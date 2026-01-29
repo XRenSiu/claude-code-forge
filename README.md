@@ -24,6 +24,19 @@
 /pdforge --from-idea "Add user authentication" --fix --loop
 ```
 
+### Update
+
+```bash
+# Update marketplace registry (fetch latest plugin list)
+claude plugin marketplace update claude-code-forge
+
+# Update installed plugin
+claude plugin update pdforge@claude-code-forge
+
+# Update to project scope only
+claude plugin update pdforge@claude-code-forge --scope project
+```
+
 ## Available Plugins
 
 | Plugin | Description | Features |
