@@ -10,7 +10,7 @@
     {
       "name": "pdforge",
       "description": "Product Development Forge - AI-driven 7-phase product development workflow. Provides complete methodology from requirements analysis to deployment, including brainstorming, TDD, three-stage review, and auto-fix loops.",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "author": {
         "name": "XRenSiu",
         "email": "xrensiu@gmail.com"
@@ -20,7 +20,7 @@
       "homepage": "https://github.com/XRenSiu/claude-code-forge/tree/main/plugins/pdforge",
       "repository": "https://github.com/XRenSiu/claude-code-forge",
       "license": "MIT",
-      "tags": ["brainstorming", "planning", "code-review", "product-development", "workflow", "tdd", "automation"]
+      "tags": ["brainstorming", "planning", "code-review", "product-development", "workflow", "tdd", "automation", "figma", "design-to-code"]
     }
   ]
 }

@@ -176,7 +176,8 @@ pdforge/
 │   ├── executing-plans/       # 快速执行模式
 │   ├── requesting-code-review/
 │   ├── systematic-debugging/
-│   └── finishing-a-development-branch/
+│   ├── finishing-a-development-branch/
+│   └── figma-to-code/
 └── rules/                    # 规则约束
     ├── agents.md
     ├── patterns.md
@@ -240,6 +241,7 @@ pdforge/
 | `requesting-code-review` | 审查前检查清单 |
 | `systematic-debugging` | 4+1 阶段根因分析 |
 | `finishing-a-development-branch` | 分支完成决策树 |
+| `figma-to-code` | Figma 设计稿转项目代码（MCP + 组件注册表） |
 
 ---
 
