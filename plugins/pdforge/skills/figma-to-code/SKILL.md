@@ -8,7 +8,7 @@ when_to_use: |
   - 用户提供 Figma URL 并要求生成代码
   - 用户要求将设计稿转换为项目组件
   - 用户说"实现设计"、"figma to code"、"设计转代码"
-version: 1.1.0
+version: 1.2.0
 ---
 
 # Figma to Code
@@ -23,6 +23,9 @@ version: 1.1.0
 2. **可选**：项目配置了 local-code-connect（有组件库时）
    - `package.json` 中有 `localCodeConnect.registry` 配置
    - 组件库已导出注册表文件
+3. **可选**：Figma API Token（用于获取完整组件属性）
+   - 环境变量 `FIGMA_TOKEN` 或 CLI `--figma-token`
+   - MCP 不返回组件 variant/boolean 属性值，REST API 能补全
 
 ## 何时使用
 
@@ -78,7 +81,8 @@ digraph {
 
 1. **读取 `package.json`**，检查是否有 `localCodeConnect.registry` 配置
 2. **如果有配置**：读取组件注册表，了解可用组件及其 props
-3. **分析项目结构**，了解现有代码布局和约定
+3. **检查 `FIGMA_TOKEN` 环境变量**是否存在（用于 Step 4 获取完整组件属性）
+4. **分析项目结构**，了解现有代码布局和约定
 
 ```json
 // package.json 配置示例（可选）
@@ -127,14 +131,29 @@ MCP 返回的代码可能有语法问题。按照 `prompts/fix-mcp-code.md` 修�
 使用 local-code-connect CLI 转换：
 
 ```bash
+# 基本用法
 npx @xrs/local-code-connect transform /tmp/figma-fixed.jsx \
   --registry <registry路径> \
   -o /tmp/figma-result.json
+
+# 带 Figma REST API 获取完整组件属性（推荐）
+npx @xrs/local-code-connect transform /tmp/figma-fixed.jsx \
+  --registry <registry路径> \
+  --figma-token $FIGMA_TOKEN \
+  --figma-file-key <fileKey> \
+  -o /tmp/figma-result.json
 ```
+
+**`--figma-token` + `--figma-file-key`** 的作用：
+- MCP 不返回组件的 variant/boolean 属性值（如 `Type=Mac`、`Show Toolbar=true`）
+- CLI 会通过 Figma REST API 一次性获取整个文件的所有实例属性
+- 属性值以最高优先级合并到 ComponentTree，使 props 提取更完整
+- fileKey 从 Step 2 的 Figma URL 中提取
+- 没有 token 时自动跳过，不影响基本功能
 
 **输出是 ComponentTree JSON**，包含：
 - 匹配到的项目组件
-- 组件 props
+- 组件 props（有 API 数据时更完整）
 - 导入信息
 - 组件树结构
 
@@ -176,6 +195,8 @@ npx @xrs/local-code-connect transform /tmp/figma-fixed.jsx \
 | 不保存临时文件 | CLI 需要文件路径 | 保存为 /tmp/figma-*.jsx |
 | 手动写组件映射 | 不准确、不一致 | 使用 CLI transform |
 | 忽略组件注册表 | 生成的代码不符合项目规范 | 始终参考注册表 |
+| 有 FIGMA_TOKEN 却不传给 CLI | 组件 props 不完整 | 有 token 就加 --figma-token 和 --figma-file-key |
+| 对每个节点单独请求 Figma API | 触发限流 | CLI 内部一次请求整个文件 |
 
 ## 你可能想跳过部分步骤
 
@@ -216,6 +237,14 @@ npx @xrs/local-code-connect transform /tmp/figma-fixed.jsx \
 1. 使用最接近的项目组件
 2. 保留原始 HTML 结构
 3. 告知用户需要在组件库添加该组件
+
+### 组件 props 不完整
+
+MCP 不返回组件的 variant/boolean 属性值。解决方法：
+1. 设置 `FIGMA_TOKEN` 环境变量
+2. 在 Step 4 传入 `--figma-token` 和 `--figma-file-key`
+3. CLI 会通过 REST API 获取所有实例的 `componentProperties`
+4. 属性名自动清理（去 `#nodeId` 后缀、去引号）后匹配 `figma.connect()` 注册的 prop
 
 ### 设计稿太大
 
