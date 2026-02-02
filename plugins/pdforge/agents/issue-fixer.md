@@ -46,7 +46,7 @@ assistant: "分析测试失败原因并修复..."
 ## Input Handling
 
 **必需参数**:
-- `REVIEW_REPORT`: 审查报告（来自 spec-reviewer/code-reviewer/security-reviewer）
+- `REVIEW_REPORT`: 审查报告（来自 design-reviewer/spec-reviewer/code-reviewer/security-reviewer）
 
 **推荐参数**:
 - `CODE_PATH`: 问题代码位置
@@ -149,7 +149,7 @@ npm run coverage
 ## 修复详情
 
 ### Issue 1: [问题标题]
-**来源**: [spec-reviewer / code-reviewer / security-reviewer]
+**来源**: [design-reviewer / spec-reviewer / code-reviewer / security-reviewer]
 **优先级**: 🔴 CRITICAL
 **位置**: `src/auth/login.ts:42-58`
 

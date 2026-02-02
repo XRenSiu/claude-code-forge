@@ -62,7 +62,8 @@ your-project/.claude/plugins/pdforge/
 │           ▼                                                             │
 │  阶段 5: 质量审查                                                        │
 │  ┌────────────────┐    ┌─────────────────────────────────┐              │
-│  │ 代码 + PRD     │──▶ │ spec-reviewer                   │              │
+│  │ 代码 + PRD     │──▶ │ design-reviewer (如有设计参考)   │              │
+│  │                │    │ spec-reviewer                   │              │
 │  │                │    │ code-reviewer                   │              │
 │  │                │    │ security-reviewer               │              │
 │  └────────────────┘    └─────────────────────────────────┘              │
