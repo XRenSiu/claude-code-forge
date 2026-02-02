@@ -8,7 +8,7 @@ when_to_use: |
   - 用户提供 Figma URL 并要求生成代码
   - 用户要求将设计稿转换为项目组件
   - 用户说"实现设计"、"figma to code"、"设计转代码"
-version: 1.3.0
+version: 1.4.0
 ---
 
 # Figma to Code
