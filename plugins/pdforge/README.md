@@ -222,6 +222,7 @@ pdforge/
 | `implementer` | 4 | 任务执行 | Read, Write, Edit, Grep, Glob, Bash |
 | `tdd-guide` | 4 | TDD 工作流指导 | Read, Write, Edit, Grep, Glob, Bash |
 | `build-error-resolver` | 4 | 构建错误修复 | Read, Write, Edit, Grep, Glob, Bash |
+| `design-reviewer` | 5 | 设计还原审查（Figma/截图） | Read, Grep, Glob, Bash |
 | `spec-reviewer` | 5 | PRD 合规审查 | Read, Grep, Glob |
 | `code-reviewer` | 5 | 代码质量审查 | Read, Grep, Glob, Bash |
 | `security-reviewer` | 5 | 安全漏洞审查 | Read, Grep, Glob, Bash |
