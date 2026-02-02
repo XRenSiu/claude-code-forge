@@ -216,7 +216,6 @@ Parse Input → Codebase Analysis → PRD Generation → Quality Validation → 
 
 ```yaml
 requirement_analysis:
-  brainstorming: optional      # 可选
   prd_validation: basic        # 基础验证
   assumption_threshold: 40%    # 允许较高假设比例
 ```
@@ -225,10 +224,11 @@ requirement_analysis:
 
 ```yaml
 requirement_analysis:
-  brainstorming: required      # 必须
   prd_validation: full         # 完整验证
   assumption_threshold: 10%    # 低假设比例
 ```
+
+> **Brainstorming** 不与产品模式绑定。使用 `--brainstorm` 参数显式启用，启用后两种模式下均执行完整 6 阶段流程。
 
 ---
 

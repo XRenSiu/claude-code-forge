@@ -92,6 +92,9 @@ your-project/.claude/plugins/pdforge/
 # 从一个想法开始完整流程
 /pdforge --from-idea "用户认证功能，支持 OAuth2 和 JWT" --fix --loop
 
+# 启用 brainstorming 需求澄清
+/pdforge --from-idea "用户认证功能" --brainstorm --fix --loop
+
 # 带自动修复和验证循环
 /pdforge --from-idea docs/ideas/payment-v2.md --fix --loop 5
 ```
@@ -304,7 +307,6 @@ pdforge/
 ### 0→1 产品（MVP/创业）
 
 ```yaml
-brainstorming: optional
 tdd_coverage: 50%
 review: code_only
 security_review: optional
@@ -315,13 +317,14 @@ execution_mode: executing-plans  # 快速模式
 ### 1→100 产品（成熟产品）
 
 ```yaml
-brainstorming: required
 tdd_coverage: 80%
 review: full  # spec + code + security
 adr: mandatory
 max_fix_rounds: 5
 execution_mode: subagent-driven-development  # 高质量模式
 ```
+
+> **Brainstorming** 通过 `--brainstorm` 参数显式启用，不与产品模式绑定。
 
 ---
 

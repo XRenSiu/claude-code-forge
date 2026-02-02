@@ -1,6 +1,6 @@
 ---
 description: 完整的 7 阶段产品开发自动化流水线。从想法到部署，协调需求分析、系统设计、任务规划、开发实现、质量审查、修复验证和交付部署。
-argument-hint: [--from-idea|--from-prd|--from-design|--from-plan] [--fix] [--loop [N]] [--skip-review] [--skip-deploy] [--mode 0to1|1to100] <input>
+argument-hint: [--from-idea|--from-prd|--from-design|--from-plan] [--fix] [--loop [N]] [--skip-review] [--skip-deploy] [--mode 0to1|1to100] [--brainstorm] <input>
 ---
 
 ## Mission
@@ -130,6 +130,7 @@ PDForge 是 AI 驱动产品开发的主协调器。它将想法转化为生产�
 | `--skip-deploy` | 跳过部署阶段 |
 | `--mode 0to1` | 0→1 产品模式（MVP/创业） |
 | `--mode 1to100` | 1→100 产品模式（成熟产品，默认） |
+| `--brainstorm` | 启用 brainstorming 需求澄清（仅与 `--from-idea` 搭配使用，默认不启用） |
 | `--spec` / `--code` / `--security` | 选择特定审查员 |
 | `--output <dir>` | 产物输出目录 |
 | `--feature <name>` | 功能名（用于文件命名） |
@@ -141,7 +142,6 @@ PDForge 是 AI 驱动产品开发的主协调器。它将想法转化为生产�
 ### 0→1 产品（MVP/创业）
 
 ```yaml
-brainstorming: optional        # 可选
 tdd_coverage: 50%              # 较低覆盖率
 review: code_only              # 仅代码审查
 security_review: optional      # 可选安全审查
@@ -153,7 +153,6 @@ execution_mode: executing-plans # 快速执行
 ### 1→100 产品（成熟产品）
 
 ```yaml
-brainstorming: required        # 必须
 tdd_coverage: 80%              # 高覆盖率
 review: full                   # 完整三阶段审查
 security_review: required      # 必须安全审查
@@ -161,6 +160,8 @@ adr: mandatory                 # 强制 ADR
 max_fix_rounds: 5              # 更多修复轮数
 execution_mode: subagent-driven-development # 高质量执行
 ```
+
+> **Brainstorming** 不与产品模式绑定。使用 `--brainstorm` 参数显式启用，两种模式下行为完全一致（完整 6 阶段流程）。
 
 ---
 
@@ -194,7 +195,7 @@ execution_mode: subagent-driven-development # 高质量执行
 
 ### 阶段 1: 需求分析（如 --from-idea）
 
-**调用**: `brainstorming` skill（可选）→ `prd-generator` agent
+**调用**: `brainstorming` skill（如 `--brainstorm`）→ `prd-generator` agent
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -203,7 +204,7 @@ execution_mode: subagent-driven-development # 高质量执行
 │                                                                 │
 │ 输入: [想法/需求描述]                                            │
 │                                                                 │
-│ ⏳ [1→100 模式] 启动苏格拉底式问答...                           │
+│ ⏳ [--brainstorm] 启动苏格拉底式问答...                         │
 │    └── 生成设计文档                                             │
 │                                                                 │
 │ ⏳ 分析代码库...                                                │
@@ -452,7 +453,7 @@ execution_mode: subagent-driven-development # 高质量执行
 2. 创建会话目录: docs/pdforge/[feature]-[timestamp]/
 
 IF --from-idea:
-    3a. [1→100 模式] 调用 brainstorming skill
+    3a. [--brainstorm] 调用 brainstorming skill
     3b. 调用 prd-generator 生成 PRD
     3c. 保存 PRD 到会话目录
     3d. 继续到步骤 4
@@ -561,7 +562,7 @@ PDForge 封装现有命令：
 
 **全新功能**：
 ```bash
-/pdforge --from-idea "用户认证 with OAuth2" --fix --loop
+/pdforge --from-idea "用户认证 with OAuth2" --brainstorm --fix --loop
 ```
 
 **基于现有 PRD 迭代**：

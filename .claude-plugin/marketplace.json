@@ -10,7 +10,7 @@
     {
       "name": "pdforge",
       "description": "Product Development Forge - AI-driven 7-phase product development workflow. Provides complete methodology from requirements analysis to deployment, including brainstorming, TDD, three-stage review, and auto-fix loops.",
-      "version": "1.7.0",
+      "version": "1.8.0",
       "author": {
         "name": "XRenSiu",
         "email": "xrensiu@gmail.com"
