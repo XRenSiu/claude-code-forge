@@ -71,14 +71,20 @@ grep -rn "console.log\|debugger\|TODO:\s*remove" --include="*.ts" src/ && {
 echo "✅ Pre-review checks passed"
 ```
 
-## 三阶段审查流程
+## 审查流程
 
-质量审查采用三阶段流程，**顺序不可颠倒**：
+质量审查采用多阶段流程，**顺序不可颠倒**：
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    三阶段审查流程                            │
+│                    审查流程                                  │
 ├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│   阶段 0: 设计还原审查 (design-reviewer) [按需]              │
+│   └── 检查：视觉还原度、布局结构、组件映射                    │
+│   └── 触发：上下文有设计参考（Figma URL/截图/设计稿）时       │
+│       │                                                     │
+│       ▼ 通过后（或无设计参考时跳过）                          │
 │                                                             │
 │   阶段 1: 规格合规审查 (spec-reviewer)                       │
 │   └── 检查：实现是否满足 PRD 和计划中的所有需求               │
@@ -107,8 +113,10 @@ echo "✅ Pre-review checks passed"
 
 | 顺序 | 原因 |
 |------|------|
+| 先设计后规格 | 视觉还原是最直观的验证，提前发现布局/组件级问题 |
 | 先规格后质量 | 先确保"做对的事"，再确保"做得好" |
 | 先质量后安全 | 先解决逻辑问题，安全审查才有意义 |
+| 设计审查可选 | 不是所有代码都有设计参考 |
 | 安全审查可选 | 不是所有代码都涉及安全敏感领域 |
 
 ## 如何请求审查
@@ -144,6 +152,12 @@ echo "✅ Pre-review checks passed"
 ### 调用审查员
 
 ```
+# 阶段 0: 设计审查（有设计参考时）
+dispatch design-reviewer with {
+  DESIGN_REFERENCE: "https://figma.com/design/abc123/... 或 /path/to/screenshot.png",
+  CODE_PATH: "src/views/**/*.vue"
+}
+
 # 阶段 1: 规格审查
 dispatch spec-reviewer with {
   SPEC_DOC: "docs/prd/feature-name.md",
@@ -210,6 +224,7 @@ dispatch code-reviewer with {
 
 ### 可以合并的条件
 
+- [ ] 设计审查（如需要）：🟢 MATCH 或 🟡 PARTIAL（无 Must Pass 失败）
 - [ ] 规格审查：🟢 PASS
 - [ ] 代码审查：🟢 APPROVE 或 🟡 APPROVE WITH CHANGES
 - [ ] 安全审查（如需要）：🟢 SECURE 或 🟡 NEEDS ATTENTION（已知风险可接受）
@@ -218,6 +233,7 @@ dispatch code-reviewer with {
 
 ### 不能合并的情况
 
+- 设计审查返回 🔴 MISMATCH（Must Pass 维度失败）
 - 任何阶段返回 🔴 FAIL / REQUEST CHANGES / CRITICAL ISSUES
 - 存在未修复的 🔴 Critical 问题
 - 测试覆盖率低于阈值（默认 80%）
@@ -236,7 +252,7 @@ dispatch code-reviewer with {
 ## 核心原则
 
 1. **审查是质量门**：不是障碍，是保护
-2. **顺序不可颠倒**：先规格，后质量，再安全
+2. **顺序不可颠倒**：先设计（如有），后规格，再质量，最后安全
 3. **自检先行**：不要浪费审查员时间
 4. **反馈是礼物**：批评代码不是批评人
 5. **持续改进**：每次审查都是学习机会

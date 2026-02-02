@@ -8,7 +8,7 @@ when_to_use: |
   - 用户提供 Figma URL 并要求生成代码
   - 用户要求将设计稿转换为项目组件
   - 用户说"实现设计"、"figma to code"、"设计转代码"
-version: 1.4.0
+version: 1.5.1
 ---
 
 # Figma to Code
@@ -59,6 +59,7 @@ digraph {
     s5a [label="Step 5\n根据 JSON + 注册表\n生成代码" shape=box];
     s5b [label="Step 5\n根据 MCP 代码\n生成代码" shape=box];
     s6 [label="Step 6\n验证" shape=box];
+    s6b [label="Step 6b\ndesign-reviewer\n(推荐)" shape=box style=filled fillcolor=lightyellow];
     
     s1 -> q1;
     q1 -> s2 [label="是"];
@@ -69,6 +70,7 @@ digraph {
     s4 -> s5a;
     s5a -> s6;
     s5b -> s6;
+    s6 -> s6b [label="需要严格审查" style=dashed];
 }
 ```
 
@@ -226,11 +228,28 @@ npx @xrs/local-code-connect transform /tmp/figma-fixed.jsx \
 
 ### Step 6: 验证
 
+#### 6a. 快速自检
+
 对比截图验证：
 - [ ] 布局匹配（间距、对齐、尺寸）
 - [ ] 排版匹配（字体、大小、粗细）
 - [ ] 颜色匹配
 - [ ] 使用了正确的项目组件
+
+#### 6b. 调度 design-reviewer（推荐）
+
+如果需要更严格的设计还原验证，建议调度 `design-reviewer` subagent 进行独立审查：
+
+```
+dispatch design-reviewer with {
+  DESIGN_REFERENCE: "<Step 2 使用的 Figma 链接>",
+  CODE_PATH: "<生成的代码路径>",
+  COMPONENT_TREE_JSON: "<Step 4 输出路径（如有）>",
+  REGISTRY_PATH: "<Step 1 发现的注册表路径（如有）>"
+}
+```
+
+design-reviewer 会自动检测 Figma URL 并使用 Figma 模式，自主调用 Figma MCP 获取截图和设计上下文，以独立视角生成详细的设计还原审查报告，覆盖布局结构、组件映射、颜色精度、间距圆角等维度，标识实现与设计稿的偏差。
 
 ## 反模式
 

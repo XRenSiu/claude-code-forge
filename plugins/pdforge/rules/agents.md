@@ -30,6 +30,7 @@ Do not try to do everything yourself. Delegate to the right specialist.
 
 | Agent | Purpose | When to Use |
 |-------|---------|-------------|
+| `design-reviewer` | Design fidelity check | When design reference (Figma URL, screenshot, mockup) exists and code is implemented |
 | `spec-reviewer` | PRD compliance check | After implementation, before merge |
 | `code-reviewer` | Code quality review | After implementation, before merge |
 | `security-reviewer` | Security audit | Code handling auth, data, APIs |
@@ -56,6 +57,8 @@ User Request
     ├─ "Implement task T001..." ─────────► implementer (with tdd-guide skill)
     │
     ├─ "Fix this build error..." ────────► build-error-resolver
+    │
+    ├─ "Review code against design..." ──► design-reviewer (when design reference exists)
     │
     ├─ "Review this code..." ────────────► code-reviewer
     │                                       └─► security-reviewer (if auth/data)
@@ -88,6 +91,12 @@ User Request
    - Data handling
    - API endpoints
    - File operations
+
+5. **Design Fidelity** → `design-reviewer`
+   - When any design reference exists (Figma URL, screenshot, design mockup) and code is implemented
+   - Not tied to figma-to-code; any code with a design reference qualifies
+   - Conditional first stage in review pipeline when design reference exists
+   - Figma URLs → Figma MCP mode; image files → screenshot mode
 
 ### MAY Delegate
 
@@ -132,6 +141,7 @@ Dispatching [agent-name]...
 | implementer | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | tdd-guide | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | build-error-resolver | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| design-reviewer | ✅ | ❌ | ❌ | ✅ | ✅ | ✅ |
 | spec-reviewer | ✅ | ❌ | ❌ | ❌ | ✅ | ✅ |
 | code-reviewer | ✅ | ❌ | ❌ | ✅ | ✅ | ✅ |
 | security-reviewer | ✅ | ❌ | ❌ | ✅ | ✅ | ✅ |

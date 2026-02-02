@@ -1,6 +1,6 @@
 # 阶段 5：质量审查 (Quality Review)
 
-> 三层审查确保代码质量（规格合规 + 代码质量 + 安全）
+> 多层审查确保代码质量（条件性设计还原 + 规格合规 + 代码质量 + 安全）
 
 ---
 
@@ -8,7 +8,7 @@
 
 | 维度 | 说明 |
 |------|------|
-| **目标** | 三层审查确保代码质量 |
+| **目标** | 多层审查确保代码质量（含条件性设计还原审查） |
 | **输入** | 代码 + PRD（来自阶段4） |
 | **输出** | 审查报告 |
 | **上游阶段** | 开发实现（阶段4） |
@@ -20,6 +20,7 @@
 
 | 类型 | 名称 | 来源 | 说明 |
 |------|------|------|------|
+| **Subagent** | `design-reviewer` | PDForge | 设计还原审查（条件性，支持 Figma URL/截图/设计稿） |
 | **Subagent** | `spec-reviewer` | PDForge | 规格合规审查 |
 | **Subagent** | `code-reviewer` | PDForge | 代码质量审查 |
 | **Subagent** | `security-reviewer` | PDForge | 安全漏洞审查 |
@@ -52,6 +53,45 @@
 ---
 
 ## 🔧 组件详解
+
+### 0. design-reviewer Subagent（条件性首阶段）
+
+**触发条件**：上下文有设计参考（Figma URL、截图、设计稿图片）且代码已实现时
+
+**Frontmatter 配置**：
+
+```yaml
+---
+name: design-reviewer
+description: 设计还原审查专家。当上下文有设计参考（Figma 链接、截图、设计稿图片）且代码已实现后调用，对比设计参考验证代码的视觉还原度。
+tools: Read, Grep, Glob, Bash
+model: opus
+---
+```
+
+**工作方式**：
+- 接收 `DESIGN_REFERENCE` 和 `CODE_PATH`，自动检测设计参考类型
+- **Figma 模式**（Figma URL）：调用 Figma MCP 获取截图和设计上下文，精确数值对比
+- **截图模式**（图片路径）：直接读取图片进行视觉对比，无法确定的精确值标注"需人工确认"
+
+**检查清单**：
+
+- [ ] 布局结构（flex 方向、区域划分、绝对定位）
+- [ ] 组件完整性（所有设计节点有对应实现）
+- [ ] 组件映射（使用正确的项目组件）
+- [ ] 间距和尺寸（精确匹配 className 值）
+- [ ] 颜色准确性（从 bg-[#xxx] 提取）
+- [ ] 圆角精确值（不用近似值）
+
+**输出评估**：
+
+| 评估 | 含义 |
+|------|------|
+| 🟢 MATCH | 视觉还原度高，所有关键维度匹配 |
+| 🟡 PARTIAL | 结构正确但有间距/颜色等差异 |
+| 🔴 MISMATCH | 布局错误、组件缺失或被替换 |
+
+---
 
 ### 1. spec-reviewer Subagent（第一阶段）
 
@@ -429,12 +469,18 @@ description: Use after completing a plan step or before merging PRs.
 
 ## 🚀 使用流程
 
-### 三阶段审查流程
+### 审查流程
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    三阶段审查流程                            │
+│                    审查流程                                  │
 ├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│   阶段 0: 设计还原审查 (design-reviewer) [按需]              │
+│   ├── 职责: 验证视觉还原度、布局结构、组件映射               │
+│   └── 触发: 上下文有设计参考（Figma URL/截图/设计稿）时      │
+│       │                                                     │
+│       ▼ 通过后（或无设计参考时跳过）                          │
 │                                                             │
 │   阶段 1: 规格合规审查 (spec-reviewer)                       │
 │   ├── 职责: 验证实现是否满足 PRD 所有需求                    │
@@ -448,14 +494,14 @@ description: Use after completing a plan step or before merging PRs.
 │       │                                                     │
 │       ▼ 通过后                                              │
 │                                                             │
-│   阶段 3: 安全审查 (security-reviewer)                       │
+│   阶段 3: 安全审查 (security-reviewer) [按需]                │
 │   ├── 职责: OWASP Top 10 漏洞检查                           │
 │   └── 触发: 涉及认证/授权/敏感数据时                         │
 │                                                             │
 └─────────────────────────────────────────────────────────────┘
 ```
 
-**顺序不可颠倒**：先确保"对的事"，再确保"做得好"
+**审查顺序不可颠倒**：先确保"看起来对"（设计还原，如有设计参考），再确保"做对的事"（规格），再确保"做得好"（代码质量），最后确保"做得安全"（安全）。设计审查和安全审查为条件性阶段。
 
 ### 手动审查
 
@@ -483,9 +529,11 @@ description: Use after completing a plan step or before merging PRs.
 ```yaml
 quality_review:
   reviewers:
+    - design-reviewer        # 设计还原（有设计参考时自动启用，支持 Figma/截图）
     - code-reviewer          # 仅代码审查
   max_rounds: 2
   coverage_threshold: 50%
+  design_review: auto        # 有设计参考时自动启用
   security_review: optional  # 可选
 ```
 
@@ -494,11 +542,13 @@ quality_review:
 ```yaml
 quality_review:
   reviewers:
+    - design-reviewer        # 设计还原（有设计参考时自动启用，支持 Figma/截图）
     - spec-reviewer          # 规格合规
     - code-reviewer          # 代码质量
     - security-reviewer      # 安全审查
   max_rounds: 5
   coverage_threshold: 80%
+  design_review: auto        # 有设计参考时自动启用
   security_review: required  # 必须
 ```
 
@@ -506,10 +556,11 @@ quality_review:
 
 ## ⚠️ 注意事项
 
-1. **审查顺序不可颠倒**：先规格合规 → 后代码质量 → 最后安全
+1. **审查顺序不可颠倒**：设计还原（如有）→ 规格合规 → 代码质量 → 安全
 2. **审查员是独立 Subagent**：没有实现过程的上下文，客观评估
-3. **断路器是保护机制**：触发时需要人工介入，不要强行继续
-4. **覆盖率门控是硬性要求**：低于阈值无法通过
+3. **设计审查是条件性首阶段**：上下文有设计参考（Figma URL/截图/设计稿图片）且代码已实现时自动触发
+4. **断路器是保护机制**：触发时需要人工介入，不要强行继续
+5. **覆盖率门控是硬性要求**：低于阈值无法通过
 
 ---
 
