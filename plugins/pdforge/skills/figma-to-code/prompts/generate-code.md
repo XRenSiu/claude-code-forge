@@ -60,7 +60,66 @@ h-full                            → 撑满父容器高度
 └── 导航栏（绝对定位覆盖层，浮在最上方）
 ```
 
-### 2. 处理 ComponentNode 的 className（必须执行）
+### 2. 处理包装 div 的 className（最易遗漏！）
+
+**`type: "element"` 的 div 节点如果包装了 `type: "component"` 节点，其 className 包含关键定位信息。** 这是导致布局错位的最常见原因。
+
+#### 识别方法
+
+在 ComponentTree JSON 中，查找以下模式：
+
+```json
+{
+  "type": "element",
+  "tag": "div",
+  "props": {
+    "className": "-translate-x-1/2 absolute left-1/2 top-[16px]"  // ⚠️ 关键定位信息！
+  },
+  "children": [
+    {
+      "type": "component",
+      "name": "XmToolbar",
+      ...
+    }
+  ]
+}
+```
+
+**这个 div 的 className 不是可选的装饰，而是决定子组件定位的关键。**
+
+#### 常见的包装 div 定位类
+
+| className 片段 | 含义 | 必须实现 |
+|----------------|------|---------|
+| `absolute left-1/2 -translate-x-1/2` | 水平居中的绝对定位 | `position: absolute; left: 50%; transform: translateX(-50%)` |
+| `absolute top-[16px]` | 距顶部 16px | `top: 16px` |
+| `absolute right-[8px] top-0` | 右上角定位 | `position: absolute; right: 8px; top: 0` |
+| `relative` | 作为子元素的定位上下文 | `position: relative` |
+
+#### 生成代码时
+
+```vue
+<!-- JSON 中 div 包装了 XmToolbar，div 的 className 有绝对定位 -->
+
+✅ 正确：保留包装 div 并应用定位
+<div class="center-tools">
+  <XmToolbar>...</XmToolbar>
+</div>
+
+<style scoped>
+.center-tools {
+  position: absolute;
+  left: 50%;
+  top: 16px;  /* 从 top-[16px] 提取 */
+  transform: translateX(-50%);  /* 从 -translate-x-1/2 提取 */
+}
+</style>
+
+❌ 错误：忽略包装 div，直接输出组件
+<XmToolbar>...</XmToolbar>  <!-- 丢失了定位信息！ -->
+```
+
+### 3. 处理 ComponentNode 的 className（必须执行）
 
 **`type: "component"` 的节点可能有 `className` 字段。** 这是 Figma 中该组件外层容器的布局类名，包含定位、尺寸、间距等信息。**你必须从 className 中提取布局属性并应用到组件上。**
 
@@ -130,7 +189,7 @@ absolute + left/top/...    →  position: absolute; ...
 <XmSelectIcon class="fp-w72" />
 ```
 
-### 3. 确定输出文件
+### 4. 确定输出文件
 
 问自己：
 - 这是新页面还是现有页面的一部分？
@@ -139,7 +198,7 @@ absolute + left/top/...    →  position: absolute; ...
 
 **参考项目现有结构做出决策。**
 
-### 4. 确定组件拆分
+### 5. 确定组件拆分
 
 问自己：
 - JSON 中有多少个顶级组件？
@@ -148,7 +207,7 @@ absolute + left/top/...    →  position: absolute; ...
 
 **原则**：如果组件超过 100 行，考虑拆分。
 
-### 5. 处理未匹配的节点
+### 6. 处理未匹配的节点
 
 JSON 中 `type: "element"` 的节点没有对应的项目组件。选择：
 - 使用最接近的项目组件
@@ -157,7 +216,7 @@ JSON 中 `type: "element"` 的节点没有对应的项目组件。选择：
 
 **注意**：`className: "undefined"` 是一个已知的 parser bug 产物，应忽略该值，不要将字符串 `"undefined"` 作为 class 输出。
 
-### 6. 从 `_source.dataName` 推断正确的文本内容
+### 7. 从 `_source.dataName` 推断正确的文本内容
 
 MCP 生成的代码常包含**占位符文本**（如所有标题都写 "Shape"，所有标签页都写 "normal"）。这些不是真实内容，需要根据 JSON 中的 `_source.dataName` 来推断正确文本。
 
@@ -193,7 +252,7 @@ JSON 结构：
 <XmTitle>Shape</XmTitle>  <!-- 所有标题都变成 Shape！ -->
 ```
 
-### 7. 处理 Figma 资产 URL（图标和图片）
+### 8. 处理 Figma 资产 URL（图标和图片）
 
 JSON 的 `assets` 字段包含 Figma 资产 URL 映射。`type: "element"` 的 `img` 标签的 `src` 属性会是已解析的 Figma 资产 URL。
 
@@ -377,6 +436,7 @@ import FeatureCard from '@/components/FeatureCard.vue'
 生成代码后检查：
 
 - [ ] **布局方向**：根节点 flex 方向是否与 JSON className 一致？
+- [ ] **包装 div 定位**：包含组件的 `type: element` div 的 className 是否已提取并应用（特别是 `absolute`、`left-1/2`、`top-[Npx]`、`-translate-x-1/2`）？
 - [ ] **绝对定位**：JSON 中 `absolute` 的节点是否在代码中也是绝对定位？
 - [ ] **父子关系**：SheetBar 等组件是否在正确的容器内？
 - [ ] **容器样式**：padding、gap、border-radius 是否与 JSON 根节点一致？
@@ -396,6 +456,7 @@ import FeatureCard from '@/components/FeatureCard.vue'
 
 | 错误 | 后果 | 正确做法 |
 |------|------|---------|
+| **忽略包装 div 的 className** | 子组件丢失定位（如居中、偏移），布局严重错位 | 扫描 `type: element` 的 div，提取其 className 中的 `absolute`、`left-1/2`、`top-[16px]`、`-translate-x-1/2` 等 |
 | 根节点 `flex` 写成 `flex-direction: column` | 整体布局方向错误 | 从 className 判断：无 `flex-col` = 水平 |
 | 把 `absolute` 元素放入文档流 | 元素占据空间，挤压其他内容 | 用 `position: absolute` 实现 |
 | 把子组件从其容器中移出 | 绝对定位元素失去定位上下文 | 保持 JSON 中的父子关系 |

@@ -8,7 +8,7 @@ when_to_use: |
   - 用户提供 Figma URL 并要求生成代码
   - 用户要求将设计稿转换为项目组件
   - 用户说"实现设计"、"figma to code"、"设计转代码"
-version: 1.5.1
+version: 1.3.0
 ---
 
 # Figma to Code
@@ -59,7 +59,6 @@ digraph {
     s5a [label="Step 5\n根据 JSON + 注册表\n生成代码" shape=box];
     s5b [label="Step 5\n根据 MCP 代码\n生成代码" shape=box];
     s6 [label="Step 6\n验证" shape=box];
-    s6b [label="Step 6b\ndesign-reviewer\n(推荐)" shape=box style=filled fillcolor=lightyellow];
     
     s1 -> q1;
     q1 -> s2 [label="是"];
@@ -70,7 +69,6 @@ digraph {
     s4 -> s5a;
     s5a -> s6;
     s5b -> s6;
-    s6 -> s6b [label="需要严格审查" style=dashed];
 }
 ```
 
@@ -228,15 +226,50 @@ npx @xrs/local-code-connect transform /tmp/figma-fixed.jsx \
 
 ### Step 6: 验证
 
-#### 6a. 快速自检
+#### 6a. 强制截图对比（必须执行）
 
-对比截图验证：
-- [ ] 布局匹配（间距、对齐、尺寸）
-- [ ] 排版匹配（字体、大小、粗细）
-- [ ] 颜色匹配
-- [ ] 使用了正确的项目组件
+**不能仅靠人工目视检查。** 必须执行以下步骤：
 
-#### 6b. 调度 design-reviewer（推荐）
+1. **获取 Figma 截图**：调用 `get_screenshot(fileKey, nodeId)` 获取设计稿截图
+2. **启动本地预览**：运行开发服务器，在浏览器中打开生成的页面
+3. **并排对比**：将 Figma 截图与实际渲染结果并排放置
+4. **逐项检查**：
+   - [ ] **绝对定位元素位置**：overlay 元素（navbar、upgrade button 等）是否在正确位置？
+   - [ ] **中心对齐元素**：使用 `left-1/2 -translate-x-1/2` 的元素是否真正居中？
+   - [ ] **垂直偏移**：`top-[16px]` 等值是否准确？
+   - [ ] **布局方向**：水平/垂直布局是否与设计一致？
+   - [ ] **间距和圆角**：gap、padding、border-radius 是否匹配？
+   - [ ] **颜色值**：背景色、文字色是否准确？
+
+**如果发现偏差**，回溯检查 ComponentTree JSON 中对应节点的 `className`，确认是否遗漏了关键定位类。
+
+#### 6b. 记录组件能力缺口
+
+在代码生成过程中，如果发现**组件库能力不足以实现设计需求**，必须：
+
+1. **在代码注释中标注**：
+```vue
+<!--
+  ⚠️ 组件能力缺口：XmNavigationBar 不支持 center slot
+  设计稿需要三段式布局（左-中-右），但组件只支持两段（左-右）
+  当前方案：使用绝对定位的兄弟元素模拟中间区域
+  建议：为 XmNavigationBar 添加 #center slot
+-->
+<div class="center-tools">...</div>
+```
+
+2. **在验证报告中列出**：
+```
+## 组件能力缺口
+
+| 组件 | 缺失能力 | 设计需求 | 当前绕过方案 |
+|------|----------|----------|-------------|
+| XmNavigationBar | center slot | 三段式布局 | 绝对定位兄弟元素 |
+```
+
+3. **可选：创建 Issue**：如果有权限，在组件库仓库创建 Issue 跟踪。
+
+#### 6c. 调度 design-reviewer（推荐）
 
 如果需要更严格的设计还原验证，建议调度 `design-reviewer` subagent 进行独立审查：
 
@@ -266,6 +299,9 @@ design-reviewer 会自动检测 Figma URL 并使用 Figma 模式，自主调用 
 | 没找到 token 也不告诉用户 | 用户不知道 props 不完整 | 输出警告信息 |
 | 对每个节点单独请求 Figma API | 触发限流 | CLI 内部一次请求整个文件 |
 | 忽略组件注册表 | 生成的代码不符合项目规范 | 始终参考注册表 |
+| 忽略包装 div 的 className | 子组件丢失关键定位（居中、偏移等） | **扫描每个 element div 的 className，提取 absolute/left-1/2/top-[Npx] 等定位类** |
+| 只做人工目视验证 | 微小偏差难以察觉 | **强制截图并排对比** |
+| 组件能力不足时不记录 | 问题被遗忘，下次还会遇到 | 在代码注释和报告中记录组件能力缺口 |
 
 ## 你可能想跳过部分步骤
 
@@ -279,6 +315,9 @@ design-reviewer 会自动检测 Figma URL 并使用 Figma 模式，自主调用 
 | "process.env 里没有 FIGMA_TOKEN，就是没 token" | **错！用户可能在 `.env` 文件中定义了 token，你必须读文件检查** |
 | "没有 token 也能用" | 能用但 60% 的 props 为空，代码质量严重下降 |
 | "package.json 里没有 localCodeConnect 配置" | glob 搜索 `.figma-registry.json`，项目可能有但没显式配置 |
+| "那个 div 只是包装器，不重要" | **错！包装 div 的 className 可能有 `absolute left-1/2 top-[16px]` 等关键定位，丢失会导致布局错位** |
+| "我看了一眼截图，差不多" | **人眼容易忽略 16px 的偏移，必须并排对比截图** |
+| "组件不支持这个功能，绕过就行" | 下次还会遇到同样问题，必须记录组件能力缺口 |
 
 **必须完整执行流程。有组件库时 Step 1-6，无组件库时 Step 1-3, 5-6。**
 
