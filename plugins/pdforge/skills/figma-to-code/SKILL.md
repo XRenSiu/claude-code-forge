@@ -8,7 +8,7 @@ when_to_use: |
   - 用户提供 Figma URL 并要求生成代码
   - 用户要求将设计稿转换为项目组件
   - 用户说"实现设计"、"figma to code"、"设计转代码"
-version: 1.11.0
+version: 1.12.0
 ---
 
 # Figma to Code
@@ -50,29 +50,34 @@ digraph {
 ```dot
 digraph {
     rankdir=TB;
-    
+
     s1 [label="Step 1\n读取项目上下文" shape=box];
     q1 [label="有 localCodeConnect\n配置?" shape=diamond];
     s2 [label="Step 2\n获取设计稿" shape=box];
     s3 [label="Step 3\n修复 MCP Code" shape=box];
     s4 [label="Step 4\nCLI transform" shape=box style=filled fillcolor=lightyellow];
-    s5a [label="Step 5\n根据 JSON + 注册表\n生成代码" shape=box];
-    s5b [label="Step 5\n根据 MCP 代码\n生成代码" shape=box];
-    s6 [label="Step 6\n验证" shape=box];
-    
+    s5 [label="Step 5\n下载 MCP 资产" shape=box style=filled fillcolor=lightblue];
+    s6a [label="Step 6\n根据 JSON + 注册表\n生成代码" shape=box];
+    s6b [label="Step 6\n根据 MCP 代码\n生成代码" shape=box];
+    s7 [label="Step 7\n验证" shape=box];
+
     s1 -> q1;
     q1 -> s2 [label="是"];
     q1 -> s2 [label="否"];
     s2 -> s3;
     s3 -> s4 [label="有组件库"];
-    s3 -> s5b [label="无组件库"];
-    s4 -> s5a;
-    s5a -> s6;
-    s5b -> s6;
+    s3 -> s5 [label="无组件库"];
+    s4 -> s5;
+    s5 -> s6a [label="有组件库"];
+    s5 -> s6b [label="无组件库"];
+    s6a -> s7;
+    s6b -> s7;
 }
 ```
 
-**黄色标注**：Step 4 仅在有组件库时执行。
+**标注说明**：
+- **黄色**：Step 4 仅在有组件库时执行
+- **蓝色**：Step 5 下载资产是必须步骤，所有流程都要执行
 
 ## 流程
 
@@ -204,17 +209,61 @@ npx @xrs/local-code-connect transform /tmp/figma-fixed.jsx \
 - 导入信息
 - 组件树结构
 
-### Step 5: 生成代码
+### Step 5: 下载 MCP 资产（必须执行）
+
+**MCP 返回的资产 URL 是临时链接，会过期。必须在生成代码前下载到本地。**
+
+#### 5a. 识别需要下载的资产
+
+从 Step 2 的 MCP 返回中，收集所有 `https://www.figma.com/api/mcp/asset/...` 格式的 URL：
+- `get_design_context` 返回的 `assets` 字段中的 URL
+- JSX 代码中 `img` 标签的 `src` 属性
+
+#### 5b. 创建资产目录
+
+在目标组件目录下创建 `assets` 文件夹：
+```bash
+mkdir -p <target-dir>/assets
+```
+
+#### 5c. 批量下载资产
+
+使用 curl 下载所有资产到本地，**命名要语义化**：
+
+```bash
+# 示例：下载图标
+curl -sL "https://www.figma.com/api/mcp/asset/xxx" -o <target-dir>/assets/home.png
+curl -sL "https://www.figma.com/api/mcp/asset/yyy" -o <target-dir>/assets/share.png
+curl -sL "https://www.figma.com/api/mcp/asset/zzz" -o <target-dir>/assets/avatar.png
+# ... 其他资产
+```
+
+**命名规则**：
+- 从 MCP 返回的 `data-name` 属性或上下文推断语义化名称
+- 使用 kebab-case：`new-topic.png`、`zen-mode.png`
+- 不要使用 MCP 的 UUID 作为文件名
+
+#### 5d. 验证下载
+
+```bash
+ls -la <target-dir>/assets
+```
+
+确保所有文件大小合理（不是 0 字节或错误页面）。
+
+### Step 6: 生成代码
 
 **有组件库时**（有 Step 4 输出）：
 1. **ComponentTree JSON**（Step 4 输出）
 2. **组件注册表**（组件详细 props 和用法）
 3. **项目结构**（现有代码和目录布局）
+4. **本地资产路径**（Step 5 下载的资产）
 
 **无组件库时**（跳过了 Step 4）：
 1. **修复后的 MCP 代码**（Step 3 输出）
 2. **项目结构**（现有代码和目录布局）
-3. 根据项目现有模式生成代码
+3. **本地资产路径**（Step 5 下载的资产）
+4. 根据项目现有模式生成代码
 
 **决策由你做出**：
 - 创建新文件还是修改现有文件
@@ -222,11 +271,22 @@ npx @xrs/local-code-connect transform /tmp/figma-fixed.jsx \
 - 是否拆分为多个组件
 - 如何与现有代码集成
 
+**资产引用**：在代码中使用相对路径或 import 引用本地资产：
+```vue
+<script setup>
+import iconHome from '../assets/home.png'
+</script>
+
+<template>
+  <img :src="iconHome" alt="Home" />
+</template>
+```
+
 按照 `prompts/generate-code.md` 指南生成代码。
 
-### Step 6: 验证
+### Step 7: 验证
 
-#### 6a. 强制截图对比（必须执行）
+#### 7a. 强制截图对比（必须执行）
 
 **不能仅靠人工目视检查。** 必须执行以下步骤：
 
@@ -243,7 +303,7 @@ npx @xrs/local-code-connect transform /tmp/figma-fixed.jsx \
 
 **如果发现偏差**，回溯检查 ComponentTree JSON 中对应节点的 `className`，确认是否遗漏了关键定位类。
 
-#### 6b. 记录组件能力缺口
+#### 7b. 记录组件能力缺口
 
 在代码生成过程中，如果发现**组件库能力不足以实现设计需求**，必须：
 
@@ -269,7 +329,7 @@ npx @xrs/local-code-connect transform /tmp/figma-fixed.jsx \
 
 3. **可选：创建 Issue**：如果有权限，在组件库仓库创建 Issue 跟踪。
 
-#### 6c. 调度 design-reviewer（推荐）
+#### 7c. 调度 design-reviewer（推荐）
 
 如果需要更严格的设计还原验证，建议调度 `design-reviewer` subagent 进行独立审查：
 
@@ -302,6 +362,8 @@ design-reviewer 会自动检测 Figma URL 并使用 Figma 模式，自主调用 
 | 忽略包装 div 的 className | 子组件丢失关键定位（居中、偏移等） | **扫描每个 element div 的 className，提取 absolute/left-1/2/top-[Npx] 等定位类** |
 | 只做人工目视验证 | 微小偏差难以察觉 | **强制截图并排对比** |
 | 组件能力不足时不记录 | 问题被遗忘，下次还会遇到 | 在代码注释和报告中记录组件能力缺口 |
+| 直接使用 MCP 资产 URL | URL 会过期，生产环境图片加载失败 | **Step 5 必须下载所有 MCP 资产到本地 assets 目录** |
+| 跳过 Step 5 下载资产 | 代码依赖临时 URL，部署后失效 | 在生成代码前完成资产下载 |
 
 ## 你可能想跳过部分步骤
 
@@ -318,8 +380,10 @@ design-reviewer 会自动检测 Figma URL 并使用 Figma 模式，自主调用 
 | "那个 div 只是包装器，不重要" | **错！包装 div 的 className 可能有 `absolute left-1/2 top-[16px]` 等关键定位，丢失会导致布局错位** |
 | "我看了一眼截图，差不多" | **人眼容易忽略 16px 的偏移，必须并排对比截图** |
 | "组件不支持这个功能，绕过就行" | 下次还会遇到同样问题，必须记录组件能力缺口 |
+| "MCP URL 看起来能用" | **错！MCP 资产 URL 是临时的，几小时后就会过期** |
+| "下载图片太麻烦" | 不下载图片 = 部署后图片全部 404 |
 
-**必须完整执行流程。有组件库时 Step 1-6，无组件库时 Step 1-3, 5-6。**
+**必须完整执行流程。有组件库时 Step 1-7，无组件库时 Step 1-3, 5-7。**
 
 ## 资源
 

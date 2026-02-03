@@ -45,17 +45,6 @@
         ]
       }
     ],
-    "Stop": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "echo \"[$(date)] Development session completed\" >> .claude/session.log 2>/dev/null || true",
-            "timeout": 5000
-          }
-        ]
-      }
-    ]
+    "Stop": []
   }
 }

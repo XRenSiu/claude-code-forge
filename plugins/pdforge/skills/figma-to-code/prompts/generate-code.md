@@ -256,20 +256,52 @@ JSON 结构：
 
 JSON 的 `assets` 字段包含 Figma 资产 URL 映射。`type: "element"` 的 `img` 标签的 `src` 属性会是已解析的 Figma 资产 URL。
 
-**这些 URL 是 Figma API 的临时资产链接，格式为 `https://www.figma.com/api/mcp/asset/...`。**
+**这些 URL 是 Figma MCP 的临时资产链接，格式为 `https://www.figma.com/api/mcp/asset/...`。这些 URL 会过期，不能直接在生产代码中使用！**
 
-处理方式：
-- 对于**图标类** img（尺寸小于 24px 或在图标容器内）：如果对应的组件库有图标组件，优先使用组件库图标。如果没有，保留 img 标签和 Figma URL 作为占位，标注 `<!-- TODO: replace with project icon -->`
-- 对于**装饰性** img（分隔线、阴影等）：用 CSS 实现等效效果，不要用 img 标签
-- 对于**内容型** img（大图、插图）：保留 img 标签和 URL
+#### 处理方式（按优先级）
+
+1. **组件库图标**：如果组件库有对应图标组件，优先使用
+   ```vue
+   <XmIcon name="arrow-down" />
+   ```
+
+2. **下载到本地**：将 MCP URL 的图片下载到项目 assets 目录
+   ```bash
+   # 下载图标到本地
+   curl -o src/assets/icons/home.svg "https://www.figma.com/api/mcp/asset/xxx"
+   ```
+   ```vue
+   <img src="@/assets/icons/home.svg" alt="Home" />
+   ```
+
+3. **装饰性元素**：用 CSS 实现（分隔线、阴影等）
+   ```css
+   .divider { border-bottom: 1px solid rgba(0, 0, 0, 0.08); }
+   ```
+
+4. **内容型图片**：下载后放入 public 或 assets 目录
+
+#### 下载脚本示例
+
+```bash
+# 批量下载 MCP 资产
+mkdir -p src/assets/icons
+
+# 从 JSON assets 字段提取 URL 并下载
+curl -o src/assets/icons/home.svg "https://www.figma.com/api/mcp/asset/c326780f-..."
+curl -o src/assets/icons/share.svg "https://www.figma.com/api/mcp/asset/4ab5bf98-..."
+# ... 其他图标
+```
 
 ```
-✅ 正确：图标用组件库
+✅ 正确：下载到本地使用
+<img src="@/assets/icons/home.svg" alt="Home" />
+
+✅ 正确：使用组件库图标
 <XmIcon name="arrow-down" />
 
-⚠️ 可接受：暂时保留 Figma URL
-<img src="https://www.figma.com/api/mcp/asset/..." alt="icon" />
-<!-- TODO: replace with project icon -->
+❌ 错误：直接使用 MCP URL（会过期！）
+<img src="https://www.figma.com/api/mcp/asset/..." />
 
 ❌ 错误：删除所有 img 或留空 src
 <img src="" />
