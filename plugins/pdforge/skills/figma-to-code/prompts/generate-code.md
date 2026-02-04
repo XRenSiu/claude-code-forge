@@ -11,6 +11,31 @@
 3. **项目结构** - 现有代码和目录布局
 4. **Figma 截图** - 视觉参考
 
+## 必须参考的 API 文档（在写任何代码之前！）
+
+生成代码前，**必须**先读取以下参考文档，了解每个组件的实际用法：
+
+1. **组件 API 文档** (`packages/vue/docs/component-api.md`)
+   — 完整的 props、slots、events 定义和使用示例
+   — 每个组件都有 "Common Mistakes" 章节，列出了 AI 常犯的错误
+
+2. **ComponentTree 转代码指南** (`local-code-connect` 包的 `docs/component-tree-to-code.md`)
+   — JSON 节点如何映射成 Vue 模板代码的详细规则
+   — 发布包路径：`node_modules/local-code-connect/docs/component-tree-to-code.md`
+
+3. **注册表中的 slots/emits/usage** (`.figma-registry.json`)
+   — 每个组件的结构化 API 速查信息
+
+### 绝对禁止（不查 API 文档直接猜测）
+
+| 禁止行为 | 说明 |
+|---------|------|
+| 猜测 slot 名称 | 只使用 API 文档中列出的 slot 名。不存在 `#tabs`、`#controls`、`#actions` |
+| 使用 `.Item` 子组件模式 | 如 `XmTabRounded.Item` 不存在。查阅 API 确认组件用法 |
+| children text 传递内容 | 如 `<XmSelectText>Text</XmSelectText>` 是错的。应用 `label` prop |
+| 使用不存在的 string prop | 如 `icon="cursor"` — XmToolbarElement 没有 icon 字符串 prop，要用 `#icon` slot |
+| CSS 变量名带 `/` | 如 `var(--color/fill/container)` — 直接用颜色值或转义变量名 |
+
 ## 决策流程
 
 ### 1. 还原整体布局结构（最重要）

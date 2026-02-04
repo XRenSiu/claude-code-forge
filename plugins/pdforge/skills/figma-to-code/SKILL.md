@@ -8,7 +8,7 @@ when_to_use: |
   - 用户提供 Figma URL 并要求生成代码
   - 用户要求将设计稿转换为项目组件
   - 用户说"实现设计"、"figma to code"、"设计转代码"
-version: 1.12.0
+version: 1.13.0
 ---
 
 # Figma to Code
@@ -253,9 +253,23 @@ ls -la <target-dir>/assets
 
 ### Step 6: 生成代码
 
+#### 6a. 读取组件 API 参考（必须先做！）
+
+**在写任何代码之前，必须读取以下文档，了解组件的实际 Vue API：**
+
+1. **`packages/vue/docs/component-api.md`** — 每个组件的 props、slots、events、usage 示例和常见错误
+2. **`local-code-connect` 包的 `docs/component-tree-to-code.md`** — ComponentTree JSON 转 Vue 代码的映射规则
+   - 发布包路径：`node_modules/local-code-connect/docs/component-tree-to-code.md`
+   - Monorepo 开发路径：`packages/local-code-connect/docs/component-tree-to-code.md`
+3. **`.figma-registry.json` 中的 `slots`/`emits`/`usage` 字段** — 结构化 API 速查
+
+> **为什么必须先读？** AI 生成代码时最大的错误来源是**猜测组件 API**（如使用不存在的 slot 名、用 children text 代替 prop、用 `.Item` 子组件模式）。这些文档提供了权威的 API 定义。
+
+#### 6b. 准备输入
+
 **有组件库时**（有 Step 4 输出）：
 1. **ComponentTree JSON**（Step 4 输出）
-2. **组件注册表**（组件详细 props 和用法）
+2. **组件 API 文档**（Step 6a 读取）
 3. **项目结构**（现有代码和目录布局）
 4. **本地资产路径**（Step 5 下载的资产）
 
@@ -264,6 +278,8 @@ ls -la <target-dir>/assets
 2. **项目结构**（现有代码和目录布局）
 3. **本地资产路径**（Step 5 下载的资产）
 4. 根据项目现有模式生成代码
+
+#### 6c. 生成
 
 **决策由你做出**：
 - 创建新文件还是修改现有文件
