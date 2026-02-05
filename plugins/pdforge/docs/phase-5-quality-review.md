@@ -70,9 +70,13 @@ model: opus
 ```
 
 **工作方式**：
-- 接收 `DESIGN_REFERENCE` 和 `CODE_PATH`，自动检测设计参考类型
-- **Figma 模式**（Figma URL）：调用 Figma MCP 获取截图和设计上下文，精确数值对比
-- **截图模式**（图片路径）：直接读取图片进行视觉对比，无法确定的精确值标注"需人工确认"
+- 接收 `DESIGN_REFERENCE`、`CODE_PATH`，可选 `IMPLEMENTATION_URL`
+- **设计稿获取**：
+  - **Figma 模式**（Figma URL）：调用 Figma MCP 获取截图和设计上下文，精确数值对比
+  - **截图模式**（图片路径）：直接读取图片进行视觉对比，无法确定的精确值标注"需人工确认"
+- **实现页面获取**：
+  - **Playwright 模式**（提供 `IMPLEMENTATION_URL`）：用 Playwright 截取真实渲染页面，与设计稿精确对比（推荐）
+  - **代码推断模式**（未提供 `IMPLEMENTATION_URL`）：从代码推断视觉效果，精度较低
 
 **检查清单**：
 

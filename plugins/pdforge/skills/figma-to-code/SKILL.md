@@ -8,7 +8,7 @@ when_to_use: |
   - 用户提供 Figma URL 并要求生成代码
   - 用户要求将设计稿转换为项目组件
   - 用户说"实现设计"、"figma to code"、"设计转代码"
-version: 1.13.0
+version: 1.14.0
 ---
 
 # Figma to Code
@@ -347,16 +347,28 @@ import iconHome from '../assets/home.png'
 
 #### 7c. 调度 design-reviewer（推荐）
 
-如果需要更严格的设计还原验证，建议调度 `design-reviewer` subagent 进行独立审查：
+如果需要更严格的设计还原验证，建议调度 `design-reviewer` subagent 进行独立审查。
 
+**前置步骤**：为获得最佳对比效果，建议先启动开发服务器：
+```bash
+npm run dev  # 启动开发服务器
+# 确认页面可访问后再调用 design-reviewer
+```
+
+**调用示例**：
 ```
 dispatch design-reviewer with {
   DESIGN_REFERENCE: "<Step 2 使用的 Figma 链接>",
+  IMPLEMENTATION_URL: "http://localhost:3000/<页面路径>",  # 推荐提供，用 Playwright 截取真实页面
   CODE_PATH: "<生成的代码路径>",
   COMPONENT_TREE_JSON: "<Step 4 输出路径（如有）>",
   REGISTRY_PATH: "<Step 1 发现的注册表路径（如有）>"
 }
 ```
+
+**IMPLEMENTATION_URL 的作用**：
+- 提供时：design-reviewer 使用 Playwright 截取真实渲染的页面，与设计稿精确对比
+- 不提供时：design-reviewer 从代码推断视觉效果，精度较低
 
 design-reviewer 会自动检测 Figma URL 并使用 Figma 模式，自主调用 Figma MCP 获取截图和设计上下文，以独立视角生成详细的设计还原审查报告，覆盖布局结构、组件映射、颜色精度、间距圆角等维度，标识实现与设计稿的偏差。
 

@@ -155,6 +155,7 @@ echo "✅ Pre-review checks passed"
 # 阶段 0: 设计审查（有设计参考时）
 dispatch design-reviewer with {
   DESIGN_REFERENCE: "https://figma.com/design/abc123/... 或 /path/to/screenshot.png",
+  IMPLEMENTATION_URL: "http://localhost:3000/dashboard",  # 可选，推荐提供
   CODE_PATH: "src/views/**/*.vue"
 }
 

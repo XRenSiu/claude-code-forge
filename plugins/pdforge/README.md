@@ -27,6 +27,21 @@ PDForge 是一个 Claude Code 插件，提供完整的 7 阶段产品开发方�
 your-project/.claude/plugins/pdforge/
 ```
 
+### 可选依赖
+
+#### Playwright Skill（推荐）
+
+用于 `design-reviewer` 截取真实渲染页面与设计稿对比：
+
+```bash
+/plugin marketplace add lackeyjb/playwright-skill
+/plugin install playwright-skill@playwright-skill
+cd ~/.claude/plugins/marketplaces/playwright-skill/skills/playwright-skill
+npm run setup
+```
+
+安装后，在调用 `design-reviewer` 时提供 `IMPLEMENTATION_URL`（如 `http://localhost:3000`），它会用 Playwright 截取真实页面进行精确对比，而非从代码推断。
+
 ---
 
 ## 7 阶段开发流程

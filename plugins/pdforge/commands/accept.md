@@ -450,6 +450,7 @@ Progress = resolved_count > 0
 - 触发方式：有设计参考时自动启用，或通过 `--design` 显式指定
 - Figma URL：design-reviewer 自主调用 Figma MCP 获取截图和设计上下文
 - 截图/图片：design-reviewer 直接读取图片进行视觉对比
+- **IMPLEMENTATION_URL**（推荐）：如提供开发服务器 URL（如 `http://localhost:3000`），design-reviewer 将使用 Playwright 截取真实渲染页面进行对比，而非从代码推断
 
 **如启用规格审查 → 调用 spec-reviewer**：
 - 焦点：PRD 合规性、功能覆盖、验收标准
