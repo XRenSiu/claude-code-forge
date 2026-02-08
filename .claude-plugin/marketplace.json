@@ -21,6 +21,36 @@
       "repository": "https://github.com/XRenSiu/claude-code-forge",
       "license": "MIT",
       "tags": ["brainstorming", "planning", "code-review", "product-development", "workflow", "tdd", "automation", "figma", "design-to-code"]
+    },
+    {
+      "name": "adversarial-debugger",
+      "description": "Adversarial Debugging with Agent Teams - Multiple agents investigate competing hypotheses in parallel, challenge each other's findings through structured debate, and converge on the true root cause.",
+      "version": "1.0.0",
+      "author": {
+        "name": "XRenSiu",
+        "email": "xrensiu@gmail.com"
+      },
+      "source": "./plugins/adversarial-debugger",
+      "category": "debugging",
+      "homepage": "https://github.com/XRenSiu/claude-code-forge/tree/main/plugins/adversarial-debugger",
+      "repository": "https://github.com/XRenSiu/claude-code-forge",
+      "license": "MIT",
+      "tags": ["debugging", "adversarial", "agent-teams", "root-cause-analysis", "hypothesis-testing", "parallel-investigation"]
+    },
+    {
+      "name": "forge-teams",
+      "description": "Agent Teams 版产品开发流水线 - 7 阶段对抗协作开发，每个关键决策点使用多 agent 辩论、竞争和交叉验证，含红队攻击和对抗式调试。",
+      "version": "1.0.1",
+      "author": {
+        "name": "XRenSiu",
+        "email": "xrensiu@gmail.com"
+      },
+      "source": "./plugins/forge-teams",
+      "category": "development",
+      "homepage": "https://github.com/XRenSiu/claude-code-forge/tree/main/plugins/forge-teams",
+      "repository": "https://github.com/XRenSiu/claude-code-forge",
+      "license": "MIT",
+      "tags": ["agent-teams", "adversarial", "product-development", "red-team", "parallel-implementation", "debugging", "tdd"]
     }
   ]
 }

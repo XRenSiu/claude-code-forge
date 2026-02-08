@@ -1,0 +1,20 @@
+{
+  "name": "adversarial-debugger",
+  "description": "Adversarial Debugging with Agent Teams - Multiple agents investigate competing hypotheses in parallel, challenge each other's findings through structured debate, and converge on the true root cause.",
+  "version": "1.0.0",
+  "author": {
+    "name": "XRenSiu",
+    "email": "xrensiu@gmail.com"
+  },
+  "homepage": "https://github.com/XRenSiu/claude-code-forge/tree/main/plugins/adversarial-debugger",
+  "repository": "https://github.com/XRenSiu/claude-code-forge",
+  "license": "MIT",
+  "keywords": [
+    "debugging",
+    "adversarial",
+    "agent-teams",
+    "root-cause-analysis",
+    "hypothesis-testing",
+    "parallel-investigation"
+  ]
+}
