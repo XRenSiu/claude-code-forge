@@ -1,7 +1,7 @@
 {
   "name": "forge-teams",
   "description": "Agent Teams 版产品开发流水线 - 7 阶段对抗协作开发，每个关键决策点使用多 agent 辩论、竞争和交叉验证，含红队攻击和对抗式调试。",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "author": {
     "name": "XRenSiu",
     "email": "xrensiu@gmail.com"

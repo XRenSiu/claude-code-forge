@@ -235,7 +235,7 @@ forge-teams 使用 Agent Teams 进行多 agent 并行协作，token 消耗显著
 
 ## Agents
 
-forge-teams 定义了 12 个专用 agent，分布在 5 个阶段：
+forge-teams 定义了 23 个专用 agent，覆盖全部 7 个阶段：
 
 | Agent | Phase | Model | 职责 |
 |-------|-------|-------|------|
@@ -244,13 +244,24 @@ forge-teams 定义了 12 个专用 agent，分布在 5 个阶段：
 | `solution-architect` | P2 | sonnet | 独立分析 PRD 和代码库，产出完整架构方案参与竞标 |
 | `technical-critic` | P2 | opus | 用深刻技术洞察力挑战每个架构决策 |
 | `design-arbiter` | P2 | opus | 综合评判多个竞争架构方案，产出最终裁决 |
+| `task-planner` | P3 | sonnet | 任务分解 + 依赖图 + 文件所有权注解（OWNS/READS/SHARED） |
+| `risk-assessor` | P3 | sonnet | 5 维风险审查（依赖/估计/集成/技术/安全） |
 | `team-implementer` | P4 | sonnet | 在并行实现阶段执行任务，遵循 TDD 纪律 |
 | `quality-sentinel` | P4 | sonnet | 持续抽查已完成任务的代码质量，发现问题创建修复任务 |
 | `red-team-attacker` | P5 | opus | 主动尝试破坏代码，构造真实攻击向量 |
-| `review-synthesizer` | P5 | opus | 统一所有审查发现，去重、排序、交叉验证 |
+| `code-reviewer` | P5 | sonnet | 蓝队代码质量审查（命名/结构/错误处理/性能/测试） |
+| `security-reviewer` | P5 | sonnet | 蓝队防御安全审查（OWASP Top 10 + 认证/授权/数据保护） |
+| `spec-reviewer` | P5 | sonnet | 蓝队规格合规审查（PRD 覆盖 + ADR 合规矩阵） |
+| `design-reviewer` | P5 | opus | 设计还原审查（Figma MCP + Playwright 像素级对比） |
+| `review-synthesizer` | P5 | opus | 统一所有审查发现，去重、排序、交叉验证，产出裁决 |
 | `hypothesis-investigator` | P6 | sonnet | 独立调查特定 bug 假设，收集支持和否定证据 |
 | `devils-advocate` | P6 | opus | 专职挑战所有假设的证据质量和逻辑完整性 |
 | `evidence-synthesizer` | P6 | opus | 中立仲裁者，维护 Evidence Board，产出根因判定 |
+| `issue-fixer` | P6 | sonnet | TDD 修复：复现测试 → 最小修复 → 回归验证 |
+| `acceptance-reviewer` | P7 | sonnet | 双模式交叉验收（需求视角 A + 技术视角 B） |
+| `doc-updater` | P7 | sonnet | 更新 README、API 文档、CHANGELOG、架构文档 |
+| `deployer` | P7 | sonnet | 部署执行 + 前置检查 + 后置验证 + 回滚方案 |
+| `build-error-resolver` | 通用 | sonnet | 构建/类型/lint 错误最小差异修复 |
 
 > **Model 选择原则**: 创作者/调查者用 sonnet（高吞吐），挑战者/仲裁者用 opus（深度推理）。详见 [设计哲学](docs/design-philosophy.md)。
 
@@ -301,13 +312,24 @@ forge-teams/
 │   ├── solution-architect.md          # P2: 方案架构师
 │   ├── technical-critic.md            # P2: 技术评论家
 │   ├── design-arbiter.md              # P2: 设计仲裁者
+│   ├── task-planner.md                # P3: 任务规划师
+│   ├── risk-assessor.md               # P3: 风险评估师
 │   ├── team-implementer.md            # P4: 团队实现者
 │   ├── quality-sentinel.md            # P4: 质量哨兵
 │   ├── red-team-attacker.md           # P5: 红队攻击者
+│   ├── code-reviewer.md              # P5: 代码质量审查（蓝队）
+│   ├── security-reviewer.md          # P5: 安全审查（蓝队）
+│   ├── spec-reviewer.md              # P5: 规格合规审查（蓝队）
+│   ├── design-reviewer.md            # P5: 设计还原审查
 │   ├── review-synthesizer.md          # P5: 审查综合者
 │   ├── hypothesis-investigator.md     # P6: 假设调查员
 │   ├── devils-advocate.md             # P6: 魔鬼辩护人
-│   └── evidence-synthesizer.md        # P6: 证据综合者
+│   ├── evidence-synthesizer.md        # P6: 证据综合者
+│   ├── issue-fixer.md                 # P6: TDD 问题修复
+│   ├── acceptance-reviewer.md         # P7: 交叉验收审查
+│   ├── doc-updater.md                 # P7: 文档更新
+│   ├── deployer.md                    # P7: 部署执行
+│   └── build-error-resolver.md        # 通用: 构建错误修复
 ├── commands/
 │   └── forge-teams.md                 # Main command definition
 ├── skills/
