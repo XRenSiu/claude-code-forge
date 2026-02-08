@@ -13,15 +13,27 @@
 ### Step 2: Install Plugin
 
 ```bash
-# Install PDForge
+# Install PDForge (single-agent product development)
 /plugin install pdforge@XRenSiu/claude-code-forge
+
+# Install Forge Teams (multi-agent adversarial development)
+/plugin install forge-teams@XRenSiu/claude-code-forge
+
+# Install Adversarial Debugger (multi-agent debugging)
+/plugin install adversarial-debugger@XRenSiu/claude-code-forge
 ```
 
 ### Step 3: Use Plugin
 
 ```bash
-# Full pipeline: idea -> production-ready code
+# PDForge: idea -> production-ready code
 /pdforge --from-idea "Add user authentication" --fix --loop
+
+# Forge Teams: idea -> adversarial multi-agent pipeline
+/forge-teams "Payment system refactor" --team-size medium --fix
+
+# Adversarial Debugger: competing hypotheses debug
+/adversarial-debugging
 ```
 
 ### Update
@@ -30,18 +42,38 @@
 # Update marketplace registry (fetch latest plugin list)
 claude plugin marketplace update claude-code-forge
 
-# Update installed plugin
+# Update installed plugins
 claude plugin update pdforge@claude-code-forge
-
-# Update to project scope only
-claude plugin update pdforge@claude-code-forge --scope project
+claude plugin update forge-teams@claude-code-forge
+claude plugin update adversarial-debugger@claude-code-forge
 ```
 
 ## Available Plugins
 
-| Plugin | Description | Features |
-|--------|-------------|----------|
-| [PDForge](plugins/pdforge/) | AI-driven 7-phase product development workflow | Commands: `/pdforge`, `/brainstorm`, `/prd`, `/design`, `/plan`, `/tdd`, `/review`, `/accept`, `/fix`, `/deploy` |
+| Plugin | Version | Description | Requires |
+|--------|---------|-------------|----------|
+| [PDForge](plugins/pdforge/) | 1.14.0 | AI-driven 7-phase product development workflow. Single-agent sequential execution with brainstorming, TDD, three-stage review, and auto-fix loops. | - |
+| [Forge Teams](plugins/forge-teams/) | 1.1.0 | Agent Teams version of PDForge. 7-phase adversarial pipeline with multi-agent debate, parallel implementation, red team attacks, and adversarial debugging. 23 agents, 6 skills. | Agent Teams |
+| [Adversarial Debugger](plugins/adversarial-debugger/) | 1.0.0 | Multi-agent adversarial debugging. Competing hypotheses investigated in parallel, challenged by devil's advocate, synthesized to true root cause. | Agent Teams |
+
+### Which plugin to use?
+
+| Scenario | Recommended |
+|----------|-------------|
+| Standard feature development | PDForge |
+| Quick prototype / MVP | PDForge (`--mode 0to1`) |
+| High-quality / security-critical features | Forge Teams |
+| Simple bug fix | PDForge `/fix` |
+| Complex bug with multiple possible root causes | Adversarial Debugger |
+| Need parallel implementation acceleration | Forge Teams |
+
+> **Agent Teams** plugins (Forge Teams, Adversarial Debugger) require the experimental Agent Teams feature:
+> ```json
+> // settings.json
+> { "env": { "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1" } }
+> ```
+
+---
 
 ## PDForge Commands
 
@@ -88,6 +120,56 @@ claude plugin update pdforge@claude-code-forge --scope project
             deployer + doc-updater -> Production
 ```
 
+## Forge Teams Pipeline
+
+```
+/forge-teams "your feature" --team-size medium
+    |
+    +-- Phase 1: Requirements Debate
+    |       product-advocate vs technical-skeptic -> Consensus PRD
+    |
+    +-- Phase 2: Architecture Bakeoff
+    |       architect A vs architect B + critic + arbiter -> Winning ADR
+    |
+    +-- Phase 3: Planning + Risk Review
+    |       task-planner + risk-assessor -> Risk-reviewed Plan
+    |
+    +-- Phase 4: Parallel Implementation
+    |       team-implementer(s) + quality-sentinel -> Code + Tests
+    |
+    +-- Phase 5: Red Team Review
+    |       red-team + code/security/spec/design reviewers + synthesizer
+    |
+    +-- Phase 6: Adversarial Debugging (if issues found)
+    |       hypothesis-investigators + devil's-advocate + synthesizer
+    |
+    +-- Phase 7: Cross Acceptance + Deployment
+            acceptance-reviewers + doc-updater + deployer
+```
+
+## Adversarial Debugger
+
+```
+/adversarial-debugging
+    |
+    +-- Phase 0: Problem Intake
+    |       Collect error messages, repro steps, environment info
+    |
+    +-- Phase 1: Hypothesis Generation
+    |       Generate 3-5 independent, falsifiable hypotheses
+    |
+    +-- Phase 2: Team Assembly
+    |       Spawn investigators + devil's advocate + synthesizer
+    |
+    +-- Phase 3: Adversarial Debate (2-3 rounds)
+    |       Investigate -> Report -> Challenge -> Respond -> Synthesize
+    |
+    +-- Phase 4: Verdict & TDD Fix
+            Root cause verdict -> Reproduction test -> Fix -> Verify
+```
+
+---
+
 ## Marketplace Management
 
 ```bash
@@ -110,8 +192,10 @@ claude plugin update pdforge@claude-code-forge --scope project
 # List installed plugins
 /plugin list
 
-# Install plugin
+# Install plugins
 /plugin install pdforge@XRenSiu/claude-code-forge
+/plugin install forge-teams@XRenSiu/claude-code-forge
+/plugin install adversarial-debugger@XRenSiu/claude-code-forge
 
 # Update plugin
 /plugin update pdforge
