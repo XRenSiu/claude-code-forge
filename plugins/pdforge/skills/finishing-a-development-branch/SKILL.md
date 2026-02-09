@@ -1,6 +1,7 @@
 ---
 name: finishing-a-development-branch
 description: 开发完成后的收尾流程。所有任务完成、测试通过、审查批准后激活。处理合并/PR/保留/丢弃决策。
+version: 1.14.0
 ---
 
 # Finishing a Development Branch

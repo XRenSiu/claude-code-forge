@@ -86,17 +86,16 @@ Announce at start: "I'm using the forge-pipeline skill to orchestrate a 7-phase 
 
 | 角色 | 职责 | 数量 |
 |------|------|------|
-| Optimist Analyst | 关注可行性、用户价值、快速交付 | 1 |
-| Pessimist Analyst | 关注风险、边界情况、技术债务 | 1 |
-| User Advocate | 代表终端用户，关注体验和可用性 | 1 |
+| Product Advocate | 关注可行性、用户价值、快速交付 | 1 |
+| Technical Skeptic | 关注风险、边界情况、技术债务 | 1 |
 | Arbitrator (Lead) | 协调辩论，综合生成共识 PRD | Lead 自己 |
 
 **执行流程**:
 1. Lead 解析需求输入，准备辩论上下文
 2. TeamCreate: `"req-debate-[feature]"`
-3. Spawn 3 个分析师，各自独立分析需求
+3. Spawn 2 个分析师，各自独立分析需求
 4. 每个分析师提交分析报告 (via SendMessage)
-5. Lead 启动辩论：乐观 vs 悲观，用户代言人仲裁
+5. Lead 启动辩论：Product Advocate vs Technical Skeptic, Lead 仲裁
 6. 最多 3 轮辩论，达成共识
 7. Lead 综合产出 PRD
 8. Shutdown team + TeamDelete
@@ -435,7 +434,7 @@ CREATE ──▶ COORDINATE ──▶ SHUTDOWN ──▶ CLEANUP
 ├─────────────────────────────────────────────────────────────────────────┤
 │                                                                         │
 │  P1: REQUIREMENTS DEBATE                                                │
-│      Team: optimist + pessimist + user-advocate                         │
+│      Team: product-advocate + technical-skeptic                          │
 │      Output: Consensus PRD                                              │
 │                                                                         │
 │  P2: ARCHITECTURE BAKEOFF                                               │

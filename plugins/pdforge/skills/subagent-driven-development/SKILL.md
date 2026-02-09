@@ -1,6 +1,7 @@
 ---
 name: subagent-driven-development
 description: Use when executing implementation plans with independent tasks. Triggers: 'implement plan', 'execute tasks', 'high quality mode'
+version: 1.14.0
 ---
 
 # Subagent-Driven Development

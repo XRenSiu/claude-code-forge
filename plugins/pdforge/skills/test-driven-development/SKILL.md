@@ -1,6 +1,7 @@
 ---
 name: test-driven-development
 description: Use when implementing features, fixing bugs, or refactoring. Triggers: 'write tests first', 'TDD', 'red-green-refactor'
+version: 1.14.0
 ---
 
 # Test-Driven Development

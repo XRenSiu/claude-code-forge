@@ -1,3 +1,11 @@
+---
+name: executing-plans
+description: >
+  快速模式任务执行，适用于 0->1 产品和 MVP 开发。
+  Use when: 使用 /pdforge --mode 0to1 或 --mode fast, MVP 开发, 任务计划已准备好待执行。
+version: 1.14.0
+---
+
 # Executing Plans Skill
 
 > 快速模式任务执行，适用于 0→1 产品和 MVP 开发

@@ -1,6 +1,7 @@
 ---
 name: requesting-code-review
 description: 定义何时、如何请求代码审查。在完成任务步骤后或 PR 合并前激活。
+version: 1.14.0
 ---
 
 # 请求代码审查

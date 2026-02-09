@@ -1,6 +1,7 @@
 ---
 name: writing-plans
 description: Use when breaking work into tasks before implementation. Triggers: 'create plan', 'task breakdown', 'implementation plan', 'before coding'.
+version: 1.14.0
 ---
 
 # Writing Plans

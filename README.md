@@ -40,12 +40,12 @@
 
 ```bash
 # Update marketplace registry (fetch latest plugin list)
-claude plugin marketplace update claude-code-forge
+/plugin marketplace update XRenSiu/claude-code-forge
 
 # Update installed plugins
-claude plugin update pdforge@claude-code-forge
-claude plugin update forge-teams@claude-code-forge
-claude plugin update adversarial-debugger@claude-code-forge
+/plugin update pdforge
+/plugin update forge-teams
+/plugin update adversarial-debugger
 ```
 
 ## Available Plugins

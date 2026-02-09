@@ -92,9 +92,12 @@ Your plugin will be reviewed for:
 ## Updating an Existing Plugin
 
 1. Make your changes in the plugin directory
-2. Update the version in `.claude-plugin/plugin.json`
-3. Update the version in `.claude-plugin/marketplace.json`
-4. Submit a Pull Request with a clear changelog
+2. If you modified a skill's SKILL.md content, bump the `version` in its frontmatter
+3. Update the version in `.claude-plugin/plugin.json`
+4. Update the version in `.claude-plugin/marketplace.json` to match
+5. Submit a Pull Request with a clear changelog
+
+> See [CLAUDE.md](CLAUDE.md) for detailed version sync rules and bump guidelines.
 
 ## Code of Conduct
 

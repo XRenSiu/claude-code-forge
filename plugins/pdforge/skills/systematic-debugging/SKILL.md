@@ -1,6 +1,7 @@
 ---
 name: systematic-debugging
 description: 4+1 阶段根因分析框架。遇到 bug、测试失败、意外行为、"不知道为什么不工作"时激活。
+version: 1.14.0
 ---
 
 # Systematic Debugging
