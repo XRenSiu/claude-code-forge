@@ -9,7 +9,7 @@ when_to_use: |
   - 多个独立任务可以同时进行
   - 需要加速实现阶段
   - 用户明确请求团队并行实现
-version: 1.0.0
+version: 1.1.0
 ---
 
 # Parallel Implementation
@@ -243,6 +243,9 @@ Task (spawn teammate):
     3. 每个任务完成后通过 SendMessage 向 team lead 报告
     4. 如果需要修改不在你列表中的文件，先请求 lead 批准
     5. 如果遇到阻塞，立即报告 lead
+    6. 保持心跳: 每 3 分钟至少发送一次 [HEARTBEAT] 或 [PROGRESS UPDATE]
+    7. 交叉验证: commit 后运行完整测试套件 (npm test)，如果他人测试失败发送 [CROSS-FAILURE ALERT]
+    8. 如果收到 [TASK MIGRATION]，优先处理迁移任务
 
     按任务 ID 顺序执行，但如果前一个被阻塞，可以跳到不依赖它的任务。
 ```
@@ -265,6 +268,9 @@ Task (spawn teammate):
     2. 对完成的代码进行抽查
     3. 发现问题时创建修复任务并通知 lead
     4. 不修改任何代码 — 你是只读角色
+    5. 当 lead 请求 Wave 边界验证时，运行 build + test + type-check 全验证
+    6. 当 implementer 报告交叉失败时，独立验证失败是否属实
+    7. 质量警报中附加 Health Impact 分数 (Critical -30, High -15, Medium -5)
 
     质量检查重点：
     - 测试是否真正测试行为
@@ -293,39 +299,111 @@ Task (spawn teammate):
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-### 监控循环
+### 监控循环 (含自愈协议)
+
+> 完整协议定义见 `rules/self-healing.md`
+
+Lead 维护以下追踪状态:
+- **Heartbeat Tracker**: 每个 agent 的最后心跳时间和连续缺失次数
+- **Health Dashboard**: 每个 agent 的健康分 (初始 100，上限 150)
+- **Wave Progress**: 当前 Wave 的完成度
 
 Lead 的监控流程：
 
 ```
 WHILE 还有未完成任务:
-    1. 检查 TaskList 状态
-    2. 检查是否有 SendMessage 等待回应
 
-    IF 收到 [TASK COMPLETED]:
-        → 标记任务完成
-        → 检查是否解锁了被阻塞的任务
-        → 如果有解锁的任务，通知对应 implementer
+    ┌─── 消息处理 ───────────────────────────────────────────────┐
+    │                                                             │
+    │  IF 收到 [TASK COMPLETED] + [CROSS-VALIDATION]:             │
+    │      → 标记任务完成                                          │
+    │      → Health +5 (任务完成)                                  │
+    │      → IF 交叉验证 Full Suite PASS: Health +10              │
+    │      → 检查是否解锁了被阻塞的任务                             │
+    │      → 如果有解锁的任务，通知对应 implementer                 │
+    │      → 更新 Heartbeat Tracker (算作心跳)                     │
+    │                                                             │
+    │  IF 收到 [HEARTBEAT] / [PROGRESS UPDATE]:                   │
+    │      → 更新 Heartbeat Tracker，重置缺失计数                  │
+    │                                                             │
+    │  IF 收到 [BLOCKED]:                                         │
+    │      → 分析阻塞原因                                          │
+    │      → 如果是依赖阻塞：通知阻塞任务的 implementer 加速       │
+    │      → 如果是文件冲突：重新分配文件所有权                     │
+    │      → 如果是技术问题：提供指导或重新分配任务                 │
+    │                                                             │
+    │  IF 收到 [CONFLICT ALERT]:                                  │
+    │      → 仲裁文件所有权                                        │
+    │      → 更新 File Ownership Map                              │
+    │      → 通知相关 implementers                                │
+    │                                                             │
+    │  IF 收到 [QUALITY ALERT]:                                   │
+    │      → 评估问题严重性                                        │
+    │      → 更新 Health: Critical -30 / High -15 / Medium -5    │
+    │      → 如果 Critical/High：创建修复任务并分配                │
+    │      → 如果 Medium/Low：记录，后续处理                       │
+    │                                                             │
+    │  IF 收到 [CROSS-FAILURE ALERT]:                             │
+    │      → 要求 sentinel 独立验证                                │
+    │      → IF 确认是回归: Health -15 (引起者)                    │
+    │      → 协调修复 (revert 或 targeted fix)                    │
+    │                                                             │
+    └─────────────────────────────────────────────────────────────┘
 
-    IF 收到 [BLOCKED]:
-        → 分析阻塞原因
-        → 如果是依赖阻塞：通知阻塞任务的 implementer 加速
-        → 如果是文件冲突：重新分配文件所有权
-        → 如果是技术问题：提供指导或重新分配任务
+    ┌─── 心跳检查 (每次循环) ─────────────────────────────────────┐
+    │                                                             │
+    │  FOR each implementer:                                      │
+    │      IF 所有 agent 同时 WARN:                                │
+    │          → 系统性问题! Broadcast 状态检查                     │
+    │          → 不扣分，先诊断环境                                 │
+    │                                                             │
+    │      IF 3-6 min 无心跳 (WARN):                              │
+    │          → SendMessage 状态检查                              │
+    │          → Health -10                                        │
+    │                                                             │
+    │      IF 6-9 min 无心跳 (STALL):                             │
+    │          → 准备迁移 (状态捕获)                                │
+    │          → SendMessage 最后通知                               │
+    │          → Health -20                                        │
+    │                                                             │
+    │      IF 9+ min 无心跳 (DEAD):                               │
+    │          → 执行迁移: shutdown → 重新分配 → 更新所有权        │
+    │          → Health -25                                        │
+    │          → 选择目标: 健康分最高 + 剩余任务最少的 agent       │
+    │          → 或 spawn 替换 agent                               │
+    │                                                             │
+    └─────────────────────────────────────────────────────────────┘
 
-    IF 收到 [CONFLICT ALERT]:
-        → 仲裁文件所有权
-        → 更新 File Ownership Map
-        → 通知相关 implementers
+    ┌─── 健康评估 (每 Wave 完成后或每 5 个任务) ──────────────────┐
+    │                                                             │
+    │  FOR each implementer:                                      │
+    │      IF Health < 50 (DEGRADED):                             │
+    │          → 重新分配下一波复杂任务给更健康的 agent            │
+    │      IF Health < 30 (CRITICAL):                             │
+    │          → 停止分配新任务，重新分配剩余任务                   │
+    │      IF Health < 30 (FAILING):                              │
+    │          → shutdown_request + spawn 替换 (如需要)           │
+    │                                                             │
+    └─────────────────────────────────────────────────────────────┘
 
-    IF 收到 [QUALITY ALERT]:
-        → 评估问题严重性
-        → 如果 Critical/High：创建修复任务并分配
-        → 如果 Medium/Low：记录，后续处理
+    ┌─── Wave 边界检查 ──────────────────────────────────────────┐
+    │                                                             │
+    │  IF 当前 Wave 所有任务完成:                                  │
+    │      → 请求 sentinel 执行 Wave 边界验证                     │
+    │      → IF PASS: 释放下一波任务                               │
+    │      → IF FAIL: 分析失败原因，创建修复任务，修复后重验证    │
+    │      → 输出 Health Dashboard                                 │
+    │                                                             │
+    └─────────────────────────────────────────────────────────────┘
 
-    IF implementer 长时间无响应:
-        → SendMessage 询问状态
-        → 如果仍无响应，考虑重新分配任务
+    ┌─── 降级检查 ───────────────────────────────────────────────┐
+    │                                                             │
+    │  IF 活跃 implementer 数量变化:                               │
+    │      1 个丢失 → Level 1: 重分配，继续并行                   │
+    │      2+ 个丢失 → Level 2: 切换顺序执行                      │
+    │      全部丢失 → Level 3: Lead 退回独立执行 (pdforge 式)     │
+    │                                                             │
+    └─────────────────────────────────────────────────────────────┘
 ```
 
 ### 文件冲突处理
@@ -345,12 +423,27 @@ WHILE 还有未完成任务:
 | Implementer 完成所有任务 | 分配其他 implementer 的任务 |
 | 高优先级修复任务 | 分配给最空闲的 implementer |
 | Quality sentinel 发现严重问题 | 分配修复任务给原 implementer |
+| Agent DEAD (自愈迁移) | 按 self-healing.md Rule 2 执行迁移 |
+| Agent Health < 50 | 重新分配其复杂任务给更健康的 agent |
 
 ---
 
 ## Step 5: Convergence
 
 **目的**: 所有任务完成后的最终验证
+
+### 预收敛检查 (自愈相关)
+
+在进入最终验证前，确认自愈状态:
+
+```markdown
+## Pre-Convergence (Self-Healing)
+
+[ ] 所有 Wave 边界验证已通过
+[ ] 无未解决的 [CROSS-FAILURE ALERT]
+[ ] 所有迁移任务已重新验证
+[ ] 无 STALL/DEAD 状态的 agent (或已完成降级处理)
+```
 
 ### 完成条件
 
@@ -441,6 +534,21 @@ npm run lint 2>&1
 - Low: {L}
 **Quality Score Average**: X/10
 
+## Agent Health Dashboard
+| Agent | Final Score | Initial | Tasks | Completed | Stalls | Migrations | Quality Avg |
+|-------|-----------|---------|-------|-----------|--------|------------|-------------|
+| implementer-1 | {score} | 100 | {N} | {M} | {K} | {J} | {X}/10 |
+| implementer-2 | ... | 100 | ... | ... | ... | ... | ... |
+
+## Self-Healing Events
+| Event | Agent | Action Taken | Outcome |
+|-------|-------|-------------|---------|
+| STALL | {agent} | Migration to {target} | Task completed |
+| CROSS-FAIL | {agent} | Revert + reimplement | Resolved |
+| DEGRADATION L{N} | — | {description} | {outcome} |
+
+_(如果无自愈事件发生，记录 "No self-healing events triggered — clean execution.")_
+
 ## Test Results
 **Total Tests**: {N}
 **Passing**: {M}
@@ -480,6 +588,9 @@ npm run lint 2>&1
 | 不做最终验证 | 集成问题遗漏 | 全部完成后运行完整验证 |
 | 不清理 Team | 资源泄漏 | 完成后 shutdown + cleanup |
 | 共享文件不做协调 | 合并冲突 | 共享文件串行修改 |
+| 不追踪心跳 | Agent 停滞无法及时发现 | 每次监控循环检查 Heartbeat Tracker |
+| 跳过 Wave 边界验证 | 错误跨波传播 | 每波完成后必须 build+test 验证 |
+| 忽视 Health Score | 弱 agent 持续拖慢团队 | 按健康分做任务分配决策 |
 
 ## You Might Want to Skip This Skill
 
@@ -518,39 +629,40 @@ Phase 6: Adversarial Debugging (if bugs found)
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                PARALLEL IMPLEMENTATION                           │
+│           PARALLEL IMPLEMENTATION (with Self-Healing)            │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                  │
 │  Step 1: PLAN INTAKE      加载计划 → 提取任务列表                 │
 │                                                                  │
 │  Step 2: TASK ANALYSIS     依赖分析 + 文件所有权分配              │
 │          ┌──────────────────────────────────────────┐           │
-│          │  Group 1: T001, T003, T005 (并行)        │           │
-│          │  Group 2: T002, T004       (依赖 G1)     │           │
-│          │  Group 3: T006             (依赖 G2)     │           │
+│          │  Wave 1: T001, T003, T005 (并行)         │           │
+│          │  Wave 2: T002, T004       (依赖 W1)      │           │
+│          │  Wave 3: T006             (依赖 W2)      │           │
 │          └──────────────────────────────────────────┘           │
 │                                                                  │
-│  Step 3: TEAM ASSEMBLY    TeamCreate                             │
+│  Step 3: TEAM ASSEMBLY    TeamCreate + Self-Healing Rules        │
 │          ┌──────────────────────────────────────────┐           │
 │          │  implementer-1  implementer-2  ...       │           │
 │          │  quality-sentinel                        │           │
+│          │  + heartbeat + cross-validation enabled   │           │
 │          └──────────────────────────────────────────┘           │
 │                                                                  │
-│  Step 4: PARALLEL EXEC    Lead = DELEGATE MODE (只协调)          │
-│          Implementers → TDD → Commit → Report                   │
-│          Sentinel → Spot-check → Alert                          │
-│          Lead → Monitor → Resolve Conflicts → Reassign          │
+│  Step 4: PARALLEL EXEC    Lead = DELEGATE + SELF-HEALING        │
+│          Implementers → TDD → Commit → Cross-Validate           │
+│          Sentinel → Spot-check + Wave Verification               │
+│          Lead → Heartbeat Track → Health Score → Migrate/Degrade│
 │                                                                  │
-│  Step 5: CONVERGENCE      All tasks done → Final verification    │
+│  Step 5: CONVERGENCE      Pre-convergence + Final verification   │
 │                                                                  │
-│  Step 6: CLEANUP          Shutdown Team → Implementation Report  │
+│  Step 6: CLEANUP          Report (with Health Dashboard)         │
 │                                                                  │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
 ## Core Principle
 
-> **"Parallelism without coordination is chaos. Coordination without delegation is a bottleneck. This skill is both."**
+> **"Parallelism without coordination is chaos. Coordination without self-healing is fragile. This skill is both resilient and fast."**
 >
-> 没有协调的并行是混乱。没有委派的协调是瓶颈。本 Skill 两者兼备。
-> 文件所有权 + TDD 纪律 + 质量抽查 = 快速且可靠的并行实现。
+> 没有协调的并行是混乱。没有自愈的协调是脆弱的。本 Skill 既有韧性又够快。
+> 文件所有权 + TDD 纪律 + 质量抽查 + 心跳检测 + 交叉验证 + 自动迁移 = 自愈式并行实现。

@@ -188,6 +188,8 @@ Issue 1:
   Details: [具体问题描述]
   Location: [文件:行号]
   Suggested Fix: [修复建议]
+  Health Impact: {score change for responsible agent}
+    Critical → -30 | High → -15 | Medium → -5
 
 Issue 2:
   ...
@@ -275,6 +277,64 @@ Status: APPROVED
 3. **被其他任务依赖的** - 基础代码质量影响下游
 4. **新增模块/文件的** - 新代码更需要审查
 5. **修改共享代码的** - 影响范围更大
+
+## Wave Boundary Verification
+
+> 参考 `rules/self-healing.md` Rule 3.4
+
+当 Lead 请求 Wave 边界验证时，执行完整验证:
+
+```bash
+# 1. 构建检查
+npm run build 2>&1
+
+# 2. 全部测试
+npm test 2>&1
+
+# 3. 类型检查 (如果项目支持)
+npm run type-check 2>&1
+
+# 4. 未提交变更检查
+git status --porcelain
+```
+
+报告格式:
+
+```
+[WAVE BOUNDARY VERIFICATION]
+Wave: {N}
+Tasks Completed: [任务列表]
+Build: PASS / FAIL (details if fail)
+Tests: PASS / FAIL ({passing}/{total}, failures listed)
+Type Check: PASS / FAIL / N/A
+Uncommitted Changes: NONE / [list]
+Verdict: PROCEED / BLOCK
+```
+
+**BLOCK 处理**: 如果 verdict 是 BLOCK，Lead 负责分析失败原因并创建修复任务。Sentinel 不修复，只报告。
+
+## Cross-Validation Monitoring
+
+> 参考 `rules/self-healing.md` Rule 3.3
+
+当 implementer 报告 `[CROSS-FAILURE ALERT]` 时，sentinel 需要独立验证:
+
+1. **运行具体失败的测试** (不是全套件，只跑被报告的测试)
+2. **确认是否是回归** — 区分: 测试本身就不稳定 vs 真的被新代码破坏
+3. **定位引发问题的 commit**: `git bisect` 或 `git log` 分析
+4. **向 Lead 报告验证结果**:
+
+```
+[CROSS-FAILURE VERIFIED]
+Original Alert By: {reporter-agent}
+Trigger Task: T{id}
+Verification Result: CONFIRMED / FALSE ALARM
+Evidence: [具体证据]
+Causing Commit: {hash} (if confirmed)
+Recommended Action: [revert / targeted fix / no action needed]
+```
+
+这个独立验证步骤防止误报导致不必要的迁移或回退。
 
 ## Core Principle
 

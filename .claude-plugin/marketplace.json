@@ -39,8 +39,8 @@
     },
     {
       "name": "forge-teams",
-      "description": "Agent Teams Product Development Pipeline - 7-phase adversarial collaborative development with multi-agent debate, competition, and cross-validation at every critical decision point, including red team attacks and adversarial debugging.",
-      "version": "1.1.0",
+      "description": "Agent Teams Product Development Pipeline - 7-phase adversarial collaborative development with multi-agent debate, competition, and cross-validation at every critical decision point, including red team attacks, adversarial debugging, and self-healing parallel implementation.",
+      "version": "1.2.0",
       "author": {
         "name": "XRenSiu",
         "email": "xrensiu@gmail.com"

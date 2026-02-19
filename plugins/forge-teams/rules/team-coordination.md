@@ -245,14 +245,17 @@ SHARED (sequential write):
 
 ## Rule 6: Idle Teammate Handling (空闲 Teammate 处理)
 
-### 6.1 检测空闲
+### 6.1 非 Phase 4 阶段 (P1, P2, P3, P5, P6, P7)
 
-如果一个 teammate 在以下时间内无响应：
-- 调查任务: 5 分钟
-- 辩论回合: 3 分钟
-- 代码实现: 10 分钟
+使用基础 idle 检测阈值：
 
-### 6.2 处理流程
+| 任务类型 | 无响应阈值 |
+|---------|----------|
+| 调查任务 | 5 分钟 |
+| 辩论回合 | 3 分钟 |
+| 代码实现 | 10 分钟 |
+
+处理流程：
 
 1. **第一次**: SendMessage 询问状态
 2. **第二次** (再等 2 分钟): SendMessage 明确催促
@@ -264,12 +267,28 @@ To: [teammate-name]
 Message: "Status check - please report your current progress. If blocked, describe the blocker."
 ```
 
-### 6.3 Stuck Teammate 替换
-
-如果 teammate 被标记为 STUCK：
+Stuck Teammate 替换：
 1. 发送 shutdown_request
 2. 如需要，spawn 新 teammate 接替任务
 3. 新 teammate 从上一次已知状态继续
+
+### 6.2 Phase 4 (Parallel Implementation) — 自愈协议
+
+> **Phase 4 使用自愈协议替代基础 idle 检测。** 完整定义见 `rules/self-healing.md`。
+
+Phase 4 的 idle 检测由心跳协议驱动，比被动轮询更精确：
+
+| 级别 | 条件 | 动作 |
+|------|------|------|
+| WARN | 3-6 min 无心跳 | 状态检查 + Health -10 |
+| STALL | 6-9 min 无心跳 | 准备迁移 + Health -20 |
+| DEAD | 9+ min 无心跳 | 执行迁移 + Health -25 |
+
+Phase 4 还提供：
+- **自动任务迁移** (self-healing.md Rule 2) — 代替手动重新分配
+- **健康评分** (self-healing.md Rule 4) — 量化 agent 可靠性
+- **交叉验证** (self-healing.md Rule 3) — 每个任务完成后全套件验证
+- **优雅降级** (self-healing.md Rule 5) — 3 级有序退化
 
 ---
 
@@ -302,7 +321,11 @@ Message: "Status check - please report your current progress. If blocked, descri
   2. 评估影响:
      - 如果是调查员: spawn 新调查员接替
      - 如果是 Devil's Advocate: Lead 临时充当
-     - 如果是 Implementer: 重新分配任务
+     - 如果是 Implementer (Phase 4): 使用自愈协议
+       → 任务迁移 (self-healing.md Rule 2)
+       → 健康评分更新 (self-healing.md Rule 4)
+       → 必要时触发降级 (self-healing.md Rule 5)
+     - 如果是 Implementer (非 Phase 4): 重新分配任务
   3. 记录崩溃信息
 ```
 
@@ -325,6 +348,20 @@ Message: "Status check - please report your current progress. If blocked, descri
   2. 生成剩余问题报告
   3. 标记为 BLOCKED，请求人工干预
   4. 不阻止 Phase 7 的文档更新（但标记为 INCOMPLETE）
+```
+
+### 7.6 系统性故障 (Phase 4)
+
+```
+条件: 所有 implementer 同时停滞或崩溃
+处理:
+  1. Broadcast 状态检查，确认是否为系统性问题
+  2. 检查环境问题 (构建是否失败、依赖是否缺失、共享服务是否宕机)
+  3. 如果是环境问题: 修复环境，不扣健康分，恢复执行
+  4. 如果原因不明: 尝试 spawn 诊断 agent 检查环境
+  5. 如果无法恢复: 触发 Total Degradation (self-healing.md Rule 5.3)
+     → Lead 退回独立执行模式 (pdforge 式顺序实现)
+  6. 在报告中记录: "Systemic failure at [时间], fallback to solo mode"
 ```
 
 ---

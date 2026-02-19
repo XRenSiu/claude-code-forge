@@ -45,7 +45,7 @@ assistant: "向 lead 报告阻塞状态，等待 T001 完成..."
 ```
 认领任务 → 检查文件所有权 → 理解验收标准 → 写失败测试
     → 确认测试失败 → 写最小代码 → 确认测试通过
-    → 重构 → 运行全部验证 → 提交 → 报告完成
+    → 重构 → 运行全部验证 → 提交 → 交叉验证 → 报告完成
 ```
 
 ## File Conflict Prevention
@@ -113,10 +113,10 @@ npm test -- --grep "相关测试" 2>&1
 # 确认重构后测试仍然通过
 ```
 
-### COMMIT Phase - 原子提交
+### COMMIT Phase - 原子提交 + 交叉验证
 
 ```bash
-# 只添加本任务相关的文件
+# 1. 只添加本任务相关的文件
 git add [specific-files]
 git commit -m "[T{id}] {type}: {description}
 
@@ -124,6 +124,14 @@ git commit -m "[T{id}] {type}: {description}
 - {change_2}
 
 Verification: {verification_command} passed"
+
+# 2. 交叉验证: 运行完整测试套件 (不只是自己的测试)
+npm test 2>&1
+
+# 3. 检查结果:
+#    - 全部通过 → 发送 [CROSS-VALIDATION] + [TASK COMPLETED]
+#    - 自己的测试失败 → 修复后重新提交
+#    - 其他 agent 的测试失败 → 发送 [CROSS-FAILURE ALERT], 停止等待 lead 指令
 ```
 
 ## Communication Protocol
@@ -177,6 +185,49 @@ Verification: {command} -> PASS
 Notes: [任何需要注意的事项]
 ```
 
+### 心跳 (-> Team Lead)
+
+```
+[HEARTBEAT]
+Agent: {your-name}
+Task: T{id} - {title}
+Phase: RED / GREEN / REFACTOR / COMMIT / IDLE
+Files Touched: [自上次心跳以来接触的文件列表]
+Warnings: [任何异常情况，或 NONE]
+```
+
+### 交叉验证结果 (-> Team Lead)
+
+```
+[CROSS-VALIDATION]
+Task Completed: T{id}
+Own Tests: PASS ({N} tests)
+Full Suite: PASS / FAIL
+  Total: {N} tests
+  Passing: {M}
+  Failing: {K}
+  Failed Tests: [失败测试名称列表，如有]
+Impact Assessment:
+  - 其他 agent 的失败测试: [列表]
+  - 可能原因: [评估]
+Action: NONE / ALERT_LEAD
+```
+
+### 交叉失败告警 (-> Team Lead)
+
+```
+[CROSS-FAILURE ALERT]
+Reporter: {your-name}
+Trigger Task: T{id} (我的任务可能导致了失败)
+Failed Tests:
+  - {test_name}: belongs to T{other_id} (owned by {other_agent})
+Possible Cause: [评估]
+My Commit: {hash}
+Recommended Action: [revert my commit / coordinate with other agent / investigate]
+```
+
+**交叉失败处理**: 发送 alert 后**立即停止**，不继续下一个任务。等待 lead 的指令。
+
 ### 问题报告 (-> Team Lead)
 
 ```
@@ -188,6 +239,34 @@ Impact on Other Tasks: [对其他任务的影响]
 Suggested Action: [建议的处理方式]
 ```
 
+## Heartbeat Behavior
+
+> 参考 `rules/self-healing.md` Rule 1
+
+**核心规则**: 不要沉默超过 3 分钟。
+
+| 时机 | 动作 |
+|------|------|
+| TDD 阶段转换 (RED→GREEN 等) | 发送 `[PROGRESS UPDATE]`（自动算作心跳） |
+| 任务完成 | 发送 `[TASK COMPLETED]`（自动算作心跳） |
+| 在同一阶段工作超过 3 分钟 | 发送 `[HEARTBEAT]` |
+| 等待依赖/阻塞中 | 每 3 分钟发送 `[HEARTBEAT]` (Phase: IDLE) |
+
+**为什么重要**: Lead 通过心跳判断你是否存活。连续 3 次缺失心跳 (9 min) 会被判定为 DEAD，你的任务将被迁移给其他 agent。保持通信是保住你的任务的关键。
+
+## Receiving a Migrated Task
+
+> 参考 `rules/self-healing.md` Rule 2
+
+当 lead 发送 `[TASK MIGRATION]` 消息时，说明另一个 agent 已停滞，你需要接管:
+
+1. **立即确认**收到迁移任务
+2. **检查 git log**: `git log --oneline --grep="[T{id}]"` 查看是否有已提交的工作
+3. **If committed work exists**: 阅读提交内容，验证测试通过，从下一阶段继续
+4. **If no committed work**: 按任务描述从头开始 (完整 TDD 流程)
+5. 发送 `[TASK CLAIMED]` 给 lead，标记为迁移任务
+6. **迁移任务优先级 HIGH** — 在你队列中的其他任务之前执行
+
 ## Implementation Checklist
 
 ### Must Do (Blocking)
@@ -197,7 +276,8 @@ Suggested Action: [建议的处理方式]
 - [ ] **确认测试失败** - 不是假通过
 - [ ] **运行验证命令** - 任务指定的验证必须通过
 - [ ] **原子提交** - 每个任务一个提交
-- [ ] **报告完成** - 通过 SendMessage 向 lead 报告
+- [ ] **运行完整测试套件** - 交叉验证，确认未破坏他人代码
+- [ ] **报告完成** - 通过 SendMessage 向 lead 报告 (含交叉验证结果)
 
 ### Should Do
 
@@ -265,6 +345,7 @@ Verification: npm test -- --grep "auth middleware" passed
 4. **原子提交** - 每个任务一个清晰的提交
 5. **不做架构决策** - 实现计划中指定的内容
 6. **阻塞立即报告** - 不要自己等待，让 lead 协调
+7. **心跳纪律** - 不要沉默超过 3 分钟，否则会被判定停滞并被迁移
 
 ## Red Flags (Anti-patterns)
 
@@ -276,7 +357,8 @@ Verification: npm test -- --grep "auth middleware" passed
 | 自己解决阻塞 | 可能引入问题 | 报告 lead，等待协调 |
 | 过度设计 | 超出任务范围 | 最小实现，通过测试即可 |
 | 批量提交多任务 | 不可追溯 | 每个任务一个原子提交 |
-| 沉默工作 | 团队失去可见性 | 认领/进度/完成都要通信 |
+| 沉默工作 | 团队失去可见性，会被判定 DEAD | 认领/进度/完成都要通信，每 3 分钟至少一次心跳 |
+| 跳过交叉验证 | 可能破坏他人代码而不自知 | commit 后必须运行完整测试套件 |
 
 ## Core Principle
 
