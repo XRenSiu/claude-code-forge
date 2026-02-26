@@ -4,13 +4,9 @@
 
 ## What is forge-teams?
 
-forge-teams 是 pdforge 的 Agent Teams 升级版。它将 pdforge 的 7 阶段产品开发流水线中的每个关键决策点，从单 agent 线性推理升级为多 agent 对抗协作：
+forge-teams 是基于 Agent Teams 的 7 阶段对抗协作产品开发流水线。它在每个关键决策点使用多 agent 对抗协作，通过辩论、竞争和交叉验证来提升决策质量：
 
 ```
-pdforge (单 agent 顺序):
-  需求 → 设计 → 规划 → 实现 → 审查 → 修复 → 交付
-    1       1      1      1      1      1      1    agent
-
 forge-teams (多 agent 对抗):
   需求辩论 → 架构竞标 → 风险审查 → 并行实现 → 红队攻防 → 对抗调试 → 交叉验收
     3-4        3         2         2-4        3-5        3-5        2-3  agents
@@ -183,53 +179,21 @@ forge-teams (多 agent 对抗):
 
 ---
 
-## vs. pdforge Comparison
-
-| 维度 | pdforge | forge-teams |
-|------|---------|-------------|
-| Agent 模式 | 单 agent 顺序执行 | 多 agent 并行对抗 |
-| 需求分析 | 线性分析 + PRD 生成 | 多视角对抗辩论 → 共识 PRD |
-| 系统设计 | 单架构师设计 | 多方案竞标 + 独立评审 |
-| 任务规划 | 单规划师分解 | 规划 + 对抗式风险审查 |
-| 代码实现 | 逐任务顺序实现 | 并行实现 + TDD 守卫执法 |
-| 质量审查 | 顺序多审查员 | 红队攻击 vs 蓝队防御 |
-| 修复验证 | 线性修复 | 对抗式假设竞争调试 |
-| 交付部署 | 单 agent 交付 | 多 agent 交叉验收 |
-| 偏见防御 | 依赖流程纪律 | 结构化对抗消除 |
-| Token 消耗 | 中等 | 高 (5-20x) |
-| 速度 | 中等 | 快 (并行) 但总量更大 |
-| 准确率/质量 | 高 | 更高 (多视角) |
-| 适合场景 | 标准开发 | 高质量/安全关键开发 |
-
-### 何时选择哪个
-
-| 场景 | 推荐 |
-|------|------|
-| 快速原型 / MVP | pdforge (`--mode 0to1`) |
-| 标准功能迭代 | pdforge (`--fix --loop`) |
-| 核心功能首次开发 | forge-teams (`--team-size medium`) |
-| 安全关键功能 | forge-teams (`--team-size large`) |
-| 性能关键功能 | forge-teams (`--team-size medium`) |
-| 简单 bug 修复 | pdforge 的 `/fix` |
-| 复杂 bug 调试 | `adversarial-debugging` 或 forge-teams P6 |
-
----
-
 ## Token Cost Considerations
 
-forge-teams 使用 Agent Teams 进行多 agent 并行协作，token 消耗显著高于 pdforge：
+forge-teams 使用 Agent Teams 进行多 agent 并行协作，token 消耗较高：
 
-| 团队规模 | 每阶段 Agent 数 | 总 Agent Sessions | 相对 pdforge |
-|---------|---------------|-------------------|-------------|
-| Small | 2-3 | 14-21 | 3-5x |
-| Medium | 3-5 | 21-35 | 5-10x |
-| Large | 5-7 | 35-49 | 10-20x |
+| 团队规模 | 每阶段 Agent 数 | 总 Agent Sessions | 预估消耗 |
+|---------|---------------|-------------------|---------|
+| Small | 2-3 | 14-21 | 适中 |
+| Medium | 3-5 | 21-35 | 较高 |
+| Large | 5-7 | 35-49 | 高 |
 
 **降低成本的建议**:
-1. 先用 pdforge 验证流程可行性
-2. 只在关键阶段使用 forge-teams（如 `--phase 5` 只用红队审查）
-3. 小功能用 `--team-size small`
-4. 只有安全关键功能才用 `--team-size large`
+1. 只在关键阶段使用 forge-teams（如 `--phase 5` 只用红队审查）
+2. 小功能用 `--team-size small`
+3. 只有安全关键功能才用 `--team-size large`
+4. 非关键功能可以跳过部分阶段（如 `--skip-to 4` 跳过辩论阶段）
 
 ---
 
@@ -293,10 +257,9 @@ forge-teams 定义了 23 个专用 agent，覆盖全部 7 个阶段：
 | [P2: 对抗式设计](docs/phase-2-adversarial-design.md) | 为什么竞标？为什么 critic + arbiter 分离？ |
 | [P3: 协作规划](docs/phase-3-collaborative-planning.md) | 为什么协作而非对抗？文件所有权注解 |
 | [P4: 并行实现](docs/phase-4-parallel-implementation.md) | 为什么并行？文件所有权约束？sentinel 的价值？ |
-| [P5: 对抗式审查](docs/phase-5-adversarial-review.md) | 为什么红队主动攻击？vs pdforge 顺序审查？ |
+| [P5: 对抗式审查](docs/phase-5-adversarial-review.md) | 为什么红队主动攻击？攻防对抗模式详解 |
 | [P6: 对抗式调试](docs/phase-6-adversarial-debugging.md) | 为什么竞争假设？devil's advocate 的作用？ |
 | [P7: 验证部署](docs/phase-7-verified-deployment.md) | 为什么独立验证者？为什么交叉确认？ |
-| [pdforge vs forge-teams](docs/pdforge-vs-forge-teams.md) | 逐阶段差异分析、选型决策树、渐进采用路径 |
 
 ---
 
@@ -357,7 +320,6 @@ forge-teams/
 │   ├── phase-5-adversarial-review.md
 │   ├── phase-6-adversarial-debugging.md
 │   ├── phase-7-verified-deployment.md
-│   └── pdforge-vs-forge-teams.md      # 对比指南
 ├── README.md                          # This file
 └── LICENSE                            # MIT License
 ```

@@ -31,7 +31,7 @@ digraph {
     start [label="新功能需求" shape=oval];
     q1 [label="需求复杂度?" shape=diamond];
     q2 [label="技术风险?" shape=diamond];
-    simple_prd [label="prd-generator\n(单 agent)" shape=box];
+    simple_prd [label="单 agent PRD\n(常规流程)" shape=box];
     adversarial [label="adversarial-requirements\n(本 Skill)" shape=box style=filled fillcolor=lightgreen];
 
     start -> q1;
@@ -41,18 +41,6 @@ digraph {
     q2 -> adversarial [label="中/高"];
 }
 ```
-
-## vs. prd-generator (pdforge)
-
-| 维度 | prd-generator | adversarial-requirements |
-|------|--------------|------------------------|
-| Agent 数量 | 1 个 | 2 个 (对抗) |
-| 技术验证 | 自我验证 | 独立技术审查 |
-| 偏见防御 | 标注假设 | 结构化挑战 |
-| 适合场景 | 简单/明确需求 | 复杂/高风险功能 |
-| Token 消耗 | 低 | 中 (两 agent) |
-| 输出质量 | 高 | 更高 (经对抗检验) |
-| 技术债务预防 | 中 | 高 |
 
 ## The 7-Step Protocol
 

@@ -14,32 +14,12 @@ version: 1.0.0
 
 # Forge Pipeline - Agent Teams 7 阶段对抗协作流水线
 
-**将 pdforge 的单 agent 顺序流水线升级为多 agent 对抗协作流水线。**
-
-每个关键决策点不再由一个 agent 拍脑袋决定，而是由多个 agent 辩论、竞争、交叉验证后达成共识。
+**多 agent 对抗协作流水线——每个关键决策点由多个 agent 辩论、竞争、交叉验证后达成共识。**
 
 Announce at start: "I'm using the forge-pipeline skill to orchestrate a 7-phase adversarial development pipeline with Agent Teams."
 
 > **前置条件**: 需要启用 Agent Teams 实验性功能。
 > 在 settings.json 中添加: `"env": { "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1" }`
-
----
-
-## vs. pdforge 对比
-
-| 维度 | pdforge | forge-teams |
-|------|---------|-------------|
-| Agent 模式 | 单 agent 顺序执行 | 多 agent 并行对抗 |
-| 需求分析 | 线性分析 + PRD | 对抗辩论 → 共识 PRD |
-| 系统设计 | 单架构师 | 多方案竞标 + 评审 |
-| 任务规划 | 单规划师 | 规划 + 风险对抗审查 |
-| 代码实现 | 逐任务顺序实现 | 并行实现 + TDD 守卫 |
-| 质量审查 | 顺序多审查员 | 红队 vs 蓝队对抗 |
-| 修复验证 | 线性修复 | 对抗式假设竞争调试 |
-| 交付部署 | 单 agent 交付 | 交叉验收 + 交付 |
-| 偏见防御 | 流程纪律 | 结构化对抗 |
-| Token 消耗 | 中等 | 高（5-20x） |
-| 适合场景 | 标准开发 | 高质量/安全关键开发 |
 
 ---
 
@@ -415,7 +395,7 @@ CREATE ──▶ COORDINATE ──▶ SHUTDOWN ──▶ CLEANUP
 
 | 坏行为 | 为什么失败 | 正确做法 |
 |--------|-----------|---------|
-| 用 forge-teams 做简单任务 | Token 浪费 10x+ | 简单任务用 pdforge |
+| 用 forge-teams 做简单任务 | Token 浪费 10x+ | 简单任务不需要 forge-teams |
 | 跳过 P1 对抗辩论 | PRD 有盲点 | 至少 2 轮辩论 |
 | P2 只提出 1 个方案 | 失去竞标优势 | 至少 2 个独立方案 |
 | P4 不用 delegate mode | Implementer 权限不足 | 必须 delegate |

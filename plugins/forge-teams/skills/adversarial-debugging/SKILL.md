@@ -35,7 +35,7 @@ digraph {
     q1 [label="原因明显?" shape=diamond];
     q2 [label="单 agent\n能定位?" shape=diamond];
     q3 [label="多个可能\n根因?" shape=diamond];
-    systematic [label="systematic-debugging\n(pdforge)" shape=box];
+    systematic [label="常规调试\n(单 agent)" shape=box];
     adversarial [label="adversarial-debugging\n(本 Skill)" shape=box style=filled fillcolor=lightgreen];
     direct [label="直接修复" shape=box];
 
@@ -48,19 +48,6 @@ digraph {
     systematic -> q3 [label="失败后"];
 }
 ```
-
-## vs. systematic-debugging (pdforge)
-
-| 维度 | systematic-debugging | adversarial-debugging |
-|------|---------------------|----------------------|
-| Agent 数量 | 1 个 (顺序) | 3-7 个 (并行) |
-| 假设处理 | 逐一测试 | 并行调查 + 辩论 |
-| 偏见防御 | 流程纪律 | 结构化对抗 + 魔鬼辩护人 |
-| 证据综合 | 个人判断 | 独立仲裁者评分 |
-| 适合场景 | 常规 bug | 复杂/间歇性 bug |
-| Token 消耗 | 低 | 高 (多 agent) |
-| 速度 | 中等 | 快 (并行调查) |
-| 准确率 | 高 | 更高 (多视角 + 对抗) |
 
 ## Integration with Forge Pipeline
 

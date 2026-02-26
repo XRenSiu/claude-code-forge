@@ -337,7 +337,7 @@ Lead 在 Wave 完成后或阶段结束时输出健康仪表盘:
 1. Broadcast: "[TOTAL DEGRADATION] All implementers lost."
 2. Shutdown sentinel (sentinel 无法实现代码)
 3. TeamDelete
-4. Lead 切换为独立执行模式 (pdforge 式顺序实现)
+4. Lead 切换为独立顺序执行模式
 5. Lead 直接按 TDD 纪律实现剩余任务
 6. 在报告中记录: "Degraded from parallel to solo execution at task T{id}"
 ```

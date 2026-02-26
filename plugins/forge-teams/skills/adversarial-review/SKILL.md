@@ -37,7 +37,6 @@ digraph {
     q1 [label="安全敏感?" shape=diamond];
     q2 [label="高风险\n功能?" shape=diamond];
     q3 [label="需要多维度\n交叉验证?" shape=diamond];
-    single [label="pdforge:requesting-code-review\n(单人三阶段审查)" shape=box];
     adversarial [label="adversarial-review\n(本 Skill)" shape=box style=filled fillcolor=lightgreen];
     simple [label="简单代码审查" shape=box];
 
@@ -47,23 +46,9 @@ digraph {
     q2 -> q3 [label="是"];
     q2 -> simple [label="否"];
     q3 -> adversarial [label="是"];
-    q3 -> single [label="否"];
+    q3 -> simple [label="否"];
 }
 ```
-
-## vs. pdforge:requesting-code-review (单人三阶段审查)
-
-| 维度 | pdforge 三阶段审查 | adversarial-review |
-|------|-------------------|-------------------|
-| 审查方式 | 顺序 (规格→代码→安全) | 并行 (4 角色同时) |
-| Agent 数量 | 1 个 (切换角色) | 5+ 个 (独立角色) |
-| 红队攻击 | 无 | 专职红队主动攻击 |
-| 交叉验证 | 无 | 多审查员独立发现 → 高置信度 |
-| 综合裁决 | 各阶段独立判断 | review-synthesizer 统一裁决 |
-| 适合场景 | 常规功能审查 | 高风险/安全敏感功能 |
-| Token 消耗 | 低 | 高 (多 agent 并行) |
-| 速度 | 中等 (顺序) | 快 (并行) 但总量更大 |
-| 缺陷检出率 | 25-40% | 70%+ |
 
 ## The 3-Phase Protocol
 
@@ -132,7 +117,7 @@ TeamCreate:
 
 **Spec Reviewer** (使用通用 agent + 详细角色提示)：
 
-由于 forge-teams 中没有专门的 spec/code/security reviewer agent 文件，这些角色使用通用 agent 类型 + 详细的角色提示来定义行为。角色提示应基于 pdforge 中对应 reviewer 的模式。
+由于 forge-teams 中没有专门的 spec/code/security reviewer agent 文件，这些角色使用通用 agent 类型 + 详细的角色提示来定义行为。
 
 ```
 Task (spawn teammate):

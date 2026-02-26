@@ -61,19 +61,19 @@
 
 ### 为什么并行而非顺序
 
-pdforge's subagent-driven-development executes tasks sequentially (one subagent at a time). This is safe but slow.
+传统单 agent 顺序执行模式一次只运行一个任务。这种方式安全但速度慢。
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│             pdforge 顺序执行 vs forge-teams 并行执行          │
+│           单 agent 顺序执行 vs forge-teams 并行执行            │
 ├─────────────────────────────────────────────────────────────┤
 │                                                             │
-│  pdforge (sequential):                                      │
+│  单 agent 顺序执行 (sequential):                             │
 │  ┌────┐ ┌────┐ ┌────┐ ┌────┐ ┌────┐                       │
 │  │ T1 │→│ T2 │→│ T3 │→│ T4 │→│ T5 │  Wall time: 5T       │
 │  └────┘ └────┘ └────┘ └────┘ └────┘                       │
 │                                                             │
-│  forge-teams (parallel, 3 implementers):                    │
+│  forge-teams 并行执行 (parallel, 3 implementers):            │
 │  ┌────┐ ┌────┐                                             │
 │  │ T1 │→│ T4 │                    implementer-1             │
 │  └────┘ └────┘                                             │
@@ -201,7 +201,7 @@ Why: If Lead writes code, it becomes a **bottleneck** — can't coordinate while
 | 质量控制 | 事后审查 | 实时 sentinel | **实时** | 早发现早修复 |
 | Sentinel 权限 | 读写 | 只读 | **只读** | 角色分离 |
 | Implementer 数量 | 固定 | 动态 (2-5) | **动态** | 按任务数量调整 |
-| TDD | 可选 | 强制 | **强制** | 与 pdforge TDD 纪律一致 |
+| TDD | 可选 | 强制 | **强制** | 确保代码质量和可验证性 |
 | Lead 角色 | 参与实现 | 纯协调 | **纯协调** | 避免成为瓶颈 |
 
 ---
@@ -421,26 +421,26 @@ tools: Read, Grep, Glob, Bash  # 只读 — 无 Write, Edit
 
 ---
 
-## ⚙️ vs pdforge 对比
+## ⚙️ 单 agent 顺序方式 vs forge-teams 并行方式
 
-| 维度 | pdforge (subagent-driven) | forge-teams (P4) | 增量价值 |
-|------|--------------------------|------------------|---------|
-| 执行模式 | 顺序 subagent | 并行 Agent Teams | N 倍加速 |
-| 质量控制 | 事后审查 (P5) | 实时 quality sentinel | 更早发现问题 |
+| 维度 | 单 agent 顺序执行 | forge-teams (P4) | 增量价值 |
+|------|-----------------|------------------|---------|
+| 执行模式 | 顺序逐个执行 | 并行 Agent Teams | N 倍加速 |
+| 质量控制 | 事后审查 | 实时 quality sentinel | 更早发现问题 |
 | 冲突防止 | 不需要（顺序执行） | 文件所有权映射 | 并行安全保障 |
-| TDD | skill 级别强制 | agent 级别强制 | 同等纪律 |
+| TDD | 可选或强制 | agent 级别强制 | 确保代码质量 |
 | 并行度 | 1 (顺序) | 2-5 (动态) | 可扩展 |
 | Lead 角色 | 直接执行 | Delegate mode | 不成为瓶颈 |
-| Token 开销 | 低 | 中（相似总量，更多 overhead） | ~1.2x pdforge |
+| Token 开销 | 低 | 中（相似总量，略多协调 overhead） | 时间大幅缩短 |
 
-### 何时选择 pdforge 顺序执行
+### 何时选择单 agent 顺序执行
 
 | 条件 | 推荐 | 原因 |
 |------|------|------|
-| <5 tasks | pdforge | 并行 overhead 不值得 |
-| 高度耦合的任务 | pdforge | 无法有效并行 |
-| 所有任务共享文件 | pdforge | 文件所有权无法隔离 |
-| 时间不敏感 | pdforge | 并行的主要优势是时间 |
+| <5 tasks | 单 agent 顺序 | 并行 overhead 不值得 |
+| 高度耦合的任务 | 单 agent 顺序 | 无法有效并行 |
+| 所有任务共享文件 | 单 agent 顺序 | 文件所有权无法隔离 |
+| 时间不敏感 | 单 agent 顺序 | 并行的主要优势是时间 |
 
 ---
 

@@ -360,7 +360,7 @@ Phase 4 还提供：
   3. 如果是环境问题: 修复环境，不扣健康分，恢复执行
   4. 如果原因不明: 尝试 spawn 诊断 agent 检查环境
   5. 如果无法恢复: 触发 Total Degradation (self-healing.md Rule 5.3)
-     → Lead 退回独立执行模式 (pdforge 式顺序实现)
+     → Lead 退回独立顺序执行模式
   6. 在报告中记录: "Systemic failure at [时间], fallback to solo mode"
 ```
 

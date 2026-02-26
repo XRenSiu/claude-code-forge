@@ -32,7 +32,7 @@
 
 ### 单 Agent 调试的问题
 
-pdforge 的 `systematic-debugging` 是一个扎实的 4+1 阶段框架（问题收集 → 根因调查 → 模式分析 → 假设测试 → TDD 修复），但它仍然是单 agent 工作：
+传统单 agent 调试方式（如 4+1 阶段框架：问题收集 → 根因调查 → 模式分析 → 假设测试 → TDD 修复）虽然结构化，但它仍然是单 agent 工作：
 
 | 问题 | 表现 | 后果 |
 |------|------|------|
@@ -344,10 +344,10 @@ Phase 6: Adversarial Debugging (本阶段)
 
 ---
 
-## ⚙️ vs pdforge 对比
+## ⚙️ 单 agent 调试 vs forge-teams 对抗调试
 
-| 维度 | pdforge (systematic-debugging) | forge-teams (P6) | 价值 |
-|------|-------------------------------|------------------|------|
+| 维度 | 单 agent 调试 | forge-teams (P6) | 价值 |
+|------|-------------|------------------|------|
 | 架构 | 单 agent 4+1 阶段 | 多 agent 5-Phase Protocol | 多视角，不遗漏 |
 | 假设 | 单 agent 逐个验证 | 多 agent 并行竞争 | 每个假设获得充分调查 |
 | 挑战 | 无（Agent 自我评估） | Devil's Advocate 专职挑战 | 防止弱证据通过 |
@@ -355,7 +355,7 @@ Phase 6: Adversarial Debugging (本阶段)
 | 评分 | 无正式评分 | 5 维加权矩阵 | 可审计、可追溯 |
 | 修复 | TDD | TDD + 回到 P5 重审 | 闭环验证修复效果 |
 | 首次正确率 | ~40% | ~80%+ | 大幅减少调试迭代 |
-| Token | 1x | ~10x | 复杂 bug 值得投资 |
+| Token | 低 | 高（约 10 倍单 agent 开销） | 复杂 bug 值得投资 |
 | 速度 | 中等（顺序） | 快（并行调查） | 调查阶段并行加速 |
 
 ### 选型指南
@@ -363,10 +363,10 @@ Phase 6: Adversarial Debugging (本阶段)
 ```
 遇到 Bug →
     ├── 原因明显 → 直接修复
-    ├── 单 agent 可定位 → systematic-debugging (pdforge)
+    ├── 单 agent 可定位 → 单 agent 系统化调试
     ├── 单 agent 难定位 → adversarial-debugging (forge-teams)
     ├── 间歇性故障 → adversarial-debugging (forge-teams)
-    └── systematic-debugging 失败 → adversarial-debugging (forge-teams)
+    └── 单 agent 调试失败 → adversarial-debugging (forge-teams)
 ```
 
 ---
@@ -403,7 +403,7 @@ Phase 6: Adversarial Debugging (本阶段)
 | "太贵了" | 3 小时随机修复 vs 30 分钟精准定位 |
 | "这个 bug 很简单" | "简单"的 bug 最容易产生锚定效应 |
 | "没时间组建团队" | Team 创建只需几秒，调查并行节省总时间 |
-| "systematic-debugging 就够了" | 如果够了你就不会需要看这个文档 |
+| "单 agent 调试就够了" | 如果够了你就不会需要看这个文档 |
 
 ---
 

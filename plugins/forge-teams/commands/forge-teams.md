@@ -5,7 +5,7 @@ argument-hint: <requirement> [--phase <1-7>] [--skip-to <phase>] [--team-size <s
 
 ## Mission
 
-`/forge-teams` 是 Agent Teams 驱动的产品开发主协调器。它将 pdforge 的 7 阶段流水线升级为多 agent 对抗协作模式：每个关键决策点由多个 agent 并行竞争、辩论和交叉验证，确保产出质量远超单 agent 线性推理。
+`/forge-teams` 是 Agent Teams 驱动的产品开发主协调器。7 阶段流水线采用多 agent 对抗协作模式：每个关键决策点由多个 agent 并行竞争、辩论和交叉验证，通过结构化对抗消除单 agent 的认知偏差。
 
 ---
 
@@ -143,15 +143,15 @@ argument-hint: <requirement> [--phase <1-7>] [--skip-to <phase>] [--team-size <s
 
 ## Token 消耗警告
 
-> **注意**: forge-teams 使用 Agent Teams 进行多 agent 并行协作，token 消耗远高于 pdforge。
+> **注意**: forge-teams 使用 Agent Teams 进行多 agent 并行协作，token 消耗较高。
 >
-> | 模式 | 预估 Token 消耗（相对 pdforge） |
-> |------|-------------------------------|
-> | small | 3-5x |
-> | medium | 5-10x |
-> | large | 10-20x |
+> | 模式 | Token 消耗等级 |
+> |------|---------------|
+> | small | 中等 |
+> | medium | 高 |
+> | large | 很高 |
 >
-> 建议先用 pdforge 验证流程可行性，再用 forge-teams 进行高质量保证。
+> 建议根据功能重要性选择合适的团队规模。
 
 ---
 
@@ -169,21 +169,6 @@ argument-hint: <requirement> [--phase <1-7>] [--skip-to <phase>] [--team-size <s
 ```
 
 2. **安装 forge-teams 插件**（本插件）
-
----
-
-## 与 pdforge 命令的互补关系
-
-forge-teams 是 pdforge 的 Agent Teams 升级版，两者可以互补使用：
-
-| 场景 | 推荐 |
-|------|------|
-| 快速原型验证 | `/pdforge --mode 0to1` |
-| 标准功能开发 | `/pdforge --fix --loop` |
-| 高质量要求的核心功能 | `/forge-teams --team-size medium` |
-| 安全关键功能 | `/forge-teams --team-size large` |
-| 只需对抗调试 | `/adversarial-debugging` |
-| 只需需求辩论 | `/forge-teams --phase 1` |
 
 ---
 

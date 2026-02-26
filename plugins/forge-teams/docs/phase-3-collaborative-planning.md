@@ -135,7 +135,7 @@ Risk Assessor provides independent reality check:
 | 交互模式 | 对抗辩论 | 协作审查 | **协作** | 任务分解较客观，辩论价值低 |
 | Risk Assessor 角色 | 挑战者 | 审查者 | **审查者** | 审查+建议，不需要对抗姿态 |
 | 交互轮数 | 多轮 (2-3) | 单轮 | **单轮** (planner -> risk -> planner修改) | 一轮风险审查足够 |
-| 任务粒度 | 5-15 分钟 | 2-5 分钟 | **2-5 分钟** | 与 pdforge writing-plans 保持一致 |
+| 任务粒度 | 5-15 分钟 | 2-5 分钟 | **2-5 分钟** | 适合 agent 单次执行的最佳粒度 |
 | 文件所有权 | 不标注 | 显式标注 | **显式标注** | 为 P4 并行实现做准备 |
 | Risk Assessor 模型 | opus | sonnet | **sonnet** | 风险审查不需要深度推理 |
 
@@ -174,7 +174,7 @@ tools: Read, Grep, Glob, Bash
 **职责**:
 
 1. 读取 ADR + 架构文档（阶段 2 产出）
-2. 按 pdforge writing-plans 标准分解任务（2-5 分钟粒度）
+2. 按 2-5 分钟粒度标准分解任务
 3. 标注任务间依赖关系（DAG 形式）
 4. 标注文件所有权（为 P4 并行实现做准备）
 5. 为每个任务指定验证方法
@@ -354,24 +354,24 @@ Planner 收到风险报告后，必须**逐条回应**:
 
 ---
 
-## ⚙️ vs pdforge 对比
+## ⚙️ 单 agent 方式 vs forge-teams 多 agent 协作方式
 
-| 维度 | pdforge (planner) | forge-teams (P3) | 增量价值 |
-|------|-------------------|------------------|---------|
+| 维度 | 单 agent 规划 | forge-teams (P3) | 增量价值 |
+|------|-------------|------------------|---------|
 | 规划角色 | 单 planner agent | planner + risk assessor | 减少计划盲点 |
 | 风险评估 | 无独立风险审查 | 独立 agent 5 维度审查 | 更健壮的计划 |
 | 文件所有权 | 不标注 | 显式标注 (OWNS/READS/SHARED) | 为 P4 并行实现做准备 |
 | 估计验证 | 无 | Risk Assessor 独立验证 | 更准确的时间估计 |
 | 集成覆盖 | 不检查 | 检查是否遗漏集成测试 | 减少集成风险 |
-| Token 开销 | 低（单 agent） | 中（2 agents, 1 轮） | ~1.5x pdforge |
+| Token 开销 | 低（单 agent） | 中（2 agents, 1 轮，约 1.5 倍单 agent 开销） | 质量提升值得适度投入 |
 
-### 什么时候用 pdforge 就够了
+### 什么时候用单 agent 规划就够了
 
 | 场景 | 推荐 | 原因 |
 |------|------|------|
-| 简单功能 (<10 tasks) | pdforge | 风险评估 overhead 不值得 |
-| 无并行需求 | pdforge | 不需要文件所有权标注 |
-| 独立模块 | pdforge | 集成风险低 |
+| 简单功能 (<10 tasks) | 单 agent | 风险评估 overhead 不值得 |
+| 无并行需求 | 单 agent | 不需要文件所有权标注 |
+| 独立模块 | 单 agent | 集成风险低 |
 | 复杂功能 (>15 tasks) | forge-teams P3 | 风险评估价值高 |
 | 需要并行实现 | forge-teams P3 | 必须标注文件所有权 |
 | 跨模块修改 | forge-teams P3 | 集成风险高 |
@@ -382,7 +382,7 @@ Planner 收到风险报告后，必须**逐条回应**:
 
 ### 必须遵守
 
-1. **任务粒度严格 2-5 分钟**: 超过 5 分钟的任务必须拆分，与 pdforge writing-plans 标准一致
+1. **任务粒度严格 2-5 分钟**: 超过 5 分钟的任务必须拆分
 2. **文件所有权标注是硬需求**: 这是 P4 并行实现的前提，必须完成，不可跳过
 3. **Risk Assessor 建议必须逐条回应**: Planner 必须对每条建议给出 ACCEPTED / PARTIALLY ACCEPTED / REJECTED + 理由
 4. **SHARED 文件必须处理**: 标记为 SHARED 的文件要么合并任务，要么标记为顺序执行

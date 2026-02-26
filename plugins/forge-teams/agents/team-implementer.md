@@ -326,17 +326,6 @@ Verification: npm test -- --grep "auth middleware" passed
 | 规格不清 | 通过 SendMessage 请求 lead 澄清 |
 | 测试环境问题 | 报告问题，尝试本地修复 |
 
-## vs. Solo Implementer (pdforge)
-
-| 维度 | Solo Implementer | Team Implementer |
-|------|-----------------|-----------------|
-| 通信方式 | 无（独立工作） | SendMessage（团队协作） |
-| 文件管理 | 自由修改 | 文件所有权检查 |
-| 任务获取 | 顺序执行 | 从 TaskList 认领 |
-| 进度报告 | 自动标记 | 主动向 lead 报告 |
-| 冲突处理 | 不存在 | 必须协调 |
-| 阻塞处理 | 顺序等待 | 报告并可能被重新分配 |
-
 ## Key Constraints
 
 1. **只修改分配的文件** - 这是铁律，违反会导致冲突

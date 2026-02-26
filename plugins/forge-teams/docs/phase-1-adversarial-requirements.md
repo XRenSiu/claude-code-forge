@@ -57,7 +57,7 @@
 | 可行性盲区 | PRD 描述的功能可能在当前代码库极难实现 | 大量返工或方案推翻 |
 | 假设堆积 | 标记了 `[⚠️ ASSUMED]` 但没人验证 | 假设进入设计和实施阶段 |
 
-pdforge 的 prd-generator 已经做了很好的改进（假设标记、13 项检查清单），但 **假设仍然是同一个 Agent 自己标记的** — 它可能不知道自己不知道什么。
+即使使用了假设标记和检查清单等改进手段，**假设仍然是同一个 Agent 自己标记的** — 它可能不知道自己不知道什么。
 
 ---
 
@@ -90,7 +90,7 @@ pdforge 的 prd-generator 已经做了很好的改进（假设标记、13 项检
 
 | 考量 | 2 角色 | 3+ 角色 |
 |------|--------|--------|
-| Token 成本 | ~4x pdforge | ~6-10x pdforge |
+| Token 成本 | 中等（2 角色 + Lead） | 高（多角色协调开销大） |
 | 收敛难度 | 2 轮即可 | 需要 3-4 轮，可能无法收敛 |
 | 核心张力覆盖 | Desirability vs Feasibility | 覆盖更多维度但边际收益递减 |
 | 协调复杂度 | Lead 仲裁 2 方意见 | Lead 需要协调 N 方，角色重叠 |
@@ -132,7 +132,7 @@ Round 2 后，Lead 综合双方意见，产出最终 PRD。
 | Skeptic 工具 | 只读 vs 读写 | 只读 | 怀疑者不需要修改代码，只需分析 |
 | Lead 角色 | 独立 arbiter vs 主 session | 主 session | 减少 1 agent，Lead 有完整上下文 |
 | 模型选择 | sonnet vs opus | sonnet | 需求分析不需要 opus 的推理深度 |
-| PRD 格式 | 自定义 vs pdforge 兼容 | pdforge 兼容 | 输出可直接被 pdforge 工具链消费 |
+| PRD 格式 | 自定义 vs 标准格式 | 标准格式 | 输出可直接被后续阶段和工具链消费 |
 
 ---
 
@@ -172,7 +172,7 @@ Step 5: Output → docs/prd/[feature]-prd.md
 | 用户视角优先 | 每个 FR 必须连接到用户价值 |
 | 乐观但不盲目 | 可以提出有挑战性的需求，但需标注风险 |
 | 回应挑战 | 收到 skeptic 挑战后必须逐条回应（接受/反驳/修改） |
-| 假设标记 | 沿用 pdforge 的 `[⚠️ ASSUMED]` 标记 |
+| 假设标记 | 使用 `[⚠️ ASSUMED]` 标记未验证的假设 |
 
 ---
 
@@ -330,26 +330,26 @@ Battle-tested PRD 与普通 PRD 的区别 — 包含技术风险注解：
 
 ---
 
-## ⚙️ vs pdforge 对比
+## ⚙️ 单 agent 方式 vs forge-teams 多 agent 对抗方式
 
-| 维度 | pdforge (prd-generator) | forge-teams (P1) | 价值 |
-|------|------------------------|------------------|------|
+| 维度 | 单 agent 方式 | forge-teams (P1) | 价值 |
+|------|-------------|------------------|------|
 | **角色** | 单 agent 生成 PRD | advocate 写 + skeptic 挑战 | 减少乐观偏差 |
 | **代码验证** | agent 自己读代码 | skeptic 独立深度分析代码库 | 更客观的技术评估 |
 | **假设处理** | 标记 `[⚠️ ASSUMED]` | 辩论消除/验证假设 | 更少未验证假设进入后续阶段 |
 | **输出格式** | PRD | Battle-tested PRD + 技术风险注解 | 更完整的决策信息 |
 | **挑战追踪** | 无 | 每个 FR 标记挑战状态 | 透明的决策过程 |
-| **Token 消耗** | 1x | ~4x | 需权衡质量收益 |
+| **Token 消耗** | 低 | 中（约 4 倍单 agent 开销） | 需权衡质量收益 |
 
-### 何时用 pdforge，何时用 forge-teams P1
+### 何时适合用单 agent，何时用 forge-teams P1
 
 | 场景 | 推荐 | 原因 |
 |------|------|------|
-| 简单功能添加 | pdforge | 低复杂度不值得对抗成本 |
+| 简单功能添加 | 单 agent | 低复杂度不值得对抗成本 |
 | 核心架构改动 | forge-teams | 高风险决策需要技术验证 |
-| 0→1 MVP | pdforge | 速度优先于完美 |
+| 0→1 MVP | 单 agent | 速度优先于完美 |
 | 1→100 新功能 | forge-teams | 已有代码库约束需要验证 |
-| 需求非常清晰 | pdforge | 无需辩论 |
+| 需求非常清晰 | 单 agent | 无需辩论 |
 | 需求有技术不确定性 | forge-teams | 辩论暴露隐藏风险 |
 
 ---
@@ -403,13 +403,13 @@ Battle-tested PRD 与普通 PRD 的区别 — 包含技术风险注解：
 1. **Skeptic 只读**：technical-skeptic 没有 Write/Edit 权限，防止其修改代码库或 PRD。Skeptic 的输出通过 SendMessage 传递给 Lead，由 Lead 综合。
 2. **证据优先**：skeptic 的所有挑战必须附带代码证据（文件路径 + 行号）。没有代码证据的挑战在综合阶段会被降权。
 3. **Lead 仲裁**：2 轮辩论后 Lead 必须做出综合判定。不允许无限辩论——如果 2 轮后仍有分歧，Lead 做最终决定。
-4. **不替代 brainstorming**：如果需求完全模糊（用户不知道自己要什么），先用 pdforge 的 brainstorming skill 澄清，再用 forge-teams P1 验证。
+4. **不替代 brainstorming**：如果需求完全模糊（用户不知道自己要什么），先用 brainstorming 工具澄清需求，再用 forge-teams P1 验证。
 5. **挑战状态标记**：最终 PRD 中每个被挑战的 FR 必须标记状态：
    - `[CHALLENGED → RESOLVED]`：挑战已解决，FR 保留
    - `[CHALLENGED → MODIFIED]`：FR 根据挑战修改
    - `[CHALLENGED → DEFERRED]`：FR 推迟到后续版本
    - `[CHALLENGED → REJECTED]`：FR 因技术不可行被移除
-6. **Token 预算意识**：P1 约消耗 pdforge PRD 生成的 4 倍 token。对简单功能，直接使用 pdforge 更经济。
+6. **Token 预算意识**：P1 约消耗单 agent PRD 生成的 4 倍 token。对简单功能，直接使用单 agent 方式更经济。
 
 ---
 

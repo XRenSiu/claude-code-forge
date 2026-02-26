@@ -6,7 +6,7 @@
 
 ## 📋 概述
 
-forge-teams 不是把 pdforge 的流程"多跑几遍"。它是一种根本不同的质量保障方法论：**让多个独立思考的 Agent 互相挑战**，而不是让一个 Agent 自己检查自己。
+forge-teams 不是把单 agent 流程"多跑几遍"。它是一种根本不同的质量保障方法论：**让多个独立思考的 Agent 互相挑战**，而不是让一个 Agent 自己检查自己。
 
 本文档解释了这个设计选择背后的认知科学依据、架构权衡、以及每个关键设计决策的推理过程。
 
@@ -175,12 +175,12 @@ forge-teams 不是把 pdforge 的流程"多跑几遍"。它是一种根本不同
 
 ## 🔧 Agent Teams vs Subagents 核心区别
 
-forge-teams 使用 Claude Code 的 Agent Teams 机制，而非 pdforge 使用的 Subagent 机制。这是根本性的架构差异。
+forge-teams 使用 Claude Code 的 Agent Teams 机制，而非传统的 Subagent 机制。这是根本性的架构差异。
 
 ### 通信模型对比
 
 ```
-Subagent 模型 (pdforge):                Agent Teams 模型 (forge-teams):
+Subagent 模型 (传统单 agent):            Agent Teams 模型 (forge-teams):
 ┌──────────┐                            ┌──────────┐
 │  主 Agent │                            │   Lead   │
 └────┬─────┘                            └──┬───┬───┘
@@ -199,8 +199,8 @@ Subagent 模型 (pdforge):                Agent Teams 模型 (forge-teams):
 
 ### 详细对比
 
-| 维度 | Subagent (pdforge) | Agent Teams (forge-teams) |
-|------|-------------------|--------------------------|
+| 维度 | Subagent (传统单 agent) | Agent Teams (forge-teams) |
+|------|------------------------|--------------------------|
 | **通信模型** | 单向：主 → 子 → 主 | 多向：agent <-> agent (via SendMessage) |
 | **上下文** | 每个 subagent 全新隔离 | 每个 teammate 全新隔离 + 可通信 |
 | **协调** | 主 agent 顺序调度 | Lead + TaskList + 自主 claim |
@@ -391,4 +391,4 @@ forge-teams 内部的某些子步骤仍可使用 subagent：
 | 阶段 1：对抗需求分析 | `docs/phase-1-adversarial-requirements.md` |
 | 阶段 2：对抗架构设计 | `docs/phase-2-adversarial-design.md` |
 | 对抗辩论规则 | `rules/adversarial-protocol.md` |
-| pdforge 对比 | 各阶段文档的 "vs pdforge 对比" 章节 |
+| 方式对比 | 各阶段文档的对比章节 |

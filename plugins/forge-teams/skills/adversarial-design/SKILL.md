@@ -36,7 +36,7 @@ digraph {
     q1 [label="设计复杂度\n高?" shape=diamond];
     q2 [label="多个可行\n方案?" shape=diamond];
     q3 [label="需要严格\n论证?" shape=diamond];
-    single [label="pdforge:architect\n(单人设计)" shape=box];
+    single [label="单人设计" shape=box];
     adversarial [label="adversarial-design\n(本 Skill)" shape=box style=filled fillcolor=lightgreen];
     simple [label="直接实现" shape=box];
 
@@ -49,18 +49,6 @@ digraph {
     q3 -> single [label="否\n(但建议用)"];
 }
 ```
-
-## vs. Single Architect (pdforge:architect)
-
-| 维度 | pdforge:architect | adversarial-design |
-|------|-------------------|-------------------|
-| Agent 数量 | 1 个 | 4+ 个 (2 architect + 1 critic + 1 arbiter) |
-| 设计方式 | 独立设计 | 竞争 + 对抗 + 仲裁 |
-| 盲点防御 | 自我审查 | 专职评论家挑战 |
-| 适合场景 | 常规功能设计 | 高风险/高复杂度架构决策 |
-| 产出 | 单一架构文档 + ADR | 裁决文档 + 对比分析 + 淘汰记录 |
-| Token 消耗 | 低 | 高 (多 agent 竞争) |
-| 质量保证 | 中等 | 高 (多视角 + 对抗验证) |
 
 ## The 5-Phase Protocol
 

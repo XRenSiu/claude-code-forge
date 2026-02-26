@@ -306,17 +306,6 @@ Blocking: [是否阻塞规划进度]
 - [ ] 集成测试任务在所有依赖任务之后
 - [ ] 每个并行组的总工作量大致均衡
 
-## vs. pdforge Planner
-
-| 维度 | pdforge Planner | Task Planner (forge-teams) |
-|------|----------------|---------------------------|
-| 文件所有权 | 不标注 | OWNS/READS/SHARED 三级标注 |
-| 输出消费者 | Implementer 顺序执行 | 多个 Team Implementer 并行执行 |
-| 风险审查 | 无 | 输出供 risk-assessor 审查 |
-| 依赖建模 | 简单顺序 | 完整依赖图 + 关键路径 |
-| 冲突检测 | 不需要 | 文件访问矩阵 + 冲突解决策略 |
-| 通信方式 | 无 | SendMessage 与 Lead 和 risk-assessor 协调 |
-
 ## Key Constraints (约束)
 
 1. **文件所有权必须标注** - 没有所有权标注的任务不能进入 P4

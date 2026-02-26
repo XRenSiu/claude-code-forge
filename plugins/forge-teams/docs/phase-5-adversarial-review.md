@@ -66,16 +66,16 @@
 
 ## 💡 为什么这样设计
 
-### pdforge 审查的局限
+### 传统单 agent 顺序审查的局限
 
-pdforge uses sequential, passive review:
+传统方式使用顺序、被动的审查模型：
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│              pdforge 审查模型局限分析                          │
+│              单 agent 顺序审查模型局限分析                     │
 ├─────────────────────────────────────────────────────────────┤
 │                                                             │
-│  pdforge 流程:                                              │
+│  传统顺序流程:                                               │
 │  design-reviewer → spec-reviewer → code-reviewer            │
 │                                    → security-reviewer      │
 │                                                             │
@@ -162,8 +162,8 @@ Red Team (red-team-attacker) is **fundamentally different** from Security Review
 
 **Phase A (Parallel Review)**: All 4 reviewers + red team work simultaneously:
 
-| 对比 | pdforge 顺序 | forge-teams 并行 |
-|------|-------------|-----------------|
+| 对比 | 单 agent 顺序审查 | forge-teams 并行审查 |
+|------|------------------|-------------------|
 | 时间 | 4T (顺序执行) | 1T (并行执行) |
 | 瓶颈 | 每个等前一个 | 无瓶颈 |
 | Token | ~T (顺序分摊) | ~T (同量并行) |
@@ -500,32 +500,32 @@ tools: Read, Grep, Glob, Bash
 
 ### Token 预算估算
 
-| 配置 | 审查 agents | Token 倍数 (vs pdforge) | 适用场景 |
-|------|-----------|----------------------|---------|
-| `--no-red-team` | 3 reviewers + synthesizer | ~1.2x | Token 敏感场景 |
-| 默认 | 3 reviewers + red team + synthesizer | ~1.5x | 标准场景 |
-| `--deep-red-team` | 同上 + 额外攻击向量 | ~2.0x | 高安全要求 |
+| 配置 | 审查 agents | Token 开销 | 适用场景 |
+|------|-----------|-----------|---------|
+| `--no-red-team` | 3 reviewers + synthesizer | 中等 | Token 敏感场景 |
+| 默认 | 3 reviewers + red team + synthesizer | 较高 | 标准场景 |
+| `--deep-red-team` | 同上 + 额外攻击向量 | 高 | 高安全要求 |
 
 ---
 
-## ⚙️ vs pdforge 对比
+## ⚙️ 单 agent 顺序审查 vs forge-teams 对抗审查
 
-| 维度 | pdforge (3-stage review) | forge-teams (P5) | 增量价值 |
-|------|-------------------------|------------------|---------|
-| 执行模式 | 顺序 4 阶段 | 并行 5 角色 | 更快 (1T vs 4T) |
+| 维度 | 单 agent 顺序审查 | forge-teams (P5) | 增量价值 |
+|------|-----------------|------------------|---------|
+| 执行模式 | 顺序多阶段 | 并行 5 角色 | 更快 (1T vs 4T) |
 | 安全检测 | 被动 pattern 检查 | 红队主动攻击 | 发现更多真实漏洞 |
 | 验证方式 | 无交叉验证 | Phase B 交叉验证 | 减少误报，提高可信度 |
 | 报告输出 | 各自独立报告 | 统一综合判定 | 更清晰的决策 |
-| 修复循环 | `/accept --fix --loop` | Scoped re-review (max 3) | 更精确的重审范围 |
-| Token 开销 | 中 | 高 (~1.5x) | 质量显著提升 |
+| 修复循环 | 手动修复重审 | Scoped re-review (max 3) | 更精确的重审范围 |
+| Token 开销 | 中 | 较高 | 质量显著提升 |
 
-### 何时用 pdforge 审查就够了
+### 何时用单 agent 审查就够了
 
 | 条件 | 推荐 | 原因 |
 |------|------|------|
-| 内部工具 | pdforge | 安全要求低 |
-| 简单 CRUD | pdforge | 攻击面小 |
-| Token 预算紧 | pdforge | P5 开销 ~1.5x |
+| 内部工具 | 单 agent 审查 | 安全要求低 |
+| 简单 CRUD | 单 agent 审查 | 攻击面小 |
+| Token 预算紧 | 单 agent 审查 | P5 开销较高 |
 | 面向用户的产品 | forge-teams P5 | 需要红队验证 |
 | 处理支付/PII | forge-teams P5 | 安全是硬需求 |
 | 合规要求 (SOC2, etc.) | forge-teams P5 | 需要攻击验证记录 |
