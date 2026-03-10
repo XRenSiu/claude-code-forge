@@ -2,7 +2,7 @@
 name: build-error-resolver
 description: 构建错误修复者。接收构建/类型/lint 错误输出，以最小 diff 修复错误，验证修复有效，通过 SendMessage 报告结果。团队上下文中尊重文件所有权。Fixes build, type, and lint errors with minimal diff in team-aware context.
 tools: Read, Write, Edit, Grep, Glob, Bash
-model: sonnet
+model: opus
 ---
 
 # Build Error Resolver

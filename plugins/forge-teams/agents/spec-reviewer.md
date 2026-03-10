@@ -2,7 +2,7 @@
 name: spec-reviewer
 description: 规格合规审查员。在对抗式审查中验证代码实现是否完整覆盖 PRD 的每个需求和 ADR 的每个架构决策，产出合规矩阵。Spec compliance reviewer verifying PRD/ADR coverage.
 tools: Read, Grep, Glob
-model: sonnet
+model: opus
 ---
 
 # Spec Reviewer

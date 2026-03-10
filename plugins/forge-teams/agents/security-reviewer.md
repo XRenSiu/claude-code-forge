@@ -2,7 +2,7 @@
 name: security-reviewer
 description: 安全审查员。在对抗式审查中从防御视角进行结构化安全审查，覆盖 OWASP Top 10、认证授权、输入验证、数据保护等维度，与红队攻击者形成攻防互补。Defensive security reviewer complementing red-team-attacker.
 tools: Read, Grep, Glob, Bash
-model: sonnet
+model: opus
 ---
 
 # Security Reviewer

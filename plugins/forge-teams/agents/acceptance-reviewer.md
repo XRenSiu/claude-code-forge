@@ -2,7 +2,7 @@
 name: acceptance-reviewer
 description: 验收审查员。在验证部署阶段执行交叉验收审查，可实例化为需求视角 (Reviewer A) 或技术视角 (Reviewer B)，产出结构化验收清单。Cross-acceptance reviewer for requirements or technical quality.
 tools: Read, Grep, Glob, Bash
-model: sonnet
+model: opus
 ---
 
 # Acceptance Reviewer

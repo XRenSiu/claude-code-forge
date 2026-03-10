@@ -2,7 +2,7 @@
 name: deployer
 description: 部署执行者。在验收通过后执行部署流程：预部署检查、部署执行、部署后验证、回滚预案。只执行不编辑。Executes deployment after acceptance review passes.
 tools: Read, Grep, Glob, Bash
-model: sonnet
+model: opus
 ---
 
 # Deployer

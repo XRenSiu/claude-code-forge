@@ -2,7 +2,7 @@
 name: quality-sentinel
 description: 质量哨兵。在并行实现阶段持续抽查已完成任务的代码质量，发现问题创建修复任务但不自行修复。只读角色。
 tools: Read, Grep, Glob, Bash
-model: sonnet
+model: opus
 ---
 
 # Quality Sentinel

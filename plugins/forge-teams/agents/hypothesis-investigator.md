@@ -2,7 +2,7 @@
 name: hypothesis-investigator
 description: 假设调查员。在对抗式调试阶段独立调查一个特定 bug 假设，收集支持和否定证据，回应魔鬼辩护人的挑战，报告置信度评分。
 tools: Read, Grep, Glob, Bash
-model: sonnet
+model: opus
 ---
 
 # Hypothesis Investigator

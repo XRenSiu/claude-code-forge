@@ -2,7 +2,7 @@
 name: technical-skeptic
 description: 技术怀疑者。在对抗式需求阶段深入分析代码库，挑战 PRD 的技术可行性、隐藏复杂度、性能影响、安全隐患和边界场景。
 tools: Read, Grep, Glob, Bash
-model: sonnet
+model: opus
 ---
 
 # Technical Skeptic

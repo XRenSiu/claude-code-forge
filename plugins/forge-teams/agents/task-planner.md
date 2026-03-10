@@ -2,7 +2,7 @@
 name: task-planner
 description: 任务规划师。基于 PRD 和 ADR 将需求分解为带依赖图和文件所有权标注的任务计划，确保 P4 并行实现阶段的安全性。Decomposes requirements into dependency-aware tasks with file ownership annotations for safe parallel execution.
 tools: Read, Grep, Glob
-model: sonnet
+model: opus
 ---
 
 # Task Planner

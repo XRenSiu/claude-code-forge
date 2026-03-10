@@ -2,7 +2,7 @@
 name: issue-fixer
 description: 问题修复者。在对抗式调试确定根因后，执行 TDD 修复流程：先写复现测试，再实现最小修复，最后验证无回归。Implements TDD fix after root cause is identified.
 tools: Read, Write, Edit, Grep, Glob, Bash
-model: sonnet
+model: opus
 ---
 
 # Issue Fixer

@@ -203,31 +203,31 @@ forge-teams 定义了 23 个专用 agent，覆盖全部 7 个阶段：
 
 | Agent | Phase | Model | 职责 |
 |-------|-------|-------|------|
-| `product-advocate` | P1 | sonnet | 从用户价值角度撰写 PRD，回应技术怀疑者挑战 |
-| `technical-skeptic` | P1 | sonnet | 挑战 PRD 的技术可行性、隐藏复杂度、安全隐患 |
-| `solution-architect` | P2 | sonnet | 独立分析 PRD 和代码库，产出完整架构方案参与竞标 |
+| `product-advocate` | P1 | opus | 从用户价值角度撰写 PRD，回应技术怀疑者挑战 |
+| `technical-skeptic` | P1 | opus | 挑战 PRD 的技术可行性、隐藏复杂度、安全隐患 |
+| `solution-architect` | P2 | opus | 独立分析 PRD 和代码库，产出完整架构方案参与竞标 |
 | `technical-critic` | P2 | opus | 用深刻技术洞察力挑战每个架构决策 |
 | `design-arbiter` | P2 | opus | 综合评判多个竞争架构方案，产出最终裁决 |
-| `task-planner` | P3 | sonnet | 任务分解 + 依赖图 + 文件所有权注解（OWNS/READS/SHARED） |
-| `risk-assessor` | P3 | sonnet | 5 维风险审查（依赖/估计/集成/技术/安全） |
-| `team-implementer` | P4 | sonnet | 在并行实现阶段执行任务，遵循 TDD 纪律 |
-| `quality-sentinel` | P4 | sonnet | 持续抽查已完成任务的代码质量，发现问题创建修复任务 |
+| `task-planner` | P3 | opus | 任务分解 + 依赖图 + 文件所有权注解（OWNS/READS/SHARED） |
+| `risk-assessor` | P3 | opus | 5 维风险审查（依赖/估计/集成/技术/安全） |
+| `team-implementer` | P4 | opus | 在并行实现阶段执行任务，遵循 TDD 纪律 |
+| `quality-sentinel` | P4 | opus | 持续抽查已完成任务的代码质量，发现问题创建修复任务 |
 | `red-team-attacker` | P5 | opus | 主动尝试破坏代码，构造真实攻击向量 |
-| `code-reviewer` | P5 | sonnet | 蓝队代码质量审查（命名/结构/错误处理/性能/测试） |
-| `security-reviewer` | P5 | sonnet | 蓝队防御安全审查（OWASP Top 10 + 认证/授权/数据保护） |
-| `spec-reviewer` | P5 | sonnet | 蓝队规格合规审查（PRD 覆盖 + ADR 合规矩阵） |
+| `code-reviewer` | P5 | opus | 蓝队代码质量审查（命名/结构/错误处理/性能/测试） |
+| `security-reviewer` | P5 | opus | 蓝队防御安全审查（OWASP Top 10 + 认证/授权/数据保护） |
+| `spec-reviewer` | P5 | opus | 蓝队规格合规审查（PRD 覆盖 + ADR 合规矩阵） |
 | `design-reviewer` | P5 | opus | 设计还原审查（Figma MCP + Playwright 像素级对比） |
 | `review-synthesizer` | P5 | opus | 统一所有审查发现，去重、排序、交叉验证，产出裁决 |
-| `hypothesis-investigator` | P6 | sonnet | 独立调查特定 bug 假设，收集支持和否定证据 |
+| `hypothesis-investigator` | P6 | opus | 独立调查特定 bug 假设，收集支持和否定证据 |
 | `devils-advocate` | P6 | opus | 专职挑战所有假设的证据质量和逻辑完整性 |
 | `evidence-synthesizer` | P6 | opus | 中立仲裁者，维护 Evidence Board，产出根因判定 |
-| `issue-fixer` | P6 | sonnet | TDD 修复：复现测试 → 最小修复 → 回归验证 |
-| `acceptance-reviewer` | P7 | sonnet | 双模式交叉验收（需求视角 A + 技术视角 B） |
-| `doc-updater` | P7 | sonnet | 更新 README、API 文档、CHANGELOG、架构文档 |
-| `deployer` | P7 | sonnet | 部署执行 + 前置检查 + 后置验证 + 回滚方案 |
-| `build-error-resolver` | 通用 | sonnet | 构建/类型/lint 错误最小差异修复 |
+| `issue-fixer` | P6 | opus | TDD 修复：复现测试 → 最小修复 → 回归验证 |
+| `acceptance-reviewer` | P7 | opus | 双模式交叉验收（需求视角 A + 技术视角 B） |
+| `doc-updater` | P7 | opus | 更新 README、API 文档、CHANGELOG、架构文档 |
+| `deployer` | P7 | opus | 部署执行 + 前置检查 + 后置验证 + 回滚方案 |
+| `build-error-resolver` | 通用 | opus | 构建/类型/lint 错误最小差异修复 |
 
-> **Model 选择原则**: 创作者/调查者用 sonnet（高吞吐），挑战者/仲裁者用 opus（深度推理）。详见 [设计哲学](docs/design-philosophy.md)。
+> **Model 选择原则**: 所有 agent 统一使用 opus，确保每个阶段都有最强推理能力。详见 [设计哲学](docs/design-philosophy.md)。
 
 ---
 

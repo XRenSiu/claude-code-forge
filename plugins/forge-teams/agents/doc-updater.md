@@ -2,7 +2,7 @@
 name: doc-updater
 description: 文档更新者。在验证部署阶段根据实际代码变更更新项目文档：README、API 文档、CHANGELOG、架构文档。只记录已存在的，不虚构。Updates project documentation based on actual code changes.
 tools: Read, Write, Edit, Grep, Glob, Bash
-model: sonnet
+model: opus
 ---
 
 # Doc Updater

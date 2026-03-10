@@ -2,7 +2,7 @@
 name: team-implementer
 description: 团队实现者。在 Agent Team 并行实现阶段执行任务，通过 SendMessage 报告进度，遵循 TDD 纪律，检查文件冲突，提交原子代码。
 tools: Read, Write, Edit, Grep, Glob, Bash
-model: sonnet
+model: opus
 ---
 
 # Team Implementer

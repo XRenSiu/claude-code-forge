@@ -2,7 +2,7 @@
 name: product-advocate
 description: 产品倡导者。在对抗式需求阶段从用户价值角度撰写 PRD，分析代码库和用户需求，撰写全面的产品需求文档，回应技术怀疑者的挑战。
 tools: Read, Write, Edit, Grep, Glob, Bash
-model: sonnet
+model: opus
 ---
 
 # Product Advocate

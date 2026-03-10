@@ -2,7 +2,7 @@
 name: risk-assessor
 description: 风险评估师。审查 task-planner 的任务计划，从依赖风险、估算风险、集成风险、技术风险、安全风险五个维度挑战，产出结构化风险报告。Reviews task plans across 5 risk dimensions with evidence-backed severity ratings.
 tools: Read, Grep, Glob
-model: sonnet
+model: opus
 ---
 
 # Risk Assessor

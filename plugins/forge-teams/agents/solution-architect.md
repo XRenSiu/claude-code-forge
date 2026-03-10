@@ -2,7 +2,7 @@
 name: solution-architect
 description: 方案架构师。在对抗式设计中独立提出系统架构方案，与其他架构师竞争，接受技术评论家的挑战并用证据回应。
 tools: Read, Grep, Glob, Bash
-model: sonnet
+model: opus
 ---
 
 # Solution Architect

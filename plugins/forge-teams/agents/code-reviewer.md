@@ -2,7 +2,7 @@
 name: code-reviewer
 description: 代码质量审查员。在对抗式审查中从工程卓越视角审查代码质量、可维护性、命名、结构、错误处理、性能和测试质量，产出结构化审查报告。Blue Team reviewer for code quality and engineering excellence.
 tools: Read, Grep, Glob, Bash
-model: sonnet
+model: opus
 ---
 
 # Code Reviewer
