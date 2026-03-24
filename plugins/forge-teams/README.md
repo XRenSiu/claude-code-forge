@@ -112,8 +112,11 @@ forge-teams (多 agent 对抗):
 ### 从中间恢复
 
 ```bash
-# 从阶段 3 开始（需要已有 PRD + ADR）
+# 从阶段 3 开始（自动检测最近未完成的 feature）
 /forge-teams --skip-to 3
+
+# 指定 feature 恢复
+/forge-teams --skip-to 3 --feature "用户认证功能-20260324"
 
 # 从红队审查开始
 /forge-teams --skip-to 5
@@ -176,6 +179,29 @@ forge-teams (多 agent 对抗):
 - **Acceptance Reviewer B**: 从技术角度验收
 - **Doc Updater**: 更新文档
 - 交叉确认确保无遗漏
+
+---
+
+## Context Recovery (跨 context 恢复)
+
+forge-teams 的多 agent 对抗辩论会快速消耗 context window。为此内置了完整的状态持久化和恢复机制：
+
+**自动状态持久化**：每次 pipeline 运行会在输出目录下维护 `.forge-state.json`，记录 feature 名、原始需求、当前阶段进度、产物路径。每个阶段开始/结束时自动更新。
+
+**增量写入**：每个 Agent 完成工作后，Lead 立即将产出写入文件（不等整个阶段结束），防御 Claude Code 的 auto-compact（约 83% context 时触发）导致的信息丢失。
+
+**编排备忘**：Lead 在每个关键子步骤后更新 `phase-N-progress.md`，记录精确进度和判断摘要。compact 或 `/clear` 后读文件即可恢复编排状态。
+
+**主动存档**：Lead 监控 context 用量，60% 进入预警，75% 强制存档——在 83% auto-compact 之前完成所有信息落盘，输出恢复指令提示用户 `/clear`。
+
+**恢复流程**：
+
+```bash
+# context 满了之后
+/clear
+/forge-teams --skip-to N              # 自动找到上次未完成的 run，从断点继续
+/forge-teams --skip-to N --feature X  # 或手动指定 feature
+```
 
 ---
 
@@ -310,7 +336,8 @@ forge-teams/
 │       └── SKILL.md                   # P6: 对抗式调试 skill
 ├── rules/
 │   ├── team-coordination.md           # Team lifecycle and communication rules
-│   └── adversarial-protocol.md        # Adversarial debate rules (10 rules)
+│   ├── adversarial-protocol.md        # Adversarial debate rules (10 rules)
+│   └── self-healing.md                # Self-healing protocol for parallel implementation
 ├── docs/
 │   ├── design-philosophy.md           # 总体设计哲学
 │   ├── phase-1-adversarial-requirements.md

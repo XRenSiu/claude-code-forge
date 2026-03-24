@@ -185,28 +185,44 @@ argument-hint: <requirement> [--phase <1-7>] [--skip-to <phase>] [--team-size <s
 ```
 docs/forge-teams/
 └── [feature]-[timestamp]/
+    ├── .forge-state.json              # Pipeline 状态文件（跨 context 恢复用）
+    ├── attachments/                   # 需求附件（图片、PDF 等非文本输入）
+    │   └── ...
     ├── phase-1-requirements/
-    │   ├── debate-transcript.md     # 需求辩论记录
-    │   └── prd.md                   # 共识 PRD
+    │   ├── debate-transcript.md       # 需求辩论记录（增量写入）
+    │   ├── prd.md                     # 共识 PRD
+    │   └── phase-1-progress.md        # 编排备忘
     ├── phase-2-architecture/
-    │   ├── proposal-a.md            # 架构方案 A
-    │   ├── proposal-b.md            # 架构方案 B
-    │   ├── evaluation.md            # 评审记录
-    │   └── adr.md                   # 最终 ADR
+    │   ├── proposal-a.md              # 架构方案 A（增量写入）
+    │   ├── proposal-b.md              # 架构方案 B（增量写入）
+    │   ├── evaluation.md              # 评审记录（增量写入）
+    │   ├── adr.md                     # 最终 ADR
+    │   └── phase-2-progress.md        # 编排备忘
     ├── phase-3-planning/
-    │   ├── plan.json                # 任务计划
-    │   └── risk-assessment.md       # 风险评估
+    │   ├── plan.json                  # 任务计划
+    │   ├── risk-assessment.md         # 风险评估
+    │   └── phase-3-progress.md        # 编排备忘
     ├── phase-4-implementation/
-    │   └── report.md                # 实现报告
+    │   ├── report.md                  # 实现报告
+    │   └── phase-4-progress.md        # 编排备忘
     ├── phase-5-red-team/
-    │   ├── attack-report.md         # 红队攻击报告
-    │   ├── defense-report.md        # 蓝队防御报告
-    │   └── arbitration.md           # 仲裁结果
+    │   ├── spec-review.md             # 规格审查报告（增量写入）
+    │   ├── code-review.md             # 代码审查报告（增量写入）
+    │   ├── security-review.md         # 安全审查报告（增量写入）
+    │   ├── attack-report.md           # 红队攻击报告（增量写入）
+    │   ├── cross-examination.md       # 交叉质询记录（增量写入）
+    │   ├── defense-report.md          # 蓝队防御报告
+    │   ├── arbitration.md             # 仲裁结果
+    │   └── phase-5-progress.md        # 编排备忘
     ├── phase-6-debugging/
-    │   ├── hypotheses.md            # 假设列表
-    │   ├── debate-log.md            # 调试辩论记录
-    │   └── fixes.md                 # 修复记录
+    │   ├── hypotheses.md              # 假设列表 / Evidence Board（增量更新）
+    │   ├── debate-log.md              # 调试辩论记录（增量追加）
+    │   ├── fixes.md                   # 修复记录
+    │   └── phase-6-progress.md        # 编排备忘
     ├── phase-7-delivery/
-    │   └── acceptance.md            # 交叉验收报告
-    └── summary.md                   # 最终流水线摘要
+    │   ├── acceptance-a.md            # 需求角度验收（增量写入）
+    │   ├── acceptance-b.md            # 技术角度验收（增量写入）
+    │   ├── acceptance.md              # 综合验收报告
+    │   └── phase-7-progress.md        # 编排备忘
+    └── summary.md                     # 最终流水线摘要
 ```
