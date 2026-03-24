@@ -28,6 +28,7 @@ argument-hint: <requirement> [--phase <1-7>] [--skip-to <phase>] [--team-size <s
 | `--no-red-team` | 跳过红队审查（阶段 5） | 启用红队 |
 | `--fix` | 修复阶段 5/6 发现的问题 | 不自动修复 |
 | `--loop [N]` | 修复后重新验证（最多 N 轮） | 3 |
+| `--feature <name>` | 指定恢复的 feature 目录（配合 `--skip-to`） | 自动检测最近未完成的 run |
 
 ---
 
@@ -110,12 +111,19 @@ argument-hint: <requirement> [--phase <1-7>] [--skip-to <phase>] [--team-size <s
 ### 从中间恢复
 
 ```bash
-# 已有 PRD 和 ADR，从阶段 3 开始
+# 已有 PRD 和 ADR，从阶段 3 开始（自动检测最近未完成的 feature）
 /forge-teams --skip-to 3
+
+# 指定 feature 恢复
+/forge-teams --skip-to 3 --feature "用户认证功能-20260324"
 
 # 已有代码，从红队审查开始
 /forge-teams --skip-to 5
 ```
+
+> **恢复机制**: `--skip-to` 会扫描 `docs/forge-teams/` 下的 `.forge-state.json`，
+> 自动找到最近一次未完成的 run。如果有多个未完成的 run，会列出供用户选择。
+> 使用 `--feature` 可以跳过自动检测，直接指定目标。
 
 ---
 

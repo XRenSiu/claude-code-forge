@@ -9,7 +9,7 @@ when_to_use: |
   - 复杂功能需要高质量保证
   - 需要并行开发加速
   - 需要红队级安全审查
-version: 1.0.0
+version: 1.1.0
 ---
 
 # Forge Pipeline - Agent Teams 7 阶段对抗协作流水线
@@ -58,6 +58,109 @@ Announce at start: "I'm using the forge-pipeline skill to orchestrate a 7-phase 
 
 ---
 
+## Pipeline State Management (.forge-state.json)
+
+每次 pipeline 运行会在输出目录 `docs/forge-teams/[feature]-[timestamp]/` 下创建并维护一个 `.forge-state.json` 文件，用于支持跨 context 恢复。
+
+### 文件格式
+
+```json
+{
+  "feature": "用户认证功能",
+  "timestamp": "20260324-103000",
+  "requirement": "用户认证功能，支持 OAuth2 和 JWT",
+  "requirement_attachments": [],
+  "team_size": "medium",
+  "current_phase": 1,
+  "status": "in_progress",
+  "phases": {
+    "1": { "status": "completed", "started_at": "...", "completed_at": "..." },
+    "2": { "status": "in_progress", "started_at": "...", "completed_at": null },
+    "3": { "status": "pending" },
+    "4": { "status": "pending" },
+    "5": { "status": "pending" },
+    "6": { "status": "pending" },
+    "7": { "status": "pending" }
+  },
+  "artifacts": {
+    "prd": "phase-1-requirements/prd.md",
+    "adr": null,
+    "plan": null,
+    "code_report": null,
+    "red_team_report": null,
+    "debug_fixes": null,
+    "acceptance": null
+  },
+  "options": {
+    "no_red_team": false,
+    "fix": false,
+    "loop": 3
+  }
+}
+```
+
+### 需求附件保存
+
+用户的需求输入可能包含非文本内容（图片、PDF、设计稿等）。这些内容在 `/clear` 后会从 context 中丢失，因此 P1 启动时 Lead **必须**将它们持久化：
+
+1. 在输出目录下创建 `attachments/` 子目录
+2. 将用户提供的图片、文件**复制**到 `attachments/`（保留原始文件名）
+3. 将相对路径记入 `requirement_attachments` 数组
+
+```
+docs/forge-teams/[feature]-[timestamp]/
+├── .forge-state.json
+├── attachments/               ← 需求附件
+│   ├── design-screenshot.png
+│   └── original-prd.pdf
+└── phase-1-requirements/
+    └── ...
+```
+
+恢复时 Lead 从 `requirement_attachments` 读取路径，重新加载这些文件作为需求上下文。
+
+> **注意**: `requirement` 字段存储**纯文本部分**，`requirement_attachments` 存储**非文本附件的相对路径**。两者互补，共同还原完整的原始需求。
+
+### 生命周期
+
+| 时机 | 动作 |
+|------|------|
+| Pipeline 启动（新 run） | **创建** `.forge-state.json`，写入 requirement、team_size、options，所有 phases 为 pending |
+| 每个阶段开始时 | **更新** `current_phase`、该阶段 `status` → `in_progress`、`started_at` |
+| 每个阶段完成时 | **更新** 该阶段 `status` → `completed`、`completed_at`、对应 `artifacts` 路径 |
+| Pipeline 全部完成 | **更新** `status` → `completed` |
+| P5→P6 回退 | **更新** `current_phase` → 6，P6 `status` → `in_progress` |
+| Pipeline 异常退出 | 当前阶段保持 `in_progress`（恢复时从此阶段重新开始） |
+
+### --skip-to 恢复协议
+
+当使用 `--skip-to N` 恢复时，Lead **必须**按以下顺序执行：
+
+1. **定位 feature 目录**:
+   - 如果指定了 `--feature`：直接定位 `docs/forge-teams/[feature]/`
+   - 否则：扫描 `docs/forge-teams/*/` 下所有 `.forge-state.json`
+     - 筛选 `status` 不为 `completed` 的 run
+     - 如果只有 1 个：自动选中
+     - 如果有多个：列出所有未完成的 run（feature 名、当前阶段、最后活动时间），请用户选择
+     - 如果没有：报错，提示没有可恢复的 run
+
+2. **验证前序产物**:
+   - 读取 `.forge-state.json`，确认 phase 1 到 N-1 的 `status` 均为 `completed`
+   - 确认 `artifacts` 中对应文件存在且非空
+   - 如果验证失败：报错并提示缺少哪些产物
+
+3. **恢复上下文**:
+   - 从 `.forge-state.json` 读取 `requirement`、`team_size`、`options`
+   - 如果 `requirement_attachments` 非空，读取 `attachments/` 下的所有附件文件（图片、PDF 等）
+   - 加载对应 artifacts 文件（PRD、ADR、plan 等）
+   - 从 phase N 开始执行，无需用户重新输入 requirement
+
+4. **更新状态**:
+   - 将 `current_phase` 更新为 N
+   - 继续正常的阶段执行和状态更新
+
+---
+
 ## Phase 1: Requirements Debate (需求对抗辩论)
 
 **目的**: 通过多视角对抗辩论，生成高质量共识 PRD，避免单一视角盲点。
@@ -72,6 +175,7 @@ Announce at start: "I'm using the forge-pipeline skill to orchestrate a 7-phase 
 
 **执行流程**:
 1. Lead 解析需求输入，准备辩论上下文
+1.1. **创建 `.forge-state.json`**（仅 P1 首次执行时）：在 `docs/forge-teams/[feature]-[timestamp]/` 下创建状态文件，将用户传入的**原始需求原文**存入 `requirement` 字段；如果用户提供了图片、文件等非文本附件，复制到 `attachments/` 并将路径记入 `requirement_attachments`；同时记录 team_size、options，P1 status → `in_progress`
 2. TeamCreate: `"req-debate-[feature]"`
 3. Spawn 2 个分析师，各自独立分析需求
 4. 每个分析师提交分析报告 (via SendMessage)
@@ -81,6 +185,8 @@ Announce at start: "I'm using the forge-pipeline skill to orchestrate a 7-phase 
 8. Shutdown team + TeamDelete
 
 **产出**: `docs/forge-teams/[feature]/phase-1-requirements/prd.md`
+
+**状态更新**: P1 `status` → `completed`，`artifacts.prd` → 文件路径，`current_phase` → 2
 
 **进入下一阶段条件**: PRD 通过质量检查（13 项），所有分析师无 blocker 级异议。
 
@@ -113,6 +219,8 @@ Announce at start: "I'm using the forge-pipeline skill to orchestrate a 7-phase 
 
 **产出**: `docs/forge-teams/[feature]/phase-2-architecture/adr.md`
 
+**状态更新**: P2 `status` → `completed`，`artifacts.adr` → 文件路径，`current_phase` → 3
+
 **进入下一阶段条件**: ADR 包含所有架构决策，Review Panel 评分 >= 7/10。
 
 ---
@@ -141,6 +249,8 @@ Announce at start: "I'm using the forge-pipeline skill to orchestrate a 7-phase 
 6. Shutdown team + TeamDelete
 
 **产出**: `docs/forge-teams/[feature]/phase-3-planning/plan.json`
+
+**状态更新**: P3 `status` → `completed`，`artifacts.plan` → 文件路径，`current_phase` → 4
 
 **进入下一阶段条件**: 所有高风险项已有缓解方案，无循环依赖。
 
@@ -174,6 +284,8 @@ Announce at start: "I'm using the forge-pipeline skill to orchestrate a 7-phase 
 **文件冲突防御**: 每个 Implementer 只编辑分配给自己的文件。Lead 通过任务分配确保无重叠。如有共享文件，使用顺序写入。
 
 **产出**: 生产级代码 + 测试
+
+**状态更新**: P4 `status` → `completed`，`artifacts.code_report` → `phase-4-implementation/report.md`，`current_phase` → 5
 
 **进入下一阶段条件**: 所有任务完成，TDD Guard 无 blocker，测试通过。
 
@@ -212,6 +324,8 @@ Announce at start: "I'm using the forge-pipeline skill to orchestrate a 7-phase 
 
 **产出**: `docs/forge-teams/[feature]/phase-5-red-team/`
 
+**状态更新**: P5 `status` → `completed`，`artifacts.red_team_report` → `phase-5-red-team/arbitration.md`，`current_phase` → 7（无 blocker）或 6（有 blocker）
+
 **进入下一阶段条件**:
 - 无 blocker 问题: 直接进入 Phase 7
 - 有 blocker 问题: 进入 Phase 6 修复
@@ -244,6 +358,8 @@ Announce at start: "I'm using the forge-pipeline skill to orchestrate a 7-phase 
 
 **产出**: `docs/forge-teams/[feature]/phase-6-debugging/`
 
+**状态更新**: P6 `status` → `completed`，`artifacts.debug_fixes` → `phase-6-debugging/fixes.md`，`current_phase` → 5（回退重审）
+
 **进入下一阶段条件**: Phase 5 重新审查通过，无 blocker 问题。
 
 ---
@@ -270,6 +386,8 @@ Announce at start: "I'm using the forge-pipeline skill to orchestrate a 7-phase 
 7. Shutdown team + TeamDelete
 
 **产出**: `docs/forge-teams/[feature]/summary.md`
+
+**状态更新**: P7 `status` → `completed`，`artifacts.acceptance` → `phase-7-delivery/acceptance.md`，pipeline `status` → `completed`
 
 ---
 
@@ -336,6 +454,7 @@ CREATE ──▶ COORDINATE ──▶ SHUTDOWN ──▶ CLEANUP
 | 6 | 证据优先 | 所有论点必须有具体证据 |
 | 7 | 遵循 adversarial-protocol 规则 | 所有对抗阶段统一规则 |
 | 8 | 遵循 team-coordination 规则 | 所有团队通信统一规范 |
+| 9 | 每个阶段开始/结束时更新 `.forge-state.json` | 支持跨 context 恢复 |
 
 ### 禁止行为
 
