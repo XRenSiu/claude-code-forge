@@ -1,11 +1,11 @@
 ---
-description: Agent Teams 版 7 阶段产品开发流水线。对抗辩论 + 并行实现 + 红队审查 + 对抗调试。
-argument-hint: <requirement> [--phase <1-7>] [--skip-to <phase>] [--team-size <small|medium|large>]
+description: Agent Teams 版 7 阶段产品开发流水线。自动识别意图：bug 描述→对抗调试，审查请求→红队审查，新功能→完整流水线。
+argument-hint: <requirement> [--skip-to <phase>] [--team-size <small|medium|large>] [--fix] [--loop N]
 ---
 
 ## Mission
 
-`/forge-teams` 是 Agent Teams 驱动的产品开发主协调器。7 阶段流水线采用多 agent 对抗协作模式：每个关键决策点由多个 agent 并行竞争、辩论和交叉验证，通过结构化对抗消除单 agent 的认知偏差。
+`/forge-teams` 是 Agent Teams 驱动的产品开发主协调器。支持**意图自动识别**——根据需求内容自动选择最佳入口：bug 描述直接进对抗调试（P6），审查请求直接进红队审查（P5），新功能走完整 7 阶段流水线。每个关键决策点由多个 agent 并行竞争、辩论和交叉验证，通过结构化对抗消除单 agent 的认知偏差。
 
 ---
 
@@ -21,12 +21,12 @@ argument-hint: <requirement> [--phase <1-7>] [--skip-to <phase>] [--team-size <s
 
 | 参数 | 说明 | 默认值 |
 |------|------|--------|
-| `<requirement>` | 需求描述（文本或文件路径） | 必填 |
+| `<requirement>` | 需求描述 / bug 描述 / 审查上下文（文本或文件路径） | 必填（完整流水线）；`--skip-to` 时可选但建议提供 |
 | `--phase <1-7>` | 仅运行指定阶段 | 运行全部 |
-| `--skip-to <phase>` | 从指定阶段恢复（需要前序产物） | 从阶段 1 开始 |
+| `--skip-to <phase>` | 从指定阶段开始。有前序产物则恢复，无前序产物则自动 bootstrap | 从阶段 1 开始 |
 | `--team-size <size>` | 团队规模配置 | `medium` |
 | `--no-red-team` | 跳过红队审查（阶段 5） | 启用红队 |
-| `--fix` | 修复阶段 5/6 发现的问题 | 不自动修复 |
+| `--fix` | 审查/调试发现问题后自动修复 | 不自动修复 |
 | `--loop [N]` | 修复后重新验证（最多 N 轮） | 3 |
 | `--feature <name>` | 指定恢复的 feature 目录（配合 `--skip-to`） | 自动检测最近未完成的 run |
 
@@ -88,15 +88,44 @@ argument-hint: <requirement> [--phase <1-7>] [--skip-to <phase>] [--team-size <s
 
 ## 示例
 
-### 完整流水线
+### 自动路由（推荐用法，无需记参数）
 
 ```bash
-# 从需求开始完整对抗协作流程
-/forge-teams "用户认证功能，支持 OAuth2 和 JWT"
+# 自动识别 → bug 描述 → 对抗调试（P6）
+/forge-teams "支付回调间歇性超时，大约每10次失败2次"
+/forge-teams "用户登录后 session 偶尔丢失"
+/forge-teams "CI 跑到 integration test 就挂，本地没问题"
 
-# 大团队模式 + 自动修复循环
+# 自动识别 → 审查请求 → 红队审查（P5）
+/forge-teams "帮我审查下 src/payment/ 的安全性"
+/forge-teams "上线前帮我做个代码体检"
+
+# 自动识别 → 新功能 → 完整流水线（P1→P7）
+/forge-teams "用户认证功能，支持 OAuth2 和 JWT"
 /forge-teams "支付系统重构" --team-size large --fix --loop 5
 ```
+
+> **意图自动识别**: Lead 分析 `<requirement>` 内容，自动判定走 P5（审查）、P6（调试）
+> 还是完整流水线。用户不需要记任何参数，直接说要做什么就行。
+
+### 显式指定入口（覆盖自动判定）
+
+```bash
+# 强制走红队审查（即使内容看起来像 bug）
+/forge-teams --skip-to 5 "支付回调间歇性超时"
+
+# 强制走对抗调试（即使内容看起来像审查）
+/forge-teams --skip-to 6 "帮我看看认证模块"
+
+# 断点续跑（有前序产物时恢复中断的流水线）
+/forge-teams --skip-to 3 --feature "用户认证功能-20260324"
+
+# 审查 + 发现问题自动修复
+/forge-teams --skip-to 5 --fix --loop 3
+```
+
+> **`--skip-to` 始终优先于自动路由**。指定后 Lead 不做意图识别，直接按指定阶段执行。
+> 有前序产物则恢复断点，无前序产物则自动 bootstrap（仅支持 P5/P6）。
 
 ### 单阶段执行
 
@@ -104,26 +133,9 @@ argument-hint: <requirement> [--phase <1-7>] [--skip-to <phase>] [--team-size <s
 # 只执行需求对抗辩论
 /forge-teams "暗色模式切换" --phase 1
 
-# 只执行红队审查
+# 只执行红队审查（需要有前序产物）
 /forge-teams --phase 5
 ```
-
-### 从中间恢复
-
-```bash
-# 已有 PRD 和 ADR，从阶段 3 开始（自动检测最近未完成的 feature）
-/forge-teams --skip-to 3
-
-# 指定 feature 恢复
-/forge-teams --skip-to 3 --feature "用户认证功能-20260324"
-
-# 已有代码，从红队审查开始
-/forge-teams --skip-to 5
-```
-
-> **恢复机制**: `--skip-to` 会扫描 `docs/forge-teams/` 下的 `.forge-state.json`，
-> 自动找到最近一次未完成的 run。如果有多个未完成的 run，会列出供用户选择。
-> 使用 `--feature` 可以跳过自动检测，直接指定目标。
 
 ---
 

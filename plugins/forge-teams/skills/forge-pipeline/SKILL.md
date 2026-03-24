@@ -2,14 +2,19 @@
 name: forge-pipeline
 description: >
   Agent Teams 7 阶段产品开发流水线。从需求到部署，每个关键决策点使用对抗辩论。
-  Use when: (1) 新项目完整开发, (2) 复杂功能需要高质量保证, (3) 需要团队级并行开发。
-  Triggers: "forge teams", "team pipeline", "adversarial development"
+  支持意图自动识别：bug 描述自动进 P6 调试，审查请求自动进 P5 红队审查，新功能走完整流水线。
+  Use when: (1) 新项目完整开发, (2) 复杂功能需要高质量保证, (3) 需要团队级并行开发,
+  (4) 已有代码需要红队审查, (5) 已知 bug 需要对抗式调试。
+  Triggers: "forge teams", "team pipeline", "adversarial development", "review my code", "debug this bug",
+  "fix this bug", "为什么会", "帮我查", "帮我看看", "代码审查", "代码体检"
 when_to_use: |
   - 新项目从零开发
   - 复杂功能需要高质量保证
   - 需要并行开发加速
   - 需要红队级安全审查
-version: 1.6.0
+  - 已有代码需要独立审查（--skip-to 5）
+  - 已知 bug 需要对抗式根因分析（--skip-to 6）
+version: 1.7.0
 ---
 
 # Forge Pipeline - Agent Teams 7 阶段对抗协作流水线
@@ -20,6 +25,72 @@ Announce at start: "I'm using the forge-pipeline skill to orchestrate a 7-phase 
 
 > **前置条件**: 需要启用 Agent Teams 实验性功能。
 > 在 settings.json 中添加: `"env": { "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1" }`
+
+---
+
+## Intent Detection & Auto-Routing (意图识别与自动路由)
+
+当用户未指定 `--skip-to` 或 `--phase` 时，Lead **必须**先分析 `<requirement>` 内容，自动判定最佳入口。
+
+### 路由决策树
+
+```
+用户输入 <requirement>
+    │
+    ├── 指定了 --skip-to N → 按 --skip-to 逻辑（恢复 or bootstrap）
+    ├── 指定了 --phase N   → 单阶段执行
+    │
+    └── 未指定 → Lead 分析意图
+        │
+        ├── 意图 = BUG_FIX     → bootstrap P6（对抗调试）
+        ├── 意图 = CODE_REVIEW  → bootstrap P5（红队审查）
+        └── 意图 = NEW_FEATURE  → 完整流水线 P1→P7
+```
+
+### 意图判定规则
+
+Lead 按以下信号判断意图类型：
+
+| 意图 | 信号关键词/模式 | 路由 |
+|------|----------------|------|
+| **BUG_FIX** | bug、报错、崩溃、失败、超时、异常、间歇性、复现、regression、error、fix、修复、排查、定位、根因、为什么会… | → bootstrap P6 |
+| **CODE_REVIEW** | 审查、review、体检、安全检查、代码质量、漏洞扫描、帮我看看这段代码、有没有问题 | → bootstrap P5 |
+| **NEW_FEATURE** | 开发、实现、做一个、新增、创建、支持XX功能、重构（大范围）、从零开始 | → 完整流水线 P1→P7 |
+
+**判定优先级**: BUG_FIX > CODE_REVIEW > NEW_FEATURE
+
+> 当意图不明确时（如 "优化支付模块"），Lead 应视为 NEW_FEATURE 走完整流水线，因为优化通常涉及需求分析和架构决策。
+
+### 自动路由后的行为
+
+- **BUG_FIX → P6**: 等同于 `--skip-to 6`，`<requirement>` 作为 bug 描述，进入 Phase 0 Information Intake
+- **CODE_REVIEW → P5**: 等同于 `--skip-to 5`，`<requirement>` 作为审查上下文，进入 Phase 0 Bootstrap
+- **NEW_FEATURE → P1**: 正常完整流水线，`<requirement>` 作为需求输入
+
+### 示例
+
+```bash
+# Lead 自动识别 → BUG_FIX → bootstrap P6
+/forge-teams "支付回调间歇性超时，大约每10次失败2次"
+/forge-teams "用户登录后 session 偶尔丢失"
+/forge-teams "CI 跑到 integration test 就挂，本地没问题"
+
+# Lead 自动识别 → CODE_REVIEW → bootstrap P5
+/forge-teams "帮我审查下 src/payment/ 的安全性"
+/forge-teams "这段认证代码有没有问题"
+/forge-teams "上线前帮我做个代码体检"
+
+# Lead 自动识别 → NEW_FEATURE → 完整流水线
+/forge-teams "用户认证功能，支持 OAuth2 和 JWT"
+/forge-teams "做一个暗色模式切换"
+/forge-teams "支付系统重构"
+
+# 显式指定，覆盖自动判定
+/forge-teams --skip-to 5 "支付回调间歇性超时"   # 强制走 P5 审查
+/forge-teams --skip-to 6 "帮我审查下安全性"       # 强制走 P6 调试
+```
+
+> **`--skip-to` 始终优先于自动路由**。当用户显式指定了 `--skip-to`，Lead 不做意图识别，直接按指定阶段执行。
 
 ---
 
@@ -213,6 +284,160 @@ Lead 必须持续监控 context 使用量并按阈值采取行动：
    - 将 `current_phase` 更新为 N
    - 清除 `interrupted_at` 和 `progress_memo`（恢复后重置）
    - 继续正常的阶段执行和状态更新
+
+---
+
+## --skip-to 智能降级 (Bootstrap Mode)
+
+`--skip-to N` 支持两种模式，Lead 自动判定：
+
+```
+--skip-to N
+    │
+    ├── 找到 .forge-state.json 且 P1~P(N-1) 均 completed
+    │   └── ✅ 恢复模式: 加载前序产物，从断点继续
+    │
+    └── 找不到 .forge-state.json，或前序产物不完整
+        │
+        ├── N = 5 → ✅ Bootstrap 审查模式: 从代码推导上下文，进入 P5
+        ├── N = 6 → ✅ Bootstrap 调试模式: 从用户描述收集信息，进入 P6
+        └── N < 5 → ❌ 报错: P1-P4 必须有前序产物，无法 bootstrap
+```
+
+> **设计原则**: P5/P6 的核心输入是**代码**和**问题描述**，这些用户可以直接提供；P1-P4 的核心输入是前一阶段的结构化产物（PRD → ADR → plan.json），跳过会丢失对抗辩论的价值，因此不支持 bootstrap。
+
+### Bootstrap 审查模式 (--skip-to 5，无前序产物)
+
+**触发条件**: `--skip-to 5`，且 Lead 检测不到已完成的 P1-P4 产物。
+
+**Phase 0: Bootstrap (上下文推导)**
+
+Lead 在进入 P5 之前，执行以下信息收集步骤：
+
+1. **确定审查范围**:
+   - 以当前项目根目录为审查根目录
+   - 扫描目录结构，识别主要代码文件
+
+2. **推导预期行为**（替代 PRD 的作用）:
+   - 读取 `README.md`、`CONTRIBUTING.md` 等项目文档
+   - 读取测试文件，推导功能预期
+   - 读取代码注释和 JSDoc/docstring
+   - 如果用户提供了 `<requirement>` 文本：作为最高优先级的预期行为依据
+   - 生成 `inferred-spec.md` 保存到输出目录
+
+3. **推导技术架构**（替代 ADR 的作用）:
+   - 分析 `package.json` / `go.mod` / `pyproject.toml` 等依赖文件
+   - 分析目录结构推导架构模式
+   - 识别框架和关键技术栈
+   - 生成 `inferred-architecture.md` 保存到输出目录
+
+4. **创建 .forge-state.json**:
+   ```json
+   {
+     "feature": "bootstrap-review-[timestamp]",
+     "timestamp": "...",
+     "requirement": "<用户提供的需求描述，或 'inferred from codebase'>",
+     "mode": "bootstrap",
+     "team_size": "medium",
+     "current_phase": 5,
+     "status": "in_progress",
+     "phases": {
+       "1": { "status": "skipped" },
+       "2": { "status": "skipped" },
+       "3": { "status": "skipped" },
+       "4": { "status": "skipped" },
+       "5": { "status": "in_progress", "started_at": "..." },
+       "6": { "status": "pending" },
+       "7": { "status": "skipped" }
+     },
+     "bootstrap": {
+       "inferred_spec": "inferred-spec.md",
+       "inferred_architecture": "inferred-architecture.md"
+     },
+     "artifacts": { ... },
+     "options": { ... }
+   }
+   ```
+
+5. **进入 P5**: 使用 `inferred-spec.md` 替代 PRD 传给 spec-reviewer，使用 `inferred-architecture.md` 替代 ADR 传给 code-reviewer，其余审查员（security-reviewer、red-team-attacker）正常工作——它们本来就直接读代码。
+
+**P5 完成后的路由**:
+- 无 blocker → 输出审查报告，pipeline 结束（bootstrap 模式不进入 P7）
+- 有 blocker + 指定了 `--fix` → 自动进入 P6 对抗调试，修复后回到 P5 缩小范围复审
+- 有 blocker + 未指定 `--fix` → 输出审查报告 + 问题清单，由用户决定后续
+
+### Bootstrap 调试模式 (--skip-to 6，无前序产物)
+
+**触发条件**: `--skip-to 6`，且 Lead 检测不到已完成的 P5 审查报告。
+
+**前提**: `<requirement>` 参数**必须提供** bug 描述。如果为空，Lead 直接报错提示用户提供 bug 描述。
+
+**Phase 0: Information Intake (信息收集)**
+
+Lead 在进入 P6 之前，执行信息收集（同 Adversarial Debugger 的 Phase 0）：
+
+1. **收集 bug 信息**:
+   - 从 `<requirement>` 参数获取用户的 bug 描述
+   - 通过错误信息和 git history 推断相关文件
+
+2. **自动补全上下文**:
+   ```bash
+   # 跑测试抓错误
+   npm test 2>&1 | tee /tmp/error.log    # (或 pytest / go test 等)
+   # 看最近变更
+   git log --oneline -10
+   git diff HEAD~5
+   # 环境信息
+   node -v && npm -v                     # (或 python --version 等)
+   ```
+
+3. **信息完整性检查**:
+   - 必须有: 错误信息/现象、可疑代码范围
+   - 最好有: 复现步骤、频率模式、近期变更
+   - **如果关键信息不足，停下来向用户提问**，不进入假设生成阶段
+
+4. **创建 .forge-state.json**:
+   ```json
+   {
+     "feature": "bootstrap-debug-[timestamp]",
+     "timestamp": "...",
+     "requirement": "<bug 描述>",
+     "mode": "bootstrap",
+     "team_size": "medium",
+     "current_phase": 6,
+     "status": "in_progress",
+     "phases": {
+       "1": { "status": "skipped" },
+       "2": { "status": "skipped" },
+       "3": { "status": "skipped" },
+       "4": { "status": "skipped" },
+       "5": { "status": "skipped" },
+       "6": { "status": "in_progress", "started_at": "..." },
+       "7": { "status": "skipped" }
+     },
+     "bootstrap": {
+       "bug_description": "<bug 描述>",
+       "intake_log": "phase-0-intake.md"
+     },
+     "artifacts": { ... },
+     "options": { ... }
+   }
+   ```
+
+5. **进入 P6**: 使用收集到的信息作为输入，替代 P5 审查报告。直接进入假设生成 → 团队组建 → 对抗辩论 → 根因判定 → TDD 修复。
+
+**P6 完成后的路由**:
+- 修复完成 → 输出根因报告 + 修复记录，pipeline 结束
+- 修复失败（3 轮辩论后仍无共识）→ 输出所有假设和证据，由用户决定后续
+
+### Bootstrap 模式的限制
+
+| 限制 | 说明 | 缓解方式 |
+|------|------|---------|
+| 无 PRD | spec-reviewer 基于推导的 `inferred-spec.md`，可能遗漏隐含需求 | 用户在 `<requirement>` 中提供关键需求点 |
+| 无 ADR | code-reviewer 基于推导的架构理解，可能误判架构决策 | 用户指向项目已有的架构文档 |
+| 无 P4 任务计划 | 无法判断文件归属是否合理 | P5 审查聚焦于代码质量和安全，不做任务级合规检查 |
+| P7 不可用 | bootstrap 模式无需交付验收 | 如需完整交付，使用完整流水线模式 |
 
 ---
 
@@ -457,9 +682,19 @@ Lead 必须持续监控 context 使用量并按阈值采取行动：
 | P3 | P4 | 计划无循环依赖，高风险项有缓解方案 |
 | P4 | P5 | 所有任务完成，TDD 合规，测试通过 |
 | P5 | P6 | 有 blocker 问题需要修复 |
-| P5 | P7 | 无 blocker 问题 |
-| P6 | P5 | 修复完成，需要重新审查 |
+| P5 | P7 | 无 blocker 问题（完整流水线模式） |
+| P5 | 完成 | 无 blocker 问题（bootstrap 模式） |
+| P6 | P5 | 修复完成，需要重新审查（完整流水线模式 or bootstrap P5 + `--fix`） |
+| P6 | 完成 | 修复完成（bootstrap P6 模式） |
 | P7 | 完成 | 交叉验收通过 |
+
+### Bootstrap 模式路由
+
+| 场景 | 入口 | 路由 |
+|------|------|------|
+| `--skip-to 5`（无产物） | Phase 0 Bootstrap → P5 | P5 通过 → 完成 |
+| `--skip-to 5 --fix`（无产物） | Phase 0 Bootstrap → P5 | P5 有 blocker → P6 → P5 循环（最多 3 次） |
+| `--skip-to 6`（无产物） | Phase 0 Intake → P6 | P6 修复完成 → 完成 |
 
 ### 回退条件
 
@@ -580,6 +815,9 @@ CREATE ──▶ COORDINATE ──▶ SHUTDOWN ──▶ CLEANUP
 | P6 跳过根因直接修 | 治标不治本 | 必须定位根因 |
 | 不清理 team | 资源泄漏 | 每阶段结束必须 cleanup |
 | 辩论超 3 轮 | 收益递减 | 3 轮后强制判定 |
+| 想修 bug 却跑完整流水线 | 浪费 P1-P4 | 用 `--skip-to 6 "bug 描述"` |
+| `--skip-to 5` 不提供需求描述 | spec-reviewer 只能猜测预期行为 | 尽量附上简短的功能需求说明 |
+| `--skip-to 6` 信息过少就开始 | 假设质量差 | Phase 0 会要求补全信息，配合它 |
 
 ---
 
