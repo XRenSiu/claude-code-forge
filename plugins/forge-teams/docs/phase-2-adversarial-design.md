@@ -584,6 +584,48 @@ Arbiter 的一个关键能力是从落选方案中识别值得保留的元素：
 
 7. **成本意识**：P2 约消耗单 agent 架构设计的 8 倍 token。在决定使用 forge-teams P2 前，确认架构决策的重要性值得这个投资。
 
+8. **增量写入**: Architect 方案完成后立即写入 `proposal-{a,b}.md`，Critic 评审完成后立即写入 `evaluation.md`。不等整个阶段结束。这是 context 容量告警时能够恢复的前提。
+
+---
+
+## 🔄 跨 Context 恢复支持
+
+### 增量写入
+
+P2 阶段的增量写入文件：
+
+| 文件 | 写入时机 | 说明 |
+|------|---------|------|
+| `proposal-a.md` | Architect A 方案完成后 | 方案 A 的完整架构设计 |
+| `proposal-b.md` | Architect B 方案完成后 | 方案 B 的完整架构设计 |
+| `evaluation.md` | Critic 评审完成后 | 6 维度挑战列表 |
+
+Lead 在收到每个 agent 输出后**立即写入**对应文件。这确保即使 context 在辩论中途耗尽，已完成的方案和评审结果不会丢失。
+
+### 进度备忘录
+
+Lead 维护 `phase-2-progress.md`，记录：
+- 当前子阶段（Phase A 独立设计 / Phase B 技术评审 / Phase C 辩论 / Phase D 裁决 / Phase E 产出）
+- 已完成 agent 的结论摘要（如 "Architect A 方案已提交，采用事件驱动架构"）
+- 辩论进展（如 "Round 1 完成，Critic 提出 3 个 CRITICAL 挑战"）
+- Lead 的判断笔记（如 "方案 A 在可扩展性上明显优于 B"）
+
+### 状态更新
+
+| 时机 | .forge-state.json 更新 |
+|------|----------------------|
+| P2 开始 | `current_phase` → 2, P2 `status` → `in_progress`, `started_at` |
+| P2 完成 | P2 `status` → `completed`, `completed_at`, `artifacts.adr` → 文件路径, `current_phase` → 3 |
+| Context 告警 | `interrupted_at`, `progress_memo` → `phase-2-progress.md` 路径 |
+
+### 恢复后行为
+
+当 `--skip-to 2` 且 `progress_memo` 指向 `phase-2-progress.md` 时：
+- Lead 读取进度备忘录，判断中断发生在哪个子阶段
+- 如果 Phase A 已完成（`proposal-a.md` 和 `proposal-b.md` 存在）：跳过独立设计，直接进入 Phase B
+- 如果 Phase B 已完成（`evaluation.md` 存在）：跳过评审，直接进入 Phase C 辩论
+- 仅 spawn 未完成阶段所需的 agent
+
 ---
 
 ## 🔗 下一阶段

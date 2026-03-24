@@ -361,6 +361,123 @@ forge-teams 内部的某些子步骤仍可使用 subagent：
 
 ---
 
+## 🛡️ 跨 Context 恢复设计 (Cross-Context Recovery Design)
+
+### 为什么需要跨 Context 恢复
+
+Claude Code 的 context window 是有限的。当流水线运行时间较长时，context 可能在阶段中途达到上限，导致 auto-compact 触发或需要 `/clear`。如果不做任何准备，阶段内已完成的工作（agent 返回的结果、辩论记录等）会丢失。
+
+```
+没有恢复机制：
+P1 ──▶ P2（Phase B: Critic 评审完成，开始辩论）
+                    │
+                    │ ← context 耗尽，/clear
+                    ▼
+              一切从头开始 ❌
+
+有恢复机制：
+P1 ──▶ P2（Phase B: Critic 评审完成，开始辩论）
+                    │
+                    │ ← context 告警，主动保存
+                    ▼
+              .forge-state.json + 中间产物 + 进度备忘录
+                    │
+                    │ /clear → --skip-to 2
+                    ▼
+              从辩论 Round 1 继续 ✅
+```
+
+### 三层防御体系
+
+forge-teams 采用三层防御体系保护工作进度：
+
+| 层 | 机制 | 作用 |
+|----|------|------|
+| **L1: 增量写入** | Agent 输出立即写入文件 | 即使突然中断，已完成的工作已在磁盘上 |
+| **L2: 进度备忘录** | Lead 持续更新 phase-N-progress.md | 恢复时知道精确的中断位置 |
+| **L3: 主动保存** | Context > 75% 时触发保存协议 | 在 auto-compact 前有序保存 |
+
+### 增量写入原则 (Incremental Write)
+
+**核心规则**: 每个 Agent 的输出必须在 Lead 收到后**立即**写入文件，不得等到阶段结束再批量写入。
+
+```
+错误做法（批量写入）：
+Agent A 返回结果 → Lead 存在内存中
+Agent B 返回结果 → Lead 存在内存中
+Agent C 返回结果 → Lead 存在内存中
+阶段结束 → 一次性写入所有文件
+                   ↑ 如果这之前 context 耗尽，全部丢失
+
+正确做法（增量写入）：
+Agent A 返回结果 → Lead 立即写入 proposal-a.md ✅
+Agent B 返回结果 → Lead 立即写入 proposal-b.md ✅
+Agent C 返回结果 → Lead 立即写入 evaluation.md ✅
+                   ↑ 即使 context 耗尽，已写入的文件安全
+```
+
+**为什么不是 Agent 自己写文件？**
+
+| 选项 | 优点 | 缺点 |
+|------|------|------|
+| Agent 自己写 | 减少一次通信 | Lead 不知道文件是否写入，无法追踪进度 |
+| Lead 收到后写 | Lead 掌握全局进度 | 多一次通信 |
+
+选择 Lead 写入，因为 Lead 是状态管理的唯一权威源。Agent 可能并行运行，如果各自写入，进度追踪会变得混乱。
+
+### 进度备忘录 (Progress Memo)
+
+Lead 在每个阶段维护 `phase-N-progress.md`，记录：
+- 当前子步骤
+- 已完成的 agent 及其结论摘要
+- 待完成的事项
+- Lead 的判断笔记
+
+这不仅仅是紧急保存——它是**常规更新**的文档，确保恢复时 Lead 能理解精确的中断位置。
+
+**与 .forge-state.json 的关系**：
+- `.forge-state.json` 记录**阶段级**状态（哪个阶段完成了）
+- `phase-N-progress.md` 记录**子步骤级**状态（阶段内部进行到哪里）
+- 两者互补：粗粒度定位 + 细粒度恢复
+
+### Context 容量监控
+
+| 阈值 | 状态 | Lead 动作 |
+|------|------|----------|
+| < 60% | 🟢 Normal | 正常执行 |
+| 60%-75% | 🟡 Warning | 评估剩余空间是否够完成当前阶段 |
+| > 75% | 🔴 Critical | 执行主动保存协议，不再启动新子步骤 |
+
+> **关键约束**: Claude Code 在 ~83% 时触发 auto-compact。主动保存必须在此之前完成，否则保存过程本身可能被 compact 打断。
+
+### 主动保存协议 (Proactive Save Protocol)
+
+```
+Context 进入 Critical (> 75%)
+    │
+    ▼
+1. 完成当前原子操作（不中断正在运行的 agent）
+    │
+    ▼
+2. 写入中间产物（已收到但未写入的 agent 输出）
+    │
+    ▼
+3. 更新 phase-N-progress.md（精确中断位置）
+    │
+    ▼
+4. 更新 .forge-state.json（interrupted_at + progress_memo）
+    │
+    ▼
+5. 清理团队（shutdown + TeamDelete）
+    │
+    ▼
+6. 输出恢复命令 → 用户 /clear → --skip-to N --feature [feature]
+```
+
+**为什么不自动恢复？** 恢复需要新的 context window，而 `/clear` 是用户操作。Lead 能做的是确保恢复所需的一切信息已保存到磁盘。
+
+---
+
 ## ⚠️ 反模式 (Anti-Patterns)
 
 ### 设计层面
@@ -381,6 +498,8 @@ forge-teams 内部的某些子步骤仍可使用 subagent：
 | 忽视否决 | 有 FATAL 挑战的方案继续推进 | FATAL = 硬否决，必须解决或放弃方案 |
 | 手动干预辩论 | 用户在辩论中途修改 Agent 立场 | 让辩论自然完成，在综合阶段提供输入 |
 | 单阶段使用 | 只用 P2 不用 P1 | 各阶段有依赖关系，建议完整流程 |
+| 不写中间文件 | 等到阶段结束才写入 | Agent 输出立即写入文件 |
+| 忽视 context 容量 | context 耗尽后丢失工作 | 持续监控，> 75% 时主动保存 |
 
 ---
 

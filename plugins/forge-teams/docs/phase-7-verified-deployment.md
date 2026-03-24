@@ -376,6 +376,7 @@ Verifier 验证回滚后的状态
 3. **回滚优先**：任何验证失败优先回滚，不尝试在线修复——在线修复容易引入更多问题
 4. **人工确认**：生产环境部署前需要人类最终确认——影响真实用户的操作必须有人签字
 5. **验证独立性**：Verifier 不能依赖 Deployer 的测试结果——独立验证才有意义
+6. **增量写入**: Reviewer A 和 B 的验收报告完成后分别立即写入 `acceptance-a.md` 和 `acceptance-b.md`。虽然 P7 通常较短，但仍需遵循增量写入原则。
 
 ### 反模式列表
 
@@ -398,6 +399,37 @@ Deployer 失败   ❌ 回滚（部署问题） ❌ 回滚（严重问题）
 ```
 
 只有左上角（双方都通过）才算部署成功。其他三种情况都触发回滚。
+
+---
+
+## 🔄 跨 Context 恢复支持
+
+### 增量写入
+
+P7 阶段的增量写入文件：
+
+| 文件 | 写入时机 | 说明 |
+|------|---------|------|
+| `acceptance-a.md` | Reviewer A（需求视角）完成后 | PRD 合规性验收报告 |
+| `acceptance-b.md` | Reviewer B（技术视角）完成后 | 技术质量验收报告 |
+
+Lead 在收到每个 Reviewer 报告后**立即写入**对应文件。
+
+### 进度备忘录
+
+Lead 维护 `phase-7-progress.md`，记录：
+- 当前步骤（Reviewer A 验收中 / Reviewer B 验收中 / 交叉确认 / Doc 更新 / 部署执行 / 部署验证）
+- 已完成 Reviewer 的验收结论摘要
+- 部署执行状态（如已开始部署）
+- Doc Updater 的更新列表
+
+### 状态更新
+
+| 时机 | .forge-state.json 更新 |
+|------|----------------------|
+| P7 开始 | `current_phase` → 7, P7 `status` → `in_progress`, `started_at` |
+| P7 完成 | P7 `status` → `completed`, `artifacts.acceptance` → 文件路径, pipeline `status` → `completed` |
+| Context 告警 | `interrupted_at`, `progress_memo` → `phase-7-progress.md` 路径 |
 
 ---
 

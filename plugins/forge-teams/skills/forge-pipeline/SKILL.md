@@ -9,7 +9,7 @@ when_to_use: |
   - 复杂功能需要高质量保证
   - 需要并行开发加速
   - 需要红队级安全审查
-version: 1.2.0
+version: 1.6.0
 ---
 
 # Forge Pipeline - Agent Teams 7 阶段对抗协作流水线
@@ -132,157 +132,56 @@ docs/forge-teams/[feature]-[timestamp]/
 | 每个阶段完成时 | **更新** 该阶段 `status` → `completed`、`completed_at`、对应 `artifacts` 路径 |
 | Pipeline 全部完成 | **更新** `status` → `completed` |
 | P5→P6 回退 | **更新** `current_phase` → 6，P6 `status` → `in_progress` |
-| Context 即将耗尽 | **主动存档**：写入中间产物 + 编排备忘 → 更新 `interrupted_at` + `progress_memo` → 清理 team → 输出恢复指令提示用户 `/clear` |
+| Context 容量告警 | **更新** `interrupted_at`、`progress_memo`，执行主动保存协议 |
 | Pipeline 异常退出 | 当前阶段保持 `in_progress`（恢复时从此阶段重新开始） |
 
-### 增量写入与编排备忘（Compact 防御）
+### Incremental Write Rule (增量写入规则)
 
-Claude Code 在 context 使用达到约 **83%** 时会自动触发 compact（对话压缩），这是不可控的。Compact 会丢失对话中的细节信息。为了防御这一风险，Lead **必须**在日常编排中持续将关键信息写入文件，而不是等到 context 快满才写。
+**核心原则**: 每个 Agent 的输出必须在 Lead 收到后**立即**写入文件，不得等到阶段结束再批量写入。这确保了 context 被截断时不会丢失已完成的工作。
 
-#### 增量写入规则
+| 阶段 | 增量写入文件 | 写入时机 |
+|------|------------|---------|
+| P1 | `debate-transcript.md` | 每轮辩论完成后追加 |
+| P2 | `proposal-{a,b}.md`, `evaluation.md` | 每个方案/评审完成后立即写入 |
+| P3 | `plan.json`, `risk-assessment.md` | 各自完成后立即写入 |
+| P5 | `{role}-review.md` (每个审查员), `cross-examination.md` | 每个审查员完成后立即写入 |
+| P6 | `hypotheses.md` (Evidence Board 更新), `debate-log.md` | 每轮辩论后追加 |
+| P7 | `acceptance-{a,b}.md` | 每个 Reviewer 完成后立即写入 |
 
-每个 Agent 完成自己的工作后，Lead **立即**将其产出写入中间文件，不等整个阶段结束：
+### phase-N-progress.md (编排备忘录)
 
-| 阶段 | 触发时机 | 写入文件 |
-|------|---------|---------|
-| P1 需求辩论 | 每轮辩论结束 | `phase-1-requirements/debate-transcript.md`（追加） |
-| P2 架构竞标 | 每个架构师提交方案 | `phase-2-architecture/proposal-{a,b}.md` |
-| P2 架构竞标 | 评审完成 | `phase-2-architecture/evaluation.md` |
-| P3 规划 | Planner 提交计划 | `phase-3-planning/plan.json` |
-| P3 规划 | Risk Analyst 提交审查 | `phase-3-planning/risk-assessment.md` |
-| P4 并行实现 | 每个 Implementer 完成任务 | git commit（已有机制） |
-| P5 红队审查 | 每个 Reviewer 提交报告 | `phase-5-red-team/{role}-review.md` |
-| P5 红队审查 | Cross-examination 结束 | `phase-5-red-team/cross-examination.md` |
-| P6 对抗调试 | 每轮调查结束 | `phase-6-debugging/hypotheses.md`（更新 Evidence Board） |
-| P6 对抗调试 | Devil's Advocate 挑战 | `phase-6-debugging/debate-log.md`（追加） |
-| P7 交叉验收 | 每个 Reviewer 提交 | `phase-7-delivery/acceptance-{a,b}.md` |
+Lead 在每个阶段维护一份 `phase-N-progress.md` 进度备忘录，**常规更新**（不仅仅是紧急情况）。
 
-> **核心原则**：任何 Agent 通过 SendMessage 提交的报告，Lead 收到后**第一件事**就是写入文件，**然后**再进行下一步编排。这样即使 compact 压缩了对话历史，所有产出都已在磁盘上。
+**内容**:
+- 当前子步骤（如 "P2 Phase B: Critic 评审中"）
+- 已完成的 agent 及其结论摘要
+- 待完成的事项
+- Lead 的判断笔记（辩论走向、关键分歧等）
 
-#### 编排备忘（常规更新）
+**更新时机**: 每个重要子步骤完成后（如 agent 返回结果、辩论轮次结束）。
 
-Lead 在每个阶段维护一份 `phase-N-progress.md`，**不是只在紧急存档时才写**，而是在每个关键子步骤完成后常规更新：
+### Context Monitoring (上下文容量监控)
 
-| 更新时机 | 记录内容 |
-|---------|---------|
-| 阶段开始 | 创建文件，记录目标、团队组成、预期步骤 |
-| 每个 Agent 完成 | 追加该 Agent 的结论摘要（1-2 句话） |
-| 每轮辩论结束 | 追加 Lead 对当前局势的判断 |
-| 阶段结束 | 标记为已完成 |
+Lead 必须持续监控 context 使用量并按阈值采取行动：
 
-这样 compact 发生后，Lead 读一下 `phase-N-progress.md` 就能恢复编排状态，知道"做到哪了、谁做完了、下一步是什么"。
+| 阈值 | 状态 | 动作 |
+|------|------|------|
+| < 60% | 🟢 Normal | 正常执行 |
+| 60%-75% | 🟡 Warning | 评估是否有足够空间完成当前阶段；如不够，准备保存 |
+| > 75% | 🔴 Critical | **强制保存**，不再启动新的子步骤 |
 
-### Context 监控与主动存档
+> **重要**: Claude Code 在 ~83% 时自动触发 auto-compact，保存必须在此之前完成。
 
-forge-teams 的多 agent 对抗辩论会快速消耗 context window。Lead **必须**在编排过程中主动监控 context 用量，在耗尽之前完成存档并提示用户 clear。
+### Proactive Save Protocol (主动保存协议)
 
-#### 监控策略
+当 context 进入 Critical 状态时，Lead 执行以下流程：
 
-Lead 在以下时机检查 context 用量：
-
-| 时机 | 说明 |
-|------|------|
-| 每个阶段开始前 | 评估剩余 context 是否足够完成该阶段 |
-| 每轮辩论结束后 | 对抗阶段（P1/P2/P5/P6）辩论轮次间检查 |
-| 每个 Agent 提交报告后 | P5 多 reviewer 并行提交时逐个检查 |
-
-#### 预估方法
-
-Lead 通过以下启发式方法预估 context 压力：
-
-1. **阶段 token 预算表**（基于 medium 团队规模的经验值）：
-
-| 阶段 | 预估 token 消耗 | 说明 |
-|------|----------------|------|
-| P1 需求辩论 | 中 | 2 agent × 3 轮辩论 |
-| P2 架构竞标 | 高 | 2 方案 + 评审 |
-| P3 规划 | 低 | 2 agent 单轮交互 |
-| P4 并行实现 | 高 | 多 implementer + TDD 守卫 |
-| P5 红队审查 | 很高 | 4-5 reviewer 并行 + cross-examination |
-| P6 对抗调试 | 高 | 多轮假设竞争 + devil's advocate |
-| P7 交叉验收 | 中 | 2 reviewer + 文档更新 |
-
-2. **运行时信号**：当 Lead 感知到以下信号时，判定 context 压力过大：
-   - 自己的回复开始被截断或变得简略
-   - Agent 的报告质量明显下降（信息不完整、遗漏要点）
-   - 系统触发了 compact 或提示 context 接近上限
-
-#### 触发存档的阈值
-
-Claude Code 在 context 使用约 **83%** 时自动触发 compact，这会导致信息有损压缩。因此 Lead 的存档必须在 compact 之前完成：
-
-| 等级 | context 已用 | 动作 |
-|------|-------------|------|
-| 正常 | < 60% | 正常执行（增量写入和编排备忘照常进行） |
-| 预警 | 60% - 75% | Lead 在每个 Agent 交互后评估是否还能完成当前阶段剩余工作。如果判断不够，在当前子步骤完成后触发存档 |
-| 紧急 | > 75% | 立即完成当前原子操作后触发存档，不再启动新的子步骤 |
-
-> **为什么是 75%**：留出 ~8% 的缓冲给存档操作本身（写文件、更新 state、清理 team、输出恢复指令），确保在 83% compact 触发前全部完成。
-
-> **如何估算 context 用量**：Lead 可通过 `#` 快捷键查看当前 token 使用量与上限的比值，或根据对话长度和 Agent 交互轮次粗估。当不确定时，**宁早不晚**——提前存档的代价（多一次恢复）远小于 context 溢出的代价（信息丢失）。
-
-#### 主动存档协议
-
-触发存档时，Lead 按以下步骤执行：
-
-1. **完成当前原子操作**：如果某个 Agent 正在提交报告，等其完成。不在半截对话中中断。
-
-2. **写入阶段内中间产物**：将当前阶段已完成的部分立即写入文件。例如：
-   - P5 审查中：已完成的 reviewer 报告各自写入 `phase-5-red-team/{role}-review.md`
-   - P1/P2 辩论中：已完成的辩论轮次写入 `debate-transcript.md`
-   - P6 调试中：当前 Evidence Board 状态写入 `hypotheses.md`
-
-3. **写入编排备忘** `phase-N-progress.md`：记录 Lead 当前的编排状态，格式如下：
-
-```markdown
-# Phase N Progress Memo
-
-## 当前子步骤
-[精确位置，如 "P5 cross-examination 阶段，已完成 spec/code/security review，red-team 报告待提交"]
-
-## 已完成的 Agent 及其结论摘要
-- spec-reviewer: 发现 3 个 PRD 偏差，#2 为 blocker（详见 spec-review.md）
-- code-reviewer: 性能问题 2 个，命名问题 5 个（详见 code-review.md）
-
-## 待处理事项
-- [ ] red-team-attacker 提交攻击报告
-- [ ] cross-examination
-- [ ] review-synthesizer 综合仲裁
-
-## Lead 判断备注
-[Lead 对当前局势的关键判断，如 "code-reviewer 的性能发现已被独立确认，可信度高"]
-```
-
-4. **更新 `.forge-state.json`**：
-   - 当前阶段 `status` 保持 `in_progress`
-   - 新增 `interrupted_at` 字段记录中断的子步骤位置
-   - 新增 `progress_memo` 字段指向 `phase-N-progress.md` 路径
-
-5. **清理 Agent Teams**：Shutdown 当前 team + TeamDelete（防止资源泄漏）
-
-6. **输出恢复指令**：向用户显示明确的恢复命令：
-
-```
-⚠️ Context 即将耗尽，已完成主动存档。
-
-已保存：
-  - 阶段进度: phase-N-progress.md
-  - 中间产物: [已写入的文件列表]
-  - 状态文件: .forge-state.json
-
-请执行：
-  /clear
-  /forge-teams --skip-to N
-```
-
-#### 恢复时加载编排备忘
-
-`--skip-to` 恢复协议的步骤 3（恢复上下文）中，如果检测到 `phase-N-progress.md` 存在：
-
-1. Lead 读取编排备忘，了解阶段内的精确中断位置
-2. 重新创建 Team，仅 spawn 尚未完成的 Agent
-3. 已完成的 Agent 产出从中间文件加载（不重新执行）
-4. 从中断的子步骤继续执行
+1. **完成当前原子操作** — 不要中途中断正在执行的 agent
+2. **写入中间产物** — 将所有已收到但未写入的 agent 输出写入文件
+3. **写入进度备忘录** — 更新 `phase-N-progress.md`
+4. **更新 .forge-state.json** — 写入 `interrupted_at`（ISO 时间戳）和 `progress_memo`（备忘录文件路径）
+5. **清理团队** — shutdown + TeamDelete
+6. **输出恢复命令** — 告诉用户执行 `/clear` 然后使用 `--skip-to N --feature [feature]` 恢复
 
 ### --skip-to 恢复协议
 
@@ -305,11 +204,14 @@ Claude Code 在 context 使用约 **83%** 时自动触发 compact，这会导致
    - 从 `.forge-state.json` 读取 `requirement`、`team_size`、`options`
    - 如果 `requirement_attachments` 非空，读取 `attachments/` 下的所有附件文件（图片、PDF 等）
    - 加载对应 artifacts 文件（PRD、ADR、plan 等）
-   - 如果 `progress_memo` 非空，读取编排备忘文件，从阶段内中断的子步骤恢复（仅 spawn 未完成的 Agent，已完成的从中间文件加载）
+   - **如果 `progress_memo` 非空**：读取对应的 `phase-N-progress.md` 文件，理解精确的中断位置
+     - 仅 spawn 未完成的 agent（已完成的从文件加载结果）
+     - 从中断的子步骤继续，而非从阶段开头重新开始
    - 从 phase N 开始执行，无需用户重新输入 requirement
 
 4. **更新状态**:
    - 将 `current_phase` 更新为 N
+   - 清除 `interrupted_at` 和 `progress_memo`（恢复后重置）
    - 继续正常的阶段执行和状态更新
 
 ---
@@ -608,9 +510,9 @@ CREATE ──▶ COORDINATE ──▶ SHUTDOWN ──▶ CLEANUP
 | 7 | 遵循 adversarial-protocol 规则 | 所有对抗阶段统一规则 |
 | 8 | 遵循 team-coordination 规则 | 所有团队通信统一规范 |
 | 9 | 每个阶段开始/结束时更新 `.forge-state.json` | 支持跨 context 恢复 |
-| 10 | Lead 在关键节点监控 context 用量，耗尽前主动存档 | 防止 context 溢出导致信息丢失 |
-| 11 | Agent 产出收到后立即写入文件（增量写入） | 防御 compact 导致的信息丢失 |
-| 12 | Lead 在每个关键子步骤后更新 `phase-N-progress.md` | compact 后可快速恢复编排状态 |
+| 10 | Agent 输出必须立即写入文件（增量写入） | 防止 context 截断丢失已完成工作 |
+| 11 | Lead 持续更新 phase-N-progress.md | 支持精确恢复中断点 |
+| 12 | Context > 75% 时执行主动保存协议 | 在 auto-compact 前保存状态 |
 
 ### 禁止行为
 
@@ -650,7 +552,6 @@ CREATE ──▶ COORDINATE ──▶ SHUTDOWN ──▶ CLEANUP
 ║  └─────────────────────────────────────────────────────────────────────┘  ║
 ║                                                                           ║
 ║  Artifacts:                                                               ║
-║    State:    docs/forge-teams/[feature]/.forge-state.json                 ║
 ║    PRD:      docs/forge-teams/[feature]/phase-1-requirements/prd.md       ║
 ║    ADR:      docs/forge-teams/[feature]/phase-2-architecture/adr.md       ║
 ║    Plan:     docs/forge-teams/[feature]/phase-3-planning/plan.json        ║
@@ -678,9 +579,6 @@ CREATE ──▶ COORDINATE ──▶ SHUTDOWN ──▶ CLEANUP
 | P5 Red/Blue 同一视角 | 失去对抗意义 | Red 必须主动攻击 |
 | P6 跳过根因直接修 | 治标不治本 | 必须定位根因 |
 | 不清理 team | 资源泄漏 | 每阶段结束必须 cleanup |
-| 等阶段结束才写文件 | compact 后信息丢失 | Agent 产出收到后立即写入文件 |
-| 不写编排备忘 | context 恢复后不知道做到哪了 | 每个关键子步骤后更新 progress.md |
-| 忽略 context 用量警告 | context 溢出导致质量崩塌 | 75% 时强制存档，不再开新子步骤 |
 | 辩论超 3 轮 | 收益递减 | 3 轮后强制判定 |
 
 ---

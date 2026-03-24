@@ -540,6 +540,7 @@ tools: Read, Grep, Glob, Bash
 2. **前置检查必须通过**: build/test/lint 必须全部通过才能开始审查，否则审查结果不可靠
 3. **修复循环最多 3 轮**: REQUEST CHANGES 触发 fix -> 范围限定重审 -> 最多 3 轮，超过触发断路器
 4. **Red Team 不修改代码**: 只报告攻击路径和 PoC，不实施修复，保持攻击者角色纯粹
+5. **增量写入**: 每个审查员完成后立即写入 `{role}-review.md`，交叉验证完成后写入 `cross-examination.md`。P5 有多个并行审查员，增量写入是恢复的关键前提。
 
 ### 反模式清单
 
@@ -563,6 +564,48 @@ tools: Read, Grep, Glob, Bash
 - [ ] `npm run lint` 无 error
 - [ ] 阶段 4 所有任务标记为 DONE
 - [ ] Quality Sentinel 无未解决的 CRITICAL/HIGH 问题
+
+---
+
+## 🔄 跨 Context 恢复支持
+
+### 增量写入
+
+P5 阶段的增量写入文件：
+
+| 文件 | 写入时机 | 说明 |
+|------|---------|------|
+| `spec-review.md` | spec-reviewer 完成后 | 规格合规审查报告 |
+| `code-review.md` | code-reviewer 完成后 | 代码质量审查报告 |
+| `security-review.md` | security-reviewer 完成后 | 安全审查报告 |
+| `red-team-report.md` | red-team-attacker 完成后 | 红队攻击报告 |
+| `cross-examination.md` | Phase B 交叉验证完成后 | 交叉验证结果 |
+
+Lead 在收到每个审查员报告后**立即写入**对应文件。由于 P5 有 4-5 个并行审查员，增量写入确保即使某些审查员尚未完成时 context 耗尽，已完成的审查结果不会丢失。
+
+### 进度备忘录
+
+Lead 维护 `phase-5-progress.md`，记录：
+- 当前阶段（Phase A 并行审查 / Phase B 交叉验证 / Phase C 综合判定 / Fix Cycle）
+- 已完成的审查员及其发现摘要
+- 交叉验证结果
+- 修复循环的轮次和状态
+
+### 状态更新
+
+| 时机 | .forge-state.json 更新 |
+|------|----------------------|
+| P5 开始 | `current_phase` → 5, P5 `status` → `in_progress`, `started_at` |
+| P5 完成（无 blocker） | P5 `status` → `completed`, `artifacts.red_team_report` → 文件路径, `current_phase` → 7 |
+| P5 完成（有 blocker） | P5 `status` → `completed`, `current_phase` → 6 |
+| Context 告警 | `interrupted_at`, `progress_memo` → `phase-5-progress.md` 路径 |
+
+### 恢复后行为
+
+当 `--skip-to 5` 且 `progress_memo` 指向 `phase-5-progress.md` 时：
+- 已完成审查（`{role}-review.md` 存在）→ 不重新 spawn 该审查员
+- Phase A 全部完成但 Phase B 未开始 → 直接进入交叉验证
+- 仅 spawn 未完成的审查员
 
 ---
 

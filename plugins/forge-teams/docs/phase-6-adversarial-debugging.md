@@ -380,6 +380,7 @@ Phase 6: Adversarial Debugging (本阶段)
 3. **收敛纪律**：3 轮后强制判定，不允许无限辩论——边际价值在第 3 轮后急剧递减
 4. **TDD 修复**：修复必须先写复现 bug 的测试（RED → GREEN → 全量回归）
 5. **闭环验证**：修复后必须回到 P5 重新审查，限定范围（只审修复涉及的代码）
+6. **增量写入**: 每轮辩论后立即更新 `hypotheses.md`（Evidence Board）并追加 `debate-log.md`。P6 的对抗辩论是高 context 消耗操作，增量写入确保辩论记录不因 context 耗尽而丢失。
 
 ### 反模式列表
 
@@ -404,6 +405,45 @@ Phase 6: Adversarial Debugging (本阶段)
 | "这个 bug 很简单" | "简单"的 bug 最容易产生锚定效应 |
 | "没时间组建团队" | Team 创建只需几秒，调查并行节省总时间 |
 | "单 agent 调试就够了" | 如果够了你就不会需要看这个文档 |
+
+---
+
+## 🔄 跨 Context 恢复支持
+
+### 增量写入
+
+P6 阶段的增量写入文件：
+
+| 文件 | 写入时机 | 说明 |
+|------|---------|------|
+| `hypotheses.md` | 每轮辩论后更新 | Evidence Board 的文件化版本，记录所有假设的状态和得分 |
+| `debate-log.md` | 每轮辩论完成后追加 | 调查员的证据报告、Devil's Advocate 的挑战、回应 |
+
+`hypotheses.md` 不是追加而是**更新**——它反映 Evidence Board 的最新状态（假设得分、ACTIVE/WEAKENED/ELIMINATED 状态）。`debate-log.md` 是追加——记录辩论的完整历史。
+
+### 进度备忘录
+
+Lead 维护 `phase-6-progress.md`，记录：
+- 当前 Phase（0 Intake / 1 Hypothesize / 2 Team Assembly / 3 Debate / 4 Verdict & Fix）
+- 假设列表及其当前状态（ACTIVE / WEAKENED / ELIMINATED）
+- 辩论轮次和关键论点摘要
+- 收敛状态（强收敛 / 弱收敛 / 未收敛 / 强制收敛）
+- 如已进入 Phase 4，修复进度
+
+### 状态更新
+
+| 时机 | .forge-state.json 更新 |
+|------|----------------------|
+| P6 开始 | `current_phase` → 6, P6 `status` → `in_progress`, `started_at` |
+| P6 完成 | P6 `status` → `completed`, `artifacts.debug_fixes` → 文件路径, `current_phase` → 5（回退重审） |
+| Context 告警 | `interrupted_at`, `progress_memo` → `phase-6-progress.md` 路径 |
+
+### 恢复后行为
+
+P6 恢复时需要特别注意：
+- 调查阶段中断：从 `hypotheses.md` 恢复假设状态，从 `debate-log.md` 恢复辩论历史
+- 修复阶段中断：检查修复代码是否已写入（代码在文件系统，不会因 context 中断丢失），检查测试是否已通过
+- 仅 spawn 状态为 ACTIVE 的假设的调查员
 
 ---
 

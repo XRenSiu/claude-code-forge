@@ -410,6 +410,57 @@ Battle-tested PRD 与普通 PRD 的区别 — 包含技术风险注解：
    - `[CHALLENGED → DEFERRED]`：FR 推迟到后续版本
    - `[CHALLENGED → REJECTED]`：FR 因技术不可行被移除
 6. **Token 预算意识**：P1 约消耗单 agent PRD 生成的 4 倍 token。对简单功能，直接使用单 agent 方式更经济。
+7. **增量写入**: Lead 必须在收到每个 agent 输出后立即写入文件。辩论记录追加到 `debate-transcript.md`，不等阶段结束。这确保 context 中断时不丢失已完成的工作。
+
+---
+
+## 🔄 跨 Context 恢复支持
+
+### .forge-state.json 创建
+
+P1 是流水线起点，负责创建 `.forge-state.json`。在 Step 1 (Intake) 中：
+
+1. 在 `docs/forge-teams/[feature]-[timestamp]/` 下创建状态文件
+2. 将用户传入的**原始需求原文**存入 `requirement` 字段
+3. 如果用户提供了图片、文件等非文本附件，复制到 `attachments/` 并将路径记入 `requirement_attachments`
+4. 记录 team_size、options
+5. P1 `status` → `in_progress`
+
+```
+docs/forge-teams/[feature]-[timestamp]/
+├── .forge-state.json          ← P1 创建
+├── attachments/               ← 非文本需求附件
+│   ├── design-screenshot.png
+│   └── original-prd.pdf
+└── phase-1-requirements/
+    └── ...
+```
+
+### 增量写入
+
+P1 阶段的增量写入文件：
+
+| 文件 | 写入时机 | 说明 |
+|------|---------|------|
+| `debate-transcript.md` | 每轮辩论完成后追加 | Advocate 和 Skeptic 的论点、证据、回应 |
+
+Lead 在收到每轮辩论结果后**立即追加**到 `debate-transcript.md`，不等辩论全部完成。
+
+### 进度备忘录
+
+Lead 维护 `phase-1-progress.md`，记录：
+- 当前步骤（Intake / Advocate Draft / Skeptic Challenge / Debate R1 / R2 / Synthesis）
+- 已完成 agent 的结论摘要
+- 待完成事项
+- Lead 的仲裁判断笔记
+
+### 状态更新
+
+| 时机 | .forge-state.json 更新 |
+|------|----------------------|
+| P1 开始 | `current_phase` → 1, P1 `status` → `in_progress`, `started_at` |
+| P1 完成 | P1 `status` → `completed`, `completed_at`, `artifacts.prd` → 文件路径, `current_phase` → 2 |
+| Context 告警 | `interrupted_at`, `progress_memo` → `phase-1-progress.md` 路径 |
 
 ---
 

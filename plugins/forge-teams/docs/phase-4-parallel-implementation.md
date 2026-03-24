@@ -452,6 +452,7 @@ tools: Read, Grep, Glob, Bash  # 只读 — 无 Write, Edit
 2. **TDD 不可跳过**: 每个 implementer 必须遵循红-绿-重构循环，sentinel 会抽查测试真实性
 3. **Sentinel 不修改代码**: 发现问题只创建 fix task，不自己修，保持角色分离
 4. **Lead 不写代码**: Delegate mode 意味着只协调不实现，违反则成为瓶颈
+5. **进度备忘录**: Lead 必须在每个 Task 完成时更新 `phase-4-progress.md`。P4 是最长阶段，context 中断风险最高，精确的进度记录是恢复的前提。
 
 ### 反模式清单
 
@@ -464,6 +465,38 @@ tools: Read, Grep, Glob, Bash  # 只读 — 无 Write, Edit
 | 固定团队大小 | 资源浪费或不足 | 根据任务数量动态调整 |
 | 忽略 Sentinel 发现 | 问题累积 | 及时分配修复 task |
 | Wave 间无验证 | 下一波构建在错误上 | 每个 Wave 完成后验证再启动下一波 |
+
+---
+
+## 🔄 跨 Context 恢复支持
+
+### 进度备忘录
+
+Lead 维护 `phase-4-progress.md`，记录：
+- 当前 Wave 编号和执行状态
+- 每个 Implementer 的任务分配和完成状态
+- Quality Sentinel 的抽查结果摘要
+- 已完成的 Task 列表及其验证结果
+- 文件所有权分配表
+
+P4 是所有阶段中持续时间最长的阶段，进度备忘录尤其重要。Lead 应在每个 Task 完成时更新备忘录。
+
+### 状态更新
+
+| 时机 | .forge-state.json 更新 |
+|------|----------------------|
+| P4 开始 | `current_phase` → 4, P4 `status` → `in_progress`, `started_at` |
+| P4 完成 | P4 `status` → `completed`, `completed_at`, `artifacts.code_report` → 文件路径, `current_phase` → 5 |
+| Context 告警 | `interrupted_at`, `progress_memo` → `phase-4-progress.md` 路径 |
+
+### 恢复后行为
+
+P4 恢复时，Lead 从 `phase-4-progress.md` 读取：
+- 已完成的 Task → 不重新执行
+- 未完成的 Task → 重新分配给 Implementer
+- Wave 进度 → 从中断的 Wave 继续
+
+> **注意**: P4 的代码产出直接写入项目文件系统，不会因 context 中断丢失。进度备忘录的主要作用是避免重复执行已完成的 Task。
 
 ---
 

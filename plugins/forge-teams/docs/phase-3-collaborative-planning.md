@@ -386,6 +386,7 @@ Planner 收到风险报告后，必须**逐条回应**:
 2. **文件所有权标注是硬需求**: 这是 P4 并行实现的前提，必须完成，不可跳过
 3. **Risk Assessor 建议必须逐条回应**: Planner 必须对每条建议给出 ACCEPTED / PARTIALLY ACCEPTED / REJECTED + 理由
 4. **SHARED 文件必须处理**: 标记为 SHARED 的文件要么合并任务，要么标记为顺序执行
+5. **增量写入**: Planner 初版计划完成后立即写入 `plan.json`，Risk Assessor 完成后立即写入 `risk-assessment.md`。确保 context 中断时已完成的规划工作不丢失。
 
 ### 反模式清单
 
@@ -398,6 +399,37 @@ Planner 收到风险报告后，必须**逐条回应**:
 | 依赖关系循环 | 任务无法排序 | 重新分解为 DAG |
 | 伪代码代替完整代码 | 执行者需要自行判断 | 提供可直接复制的完整代码 |
 | 忽略 SHARED 标注 | P4 并行冲突 | 合并任务或标记顺序执行 |
+
+---
+
+## 🔄 跨 Context 恢复支持
+
+### 增量写入
+
+P3 阶段的增量写入文件：
+
+| 文件 | 写入时机 | 说明 |
+|------|---------|------|
+| `plan.json` | Planner 完成初版计划后 | 任务分解 + 依赖关系 + 文件所有权 |
+| `risk-assessment.md` | Risk Assessor 完成审查后 | 5 维度风险评估报告 |
+
+Lead 在收到 Planner 初版计划后立即写入 `plan.json`，在收到 Risk Assessor 报告后立即写入 `risk-assessment.md`。Planner 修改计划后更新 `plan.json`。
+
+### 进度备忘录
+
+Lead 维护 `phase-3-progress.md`，记录：
+- 当前步骤（Planner 分析中 / 初版计划完成 / Risk Assessor 审查中 / Planner 修改中 / 最终验证）
+- Planner 的任务数量和分组摘要
+- Risk Assessor 的风险评级摘要
+- Planner 对风险建议的回应状态
+
+### 状态更新
+
+| 时机 | .forge-state.json 更新 |
+|------|----------------------|
+| P3 开始 | `current_phase` → 3, P3 `status` → `in_progress`, `started_at` |
+| P3 完成 | P3 `status` → `completed`, `completed_at`, `artifacts.plan` → 文件路径, `current_phase` → 4 |
+| Context 告警 | `interrupted_at`, `progress_memo` → `phase-3-progress.md` 路径 |
 
 ---
 
