@@ -99,6 +99,32 @@ forge-teams (多 agent 对抗):
 /forge-teams "支付系统重构" --team-size large --fix --loop 5
 ```
 
+### 独立 Bug 修复
+
+```bash
+# 描述 bug → 对抗调试定位根因 → TDD 修复 → 独立验证
+/forge-fix "支付回调间歇性超时，大约每10次失败2次"
+
+# 简单 bug 走快速路径（跳过对抗调试）
+/forge-fix "登录页面 CSS 错位" --quick
+
+# 复杂 bug，加大团队 + 增加循环
+/forge-fix "高并发下 Redis 连接池泄漏" --team-size large --loop 5
+```
+
+### 独立需求验证
+
+```bash
+# 描述需求 → 检查现有代码是否已实现 → 差距报告
+/forge-verify "用户可以通过邮箱注册，密码至少8位，注册后发送验证邮件"
+
+# 严格模式 + 检查测试覆盖
+/forge-verify "支持 OAuth2 登录和 JWT token 刷新" --strict --with-tests
+
+# 从文件加载需求
+/forge-verify requirements.md
+```
+
 ### 单阶段执行
 
 ```bash
@@ -199,6 +225,29 @@ forge-teams 使用 Agent Teams 进行多 agent 并行协作，token 消耗较高
 
 ## Agents
 
+## Commands
+
+| Command | 描述 | 需要 Agent Teams |
+|---------|------|-----------------|
+| `/forge-teams` | 7 阶段对抗协作流水线（完整 pipeline 或单阶段） | 是 |
+| `/forge-fix` | 独立 bug 修复：对抗调试 → TDD 修复 → 独立验证 → 循环 | 是（快速路径除外） |
+| `/forge-verify` | 独立需求验证：结构化 → 代码映射 → 测试覆盖 → 差距报告 | 否 |
+
+### 何时使用哪个命令？
+
+| 场景 | 推荐命令 |
+|------|---------|
+| 新功能完整开发 | `/forge-teams "需求描述"` |
+| 已知 bug，需要快速修复 | `/forge-fix "bug 描述"` |
+| 简单 bug，根因明显 | `/forge-fix "bug 描述" --quick` |
+| 检查需求是否已实现 | `/forge-verify "需求描述"` |
+| 代码安全审查 | `/forge-teams --skip-to 5` |
+| 复杂 bug，多个可能根因 | `/forge-fix "bug 描述" --team-size large` |
+
+---
+
+## Agents
+
 forge-teams 定义了 23 个专用 agent，覆盖全部 7 个阶段：
 
 | Agent | Phase | Model | 职责 |
@@ -235,14 +284,17 @@ forge-teams 定义了 23 个专用 agent，覆盖全部 7 个阶段：
 
 | Skill | 阶段 | 描述 |
 |-------|------|------|
-| `forge-pipeline` | 全流程 | 7 阶段产品开发流水线，从需求到部署 |
+| `forge-teams` | 全流程 | `/forge-teams`: 7 阶段产品开发流水线，从需求到部署 |
 | `adversarial-requirements` | P1 | 对抗式需求分析，产品倡导者 vs 技术怀疑者 |
 | `adversarial-design` | P2 | 对抗式架构设计，多架构师竞标 + 评论家挑战 + 仲裁者裁决 |
 | `parallel-implementation` | P4 | 并行实现，多 implementer 执行 + quality sentinel 抽查 |
 | `adversarial-review` | P5 | 对抗式审查 + 红队攻击，多 agent 并行交叉检验 |
 | `adversarial-debugging` | P6 | 对抗式调试，竞争假设 + 结构化辩论找根因 |
+| `forge-fix` | 独立 | `/forge-fix`: 独立 bug 修复循环，快速路径分流 + 三层迭代控制（Fixer→Advisor→Replanner） |
+| `forge-verify` | 独立 | `/forge-verify`: 独立需求验证，EARS 结构化 → 代码映射 → 测试验证 → 差距报告 |
 
-> P3 (规划) 和 P7 (验收) 由 `forge-pipeline` skill 内联编排，不需要独立 skill。
+> P3 (规划) 和 P7 (验收) 由 `forge-teams` skill 内联编排，不需要独立 skill。
+> `forge-fix` 和 `forge-verify` 是独立入口 skill，不依赖 7 阶段流水线。
 
 ---
 
@@ -293,11 +345,9 @@ forge-teams/
 │   ├── doc-updater.md                 # P7: 文档更新
 │   ├── deployer.md                    # P7: 部署执行
 │   └── build-error-resolver.md        # 通用: 构建错误修复
-├── commands/
-│   └── forge-teams.md                 # Main command definition
 ├── skills/
 │   ├── forge-pipeline/
-│   │   └── SKILL.md                   # 全流程编排 skill
+│   │   └── SKILL.md                   # /forge-teams: 7 阶段流水线主入口
 │   ├── adversarial-requirements/
 │   │   └── SKILL.md                   # P1: 对抗式需求 skill
 │   ├── adversarial-design/
@@ -306,8 +356,12 @@ forge-teams/
 │   │   └── SKILL.md                   # P4: 并行实现 skill
 │   ├── adversarial-review/
 │   │   └── SKILL.md                   # P5: 对抗式审查 skill
-│   └── adversarial-debugging/
-│       └── SKILL.md                   # P6: 对抗式调试 skill
+│   ├── adversarial-debugging/
+│   │   └── SKILL.md                   # P6: 对抗式调试 skill
+│   ├── fix-bug-loop/
+│   │   └── SKILL.md                   # /forge-fix (name: forge-fix): 独立 bug 修复循环
+│   └── verify-requirement/
+│       └── SKILL.md                   # /forge-verify (name: forge-verify): 独立需求验证
 ├── rules/
 │   ├── team-coordination.md           # Team lifecycle and communication rules
 │   └── adversarial-protocol.md        # Adversarial debate rules (10 rules)

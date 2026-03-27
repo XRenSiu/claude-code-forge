@@ -13,6 +13,7 @@ when_to_use: |
   - 测试失败且原因不明
   - 用户明确请求对抗式调试
 version: 1.0.0
+disable-model-invocation: true
 ---
 
 # Adversarial Debugging

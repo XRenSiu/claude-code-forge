@@ -12,6 +12,7 @@ when_to_use: |
   - 单人设计可能有盲点
   - 用户明确请求对抗式设计
 version: 1.0.0
+disable-model-invocation: true
 ---
 
 # Adversarial Design

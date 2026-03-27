@@ -22,7 +22,7 @@
 |------|------|------|------|
 | **Agent** | Deployer (general-purpose) | sonnet | 执行前置检查 + 部署 |
 | **Agent** | Verifier (general-purpose) | sonnet | 独立验证部署结果 |
-| **Skill** | — | — | 无专用 Skill（由 `forge-pipeline` 编排） |
+| **Skill** | — | — | 无专用 Skill（由 `forge-teams` skill 编排） |
 | **Rule** | `team-coordination.md` | — | 团队协调通信规则 |
 
 ---

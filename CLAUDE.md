@@ -1,6 +1,6 @@
 # Claude Code Forge - 项目规范
 
-这是 Claude Code 插件市场项目。结构：`.claude-plugin/marketplace.json` → `plugins/<name>/` → skills / commands / agents / rules。
+这是 Claude Code 插件市场项目。结构：`.claude-plugin/marketplace.json` → `plugins/<name>/` → skills / agents / rules。
 
 ## 版本管理
 
@@ -19,7 +19,7 @@
 | 修复 typo / 格式调整 | patch (+0.0.1) | patch (+0.0.1) | 1.0.0 → 1.0.1 |
 | 功能增强 / 流程变更 | minor (+0.1.0) | minor (+0.1.0) | 1.0.0 → 1.1.0 |
 | 不兼容变更 / 重大重构 | major (+1.0.0) | major (+1.0.0) | 1.0.0 → 2.0.0 |
-| 新增 skill / command / agent | — | minor (+0.1.0) | 1.1.0 → 1.2.0 |
+| 新增 skill / agent | — | minor (+0.1.0) | 1.1.0 → 1.2.0 |
 
 ### 修改文件后的同步清单
 
@@ -28,13 +28,13 @@
 2. `plugins/<name>/.claude-plugin/plugin.json` 的 `version`
 3. `.claude-plugin/marketplace.json` 中对应插件的 `version`
 
-新增 skill / command / agent 时，更新第 2、3 项。
+新增 skill / agent 时，更新第 2、3 项。
 
 ## Commit 规范
 
 遵循 Conventional Commits：
 
-- `feat:` 新功能（新 skill / command / agent）
+- `feat:` 新功能（新 skill / agent）
 - `fix:` 修复
 - `refactor:` 重构
 - `docs:` 文档
@@ -51,8 +51,7 @@ claude-code-forge/
 │   └── <plugin-name>/
 │       ├── .claude-plugin/plugin.json  # 插件清单
 │       ├── agents/                     # Agent 定义 (*.md)
-│       ├── commands/                   # 命令定义 (*.md)
-│       ├── skills/                     # 技能定义 (SKILL.md)
+│       ├── skills/                     # Skill 定义 (<name>/SKILL.md)，也作为斜杠命令入口
 │       ├── rules/                      # 约束规则 (*.md)
 │       ├── hooks/hooks.json            # 事件钩子
 │       └── docs/                       # 阶段文档
@@ -60,4 +59,5 @@ claude-code-forge/
 └── README.md
 ```
 
-Commands、agents、skills、hooks 从目录自动发现，不需要在 plugin.json 中列举。
+Agents、skills、rules、hooks 从目录自动发现，不需要在 plugin.json 中列举。
+Skill 的 `name` 字段决定斜杠命令名（如 `name: forge-teams` → `/forge-teams`）。

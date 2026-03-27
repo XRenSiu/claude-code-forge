@@ -22,7 +22,7 @@
 |------|------|------|------|
 | **Agent** | `planner` (general-purpose) | sonnet | 分解任务、写计划 |
 | **Agent** | `risk-assessor` (general-purpose) | sonnet | 评估风险、验证依赖 |
-| **Skill** | 无独立 skill | - | 由 forge-pipeline SKILL 编排 |
+| **Skill** | 无独立 skill | - | 由 `forge-teams` skill 编排 |
 | **Rule** | `team-coordination.md` | - | 团队协作规则 |
 
 ```

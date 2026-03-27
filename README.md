@@ -53,7 +53,7 @@
 | Plugin | Version | Description | Requires |
 |--------|---------|-------------|----------|
 | [PDForge](plugins/pdforge/) | 1.14.0 | AI-driven 7-phase product development workflow. Single-agent sequential execution with brainstorming, TDD, three-stage review, and auto-fix loops. | - |
-| [Forge Teams](plugins/forge-teams/) | 1.1.0 | Agent Teams version of PDForge. 7-phase adversarial pipeline with multi-agent debate, parallel implementation, red team attacks, and adversarial debugging. 23 agents, 6 skills. | Agent Teams |
+| [Forge Teams](plugins/forge-teams/) | 1.8.0 | Agent Teams version of PDForge. 7-phase adversarial pipeline with multi-agent debate, parallel implementation, red team attacks, adversarial debugging, independent bug fix loop, and requirement verification. 23 agents, 8 skills. | Agent Teams |
 | [Adversarial Debugger](plugins/adversarial-debugger/) | 1.0.0 | Multi-agent adversarial debugging. Competing hypotheses investigated in parallel, challenged by devil's advocate, synthesized to true root cause. | Agent Teams |
 
 ### Which plugin to use?
@@ -63,8 +63,9 @@
 | Standard feature development | PDForge |
 | Quick prototype / MVP | PDForge (`--mode 0to1`) |
 | High-quality / security-critical features | Forge Teams |
-| Simple bug fix | PDForge `/fix` |
-| Complex bug with multiple possible root causes | Adversarial Debugger |
+| Simple bug fix | Forge Teams `/forge-fix --quick` or PDForge `/fix` |
+| Complex bug with multiple possible root causes | Forge Teams `/forge-fix` or Adversarial Debugger |
+| Check if a requirement is implemented | Forge Teams `/forge-verify` |
 | Need parallel implementation acceleration | Forge Teams |
 
 > **Agent Teams** plugins (Forge Teams, Adversarial Debugger) require the experimental Agent Teams feature:
@@ -147,6 +148,27 @@
             acceptance-reviewers + doc-updater + deployer
 ```
 
+### Independent Entry Points
+
+```
+/forge-fix "bug description" [--quick] [--loop N]
+    |
+    +-- Quick Path (--quick): Locate -> TDD Fix -> Verify
+    |
+    +-- Full Path: Adversarial Debugging -> TDD Fix -> Independent Verify
+    |       3-5 hypothesis-investigators + devil's-advocate + synthesizer
+    |       Three-layer loop: Fixer -> Advisor -> Replanner
+    |
+    +-- Loop until fixed or circuit breaker (max N rounds)
+
+/forge-verify "requirement description" [--strict] [--with-tests]
+    |
+    +-- Phase 0: Structurize (EARS format)
+    +-- Phase 1: Code Mapping (Grep + Glob + Read)
+    +-- Phase 2: Test Verification (optional)
+    +-- Phase 3: Gap Report (5-level classification)
+```
+
 ## Adversarial Debugger
 
 ```
@@ -219,8 +241,7 @@ plugins/
     ├── .claude-plugin/
     │   └── plugin.json      # Plugin manifest (required)
     ├── agents/              # AI agent definitions
-    ├── commands/            # Slash commands
-    ├── skills/              # Reusable workflows
+    ├── skills/              # Skills & slash commands (SKILL.md)
     ├── rules/               # Constraints and standards
     ├── hooks/               # Event handlers
     │   └── hooks.json

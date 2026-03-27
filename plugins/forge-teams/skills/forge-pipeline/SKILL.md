@@ -1,12 +1,13 @@
 ---
-name: forge-pipeline
+name: forge-teams
 description: >
-  Agent Teams 7 阶段产品开发流水线。从需求到部署，每个关键决策点使用对抗辩论。
-  支持意图自动识别：bug 描述自动进 P6 调试，审查请求自动进 P5 红队审查，新功能走完整流水线。
+  Agent Teams 版 7 阶段产品开发流水线。自动识别意图：bug 描述→对抗调试，审查请求→红队审查，新功能→完整流水线。
+  对抗辩论 + 并行实现 + 红队审查 + 对抗调试。
   Use when: (1) 新项目完整开发, (2) 复杂功能需要高质量保证, (3) 需要团队级并行开发,
   (4) 已有代码需要红队审查, (5) 已知 bug 需要对抗式调试。
   Triggers: "forge teams", "team pipeline", "adversarial development", "review my code", "debug this bug",
   "fix this bug", "为什么会", "帮我查", "帮我看看", "代码审查", "代码体检"
+argument-hint: <requirement> [--skip-to <phase>] [--team-size <small|medium|large>] [--fix] [--loop N]
 when_to_use: |
   - 新项目从零开发
   - 复杂功能需要高质量保证
@@ -14,17 +15,150 @@ when_to_use: |
   - 需要红队级安全审查
   - 已有代码需要独立审查（--skip-to 5）
   - 已知 bug 需要对抗式根因分析（--skip-to 6）
-version: 1.7.0
+version: 1.8.0
+disable-model-invocation: true
 ---
 
-# Forge Pipeline - Agent Teams 7 阶段对抗协作流水线
+# Forge Teams - Agent Teams 7 阶段对抗协作流水线
 
-**多 agent 对抗协作流水线——每个关键决策点由多个 agent 辩论、竞争、交叉验证后达成共识。**
+`/forge-teams` 是 Agent Teams 驱动的产品开发主协调器。支持**意图自动识别**——根据需求内容自动选择最佳入口：bug 描述直接进对抗调试（P6），审查请求直接进红队审查（P5），新功能走完整 7 阶段流水线。每个关键决策点由多个 agent 并行竞争、辩论和交叉验证，通过结构化对抗消除单 agent 的认知偏差。
 
-Announce at start: "I'm using the forge-pipeline skill to orchestrate a 7-phase adversarial development pipeline with Agent Teams."
+Announce at start: "I'm using the forge-teams skill to orchestrate a 7-phase adversarial development pipeline with Agent Teams."
 
 > **前置条件**: 需要启用 Agent Teams 实验性功能。
 > 在 settings.json 中添加: `"env": { "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1" }`
+
+---
+
+## 用法
+
+```bash
+/forge-teams <requirement> [options]
+```
+
+## 参数说明
+
+| 参数 | 说明 | 默认值 |
+|------|------|--------|
+| `<requirement>` | 需求描述 / bug 描述 / 审查上下文（文本或文件路径） | 必填（完整流水线）；`--skip-to` 时可选但建议提供 |
+| `--phase <1-7>` | 仅运行指定阶段 | 运行全部 |
+| `--skip-to <phase>` | 从指定阶段开始。有前序产物则恢复，无前序产物则自动 bootstrap | 从阶段 1 开始 |
+| `--team-size <size>` | 团队规模配置 | `medium` |
+| `--no-red-team` | 跳过红队审查（阶段 5） | 启用红队 |
+| `--fix` | 审查/调试发现问题后自动修复 | 不自动修复 |
+| `--loop [N]` | 修复后重新验证（最多 N 轮） | 3 |
+| `--feature <name>` | 指定恢复的 feature 目录（配合 `--skip-to`） | 自动检测最近未完成的 run |
+
+## 示例
+
+### 自动路由（推荐用法，无需记参数）
+
+```bash
+# 自动识别 → bug 描述 → 对抗调试（P6）
+/forge-teams "支付回调间歇性超时，大约每10次失败2次"
+/forge-teams "用户登录后 session 偶尔丢失"
+
+# 自动识别 → 审查请求 → 红队审查（P5）
+/forge-teams "帮我审查下 src/payment/ 的安全性"
+/forge-teams "上线前帮我做个代码体检"
+
+# 自动识别 → 新功能 → 完整流水线（P1→P7）
+/forge-teams "用户认证功能，支持 OAuth2 和 JWT"
+/forge-teams "支付系统重构" --team-size large --fix --loop 5
+```
+
+> **意图自动识别**: Lead 分析 `<requirement>` 内容，自动判定走 P5（审查）、P6（调试）
+> 还是完整流水线。用户不需要记任何参数，直接说要做什么就行。
+
+### 显式指定入口（覆盖自动判定）
+
+```bash
+# 强制走红队审查
+/forge-teams --skip-to 5 "支付回调间歇性超时"
+
+# 断点续跑
+/forge-teams --skip-to 3 --feature "用户认证功能-20260324"
+
+# 审查 + 发现问题自动修复
+/forge-teams --skip-to 5 --fix --loop 3
+```
+
+> **`--skip-to` 始终优先于自动路由**。有前序产物则恢复断点，无前序产物则自动 bootstrap（仅支持 P5/P6）。
+
+### 独立入口（不走完整流水线）
+
+```bash
+# 独立 bug 修复（复用 P6 引擎，支持快速路径和三层迭代控制）
+/forge-fix "支付回调间歇性超时" --loop 5
+/forge-fix "CSS 错位" --quick
+
+# 独立需求验证（检查代码是否实现了指定需求）
+/forge-verify "用户可以通过邮箱注册，密码至少8位"
+/forge-verify requirements.md --strict --with-tests
+```
+
+## 团队规模配置
+
+| 规模 | 每阶段团队 | 适用场景 | Token 消耗 |
+|------|-----------|---------|-----------|
+| `small` | 2-3 agents | 小功能、快速验证 | 中 |
+| `medium` | 3-5 agents | 标准功能开发 | 高 |
+| `large` | 5-7 agents | 复杂功能、高质量要求 | 很高 |
+
+### 各阶段团队组成（medium 配置）
+
+| 阶段 | 角色 | 数量 |
+|------|------|------|
+| 1. 需求辩论 | 乐观分析师 + 悲观分析师 + 用户代言人 + 仲裁者 | 4 |
+| 2. 架构竞标 | 架构师 A + 架构师 B + 评审团 | 3 |
+| 3. 任务规划 | 规划师 + 风险分析师 | 2 |
+| 4. 并行实现 | 实现者 x2 + TDD 守卫 | 3 |
+| 5. 红队审查 | 红队 x2 + 蓝队 x1 + 仲裁者 | 4 |
+| 6. 对抗调试 | 调查员 x2 + Devil's Advocate + 综合员 | 4 |
+| 7. 交付验收 | 验收员 x2 + 文档更新员 | 3 |
+
+## Token 消耗警告
+
+> **注意**: forge-teams 使用 Agent Teams 进行多 agent 并行协作，token 消耗较高。
+>
+> | 模式 | Token 消耗等级 |
+> |------|---------------|
+> | small | 中等 |
+> | medium | 高 |
+> | large | 很高 |
+>
+> 建议根据功能重要性选择合适的团队规模。
+
+## 输出目录结构
+
+```
+docs/forge-teams/
+└── [feature]-[timestamp]/
+    ├── phase-1-requirements/
+    │   ├── debate-transcript.md     # 需求辩论记录
+    │   └── prd.md                   # 共识 PRD
+    ├── phase-2-architecture/
+    │   ├── proposal-a.md            # 架构方案 A
+    │   ├── proposal-b.md            # 架构方案 B
+    │   ├── evaluation.md            # 评审记录
+    │   └── adr.md                   # 最终 ADR
+    ├── phase-3-planning/
+    │   ├── plan.json                # 任务计划
+    │   └── risk-assessment.md       # 风险评估
+    ├── phase-4-implementation/
+    │   └── report.md                # 实现报告
+    ├── phase-5-red-team/
+    │   ├── attack-report.md         # 红队攻击报告
+    │   ├── defense-report.md        # 蓝队防御报告
+    │   └── arbitration.md           # 仲裁结果
+    ├── phase-6-debugging/
+    │   ├── hypotheses.md            # 假设列表
+    │   ├── debate-log.md            # 调试辩论记录
+    │   └── fixes.md                 # 修复记录
+    ├── phase-7-delivery/
+    │   └── acceptance.md            # 交叉验收报告
+    └── summary.md                   # 最终流水线摘要
+```
 
 ---
 

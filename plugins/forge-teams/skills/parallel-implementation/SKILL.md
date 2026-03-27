@@ -10,6 +10,7 @@ when_to_use: |
   - 需要加速实现阶段
   - 用户明确请求团队并行实现
 version: 1.1.0
+disable-model-invocation: true
 ---
 
 # Parallel Implementation

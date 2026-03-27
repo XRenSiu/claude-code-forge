@@ -39,8 +39,8 @@
     },
     {
       "name": "forge-teams",
-      "description": "Agent Teams Product Development Pipeline - 7-phase adversarial collaborative development with multi-agent debate, competition, and cross-validation at every critical decision point, including red team attacks, adversarial debugging, and self-healing parallel implementation. --skip-to supports smart fallback: auto-bootstraps when no prior artifacts exist, enabling direct P5/P6 entry.",
-      "version": "1.7.0",
+      "description": "Agent Teams Product Development Pipeline - 7-phase adversarial collaborative development with multi-agent debate, competition, and cross-validation at every critical decision point, including red team attacks, adversarial debugging, self-healing parallel implementation, independent bug fix loop (/forge-fix), and requirement verification (/forge-verify).",
+      "version": "1.8.0",
       "author": {
         "name": "XRenSiu",
         "email": "xrensiu@gmail.com"
@@ -50,7 +50,7 @@
       "homepage": "https://github.com/XRenSiu/claude-code-forge/tree/main/plugins/forge-teams",
       "repository": "https://github.com/XRenSiu/claude-code-forge",
       "license": "MIT",
-      "tags": ["agent-teams", "adversarial", "product-development", "red-team", "parallel-implementation", "debugging", "tdd"]
+      "tags": ["agent-teams", "adversarial", "product-development", "red-team", "parallel-implementation", "debugging", "tdd", "bug-fix", "requirement-verification"]
     }
   ]
 }

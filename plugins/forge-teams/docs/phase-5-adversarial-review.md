@@ -9,9 +9,9 @@
 | 维度 | 说明 |
 |------|------|
 | **目标** | 通过并行审查 + 红队攻击 + 交叉验证，全方位检验代码质量和安全性 |
-| **输入** | 已实现的代码（来自阶段4） |
+| **输入** | 已实现的代码（来自阶段4），或用户指定的代码范围（通过 `--skip-to 5`） |
 | **输出** | 审查报告（含红队攻击结果） |
-| **上游阶段** | 并行实现（阶段4） |
+| **上游阶段** | 并行实现（阶段4）或独立入口（`--skip-to 5` bootstrap） |
 | **下游阶段** | 对抗调试（阶段6）或 交叉验收（阶段7） |
 
 ---
@@ -26,6 +26,7 @@
 | **Agent** | `code-reviewer` (general-purpose) | sonnet | 代码质量审查 |
 | **Agent** | `security-reviewer` (general-purpose) | sonnet | 安全模式审查 |
 | **Skill** | `adversarial-review` | - | Phase 5 编排逻辑 |
+| **Skill** | `verify-requirement` (`/forge-verify`) | - | 独立需求验证入口（复用 spec-reviewer 方法论，轻量级） |
 | **Rule** | `adversarial-protocol.md` | - | 对抗审查协议 |
 
 ```

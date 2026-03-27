@@ -10,6 +10,7 @@ when_to_use: |
   - 产品需求和技术约束之间需要平衡
   - 用户明确请求对抗式需求分析
 version: 1.0.0
+disable-model-invocation: true
 ---
 
 # Adversarial Requirements

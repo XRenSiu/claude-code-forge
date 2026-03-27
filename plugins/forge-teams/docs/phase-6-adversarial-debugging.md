@@ -9,10 +9,10 @@
 | 维度 | 说明 |
 |------|------|
 | **目标** | 通过竞争假设 + 对抗辩论定位问题根因，用 TDD 修复 |
-| **输入** | Phase 5 审查报告中的问题 |
+| **输入** | Phase 5 审查报告中的问题，或用户直接描述的 bug（通过 `/forge-fix`） |
 | **输出** | 根因分析报告 + TDD 修复 |
-| **上游阶段** | 对抗审查（阶段5） |
-| **下游阶段** | 返回阶段5 重新审查 |
+| **上游阶段** | 对抗审查（阶段5）或独立入口（`/forge-fix`） |
+| **下游阶段** | 返回阶段5 重新审查，或独立验证（`/forge-fix` 模式） |
 
 ---
 
@@ -24,6 +24,7 @@
 | **Agent** | `devils-advocate` (x1) | opus | 魔鬼辩护人，专职挑战所有假设 |
 | **Agent** | `evidence-synthesizer` (x1) | opus | 证据综合员，中立仲裁 + 评分裁决 |
 | **Skill** | `adversarial-debugging` | — | Phase 6 编排（5-Phase Protocol） |
+| **Skill** | `fix-bug-loop` (`/forge-fix`) | — | 独立 bug 修复入口（复用 P6 引擎 + 三层迭代控制） |
 | **Rule** | `adversarial-protocol.md` | — | 对抗辩论通信规则 |
 
 ---

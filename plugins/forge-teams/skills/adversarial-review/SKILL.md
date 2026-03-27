@@ -12,6 +12,7 @@ when_to_use: |
   - 需要多维度交叉验证
   - 用户明确请求对抗式审查
 version: 1.0.0
+disable-model-invocation: true
 ---
 
 # Adversarial Review + Red Team

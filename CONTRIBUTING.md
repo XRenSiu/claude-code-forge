@@ -21,8 +21,7 @@ plugins/
     ├── .claude-plugin/
     │   └── plugin.json      # Required: Plugin manifest
     ├── agents/              # Optional: Agent definitions (*.md)
-    ├── commands/            # Optional: Command definitions (*.md)
-    ├── skills/              # Optional: Skill definitions (SKILL.md)
+    ├── skills/              # Optional: Skills & slash commands (<name>/SKILL.md)
     ├── rules/               # Optional: Constraint rules (*.md)
     ├── hooks/
     │   └── hooks.json       # Optional: Event handlers
