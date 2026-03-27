@@ -66,6 +66,7 @@
 | Simple bug fix | Forge Teams `/forge-fix --quick` or PDForge `/fix` |
 | Complex bug with multiple possible root causes | Forge Teams `/forge-fix` or Adversarial Debugger |
 | Check if a requirement is implemented | Forge Teams `/forge-verify` |
+| Verify + auto-implement missing features | Forge Teams `/forge-verify --fix` |
 | Need parallel implementation acceleration | Forge Teams |
 
 > **Agent Teams** plugins (Forge Teams, Adversarial Debugger) require the experimental Agent Teams feature:
@@ -161,12 +162,14 @@
     |
     +-- Loop until fixed or circuit breaker (max N rounds)
 
-/forge-verify "requirement description" [--strict] [--with-tests]
+/forge-verify "requirement description" [--fix] [--loop N]
     |
     +-- Phase 0: Structurize (EARS format)
     +-- Phase 1: Code Mapping (Grep + Glob + Read)
     +-- Phase 2: Test Verification (optional)
     +-- Phase 3: Gap Report (5-level classification)
+    +-- Phase 4: Auto Fix (--fix: TDD implement missing features)
+    +-- Phase 5: Re-Verify (loop until all pass or max N rounds)
 ```
 
 ## Adversarial Debugger

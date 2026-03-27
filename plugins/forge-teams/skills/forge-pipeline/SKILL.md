@@ -94,7 +94,7 @@ Announce at start: "I'm using the forge-teams skill to orchestrate a 7-phase adv
 
 # 独立需求验证（检查代码是否实现了指定需求）
 /forge-verify "用户可以通过邮箱注册，密码至少8位"
-/forge-verify requirements.md --strict --with-tests
+/forge-verify "支持 OAuth2 登录" --fix --loop 3   # 验证 + 自动补齐
 ```
 
 ## 团队规模配置

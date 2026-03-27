@@ -5,7 +5,7 @@ description: >
   不需要 Agent Teams，使用 Lead 单 agent 流程。复用 spec-reviewer 的逐条验证方法论。
   Use when: (1) 验证需求是否已实现, (2) 检查功能完整性, (3) 交付前需求对照。
   Triggers: "forge verify", "verify requirement", "验证需求", "功能检查", "check implementation"
-argument-hint: <requirement-description> [--strict] [--with-tests] [--format <matrix|summary>]
+argument-hint: <requirement-description> [--strict] [--with-tests] [--fix] [--loop N]
 when_to_use: |
   - 需要验证某个需求是否已在项目中实现
   - 检查功能完整性
@@ -39,13 +39,15 @@ Announce at start: "I'm using the forge-verify skill to check whether the descri
 | `<requirement-description>` | 需求描述（文本、文件路径、或 URL） | 必填 |
 | `--strict` | 严格模式：PARTIAL 视为 FAIL | 宽松模式 |
 | `--with-tests` | 对每条 "已实现" 需求检查测试覆盖 | 不检查 |
+| `--fix` | 发现 Gap 后自动补齐实现（PARTIAL → 补全，NOT_IMPLEMENTED → 实现） | 不修复 |
+| `--loop <N>` | 修复后重新验证，最多 N 轮（需配合 `--fix`） | `3` |
 | `--format <format>` | 输出格式：`matrix`（完整合规矩阵）或 `summary`（摘要） | `matrix` |
 | `--scope <path>` | 限定验证范围到指定目录 | 整个项目 |
 
 ## 示例
 
 ```bash
-# 用文字描述需求
+# 只验证，不修复
 /forge-verify "用户可以通过邮箱注册，密码至少8位，注册后发送验证邮件"
 
 # 从文件加载需求
@@ -53,6 +55,12 @@ Announce at start: "I'm using the forge-verify skill to check whether the descri
 
 # 严格模式 + 检查测试覆盖
 /forge-verify "支持 OAuth2 登录和 JWT token 刷新" --strict --with-tests
+
+# 验证 + 自动补齐实现
+/forge-verify "用户可以通过邮箱注册，密码至少8位，注册后发送验证邮件" --fix
+
+# 验证 + 补齐 + 多轮循环直到全部通过
+/forge-verify "支持 OAuth2 登录和 JWT token 刷新" --fix --loop 5
 
 # 只检查特定目录
 /forge-verify "API 支持分页和排序" --scope src/api/
@@ -67,12 +75,13 @@ docs/forge-verify/
     ├── code-mapping.md             # 需求到代码映射
     ├── test-coverage.md            # 测试覆盖检查（--with-tests）
     ├── gap-report.md               # 差距报告
+    ├── fix-log.md                  # 修复记录（--fix）
     └── summary.md                  # 最终摘要
 ```
 
 ---
 
-## The 4-Phase Protocol
+## Protocol Overview
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -89,7 +98,17 @@ docs/forge-verify/
 │           ↓               对 "已实现" 的需求验证测试               │
 │                                                                   │
 │  Phase 3: GAP REPORT      综合差距报告                             │
-│                            5 级分类 + 修复建议                     │
+│           ↓               5 级分类 + 修复建议                     │
+│                                                                   │
+│  [--fix enabled]                                                  │
+│                                                                   │
+│  Phase 4: AUTO FIX        逐条补齐缺失实现                        │
+│           ↓               按优先级: NOT_IMPLEMENTED → PARTIAL     │
+│                            TDD: 先写测试 → 再实现 → 验证通过      │
+│                                                                   │
+│  Phase 5: RE-VERIFY       重新验证（回到 Phase 1）                 │
+│                            只重验 Phase 4 修改的需求               │
+│                            最多 --loop N 轮                       │
 │                                                                   │
 └─────────────────────────────────────────────────────────────────┘
 ```
@@ -301,6 +320,138 @@ grep -rn "describe\|it\|test\|expect" --include="*.test.*" --include="*.spec.*" 
 
 ---
 
+## Phase 4: Auto Fix (自动补齐，需 `--fix`)
+
+**触发条件**: 指定了 `--fix` 参数，且 Phase 3 发现 NOT_IMPLEMENTED / PARTIAL / SUSPICIOUS 的需求。
+
+### 修复优先级
+
+按以下顺序逐条补齐：
+
+1. **NOT_IMPLEMENTED (Must)** — 最高优先级，缺失的核心功能
+2. **PARTIAL (Must)** — 已有骨架但不完整
+3. **SUSPICIOUS** — 实现与需求不符，需要修正
+4. **NOT_IMPLEMENTED (Should)** — 次要缺失功能
+5. **PARTIAL (Should)** — 次要不完整功能
+
+### 修复协议
+
+对每条需要修复的需求：
+
+```
+FOR each gap IN sorted_gaps:
+
+    1. 理解需求
+       → 读取 structured-requirements.md 中对应的 EARS 格式需求
+       → 理解验收标准
+
+    2. 分析现有代码（PARTIAL / SUSPICIOUS）
+       → 读取 code-mapping.md 中的已有实现位置
+       → 理解已实现的部分和缺失的部分
+
+    3. TDD 实现
+       → 先写满足验收标准的测试（RED）
+       → 实现最小代码使测试通过（GREEN）
+       → 运行全套件确认无回归
+
+    4. 更新映射
+       → 更新 code-mapping.md 中该需求的状态
+       → 记录实现位置
+
+    5. 提交
+       → git add + git commit
+       → commit message: "feat: implement REQ-XXX [需求简述]"
+
+END FOR
+```
+
+### 修复范围约束
+
+| 情况 | 操作 |
+|------|------|
+| NOT_IMPLEMENTED | 新建文件/函数实现需求 |
+| PARTIAL | 在现有实现上补全缺失部分 |
+| SUSPICIOUS | 修正不符合需求的实现 |
+| 需求之间有依赖 | 先实现被依赖的需求 |
+| 修复可能影响已通过需求 | 运行全套件验证无回归 |
+
+### 保存修复记录
+
+每条修复完成后立即写入 `fix-log.md`：
+
+```markdown
+## REQ-XXX: [需求描述]
+
+**Previous Status**: NOT_IMPLEMENTED / PARTIAL / SUSPICIOUS
+**Fix Applied**: [修复描述]
+**Files Modified**: [文件列表]
+**Tests Added**: [测试文件:测试名称]
+**Commit**: [commit hash]
+```
+
+---
+
+## Phase 5: Re-Verify (重新验证，需 `--fix --loop`)
+
+**触发条件**: Phase 4 完成修复后，自动回到 Phase 1 重新验证。
+
+### 重新验证范围
+
+**只重验 Phase 4 修改过的需求**，已经 PASS 的需求不重复验证（除非修复可能影响它们）。
+
+### 循环控制
+
+```
+FOR round IN 1..N:
+
+    1. Phase 1: Code Mapping（scope-limited to fixed requirements）
+    2. Phase 2: Test Verify（if --with-tests）
+    3. Phase 3: Gap Report
+
+    IF 所有需求均 PASS:
+        → 输出成功报告，结束
+        BREAK
+
+    IF 仍有 Gap 且 round < N:
+        → Phase 4: 继续修复剩余 Gap
+        → 进入下一轮
+
+    IF round == N 且仍有 Gap:
+        → 输出部分成功报告 + 剩余 Gap 列表
+        → 断路器触发，建议人工介入
+        BREAK
+
+END FOR
+```
+
+### 断路器输出
+
+```markdown
+## Verify-Fix Loop 断路器触发
+
+**总轮次**: N
+**初始 Gap**: X 条
+**已修复**: Y 条
+**剩余 Gap**: Z 条
+
+### 已修复需求
+| ID | Requirement | Fix Round |
+|----|-------------|-----------|
+| REQ-001 | ... | Round 1 |
+| REQ-003 | ... | Round 2 |
+
+### 未能修复的需求
+| ID | Requirement | 失败原因 |
+|----|-------------|---------|
+| REQ-005 | ... | [原因] |
+
+### 建议
+1. [人工排查方向]
+2. [可能需要架构变更，建议 /forge-teams]
+```
+
+---
+
 ## Final Output (最终输出)
 
 ```markdown
@@ -325,10 +476,15 @@ grep -rn "describe\|it\|test\|expect" --include="*.test.*" --include="*.spec.*" 
 2. [第二关键的缺失需求]
 3. [第三关键的缺失需求]
 
+## Fix Summary (仅 --fix 模式)
+- **Gaps Fixed**: Y / X
+- **Fix Rounds**: N
+- **Commits**: [commit list]
+
 ## Recommendation
 [基于差距分析的下一步建议]
-- 如果缺失严重: "建议使用 /forge-teams 启动完整开发流水线补齐功能"
-- 如果基本完成: "建议使用 /forge-teams --skip-to 5 做一次红队审查确认质量"
+- 如果缺失严重且未启用 --fix: "建议使用 /forge-verify --fix 自动补齐，或 /forge-teams 启动完整流水线"
+- 如果 --fix 全部通过: "建议使用 /forge-teams --skip-to 5 做一次红队审查确认质量"
 - 如果全部通过: "需求已完全覆盖，可以进入部署阶段"
 ```
 
@@ -342,13 +498,16 @@ grep -rn "describe\|it\|test\|expect" --include="*.test.*" --include="*.spec.*" 
 /forge-verify "需求描述"
       │
       ▼
-  Verification Report
+  Phase 0-3: Verify
       │
       ├── 全部通过 → ✅ 完成
       │
-      ├── 有 Gap → 用户决策
+      ├── 有 Gap + --fix → Phase 4: 自动补齐 → Phase 5: 重新验证
+      │   └── 循环直到全部通过（最多 --loop N 轮）
+      │
+      ├── 有 Gap + 无 --fix → 用户决策
+      │   ├── /forge-verify --fix               → 自动补齐
       │   ├── /forge-teams "补齐 [缺失需求]"     → 完整流水线补功能
-      │   ├── /forge-teams --skip-to 5            → 红队审查已实现部分
       │   └── 手动修复
       │
       └── 可疑实现 → 用户决策

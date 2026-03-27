@@ -118,11 +118,11 @@ forge-teams (多 agent 对抗):
 # 描述需求 → 检查现有代码是否已实现 → 差距报告
 /forge-verify "用户可以通过邮箱注册，密码至少8位，注册后发送验证邮件"
 
-# 严格模式 + 检查测试覆盖
-/forge-verify "支持 OAuth2 登录和 JWT token 刷新" --strict --with-tests
+# 验证 + 自动补齐缺失实现（TDD 方式）
+/forge-verify "支持 OAuth2 登录和 JWT token 刷新" --fix --loop 3
 
-# 从文件加载需求
-/forge-verify requirements.md
+# 严格模式 + 检查测试覆盖
+/forge-verify requirements.md --strict --with-tests
 ```
 
 ### 单阶段执行
@@ -231,7 +231,7 @@ forge-teams 使用 Agent Teams 进行多 agent 并行协作，token 消耗较高
 |---------|------|-----------------|
 | `/forge-teams` | 7 阶段对抗协作流水线（完整 pipeline 或单阶段） | 是 |
 | `/forge-fix` | 独立 bug 修复：对抗调试 → TDD 修复 → 独立验证 → 循环 | 是（快速路径除外） |
-| `/forge-verify` | 独立需求验证：结构化 → 代码映射 → 测试覆盖 → 差距报告 | 否 |
+| `/forge-verify` | 独立需求验证：结构化 → 代码映射 → 差距报告 → 自动补齐（`--fix`） | 否 |
 
 ### 何时使用哪个命令？
 
@@ -241,6 +241,7 @@ forge-teams 使用 Agent Teams 进行多 agent 并行协作，token 消耗较高
 | 已知 bug，需要快速修复 | `/forge-fix "bug 描述"` |
 | 简单 bug，根因明显 | `/forge-fix "bug 描述" --quick` |
 | 检查需求是否已实现 | `/forge-verify "需求描述"` |
+| 验证需求 + 自动补齐缺失 | `/forge-verify "需求描述" --fix` |
 | 代码安全审查 | `/forge-teams --skip-to 5` |
 | 复杂 bug，多个可能根因 | `/forge-fix "bug 描述" --team-size large` |
 
@@ -291,7 +292,7 @@ forge-teams 定义了 23 个专用 agent，覆盖全部 7 个阶段：
 | `adversarial-review` | P5 | 对抗式审查 + 红队攻击，多 agent 并行交叉检验 |
 | `adversarial-debugging` | P6 | 对抗式调试，竞争假设 + 结构化辩论找根因 |
 | `forge-fix` | 独立 | `/forge-fix`: 独立 bug 修复循环，快速路径分流 + 三层迭代控制（Fixer→Advisor→Replanner） |
-| `forge-verify` | 独立 | `/forge-verify`: 独立需求验证，EARS 结构化 → 代码映射 → 测试验证 → 差距报告 |
+| `forge-verify` | 独立 | `/forge-verify`: 独立需求验证，EARS 结构化 → 代码映射 → 差距报告 → 自动补齐（`--fix`） |
 
 > P3 (规划) 和 P7 (验收) 由 `forge-teams` skill 内联编排，不需要独立 skill。
 > `forge-fix` 和 `forge-verify` 是独立入口 skill，不依赖 7 阶段流水线。
