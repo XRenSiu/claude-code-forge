@@ -1,0 +1,24 @@
+{
+  "name": "design-clone",
+  "description": "Design DNA extraction + pixel-perfect website cloning. Combines programmatic CSS extraction (Browser MCP + getComputedStyle) with a 3-dimension design profile schema (design system / design style / visual effects). Two modes: --dna-only outputs a structured 150+ field Design DNA JSON; --full additionally generates a Next.js pixel-perfect clone via parallel builder agents.",
+  "version": "1.0.0",
+  "author": {
+    "name": "XRenSiu",
+    "email": "xrensiu@gmail.com"
+  },
+  "homepage": "https://github.com/XRenSiu/claude-code-forge/tree/main/plugins/design-clone",
+  "repository": "https://github.com/XRenSiu/claude-code-forge",
+  "license": "MIT",
+  "keywords": [
+    "design-clone",
+    "design-dna",
+    "website-clone",
+    "design-tokens",
+    "design-system",
+    "visual-effects",
+    "reverse-engineering",
+    "pixel-perfect",
+    "browser-mcp",
+    "getComputedStyle"
+  ]
+}

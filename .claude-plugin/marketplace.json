@@ -38,6 +38,21 @@
       "tags": ["debugging", "adversarial", "agent-teams", "root-cause-analysis", "hypothesis-testing", "parallel-investigation"]
     },
     {
+      "name": "design-clone",
+      "description": "Design DNA extraction + pixel-perfect website cloning. Combines programmatic CSS extraction (Browser MCP + getComputedStyle) with a 3-dimension design profile schema (design system / design style / visual effects). Two modes: --dna-only outputs a structured 150+ field Design DNA JSON; --full additionally generates a Next.js pixel-perfect clone via parallel builder agents.",
+      "version": "1.0.0",
+      "author": {
+        "name": "XRenSiu",
+        "email": "xrensiu@gmail.com"
+      },
+      "source": "./plugins/design-clone",
+      "category": "design",
+      "homepage": "https://github.com/XRenSiu/claude-code-forge/tree/main/plugins/design-clone",
+      "repository": "https://github.com/XRenSiu/claude-code-forge",
+      "license": "MIT",
+      "tags": ["design-clone", "design-dna", "website-clone", "design-tokens", "design-system", "visual-effects", "reverse-engineering", "pixel-perfect", "browser-mcp"]
+    },
+    {
       "name": "forge-teams",
       "description": "Agent Teams Product Development Pipeline - 7-phase adversarial collaborative development with multi-agent debate, competition, and cross-validation at every critical decision point, including red team attacks, adversarial debugging, self-healing parallel implementation, independent bug fix loop (/forge-fix), and requirement verification (/forge-verify).",
       "version": "1.8.0",
