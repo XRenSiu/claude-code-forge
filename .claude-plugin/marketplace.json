@@ -66,6 +66,21 @@
       "repository": "https://github.com/XRenSiu/claude-code-forge",
       "license": "MIT",
       "tags": ["agent-teams", "adversarial", "product-development", "red-team", "parallel-implementation", "debugging", "tdd", "bug-fix", "requirement-verification"]
+    },
+    {
+      "name": "persona-distill",
+      "description": "Persona Distillation Ecosystem - parameterized schema library + generation/evaluation/scheduling/debate toolkit for distilling personas (people or rule systems) into self-contained Claude Code skills. 5 skills (distill-meta, persona-judge, distill-collector, persona-router, persona-debate), 9 persona schemas (self/collaborator/mentor/loved-one/friend/public-mirror/public-domain/topic/executor), 18 reusable components, 12-dimension quality rubric.",
+      "version": "0.1.0",
+      "author": {
+        "name": "XRenSiu",
+        "email": "xrensiu@gmail.com"
+      },
+      "source": "./plugins/persona-distill",
+      "category": "knowledge",
+      "homepage": "https://github.com/XRenSiu/claude-code-forge/tree/main/plugins/persona-distill",
+      "repository": "https://github.com/XRenSiu/claude-code-forge",
+      "license": "MIT",
+      "tags": ["persona-distillation", "skill-generation", "schema-library", "quality-evaluation", "multi-modal-collection", "persona-routing", "persona-debate", "cognitive-os", "self-contained-skills"]
     }
   ]
 }

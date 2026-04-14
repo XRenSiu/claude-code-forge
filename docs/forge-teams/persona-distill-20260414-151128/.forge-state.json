@@ -1,0 +1,35 @@
+{
+  "feature": "persona-distill-ecosystem",
+  "timestamp": "20260414-151128",
+  "requirement": "Implement the full distill-skills ecosystem per master plan: 5 skills (distill-meta + persona-judge as core; distill-collector + persona-router + persona-debate as optional), 9 persona schemas, 16 shared components, 7-phase distillation workflow. Deliver as new plugin plugins/persona-distill/ in the claude-code-forge marketplace.",
+  "requirement_attachments": ["attachments/distill-skills-master-plan.md"],
+  "team_size": "large",
+  "current_phase": 7,
+  "status": "completed",
+  "phases": {
+    "1": { "status": "skipped", "note": "User instructed to skip PRD debate; master plan document serves as PRD" },
+    "2": { "status": "skipped", "note": "User instructed to skip architecture bakeoff; master plan document serves as ADR" },
+    "3": { "status": "completed", "started_at": "2026-04-14T15:11:28+08:00", "completed_at": "2026-04-14T15:20:00+08:00" },
+    "4": { "status": "completed", "started_at": "2026-04-14T15:20:00+08:00", "completed_at": "2026-04-14T16:30:00+08:00", "waves_completed": [1, 2, 3, 4, 5], "files_created": 75 },
+    "5": { "status": "completed", "started_at": "2026-04-14T16:30:00+08:00", "completed_at": "2026-04-14T17:00:00+08:00" },
+    "6": { "status": "completed", "started_at": "2026-04-14T17:00:00+08:00", "completed_at": "2026-04-14T17:15:00+08:00" },
+    "7": { "status": "completed", "started_at": "2026-04-14T17:15:00+08:00", "completed_at": "2026-04-14T17:45:00+08:00" }
+  },
+  "artifacts": {
+    "prd": "phase-1-requirements/prd.md",
+    "adr": "phase-2-architecture/adr.md",
+    "plan": "phase-3-planning/plan.json",
+    "code_report": "plugins/persona-distill/docs/integration.md",
+    "red_team_report": "phase-5-red-team/ (inline in reviewer outputs)",
+    "debug_fixes": "phase-6-debugging/ (inline fixes: 16→18, dead refs, seven-axis, security docs)",
+    "acceptance": "phase-7-delivery/acceptance.md"
+  },
+  "options": {
+    "no_red_team": false,
+    "fix": false,
+    "loop": 3,
+    "skip_to": 3
+  },
+  "interrupted_at": null,
+  "progress_memo": null
+}

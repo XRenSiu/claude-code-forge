@@ -1,0 +1,151 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/XRenSiu/claude-code-forge/plugins/persona-distill/contracts/manifest.schema.json",
+  "title": "persona-distill manifest.json contract",
+  "description": "The manifest.json produced by distill-meta for every generated persona skill. Consumed by persona-judge (routing of rubric dimensions), persona-router (matching), and persona-debate (participant discovery). This schema is the ONLY authoritative contract for that file; changes here are breaking changes to all 5 skills.",
+  "type": "object",
+  "required": [
+    "persona_distill_version",
+    "schema_type",
+    "schema_version",
+    "components_used",
+    "identity",
+    "triggers",
+    "fingerprint",
+    "version",
+    "generated_at",
+    "density_score"
+  ],
+  "properties": {
+    "persona_distill_version": {
+      "type": "string",
+      "description": "SemVer of the persona-distill plugin that generated this manifest.",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "schema_type": {
+      "type": "string",
+      "description": "Which of the 9 persona schemas this skill uses.",
+      "enum": [
+        "self",
+        "collaborator",
+        "mentor",
+        "loved-one",
+        "friend",
+        "public-mirror",
+        "public-domain",
+        "topic",
+        "executor"
+      ]
+    },
+    "schema_version": {
+      "type": "string",
+      "description": "Version of the schema definition used. Allows future migration.",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "components_used": {
+      "type": "array",
+      "description": "Slugs of the 18 shared components activated for this persona.",
+      "items": {
+        "type": "string",
+        "enum": [
+          "hard-rules",
+          "identity",
+          "expression-dna",
+          "persona-5layer",
+          "persona-6layer",
+          "self-memory",
+          "work-capability",
+          "shared-memories",
+          "emotional-patterns",
+          "mental-models",
+          "decision-heuristics",
+          "thought-genealogy",
+          "internal-tensions",
+          "honest-boundaries",
+          "domain-framework",
+          "computation-layer",
+          "interpretation-layer",
+          "correction-layer"
+        ]
+      },
+      "minItems": 3,
+      "uniqueItems": true
+    },
+    "identity": {
+      "type": "object",
+      "description": "Identity card. Used by persona-router for matching.",
+      "required": ["name", "description"],
+      "properties": {
+        "name": { "type": "string" },
+        "display_name": { "type": "string" },
+        "description": { "type": "string", "description": "One-paragraph summary. Router matches against this." },
+        "domains": {
+          "type": "array",
+          "description": "Domains / areas of expertise the persona is suited for.",
+          "items": { "type": "string" }
+        },
+        "language": { "type": "string", "description": "Primary language (zh/en/...)." },
+        "subject_type": {
+          "type": "string",
+          "description": "Whether this is a real person, composite, fictional, or rule system.",
+          "enum": ["real-person", "composite", "fictional", "rule-system", "topic"]
+        }
+      }
+    },
+    "triggers": {
+      "type": "array",
+      "description": "Trigger phrases for skill invocation.",
+      "items": { "type": "string" },
+      "minItems": 1
+    },
+    "fingerprint": {
+      "type": "string",
+      "description": "SHA-256 over the concatenated, sorted list of knowledge/*.md file contents. Stable across rebuilds when knowledge is unchanged.",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "version": {
+      "type": "string",
+      "description": "SemVer of this persona skill itself. Bumped on knowledge updates or corrections.",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "generated_at": {
+      "type": "string",
+      "description": "ISO 8601 timestamp when this manifest was written.",
+      "format": "date-time"
+    },
+    "density_score": {
+      "type": "number",
+      "description": "Most recent density score from persona-judge. 0-10. -1 if not yet evaluated.",
+      "minimum": -1,
+      "maximum": 10
+    },
+    "validation_score": {
+      "type": "number",
+      "description": "Most recent validation score from persona-judge. 0-110 raw, or -1 if not evaluated.",
+      "minimum": -1,
+      "maximum": 110
+    },
+    "unvalidated": {
+      "type": "boolean",
+      "description": "True for skills shipped before dog-food validation. Consumers may warn users.",
+      "default": false
+    },
+    "sources": {
+      "type": "object",
+      "description": "Corpus provenance summary.",
+      "properties": {
+        "primary_ratio": {
+          "type": "number",
+          "description": "Fraction of corpus from primary sources (first-hand).",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "corpus_size_chars": { "type": "integer", "minimum": 0 },
+        "source_categories": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    }
+  }
+}

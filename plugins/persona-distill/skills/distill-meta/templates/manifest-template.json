@@ -1,0 +1,55 @@
+{
+  "_template_notes": {
+    "_purpose": "Template consumed by distill-meta Phase 5 (step 5 in references/output-spec.md §4) to render each generated persona skill's manifest.json. MUST validate against contracts/manifest.schema.json after placeholder substitution.",
+    "_owner": "distill-meta",
+    "_conforms_to": "../../../contracts/manifest.schema.json",
+    "_substitution_rule": "distill-meta scans for tokens of shape {ALL_CAPS_SNAKE}. String slots are quoted placeholders like \"{PERSONA_SLUG}\" and substituted in place. Array slots (\"{COMPONENTS_ARRAY}\", \"{TRIGGERS_ARRAY}\", \"{DOMAINS_ARRAY}\", \"{SOURCE_CATEGORIES_ARRAY}\") are replaced with the full JSON array literal. Numeric slots (\"{DENSITY_SCORE_NUMBER}\", etc.) are string-typed here and replaced with raw numbers at render time (quotes dropped).",
+    "_strip_before_write": "distill-meta MUST delete this \"_template_notes\" key before writing the rendered manifest.json to disk. The schema does not permit extra top-level keys with validation intent; keeping this block post-render would leak generator internals into consumer skills.",
+    "_placeholder_catalog": {
+      "{PERSONA_DISTILL_VERSION}": "SemVer of the persona-distill plugin at render time. Default \"0.1.0\".",
+      "{SCHEMA_TYPE}": "One of the 9 enum values in manifest.schema.json → schema_type.",
+      "{SCHEMA_VERSION}": "SemVer of the schema definition consumed. Default \"0.1.0\".",
+      "{COMPONENTS_ARRAY}": "JSON array of component slugs from the 18-slug reserve (see component-contract.md §6). minItems=3, uniqueItems=true.",
+      "{PERSONA_SLUG}": "kebab-case identity.name. Used as directory name and SKILL.md 'name'.",
+      "{PERSONA_DISPLAY_NAME}": "Human-readable identity.display_name.",
+      "{PERSONA_DESCRIPTION}": "One-paragraph summary. Router matches against this field.",
+      "{DOMAINS_ARRAY}": "JSON array of domain strings.",
+      "{LANGUAGE_CODE}": "Primary language code (e.g. \"zh\", \"en\").",
+      "{SUBJECT_TYPE}": "One of: real-person | composite | fictional | rule-system | topic.",
+      "{TRIGGERS_ARRAY}": "JSON array of trigger phrase strings. minItems=1.",
+      "{FINGERPRINT_HEX}": "64-char lowercase hex SHA-256 over sorted knowledge/**/*.md. Write the literal string \"TO_BE_COMPUTED\" BEFORE Phase 5 step 2 and overwrite with the computed digest at step 5.",
+      "{VERSION}": "SemVer of this persona skill. Default \"0.1.0\" on first render; bumped by distill-meta on subsequent writes.",
+      "{GENERATED_AT_ISO8601}": "ISO 8601 UTC timestamp (e.g. \"2026-04-14T15:11:28Z\").",
+      "{DENSITY_SCORE_NUMBER}": "Most recent persona-judge density score 0-10, or -1 if not yet evaluated. Emit as raw number (no quotes) at render time.",
+      "{VALIDATION_SCORE_NUMBER}": "Most recent persona-judge validation score 0-110 raw, or -1. Emit as raw number.",
+      "{UNVALIDATED_BOOL}": "true on first render (pre-judge), flipped to false after persona-judge writes validation-report.md. Emit as raw boolean.",
+      "{PRIMARY_RATIO_NUMBER}": "Fraction of corpus from primary sources, 0.0-1.0. Emit as raw number.",
+      "{CORPUS_SIZE_CHARS_INT}": "Integer >= 0, total characters in knowledge/**/*.md.",
+      "{SOURCE_CATEGORIES_ARRAY}": "JSON array of source category strings (e.g. [\"articles\", \"chats\", \"transcripts\"])."
+    }
+  },
+  "persona_distill_version": "{PERSONA_DISTILL_VERSION}",
+  "schema_type": "{SCHEMA_TYPE}",
+  "schema_version": "{SCHEMA_VERSION}",
+  "components_used": "{COMPONENTS_ARRAY}",
+  "identity": {
+    "name": "{PERSONA_SLUG}",
+    "display_name": "{PERSONA_DISPLAY_NAME}",
+    "description": "{PERSONA_DESCRIPTION}",
+    "domains": "{DOMAINS_ARRAY}",
+    "language": "{LANGUAGE_CODE}",
+    "subject_type": "{SUBJECT_TYPE}"
+  },
+  "triggers": "{TRIGGERS_ARRAY}",
+  "fingerprint": "{FINGERPRINT_HEX}",
+  "version": "{VERSION}",
+  "generated_at": "{GENERATED_AT_ISO8601}",
+  "density_score": "{DENSITY_SCORE_NUMBER}",
+  "validation_score": "{VALIDATION_SCORE_NUMBER}",
+  "unvalidated": "{UNVALIDATED_BOOL}",
+  "sources": {
+    "primary_ratio": "{PRIMARY_RATIO_NUMBER}",
+    "corpus_size_chars": "{CORPUS_SIZE_CHARS_INT}",
+    "source_categories": "{SOURCE_CATEGORIES_ARRAY}"
+  }
+}
