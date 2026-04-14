@@ -23,11 +23,13 @@
 **输入**：100 条和朋友 Alice 的 iMessage
 
 **调用**：
+
 ```
 "蒸馏 Alice 作为 friend schema 的 persona skill"
 ```
 
-**输出**（自动生成的目录）：
+**产物**（自动生成的目录）：
+
 ```
 alice-friend-skill/
 ├── SKILL.md                    # 触发词 + 人格声明
@@ -40,11 +42,11 @@ alice-friend-skill/
 │   └── honest-boundaries.md    # 明确标注哪些问题资料不够
 ├── knowledge/
 │   ├── chats/imessage/alice.md # 清洗+脱敏后的原始语料
-│   └── conflicts.md            # 自动检测到的矛盾（保留不抹平）
+│   └── conflicts.md            # 自动检测到的矛盾（保留，不抹平）
 └── validation-report.md        # persona-judge 评估结果
 ```
 
-你现在可以把 `alice-friend-skill/` 塞进任何 Claude Code 项目，它会作为独立 skill 被识别。
+你现在可以把 `alice-friend-skill/` 塞进任何 Claude Code 项目，它会作为独立 skill 被识别，**不再依赖本插件**。
 
 ---
 
@@ -77,13 +79,15 @@ alice-friend-skill/
 用 persona-router 帮我选合适的 persona 来讨论这个架构问题
 ```
 
-想先走一遍端到端验证：见 [`docs/integration.md §7`](./docs/integration.md)（"How to verify v1 end-to-end"）。
+完整的端到端验证步骤（生成 → 评估 → 路由 → 辩论）：见 [`docs/integration.md §7`](./docs/integration.md)。
 
 ---
 
 ## 它是怎么跑的？
 
-这是个 **spec-driven 插件**——Claude Code 在运行时读这些 markdown + json 文件并按编排执行，**没有后台 server、没有常驻 runtime**。唯一的例外是 v0.2.0 新加的 4 个 Python 脚本（`skills/distill-collector/scripts/*.py`），它们是 stdlib-only 的语料 parser，你可以手动跑。
+**spec-driven 插件**——Claude Code 在运行时读这些 markdown + json 文件按编排执行，**没有后台 server、没有常驻 runtime**。
+
+唯一的例外：v0.2.0 新加了 4 个 stdlib-only Python 脚本（`skills/distill-collector/scripts/*.py`）用于解析 iMessage / email / twitter / 通用文本，你可以手动跑。
 
 生成的 persona skill 也是一堆 markdown + json，**不依赖本插件就能加载**。
 
@@ -124,9 +128,24 @@ Phase 5    交付 / 升级     → 产出路径 + 触发词；已有 skill 走 m
 
 ---
 
-## 4 份契约
+## 18 个组件
 
-跨 skill 的权威接口，改动这些是 breaking change：
+Schema 不是固定模板，是**组件的有序组合**。18 个可复用组件：
+
+```
+hard-rules · identity · expression-dna（7 轴量化）· persona-5layer · persona-6layer
+self-memory · work-capability · shared-memories · emotional-patterns
+mental-models（三重验证）· decision-heuristics · thought-genealogy · internal-tensions
+honest-boundaries · domain-framework · computation-layer · interpretation-layer · correction-layer
+```
+
+每个组件有统一的 I/O 契约，定义在 [`contracts/component-contract.md`](./contracts/component-contract.md)。
+
+---
+
+## 4 份跨 skill 契约
+
+改动这些是 breaking change：
 
 | 契约 | 作用 |
 |------|------|
@@ -144,11 +163,11 @@ Phase 5    交付 / 升级     → 产出路径 + 触发词；已有 skill 走 m
 | Phase 2.5 迭代深化 | single-pass | **multi-round**（Jaccard > 0.8 早停，≤ 3 轮，高置信度自动回填） |
 | 冲突处理 | 只能用户手动追加 | **Phase 3.5 自动检测**（4 类冲突，只 surface 不 resolve） |
 | distill-collector | 全部 scaffolding-only | **4 条 runnable**（iMessage / email / twitter / generic），6 条仍 spec-only |
-| 迁移 | 无 | **migrator agent**，PLAN/APPLY 模式，保留自包含不变量 |
+| 迁移 | 无 | **migrator agent**，PLAN / APPLY 模式，保留自包含不变量 |
 | schema | 9 个硬编码 | **9 核心 + 社区可扩展**（contract + contribution guide） |
 | 契约数 | 3 | **4**（+ schema-extension-contract） |
 
-完整 change log 和 v2 roadmap 在 [`docs/integration.md`](./docs/integration.md) §v0.2.0 change summary 和 §8。
+完整 change log 和 v2 roadmap 在 [`docs/integration.md`](./docs/integration.md)。
 
 ---
 
@@ -156,7 +175,6 @@ Phase 5    交付 / 升级     → 产出路径 + 触发词；已有 skill 走 m
 
 - **所有 9 个 schema 都带 `unvalidated: true`**——还没有一个真实 persona 被端到端 dog-food 跑通过。Dog-food 是 v1.0.0 的前置条件。
 - **`distill-collector` 剩下 6 个平台（WeChat / QQ / Feishu / Slack / Dingtalk / Telegram）+ 音视频 + OCR 都是 spec-only**——你得自己跑第三方导出工具，然后管到 `generic_import.py`。
-- **参考库无法 clone**：nuwa-skill / colleague-skill / anti-distill / immortal-skill 等，都是从 README 片段反向推导的，标注为 `[UNVERIFIED-FROM-README]`。
 - **7 个已知安全 / 信任缺口**：privacy free-text PII、consent bypass、prompt injection from corpus、manifest 字段欠约束、rubric gaming、self-containment escape、schema 误用。**真实使用前**务必看 [`docs/integration.md §6.2`](./docs/integration.md)。
 - **不要蒸馏未授权的真人**——`hard-rules` 是政策不是强制执行。
 
@@ -174,22 +192,23 @@ persona-distill/
 │   └── schema-extension-contract.md         # v0.2.0
 ├── skills/
 │   ├── distill-meta/                        # 主编排器
-│   │   ├── agents/                          # 11 sub-agent（含 v0.2.0 新增的 candidate-merger / conflict-detector / migrator）
+│   │   ├── agents/                          # 11 sub-agent
 │   │   ├── references/
-│   │   │   ├── schemas/                     # 9 core + community/ 子目录
+│   │   │   ├── schemas/                     # 9 core + community/
 │   │   │   ├── components/                  # 18 组件
-│   │   │   ├── extraction/                  # 提取框架（含 v0.2.0 新增的 convergence-detection / conflict-detection）
-│   │   │   └── migration.md                 # v0.2.0 迁移规格
+│   │   │   ├── extraction/                  # 提取框架
+│   │   │   └── migration.md                 # v0.2.0
 │   │   └── templates/
 │   ├── persona-judge/                       # 12 维评估器
 │   ├── distill-collector/
-│   │   ├── references/                      # 12 个平台规格 + 脱敏策略
+│   │   ├── references/                      # 12 平台规格 + 脱敏策略
 │   │   └── scripts/                         # v0.2.0 — 4 个 stdlib Python parser
 │   ├── persona-router/                      # 跨 persona 调度
 │   └── persona-debate/                      # 多 persona 辩论
 ├── docs/
 │   ├── integration.md                       # 如何连接 + 已知限制
-│   └── schema-contribution-guide.md         # v0.2.0 — 如何贡献 schema
+│   ├── schema-contribution-guide.md         # v0.2.0 — 如何贡献 schema
+│   └── credits.md                           # 参考库与设计决策
 ├── LICENSE
 └── README.md
 ```
@@ -199,19 +218,3 @@ persona-distill/
 ## License
 
 MIT. See [LICENSE](./LICENSE).
-
-## Credits
-
-设计综合了以下参考库的模式（标 `[UNVERIFIED-FROM-README]` 的是只能读 README 片段的）：
-
-- [alchaincyf/nuwa-skill](https://github.com/alchaincyf/nuwa-skill) — 认知 OS、三重验证、7 轴 DNA
-- [titanwings/colleague-skill](https://github.com/titanwings/colleague-skill) — Work + Persona 双层架构、correction layer
-- [notdog1998/yourself-skill](https://github.com/notdog1998/yourself-skill) — self-memory 组件
-- [leilei926524-tech/anti-distill](https://github.com/leilei926524-tech/anti-distill) — 密度分类器（反向用作正向评分）
-- [agenmod/immortal-skill](https://github.com/agenmod/immortal-skill) — 统一 CLI、conflicts.md
-- [titanwings/ex-skill](https://github.com/titanwings/ex-skill) · [perkfly/ex-skill](https://github.com/perkfly/ex-skill) — 6 层人格（loved-one schema）
-- [jinchenma94/bazi-skill](https://github.com/jinchenma94/bazi-skill) — computation + interpretation layer 分离
-- [softaworks/agent-toolkit/skill-judge](https://github.com/softaworks/agent-toolkit) — 8 维 skill rubric 核心
-- cyber-figures — 迭代深化理念
-- midas.skill — N 维框架（public-domain schema）
-- 图鉴.skill / 诸子.skill — router + debate 概念蓝本（URL 未知）

@@ -1,0 +1,60 @@
+# Credits & Prior Art
+
+> 设计综合了以下参考库的模式。标注 `[UNVERIFIED-FROM-README]` 的，是因为仓库无法 clone，只能从 README 片段反向推导，细节可能有偏差。
+
+## 核心参考（Tier 1 — 必读）
+
+| 库 | 贡献 | 本插件取之处 |
+|----|------|------------|
+| [alchaincyf/nuwa-skill](https://github.com/alchaincyf/nuwa-skill) | 认知 OS、三重验证、7 轴 DNA、6 agent 并行、Phase 0→4 主流程 | `public-mirror` schema 蓝本；提取框架基础；Research Review Checkpoint；Self-Contained 原则；`[UNVERIFIED-FROM-README]` |
+| [titanwings/colleague-skill](https://github.com/titanwings/colleague-skill) | 双层架构（Work + Persona）、5 层人格、采集脚本、merger / correction | `collaborator` schema 蓝本；`persona-5layer`、`correction-layer` 组件；`[UNVERIFIED-FROM-README]` |
+| [notdog1998/yourself-skill](https://github.com/notdog1998/yourself-skill) | 自蒸馏双层（self + persona）、WeChat/QQ parser | `self-memory` 组件；采集脚本参考；`[UNVERIFIED-FROM-README]` |
+| [leilei926524-tech/anti-distill](https://github.com/leilei926524-tech/anti-distill) | 4 级密度分类器（SAFE / DILUTE / REMOVE / MASK）、稀释策略 | 反向用作**正向**密度评分；`persona-judge` density-scoring；`[UNVERIFIED-FROM-README]` |
+
+## 新一代多维蒸馏（Tier 2）
+
+| 库 | 贡献 | 本插件取之处 |
+|----|------|------------|
+| [agenmod/immortal-skill](https://github.com/agenmod/immortal-skill) | 7 persona 模板、12+ 平台、conflicts.md、统一 CLI、snapshot | `distill-collector` CLI 规格；`conflicts.md` 模式；Phase 3.5 冲突检测；migration tool 的 version+correction；`[UNVERIFIED-FROM-README]` |
+| [titanwings/ex-skill](https://github.com/titanwings/ex-skill) · [perkfly/ex-skill](https://github.com/perkfly/ex-skill) | 6 层人格、memories + persona、星盘/MBTI/依恋 | `loved-one` schema（6 层）；`shared-memories` + `emotional-patterns` 组件；`[UNVERIFIED-FROM-README]` |
+| [jinchenma94/bazi-skill](https://github.com/jinchenma94/bazi-skill) | Python computation + interpretation layer 分离、规则库 YAML | `executor` schema；`computation-layer` / `interpretation-layer` 组件分离；`[UNVERIFIED-FROM-README]` |
+| midas.skill | N 维框架（方法论而非单人） | `public-domain` schema；`domain-framework` 组件；`[UNVERIFIED-FROM-README]` |
+| cyber-figures | "5 轮蒸馏 / 405 段全文扫描发现 Layer 3" | Phase 2.5 迭代深化理念；Jaccard 收敛；`[UNVERIFIED-FROM-README]` |
+
+## 评估体系（Tier 3）
+
+| 库 | 贡献 | 本插件取之处 |
+|----|------|------------|
+| [softaworks/agent-toolkit/skill-judge](https://github.com/softaworks/agent-toolkit) | 8 维 skill 评估 rubric | `persona-judge` 12 维 rubric 在其基础上扩充（+ density + anti-gaming + 3 live tests） |
+
+## 概念蓝本（URL 未知）
+
+- **图鉴.skill** — 跨 persona 图谱、按需调度 → `persona-router` 的 scheduler 思路
+- **诸子.skill** — 多 persona 辩论与对垒 → `persona-debate` 的 3 种模式（round-robin / position-based / free-form）
+
+## 设计决策清单
+
+为什么这么做（master-plan §9 原始讨论的浓缩）：
+
+1. **为什么不做"3 个固定架构 skill"**：colleague 5 层 / ex 6 层 / nuwa 三维 / immortal 四维没有任何两个一样，说明架构必须**参数化**。
+2. **为什么 9 种 schema 不合并**：合并后每种的组件组合差异依然存在，不如显式列出。
+3. **为什么 `executor` 不独立成 skill**：它就是 `computation-layer` 组件 + 话术，没必要另起炉灶。
+4. **为什么 `computation-layer` 不只属于 executor**：它可以挂到任何 schema（蒸馏一个量化交易导师）。
+5. **为什么 persona-judge 是核心不是可选**：没有量化评估的蒸馏就是玄学，质量无法改进。
+6. **为什么 router 和 debate 是可选**：在 persona skill 数量 < 10 之前没价值。
+7. **为什么产物必须自包含**：防止生成的 persona skill 依赖 distill-meta。借鉴 nuwa 的核心原则。
+8. **为什么保留 `conflicts.md`**：矛盾是真实感的来源，不能被抹平。借鉴 immortal-skill。
+9. **为什么强制 Research Review Checkpoint**：不让 AI 蒙头跑完，人工介入一次可以避免很多错误。借鉴 nuwa。
+10. **为什么把 anti-distill 的 classifier 反向用**：正向（密度评分）比反向（防蒸馏）更有价值。
+
+## 诚实的边界
+
+- **没真正 clone 并运行任何一个参考库**，所有结构都是基于搜索结果和 README/SKILL.md 片段。具体 prompt 细节可能和原库有偏差。
+- **9 种 schema 没有经过实际蒸馏验证**——所有 schema 的 manifest 都带 `unvalidated: true`。
+- **Phase 2.5 迭代深化是理念扩充，不是成熟方法**——cyber-figures 的经验说明这件事有价值，怎么系统化做好还需要探索。
+- **`computation-layer` 作为通用挂件是设想**——实际可能绝大多数 schema 不需要它。
+- **本方案和现有方案的差异化点**：主要在"参数化 schema + 生成后生态（router / debate / migrator）+ 密度评分 + 社区 schema 扩展"四个点。生态继续演进，这些差异可能会被覆盖。
+
+---
+
+详细的集成拓扑和已知限制见 [`integration.md`](./integration.md)。
