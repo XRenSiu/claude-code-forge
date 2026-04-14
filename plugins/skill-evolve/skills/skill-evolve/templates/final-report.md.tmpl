@@ -1,0 +1,75 @@
+# Skill Evolution Final Report — {{skill_name}}
+
+**Started**: {{start_ts}}
+**Ended**: {{end_ts}}
+**Total rounds**: {{total_rounds}}
+**Termination reason**: {{termination_reason}}
+
+---
+
+## Headline
+
+| | Baseline | Final | Δ |
+|---|---|---|---|
+| **Total** | {{baseline_total}} / 100 | **{{final_total}} / 100** | **{{delta_total}}** |
+
+---
+
+## Per-Dimension Change
+
+| Dimension | Baseline | Final | Δ | Notes |
+|-----------|----------|-------|---|-------|
+| Workflow Clarity | {{wc_b}} | {{wc_f}} | {{wc_d}} | {{wc_note}} |
+| Boundary Handling | {{bh_b}} | {{bh_f}} | {{bh_d}} | {{bh_note}} |
+| Checkpoint Design | {{cd_b}} | {{cd_f}} | {{cd_d}} | {{cd_note}} |
+| Instruction Specificity | {{is_b}} | {{is_f}} | {{is_d}} | {{is_note}} |
+| Trigger Coverage | {{tc_b}} | {{tc_f}} | {{tc_d}} | {{tc_note}} |
+| Architecture Conciseness | {{ac_b}} | {{ac_f}} | {{ac_d}} | {{ac_note}} |
+| Known Test Pass Rate | {{ktpr_b}} | {{ktpr_f}} | {{ktpr_d}} | {{ktpr_note}} |
+| Edge + Voice Test | {{evt_b}} | {{evt_f}} | {{evt_d}} | {{evt_note}} |
+
+---
+
+## Experiment Stats
+
+- KEEP: {{n_keep}} 轮
+- REVERT: {{n_revert}} 轮（{{revert_pct}}%）
+- SKIP: {{n_skip}} 轮
+- 平均每 KEEP 涨分：{{avg_gain_per_keep}}
+
+> 若 REVERT > 50%：mutate 太激进，下次缩小修改幅度。
+> 若连续 5 轮无 KEEP：rubric 已封顶或局部最优，考虑换 rubric / 引入变异。
+
+---
+
+## Top Improvements（按涨分排序）
+
+1. **Round {{r1}}** — `{{r1_dim}}` +{{r1_gain}}：{{r1_change}}（commit `{{r1_hash}}`）
+2. **Round {{r2}}** — `{{r2_dim}}` +{{r2_gain}}：{{r2_change}}（commit `{{r2_hash}}`）
+3. **Round {{r3}}** — `{{r3_dim}}` +{{r3_gain}}：{{r3_change}}（commit `{{r3_hash}}`）
+
+---
+
+## Notable Reverts（学习用）
+
+| Round | 假设 | 复评 Δ | 失败原因 |
+|-------|------|--------|---------|
+| {{rev_r1}} | {{rev_h1}} | {{rev_d1}} | {{rev_why1}} |
+| {{rev_r2}} | {{rev_h2}} | {{rev_d2}} | {{rev_why2}} |
+
+---
+
+## Remaining Weakest Dimensions（下一次迭代的方向）
+
+1. `{{remaining_1}}` — {{remaining_1_score}} 分，建议方向：{{remaining_1_advice}}
+2. `{{remaining_2}}` — {{remaining_2_score}} 分，建议方向：{{remaining_2_advice}}
+
+---
+
+## Reproducibility
+
+- Rubric version: 1.0
+- experiments.tsv: `{{experiments_path}}`
+- All git commits: `git log --oneline --grep='^evolve\|^experiment' -- {{skill_path}}`
+
+End of report.

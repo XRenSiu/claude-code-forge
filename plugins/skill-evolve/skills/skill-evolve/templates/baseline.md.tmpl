@@ -1,0 +1,84 @@
+# Baseline Evaluation — {{skill_name}}
+
+**Evaluated at**: {{timestamp}}
+**Skill path**: `{{skill_path}}`
+**Rubric version**: 1.0
+**Evaluator**: independent subagent (run #{{eval_run_id}})
+
+---
+
+## Total: {{total}} / 100
+
+| Dimension | Score | Anchor | Weakest? |
+|-----------|-------|--------|----------|
+| 1. Workflow Clarity | {{workflow_clarity}}/10 | {{wc_anchor}} | {{wc_weak}} |
+| 2. Boundary Handling | {{boundary_handling}}/10 | {{bh_anchor}} | {{bh_weak}} |
+| 3. Checkpoint Design | {{checkpoint_design}}/10 | {{cd_anchor}} | {{cd_weak}} |
+| 4. Instruction Specificity | {{instruction_specificity}}/10 | {{is_anchor}} | {{is_weak}} |
+| 5. Trigger Coverage | {{trigger_coverage}}/10 | {{tc_anchor}} | {{tc_weak}} |
+| 6. Architecture Conciseness | {{architecture_conciseness}}/10 | {{ac_anchor}} | {{ac_weak}} |
+| 7. Known Test Pass Rate | {{known_test_pass_rate}}/20 | — | {{ktpr_weak}} |
+| 8. Edge + Voice Test | {{edge_voice_test}}/20 | — | {{evt_weak}} |
+
+---
+
+## Weakest Dimension（下一轮 mutate 目标）
+
+**`{{weakest_dimension}}`** —— {{weakest_score}} 分
+
+### 失分理由（来自 evaluator 的 rationale）
+
+{{weakest_rationale}}
+
+### 失分段落（SKILL.md 中的具体位置）
+
+```
+{{weakest_excerpt}}
+```
+
+---
+
+## Test Prompts Used
+
+### Known tests
+
+1. **{{test_1_prompt}}**
+   - Expected direction: {{test_1_expected}}
+   - Actual output (subagent dry-run): {{test_1_actual}}
+   - Sub-score: {{test_1_score}} / 7
+
+2. **{{test_2_prompt}}**
+   - Expected: {{test_2_expected}}
+   - Actual: {{test_2_actual}}
+   - Sub-score: {{test_2_score}} / 7
+
+3. **{{test_3_prompt}}**
+   - Expected: {{test_3_expected}}
+   - Actual: {{test_3_actual}}
+   - Sub-score: {{test_3_score}} / 7
+
+### Edge + voice test
+
+- Edge prompt: {{edge_prompt}}
+- Edge output: {{edge_output}}
+- Edge sub-score: {{edge_sub}} / 10
+- Voice analysis (100 字): {{voice_analysis}}
+- Voice sub-score: {{voice_sub}} / 10
+
+---
+
+## Baseline Decision
+
+- 基线分数 **≥ {{target}}** → SKIP 进化循环，直接出 final-report（skill 已达标）
+- 基线分数 **< {{target}}** → 进入 Phase 1 hill-climbing 循环
+
+→ **Decision: {{decision}}**
+
+---
+
+## Notes for Improver Agent
+
+- 第一轮 mutate 必须聚焦于 `{{weakest_dimension}}`
+- 假设句模板：「如果把 `{{weakest_excerpt}}` 改成 ___，则 `{{weakest_dimension}}` 应 +N 分，因为 ___」
+- 修改幅度建议 ≤ 30 行
+- 不要顺手优化其它维度
