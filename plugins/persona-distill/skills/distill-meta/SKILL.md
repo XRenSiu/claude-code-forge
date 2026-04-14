@@ -14,7 +14,7 @@ when_to_use: |
   - 需要蒸馏一个规则体系（八字/奇门/塔罗等，schema=executor）
   - 已有 persona skill 想迭代升级（自动走 update 分支）
   - 不要用于：单次角色扮演（用 prompt 即可）、不需要产物文件的场景
-version: 0.1.0
+version: 0.2.0
 ---
 
 # distill-meta
@@ -59,8 +59,9 @@ Phase 0.5  Schema 决策   → 9 选 1 + 组件选定 + 立即建目录（强制
 Phase 1    语料采集     → 私有（distill-collector）+ 公开（并行 agent 调研）
 Phase 1.5  Research Review Checkpoint → 覆盖率表格 + 缺口标注 + 用户确认
 Phase 2    维度提取     → 并行按组件提取 + 三重验证 + 七轴 DNA + 张力识别 + 密度分类
-Phase 2.5  迭代深化     → 最多 3 轮扫描"上轮错过的 X"
+Phase 2.5  迭代深化     → 最多 3 轮多轮扫描 + Jaccard 收敛 + 高置信度自动回填
 Phase 3    Skill 组装   → SKILL.md + manifest.json + 组件文件 + conflicts.md
+Phase 3.5  冲突检测     → 自动 surface 组件/语料/时期间的事实性矛盾到 conflicts.md（不 resolve）
 Phase 4    质量验证     → 调用 persona-judge：三项测试 + 12 维 rubric + 密度评分
 Phase 5    交付与后续   → 告知路径 + 触发词 + 进化方式（debate / router）
 ```
@@ -89,14 +90,25 @@ Phase 5    交付与后续   → 告知路径 + 触发词 + 进化方式（debat
 - **Goal**: 并行按组件提取：每个组件一个 sub-agent。三重验证（思维模型）、七轴量化（表达 DNA）、张力识别、密度分类。
 - **Artifact**: `<skill>/references/` 下各组件的初稿。
 
-### Phase 2.5 — Iterative Deepening（新增，借鉴 cyber-figures）
-- **Goal**: 最多 3 轮全文扫描"上轮错过的 X"；每轮必须产出"新的非冗余维度"才继续。
-- **Artifact**: 合并进对应组件文件，矛盾写入 `conflicts.md`。
+### Phase 2.5 — Iterative Deepening（借鉴 cyber-figures；v0.2.0 multi-round）
+- **Goal**: 最多 3 轮全文扫描"上轮错过的 X"；每轮用 Jaccard > 0.8 判定收敛，高置信度候选（score ≥ 0.75 且 verdict ∈ {ACCEPT, AUTO}）自动回填到目标组件。
+- **Agents**: `iterative-deepener`（多轮主控）+ `candidate-merger`（每轮 append-only 回填 + bump patch version + 写 merge log）+ 按需 spawn 3 个 ephemeral attribution-vote mini-agent。
+- **Stop conditions**: Jaccard > 0.8（早停）/ status = NO_GAPS / round_index = max_rounds（强制停，附 MAX_ROUNDS_REACHED）。
+- **Artifact**: 合并进对应组件文件的 `### Added in round N` 块；merge 审计记录到 `knowledge/phase25-merge-log.md`；矛盾写入 `conflicts.md`。
+- **Back-compat**: 调用方传 `max_rounds = 1` 即退化为 v0.1.0 single-pass 行为。
+- **See**: `references/extraction/iterative-deepening.md`、`references/extraction/convergence-detection.md`、`agents/iterative-deepener.md`、`agents/candidate-merger.md`。
 
 ### Phase 3 — Skill Assembly
 - **Goal**: 按 schema 的组件清单拼装 SKILL.md、manifest.json、各组件文件、conflicts.md、trigger 说明。
 - **Artifact**: 完整的 persona skill 目录（产物对 distill-meta **零依赖**）。
 - **See**: `contracts/component-contract.md` 的组件 I/O 契约。
+
+### Phase 3.5 — Conflict Detection（v0.2.0 新增，借鉴 immortal-skill）
+- **Goal**: 在 Phase 3 组装完成后、Phase 4 验证之前，跨组件与跨语料自动探测**事实性矛盾**（两份来源对同一断言给出 A 与 ¬A），写入产物根目录 `conflicts.md`。与 `internal-tensions`（稳定对立极，A ∧ B 共存）严格正交——前者是不兼容事实，后者是并存两极。
+- **Agent**: `conflict-detector`（单实例）。
+- **Four kinds**: factual / value-shift / stated-vs-behavioral / component-self。
+- **Hard rule**: 本阶段**只 surface，不 resolve**——`suggested_handling` 仅能取 `PRESERVE_BOTH` / `FLAG_FOR_USER` / `TIMEBOUND`；若用户先前手写了 `conflicts.md`，用户条目在 `## User-Appended Conflicts` 段 verbatim 保留，auto-detected 条目在 `## Auto-Detected Conflicts` 段单独归档，互不合并。
+- **See**: `references/extraction/conflict-detection.md`、`agents/conflict-detector.md`。
 
 ### Phase 4 — Quality Validation（dog-food）
 - **Goal**: 调用 `persona-judge` 跑三项测试（已知 / 边界 / 声音）+ 12 维 rubric + 密度评分。
@@ -142,6 +154,10 @@ Phase 5    交付与后续   → 告知路径 + 触发词 + 进化方式（debat
 > 待 dog-food 跑通一轮（通过 `persona-judge` 验证）后才移除该标记。
 > 详见 `contracts/manifest.schema.json` 的 `schema.unvalidated` 字段。
 
+### Community Schemas（v0.2.0 新增）
+
+除 9 种核心 schema 外，`distill-meta` 接受社区贡献的 schema 放置于 `references/schemas/community/`。每份必须符合 `contracts/schema-extension-contract.md`（YAML frontmatter + 7 个 H2 段 + 5-10 份测试语料），并提供自己的 `decision_tree_branch` 谓词。Phase 0.5 在走完 9 个核心分支之后按字母序扫描 community 目录；首个匹配谓词的 schema 胜出，多 match 时阻塞式提问用户。由社区 schema 生成的 persona skill 在 manifest 中标记 `schema_type_origin: community` + `schema_type_author: <handle>`。v0.2.0 社区目录为空——见 `docs/schema-contribution-guide.md` 如何提交首个社区 schema。
+
 ## Components（组件库）
 
 Schema 不是固定模板，而是**组件的有序组合**。18 个可复用组件：
@@ -181,6 +197,16 @@ Schema 不是固定模板，而是**组件的有序组合**。18 个可复用组
 2. 立即创建目录
 3. Phase 1.5 展示"当前覆盖率为 0" 请求资料
 4. 用户仍不提供 → 生成一份"骨架 + honest-boundaries 写满已知缺口"的最小产物
+
+### Update branch — 已存在 persona skill 的升级路径（v0.2.0 新增）
+
+Phase 0 会将目标 slug 对比 `produced/` 与用户提供的路径。发现已存在 persona skill 且满足任一条件——(a) `manifest.distill_meta_version` 与当前插件版本不同；(b) 任一 `components_used[].version` 与 `distill-meta/references/components/<slug>.md` 当前版本不同；(c) `manifest.schema.json` v0.2.0+ 迁移字段缺失——Phase 0 路由到 `agents/migrator.md` `mode: PLAN`，向用户展示生成的 `.migration/plan.md`。用户可选：
+
+- `apply` → 重新调用 migrator `mode: APPLY`（7 步 + snapshot + re-validation，可 rollback）。
+- `regenerate` → 走常规 Phase 1-5 全量重新蒸馏。
+- `ignore` → 保持 frozen skill（不写入）。
+
+默认 `apply`。Migrator **永远不破坏 self-contained 原则**——迁移完成后 `grep -r "distill-meta" {persona-skill-root}/` 仍返回 0 命中（master plan §9 #7）。详见 `references/migration.md` 与 `agents/migrator.md`。
 
 ## Contracts（跨 skill 接口契约）
 

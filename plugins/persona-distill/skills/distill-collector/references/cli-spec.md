@@ -1,20 +1,21 @@
 ---
-contract_version: 0.1.0
+contract_version: 0.2.0
 applies_to: distill-collector
-status: SCAFFOLDING-ONLY
+status: PARTIAL-RUNNABLE
 references:
   - ../SKILL.md
   - ../../distill-meta/references/output-spec.md
+  - ../scripts/
 ---
 
 # distill-collector — Unified CLI Specification
 
-> **[SCAFFOLDING-ONLY]** This document defines the **contract** for a CLI named
-> `distill-collector`. v1 of this skill does **not** ship a runnable binary;
-> it ships the spec so that (a) users writing their own scripts, (b) third-party
-> tools, and (c) future maintainers all agree on the same command names,
-> arguments, and output shape. See SKILL.md "Scaffolding-only disclaimer" for
-> the rationale (risks TEC-01 / TEC-02 / EST-02).
+> **[PARTIAL-RUNNABLE]** This document defines the **contract** for a CLI
+> named `distill-collector`. v0.2.0 ships **4 runnable parsers** under
+> `../scripts/` (covering iMessage / email / Twitter / generic text); the
+> remaining commands stay spec-only stubs. See §10 for the runnable subset
+> and SKILL.md for the rationale (risks TEC-01 / TEC-02 / EST-02 — we promote
+> a parser only when its input shape has been stable for ≥2 years).
 
 Inspired by `agenmod/immortal-skill/immortal_cli.py`. All commands share the
 global flags:
@@ -36,7 +37,10 @@ Exit code convention (applies to every command):
 | 4    | input error (file unreadable, corrupt export) |
 | 5    | output error (cannot write under `knowledge/`) |
 | 10   | partial success (some records skipped; see stderr for count) |
-| 20   | scaffolding stub: command is spec-only in v1, no runner available |
+| 20   | scaffolding stub: command is spec-only in v0.2.0, no runner available |
+
+Code `0` is the success path for `scripts/redactor.py` (including
+`--test`-vector success) and the four runnable parsers under §10.
 
 ---
 
@@ -232,3 +236,36 @@ lets distill-meta's Phase 1 always have a fallback.
 5. Commands are **idempotent where possible**: re-running `import` on the same
    input produces byte-identical output (modulo timestamps in the frontmatter's
    `generated_at`, which is normalized to the input file's mtime when present).
+
+---
+
+## 10. Runnable subset (v0.2.0)
+
+The four CLIs below ship as standalone Python 3.9+ scripts under
+`../scripts/`. They use only stdlib (`sqlite3`, `mailbox`, `zipfile`, `json`,
+`hashlib`, `re`, `argparse`) — no `pip install` step. Each script calls
+`scripts/redactor.py` before writing (unless `--no-redact` with the §5 stderr
+warning).
+
+| CLI command (spec) | Concrete runner | Covers |
+|--------------------|-----------------|--------|
+| `import --format generic` (§5) | `scripts/generic_import.py` | any UTF-8 .txt / .md → chat or article |
+| `collect --platform imessage` (§3) | `scripts/imessage_parser.py` | macOS `chat.db` → per-contact .md |
+| `collect --platform email` (§3) | `scripts/mbox_parser.py` | `.mbox` → per-thread .md |
+| `collect --platform twitter` (§3) | `scripts/twitter_archive_parser.py` | Twitter "Download your data" zip → per-year .md |
+| (shared infra) | `scripts/redactor.py` | regex PII redactor + embedded §6 self-tests |
+
+One-liners (each writes under `{destination}/knowledge/...`):
+
+```bash
+python scripts/generic_import.py --source notes.txt --subject "Alice Z" --destination ./alice
+python scripts/imessage_parser.py --db ~/Library/Messages/chat.db --subject "Alice Z" --destination ./alice
+python scripts/mbox_parser.py --mbox All-Mail.mbox --subject "Alice Z" --email-address alice@example.com --destination ./alice
+python scripts/twitter_archive_parser.py --archive twitter-archive.zip --subject "Alice Z" --destination ./alice
+python scripts/redactor.py --test     # validate redaction conformance
+```
+
+The remaining commands (`platforms`, `setup`, `transcribe`, and `collect` for
+WeChat/QQ/Feishu/Slack/Dingtalk/Telegram) remain exit-20 stubs in v0.2.0; the
+contract above is preserved so future implementers / user scripts drop into
+the same shape.

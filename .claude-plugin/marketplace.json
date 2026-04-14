@@ -69,8 +69,8 @@
     },
     {
       "name": "persona-distill",
-      "description": "Persona Distillation Ecosystem - parameterized schema library + generation/evaluation/scheduling/debate toolkit for distilling personas (people or rule systems) into self-contained Claude Code skills. 5 skills (distill-meta, persona-judge, distill-collector, persona-router, persona-debate), 9 persona schemas (self/collaborator/mentor/loved-one/friend/public-mirror/public-domain/topic/executor), 18 reusable components, 12-dimension quality rubric.",
-      "version": "0.1.0",
+      "description": "Persona Distillation Ecosystem - parameterized schema library + generation/evaluation/scheduling/debate toolkit for distilling personas (people or rule systems) into self-contained Claude Code skills. 5 skills (distill-meta, persona-judge, distill-collector, persona-router, persona-debate), 9 persona schemas (self/collaborator/mentor/loved-one/friend/public-mirror/public-domain/topic/executor), 18 reusable components, 12-dimension quality rubric, multi-round Phase 2.5, auto conflict detection, runnable parsers, migration tool, community schema extension.",
+      "version": "0.2.0",
       "author": {
         "name": "XRenSiu",
         "email": "xrensiu@gmail.com"

@@ -1,23 +1,23 @@
 ---
-contract_version: 0.1.0
+contract_version: 0.2.0
 applies_to: distill-collector — PII redaction at write-time
-status: SCAFFOLDING-ONLY
+status: RUNNABLE
 references:
   - ./cli-spec.md
   - ../../distill-meta/references/output-spec.md
+  - ../scripts/redactor.py
 ---
 
 # Redaction Policy — Unified Write-Time PII Filter
 
-> **[SCAFFOLDING-ONLY]** This document pins the regex patterns, placeholder
-> format, and override behavior that every parser (text, av, image-doc) MUST
-> apply at **write-time** before Markdown is persisted to `knowledge/`.
-> v1 ships the contract here; the regexes are the source of truth even though
-> no single binary runs them end-to-end in this wave. Users implementing
-> their own import scripts MUST follow this spec — `distill-meta` Phase 1.5
-> trusts the `redaction: applied-vYYYYMMDD` frontmatter tag as an unforged
-> claim. `distill-collector import --format generic` is expected to run this
-> for real (it is the one runnable command in v1 per cli-spec.md §5).
+> **[RUNNABLE]** This document pins the regex patterns, placeholder format,
+> and override behavior that every parser (text, av, image-doc) MUST apply at
+> **write-time** before Markdown is persisted to `knowledge/`. The reference
+> implementation now ships under `../scripts/redactor.py` (stdlib-only
+> Python 3.9+); the §6 test vectors are embedded as `unittest` cases and run
+> via `python redactor.py --test`. Users implementing their own import
+> scripts MUST still follow this spec — `distill-meta` Phase 1.5 trusts the
+> `redaction: applied-vYYYYMMDD` frontmatter tag as an unforged claim.
 
 Redaction applies at **write time**, not as a post-hoc scan. Rationale: if
 the source file is later deleted, the repo must not retain PII that
@@ -217,3 +217,36 @@ parser → markdown-text → redact(markdown-text) → write(path, redacted)
 No parser is permitted to write, then retro-redact. Users / downstream skills
 rely on the file-on-disk being the redacted copy from the first moment it
 exists.
+
+---
+
+## 8. Reference implementation (v0.2.0)
+
+The runnable Python module lives at `../scripts/redactor.py`. It exposes:
+
+```python
+from redactor import redact
+out = redact(input_text, salt="distill-collector-v1")  # str → str
+```
+
+and a CLI:
+
+```
+python redactor.py --in input.txt --out redacted.txt [--salt S] [--no-redact]
+python redactor.py --test    # run all §6.1 / §6.2 vectors as unittests
+```
+
+Implementation notes:
+
+- All §1 patterns live in a single ordered list inside `redactor.py`.
+  Order matters: API-key patterns run before EMAIL/PHONE/CARD so that a
+  long token like `sk-Ab...` is not double-matched.
+- The `EMAIL-HASH` placeholder uses the suffix `-HASH-` (matching §2's
+  example) instead of bare `-`, preserving downstream search heuristics
+  that look for the `EMAIL-HASH-` prefix.
+- The CLI exit codes mirror cli-spec.md: 0 success, 2 usage, 4 input,
+  5 output. `--test` returns 0 if all vectors pass, 1 otherwise.
+- All four runnable parsers (`generic_import.py`, `imessage_parser.py`,
+  `mbox_parser.py`, `twitter_archive_parser.py`) call `redact()` before
+  writing; `--no-redact` triggers the §5 stderr warning via the shared
+  `_warn_no_redact` helper.

@@ -1,7 +1,7 @@
 ---
-contract_version: 0.1.0
+contract_version: 0.2.0
 applies_to: distill-collector — text/chat platforms
-status: SCAFFOLDING-ONLY
+status: PARTIAL-RUNNABLE
 references:
   - ./cli-spec.md
   - ./redaction-policy.md
@@ -10,12 +10,15 @@ references:
 
 # Text & Chat Platform Parsers — Reference
 
-> **[SCAFFOLDING-ONLY]** None of the platform-specific parsers in this document
-> ship as runnable code in v1. For each platform we document: (a) the export
-> method the user must perform, (b) the canonical third-party tool pointer,
-> (c) the target output path + Markdown schema. Only `generic-text` ships a
-> minimal reference impl (see §11). Rationale: risks TEC-02 / EST-02 — shipping
-> 8 platform parsers that each depend on moving DB schemas is a liability.
+> **[PARTIAL-RUNNABLE]** v0.2.0 promoted **iMessage / email / Twitter / generic**
+> from spec-only to runnable Python scripts under `../scripts/`. The remaining
+> 6 platforms (WeChat / QQ / Feishu / Slack / Dingtalk / Telegram) stay
+> spec-only pending stable export formats. For each spec-only platform we
+> document: (a) the export method the user must perform, (b) the canonical
+> third-party tool pointer, (c) the target output path + Markdown schema.
+> Rationale: risks TEC-02 / EST-02 — shipping parsers that each depend on
+> moving DB schemas is a liability; we promote a parser only when the input
+> shape has been stable for ≥2 years.
 
 All parsers feed the unified pipeline defined in `cli-spec.md`. All writes go
 under `knowledge/chats/{platform}/` (or `knowledge/articles/` for long-form
@@ -31,15 +34,17 @@ email/tweets) and all pass through the redaction pipeline in
 | Feishu     | Admin → compliance export (CSV/JSON)                   | Feishu official export       | `knowledge/chats/feishu/{channel}.md`    | spec-only  |
 | Slack      | Workspace export (ZIP of JSON)                         | `slack-export-viewer`        | `knowledge/chats/slack/{channel}.md`     | spec-only  |
 | Dingtalk   | Admin compliance / phone-side manual export            | (manual → generic)           | `knowledge/chats/dingtalk/{channel}.md`  | spec-only  |
-| iMessage   | `chat.db` from `~/Library/Messages/`                   | `imessage_reader`            | `knowledge/chats/imessage/{contact}.md`  | spec-only  |
+| iMessage   | `chat.db` from `~/Library/Messages/`                   | `scripts/imessage_parser.py` | `knowledge/chats/imessage/{contact}.md`  | **RUNNABLE** (see scripts/imessage_parser.py) |
 | Telegram   | Telegram Desktop → "Export chat history" (HTML/JSON)   | `telegram-export`            | `knowledge/chats/telegram/{chat}.md`     | spec-only  |
-| Email      | `.mbox` / `.eml` from mail client                      | `mbox-reader` / stdlib mail  | `knowledge/articles/email/{thread}.md`   | spec-only  |
-| Twitter/X  | Account settings → "Download your data" (ZIP)          | twitter-archive JSON         | `knowledge/articles/twitter/{year}.md`   | spec-only  |
-| Generic    | Hand-typed / copy-paste to `.txt` / `.md`              | (this skill)                 | configurable via `--destination`         | **stub**   |
+| Email      | `.mbox` / `.eml` from mail client                      | `scripts/mbox_parser.py`     | `knowledge/articles/email/{thread}.md`   | **RUNNABLE** (see scripts/mbox_parser.py) |
+| Twitter/X  | Account settings → "Download your data" (ZIP)          | `scripts/twitter_archive_parser.py` | `knowledge/articles/twitter/{year}.md` | **RUNNABLE** (see scripts/twitter_archive_parser.py) |
+| Generic    | Hand-typed / copy-paste to `.txt` / `.md`              | `scripts/generic_import.py`  | configurable via `--destination`         | **RUNNABLE** (see scripts/generic_import.py) |
 
-> All "spec-only" rows mean: the contract below is binding; the runner is the
-> user's responsibility (third-party tool output → `distill-collector import
-> --format generic`). See cli-spec.md §3 for exit-code semantics.
+> "spec-only" rows mean: the contract below is binding; the runner is the
+> user's responsibility (third-party tool output → `scripts/generic_import.py`).
+> "**RUNNABLE**" rows mean a Python 3.9+ stdlib-only script is provided under
+> `../scripts/`; see each platform section for the one-line invocation.
+> See cli-spec.md §3 for exit-code semantics.
 
 ---
 
@@ -126,15 +131,24 @@ _[attachment: image → redacted — see knowledge/media/INDEX.md]_
 
 ---
 
-## 6. iMessage  `[USER-RESPONSIBILITY]`
+## 6. iMessage  **[RUNNABLE]**
 
-**Input shape**: `~/Library/Messages/chat.db` on macOS (SQLite). Requires Full Disk Access to read.
+**Runnable path**: `scripts/imessage_parser.py` reads `chat.db` directly via stdlib `sqlite3`, handles Core Data timestamps + `attributedBody` blobs, and writes per-contact Markdown.
 
-**Tool pointer**: [`imessage_reader`](https://github.com/niftycode/imessage_reader) or [`imessage-exporter`](https://github.com/ReagentX/imessage-exporter). The latter emits HTML/TXT; run the TXT output through `distill-collector import --format generic`.
+```
+python scripts/imessage_parser.py --db ~/Library/Messages/chat.db \
+    --subject "Alice Z" --destination ./alice-persona [--since 2024-01-01]
+```
 
-**Output schema**: `knowledge/chats/imessage/{contact}.md`. Phone numbers in the `contact` field are redacted per redaction-policy §2 (email-style placeholder).
+**Input shape**: `~/Library/Messages/chat.db` on macOS (SQLite). Requires Full Disk Access to read; copy the file to a working dir if you prefer not to grant FDA to the Python interpreter.
 
-**Parser status**: spec-only.
+**Tool pointer (legacy / alternative)**: [`imessage_reader`](https://github.com/niftycode/imessage_reader) or [`imessage-exporter`](https://github.com/ReagentX/imessage-exporter). The latter emits HTML/TXT; run the TXT output through `scripts/generic_import.py`. The shipped script supersedes both for the common case.
+
+**Quirks handled**: (a) dates stored as nanoseconds-since-2001 on Catalina+ vs. seconds on older macOS — auto-detected by magnitude; (b) message text in either `text` column or `attributedBody` NSArchiver blob — best-effort UTF-8 byte-scan, falling back to `[UNREADABLE-ATTRIBUTED-BODY]`.
+
+**Output schema**: `knowledge/chats/imessage/{contact-slug}.md`. Phone numbers / emails in the `contact` frontmatter field are redacted per redaction-policy §2 before slugification, so the file path itself does not leak PII.
+
+**Parser status**: **runnable** (v0.2.0).
 
 ---
 
@@ -150,11 +164,20 @@ _[attachment: image → redacted — see knowledge/media/INDEX.md]_
 
 ---
 
-## 8. Email  `[USER-RESPONSIBILITY]`
+## 8. Email  **[RUNNABLE]**
 
-**Input shape**: `.mbox` (Apple Mail, Thunderbird) or directory of `.eml` files.
+**Runnable path**: `scripts/mbox_parser.py` reads `.mbox` via stdlib `mailbox`, filters threads to those the subject participates in, strips nested `>>` quote chains, and writes one Markdown file per thread.
 
-**Tool pointer**: Python stdlib `mailbox` / `email` modules; no third-party tool required, but still out-of-scope for v1 runner. One thread = one file.
+```
+python scripts/mbox_parser.py --mbox ./All-Mail.mbox --subject "Alice Z" \
+    --email-address alice@example.com --destination ./alice-persona
+```
+
+**Input shape**: `.mbox` (Apple Mail, Thunderbird, mbox export from Gmail Takeout). `.eml` directories are out of scope for v0.2.0 — concatenate them into an mbox first if needed.
+
+**Tool pointer (legacy / alternative)**: stdlib `mailbox` / `email` modules — that's exactly what the shipped script wraps. No third-party tool required.
+
+**Quoted-reply handling**: lines starting with one `>` are kept (one level of quote context); lines with `>>` or deeper are stripped; signature blocks beginning `-- \n` are dropped.
 
 **Output schema**: one file per thread under `knowledge/articles/email/{YYYY-MM}-{thread-subject-slug}.md`, with:
 
@@ -181,15 +204,22 @@ redaction: applied-v20260414
 {body}
 ```
 
-**Parser status**: spec-only (goes to `articles/`, not `chats/`, because email threads are long-form).
+**Parser status**: **runnable** (v0.2.0); writes to `articles/`, not `chats/`, because email threads are long-form.
 
 ---
 
-## 9. Twitter / X  `[USER-RESPONSIBILITY]`
+## 9. Twitter / X  **[RUNNABLE]**
 
-**Input shape**: "Download your archive" ZIP containing `tweet.js` + media folder.
+**Runnable path**: `scripts/twitter_archive_parser.py` accepts the Twitter "Download your data" ZIP **or** an extracted directory, strips the `window.YTD.tweets.part0 = ` JS prefix from `data/tweets.js`, and emits one file per year.
 
-**Tool pointer**: no single vetted tool; treat `tweet.js` as JSON (strip the `window.YTD.tweets.part0 = ` prefix) and emit Markdown.
+```
+python scripts/twitter_archive_parser.py --archive ./twitter-2024-archive.zip \
+    --subject "Alice Z" --destination ./alice-persona
+```
+
+**Input shape**: "Download your archive" ZIP containing `data/tweets.js` (or legacy `data/tweet.js`) + media folder.
+
+**Tool pointer (legacy / alternative)**: no single vetted third-party tool; the shipped script is the canonical runner. `@handle` mentions are flattened to `[REDACTED-HANDLE]` in the Markdown to avoid leaking other users' identities.
 
 **Output schema**: one file per year `knowledge/articles/twitter/{YYYY}.md`:
 
@@ -210,16 +240,24 @@ tweet body...
   - reply to: @PersonA → [REDACTED-HANDLE]
 ```
 
-**Parser status**: spec-only.
+**Parser status**: **runnable** (v0.2.0).
 
 ---
 
-## 10. Generic Text  **[stub — minimal reference OK]**
+## 10. Generic Text  **[RUNNABLE]**
+
+**Runnable path**: `scripts/generic_import.py` is the most stable path — works on any UTF-8 `.txt` / `.md` file regardless of source platform.
+
+```
+python scripts/generic_import.py --source ./notes.txt --subject "Alice Z" \
+    --destination ./alice-persona
+```
+
+It auto-detects whether the input looks like a chat (any line matching `speaker:` prefix) and routes output to `chats/generic/` or `articles/generic/` accordingly.
 
 **Input shape**: any UTF-8 plain text or Markdown file the user hands over.
 
-**Tool pointer**: this skill itself, via `distill-collector import --format
-generic`.
+**Tool pointer**: `scripts/generic_import.py` (was: this skill via the planned CLI).
 
 **Heuristic rules** (the only parsing v1 is expected to actually run):
 
@@ -235,9 +273,7 @@ generic`.
 **Output schema**: same frontmatter shape as the platform-specific files
 above, `platform: generic`, `source_policy: user-provided`.
 
-**Parser status**: **stub** — can ship a ~50-line reference implementation in
-a later wave without violating the scaffolding constraint, because it has no
-platform-specific dependency. Not shipped in this wave (spec docs only).
+**Parser status**: **runnable** (v0.2.0). Ships under 200 lines of stdlib.
 
 ---
 

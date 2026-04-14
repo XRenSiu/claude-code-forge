@@ -1,37 +1,67 @@
 ---
 name: distill-collector
 description: >
-  多模态语料采集脚手架。把微信/QQ/iMessage/播客/视频/PDF 等多种输入统一成
-  Markdown 放进 persona skill 的 knowledge/ 目录。本 skill 是**规范 + 编排层**，
-  不打包可运行的平台解析器（见下方"scaffolding-only"说明）。
+  多模态语料采集脚手架 + 4 个可运行解析器。把 iMessage / 邮件 / Twitter 归档 /
+  通用文本直接转成 Markdown 放进 persona skill 的 knowledge/ 目录；
+  WeChat / QQ / Feishu / Slack / Dingtalk / Telegram / 音视频 / OCR
+  仍是规范 + 第三方工具指针。
   Use when: (1) 需要为 distill-meta 准备多模态语料,
   (2) 想把跨平台聊天记录归档成统一 Markdown,
   (3) 需要把音频/视频访谈转写成文本,
   (4) 手动整理语料前想先看 CLI 契约和目录规范。
   Triggers: "collect corpus", "采集语料", "ingest chat history",
-  "transcribe interview", "import wechat"
+  "transcribe interview", "import wechat", "import imessage",
+  "parse mbox", "parse twitter archive"
 when_to_use: |
   - distill-meta Phase 1 需要把多模态输入归档到 knowledge/ 之前
+  - 你有 iMessage chat.db / .mbox / Twitter 归档 zip / 任意 .txt → 直接跑 scripts/
   - 你有跨平台的原始导出（WeChat/QQ/Slack/Notion 等），想统一成 Markdown
   - 你有访谈录音/播客/视频，想拿到可供蒸馏的文字稿
   - 你想知道 persona skill 的 knowledge/ 目录该怎么组织
   - 你要手动准备语料，想先看官方 CLI 契约和目录约定
-version: 0.1.0
+version: 0.2.0
 ---
 
-# Distill Collector (Scaffolding-Only)
+# Distill Collector (Partial-Runnable)
 
 **把多模态语料统一成 Markdown，放进 `knowledge/` 目录。**
 
-Announce at start: "I'm using the distill-collector skill to document the unified corpus-collection contract and point to the right third-party tools; I won't run platform-specific parsers inside this skill."
+Announce at start: "I'm using the distill-collector skill. v0.2.0 ships 4 runnable parsers (iMessage / email / Twitter / generic) under scripts/; the remaining 6 chat platforms + audio/video + OCR are still spec-only and route through third-party tools."
 
-> **Scaffolding-only disclaimer (必读 / REQUIRED READING)**
+> **Status: PARTIAL-RUNNABLE (4 of 12 parsers runnable)**
 >
-> **This skill is a specification + orchestration layer. It documents the unified CLI contract and points users to appropriate third-party tools for each platform. It does NOT ship runnable parsers for WeChat/QQ/iMessage/Whisper/yt-dlp due to platform-specific OS dependencies.**
+> **Runnable now (Python 3.9+ stdlib only, no `pip install`):**
+> `scripts/generic_import.py`, `scripts/imessage_parser.py`, `scripts/mbox_parser.py`, `scripts/twitter_archive_parser.py`, plus the shared `scripts/redactor.py`.
 >
-> 本 skill 只提供**规范 + 编排**：定义统一 CLI 契约、输出目录约定、脱敏管线接口，并指向各平台合适的第三方工具。它**不打包**可运行的 WeChat / QQ / iMessage / Whisper / yt-dlp 解析器，因为这些工具依赖宿主 OS / 账号 / 二进制（ffmpeg 等）。
+> **Still spec-only (route through third-party tool → `generic_import.py`):**
+> WeChat / QQ / Feishu / Slack / Dingtalk / Telegram chat exports; Whisper / yt-dlp audio-video pipeline; OCR / EXIF / PDF / docx / Notion document pipeline.
 >
-> 这是本方案在风险评估 TEC-01 / TEC-02 / EST-02 下的显式取舍：与其发布一个 90% 情况下跑不起来的解析器套件，不如发布一份稳定的契约 + 指向真正能用的外部工具的索引。
+> 这是本方案在风险评估 TEC-01 / TEC-02 / EST-02 下的显式取舍：只把**输入格式已经稳定 ≥2 年**的解析器升级为 runnable（mbox 标准、Twitter "Download your data" zip 多年未变、iMessage chat.db schema 自 Catalina 后稳定）；微信 / QQ / Whisper / yt-dlp 仍依赖移动靶 + 用户侧二进制，保持外部工具指针。
+
+## Runnable quickstart (v0.2.0)
+
+```bash
+# 1. iMessage (macOS, 需要 Full Disk Access 或先复制 chat.db 到工作目录)
+python scripts/imessage_parser.py --db ~/Library/Messages/chat.db \
+    --subject "Alice Z" --destination ./alice-persona
+
+# 2. 邮件归档 (Apple Mail / Thunderbird / Gmail Takeout 的 .mbox)
+python scripts/mbox_parser.py --mbox ./All-Mail.mbox --subject "Alice Z" \
+    --email-address alice@example.com --destination ./alice-persona
+
+# 3. Twitter "Download your data" 归档
+python scripts/twitter_archive_parser.py --archive ./twitter-archive.zip \
+    --subject "Alice Z" --destination ./alice-persona
+
+# 4. 任意 .txt / .md (从微信 / QQ / Slack 导出的中间产物也走这里)
+python scripts/generic_import.py --source ./notes.txt --subject "Alice Z" \
+    --destination ./alice-persona
+
+# 5. 验证脱敏实现 (跑 references/redaction-policy.md §6 全部测试向量)
+python scripts/redactor.py --test
+```
+
+每个脚本都默认写入 `{destination}/knowledge/{chats|articles}/{platform}/...`，frontmatter 含 `redaction: applied-vYYYYMMDD`。`--no-redact` 触发显式 stderr 警告并改写 `redaction: disabled`，下游 distill-meta Phase 1.5 会拦截。
 
 ## Why This Shape
 
@@ -48,15 +78,16 @@ Announce at start: "I'm using the distill-collector skill to document the unifie
 
 ## Supported Formats Matrix
 
-| 类别 | 覆盖的平台/格式 | 本 skill 提供的规范深度 | 推荐的外部工具 |
+| 类别 | 覆盖的平台/格式 | 本 skill 提供的深度 | 推荐的工具 |
 |------|----------------|---------------------|-------------|
-| 文本 | WeChat, QQ, Feishu, Slack, Dingtalk, iMessage, Telegram, 邮件 (mbox/eml), Twitter/X 导出 | reference-docs-only | wechatDataBackup, QQExport, slack-export-viewer, imessage-exporter, telegram-export |
+| 文本 (runnable) | iMessage / mbox / Twitter zip / generic .txt | **runnable**（v0.2.0，stdlib-only） | `scripts/imessage_parser.py` / `mbox_parser.py` / `twitter_archive_parser.py` / `generic_import.py` |
+| 文本 (spec-only) | WeChat, QQ, Feishu, Slack, Dingtalk, Telegram | reference-docs + 第三方工具 → `generic_import.py` | wechatDataBackup, QQExport, slack-export-viewer, telegram-export |
 | 图像 | 截图 OCR + EXIF 元数据 | reference-docs-only | tesseract-ocr, exiftool |
 | 音频 | 访谈/播客/语音备忘录 → 文字稿 | reference-docs-only（给出 Whisper 调用样例，不随 skill 分发） | openai/whisper (本地), whisper.cpp, faster-whisper |
 | 视频 | 播客/YouTube/B 站 → 音轨 + 字幕 | reference-docs-only | yt-dlp, ffmpeg, 再接音频管线 |
 | 文档 | PDF, docx, epub, Notion 导出 | reference-docs-only + minimal reference impl (纯文本 PDF / docx 的最小样例) | pypdf / pdfplumber, python-docx, pandoc, notion-exporter |
 
-"reference-docs-only" 意味着：你在 `references/` 下能看到字段映射、目录约定、命令样例；但你**不会**在本 skill 里看到可直接 `python parse_wechat.py` 的运行时。
+"reference-docs-only" 意味着：你在 `references/` 下能看到字段映射、目录约定、命令样例；但你**不会**在本 skill 里看到可直接 `python parse_wechat.py` 的运行时——把第三方工具的输出喂给 `scripts/generic_import.py` 即可走完管线。
 
 ## Unified CLI Contract
 
@@ -128,7 +159,8 @@ distill-meta 的 Phase 1（语料采集）有两条路径：
 
 直面不做什么：
 
-- **不打包平台数据库解析器**。WeChat、QQ、iMessage 的本地数据库提取强依赖 OS 与账号授权。请使用 `wechatDataBackup`、`QQExport`、`imessage-exporter` 等外部工具拿到原始导出，再走 `distill-collector import --format generic`。
+- **不打包 WeChat / QQ 数据库解析器**。这些平台的本地数据库提取强依赖 OS 与账号授权（schema 几乎每年都变）。请使用 `wechatDataBackup`、`QQExport` 等外部工具拿到原始导出，再走 `scripts/generic_import.py`。
+- **iMessage / 邮件 / Twitter 已经 runnable**（v0.2.0）。这三类格式自 2020 年后稳定 ≥2 年，因此被升级为内置解析器；见 §"Runnable quickstart"。
 - **不打包 Whisper / yt-dlp**。音视频转写要求用户侧自行安装 Whisper（或 whisper.cpp / faster-whisper）与 ffmpeg；视频下载要求安装 yt-dlp。`references/cli-spec.md` 给出参考调用方式，但 skill 本身不分发这些二进制。
 - **OCR 不打包**。`tesseract-ocr` + 对应语言包需用户侧安装；EXIF 提取推荐 `exiftool`。
 - **不做跨平台对齐**。同一个联系人在 WeChat / iMessage 的 ID 合并由 distill-meta Phase 2 处理，不在 collector 范围内。
@@ -141,11 +173,12 @@ distill-meta 的 Phase 1（语料采集）有两条路径：
 
 当你需要展开细节时再去读：
 
-- `references/cli-spec.md` — 每个 CLI 命令的参数、退出码、输出格式、错误约定。
-- `references/text-parsers.md` — 8+ 文本平台的导出方式、第三方工具指针、输出模式。
+- `references/cli-spec.md` — 每个 CLI 命令的参数、退出码、输出格式、错误约定（v0.2.0 §10 列出 4 个 runnable 子集）。
+- `references/text-parsers.md` — 10 文本平台的导出方式 / 第三方工具指针 / 输出模式（4 个 runnable + 6 个 spec-only）。
 - `references/av-pipeline.md` — 音视频转写 / yt-dlp / ffmpeg 的管线规范（scaffolding-only）。
 - `references/image-doc-parsers.md` — OCR / EXIF / PDF / docx / epub / Notion 的处理规范。
-- `references/redaction-policy.md` — PII 正则、占位符、豁免名单、写入时接口。
+- `references/redaction-policy.md` — PII 正则、占位符、豁免名单、写入时接口；reference impl = `scripts/redactor.py`。
+- `scripts/` — 4 个可运行 Python 脚本 + 共享 redactor。Python 3.9+ stdlib only。
 
 > `text-parsers.md` 同时包含平台索引（工具指针 + 已知坑），`redaction-policy.md` 包含写入时的 frontmatter 约定。无独立 `platform-index.md` / `output-schema.md`。
 

@@ -1,6 +1,6 @@
 ---
 name: decision-tree
-version: 0.1.0
+version: 0.2.0
 phase: 0.5
 consumed_by: distill-meta (Phase 0.5 agent)
 produces: schema-decision.json
@@ -165,3 +165,28 @@ floor at 0.1
 - Phase 3 consumes `schema` + `components` to assemble the persona skill.
 - Phase 4 consumes `schema` via `manifest.schema_type` to route rubric dimensions inside `persona-judge`.
 - If the user rejects the decision at Phase 1.5, the agent re-runs this tree with the corrected signals.
+
+## Community Schemas / 社区扩展
+
+> See `contracts/schema-extension-contract.md` for the authoritative protocol.
+
+Community-contributed schemas extend this decision tree at runtime without editing the 9 core branches above. The Phase 0.5 agent's evaluation order is:
+
+1. **Discovery**: enumerate `references/schemas/*.md` (core) and `references/schemas/community/*.md` (community). Validate each file against `schema-extension-contract.md §3-§4`. Recompute `test_corpus_hash` from the sibling `<slug>-corpus/` directory; mismatch → WARN and skip. Failing files are logged (`schema_extension_warn: slug=<s> reason=<r>`) and NEVER loaded.
+
+2. **Core walk**: evaluate the 9 core branches above in the order written (top-down). If a core branch matches, pick it and STOP — community schemas are never consulted when a core branch matches.
+
+3. **Community fallback**: when no core branch matches, iterate over the loaded community schemas in **alphabetical order by slug** and evaluate each schema's `decision_tree_branch` predicate (a deterministic boolean expression over the `user_signals` fields). The **first matching predicate wins**.
+
+4. **Conflict resolution**: if more than one community predicate matches (ambiguous extension territory), the agent MUST surface the conflict to the user with a one-line summary of each candidate schema and ask for a pick. This is the **only** moment the Phase 0.5 agent is permitted to block on user input; the fallback rule above still applies if the user declines to choose (use the alphabetically-first candidate and set `confidence ≤ 0.3`).
+
+5. **Manifest marking**: when a community schema wins, the produced persona skill's manifest MUST set `schema_type_origin: community` and `schema_type_author: <author>` (from the schema file's frontmatter). Core schemas default to `schema_type_origin: core`.
+
+### Determinism guarantee
+
+Two runs of Phase 0.5 on the same corpus and same `user_signals` MUST produce the same schema choice. Discovery order (core canonical-order + community alphabetical) is the mechanism that keeps this true even as the community set grows. Do not introduce any ordering that depends on filesystem mtime, random seed, or time-of-day.
+
+### Change log
+
+- 0.2.0 — Added §Community Schemas section describing discovery, evaluation order, conflict resolution, and determinism guarantee. No change to the 9 core branches.
+- 0.1.0 — Initial decision tree with 9 core schemas.

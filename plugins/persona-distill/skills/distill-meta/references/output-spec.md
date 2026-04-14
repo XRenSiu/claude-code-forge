@@ -33,7 +33,7 @@ references:
 ├── versions/                # snapshot per update (last 5 retained by default)
 │   ├── 0.1.0/
 │   └── 0.2.0/
-├── conflicts.md             # append-only conflict ledger
+├── conflicts.md             # append-only conflict ledger (user-appended + Phase 3.5 auto-detected)
 └── validation-report.md     # latest persona-judge report (mirror of versions/validation-report-*.md)
 ```
 
@@ -105,9 +105,12 @@ Append-only ledger of contradictions discovered between corpus items.
 - resolution: <string | "unresolved">
 ```
 
-**v1 scope**: entries are **user-appended** during review. **v2 scope**: auto-detection by
-`conflict-scanner` during Phase 3 is planned but **out of scope for v1**. Do not remove past
-entries even after resolution — mark `resolution:` instead.
+**Scope**: entries may be (a) **user-appended** during review, or (b) **auto-detected** by the
+`conflict-detector` agent in Phase 3.5. Both share the file; user entries live under
+`## User-Appended Conflicts`, auto entries under `## Auto-Detected Conflicts`, and the agent
+MUST preserve user entries verbatim (see `agents/conflict-detector.md §Interaction with
+user-appended conflicts`). Do not remove past entries — mark `resolution:` instead. The
+detector never auto-resolves; `suggested_handling` ∈ {PRESERVE_BOTH, FLAG_FOR_USER, TIMEBOUND}.
 
 ### 2.7 `validation-report.md`
 

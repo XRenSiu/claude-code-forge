@@ -1,12 +1,22 @@
 ---
 name: integration
-description: Cross-skill wiring, interface contracts, and known limitations for persona-distill v0.1.0
-version: 0.1.0
+description: Cross-skill wiring, interface contracts, and known limitations for persona-distill v0.2.0
+version: 0.2.0
 ---
 
 # persona-distill — Integration & Known Limitations
 
-> How the 5 skills and 3 contracts wire together, and the honest list of v1 gaps.
+> How the 5 skills and 4 contracts wire together, what v0.2.0 added on top of v0.1.0, and the honest list of remaining gaps.
+
+## v0.2.0 change summary
+
+- **Phase 2.5 upgraded to multi-round** with Jaccard convergence detection (≤ 3 rounds) + auto-patch-back via new `candidate-merger` agent. Single-pass v0.1.0 behavior preserved as `max_rounds=1` back-compat.
+- **Phase 3.5 Conflict Detection** added (new `conflict-detector` agent + `extraction/conflict-detection.md`). Writes `knowledge/conflicts.md` with 4 conflict kinds (factual / value-shift / stated-vs-behavioral / component-self); strictly separated from `internal-tensions` (stable polarities). Agent never auto-resolves; `suggested_handling` ∈ {PRESERVE_BOTH, FLAG_FOR_USER, TIMEBOUND}.
+- **distill-collector partial-runnable**: 4 of 12 parsers runnable (iMessage / email / twitter / generic) via stdlib-only Python in `scripts/`. `redactor.py` embeds §6.1/§6.2 test vectors as self-tests. Remaining 6 chat platforms + AV pipeline + image/doc pipeline remain spec-only (third-party tool dependencies).
+- **Migration tool** (new `migrator.md` agent + `references/migration.md` + `templates/migration-plan-template.md`): upgrades previously-generated persona skills when component library bumps. Preserves self-containment (grep -r "distill-meta" must return 0 after migration). PLAN/APPLY modes; rollback via snapshot; user-edited files refused.
+- **Schema community extension** (new `contracts/schema-extension-contract.md` + `docs/schema-contribution-guide.md` + `references/schemas/community/` discovery directory). Core 9 schemas + community schemas; `manifest.schema_type_origin: core|community` differentiates.
+- **Manifest schema bumped to v0.2.0** with 5 new migration fields (`distill_meta_version`, `components_fingerprint`, `last_migrated_at`, `migration_history[]`, widened `components_used[]` via oneOf for backward compat) + 2 community fields (`schema_type_origin`, `schema_type_author`). All additions are additive; v0.1.0 manifests still validate.
+- **Contracts count: 3 → 4** (added `schema-extension-contract.md`).
 
 ---
 
@@ -67,9 +77,12 @@ version: 0.1.0
 
 | Contract | Producer | Consumer(s) |
 |----------|----------|-------------|
-| `contracts/manifest.schema.json` | `distill-meta` (via `templates/manifest-template.json` at generation time) | `persona-judge`, `persona-router`, `persona-debate`, any produced persona skill |
+| `contracts/manifest.schema.json` (v0.2.0) | `distill-meta` (via `templates/manifest-template.json` at generation time); `migrator` (on upgrade) | `persona-judge`, `persona-router`, `persona-debate`, any produced persona skill |
 | `contracts/validation-report.schema.md` | `persona-judge` | `distill-meta` (Phase 4 gate in `agents/validator.md`); user (standalone eval) |
-| `contracts/component-contract.md` | `distill-meta` (every file in `references/components/`) | All 9 schemas; `persona-judge` rubric validates conformance |
+| `contracts/component-contract.md` | `distill-meta` (every file in `references/components/`) | All 9 core + community schemas; `persona-judge` rubric validates conformance |
+| `contracts/schema-extension-contract.md` (v0.2.0 new) | community contributors | `distill-meta` Phase 0.5 discovery validates each community schema before loading |
+
+**Schema extensibility**: the `references/schemas/community/` subdirectory is a discovery sibling of the 9 core schema files. `distill-meta` Phase 0.5 enumerates both directories, validates community files against `contracts/schema-extension-contract.md`, and builds a deterministic ordered schema list (core canonical-order + community alphabetical). Failing community files are logged (`schema_extension_warn:`) and skipped — never loaded. Persona skills produced from a community schema carry `schema_type_origin: community` + `schema_type_author` in their manifest, allowing `persona-router`, `persona-judge`, and `persona-debate` to differentiate at downstream consumption time without breaking the contract hub.
 
 ## 3. Wave-by-wave implementation record
 
@@ -121,14 +134,14 @@ See `../../docs/forge-teams/persona-distill-20260414-151128/phase-3-planning/pla
 
 1. **No dog-food persona**: all 9 schemas ship with `unvalidated: true`. Before shipping v1.0.0, at least one real persona (suggested: `friend` or `self` — lowest complexity) should be distilled end-to-end and the contracts tested by running it.
 2. **Reference libraries unclonable**: 15+ repos (nuwa, colleague, ex, anti-distill, immortal, bazi, midas, 图鉴, 诸子, etc.) could not be cloned. Every "borrowed from X" section is tagged `[UNVERIFIED-FROM-README]`. v2 should clone and reconcile.
-3. **distill-collector scaffolding-only**: 8 text parsers (WeChat / QQ / Feishu / Slack / Dingtalk / iMessage / Telegram / email / Twitter), audio/video transcription, image OCR, and document extraction are all spec + third-party-tool pointers. No runnable code ships in v1. `generic` format import is the one minimal path that can work without extra user tooling.
-4. **Phase 2.5 single-pass**: multi-round iterative deepening (cyber-figures concept) is TODO(v2).
-5. **computation-layer executor-only**: cross-schema attachment is conceptual; real interface exists only for executor.
-6. **Scoring normalization fragile**: raw /110 score is authoritative; /100 normalized is display-only. Rubric explicitly warns against gating on normalized.
-7. **Discovery env-dependent**: `persona-router` filesystem scan paths vary across Claude Code installs; router reports which paths it scanned when empty.
-8. **Anti-gaming heuristics not exhaustive**: 8 patterns documented; sophisticated gaming is still possible.
-9. **Conflicts.md user-appended only**: automatic conflict detection deferred to v2.
-10. **No migration tool**: generated persona skills are "frozen copies" of components at generation time. When `distill-meta`'s component library updates, already-generated skills do not auto-upgrade. v2 adds a migrator.
+3. **distill-collector partial-runnable** (v0.2.0): 4 runnable paths ship (iMessage / email / twitter / generic via `scripts/`); 6 chat platforms (WeChat / QQ / Feishu / Slack / Dingtalk / Telegram) + AV pipeline + image OCR / document extraction remain spec-only due to volatile third-party export formats. Users of remaining platforms must wire their own export → `generic_import.py`.
+4. **computation-layer executor-only**: cross-schema attachment is conceptual; real interface exists only for executor.
+5. **Scoring normalization fragile**: raw /110 score is authoritative; /100 normalized is display-only. Rubric explicitly warns against gating on normalized.
+6. **Discovery env-dependent**: `persona-router` filesystem scan paths vary across Claude Code installs; router reports which paths it scanned when empty.
+7. **Anti-gaming heuristics not exhaustive**: 8 patterns documented; sophisticated gaming is still possible.
+8. **Phase 3.5 conflict detection is heuristic** (v0.2.0): LLM-driven cross-referencing surfaces obvious contradictions but can miss subtle shifts; agent only surfaces, never resolves — user is final arbiter.
+9. **Migration tool detects but does not auto-resolve user edits** (v0.2.0): user-modified component files in a produced persona skill are REFUSED for auto-patch; migrator falls back to diff display only.
+10. **Community schemas require manual PR review** (v0.2.0): no automated CI for `schema-extension-contract.md` conformance yet; human maintainer review is the gate.
 
 ### 6.2 Security / trust limitations (surfaced by P5 red-team)
 
@@ -164,22 +177,29 @@ These are **known v1 gaps**. They do not block shipping, but users should unders
 
 If any step fails, the contracts or templates need fixes before v1.0.0. Any bug reports welcome.
 
-## 8. v2 roadmap (extracted from TODOs across implementation)
+## 8. v2 roadmap (post-v0.2.0)
 
-Collected from agents' reports in the 5-wave build:
+Shipped in v0.2.0 (removed from roadmap): multi-round Phase 2.5 with Jaccard convergence, auto-patch of candidates, migration tool, automatic conflicts.md detection, runnable iMessage/email/twitter/generic parsers.
 
-- Multi-round Phase 2.5 with Jaccard convergence detection
-- Auto-patch of Phase 2.5 candidates back into components
-- Cross-schema computation-layer attachment interface
-- Chinese/English source-policy parameterization (English whitelist/blacklist populated)
-- config.yaml for persona-judge configurable thresholds (already scaffolded; not wired)
-- Migration tool for updating old generated skills when component library bumps
-- Automatic conflicts.md detection via LLM cross-referencing
-- Seven-axis DNA taxonomy reconciliation (extraction file vs component file)
-- Runnable `distill-collector` parsers for at least WeChat + iMessage (with user-supplied exports)
-- Dog-food end-to-end validation removing `unvalidated: true` banners from validated schemas
-- Task-tool skill invocation semantics for persona-debate moderator
+Remaining:
+
+- Cross-schema computation-layer attachment interface (still executor-only).
+- Chinese/English source-policy parameterization (English whitelist/blacklist populated).
+- config.yaml for persona-judge configurable thresholds (scaffolded; not wired).
+- Seven-axis DNA taxonomy reconciliation (v0.2.0 applied alias-table bandage; v2 should canonicalize short-names).
+- Runnable `distill-collector` parsers for WeChat + QQ + Feishu + Slack + Dingtalk + Telegram + AV pipeline + OCR / document extraction (all still spec-only).
+- Dog-food end-to-end validation removing `unvalidated: true` banners from validated schemas (v1.0.0 prerequisite).
+- Task-tool skill invocation semantics for persona-debate moderator.
+- `5layer / 6layer` DRY refactor (duplicated paragraphs).
+- `manifest.schema.json` maxLength caps + `fingerprint-verifier` agent (closes S4).
+- Untrusted-input delimiter convention for corpus-in-prompt concatenation (closes S3).
+- NER-based free-text PII redactor (closes S1).
+- Signed `consent-attestation.md` + corpus proper-noun cross-check (closes S2).
+- `pass_threshold_raw` lock-range + second-judge independent run (closes S5).
+- Self-containment-linter agent + rename "Extraction Prompt" → preserve-at-copy section (closes S6).
+- `source_privacy` dimension across source-policies + Phase 1.5 public-vs-private gate (closes S7).
+- CI for `schema-extension-contract.md` conformance (automated community PR validation).
 
 ---
 
-**Status**: v0.1.0 — spec-complete, dog-food validation pending.
+**Status**: v0.2.0 — spec-complete; 4 runnable parser paths; multi-round Phase 2.5, Phase 3.5 conflict detection, migration tool, and community schema extension mechanism all wired. Dog-food validation still pending for v1.0.0.
