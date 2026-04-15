@@ -27,6 +27,20 @@
 |----|------|------------|
 | [softaworks/agent-toolkit/skill-judge](https://github.com/softaworks/agent-toolkit) | 8 维 skill 评估 rubric | `persona-judge` 12 维 rubric 在其基础上扩充（+ density + anti-gaming + 3 live tests） |
 
+## 认知科学学术引用（v0.3.0 execution-profile 组件）
+
+v0.3.0 新增的 `execution-profile` 组件 / `cdm-4sweep` 提取方法论 / `execution-profile-extractor` agent 基于以下**同行评审论文与权威著作**。这些**不是** `[UNVERIFIED-FROM-README]`——可被 persona-judge 直接引用。
+
+| 文献 | 贡献 | 本插件取之处 |
+|------|------|------------|
+| Klein, G. (1998). *Sources of Power: How People Make Decisions*. MIT Press. | Recognition-Primed Decision 模型；"80% 专家决策是识别→第一反应，不是列表权衡" 的现场数据 | `execution-profile` 红线 2（RPD 风格）的学术依据；否决 Decision Making 段的 GPT 中性列表对比句式 |
+| Hoffman, R. R., Crandall, B., & Shadbolt, N. (1998). Use of the Critical Decision Method to elicit expert knowledge. *Human Factors*, 40(2), 254-276. | Critical Decision Method 4-sweep 标准化协议（Incident → Timeline → 10-Probe → What-If） | `cdm-4sweep.md` 的主方法；Sweep 3 的 10 项 probe |
+| Crandall, B., Klein, G., & Hoffman, R. R. (2006). *Working Minds: A Practitioner's Guide to Cognitive Task Analysis*. MIT Press. | CDM 操作手册 + Knowledge Audit 姊妹方法（past_and_future / big_picture / noticing 等 8 项） | 10 项 probe 的精简清单；execution-profile-extractor 的 Sweep 4 后 reverse-review |
+| Klein, G., Ross, K. G., Moon, B. M., et al. (2003). Macrocognition. *IEEE Intelligent Systems*. | 8 类宏观认知活动（Sensemaking / Decision Making / Planning / Adaptation / Problem Detection / Coordination / Managing Uncertainty / Mental Simulation） | execution-profile 的 8 段骨架；顺序不可变 |
+| Ericsson, K. A., & Ward, P. 关于自述 vs 行为差异的一系列工作 | "专家说的不是专家做的"——self-report 与实际行为系统性偏离 | `execution-profile` 红线 1 的学术依据；evidence 不能全是自述 |
+
+**诚实提醒**：CTA/CDM 原本是**人采访人**的方法。本插件是 LLM 从已有语料"模拟采访"。部分 probe（如"如果时间多一倍"）没有现实对应物，只能基于材料推断。这意味着提取质量有上限——比凭空总结高得多，但离真正的专家采访有差距。具体损耗需要跑对照实验（v1.0.0 dog-food 前置）。
+
 ## 概念蓝本（URL 未知）
 
 - **图鉴.skill** — 跨 persona 图谱、按需调度 → `persona-router` 的 scheduler 思路
@@ -46,6 +60,7 @@
 8. **为什么保留 `conflicts.md`**：矛盾是真实感的来源，不能被抹平。借鉴 immortal-skill。
 9. **为什么强制 Research Review Checkpoint**：不让 AI 蒙头跑完，人工介入一次可以避免很多错误。借鉴 nuwa。
 10. **为什么把 anti-distill 的 classifier 反向用**：正向（密度评分）比反向（防蒸馏）更有价值。
+11. **为什么 v0.3.0 引入 execution-profile（第 19 个组件）**：描述 ≠ 执行。`mental-models` 给"他怎么想"、`decision-heuristics` 给 IF-THEN 规则、`expression-dna` 给"怎么说"——三者加起来仍然是描述性的。加载 persona skill 后让 Claude 执行实际任务（拆解问题、选方案、判断要不要回头改），它会在决策瞬间漂回"标准中性助手"——描述没告诉它"现在这一秒该做什么"。execution-profile 用 Klein RPD + CDM 4-sweep 从具体事件反推指令性条款填这个缺口。
 
 ## 诚实的边界
 

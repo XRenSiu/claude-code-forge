@@ -143,6 +143,9 @@ See `../../docs/forge-teams/persona-distill-20260414-151128/phase-3-planning/pla
 8. **Phase 3.5 conflict detection is heuristic** (v0.2.0): LLM-driven cross-referencing surfaces obvious contradictions but can miss subtle shifts; agent only surfaces, never resolves — user is final arbiter.
 9. **Migration tool detects but does not auto-resolve user edits** (v0.2.0): user-modified component files in a produced persona skill are REFUSED for auto-patch; migrator falls back to diff display only.
 10. **Community schemas require manual PR review** (v0.2.0): no automated CI for `schema-extension-contract.md` conformance yet; human maintainer review is the gate.
+11. **execution-profile is LLM-simulated CTA, not real CDM interviews** (v0.3.0): CTA/CDM are originally **human-interviewing-human** methods. This plugin runs the protocol by having an LLM "interview" pre-existing corpus. Some probes (notably Sweep 3's `time_pressure` and `hypotheticals`) have no real counterfactual ground truth — they can only be inferred from the material. This **caps extraction quality**: better than asking Claude to summarize in one shot, but short of true expert elicitation. Exact loss has not been measured; `cdm-4sweep.md §Honest Limitation Admission` states this directly. A controlled A/B (skill with vs. without execution-profile on the same task set) is a v1.0.0 dog-food prerequisite.
+12. **execution-profile's red-line 2 threshold is conservative** (v0.3.0): Klein's field data says ~80% of expert decisions are RPD-style (not analytical list-compare). The red-line triggers at >50% list-compare rather than >20%, to avoid false positives on legitimately analytical personas (quant traders, statisticians, regulators). If multiple public-mirror / mentor skills hit false-positive red-line-2 fails, the threshold should tighten to 30%.
+13. **execution-profile only ships for public-mirror + mentor** (v0.3.0): other schemas (`self`, `collaborator`, `friend`, `loved-one`, `public-domain`) are expansion candidates but not yet validated. Those schemas set `execution_profile_completeness: not_applicable` in manifest. `topic` and `executor` are permanently excluded (no event-based personas).
 
 ### 6.2 Security / trust limitations (surfaced by P5 red-team)
 
@@ -157,6 +160,7 @@ These are **known v1 gaps**. They do not block shipping, but users should unders
 | S5 | **Rubric gaming via `config.yaml`** | High | `persona-judge/references/rubric.md` §"Configurable Thresholds" lets users override `pass_threshold_raw`, `density_floor`, `required_tensions`, `required_boundaries`, `primary_source_min`. An attacker sets `density_floor: 0.5` and `pass_threshold_raw: 40` → low-quality persona PASSes. Anti-gaming §"PRD Threshold Arbitrage" does not catch config tampering. | Lock overrides to narrow ranges (e.g. `pass_threshold_raw ∈ [75, 95]`); require attestation that defaults were used; second independent model runs judge. |
 | S6 | **Self-contained escape in generated skills** | High | `component-contract.md §4` instructs generators to drop `Extraction Prompt` from emitted components. Some components (notably `correction-layer`) carry runtime behavior in that section; dropping breaks them when skill is moved. Also: `skill-md-template.md` has breadcrumbs to PRD/contract paths that don't exist in the produced skill. | Rename runtime-bearing section (keep at copy time); add a self-containment-linter agent that greps for external references. |
 | S7 | **Schema-misuse (private corpus in public-mirror)** | High | If a user picks `public-mirror` schema but the corpus contains private chats with the public figure, private content leaks into a skill labeled "public". No guardrail distinguishes public vs. private sources — only primary vs. secondary. | Add `corpus_access_declared` cross-check in Phase 1.5; warn on `schema_type ↔ source privacy` mismatches. |
+| S8 | **execution-profile red-line self-report via manifest fabrication** (v0.3.0) | Medium | `persona-judge` rubric v0.2.0 reads `components/execution-profile.md`'s `## Red-Line Summary` section to decide the Mindset Transfer ±1 adjustment. A producer can write `Red Line 1 passes: N / 0 fails` in the markdown while the evidence actually traces back to self-description (failing red-line 1). Rubric §Anti-Gaming added `Execution-Profile Red-Line Evasion` entry (random-sample 3 instructions; grep source_id against `knowledge/`), but sophisticated producers can still pass the sample check. | Run the red-line check independently in persona-judge rather than reading the producer's self-report; require `red_line_summary` to live in `manifest.json` with hash of evidence-trace. |
 
 ### 6.3 Honest guidance for users
 
@@ -178,11 +182,24 @@ These are **known v1 gaps**. They do not block shipping, but users should unders
 
 If any step fails, the contracts or templates need fixes before v1.0.0. Any bug reports welcome.
 
-## 8. v2 roadmap (post-v0.2.0)
+## 8. v2 roadmap (post-v0.3.0)
 
-Shipped in v0.2.0 (removed from roadmap): multi-round Phase 2.5 with Jaccard convergence, auto-patch of candidates, migration tool, automatic conflicts.md detection, runnable iMessage/email/twitter/generic parsers.
+Shipped in v0.3.0: `execution-profile` component + `cdm-4sweep` extraction + Phase 3.7 + persona-judge rubric v0.2.0 (Mindset Transfer ±1 red-line coupling + 2 anti-gaming entries) + manifest schema v0.3.0 enum addition + migrator new-component discovery. Public-mirror and mentor schemas carry execution-profile as optional component.
+
+Shipped in v0.2.0 (still removed from roadmap): multi-round Phase 2.5 with Jaccard convergence, auto-patch of candidates, migration tool, automatic conflicts.md detection, runnable iMessage/email/twitter/generic parsers.
 
 Remaining:
+
+**v0.3.0-derived roadmap (new):**
+
+- **Phase 3.7 → Phase 2 consolidation**: `execution-profile-extractor` only truly depends on `knowledge/` + `identity.md` + (optional) `expression-dna.md`, so architecturally it could run in Phase 2 parallel with `mental-model-extractor` / `expression-analyzer`. Phase 3.7 was chosen for minimum disruption of existing Phase 2 orchestration. Consolidation pushes total phase count back down to 7.
+- **execution-profile schema expansion**: extend to `self`, `collaborator`, `friend`, `loved-one`, `public-domain` — bilateral declaration required (both the component's `optional_for_schemas` and each schema's `optional_components:` must list it). Blocked on: dog-food evidence that the CDM 4-sweep produces usable output on smaller / more private corpora than public-mirror/mentor.
+- **CTA fidelity controlled experiment**: A/B test — distill the same persona (a) without execution-profile (b) with execution-profile, give both to the same task set, blind-judge which produces more persona-specific decisions. Quantifies the "LLM-simulates-human-interviewer" quality cap. v1.0.0 dog-food prerequisite.
+- **Red-line 2 threshold calibration**: current 50% list-compare cutoff is conservative vs. Klein's 80/20 field data. If dog-food shows few false positives on legitimately analytical personas, tighten to 30%.
+- **execution-profile independent red-line re-check in persona-judge** (closes S8): don't trust producer's self-reported `Red-Line Summary`; recompute from `knowledge/` evidence chains.
+- **execution-profile trace file optional compression**: `execution-profile-trace.md` can grow large on rich corpora (~10 incidents × ~3 decision points × 10 probes ≈ 300 entries). Consider gzip-compressing as `execution-profile-trace.md.gz` for persona skills > 1MB total.
+
+**v0.2.0-derived roadmap (unchanged):**
 
 - Cross-schema computation-layer attachment interface (still executor-only).
 - Chinese/English source-policy parameterization (English whitelist/blacklist populated).
