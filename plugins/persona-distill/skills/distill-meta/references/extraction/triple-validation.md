@@ -18,7 +18,7 @@ iteration_mode: single-pass
 
 ## When to Invoke
 
-在 7-Phase 流程中的调用时机：
+在 8-Phase 流程中的调用时机：
 
 - **Phase 2「维度提取」**：在 mental-models-extractor 与 decision-heuristic-extractor 两个并行 agent 各自输出初稿之后、写入 `knowledge/components/*.md` 之前。
 - **Phase 4「质量验证」**：persona-judge 反向调用本方法重新核对 Primary Source Ratio；若某条断言找不到 3 个独立来源，扣该维度分。

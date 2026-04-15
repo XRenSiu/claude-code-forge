@@ -5,7 +5,7 @@ purpose: 把 persona 从"描述"转成"执行指令"——用 Klein 的 Recognit
 consumed_by:
   - ../components/execution-profile.md
   - ../../agents/execution-profile-extractor.md
-  - persona-judge（用作 Execution-Readiness 维度评分输入，v0.3.0）
+  - persona-judge（Mindset Transfer ±1 调整与 Execution-Profile anti-gaming 反作弊条目基于本方法的 red_line_summary 字段；rubric v0.2.0+）
 borrowed_from:
   - Klein, G. (1998). Sources of Power — RPD model
   - Hoffman, R. R., Crandall, B., & Shadbolt, N. (1998). Use of the Critical Decision Method to elicit expert knowledge. Human Factors, 40(2), 254-276.

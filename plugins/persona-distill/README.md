@@ -155,7 +155,7 @@ execution-profile（v0.3.0：CDM 4-sweep 执行画像，把描述编译为 8 类
 |------|------|
 | [`contracts/manifest.schema.json`](./contracts/manifest.schema.json) | 每个产出 persona skill 的 `manifest.json` 字段 schema（v0.2.0 扩展了迁移字段） |
 | [`contracts/validation-report.schema.md`](./contracts/validation-report.schema.md) | persona-judge 的输出 schema，也是 distill-meta Phase 4 gate 读取的格式 |
-| [`contracts/component-contract.md`](./contracts/component-contract.md) | 18 个共享组件的 I/O 契约 |
+| [`contracts/component-contract.md`](./contracts/component-contract.md) | 19 个共享组件的 I/O 契约 |
 | [`contracts/schema-extension-contract.md`](./contracts/schema-extension-contract.md) | v0.2.0 新增：社区 schema 必须满足的协议（frontmatter + 7 个 H2 + 测试语料） |
 
 ---
@@ -208,10 +208,10 @@ persona-distill/
 │   └── schema-extension-contract.md         # v0.2.0
 ├── skills/
 │   ├── distill-meta/                        # 主编排器
-│   │   ├── agents/                          # 11 sub-agent
+│   │   ├── agents/                          # 12 sub-agent
 │   │   ├── references/
 │   │   │   ├── schemas/                     # 9 core + community/
-│   │   │   ├── components/                  # 18 组件
+│   │   │   ├── components/                  # 19 组件（incl. execution-profile）
 │   │   │   ├── extraction/                  # 提取框架
 │   │   │   └── migration.md                 # v0.2.0
 │   │   └── templates/

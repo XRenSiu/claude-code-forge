@@ -87,7 +87,7 @@ If the user just says "distill 张三" / "蒸馏 X" without providing any inform
 |----------------|---------|
 | corpus-access unknown | assume `public-only` UNLESS the user explicitly says "我同事" / "我朋友" / "my colleague" |
 | object type unknown | assume `person` |
-| relation unknown (when `private-corpus` is implied) | **default = collaborator + all 18 components**, then let Phase 1.5 corpus review narrow down |
+| relation unknown (when `private-corpus` is implied) | **default = collaborator + all schema-required components** (19 components available in library v0.3.0+; `execution-profile` attached when knowledge/ density suffices), then let Phase 1.5 corpus review narrow down |
 | intent unknown (when `public-only`) | **default = public-mirror** (most general public-facing schema) |
 
 The Phase 0.5 agent MUST NOT ask the user clarifying questions. Pick the default, create the skill directory, and let Phase 1.5 Research Review surface any mismatch for the user to correct.

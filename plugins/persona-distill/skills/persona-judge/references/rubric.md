@@ -95,7 +95,13 @@ changelog:
 - **3**: 事实堆砌穿插口号。
 - **0**: 只有事实，无任何可迁移的思考模式。
 
-**Execution-Profile bonus**（v0.2.0+ 新增，不变总分上限）：若 `components/execution-profile.md` 存在且 `red_line_summary` 全 0 fails，Mindset Transfer 维度**可累加 +1 最高封顶 10**；反之若存在但 red_line 任一失败 → 本维度扣 1 分（最低不低于 0）。判据来自本维度的核心定义："框架是否可迁移到新情境"恰好是 execution-profile 的 8 类指令产出的功能。
+**Execution-Profile adjustment**（v0.2.0+ 新增，不改变总分上限 10、下限 0）：若产物中存在 `components/execution-profile.md`，按以下规则对 Mindset Transfer 原始得分做一次性调整：
+
+- **全红线 PASS**（`red_line_summary.red_line_1_fails + red_line_2_fails + red_line_3_fails == 0`）→ Mindset Transfer **+1，上限封顶 10**（即若原始已是 10，调整后仍是 10）。
+- **任一红线 FAIL**（上述求和 > 0）→ Mindset Transfer **-1，下限截断为 0**（即若原始是 0，调整后仍是 0）。
+- **不存在 execution-profile.md**（schema 不支持 / 被降级跳过）→ 不调整。
+
+判据：本维度的核心定义 "框架是否可迁移到新情境" 恰好是 execution-profile 8 类指令产出的功能；红线失败意味着 Profile 退化成了描述性总结，反而证伪 Mindset Transfer。调整后的分数写入 `validation-report.md` 的 `## Summary` 段，并附 `adjustment_reason: "execution-profile-red-lines-all-pass"` 之类的说明字段。
 
 ### 6. Anti-Pattern Specificity — 反模式具体度（max 10）
 

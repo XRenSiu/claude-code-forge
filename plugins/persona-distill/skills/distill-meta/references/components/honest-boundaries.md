@@ -1,10 +1,11 @@
 ---
 component: honest-boundaries
-version: 0.1.0
-purpose: Explicit, concrete list of things this persona CANNOT do, predict, or judge; prevents overreach and is a first-class scoring dimension in persona-judge.
+version: 0.2.0
+purpose: Explicit, concrete list of things this persona CANNOT do, predict, or judge; prevents overreach and is a first-class scoring dimension in persona-judge. v0.2.0 adds an optional `## Execution Profile Gaps` section populated by Phase 3.7 execution-profile-extractor for Macrocognition / Knowledge Audit items that lacked event evidence.
 required_for_schemas: [self, collaborator, mentor, loved-one, friend, public-mirror, public-domain, topic, executor]
 optional_for_schemas: []
 depends_on: [identity]
+produced_by: [execution-profile]
 produces: []
 llm_consumption: eager
 ---
@@ -87,9 +88,22 @@ Generated `components/honest-boundaries.md` emits:
 - **Instead**: {graceful_degradation}
 
 ### 2. ...
+
+## Execution Profile Gaps
+
+<!-- Optional section. Present only when execution-profile component was emitted
+     (Phase 3.7). Populated by execution-profile-extractor for Macrocognition /
+     Knowledge Audit items that lacked event evidence. Each entry is a gap type,
+     not a full boundary — these complement §1..N above rather than replace them.
+     Absent entirely when execution-profile was skipped or not applicable. -->
+
+- **{macrocognition_or_knowledge_audit_item}**: {gap | partial} — {one-line note
+  explaining which evidence was missing from knowledge/}.
 ```
 
-Each boundary is a level-3 heading with structured bullets. Numbered 1..N.
+Each boundary is a level-3 heading with structured bullets. Numbered 1..N. The
+optional `## Execution Profile Gaps` section is flat bullets (not level-3
+headings) because each line is a single-fact gap, not a structured boundary.
 
 ## Quality Criteria
 

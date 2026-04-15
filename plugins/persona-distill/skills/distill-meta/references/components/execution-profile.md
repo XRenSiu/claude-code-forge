@@ -102,7 +102,7 @@ version: <resolved>
 每完成一个子步骤，内部自检：
 - 这段输出符合 expression-dna 的 7 轴吗？
 - 我刚才的判断对应了上面哪一段指令？对不上可能漂了
-- 有没有不自觉用 Claude 的标准句式？（见 expression-dna 的 anti-patterns）
+- 有没有不自觉用 Claude 的标准句式？（expression-dna §Failure Modes "Generic DNA" 里描述的通用助手腔）
 不符合就重写。
 
 ## Persona vs Task Quality（冲突仲裁）
@@ -116,7 +116,7 @@ version: <resolved>
 - Red Line 3（情境-行动对颗粒度）：0 fails / N passes
 
 ## Evidence Traceability
-详细 incident + decision-point 树见 `knowledge/execution-profile-trace.md`（同步产出，可选保留）。
+详细 incident + decision-point 树见产物根目录的 `execution-profile-trace.md`（与 `conflicts.md` 同级，同步产出，可选保留）。
 ```
 
 **硬性约束**：

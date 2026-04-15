@@ -14,7 +14,7 @@ version: 0.3.0
 
 **Persona ≠ 提示词模板。Persona = 可组合组件在参数化 schema 下的稳定压缩。**
 
-一个人、一个领域、一套规则，本质上都是「用有限文字编码一个可被另一个 agent 复现的认知行为」。我们不相信"写一个牛逼 system prompt 就能模拟乔布斯"——那是幻觉。我们相信的是：**先分解（9 schema × 18 component），再提取（三重验证 + 七轴 DNA），再压缩（density + conflicts），再验证（12 维 + 活体测试）**。每一步都是可审计的工程行为，而不是艺术。
+一个人、一个领域、一套规则，本质上都是「用有限文字编码一个可被另一个 agent 复现的认知行为」。我们不相信"写一个牛逼 system prompt 就能模拟乔布斯"——那是幻觉。我们相信的是：**先分解（9 schema × 19 component），再提取（三重验证 + 七轴 DNA），再压缩（density + conflicts），再执行编译（CDM 4-sweep → execution-profile），再验证（12 维 + 活体测试）**。每一步都是可审计的工程行为，而不是艺术。
 
 ---
 
@@ -37,7 +37,7 @@ version: 0.3.0
 
 **为什么**：
 - Claude Code 的上下文窗口是有限的。一次性灌入 2000 行 SKILL.md 等于**主动**降低 agent 的推理质量。
-- 按需加载让用户能在不读完整个知识库的情况下调用 skill——「蒸馏张三」的用户不需要预先理解 18 个组件。
+- 按需加载让用户能在不读完整个知识库的情况下调用 skill——「蒸馏张三」的用户不需要预先理解 19 个组件。
 - 这份原则也决定了 docs 的结构：本文件是入口摘要，`integration.md` 是布线细节，`schema-contribution-guide.md` 是扩展协议。
 
 ### 3. No Interrogate（不盘问）—— 默认路径兜底一切
@@ -68,7 +68,7 @@ version: 0.3.0
 
 ## 关键设计取舍
 
-### 为什么是 9 schema × 18 component，不是 1 个大模板？
+### 为什么是 9 schema × 19 component，不是 1 个大模板？
 
 固定模板的问题：蒸馏「自己」、「已故爷爷」、「八字推算规则」用**同一套字段**显然荒谬。
 
@@ -80,7 +80,7 @@ version: 0.3.0
 - 领域（topic）：你需要一块知识的"代理人"
 - 规则（executor）：你需要一套可计算+可解释的算法
 
-每种 schema 引用一组（不是全部）组件。18 个组件是**正交的认知切面**：identity 是"他是谁"、expression-dna 是"他怎么说"、mental-models 是"他怎么想"、emotional-patterns 是"他怎么感受"……任意两个组件都不可被对方完全替代。
+每种 schema 引用一组（不是全部）组件。19 个组件是**正交的认知切面**：identity 是"他是谁"、expression-dna 是"他怎么说"、mental-models 是"他怎么想"、emotional-patterns 是"他怎么感受"、execution-profile 是"他会怎么动手做"……任意两个组件都不可被对方完全替代。
 
 **组合而非继承**：schema 只定义「哪些组件必选 / 可选 / 禁用」，不重新定义组件本身。这让共享组件的改进能惠及所有使用它的 schema——改 `mental-models.md` 的三重验证协议，自动影响所有依赖它的 schema，不需要改 9 个文件。
 

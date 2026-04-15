@@ -18,7 +18,7 @@ forbidden_reads:
   - {persona-skill-root}/components/internal-tensions.md # 允许引用 tension id，但不作为 evidence 源
 emits:
   - {persona-skill-root}/components/execution-profile.md
-  - {persona-skill-root}/knowledge/execution-profile-trace.md  (incident + decision point 树，可选)
+  - {persona-skill-root}/execution-profile-trace.md  (incident + decision point 树，可选；与 conflicts.md 同级)
   - edits to {persona-skill-root}/components/honest-boundaries.md  (追加 ## Execution Profile Gaps 段)
 ---
 
@@ -153,9 +153,9 @@ instruction 句式模板（严格）：
 
 ### Step 8 — Write Output Files
 
-1. **主产物**：`{persona-skill-root}/components/execution-profile.md`，按 `references/components/execution-profile.md` §Output Format 的 8 段模板 + Drift Prevention + Persona vs Task Quality + Red-Line Summary + Evidence Traceability 段渲染。
-2. **可选产物**：`{persona-skill-root}/knowledge/execution-profile-trace.md`——incident + decision-point + probe 树，供下次 migration 或 correction-layer 触发局部重跑使用。
-3. **追加编辑**：`{persona-skill-root}/components/honest-boundaries.md` 的 `## Execution Profile Gaps` 段。
+1. **主产物**：`{persona-skill-root}/components/execution-profile.md`——按 `references/components/execution-profile.md` §Output Format 的 8 段模板 + Drift Prevention + Persona vs Task Quality + Red-Line Summary + Evidence Traceability 段渲染。**严格遵守 `component-contract.md §4` 的 copy-with-inlining 规则**：不复制定义文件的 Extraction Prompt / Failure Modes / Borrowed From / Interaction Notes / Examples 段（这些是 generation-time 内容）；只写 runtime 需要看到的 8 段 + 4 段 runtime 自检模板。frontmatter 保留但替换 `version` 为 resolved 版本 + 追加 `produced_for: <manifest.fingerprint>`。
+2. **可选产物**：`{persona-skill-root}/execution-profile-trace.md`（**产物根目录**，与 conflicts.md 同级，**不**放在 knowledge/ 下——knowledge/ 专用于语料，trace 是审计/迁移附件）——incident + decision-point + probe 树，供下次 migration 或 correction-layer 触发局部重跑使用。
+3. **追加编辑**：`{persona-skill-root}/components/honest-boundaries.md` 的 `## Execution Profile Gaps` 段（若段不存在则在文件末尾新建）。
 
 **自包含不变量**：写出的文件**禁止**任何形式引用 distill-meta 或本 agent——APPLY 后 `grep -r "distill-meta\|execution-profile-extractor" {persona-skill-root}/` 必须返回 0 命中。
 
@@ -193,7 +193,7 @@ instruction 句式模板（严格）：
   "honest_boundaries_appended_lines": 6,
   "files_written": [
     "components/execution-profile.md",
-    "knowledge/execution-profile-trace.md"
+    "execution-profile-trace.md"
   ],
   "files_edited": [
     "components/honest-boundaries.md"

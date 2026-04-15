@@ -137,7 +137,7 @@ A PR adding a community schema is reviewed against:
 - [ ] A `persona-judge` run on a persona generated from that corpus scores **≥ 70** on the raw rubric; report is attached to the PR description.
 - [ ] No overlap with existing schema: compute Jaccard similarity `|A ∩ B| / |A ∪ B|` on `required_components` against every existing core and community schema; **must be < 0.8** vs. all of them.
 - [ ] `decision_tree_branch` is non-duplicative: no existing branch uses the same predicate; if close, the new branch adds at least one additional signal.
-- [ ] Slug does not collide with any of the 18 component slugs or any existing schema slug.
+- [ ] Slug does not collide with any of the 19 component slugs or any existing schema slug.
 - [ ] Any new community components under `components/community/` themselves conform to `component-contract.md`.
 - [ ] `author` field is set; `unvalidated: true`; `review_status: draft`.
 - [ ] Claimed `Borrowed From` sources cited honestly; `[UNVERIFIED-FROM-README]` used when warranted.

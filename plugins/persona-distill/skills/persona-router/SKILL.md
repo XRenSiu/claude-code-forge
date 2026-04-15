@@ -59,7 +59,7 @@ plugins/persona-distill/contracts/manifest.schema.json
 Schema 里 router 实际用到的字段：
 - `schema_type` — 9 种 persona schema 之一
 - `identity.name` / `identity.display_name` / `identity.description` / `identity.domains` / `identity.subject_type` — 匹配语义
-- `components_used` — 18 个共享组件的激活集合
+- `components_used` — 19 个共享组件的激活集合（v0.3.0 起含 execution-profile）
 - `triggers` — 触发短语（用来做二次验证）
 - `density_score` / `validation_score` — 质量信号
 - `unvalidated` — 未验证警告

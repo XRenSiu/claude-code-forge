@@ -4,7 +4,7 @@
   "title": "persona-distill manifest.json contract",
   "description": "The manifest.json produced by distill-meta for every generated persona skill. Consumed by persona-judge (routing of rubric dimensions), persona-router (matching), persona-debate (participant discovery), and the migrator agent (component-version drift detection and user-edit detection). This schema is the ONLY authoritative contract for that file; changes here are breaking changes to all 5 skills.",
   "schema_version": "0.2.0",
-  "$comment": "Version 0.2.0 — (a) schema_type relaxed from a fixed enum of 9 values to a slug pattern to accommodate community-contributed schemas per contracts/schema-extension-contract.md (origin and author fields added); (b) migration support added per references/migration.md — distill_meta_version, migration_history[], last_migrated_at, components_fingerprint, and components_used widened via oneOf to optionally carry per-slug version + original_component_hash for drift and user-edit detection. Core schemas: self|collaborator|mentor|loved-one|friend|public-mirror|public-domain|topic|executor.",
+  "$comment": "Version 0.3.0 — adds execution-profile to components_used enum (both legacy and v0.2.0+ object form), plus two optional fields execution_profile_completeness (enum) and execution_profile_self_report_only (boolean) for Phase 3.7 audit surfacing. Additive change — pre-v0.3.0 manifests remain valid. Version 0.2.0 — (a) schema_type relaxed from a fixed enum of 9 values to a slug pattern to accommodate community-contributed schemas per contracts/schema-extension-contract.md (origin and author fields added); (b) migration support added per references/migration.md — distill_meta_version, migration_history[], last_migrated_at, components_fingerprint, and components_used widened via oneOf to optionally carry per-slug version + original_component_hash for drift and user-edit detection. Core schemas: self|collaborator|mentor|loved-one|friend|public-mirror|public-domain|topic|executor.",
   "type": "object",
   "required": [
     "persona_distill_version",
@@ -50,7 +50,7 @@
       "pattern": "^\\d+\\.\\d+\\.\\d+$"
     },
     "components_used": {
-      "description": "Slugs of the 18 shared components activated for this persona. v0.2.0 widens this to optionally carry per-slug version + original_component_hash so the migrator can detect component-library drift and user hand-edits. Both shapes validate (oneOf); new generators SHOULD emit the object form. Pre-v0.2.0 manifests using the legacy string form remain valid; the migrator treats them as third-party / no-known-baseline skills (diff-only mode, no auto-patch). See references/migration.md §Failure Modes.",
+      "description": "Slugs of the 19 shared components activated for this persona. v0.3.0 adds `execution-profile` (Phase 3.7 CDM-based execution-layer extraction). v0.2.0 widens this to optionally carry per-slug version + original_component_hash so the migrator can detect component-library drift and user hand-edits. Both shapes validate (oneOf); new generators SHOULD emit the object form. Pre-v0.2.0 manifests using the legacy string form remain valid; the migrator treats them as third-party / no-known-baseline skills (diff-only mode, no auto-patch). See references/migration.md §Failure Modes.",
       "oneOf": [
         {
           "type": "array",
@@ -75,7 +75,8 @@
               "domain-framework",
               "computation-layer",
               "interpretation-layer",
-              "correction-layer"
+              "correction-layer",
+              "execution-profile"
             ]
           },
           "minItems": 3,
@@ -108,7 +109,8 @@
                   "domain-framework",
                   "computation-layer",
                   "interpretation-layer",
-                  "correction-layer"
+                  "correction-layer",
+                  "execution-profile"
                 ]
               },
               "version": {
@@ -253,6 +255,16 @@
           "items": { "type": "string" }
         }
       }
+    },
+    "execution_profile_completeness": {
+      "type": "string",
+      "description": "v0.3.0+. Status of Phase 3.7 execution-profile extraction. `full` = all 8 Macrocognition segments have evidence-backed instructions; `partial` = ≥ 3 segments resolved to 'No evidence; see honest-boundaries.md'; `skipped` = knowledge/ had < 10 usable decision points, component not emitted; `not_applicable` = schema does not support execution-profile (topic, executor). Absent for pre-v0.3.0 skills.",
+      "enum": ["full", "partial", "skipped", "not_applicable"]
+    },
+    "execution_profile_self_report_only": {
+      "type": "boolean",
+      "description": "v0.3.0+. True if execution-profile red-line 1 (self-report ≠ behavior, Ericsson/Ward) was batch-failed during Phase 3.7 — all evidence trails back to persona's self-description rather than observed events. Downstream consumers (router / judge) should down-weight this persona for execution-typed tasks when true. Absent or false otherwise.",
+      "default": false
     }
   },
   "allOf": [

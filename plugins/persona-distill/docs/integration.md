@@ -95,6 +95,7 @@ See `../../docs/forge-teams/persona-distill-20260414-151128/phase-3-planning/pla
 | 3 | 9 distill-meta agents + 3 templates + 3 persona-judge internals | 15 |
 | 4 | distill-collector (5) + persona-router (3) + persona-debate (2) | 10 |
 | 5 | README, LICENSE, this integration doc, marketplace.json registration | 4 |
+| 6 (v0.3.0) | Phase 3.7 addition: `references/extraction/cdm-4sweep.md` + `references/components/execution-profile.md` + `agents/execution-profile-extractor.md` (+ manifest schema enum + rubric anti-gaming entries) | 3 new + 7 edited |
 
 ## 4. Cross-skill interface checkpoints
 

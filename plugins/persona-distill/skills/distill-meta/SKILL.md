@@ -21,7 +21,7 @@ version: 0.3.0
 
 **把一个人（或领域/规则体系）蒸馏成一个自包含的 persona skill。**
 
-Announce at start: "I'm using the distill-meta skill to orchestrate a 7-phase persona distillation pipeline and produce a self-contained persona skill."
+Announce at start: "I'm using the distill-meta skill to orchestrate an 8-phase persona distillation pipeline and produce a self-contained persona skill."
 
 > **前置条件**: 深度蒸馏会并行 spawn 多个 sub-agent（语料侦查、维度提取、张力发现、迭代深化、验证）。
 > 如果启用 Agent Teams 实验功能（`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`），
@@ -241,7 +241,7 @@ persona-debate / distill-collector 通过它们解耦：
 | 层级 | 内容 | 位置 |
 |------|------|------|
 | 入口（本文件） | 编排流程 + 决策路径 + 契约指针 | `SKILL.md`（**必须 < 350 行**） |
-| 参考 | 决策树 / 9 schema / 18 组件 / 提取方法 / 来源策略 / 产出规范 | `references/` |
+| 参考 | 决策树 / 9 schema / 19 组件 / 提取方法 / 来源策略 / 产出规范 | `references/` |
 | 代理 | 9 个 sub-agent 定义（corpus-scout / mental-model-extractor / ...） | `agents/` |
 | 模板 | SKILL.md 骨架、manifest 模板、reference 模板 | `templates/` |
 | 契约 | 跨 skill 接口（3 份） | `../../contracts/` |

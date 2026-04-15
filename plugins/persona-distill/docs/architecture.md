@@ -63,7 +63,7 @@ persona-distill/
 ├── contracts/                                  # Layer 2 — 跨 skill 契约
 │   ├── manifest.schema.json                    # 产物 manifest 的 JSON Schema
 │   ├── validation-report.schema.md             # persona-judge 输出格式
-│   ├── component-contract.md                   # 18 组件的 I/O 契约
+│   ├── component-contract.md                   # 19 组件的 I/O 契约
 │   └── schema-extension-contract.md            # 社区 schema 必须符合
 ├── skills/                                     # Layer 5 + 4 + 3
 │   ├── distill-meta/                           # 主编排器（Layer 5）
@@ -217,22 +217,22 @@ router / judge / debate 只通过该 manifest 识别 persona skill——**不解
 
 ```
 alice-friend-skill/
-├── SKILL.md                    # 入口：frontmatter（触发词）+ 人格声明
-├── manifest.json               # 元数据（上节字段）
-├── components/                 # 对应 schema 规定的组件子集
-│   ├── identity.md             # 她是谁 + subject_type
-│   ├── expression-dna.md       # 7 轴量化 + 代表样本
-│   ├── shared-memories.md      # 共同经历（朋友 schema 特有）
-│   ├── emotional-patterns.md   # 情绪触发 + 应对
-│   ├── hard-rules.md           # 合规+安全边界
-│   ├── execution-profile.md    # Phase 3.7 产物（可选）：8 类指令条款
-│   └── honest-boundaries.md    # 资料不足之处（含 Execution Profile Gaps 段）
-├── knowledge/                  # 原始语料（脱敏后）+ 冲突 + 可选 trace
+├── SKILL.md                        # 入口：frontmatter（触发词）+ 人格声明
+├── manifest.json                   # 元数据（上节字段）
+├── components/                     # 对应 schema 规定的组件子集
+│   ├── identity.md                 # 她是谁 + subject_type
+│   ├── expression-dna.md           # 7 轴量化 + 代表样本
+│   ├── shared-memories.md          # 共同经历（朋友 schema 特有）
+│   ├── emotional-patterns.md       # 情绪触发 + 应对
+│   ├── hard-rules.md               # 合规+安全边界
+│   ├── execution-profile.md        # Phase 3.7 产物（可选）：8 类指令条款
+│   └── honest-boundaries.md        # 资料不足之处（含 Execution Profile Gaps 段）
+├── knowledge/                      # 原始语料（脱敏后，仅语料；审计件放根目录）
 │   ├── chats/imessage/alice.md
-│   ├── public/...              # 按来源平台分目录
-│   ├── conflicts.md            # Phase 3.5 产物
-│   └── execution-profile-trace.md  # Phase 3.7 可选：incident+probe 树
-└── validation-report.md        # persona-judge 输出（可再跑覆盖）
+│   └── public/...                  # 按来源平台分目录
+├── conflicts.md                    # Phase 3.5 产物（根目录，非 knowledge/）
+├── execution-profile-trace.md      # Phase 3.7 可选（根目录）：incident+probe 树
+└── validation-report.md            # persona-judge 输出（可再跑覆盖）
 ```
 
 **不变量**：`grep -rE "persona-distill|distill-meta" alice-friend-skill/` 必须返回 0。
@@ -247,7 +247,7 @@ alice-friend-skill/
 
 `distill-meta` 在 Phase 2 并行 spawn 5 个独立 agent，每个写一个组件。彼此不通信，各自读同一份 `knowledge/`，输出到各自的 components/ 文件。
 
-**为什么并行**：组件正交（原理文件 §「为什么 18 组件」），独立提取不会污染。
+**为什么并行**：组件正交（原理文件 §「为什么 19 组件」），独立提取不会污染。
 **并发上限**：`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` 时走 agent teams；默认 5 路并发。
 **失败处理**：任一 agent 失败 → 主协调者补跑该路径，其它不回滚。
 
