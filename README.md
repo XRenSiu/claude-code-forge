@@ -21,6 +21,15 @@
 
 # Install Adversarial Debugger (multi-agent debugging)
 /plugin install adversarial-debugger@XRenSiu/claude-code-forge
+
+# Install Design Clone (pixel-perfect website cloning + Design DNA)
+/plugin install design-clone@XRenSiu/claude-code-forge
+
+# Install Persona Distill (distill any persona into a self-contained skill)
+/plugin install persona-distill@XRenSiu/claude-code-forge
+
+# Install Skill Evolve (Darwin-style SKILL.md optimizer)
+/plugin install skill-evolve@XRenSiu/claude-code-forge
 ```
 
 ### Step 3: Use Plugin
@@ -55,6 +64,9 @@
 | [PDForge](plugins/pdforge/) | 1.14.0 | AI-driven 7-phase product development workflow. Single-agent sequential execution with brainstorming, TDD, three-stage review, and auto-fix loops. | - |
 | [Forge Teams](plugins/forge-teams/) | 1.8.0 | Agent Teams version of PDForge. 7-phase adversarial pipeline with multi-agent debate, parallel implementation, red team attacks, adversarial debugging, independent bug fix loop, and requirement verification. 23 agents, 8 skills. | Agent Teams |
 | [Adversarial Debugger](plugins/adversarial-debugger/) | 1.0.0 | Multi-agent adversarial debugging. Competing hypotheses investigated in parallel, challenged by devil's advocate, synthesized to true root cause. | Agent Teams |
+| [Design Clone](plugins/design-clone/) | 1.0.0 | Design DNA extraction + pixel-perfect website cloning. Browser-MCP-driven CSS introspection produces a 150+ field Design DNA profile; `--full` mode additionally spawns parallel builder agents to generate a Next.js clone. | Browser MCP |
+| [Persona Distill](plugins/persona-distill/) | 0.2.0 | Distill any persona (person or rule system) into a self-contained Claude Code skill. 5 skills (meta/judge/collector/router/debate), 9 schemas, 18 components, 12-dimension quality rubric, multi-round evaluation. | - |
+| [Skill Evolve](plugins/skill-evolve/) | 0.1.0 | Darwin-style autonomous SKILL.md optimizer. 8-dimension rubric + independent-subagent scoring + git-backed ratchet hill-climbing (keep-or-revert) to evolve any skill from initial draft toward 90+. | - |
 
 ### Which plugin to use?
 
@@ -68,6 +80,9 @@
 | Check if a requirement is implemented | Forge Teams `/forge-verify` |
 | Verify + auto-implement missing features | Forge Teams `/forge-verify --fix` |
 | Need parallel implementation acceleration | Forge Teams |
+| Clone a live website (design DNA or pixel-perfect Next.js) | Design Clone |
+| Distill a persona / expert / rule system into a skill | Persona Distill |
+| Improve quality of an existing SKILL.md | Skill Evolve |
 
 > **Agent Teams** plugins (Forge Teams, Adversarial Debugger) require the experimental Agent Teams feature:
 > ```json
@@ -193,6 +208,29 @@
             Root cause verdict -> Reproduction test -> Fix -> Verify
 ```
 
+## Skill Evolve
+
+```
+/skill-evolve <path-to-existing-skill>
+    |
+    +-- Phase 0: Baseline
+    |       Independent subagent scores the SKILL.md on 8 dimensions
+    |       (60 structural + 40 effectiveness) -> baseline.md
+    |
+    +-- Phase 1: Hill-Climbing Ratchet (loop N rounds)
+    |       Diagnose weakest dimension
+    |    -> Atomic mutation (one focused change)
+    |    -> Independent re-eval (new subagent, no leak)
+    |    -> KEEP (git commit) or REVERT (git checkout --)
+    |    -> Append to experiments.tsv
+    |
+    +-- Phase 2: Final Report
+            Baseline vs final scores, improvement list,
+            remaining weak dimensions for next iteration
+```
+
+> Scores only go up: every round either commits the gain or cleanly reverts. Inspired by Karpathy's autoresearch and alchaincyf/darwin-skill.
+
 ---
 
 ## Marketplace Management
@@ -221,6 +259,9 @@
 /plugin install pdforge@XRenSiu/claude-code-forge
 /plugin install forge-teams@XRenSiu/claude-code-forge
 /plugin install adversarial-debugger@XRenSiu/claude-code-forge
+/plugin install design-clone@XRenSiu/claude-code-forge
+/plugin install persona-distill@XRenSiu/claude-code-forge
+/plugin install skill-evolve@XRenSiu/claude-code-forge
 
 # Update plugin
 /plugin update pdforge
