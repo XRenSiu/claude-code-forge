@@ -1,0 +1,39 @@
+# persona-judge — default thresholds
+#
+# v0.4.0: thresholds are locked to ranges defined in config.schema.json.
+# Overriding outside the range → persona-judge HALTs at load time with a
+# clear error. This closes integration.md §6.2 S5 (rubric gaming via
+# unbounded config overrides).
+#
+# Rationale for each range is in references/rubric.md §Configurable
+# Thresholds.
+
+# PASS gate (raw score, /110 scale).
+# Locked range: [75, 95]. Below 75 = accepting low-quality skills; above
+# 95 = blocking all realistic outputs.
+pass_threshold_raw: 82
+
+# Density floor. < density_floor = forced FAIL regardless of total score.
+# Locked range: [2.0, 5.0]. Below 2.0 = accepting placeholder-dense output;
+# above 5.0 = blocking all but the most dense corpora.
+density_floor: 3.0
+
+# Internal Tensions dimension: required preserved contradictions to score
+# max (10/10). Locked range: [1, 4]. Below 1 = demanding zero tension
+# preservation (breaks the design principle); above 4 = unrealistic.
+required_tensions: 2
+
+# Honest Boundaries dimension: required explicit limits to score max.
+# Locked range: [2, 6]. Below 2 = accepting vague disclaimers; above 6 =
+# over-constraining short personas.
+required_boundaries: 3
+
+# Primary Source Ratio floor for max Primary-Source dimension score.
+# Locked range: [0.3, 0.8]. Below 0.3 = accepting mostly-secondary
+# corpora; above 0.8 = impossible for personas with fair-use quotes.
+primary_source_min: 0.5
+
+# Number of 0-scoring dimensions that triggers a forced FAIL.
+# Locked range: [2, 4]. Below 2 = any single 0 fails the skill
+# (over-strict); above 4 = accepting skills with too many zero-dimensions.
+critical_failure_count: 2

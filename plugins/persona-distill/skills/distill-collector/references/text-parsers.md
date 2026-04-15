@@ -1,24 +1,26 @@
 ---
-contract_version: 0.2.0
+contract_version: 0.3.0
 applies_to: distill-collector — text/chat platforms
 status: PARTIAL-RUNNABLE
 references:
   - ./cli-spec.md
   - ./redaction-policy.md
   - ../../distill-meta/references/output-spec.md
+changelog:
+  - 0.3.0 — Promoted Telegram + Slack from spec-only to RUNNABLE (scripts/telegram_parser.py + scripts/slack_parser.py). Both stdlib-only, with 8 + 13 embedded self-tests respectively. Remaining 4 spec-only: WeChat / QQ / Feishu / Dingtalk.
+  - 0.2.0 — Promoted iMessage / email / Twitter / generic to RUNNABLE.
 ---
 
 # Text & Chat Platform Parsers — Reference
 
-> **[PARTIAL-RUNNABLE]** v0.2.0 promoted **iMessage / email / Twitter / generic**
-> from spec-only to runnable Python scripts under `../scripts/`. The remaining
-> 6 platforms (WeChat / QQ / Feishu / Slack / Dingtalk / Telegram) stay
-> spec-only pending stable export formats. For each spec-only platform we
-> document: (a) the export method the user must perform, (b) the canonical
-> third-party tool pointer, (c) the target output path + Markdown schema.
-> Rationale: risks TEC-02 / EST-02 — shipping parsers that each depend on
-> moving DB schemas is a liability; we promote a parser only when the input
-> shape has been stable for ≥2 years.
+> **[PARTIAL-RUNNABLE]** v0.3.0 promotes **Telegram + Slack** to runnable
+> Python. The remaining **4 platforms** (WeChat / QQ / Feishu / Dingtalk)
+> stay spec-only pending stable export formats. For each spec-only platform
+> we document: (a) the export method the user must perform, (b) the
+> canonical third-party tool pointer, (c) the target output path + Markdown
+> schema. Rationale: risks TEC-02 / EST-02 — shipping parsers that each
+> depend on moving DB schemas is a liability; we promote a parser only when
+> the input shape has been stable for ≥2 years.
 
 All parsers feed the unified pipeline defined in `cli-spec.md`. All writes go
 under `knowledge/chats/{platform}/` (or `knowledge/articles/` for long-form
@@ -32,10 +34,10 @@ email/tweets) and all pass through the redaction pipeline in
 | WeChat     | macOS/Win local DB dump                                | `wechatDataBackup`           | `knowledge/chats/wechat/{contact}.md`    | spec-only  |
 | QQ         | TM DB export (Windows)                                 | `QQExport` / MobileQQ-export | `knowledge/chats/qq/{contact}.md`        | spec-only  |
 | Feishu     | Admin → compliance export (CSV/JSON)                   | Feishu official export       | `knowledge/chats/feishu/{channel}.md`    | spec-only  |
-| Slack      | Workspace export (ZIP of JSON)                         | `slack-export-viewer`        | `knowledge/chats/slack/{channel}.md`     | spec-only  |
+| Slack      | Workspace export (unzipped directory of JSON)          | `scripts/slack_parser.py`    | `knowledge/chats/slack/{category}/{channel}.md` | **RUNNABLE** (see scripts/slack_parser.py) |
 | Dingtalk   | Admin compliance / phone-side manual export            | (manual → generic)           | `knowledge/chats/dingtalk/{channel}.md`  | spec-only  |
 | iMessage   | `chat.db` from `~/Library/Messages/`                   | `scripts/imessage_parser.py` | `knowledge/chats/imessage/{contact}.md`  | **RUNNABLE** (see scripts/imessage_parser.py) |
-| Telegram   | Telegram Desktop → "Export chat history" (HTML/JSON)   | `telegram-export`            | `knowledge/chats/telegram/{chat}.md`     | spec-only  |
+| Telegram   | Telegram Desktop → "Export Telegram data" → JSON       | `scripts/telegram_parser.py` | `knowledge/chats/telegram/{chat}.md`     | **RUNNABLE** (see scripts/telegram_parser.py) |
 | Email      | `.mbox` / `.eml` from mail client                      | `scripts/mbox_parser.py`     | `knowledge/articles/email/{thread}.md`   | **RUNNABLE** (see scripts/mbox_parser.py) |
 | Twitter/X  | Account settings → "Download your data" (ZIP)          | `scripts/twitter_archive_parser.py` | `knowledge/articles/twitter/{year}.md` | **RUNNABLE** (see scripts/twitter_archive_parser.py) |
 | Generic    | Hand-typed / copy-paste to `.txt` / `.md`              | `scripts/generic_import.py`  | configurable via `--destination`         | **RUNNABLE** (see scripts/generic_import.py) |
@@ -107,15 +109,32 @@ _[attachment: image → redacted — see knowledge/media/INDEX.md]_
 
 ---
 
-## 4. Slack  `[USER-RESPONSIBILITY]`
+## 4. Slack  **[RUNNABLE]** (v0.3.0)
 
-**Input shape**: workspace admin "Export workspace data" → ZIP of per-channel JSON files.
+**Runnable path**: `scripts/slack_parser.py` reads an unzipped Slack workspace export directory, resolves `<@U12345>` mentions via `users.json`, and writes per-channel Markdown categorised by access level.
 
-**Tool pointer**: [`slack-export-viewer`](https://github.com/hfaran/slack-export-viewer) for browsing; for Markdown conversion use a small user script that iterates the JSON files.
+```
+python scripts/slack_parser.py --source /path/to/slack-export/ \
+    --subject "Alice Z" --destination ./alice-persona \
+    [--channel-filter engineering] [--no-redact]
+```
 
-**Output schema**: `knowledge/chats/slack/{channel-slug}.md`. User mentions (`<@U12345>`) resolved via `users.json`; anchor identity (`--subject`) preserved as speaker name, all others hashed per redaction-policy §2.
+**Input shape**: the unzipped Slack export layout:
+- `users.json` — array of users with `id`, `name`, `real_name`
+- `channels.json` / `groups.json` / `mpims.json` / `dms.json` — channel indices by category
+- `<channel-name>/YYYY-MM-DD.json` — message arrays per day per channel
 
-**Parser status**: spec-only.
+**Access-level mapping** (per primary-vs-secondary.md v0.2.0):
+- `channels/*` → `semi-public` (internal org)
+- `groups/*` → `private`
+- `mpims/*` → `private`
+- `dms/*` → `private`
+
+The `corpus_access_declared` field in the persona's manifest rolls up from these per-file tags. A public-mirror persona distilled from a Slack export will trigger the Phase 1.5 mismatch warning — see §7 integration note in `primary-vs-secondary.md`.
+
+**Output schema**: `knowledge/chats/slack/{category}/{channel-slug}.md`. Mentions resolved to display names (`@Alice`). Channel-join / channel-leave / channel-topic messages skipped. File-share messages with no text rendered as `[file-share: N attachment(s)]`.
+
+**Parser status**: **runnable** (v0.3.0). 13 embedded self-tests via `python slack_parser.py --test`.
 
 ---
 
@@ -152,15 +171,23 @@ python scripts/imessage_parser.py --db ~/Library/Messages/chat.db \
 
 ---
 
-## 7. Telegram  `[USER-RESPONSIBILITY]`
+## 7. Telegram  **[RUNNABLE]** (v0.3.0)
 
-**Input shape**: Telegram Desktop → Settings → Advanced → "Export Telegram data" (HTML or JSON).
+**Runnable path**: `scripts/telegram_parser.py` reads the `result.json` produced by Telegram Desktop's JSON export, writes one file per chat, handles rich-text arrays, skips service messages, renders media placeholders.
 
-**Tool pointer**: [`telegram-export`](https://github.com/expectocode/telegram-export) for API-side; Desktop's built-in export is the safer route.
+```
+python scripts/telegram_parser.py --source /path/to/result.json \
+    --subject "Alice Z" --destination ./alice-persona \
+    [--chat-filter alice] [--no-redact]
+```
 
-**Output schema**: `knowledge/chats/telegram/{chat-slug}.md`. Media messages collapsed to `_[attachment: type → redacted]_`.
+**Input shape**: Telegram Desktop → Settings → Advanced → "Export Telegram data" → **JSON** (not HTML). The export bundle contains `result.json` at its root along with media directories; only the JSON is consumed.
 
-**Parser status**: spec-only.
+**Supported message fields**: `text` (string or rich-part array), `from` / `from_id`, `date`, `media_type`. `type: "service"` messages (joined group, pinned, etc.) are skipped.
+
+**Output schema**: `knowledge/chats/telegram/{chat-slug}.md`. `access_level` tagged as `private` (personal chats + private groups). Empty chats (only service messages) skipped. Media-only messages rendered as `[<media_type>]`.
+
+**Parser status**: **runnable** (v0.3.0). 8 embedded self-tests via `python telegram_parser.py --test`.
 
 ---
 

@@ -96,6 +96,7 @@ See `../../docs/forge-teams/persona-distill-20260414-151128/phase-3-planning/pla
 | 4 | distill-collector (5) + persona-router (3) + persona-debate (2) | 10 |
 | 5 | README, LICENSE, this integration doc, marketplace.json registration | 4 |
 | 6 (v0.3.0) | Phase 3.7 addition: `references/extraction/cdm-4sweep.md` + `references/components/execution-profile.md` + `agents/execution-profile-extractor.md` (+ manifest schema enum + rubric anti-gaming entries) | 3 new + 7 edited |
+| 7 (v0.4.0) | Security hardening: `contracts/consent-attestation-contract.md` + `contracts/untrusted-corpus-contract.md` + `agents/fingerprint-verifier.md` + `agents/self-containment-linter.md` + `persona-judge/config.yaml` + `persona-judge/config.schema.json` + `scripts/telegram_parser.py` + `scripts/slack_parser.py` + redactor.py v0.3 (CN-ADDR/ADDR/CN-NAME/FLAG). Edits to hard-rules.md, correction-layer.md, honest-boundaries.md, primary-vs-secondary.md, manifest.schema.json, rubric.md, text-parsers.md, redaction-policy.md, skill-md-template.md, distill-meta SKILL.md (Phase 3.8 + 0-Gate). | 8 new + 11 edited |
 
 ## 4. Cross-skill interface checkpoints
 
@@ -135,7 +136,7 @@ See `../../docs/forge-teams/persona-distill-20260414-151128/phase-3-planning/pla
 
 1. **No dog-food persona**: all 9 schemas ship with `unvalidated: true`. Before shipping v1.0.0, at least one real persona (suggested: `friend` or `self` — lowest complexity) should be distilled end-to-end and the contracts tested by running it.
 2. **Reference libraries unclonable**: 15+ repos (nuwa, colleague, ex, anti-distill, immortal, bazi, midas, 图鉴, 诸子, etc.) could not be cloned. Every "borrowed from X" section is tagged `[UNVERIFIED-FROM-README]`. v2 should clone and reconcile.
-3. **distill-collector partial-runnable** (v0.2.0): 4 runnable paths ship (iMessage / email / twitter / generic via `scripts/`); 6 chat platforms (WeChat / QQ / Feishu / Slack / Dingtalk / Telegram) + AV pipeline + image OCR / document extraction remain spec-only due to volatile third-party export formats. Users of remaining platforms must wire their own export → `generic_import.py`.
+3. **distill-collector partial-runnable** (v0.4.0): 6 runnable paths ship (iMessage / email / Twitter / generic / Telegram / Slack via `scripts/`); 4 chat platforms (WeChat / QQ / Feishu / Dingtalk) + AV pipeline + image OCR / document extraction remain spec-only due to volatile third-party export formats. Users of remaining platforms must wire their own export → `generic_import.py`.
 4. **computation-layer executor-only**: cross-schema attachment is conceptual; real interface exists only for executor.
 5. **Scoring normalization fragile**: raw /110 score is authoritative; /100 normalized is display-only. Rubric explicitly warns against gating on normalized.
 6. **Discovery env-dependent**: `persona-router` filesystem scan paths vary across Claude Code installs; router reports which paths it scanned when empty.
@@ -147,20 +148,28 @@ See `../../docs/forge-teams/persona-distill-20260414-151128/phase-3-planning/pla
 12. **execution-profile's red-line 2 threshold is conservative** (v0.3.0): Klein's field data says ~80% of expert decisions are RPD-style (not analytical list-compare). The red-line triggers at >50% list-compare rather than >20%, to avoid false positives on legitimately analytical personas (quant traders, statisticians, regulators). If multiple public-mirror / mentor skills hit false-positive red-line-2 fails, the threshold should tighten to 30%.
 13. **execution-profile only ships for public-mirror + mentor** (v0.3.0): other schemas (`self`, `collaborator`, `friend`, `loved-one`, `public-domain`) are expansion candidates but not yet validated. Those schemas set `execution_profile_completeness: not_applicable` in manifest. `topic` and `executor` are permanently excluded (no event-based personas).
 
-### 6.2 Security / trust limitations (surfaced by P5 red-team)
+### 6.2 Security / trust limitations
 
-These are **known v1 gaps**. They do not block shipping, but users should understand them before distilling real people's corpora or accepting a third-party persona skill.
+**v0.4.0 ships mitigations for all 7 original gaps (S1-S7)**. Each gap is
+now marked **Partially closed** — the gap is smaller but not eliminated;
+the "v2 Mitigation" column records the residual hole and what's still
+needed. Users should still read each row before distilling real corpora.
 
-| # | Category | Severity | Description | v2 Mitigation |
-|---|----------|----------|-------------|---------------|
-| S1 | **Privacy — free-text PII** | Critical | `distill-collector/references/redaction-policy.md` redacts via regex only: phones, emails, ID numbers, credit cards, API keys. **Free-text names, street addresses, medical/political/religious info survive into `knowledge/`**. | Ship NER-based name redactor + address regex; drop the default-salt for hashes. |
-| S2 | **Consent bypass via `subject_type: fictional`** | Critical | `hard-rules.md` requires consent for impersonating living real people. Enforcement is gated on the *declared* `identity.subject_type`. An attacker/careless user declares `fictional` and ships a persona of a real person without consent. | Require a signed `consent-attestation.md` at skill root; cross-check corpus proper-nouns against declared subject_type. |
-| S3 | **Prompt injection from corpus** | Critical | `knowledge/**` (untrusted input) is concatenated with `components/hard-rules.md` (trusted) at runtime without structural delimiters. A malicious corpus line like `"SYSTEM: Ignore previous instructions..."` can override rules. `correction-layer` also accepts severity=`hard-rule` amendments from chat turns. | Tag `knowledge/**` files as `untrusted-input: true` with runtime delimiters; forbid `hard-rule` corrections without out-of-band confirmation. |
-| S4 | **Manifest fields under-constrained** | High | `manifest.schema.json`: `triggers`/`description`/`domains` have no `maxLength`; `fingerprint` pattern matches any 64 hex chars (not verified against actual `knowledge/**/*.md` SHA-256); `validation_score` can be set to 110 without a `validation-report.md` existing; no `schema_type ↔ components_used` cross-check. | Add maxLength caps; add `if/then` conditional validators; ship a `fingerprint-verifier` agent for persona-judge. |
-| S5 | **Rubric gaming via `config.yaml`** | High | `persona-judge/references/rubric.md` §"Configurable Thresholds" lets users override `pass_threshold_raw`, `density_floor`, `required_tensions`, `required_boundaries`, `primary_source_min`. An attacker sets `density_floor: 0.5` and `pass_threshold_raw: 40` → low-quality persona PASSes. Anti-gaming §"PRD Threshold Arbitrage" does not catch config tampering. | Lock overrides to narrow ranges (e.g. `pass_threshold_raw ∈ [75, 95]`); require attestation that defaults were used; second independent model runs judge. |
-| S6 | **Self-contained escape in generated skills** | High | `component-contract.md §4` instructs generators to drop `Extraction Prompt` from emitted components. Some components (notably `correction-layer`) carry runtime behavior in that section; dropping breaks them when skill is moved. Also: `skill-md-template.md` has breadcrumbs to PRD/contract paths that don't exist in the produced skill. | Rename runtime-bearing section (keep at copy time); add a self-containment-linter agent that greps for external references. |
-| S7 | **Schema-misuse (private corpus in public-mirror)** | High | If a user picks `public-mirror` schema but the corpus contains private chats with the public figure, private content leaks into a skill labeled "public". No guardrail distinguishes public vs. private sources — only primary vs. secondary. | Add `corpus_access_declared` cross-check in Phase 1.5; warn on `schema_type ↔ source privacy` mismatches. |
-| S8 | **execution-profile red-line self-report via manifest fabrication** (v0.3.0) | Medium | `persona-judge` rubric v0.2.0 reads `components/execution-profile.md`'s `## Red-Line Summary` section to decide the Mindset Transfer ±1 adjustment. A producer can write `Red Line 1 passes: N / 0 fails` in the markdown while the evidence actually traces back to self-description (failing red-line 1). Rubric §Anti-Gaming added `Execution-Profile Red-Line Evasion` entry (random-sample 3 instructions; grep source_id against `knowledge/`), but sophisticated producers can still pass the sample check. | Run the red-line check independently in persona-judge rather than reading the producer's self-report; require `red_line_summary` to live in `manifest.json` with hash of evidence-trace. |
+| # | Category | Original Severity | Description | v0.4.0 Status | Residual Gap |
+|---|----------|-------------------|-------------|---------------|--------------|
+| S1 | **Privacy — free-text PII** | Critical | Regex-only redaction let names / addresses / medical+political+religious topics survive. | **Partially closed (v0.4.0)**: redactor v0.3 adds CN-ADDR, ADDR (Western), CN-NAME (introducer-gated), and FLAG:MEDICAL/POLITICAL/RELIGIOUS inline tags. | CN-NAME still misses non-introducer mentions; English / mixed-script names unhandled; full NER is v2 work. |
+| S2 | **Consent bypass via `subject_type: fictional`** | Critical | No file-level attestation required. | **Partially closed (v0.4.0)**: `contracts/consent-attestation-contract.md` + Phase 0 gate + `manifest.consent_attestation` object required when `subject_type ∈ {real-person, composite}`. | Attacker can still declare `fictional` to bypass; no signature verification. Corpus proper-noun cross-check is v0.5. |
+| S3 | **Prompt injection from corpus** | Critical | No structural separation between trusted rules and untrusted corpus. | **Partially closed (v0.4.0)**: `contracts/untrusted-corpus-contract.md` defines `<<<UNTRUSTED_CORPUS …>>>` delimiters; `hard-rules.md` mandates the Untrusted-Corpus Discipline paragraph verbatim; `correction-layer.md` gates `severity: hard-rule` corrections behind out-of-band confirmation. | Delimiters are a heuristic, not a sandbox. Sophisticated multi-step prompt-injection chains may still confuse the LLM. |
+| S4 | **Manifest fields under-constrained** | High | No maxLength caps; `fingerprint` unverifiable against `knowledge/`; no schema_type ↔ components_used cross-check. | **Partially closed (v0.4.0)**: manifest schema v0.4 adds maxLength (triggers 200 / description 2000 / domains/items 80) + maxItems 20 on triggers/domains. `schema_type`-specific `allOf` rules require public-mirror to include {identity, mental-models, decision-heuristics, expression-dna} and executor to include {computation-layer, interpretation-layer}. `agents/fingerprint-verifier.md` recomputes hashes in Phase 3.8 pre-check + persona-judge Manual mode. | `validation_score` still settable without a real validation-report; full schema_type coverage (7 more schemas) is v0.5. |
+| S5 | **Rubric gaming via `config.yaml`** | High | Thresholds were freely overridable, letting attackers set `density_floor: 0.5`. | **Closed (v0.4.0)**: `persona-judge/config.schema.json` locks every threshold to a sane range; persona-judge rejects out-of-range config at load time (`exit 3`). Config SHA-256 recorded in validation-report. | None for config-based gaming. A second-judge independent run is still v2 (redundant but blocks judge-collusion). |
+| S6 | **Self-contained escape in generated skills** | High | Single `grep` in migrator missed subtle leakage (absolute paths, PRD anchors, broken internal links). | **Closed (v0.4.0)**: `agents/self-containment-linter.md` runs 6 checks in new Phase 3.8 and in migrator step 6. Any failure blocks Phase 4 / reverts migration. | None. Linter covers the documented attack surfaces. |
+| S7 | **Schema-misuse (private corpus in public-mirror)** | High | No public/private distinction on sources. | **Partially closed (v0.4.0)**: `source-policies/primary-vs-secondary.md` v0.2 adds `access_level` (public / semi-public / private) orthogonal to tier. `manifest.corpus_access_declared` is required when mixed; Phase 1.5 warns on `schema_type=public-mirror` + non-public-only corpus AND `consent_method=implicit-public-figure` + non-public-only corpus. Slack parser tags `channels/*` as semi-public; Telegram tags everything as private. | Warning is advisory — user can still proceed. Hard-fail is v0.5. |
+| S8 | **execution-profile red-line self-report via manifest fabrication** (v0.3.0) | Medium | persona-judge read producer's self-reported Red-Line Summary. | **Partial**: rubric §Anti-Gaming catches obvious fabrication via sampled evidence grep. | Independent re-check in persona-judge still v2. |
+
+**Summary**: 7 gaps, 5 partially closed + 2 fully closed. v0.5 roadmap
+addresses residuals (NER redactor, corpus proper-noun cross-check, full
+schema coverage in components_used, hard-fail on access-level mismatch,
+independent red-line re-check).
 
 ### 6.3 Honest guidance for users
 
@@ -182,7 +191,10 @@ These are **known v1 gaps**. They do not block shipping, but users should unders
 
 If any step fails, the contracts or templates need fixes before v1.0.0. Any bug reports welcome.
 
-## 8. v2 roadmap (post-v0.3.0)
+## 8. v2 roadmap (post-v0.4.0)
+
+Shipped in v0.4.0: **7 security/trust gaps partially or fully closed**.
+`contracts/consent-attestation-contract.md` (S2) + `contracts/untrusted-corpus-contract.md` (S3) added as 5th and 6th contracts. `agents/fingerprint-verifier.md` + `agents/self-containment-linter.md` added — both run in new **Phase 3.8** between execution-profile extraction and persona-judge. `persona-judge/config.yaml` + `config.schema.json` lock threshold overrides to sane ranges (S5, closed). `redactor.py` v0.3 adds Chinese/Western addresses + Chinese name heuristics + sensitive-topic flags (S1 partial). `primary-vs-secondary.md` v0.2 adds `access_level` dimension (S7). `manifest.schema.json` v0.4 adds maxLength caps, schema_type↔components_used cross-checks, consent_attestation field (S4 partial). 2 new parsers: `telegram_parser.py` + `slack_parser.py` (6 runnable total).
 
 Shipped in v0.3.0: `execution-profile` component + `cdm-4sweep` extraction + Phase 3.7 + persona-judge rubric v0.2.0 (Mindset Transfer ±1 red-line coupling + 2 anti-gaming entries) + manifest schema v0.3.0 enum addition + migrator new-component discovery. Public-mirror and mentor schemas carry execution-profile as optional component.
 
@@ -190,7 +202,17 @@ Shipped in v0.2.0 (still removed from roadmap): multi-round Phase 2.5 with Jacca
 
 Remaining:
 
-**v0.3.0-derived roadmap (new):**
+**v0.4.0-derived roadmap (new):**
+
+- **NER-based name redactor** (closes S1 residual): replace regex-only CN-NAME heuristic with a proper NER model. Requires dropping the "stdlib-only" rule for the redactor or shipping a small model file. Open question: local tiny-NER (spaCy / fastText) vs. LLM-call per paragraph.
+- **Corpus proper-noun cross-check against declared `subject_type`** (closes S2 residual): at Phase 1.5, count distinct proper nouns in `knowledge/` and compare against `identity.name`. If `subject_type: fictional` but corpus is dominated by one real-name proper noun, warn or block.
+- **Full schema_type ↔ components_used cross-check**: v0.4.0 covers public-mirror + executor; extend to the other 7 schemas.
+- **Hard-fail on access-level mismatch** (closes S7 residual): v0.4.0 warns at Phase 1.5; v0.5 should halt and require user to either reclassify schema or strip private corpus.
+- **Independent red-line re-check in persona-judge** (closes S8): recompute red-line summary from `knowledge/` evidence chains rather than reading producer's self-report.
+- **Second-judge independent run** (defense-in-depth on S5): once config ranges are locked, a second LLM judge with different model family can catch ratings the first judge got wrong.
+- **Parser coverage** (WeChat / QQ / Feishu / Dingtalk): the 4 remaining platforms. WeChat + QQ need proven third-party DB decryption tools stable enough to wrap; Feishu + Dingtalk need enterprise compliance export samples. Still constrained by stdlib-only.
+
+**v0.3.0-derived roadmap:**
 
 - **Phase 3.7 → Phase 2 consolidation**: `execution-profile-extractor` only truly depends on `knowledge/` + `identity.md` + (optional) `expression-dna.md`, so architecturally it could run in Phase 2 parallel with `mental-model-extractor` / `expression-analyzer`. Phase 3.7 was chosen for minimum disruption of existing Phase 2 orchestration. Consolidation pushes total phase count back down to 7.
 - **execution-profile schema expansion**: extend to `self`, `collaborator`, `friend`, `loved-one`, `public-domain` — bilateral declaration required (both the component's `optional_for_schemas` and each schema's `optional_components:` must list it). Blocked on: dog-food evidence that the CDM 4-sweep produces usable output on smaller / more private corpora than public-mirror/mentor.

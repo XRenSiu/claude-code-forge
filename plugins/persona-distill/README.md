@@ -147,18 +147,39 @@ execution-profile（v0.3.0：CDM 4-sweep 执行画像，把描述编译为 8 类
 
 ---
 
-## 4 份跨 skill 契约
+## 6 份跨 skill 契约
 
 改动这些是 breaking change：
 
 | 契约 | 作用 |
 |------|------|
-| [`contracts/manifest.schema.json`](./contracts/manifest.schema.json) | 每个产出 persona skill 的 `manifest.json` 字段 schema（v0.2.0 扩展了迁移字段） |
+| [`contracts/manifest.schema.json`](./contracts/manifest.schema.json) | 每个产出 persona skill 的 `manifest.json` 字段 schema（v0.2 迁移 / v0.3 execution-profile / v0.4 consent + access_declared + maxLength） |
 | [`contracts/validation-report.schema.md`](./contracts/validation-report.schema.md) | persona-judge 的输出 schema，也是 distill-meta Phase 4 gate 读取的格式 |
 | [`contracts/component-contract.md`](./contracts/component-contract.md) | 19 个共享组件的 I/O 契约 |
 | [`contracts/schema-extension-contract.md`](./contracts/schema-extension-contract.md) | v0.2.0 新增：社区 schema 必须满足的协议（frontmatter + 7 个 H2 + 测试语料） |
+| [`contracts/consent-attestation-contract.md`](./contracts/consent-attestation-contract.md) | **v0.4.0 新增**：蒸馏 real-person / composite 时必须在产物根目录提供的同意声明格式，Phase 0 闸门 |
+| [`contracts/untrusted-corpus-contract.md`](./contracts/untrusted-corpus-contract.md) | **v0.4.0 新增**：`<<<UNTRUSTED_CORPUS>>>` 分隔符约定 + hard-rules 强制段落 + correction-layer 硬规则门禁 |
 
 ---
+
+## v0.4.0 相对 v0.3.0 的变化（安全强化）
+
+| 领域 | v0.3.0 | v0.4.0 |
+|------|--------|--------|
+| 安全契约数 | 4（manifest / validation-report / component / schema-extension） | **6**（+ consent-attestation + untrusted-corpus） |
+| Phase 0 闸门 | 只识别对象 | + **consent-attestation.md 门禁**（real-person / composite 必需） |
+| Phase 1.5 | 覆盖率 + 缺口 | + **corpus_access_declared 与 schema_type 交叉校验**（public-mirror ≠ private 语料警告） |
+| 新增 sub-agent | - | **fingerprint-verifier + self-containment-linter**（都跑在新 Phase 3.8） |
+| 阶段数 | 8 | **9**（+ Phase 3.8 自包含/指纹校验） |
+| hard-rules 组件 | 0.1.0 | **0.2.0**（强制嵌入 Untrusted-Corpus Discipline 段） |
+| correction-layer 组件 | 0.1.0 | **0.2.0**（`severity: hard-rule` 必须带 out-of-band 确认） |
+| honest-boundaries 组件 | 0.1.0 | **0.2.0**（可选 Execution Profile Gaps 段） |
+| redactor | 仅 phone/email/id/card/key | + **CN-ADDR / ADDR / CN-NAME（introducer-gated）/ FLAG:MEDICAL・POLITICAL・RELIGIOUS** |
+| source-policies | tier 三层 | + **access_level（public / semi-public / private）正交维度** |
+| persona-judge config | 无硬边界 | **config.yaml + config.schema.json 区间锁**（6 项阈值全部落在 [min, max] 内，越界直接 exit 3） |
+| manifest 约束 | 无 maxLength / schema↔components 联动 | **maxLength 全部字段 + public-mirror/executor 必选组件联动 + consent_attestation 对象必需** |
+| runnable parser 数 | 4（iMessage / email / Twitter / generic） | **6**（+ Telegram + Slack；均 stdlib-only，共 42 个自测） |
+| §6.2 安全缺口 | 7 open + 1（S8） | **5 部分关闭 + 2 完全关闭**（S5 / S6） |
 
 ## v0.3.0 相对 v0.2.0 的变化
 
@@ -187,12 +208,13 @@ execution-profile（v0.3.0：CDM 4-sweep 执行画像，把描述编译为 8 类
 
 ---
 
-## 诚实的边界
+## 诚实的边界（v0.4.0）
 
 - **所有 9 个 schema 都带 `unvalidated: true`**——还没有一个真实 persona 被端到端 dog-food 跑通过。Dog-food 是 v1.0.0 的前置条件。
-- **`distill-collector` 剩下 6 个平台（WeChat / QQ / Feishu / Slack / Dingtalk / Telegram）+ 音视频 + OCR 都是 spec-only**——你得自己跑第三方导出工具，然后管到 `generic_import.py`。
-- **7 个已知安全 / 信任缺口**：privacy free-text PII、consent bypass、prompt injection from corpus、manifest 字段欠约束、rubric gaming、self-containment escape、schema 误用。**真实使用前**务必看 [`docs/integration.md §6.2`](./docs/integration.md)。
-- **不要蒸馏未授权的真人**——`hard-rules` 是政策不是强制执行。
+- **`distill-collector` 剩下 4 个平台（WeChat / QQ / Feishu / Dingtalk）+ 音视频 + OCR 仍是 spec-only**——你得自己跑第三方导出工具，然后管到 `generic_import.py`。v0.3 起 Telegram + Slack 已可直接跑；v0.2 起 iMessage / email / Twitter / generic 可跑。
+- **7 个原始安全缺口**：v0.4.0 **5 个部分关闭 + 2 个完全关闭**（S5 config 区间锁 / S6 self-containment linter）。5 个部分关闭项的残余缺口见 [`docs/integration.md §6.2`](./docs/integration.md)——**真实使用前仍需阅读**，尤其是 S1（英文人名未处理）、S2（`fictional` 声明仍可绕过）、S7（私密语料警告但不硬拦截）。
+- **execution-profile 是 LLM 模拟 CTA 而非真正人采访人**——质量上限尚未通过对照实验量化，v1.0.0 前置。
+- **"不要蒸馏未授权的真人"仍是政策+摩擦，不是硬强制**——v0.4 的 consent-attestation 闸门是结构性摩擦，不是签名验证。详见 [`contracts/consent-attestation-contract.md §6`](./contracts/consent-attestation-contract.md)。
 
 ---
 

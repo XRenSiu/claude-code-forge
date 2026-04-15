@@ -1,11 +1,12 @@
 ---
 rubric: persona-judge
-version: 0.2.0
+version: 0.3.0
 total_max: 110
 pass_threshold_raw: 82
 density_floor: 3.0
 borrowed_from: softaworks/agent-toolkit/skill-judge + nuwa-skill three-tests + anti-distill density + Klein/Crandall CDM (execution-profile anti-gaming)
 changelog:
+  - 0.3.0 — Added locked-range validation on config.yaml overrides (closes integration.md §6.2 S5). persona-judge now refuses to load with out-of-range config values; config SHA-256 is recorded in validation-report.
   - 0.2.0 — Added Mindset Transfer ±1 adjustment tied to execution-profile red-line compliance; added 2 anti-gaming entries for execution-profile fabricated evidence and GPT-style infection. Additive only — total_max and pass_threshold unchanged.
   - 0.1.0 — Initial 12-dimension rubric.
 ---
@@ -214,15 +215,25 @@ PRD §4.2 原文写 "**通过门槛 75**"（语境上接近归一化 /100 标尺
 用户通过 `plugins/persona-distill/skills/persona-judge/config.yaml` 覆写以下默认值（默认全部来自 nuwa-skill 基线）：
 
 ```yaml
-pass_threshold_raw: 82       # PASS 下限（raw /110）
-density_floor: 3.0           # density 硬底线
-required_tensions: 2         # Internal Tensions 满分所需的未解矛盾对数
-required_boundaries: 3       # Honest Boundaries 满分所需的具体边界数
-primary_source_min: 0.5      # Primary Source Ratio 满分所需一手源比例
-critical_failure_count: 2    # 触发强制 FAIL 的 0 分维度阈值
+pass_threshold_raw: 82       # PASS 下限（raw /110）—— locked [75, 95]
+density_floor: 3.0           # density 硬底线                —— locked [2.0, 5.0]
+required_tensions: 2         # Internal Tensions 满分所需 pair —— locked [1, 4]
+required_boundaries: 3       # Honest Boundaries 满分所需条   —— locked [2, 6]
+primary_source_min: 0.5      # Primary Source Ratio 满分所需比 —— locked [0.3, 0.8]
+critical_failure_count: 2    # 触发强制 FAIL 的 0 分维度阈值   —— locked [2, 4]
 ```
 
-所有实际生效阈值 **必须写入** `validation-report.md` 的 `## Summary` 段末，保证每份 report 可独立复现判决。
+**v0.4.0 阈值区间锁**（closes integration.md §6.2 S5）：所有可配值都有硬上下限，定义在 `config.schema.json`（JSON Schema Draft-07）。persona-judge 启动时先用 Draft-07 validator 校验 `config.yaml`，超出区间的值触发 `exit 3: config-out-of-range`——不是 fallback 到默认，也不是 warning，**直接拒绝加载**。这消除 "用户设 `density_floor: 0.5` + `pass_threshold_raw: 40` 让 FAIL 的 skill 伪装成 PASS" 这条作弊向量。
+
+区间选取理由：
+- `pass_threshold_raw ∈ [75, 95]`：低于 75 违反 PRD 设计意图（该区段属于 CONDITIONAL_PASS）；高于 95 在现实语料上几乎无法达成。
+- `density_floor ∈ [2.0, 5.0]`：低于 2.0 等于接受占位符密度的内容；高于 5.0 只有高浓缩写作（乔布斯 keynote 量级）能通过。
+- `required_tensions ∈ [1, 4]`：低于 1 违反 Preserve Tensions 设计原则；高于 4 对短语料 persona 不现实。
+- `required_boundaries ∈ [2, 6]`：低于 2 接受"我可能有偏见"套话；高于 6 对小范围 persona 过度约束。
+- `primary_source_min ∈ [0.3, 0.8]`：低于 0.3 接受绝大多数二手内容；高于 0.8 对任何 fair-use 引用场景不可行。
+- `critical_failure_count ∈ [2, 4]`：低于 2 意味着任一维度得 0 就判 FAIL（过严）；高于 4 容忍太多维度得 0。
+
+所有实际生效阈值 **必须写入** `validation-report.md` 的 `## Summary` 段末，保证每份 report 可独立复现判决。config.yaml 的 SHA-256 也写入 report 以便审计。
 
 ## Anti-Gaming / 反作弊
 

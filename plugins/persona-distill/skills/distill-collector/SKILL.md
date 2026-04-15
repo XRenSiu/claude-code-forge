@@ -26,12 +26,12 @@ version: 0.2.0
 
 **把多模态语料统一成 Markdown，放进 `knowledge/` 目录。**
 
-Announce at start: "I'm using the distill-collector skill. v0.2.0 ships 4 runnable parsers (iMessage / email / Twitter / generic) under scripts/; the remaining 6 chat platforms + audio/video + OCR are still spec-only and route through third-party tools."
+Announce at start: "I'm using the distill-collector skill. v0.4.0 ships 6 runnable parsers (iMessage / email / Twitter / generic / Telegram / Slack) under scripts/; the remaining 4 chat platforms (WeChat / QQ / Feishu / Dingtalk) + audio/video + OCR are still spec-only and route through third-party tools."
 
-> **Status: PARTIAL-RUNNABLE (4 of 12 parsers runnable)**
+> **Status: PARTIAL-RUNNABLE (6 of 12 parsers runnable)**
 >
 > **Runnable now (Python 3.9+ stdlib only, no `pip install`):**
-> `scripts/generic_import.py`, `scripts/imessage_parser.py`, `scripts/mbox_parser.py`, `scripts/twitter_archive_parser.py`, plus the shared `scripts/redactor.py`.
+> `scripts/generic_import.py`, `scripts/imessage_parser.py`, `scripts/mbox_parser.py`, `scripts/twitter_archive_parser.py`, `scripts/telegram_parser.py` (v0.4.0), `scripts/slack_parser.py` (v0.4.0), plus the shared `scripts/redactor.py`.
 >
 > **Still spec-only (route through third-party tool → `generic_import.py`):**
 > WeChat / QQ / Feishu / Slack / Dingtalk / Telegram chat exports; Whisper / yt-dlp audio-video pipeline; OCR / EXIF / PDF / docx / Notion document pipeline.

@@ -1,11 +1,14 @@
 ---
-contract_version: 0.2.0
+contract_version: 0.3.0
 applies_to: distill-collector — PII redaction at write-time
 status: RUNNABLE
 references:
   - ./cli-spec.md
   - ../../distill-meta/references/output-spec.md
   - ../scripts/redactor.py
+changelog:
+  - 0.3.0 — Added Chinese + Western street address patterns (CN-ADDR, ADDR), Chinese full-name heuristic (CN-NAME, introducer-gated to reduce false positives on historical/place names), and sensitive-topic inline flags (FLAG:MEDICAL / FLAG:POLITICAL / FLAG:RELIGIOUS). Flags tag content for human review without hashing — reviewers decide per-instance. Closes integration.md §6.2 S1 (partial — full NER is still v2 work).
+  - 0.2.0 — Unified write-time policy + embedded test vectors in redactor.py.
 ---
 
 # Redaction Policy — Unified Write-Time PII Filter
@@ -94,6 +97,61 @@ identity in downstream analysis.
 \bBearer\s+[A-Za-z0-9._\-]{20,}\b
 ```
 
+### 1.6 Street addresses (v0.3.0)
+
+```regex
+# Chinese address: optional 省/自治区 + 市 + optional 区/县 + 路/街 + 号
+# Anchored on 号 suffix to avoid false positives on partial locations.
+(?:[\u4e00-\u9fa5]{2,8}(?:省|自治区|特别行政区))?
+[\u4e00-\u9fa5]{2,10}市
+(?:[\u4e00-\u9fa5]{1,10}(?:区|县))?
+[\u4e00-\u9fa5\w]{2,30}(?:路|街|巷|大道|胡同)
+[\u4e00-\u9fa5\w]*?\d+号
+
+# Western address: number + 1-5 words + street-type
+\b\d{1,5}\s+(?:[A-Z][a-z]+\s+){1,5}
+(?:Street|St|Avenue|Ave|Road|Rd|Boulevard|Blvd|Lane|Ln|Drive|Dr|Way)\b
+```
+
+### 1.7 Chinese full names (v0.3.0, introducer-gated)
+
+```regex
+# Must be preceded by an introducer word to reduce false positives on
+# historical figures / place names that happen to start with a surname.
+(?:我叫|他叫|她叫|名字叫|名字是|名字|姓名|联系人|客户|用户|员工|
+  老师|同学|经理|总监|先生|女士)
+\s*[<top-100-百家姓>][\u4e00-\u9fa5]{1,2}\b
+```
+
+Without this introducer gate, a surname+given-name regex produces
+unacceptable false-positive rates on Chinese prose (王维 the Tang poet,
+张家口 the city, etc.). The trade-off: names in casual mention ("I ran
+into 张伟 yesterday") without an introducer survive. NER is v2 work.
+
+### 1.8 Sensitive-topic flags (v0.3.0, non-redacting)
+
+These patterns do NOT hash/obscure content — they prepend an inline
+`[FLAG:KIND]` tag so human reviewers can triage before publishing.
+
+```regex
+# Medical
+(?:确诊|诊断|病史|患有|服用|处方|手术|化疗|
+  diagnosed\s+with|suffers\s+from|prescribed|on\s+medication)
+
+# Political
+(?:党员|入党|政治面貌|支持.{0,3}党|反对.{0,3}党|
+  party\s+member|voted\s+for|voting\s+record)
+
+# Religious
+(?:信仰|信教|皈依|受洗|伊斯兰|基督|佛教|道教|
+  convert(?:ed)?\s+to|practicing\s+(?:christian|muslim|jewish|buddhist))
+```
+
+Rationale: these topics need human judgment — a medical diagnosis
+mentioned in public biography differs from one from a private chat. The
+flag surfaces the mention without deciding; reviewers use `--no-redact`
+only for false-positive removal, not to suppress FLAG tags.
+
 ---
 
 ## 2. Placeholder format
@@ -103,14 +161,18 @@ Redacted matches are replaced by `[REDACTED:<KIND>-<4char-hash>]`, where
 The salt is the `fingerprint` seed from `manifest.json` when available,
 otherwise the literal string `"distill-collector-v1"`.
 
-| Category    | Placeholder example          |
-|-------------|------------------------------|
-| phone       | `[REDACTED:PHONE-3a9f]`      |
-| email       | `[REDACTED:EMAIL-HASH-7c21]` |
-| id (CN/US)  | `[REDACTED:ID-1b8e]`         |
-| credit card | `[REDACTED:CARD-004d]`       |
-| api key     | `[REDACTED:KEY-ff12]`        |
-| geo (EXIF)  | `[REDACTED-GEO]`             |
+| Category          | Placeholder example          |
+|-------------------|------------------------------|
+| phone             | `[REDACTED:PHONE-3a9f]`      |
+| email             | `[REDACTED:EMAIL-HASH-7c21]` |
+| id (CN/US)        | `[REDACTED:ID-1b8e]`         |
+| credit card       | `[REDACTED:CARD-004d]`       |
+| api key           | `[REDACTED:KEY-ff12]`        |
+| cn address (v0.3) | `[REDACTED:CN-ADDR-5f7a]`    |
+| address (v0.3)    | `[REDACTED:ADDR-9c12]`       |
+| cn name (v0.3)    | `[REDACTED:CN-NAME-e84d]`    |
+| geo (EXIF)        | `[REDACTED-GEO]`             |
+| flag (v0.3)       | `[FLAG:MEDICAL]<content>`    |
 
 Why keep a 4-hex suffix? It preserves **anchor identity** — the same phone
 number across the corpus maps to the same placeholder, so downstream schema
@@ -130,20 +192,22 @@ happens at `distill-meta` Phase 2).
 
 ---
 
-## 4. Scope limits (things v1 deliberately does NOT redact)
+## 4. Scope limits (things v0.3.0 still deliberately does NOT redact)
 
 - **Photographs themselves**. Faces in images are **not** blurred. Users who
   need that must pre-process images before handing them to the pipeline.
   This is a **[USER-RESPONSIBILITY]**.
-- **Street addresses**. No reliable free regex across languages; v2 will
-  address via an NER model. v1 leaves addresses in plaintext.
+- **Free-text names without an introducer**. CN-NAME pattern requires a
+  preceding word like `联系人` / `客户` / `姓名` to fire. Casual mentions
+  (`"和张伟聊天"`) survive. Full NER is v2 work.
+- **English / Western full names**. No heuristic — the name space is too
+  ambiguous with common words to regex safely. v2.
 - **Birth dates / ages** when not in an ID pattern.
-- **IP addresses**. Not redacted by default in v1.
+- **IP addresses**. Not redacted by default.
 - **Usernames / handles** (`@alice`). Treated as speaker aliases per §3, not
   stripped.
-- **Free-text names** appearing in the prose (e.g., "I met with John
-  yesterday"). Not caught by any regex — this is a structural limitation of
-  regex-based redaction.
+- **Addresses without 号 suffix or street-type keyword**. Partial addresses
+  (区 / 街 names alone) survive.
 
 Every shipped Markdown file carries `redaction: applied-vYYYYMMDD`; that tag
 attests to **these regexes having run**, not a guarantee of zero PII.
@@ -185,6 +249,14 @@ conformance.
 | `身份证 110101199001011234`                | `ID`                      |
 | `SSN 123-45-6789`                         | `ID`                      |
 | `key sk-AbCdEf1234567890XyZqRsTuVwX`      | `KEY`                     |
+| `北京市朝阳区建国路88号` (v0.3)             | `CN-ADDR`                 |
+| `广东省深圳市南山区科技园南路10号` (v0.3)   | `CN-ADDR`                 |
+| `221 Baker Street London` (v0.3)          | `ADDR`                    |
+| `1600 Pennsylvania Avenue` (v0.3)         | `ADDR`                    |
+| `联系人张伟` (v0.3, introducer-gated)      | `CN-NAME`                 |
+| `他去年确诊了糖尿病` (v0.3, flag)           | `[FLAG:MEDICAL]` prefix   |
+| `她是 2015 年入党的` (v0.3, flag)           | `[FLAG:POLITICAL]` prefix |
+| `2010 年皈依了佛教` (v0.3, flag)            | `[FLAG:RELIGIOUS]` prefix |
 
 ### 6.2 Negative cases (redaction MUST NOT trigger)
 
@@ -199,6 +271,8 @@ conformance.
 | Input snippet                             | Behavior |
 |-------------------------------------------|----------|
 | `transaction id 4532015112830366`         | May match `CARD` regex (16 digits). Accepted v1 limitation. User can `--no-redact` that specific file. |
+| `张伟的历史贡献` (v0.3)                    | CN-NAME **does NOT** fire (no introducer). Accepted — regex cannot distinguish historical figure from casual mention. |
+| `在北京路开会` (v0.3)                      | CN-ADDR **does NOT** fire (no 号 suffix). Accepted — no anchor. |
 
 ---
 

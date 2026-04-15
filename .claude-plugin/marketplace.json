@@ -69,8 +69,8 @@
     },
     {
       "name": "persona-distill",
-      "description": "Persona Distillation Ecosystem - parameterized schema library + generation/evaluation/scheduling/debate toolkit for distilling personas (people or rule systems) into self-contained Claude Code skills. 5 skills, 9 persona schemas, 19 reusable components, 12-dimension quality rubric, multi-round Phase 2.5, auto conflict detection, Phase 3.7 execution-profile via Klein-RPD/CDM 4-sweep (描述→指令), runnable parsers, migration tool, community schema extension.",
-      "version": "0.3.0",
+      "description": "Persona Distillation Ecosystem - parameterized schema library + generation/evaluation/scheduling/debate toolkit for distilling personas (people or rule systems) into self-contained Claude Code skills. 5 skills, 9 schemas, 19 components (incl. execution-profile via Klein-RPD/CDM), 9-phase pipeline with v0.4.0 security: consent-attestation gate, untrusted-corpus delimiters, fingerprint verifier, self-containment linter, rubric config range locks, corpus_access_declared cross-check. 6 runnable parsers (iMessage/email/Twitter/generic/Telegram/Slack).",
+      "version": "0.4.0",
       "author": {
         "name": "XRenSiu",
         "email": "xrensiu@gmail.com"

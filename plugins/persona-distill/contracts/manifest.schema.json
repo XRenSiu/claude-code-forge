@@ -4,7 +4,7 @@
   "title": "persona-distill manifest.json contract",
   "description": "The manifest.json produced by distill-meta for every generated persona skill. Consumed by persona-judge (routing of rubric dimensions), persona-router (matching), persona-debate (participant discovery), and the migrator agent (component-version drift detection and user-edit detection). This schema is the ONLY authoritative contract for that file; changes here are breaking changes to all 5 skills.",
   "schema_version": "0.2.0",
-  "$comment": "Version 0.3.0 — adds execution-profile to components_used enum (both legacy and v0.2.0+ object form), plus two optional fields execution_profile_completeness (enum) and execution_profile_self_report_only (boolean) for Phase 3.7 audit surfacing. Additive change — pre-v0.3.0 manifests remain valid. Version 0.2.0 — (a) schema_type relaxed from a fixed enum of 9 values to a slug pattern to accommodate community-contributed schemas per contracts/schema-extension-contract.md (origin and author fields added); (b) migration support added per references/migration.md — distill_meta_version, migration_history[], last_migrated_at, components_fingerprint, and components_used widened via oneOf to optionally carry per-slug version + original_component_hash for drift and user-edit detection. Core schemas: self|collaborator|mentor|loved-one|friend|public-mirror|public-domain|topic|executor.",
+  "$comment": "Version 0.4.0 — adds consent_attestation object (required when subject_type ∈ {real-person, composite}, closes integration.md §6.2 S2) and corpus_access_declared enum (closes §6.2 S7). Adds maxLength caps on triggers/description/domains (closes §6.2 S4). Version 0.3.0 — adds execution-profile to components_used enum (both legacy and v0.2.0+ object form), plus two optional fields execution_profile_completeness (enum) and execution_profile_self_report_only (boolean) for Phase 3.7 audit surfacing. Version 0.2.0 — (a) schema_type relaxed from a fixed enum of 9 values to a slug pattern to accommodate community-contributed schemas per contracts/schema-extension-contract.md (origin and author fields added); (b) migration support added per references/migration.md — distill_meta_version, migration_history[], last_migrated_at, components_fingerprint, and components_used widened via oneOf to optionally carry per-slug version + original_component_hash for drift and user-edit detection. Core schemas: self|collaborator|mentor|loved-one|friend|public-mirror|public-domain|topic|executor.",
   "type": "object",
   "required": [
     "persona_distill_version",
@@ -137,13 +137,14 @@
       "properties": {
         "name": { "type": "string" },
         "display_name": { "type": "string" },
-        "description": { "type": "string", "description": "One-paragraph summary. Router matches against this." },
+        "description": { "type": "string", "description": "One-paragraph summary. Router matches against this.", "maxLength": 2000 },
         "domains": {
           "type": "array",
           "description": "Domains / areas of expertise the persona is suited for.",
-          "items": { "type": "string" }
+          "items": { "type": "string", "maxLength": 80 },
+          "maxItems": 20
         },
-        "language": { "type": "string", "description": "Primary language (zh/en/...)." },
+        "language": { "type": "string", "description": "Primary language (zh/en/...).", "maxLength": 20 },
         "subject_type": {
           "type": "string",
           "description": "Whether this is a real person, composite, fictional, or rule system.",
@@ -153,9 +154,10 @@
     },
     "triggers": {
       "type": "array",
-      "description": "Trigger phrases for skill invocation.",
-      "items": { "type": "string" },
-      "minItems": 1
+      "description": "Trigger phrases for skill invocation. maxItems 20 caps router matching cost; maxLength 200 prevents long-prompt injection via manifest.",
+      "items": { "type": "string", "maxLength": 200 },
+      "minItems": 1,
+      "maxItems": 20
     },
     "fingerprint": {
       "type": "string",
@@ -265,6 +267,37 @@
       "type": "boolean",
       "description": "v0.3.0+. True if execution-profile red-line 1 (self-report ≠ behavior, Ericsson/Ward) was batch-failed during Phase 3.7 — all evidence trails back to persona's self-description rather than observed events. Downstream consumers (router / judge) should down-weight this persona for execution-typed tasks when true. Absent or false otherwise.",
       "default": false
+    },
+    "consent_attestation": {
+      "type": "object",
+      "description": "v0.4.0+. Summary of `consent-attestation.md` at the persona-skill root. REQUIRED when identity.subject_type ∈ {real-person, composite}; ABSENT otherwise. Closes integration.md §6.2 S2 partially (adds friction, not enforcement). Writer: distill-meta Phase 0. Readers: persona-router (down-weights absent consent); persona-judge (flags absence in validation-report). See contracts/consent-attestation-contract.md.",
+      "required": ["present", "method", "date", "hash"],
+      "properties": {
+        "present": {
+          "type": "boolean",
+          "description": "True if the file exists, parses, and passes Phase 0 validation."
+        },
+        "method": {
+          "type": "string",
+          "enum": ["written", "verbal-recorded", "implicit-public-figure", "self"],
+          "description": "Method by which consent was obtained for the primary subject."
+        },
+        "date": {
+          "type": "string",
+          "format": "date",
+          "description": "Date the primary subject's consent was obtained (ISO 8601 date)."
+        },
+        "hash": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$",
+          "description": "SHA-256 of consent-attestation.md at generation time. Downstream consumers can verify by recomputing."
+        }
+      }
+    },
+    "corpus_access_declared": {
+      "type": "string",
+      "enum": ["public-only", "mixed", "private-only"],
+      "description": "v0.4.0+. Declares the access level of the corpus used to distill this persona. `public-only` = books, essays, public talks, tweets, public interviews. `mixed` = public + private (chats, emails, DMs). `private-only` = no public content. Phase 1.5 Research Review cross-checks against schema_type: public-mirror + non-public-only corpus triggers a warning. Closes integration.md §6.2 S7."
     }
   },
   "allOf": [
@@ -276,6 +309,53 @@
       },
       "then": {
         "required": ["schema_type_author"]
+      }
+    },
+    {
+      "$comment": "v0.4.0 — When identity.subject_type is real-person or composite, consent_attestation object MUST be present (Phase 0 gate; see contracts/consent-attestation-contract.md).",
+      "if": {
+        "properties": {
+          "identity": {
+            "properties": {
+              "subject_type": { "enum": ["real-person", "composite"] }
+            },
+            "required": ["subject_type"]
+          }
+        },
+        "required": ["identity"]
+      },
+      "then": {
+        "required": ["consent_attestation"]
+      }
+    },
+    {
+      "$comment": "v0.4.0 — schema_type ↔ components_used soft cross-check via `contains`. public-mirror personas MUST include the 4 core required components. Deeper schema-specific checks are enforced by distill-meta Phase 3 / persona-judge; this catches the blatant mismatches at schema load time.",
+      "if": { "properties": { "schema_type": { "const": "public-mirror" } }, "required": ["schema_type"] },
+      "then": {
+        "properties": {
+          "components_used": {
+            "allOf": [
+              { "contains": { "oneOf": [ {"const": "identity"}, {"type": "object", "properties": {"slug": {"const": "identity"}}} ] } },
+              { "contains": { "oneOf": [ {"const": "mental-models"}, {"type": "object", "properties": {"slug": {"const": "mental-models"}}} ] } },
+              { "contains": { "oneOf": [ {"const": "decision-heuristics"}, {"type": "object", "properties": {"slug": {"const": "decision-heuristics"}}} ] } },
+              { "contains": { "oneOf": [ {"const": "expression-dna"}, {"type": "object", "properties": {"slug": {"const": "expression-dna"}}} ] } }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "$comment": "v0.4.0 — executor schema MUST include computation-layer and interpretation-layer.",
+      "if": { "properties": { "schema_type": { "const": "executor" } }, "required": ["schema_type"] },
+      "then": {
+        "properties": {
+          "components_used": {
+            "allOf": [
+              { "contains": { "oneOf": [ {"const": "computation-layer"}, {"type": "object", "properties": {"slug": {"const": "computation-layer"}}} ] } },
+              { "contains": { "oneOf": [ {"const": "interpretation-layer"}, {"type": "object", "properties": {"slug": {"const": "interpretation-layer"}}} ] } }
+            ]
+          }
+        }
       }
     }
   ]

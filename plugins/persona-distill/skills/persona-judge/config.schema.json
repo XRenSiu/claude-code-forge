@@ -1,0 +1,52 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/XRenSiu/claude-code-forge/plugins/persona-distill/skills/persona-judge/config.schema.json",
+  "title": "persona-judge config",
+  "description": "Locked-range threshold overrides for persona-judge. v0.4.0 closes integration.md §6.2 S5 by rejecting config values outside sane ranges at load time.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "pass_threshold_raw": {
+      "type": "number",
+      "description": "Raw score (/110) at which verdict transitions from CONDITIONAL_PASS to PASS.",
+      "minimum": 75,
+      "maximum": 95,
+      "default": 82
+    },
+    "density_floor": {
+      "type": "number",
+      "description": "Density score below which verdict is forced to FAIL regardless of total.",
+      "minimum": 2.0,
+      "maximum": 5.0,
+      "default": 3.0
+    },
+    "required_tensions": {
+      "type": "integer",
+      "description": "Number of preserved tensions needed to score max on Internal Tensions dimension.",
+      "minimum": 1,
+      "maximum": 4,
+      "default": 2
+    },
+    "required_boundaries": {
+      "type": "integer",
+      "description": "Number of explicit limits needed to score max on Honest Boundaries dimension.",
+      "minimum": 2,
+      "maximum": 6,
+      "default": 3
+    },
+    "primary_source_min": {
+      "type": "number",
+      "description": "Minimum ratio of primary-source corpus for max Primary-Source dimension score.",
+      "minimum": 0.3,
+      "maximum": 0.8,
+      "default": 0.5
+    },
+    "critical_failure_count": {
+      "type": "integer",
+      "description": "Number of 0-scoring dimensions that triggers a forced FAIL.",
+      "minimum": 2,
+      "maximum": 4,
+      "default": 2
+    }
+  }
+}
