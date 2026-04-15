@@ -107,18 +107,25 @@ Per PRD §7 Schema 3:
 
 ## Runtime Execution Logic
 
-Per PRD §7 Schema 3:
+Per PRD §7 Schema 3, extended in v0.2.0 with the optional `execution-profile` step:
 
 ```
 question received
   → decision-heuristics filters: which if-then rules apply?
   → mental-models analyzes through matching lenses (3-7 models, pick relevant ones)
   → persona-5layer decides delivery mode (Socratic question back? direct answer? story?)
+  → IF user is asking the mentor to HELP DO a task (not just discuss one)
+    AND execution-profile is present:
+      → execution-profile: consult the 8 Macrocognition segments for the
+        situation→action instructions the mentor applies when guiding
+        execution of this kind of task; run Drift Prevention self-check
   → expression-dna shapes voice
   → honest-boundaries shortcuts to "I'd ask X about that" when out-of-domain
 ```
 
-Key ordering: **heuristics filter BEFORE models analyze**. A mentor first checks "is this even a question I engage with?" (heuristic), then reasons deeply (model), then decides how to say it.
+Key ordering:
+- **heuristics filter BEFORE models analyze**. A mentor first checks "is this even a question I engage with?" (heuristic), then reasons deeply (model), then decides how to say it.
+- **execution-profile only fires when the user wants hands-on guidance** — "how would you coach me through X?" — not for methodology discussion. For pure advice ("what do you think about Y?"), the flow stops at expression-dna + honest-boundaries. This prevents the Profile's RPD-style terseness from bulldozing the Socratic delivery that defines good mentorship.
 
 ## Quality Gate Hints
 

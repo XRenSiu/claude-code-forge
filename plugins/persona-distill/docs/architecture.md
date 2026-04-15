@@ -33,7 +33,7 @@ version: 0.3.0
                 │ references
 ┌────────────────────────────────────────────────────────────────────┐
 │  Layer 3: Reference Libraries (schemas / components / extraction)  │
-│   9+N schemas · 19 components · 7 extraction frameworks (incl.     │
+│   9+N schemas · 19 components · 8 extraction frameworks (incl.     │
 │   cdm-4sweep) · 3 source policies · 1 decision tree · output spec  │
 │   · migration                                                      │
 └───────────────▲────────────────────────────────────────────────────┘
@@ -72,7 +72,7 @@ persona-distill/
 │   │   ├── references/                         # Layer 3
 │   │   │   ├── schemas/                        #   9 core + community/
 │   │   │   ├── components/                     #   19 可复用组件
-│   │   │   ├── extraction/                     #   7 提取框架（incl. cdm-4sweep）
+│   │   │   ├── extraction/                     #   8 提取框架（incl. cdm-4sweep）
 │   │   │   ├── source-policies/                #   中英文源策略
 │   │   │   ├── decision-tree.md                #   schema 决策树
 │   │   │   ├── output-spec.md                  #   产物目录规格

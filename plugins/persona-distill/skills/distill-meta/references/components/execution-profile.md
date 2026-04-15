@@ -3,11 +3,19 @@ component: execution-profile
 version: 0.1.0
 purpose: 把已蒸馏人格从"描述"升级为"执行指令"——8 类 Macrocognition 骨架下的情境-行动对，每条可追溯到 knowledge/ 具体事件；加载本 persona skill 后执行任意任务时按此指令运作。
 required_for_schemas: []
-optional_for_schemas: [public-mirror, mentor, self, collaborator, friend, loved-one, public-domain]
-depends_on: [identity, expression-dna]
+optional_for_schemas: [public-mirror, mentor]
+depends_on: [identity]
 produces: [honest-boundaries]
 llm_consumption: eager
 ---
+
+<!--
+Scope note (v0.3.0):
+- v0.3.0 ships execution-profile as optional for **public-mirror** and **mentor** only — schemas whose typical corpora (interviews / post-mortems / 1-on-1s) already exceed the 10-decision-point floor the CDM 4-sweep needs.
+- Soft dependency: `expression-dna` (when present) supplies the口吻 hint cited in the Drift Prevention section. Absent expression-dna, the extractor still runs; Drift Prevention falls back to a schema-agnostic default.
+- v0.4.0 expansion candidates (pending dog-food data): `self`, `collaborator`, `friend`, `loved-one`, `public-domain`. These are not listed in `optional_for_schemas` above because their schema files do not yet declare execution-profile in `optional_components:`. Bilateral declaration is required — update both sides before expanding.
+-->
+
 
 ## Purpose
 
@@ -41,7 +49,7 @@ llm_consumption: eager
       decision_point: t2
       source_id: "knowledge/corpus/<path>#L<line>"
       probe_hits: [cues, options, errors]
-  confidence: high | medium
+  confidence: high | medium | low   # low 用于 red-line 1 失败后 retry 保留的条目；dropped 条目不入 Profile，转 honest-boundaries
   red_line_passes: [1, 2, 3]
   markers: []  # optional：[SELF-REPORT-ONLY] | [ANALYTICAL-DEVIATION]
 ```
@@ -72,7 +80,7 @@ version: <resolved>
 **执行指令**：
 - <做 X 不做 Y 的具体句式>
   - 证据：knowledge/<file>:<line> — <事件简述>
-  - 置信度：high | medium
+  - 置信度：high | medium | low
 - ...
 
 ## 2. 方案抉择（Decision Making）

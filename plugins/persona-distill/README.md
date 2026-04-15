@@ -168,7 +168,7 @@ execution-profile（v0.3.0：CDM 4-sweep 执行画像，把描述编译为 8 类
 | 组件数 | 18 | **19**（+ execution-profile） |
 | 阶段数 | 7 | **8**（+ Phase 3.7） |
 | sub-agent 数 | 11 | **12**（+ execution-profile-extractor） |
-| 提取框架数 | 6 | **7**（+ cdm-4sweep） |
+| 提取框架数 | 7 | **8**（+ cdm-4sweep） |
 | 理论来源 | nuwa / immortal / anti-distill | 上述 + Klein RPD / Hoffman-Crandall-Shadbolt CDM / Crandall Working Minds / Macrocognition |
 | persona-judge | 12 维 rubric | 同 + Mindset Transfer 与 execution-profile red-line 联动 + 2 条 anti-gaming 条目 |
 

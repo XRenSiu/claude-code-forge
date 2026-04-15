@@ -1,11 +1,14 @@
 ---
-version: 0.1.0
+version: 0.2.0
 purpose: Reference doc for migrating already-generated persona skills when distill-meta's component library or manifest schema bumps version, while preserving the self-containment invariant.
 consumed_by: [agents/migrator.md]
 references:
   - ../../../contracts/manifest.schema.json
   - ../../../contracts/component-contract.md
   - ../templates/migration-plan-template.md
+changelog:
+  - 0.2.0 — Added new-component discovery step (§New-Component Discovery). Addresses the v0.2.0 → v0.3.0 case where the library adds a component (e.g., `execution-profile`) to a schema's `optional_components` after a persona was already generated — the migrator now surfaces the new-component opt-in instead of silently passing the persona over.
+  - 0.1.0 — Initial 7-step migration procedure.
 ---
 
 # Persona-Skill Migration Reference
@@ -27,6 +30,19 @@ Triggers (any one of):
 3. **Schema contract bump** — `contracts/manifest.schema.json` `$id` version differs from manifest's `distill_meta_version`. Includes the persona-distill plugin's own version bump that touched the schema.
 
 The migrator is **opt-in**. Detection only surfaces a recommendation; nothing is overwritten without user approval (PATCH bumps may auto-apply per the agent's `auto_approve_patch_bumps` flag, but a snapshot is still taken).
+
+## New-Component Discovery (v0.2.0 of this doc)
+
+Before running the per-component version-diff pass (next section), the migrator also checks whether the **schema** (canonical definition in `distill-meta/references/schemas/<schema_type>.md`) now declares optional components that the persona's existing `manifest.components_used[]` does NOT carry. This happens when a library release adds a component to an existing schema's `optional_components:` list after the persona was already generated — e.g., v0.3.0 adds `execution-profile` to `public-mirror` and `mentor`.
+
+Behavior:
+
+1. Read `{distill_meta_root}/references/schemas/{manifest.schema_type}.md` frontmatter. Compute `schema.optional_components − manifest.components_used[]` = new-optional-candidates.
+2. For each candidate, the migrator appends an `## Optional New Components` section to `plan.md` listing the slug, a one-line purpose from the component definition's frontmatter, and a default recommendation: `opt_in` if the component definition's `optional_for_schemas` explicitly names the current schema (bilateral agreement), else `skip`.
+3. In `mode: APPLY`, opt-in candidates go through the same generation flow distill-meta would use for a fresh skill — the corresponding Phase-level extractor (e.g., `agents/execution-profile-extractor.md` for `execution-profile`) runs over the persona's existing `knowledge/`. If the extractor returns `INSUFFICIENT_EVENTS` / equivalent downgrade status, the migrator records the skip reason in `migration_history[]` rather than failing.
+4. The migrator never opt-ins new REQUIRED components (that would indicate a MAJOR schema change — route to `schema-evolution-required` in Failure Modes instead).
+
+This step is separate from the per-component version-diff pass below because it changes `components_used[]` membership, not just per-slug versions. User approval for opt-in candidates is REQUIRED in `mode: APPLY` — default is `skip` unless the user explicitly accepts.
 
 ## Migration Plan (diff report)
 

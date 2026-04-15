@@ -113,6 +113,7 @@ Phase 5    交付与后续       → 告知路径 + 触发词 + 进化方式（d
 - **See**: `references/extraction/conflict-detection.md`、`agents/conflict-detector.md`。
 
 ### Phase 3.7 — Execution Profile Extraction（v0.3.0 新增，借鉴 Klein RPD + CDM）
+- **Applies only to**: schemas whose `optional_components:` lists `execution-profile`——v0.3.0 是 `public-mirror` + `mentor`。其它 schema 跳过本阶段，manifest 设 `execution_profile_completeness: not_applicable`。
 - **Goal**: 把已蒸馏的描述性人格编译成**指令性**的"情境 → 动作"条款。在 Phase 3.5 之后、Phase 4 之前运行，从 `knowledge/` 里的**具体事件**反推 8 类 Macrocognition（Sensemaking / Decision Making / Planning / Adaptation / Problem Detection / Coordination / Managing Uncertainty / Mental Simulation）下的可执行指令。
 - **Agent**: `execution-profile-extractor`（单实例，串行于 Phase 3.5 后）。
 - **Protocol**: CDM 4-sweep（Incident Identification → Timeline Construction → 10-Probe Deepening → What-If Validation），每条指令可追溯到 `knowledge/` 的具体事件行号。
@@ -121,7 +122,12 @@ Phase 5    交付与后续       → 告知路径 + 触发词 + 进化方式（d
   2. 80% 专家决策是 RPD 风格——Decision Making 段里"列表对比"句式占比不得 > 50%。
   3. 颗粒度必须是"情境-行动对"——禁用 `注重 / 倾向 / 重视 / prefer / value / focus on` 作谓语。
 - **Honest boundary coupling**: Sweep 4 what-if 推不出的条目 + Knowledge Audit 8 项的 gap 项自动追加到 `components/honest-boundaries.md` 的 `## Execution Profile Gaps` 段。
-- **Downgrade**: 若 `knowledge/` 的可用 decision point < 10 → 跳过本组件，`honest-boundaries` 追加"事件证据不足"声明；该 persona skill 的 manifest 设 `execution_profile_completeness: skipped`。
+- **Failure policy**:
+  - `INSUFFICIENT_EVENTS`（knowledge/ 可用 decision point < 10）→ 跳过本组件，honest-boundaries 追加"事件证据不足"声明，manifest 设 `execution_profile_completeness: skipped`。继续 Phase 4。
+  - `PARTIAL`（≥ 3 段是 "No evidence"）→ 正常写入但 manifest 设 `execution_profile_completeness: partial`。继续 Phase 4。
+  - red-line 批量失败且 agent 内部 retry 后仍失败 → 降级至 honest-boundaries，manifest 设 `execution_profile_completeness: skipped`。继续 Phase 4。
+  - agent 工具错误 / 崩溃（非语义失败）→ 记日志，**跳过 Phase 3.7 但不阻塞 Phase 4**；manifest 设 `execution_profile_completeness: skipped` 并附 error reason。本阶段不应让整个流水线失败，因为它是可选增强。
+- **Architectural note**: Phase 3.7 置于 Phase 3.5 之后主要是出于"最小侵入"的工程选择——避免改动 Phase 2 并行编排。理论上本 agent 仅依赖 `knowledge/` + `identity.md`（可选 `expression-dna.md`），可在 Phase 2 内与 mental-model-extractor / expression-analyzer 并行。v0.4.0 roadmap 项。
 - **See**: `references/extraction/cdm-4sweep.md`、`references/components/execution-profile.md`、`agents/execution-profile-extractor.md`。
 
 ### Phase 4 — Quality Validation（dog-food）

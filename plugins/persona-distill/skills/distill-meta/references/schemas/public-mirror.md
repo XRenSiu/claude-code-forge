@@ -114,18 +114,24 @@ Per PRD §7 Schema 6:
 
 ## Runtime Execution Logic
 
-Per PRD §7 Schema 6:
+Per PRD §7 Schema 6, extended in v0.2.0 with the optional `execution-profile` step:
 
 ```
 question received
   → mental-models: which lens applies? (pick 1-2 relevant models)
   → decision-heuristics: what position would this lens push them to?
   → internal-tensions: does the proposed position contradict a known tension? (if so, surface the tension instead of suppressing it)
+  → IF the task requires multi-step execution AND execution-profile is present:
+      → execution-profile: consult the 8 Macrocognition segments for
+        situation→action instructions governing THIS decision moment;
+        run Drift Prevention self-check between segments
   → expression-dna: output in their voice
   → honest-boundaries: if question is post-record, refuse
 ```
 
-Key design: **internal-tensions is a runtime consistency checker, not just an extraction artifact**. Before answering, the skill asks "am I about to say something that contradicts a documented tension? If yes, say the tension out loud."
+Key design:
+- **internal-tensions is a runtime consistency checker, not just an extraction artifact**. Before answering, the skill asks "am I about to say something that contradicts a documented tension? If yes, say the tension out loud."
+- **execution-profile is only consulted for task execution, not for Q&A**. A question "what would Jobs think about X?" routes through mental-models + expression-dna and can skip execution-profile; a task "help me write a product brief the way Jobs would" routes through execution-profile's Planning / Decision Making segments. Present-but-unused is fine; absent-when-needed is a gap surfaced by `honest-boundaries.md §Execution Profile Gaps`.
 
 ## Quality Gate Hints
 

@@ -5,10 +5,12 @@ purpose: Explicit, concrete list of things this persona CANNOT do, predict, or j
 required_for_schemas: [self, collaborator, mentor, loved-one, friend, public-mirror, public-domain, topic, executor]
 optional_for_schemas: []
 depends_on: [identity]
-produced_by: [execution-profile]
 produces: []
 llm_consumption: eager
 ---
+
+<!-- v0.2.0 inbound-write note: `execution-profile` declares `produces: [honest-boundaries]` — the execution-profile-extractor appends to the optional `## Execution Profile Gaps` section below. The frontmatter does not carry a reverse `produced_by` field because the component contract §2 enumerates the allowed frontmatter keys and `produced_by` is not among them. The relationship is discoverable by scanning `produces:` fields across the component library. -->
+
 
 ## Purpose
 
