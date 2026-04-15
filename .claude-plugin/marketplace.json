@@ -70,7 +70,7 @@
     {
       "name": "persona-distill",
       "description": "Persona Distillation Ecosystem - parameterized schema library + generation/evaluation/scheduling/debate toolkit for distilling personas (people or rule systems) into self-contained Claude Code skills. 5 skills (distill-meta, persona-judge, distill-collector, persona-router, persona-debate), 9 persona schemas (self/collaborator/mentor/loved-one/friend/public-mirror/public-domain/topic/executor), 18 reusable components, 12-dimension quality rubric, multi-round Phase 2.5, auto conflict detection, runnable parsers, migration tool, community schema extension.",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "author": {
         "name": "XRenSiu",
         "email": "xrensiu@gmail.com"
@@ -85,7 +85,7 @@
     {
       "name": "skill-evolve",
       "description": "Skill Evolution Engine — Darwin-style autonomous SKILL.md optimizer. Applies an 8-dimension rubric (60 structural + 40 effectiveness), independent-subagent scoring, and git-backed ratchet hill-climbing (keep-or-revert) to evolve any Claude Code skill from initial draft toward 90+. Inspired by Karpathy's autoresearch and alchaincyf/darwin-skill.",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "author": {
         "name": "XRenSiu",
         "email": "xrensiu@gmail.com"

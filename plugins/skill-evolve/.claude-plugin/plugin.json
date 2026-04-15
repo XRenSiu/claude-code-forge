@@ -1,7 +1,7 @@
 {
   "name": "skill-evolve",
   "description": "Skill Evolution Engine — Darwin-style autonomous SKILL.md optimizer. Applies an 8-dimension rubric (60 structural + 40 effectiveness), independent-subagent scoring, and git-backed ratchet hill-climbing (keep-or-revert) to evolve any Claude Code skill from initial draft toward 90+. Inspired by Karpathy's autoresearch and alchaincyf/darwin-skill.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "author": {
     "name": "XRenSiu",
     "email": "xrensiu@gmail.com"
