@@ -1,6 +1,30 @@
 # Claude Code Plugins Marketplace
 
-> A curated collection of plugins for Claude Code, enhancing your AI-powered development workflow.
+> Six plugins that cover the end-to-end AI-assisted development loop: spec → code → review → debug → deploy, plus design reverse-engineering, persona distillation, and autonomous skill optimization.
+
+**At a glance:**
+
+- **[PDForge](#pdforge)** — single-agent 7-phase pipeline from idea to deploy (brainstorm → PRD → design → plan → TDD → review → deploy)
+- **[Forge Teams](#forge-teams)** — the adversarial / multi-agent version of PDForge (red team, parallel implementation, debate at every decision)
+- **[Adversarial Debugger](#adversarial-debugger)** — competing hypotheses + devil's advocate for stubborn bugs
+- **[Design Clone](#design-clone)** — extract Design DNA from a live website, or pixel-perfect clone it into a Next.js app
+- **[Persona Distill](#persona-distill)** — distill a person / expert / rule system into a self-contained, portable persona skill
+- **[Skill Evolve](#skill-evolve)** — autonomous Darwin-style hill-climbing optimizer for any existing SKILL.md
+
+## Contents
+
+- [Quick Start](#quick-start)
+- [Available Plugins](#available-plugins)
+- [Which plugin to use?](#which-plugin-to-use)
+- [PDForge](#pdforge)
+- [Forge Teams](#forge-teams)
+- [Adversarial Debugger](#adversarial-debugger)
+- [Design Clone](#design-clone)
+- [Persona Distill](#persona-distill)
+- [Skill Evolve](#skill-evolve)
+- [Marketplace Management](#marketplace-management)
+- [Plugin Management](#plugin-management)
+- [Contributing](#contributing)
 
 ## Quick Start
 
@@ -35,14 +59,25 @@
 ### Step 3: Use Plugin
 
 ```bash
-# PDForge: idea -> production-ready code
+# PDForge — idea to production-ready code (single-agent pipeline)
 /pdforge --from-idea "Add user authentication" --fix --loop
 
-# Forge Teams: idea -> adversarial multi-agent pipeline
+# Forge Teams — adversarial multi-agent pipeline (debate + parallel + red team)
 /forge-teams "Payment system refactor" --team-size medium --fix
 
-# Adversarial Debugger: competing hypotheses debug
+# Adversarial Debugger — competing hypotheses for hard bugs
 /adversarial-debugging
+
+# Design Clone — Design DNA extraction (--dna-only) or pixel-perfect Next.js clone (--full)
+/design-clone https://stripe.com --dna-only
+/design-clone https://stripe.com --full
+
+# Persona Distill — shape a person / expert / rule system into a reusable skill
+"蒸馏乔布斯作为产品设计 mentor"
+"distill my iMessage history with Alice into a friend-schema persona skill"
+
+# Skill Evolve — autonomous Darwin-style optimizer for an existing SKILL.md
+/skill-evolve path/to/your-skill/SKILL.md --rounds 5
 ```
 
 ### Update
@@ -51,10 +86,13 @@
 # Update marketplace registry (fetch latest plugin list)
 /plugin marketplace update XRenSiu/claude-code-forge
 
-# Update installed plugins
+# Update all installed plugins
 /plugin update pdforge
 /plugin update forge-teams
 /plugin update adversarial-debugger
+/plugin update design-clone
+/plugin update persona-distill
+/plugin update skill-evolve
 ```
 
 ## Available Plugins
@@ -66,7 +104,7 @@
 | [Adversarial Debugger](plugins/adversarial-debugger/) | 1.0.0 | Multi-agent adversarial debugging. Competing hypotheses investigated in parallel, challenged by devil's advocate, synthesized to true root cause. | Agent Teams |
 | [Design Clone](plugins/design-clone/) | 1.0.0 | Design DNA extraction + pixel-perfect website cloning. Browser-MCP-driven CSS introspection produces a 150+ field Design DNA profile; `--full` mode additionally spawns parallel builder agents to generate a Next.js clone. | Browser MCP |
 | [Persona Distill](plugins/persona-distill/) | 0.4.0 | Distill any persona (person or rule system) into a self-contained Claude Code skill. 5 skills, 9 schemas, 19 components, 12-dim rubric, 9-phase pipeline (CDM execution-profile + self-containment linter + fingerprint verifier). v0.4.0 security hardening: consent attestation gate, untrusted-corpus delimiters, rubric config range locks, corpus access declaration, 6 runnable parsers (iMessage/email/Twitter/generic/Telegram/Slack). | - |
-| [Skill Evolve](plugins/skill-evolve/) | 0.1.0 | Darwin-style autonomous SKILL.md optimizer. 8-dimension rubric + independent-subagent scoring + git-backed ratchet hill-climbing (keep-or-revert) to evolve any skill from initial draft toward 90+. | - |
+| [Skill Evolve](plugins/skill-evolve/) | 0.1.1 | Darwin-style autonomous SKILL.md optimizer. 8-dimension rubric + independent-subagent scoring + git-backed ratchet hill-climbing (keep-or-revert) to evolve any skill from initial draft toward 90+. | - |
 
 ### Which plugin to use?
 
@@ -92,7 +130,13 @@
 
 ---
 
-## PDForge Commands
+## PDForge
+
+**Version**: 1.14.0 · **Category**: Development · **Requires**: none
+
+Single-agent, sequential 7-phase product development pipeline. Use when one Claude driving a well-specified pipeline is the right tool — fewer moving parts than Forge Teams, lower token cost, deterministic flow.
+
+### PDForge Commands
 
 | Command | Phase | Description |
 |---------|-------|-------------|
@@ -110,7 +154,7 @@
 | `/update-docs` | 7 | Update documentation |
 | `/learn` | 7 | Extract reusable patterns |
 
-## PDForge 7-Phase Workflow
+### PDForge 7-Phase Workflow
 
 ```
 /pdforge --from-idea "your feature"
@@ -137,7 +181,13 @@
             deployer + doc-updater -> Production
 ```
 
-## Forge Teams Pipeline
+## Forge Teams
+
+**Version**: 1.8.0 · **Category**: Development · **Requires**: Agent Teams (experimental)
+
+Adversarial multi-agent version of PDForge. At every critical decision point — requirements, architecture, implementation, review, debug — two or more agents debate, compete, or cross-validate. Higher token cost than PDForge but catches failure modes a single agent would miss. 23 agents + 8 skills.
+
+### Forge Teams Pipeline
 
 ```
 /forge-teams "your feature" --team-size medium
@@ -164,7 +214,7 @@
             acceptance-reviewers + doc-updater + deployer
 ```
 
-### Independent Entry Points
+### Forge Teams Independent Entry Points
 
 ```
 /forge-fix "bug description" [--quick] [--loop N]
@@ -189,6 +239,12 @@
 
 ## Adversarial Debugger
 
+**Version**: 1.0.0 · **Category**: Debugging · **Requires**: Agent Teams (experimental)
+
+Parallel multi-agent root-cause analysis for stubborn bugs. 3-5 investigators independently propose and pursue hypotheses; a devil's-advocate stress-tests each; a synthesizer produces a final verdict before writing a reproduction test and fix. Use when you have a bug with several plausible causes and a single-agent debug is churning.
+
+### Adversarial Debugger Flow
+
 ```
 /adversarial-debugging
     |
@@ -208,7 +264,126 @@
             Root cause verdict -> Reproduction test -> Fix -> Verify
 ```
 
+## Design Clone
+
+**Version**: 1.0.0 · **Category**: Design · **Requires**: Browser MCP
+
+Extract a structured **Design DNA** (150+ fields across design system / design style / visual effects) from any live website, and optionally spawn parallel builder agents to regenerate the site as a pixel-perfect Next.js clone. Uses Browser MCP + `getComputedStyle()` to read actual rendered CSS rather than scraped HTML — captures hover states, gradients, shadows, spacing tokens as the browser computes them.
+
+### Design Clone Flow
+
+```
+/design-clone <url> [--dna-only | --full]
+    |
+    +-- Phase 0: Target Validation
+    |       Resolve URL, Browser MCP probe, capture primary viewport
+    |
+    +-- Phase 1: Design DNA Extraction
+    |       Enumerate components in viewport
+    |    -> For each: capture getComputedStyle() + bounding box
+    |    -> Categorize into design-system / design-style / visual-effects
+    |    -> Emit structured design-dna.json (150+ fields)
+    |
+    +-- [--dna-only] STOP HERE -> design-dna.json only
+    |
+    +-- Phase 2 (--full): Parallel Clone Build
+    |       Spawn N builder agents in parallel (one per page/section)
+    |    -> Each consumes design-dna.json + region screenshots
+    |    -> Emits Next.js + Tailwind components
+    |    -> synthesizer merges into one app
+    |
+    +-- Phase 3 (--full): Pixel-Diff Verification
+            Re-render clone -> diff against original viewports
+            -> list of mismatches for iteration
+```
+
+Typical uses:
+- `--dna-only` — feed a competitor's design tokens into your own brand refresh
+- `--full` — bootstrap a marketing clone or comparison prototype
+
+---
+
+## Persona Distill
+
+**Version**: 0.4.0 · **Category**: Knowledge · **Requires**: none
+
+Compile a person, expert, or rule system into a **self-contained Claude Code skill** — a folder you can `cp -r` to anyone, no dependency on this plugin afterwards. Covers five roles via five sub-skills: `distill-meta` (orchestrator), `persona-judge` (12-dim quality rubric + density floor + 3 live tests), `distill-collector` (6 runnable corpus parsers), `persona-router` (cross-persona scheduler), `persona-debate` (multi-persona tournament).
+
+Ships 9 schemas (self / collaborator / mentor / loved-one / friend / public-mirror / public-domain / topic / executor) and 19 reusable components. v0.3.0 added a **CDM-based execution-profile** that turns descriptive persona content into instruction-grade "situation → action" pairs (so the skill knows what to *do*, not just what to *think*). v0.4.0 shipped 7 security/trust hardenings (consent attestation gate, untrusted-corpus delimiters, rubric config lock, fingerprint verifier, self-containment linter, corpus access cross-check, expanded PII redaction).
+
+### Persona Distill 9-Phase Pipeline
+
+```
+"蒸馏 Alice 作为 friend schema" | /distill-meta
+    |
+    +-- Phase 0: Intent + Consent Gate
+    |       Identify subject, schema_type; if real-person →
+    |       consent-attestation.md must exist at skill root
+    |
+    +-- Phase 0.5: Schema Decision
+    |       Pick 1 of 9 schemas (or community); instantiate skill dir
+    |
+    +-- Phase 1: Corpus Collection
+    |       distill-collector parsers (iMessage/email/Twitter/
+    |       generic/Telegram/Slack) + public-web research agents
+    |       (4 remaining platforms: WeChat/QQ/Feishu/Dingtalk → spec-only)
+    |
+    +-- Phase 1.5: Research Review + Access-Level Check
+    |       Coverage table, gaps, corpus_access_declared vs schema_type
+    |
+    +-- Phase 2: Dimension Extraction (parallel)
+    |       5-8 sub-agents extract components: identity, expression-dna
+    |       (7 axes), mental-models (triple validation), tensions, …
+    |
+    +-- Phase 2.5: Iterative Deepening
+    |       Up to 3 rounds; Jaccard>0.8 early stop; high-confidence
+    |       candidates auto-merged
+    |
+    +-- Phase 3: Skill Assembly
+    |       Emit SKILL.md, manifest.json, components/**, knowledge/
+    |       (hard-rules embeds Untrusted-Corpus Discipline paragraph)
+    |
+    +-- Phase 3.5: Conflict Detection
+    |       4-type factual contradictions surfaced to conflicts.md
+    |       (not resolved — preserves tension)
+    |
+    +-- Phase 3.7: Execution Profile (public-mirror / mentor only)
+    |       CDM 4-sweep: Incident → Timeline → 10-Probe → What-If
+    |       -> 8 Macrocognition categories × instruction-grade pairs
+    |       -> 3 red-line checks (self-report, RPD style, granularity)
+    |
+    +-- Phase 3.8: Self-Containment + Fingerprint Gate
+    |       6-check linter + independent SHA-256 recompute
+    |       -> block Phase 4 on any failure
+    |
+    +-- Phase 4: Quality Validation
+    |       persona-judge: 3 live tests (known/edge/voice) +
+    |       12-dim rubric + density floor -> validation-report.md
+    |
+    +-- Phase 5: Delivery
+            Path, trigger words, follow-ups (debate / router / migrate)
+```
+
+### Persona Distill Companion Skills
+
+```
+persona-judge     — evaluate any persona skill (not just ours) on 12 dims + 3 live tests
+persona-router    — "which installed persona best fits this question?"
+persona-debate    — round-robin / position-based / free-form tournament among 2-5 personas
+distill-collector — 6 runnable stdlib-only parsers + redactor (CN-ADDR, CN-NAME, FLAG:MEDICAL, …)
+```
+
+Produced skills are portable: `grep -r "persona-distill" produced-skill/` returns 0.
+
+---
+
 ## Skill Evolve
+
+**Version**: 0.1.1 · **Category**: Meta · **Requires**: none
+
+Autonomous Darwin-style optimizer for an existing `SKILL.md`. Independent subagents score each round on 8 dimensions (60 structural + 40 effectiveness) with no leakage between judge and mutator; a git-backed ratchet ensures scores only go up (commit on gain, `git checkout --` on regression). Inspired by Karpathy's autoresearch and alchaincyf/darwin-skill.
+
+### Skill Evolve Flow
 
 ```
 /skill-evolve <path-to-existing-skill>
@@ -229,7 +404,7 @@
             remaining weak dimensions for next iteration
 ```
 
-> Scores only go up: every round either commits the gain or cleanly reverts. Inspired by Karpathy's autoresearch and alchaincyf/darwin-skill.
+> Scores only go up: every round either commits the gain or cleanly reverts.
 
 ---
 
