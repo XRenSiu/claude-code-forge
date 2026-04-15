@@ -65,7 +65,7 @@
 | [Forge Teams](plugins/forge-teams/) | 1.8.0 | Agent Teams version of PDForge. 7-phase adversarial pipeline with multi-agent debate, parallel implementation, red team attacks, adversarial debugging, independent bug fix loop, and requirement verification. 23 agents, 8 skills. | Agent Teams |
 | [Adversarial Debugger](plugins/adversarial-debugger/) | 1.0.0 | Multi-agent adversarial debugging. Competing hypotheses investigated in parallel, challenged by devil's advocate, synthesized to true root cause. | Agent Teams |
 | [Design Clone](plugins/design-clone/) | 1.0.0 | Design DNA extraction + pixel-perfect website cloning. Browser-MCP-driven CSS introspection produces a 150+ field Design DNA profile; `--full` mode additionally spawns parallel builder agents to generate a Next.js clone. | Browser MCP |
-| [Persona Distill](plugins/persona-distill/) | 0.2.0 | Distill any persona (person or rule system) into a self-contained Claude Code skill. 5 skills (meta/judge/collector/router/debate), 9 schemas, 18 components, 12-dimension quality rubric, multi-round evaluation. | - |
+| [Persona Distill](plugins/persona-distill/) | 0.3.0 | Distill any persona (person or rule system) into a self-contained Claude Code skill. 5 skills (meta/judge/collector/router/debate), 9 schemas, 19 components, 12-dim quality rubric, multi-round evaluation, Phase 3.7 execution-profile via Klein-RPD/CDM 4-sweep (compiles description → instruction). | - |
 | [Skill Evolve](plugins/skill-evolve/) | 0.1.0 | Darwin-style autonomous SKILL.md optimizer. 8-dimension rubric + independent-subagent scoring + git-backed ratchet hill-climbing (keep-or-revert) to evolve any skill from initial draft toward 90+. | - |
 
 ### Which plugin to use?

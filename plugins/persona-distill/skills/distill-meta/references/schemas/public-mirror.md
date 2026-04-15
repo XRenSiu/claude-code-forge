@@ -2,7 +2,7 @@
 schema: public-mirror
 label_zh: 公众镜像（思想家 / KOL）
 label_en: public-mirror
-version: 0.1.0
+version: 0.2.0
 required_components:
   - hard-rules
   - identity
@@ -15,6 +15,7 @@ required_components:
   - correction-layer
 optional_components:
   - computation-layer
+  - execution-profile    # recommended; CDM 4-sweep turns描述→指令
 typical_corpus_sources:
   - 著作 / books, essays
   - 访谈 / interviews, podcasts
@@ -66,6 +67,7 @@ Subject type in manifest: `identity.subject_type = "real-person"` (or `"fictiona
 ## Optional Components
 
 - `computation-layer` — rare; attach when the figure is known for a specific computation they publicized (Buffett intrinsic-value formulas, Knuth algorithms).
+- `execution-profile` — **recommended**. Added v0.2.0. Phase 3.7 runs CDM 4-sweep on `knowledge/` events to produce instruction-grade "situation → action" pairs across 8 Macrocognition categories. Without it, public-mirror skills describe *how the figure thinks* but leave Claude to improvise when *executing a task* — the Profile is the glue between description and action. Skip only if `knowledge/` has < 10 usable decision points (very short public record).
 
 ## Typical Corpus Sources
 

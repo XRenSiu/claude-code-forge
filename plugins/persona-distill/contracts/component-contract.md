@@ -1,12 +1,12 @@
 ---
 name: component-contract
-description: Authoritative interface contract for the 18 shared components used across 9 persona schemas
-version: 1.0.0
+description: Authoritative interface contract for the 19 shared components used across 9 persona schemas
+version: 1.1.0
 ---
 
 # Component Contract
 
-> All 18 shared components (`hard-rules`, `identity`, `expression-dna`, `persona-5layer`, `persona-6layer`, `self-memory`, `work-capability`, `shared-memories`, `emotional-patterns`, `mental-models`, `decision-heuristics`, `thought-genealogy`, `internal-tensions`, `honest-boundaries`, `domain-framework`, `computation-layer`, `interpretation-layer`, `correction-layer`) MUST conform to this contract. Schema writers consume components by slug; any component file violating this contract blocks the Phase 4 quality gate.
+> All 19 shared components (`hard-rules`, `identity`, `expression-dna`, `persona-5layer`, `persona-6layer`, `self-memory`, `work-capability`, `shared-memories`, `emotional-patterns`, `mental-models`, `decision-heuristics`, `thought-genealogy`, `internal-tensions`, `honest-boundaries`, `domain-framework`, `computation-layer`, `interpretation-layer`, `correction-layer`, `execution-profile`) MUST conform to this contract. Schema writers consume components by slug; any component file violating this contract blocks the Phase 4 quality gate.
 
 ## 1. File Naming
 
@@ -63,7 +63,7 @@ When a component is emitted into a produced persona skill (under `components/`),
 
 ## 6. Slug Reservations
 
-The 18 reserved component slugs (from PRD §2.3):
+The 19 reserved component slugs:
 
 | Slug | Schemas it is required for |
 |------|-----------------------------|
@@ -85,6 +85,7 @@ The 18 reserved component slugs (from PRD §2.3):
 | `computation-layer` | executor (required), any schema (optional attachment) |
 | `interpretation-layer` | executor |
 | `correction-layer` | all persona schemas |
+| `execution-profile` | optional for persona schemas 1-7 (public-mirror, mentor recommended); not applicable to topic / executor |
 
 No third-party or plugin-added components in v1.
 
@@ -100,3 +101,4 @@ Components MUST NOT:
 ## 8. Change Log
 
 - 1.0.0 — Initial contract.
+- 1.1.0 — Added `execution-profile` component (19th slug). Optional for persona schemas 1-7; drives Phase 3.7 CDM-based execution-layer extraction. Additive change — existing schemas unaffected.

@@ -54,7 +54,7 @@ alice-friend-skill/
 
 | Skill | 做什么 | 怎么触发 |
 |-------|--------|----------|
-| [`distill-meta`](./skills/distill-meta/SKILL.md) | 主编排器。**8 阶段工作流**：意图 → schema 决策 → 采集 → 评审 → 提取 → 多轮深化 → 组装 → 冲突检测 → 验证 → 交付。 | `蒸馏乔布斯` / `build a persona skill for 张三` / `distill my own style` |
+| [`distill-meta`](./skills/distill-meta/SKILL.md) | 主编排器。**8 阶段工作流**：意图 → schema 决策 → 采集 → 评审 → 提取 → 多轮深化 → 组装 → 冲突检测 → 执行画像（CDM 4-sweep）→ 验证 → 交付。 | `蒸馏乔布斯` / `build a persona skill for 张三` / `distill my own style` |
 | [`persona-judge`](./skills/persona-judge/SKILL.md) | 质量评估器。12 维 rubric（raw /110，pass ≥ 82）+ 3 项活体测试（Known / Edge / Voice）+ 密度评分（< 3.0 强制 FAIL）。自动被 Phase 4 调用，也可单跑。 | `评估 naval-skill 的质量` |
 | [`distill-collector`](./skills/distill-collector/SKILL.md) | 多模态语料采集 + 脱敏。v0.2.0 **4 条可跑路径**（iMessage / email / twitter / generic），剩余 8 条是规格 + 第三方工具指针（自己导出 → 管到 generic）。 | `import imessage chat history` / `导入我的邮件语料` |
 | [`persona-router`](./skills/persona-router/SKILL.md) | 跨 persona 调度器。扫描所有已装 persona skill 的 `manifest.json`，按 schema 相关性 + 领域重叠 + 组件覆盖 + 密度 + 一手来源占比打分，推荐 Top 1-3。 | `哪个 persona 最适合回答这个架构问题` |
@@ -96,16 +96,17 @@ alice-friend-skill/
 ## 8 阶段工作流
 
 ```
-Phase 0    意图澄清       → 对象 + 目的 + 检测是否已有同名 skill
-Phase 0.5  Schema 决策     → 9 种之一 + 组件选定 + 立即建目录
-Phase 1    语料采集        → 私有（distill-collector）+ 公开（并行 agent 调研）
-Phase 1.5  Research Review → 覆盖率表 + 缺口标注 + 用户确认
-Phase 2    维度提取        → 并行按组件提取：三重验证 + 7 轴 DNA + 张力识别
-Phase 2.5  迭代深化（新）   → ≤ 3 轮 + Jaccard 收敛 + 高置信度自动回填
-Phase 3    Skill 组装      → SKILL.md + manifest + 各组件文件
-Phase 3.5  冲突检测（新）   → 自动 surface 事实性矛盾到 conflicts.md（不 resolve）
-Phase 4    质量验证        → persona-judge：3 项测试 + 12 维 rubric + 密度评分
-Phase 5    交付 / 升级     → 产出路径 + 触发词；已有 skill 走 migrator
+Phase 0    意图澄清            → 对象 + 目的 + 检测是否已有同名 skill
+Phase 0.5  Schema 决策          → 9 种之一 + 组件选定 + 立即建目录
+Phase 1    语料采集             → 私有（distill-collector）+ 公开（并行 agent 调研）
+Phase 1.5  Research Review      → 覆盖率表 + 缺口标注 + 用户确认
+Phase 2    维度提取             → 并行按组件提取：三重验证 + 7 轴 DNA + 张力识别
+Phase 2.5  迭代深化（v0.2.0）    → ≤ 3 轮 + Jaccard 收敛 + 高置信度自动回填
+Phase 3    Skill 组装           → SKILL.md + manifest + 各组件文件
+Phase 3.5  冲突检测（v0.2.0）    → 自动 surface 事实性矛盾到 conflicts.md（不 resolve）
+Phase 3.7  执行画像（v0.3.0 新） → CDM 4-sweep：从 knowledge/ 事件反推 8 类 Macrocognition 指令条款
+Phase 4    质量验证             → persona-judge：3 项测试 + 12 维 rubric + 密度评分
+Phase 5    交付 / 升级          → 产出路径 + 触发词；已有 skill 走 migrator
 ```
 
 ---
@@ -128,18 +129,21 @@ Phase 5    交付 / 升级     → 产出路径 + 触发词；已有 skill 走 m
 
 ---
 
-## 18 个组件
+## 19 个组件
 
-Schema 不是固定模板，是**组件的有序组合**。18 个可复用组件：
+Schema 不是固定模板，是**组件的有序组合**。19 个可复用组件：
 
 ```
 hard-rules · identity · expression-dna（7 轴量化）· persona-5layer · persona-6layer
 self-memory · work-capability · shared-memories · emotional-patterns
 mental-models（三重验证）· decision-heuristics · thought-genealogy · internal-tensions
 honest-boundaries · domain-framework · computation-layer · interpretation-layer · correction-layer
+execution-profile（v0.3.0：CDM 4-sweep 执行画像，把描述编译为 8 类 Macrocognition 指令条款）
 ```
 
 每个组件有统一的 I/O 契约，定义在 [`contracts/component-contract.md`](./contracts/component-contract.md)。
+
+**execution-profile 是什么**：其它组件描述"他怎么想 / 怎么说"，execution-profile 把这些描述**编译为指令**——加载 persona skill 后执行任务时，Claude 在 8 类决策时刻（Sensemaking / Decision Making / Planning / Adaptation / Problem Detection / Coordination / Managing Uncertainty / Mental Simulation）查询对应的"识别 X → 直接做 Y"条款。基于 Klein 的 Recognition-Primed Decision 理论和 CDM 4-sweep 标准协议，从 `knowledge/` 里的**具体事件**反推，每条指令可追溯到具体行号。详见 [`docs/principles.md`](./docs/principles.md) 和 [`skills/distill-meta/references/extraction/cdm-4sweep.md`](./skills/distill-meta/references/extraction/cdm-4sweep.md)。
 
 ---
 
@@ -155,6 +159,18 @@ honest-boundaries · domain-framework · computation-layer · interpretation-lay
 | [`contracts/schema-extension-contract.md`](./contracts/schema-extension-contract.md) | v0.2.0 新增：社区 schema 必须满足的协议（frontmatter + 7 个 H2 + 测试语料） |
 
 ---
+
+## v0.3.0 相对 v0.2.0 的变化
+
+| 领域 | v0.2.0 | v0.3.0 |
+|------|--------|--------|
+| 执行层 | 无 | **Phase 3.7 execution-profile**（CDM 4-sweep：Incident → Timeline → 10-Probe → What-If；8 类 Macrocognition 指令；3 条红线校验） |
+| 组件数 | 18 | **19**（+ execution-profile） |
+| 阶段数 | 7 | **8**（+ Phase 3.7） |
+| sub-agent 数 | 11 | **12**（+ execution-profile-extractor） |
+| 提取框架数 | 6 | **7**（+ cdm-4sweep） |
+| 理论来源 | nuwa / immortal / anti-distill | 上述 + Klein RPD / Hoffman-Crandall-Shadbolt CDM / Crandall Working Minds / Macrocognition |
+| persona-judge | 12 维 rubric | 同 + Mindset Transfer 与 execution-profile red-line 联动 + 2 条 anti-gaming 条目 |
 
 ## v0.2.0 相对 v0.1.0 的变化
 

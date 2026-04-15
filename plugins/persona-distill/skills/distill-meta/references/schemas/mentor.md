@@ -2,7 +2,7 @@
 schema: mentor
 label_zh: 导师 / 老板 / 前辈
 label_en: mentor
-version: 0.1.0
+version: 0.2.0
 required_components:
   - hard-rules
   - identity
@@ -16,6 +16,7 @@ required_components:
 optional_components:
   - computation-layer
   - internal-tensions
+  - execution-profile    # recommended for mentors with rich 1-on-1 / post-mortem corpus
 typical_corpus_sources:
   - 1-on-1 记录 / one-on-one session notes
   - 决策回顾 / post-mortems & decision reviews
@@ -66,6 +67,7 @@ Subject type in manifest: `identity.subject_type = "real-person"`. Distinct from
 
 - `internal-tensions` — add when the mentor is known to hold visible contradictions (e.g., "move fast" vs "sweat the details") that shape different advice in different contexts.
 - `computation-layer` — add for mentors with a signature computational ritual (e.g., quant boss → ta-lib indicators; surgeon mentor → triage scoring). Per PRD §2.4 Example C.
+- `execution-profile` — **recommended** when the mentor corpus is rich in narrated decisions (1-on-1 transcripts, post-mortems, named calls). Added v0.2.0. Phase 3.7 runs CDM 4-sweep to turn `decision-heuristics` IF-THEN rules + `mental-models` framings into 8 Macrocognition-category instruction-grade "situation → action" pairs. For mentors, this component compensates for the common "mentor describes but skill can't *act*" failure — the Profile tells the runtime *what to do first* when a user brings a problem, not just *how the mentor would reason*. Skip only if the mentor's corpus is sparse on events (e.g., methodology-lecture-only, zero 1-on-1s).
 
 ## Typical Corpus Sources
 

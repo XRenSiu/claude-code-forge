@@ -1,7 +1,7 @@
 ---
 name: architecture
 description: Structural view of persona-distill — layers, data flow, sub-agent orchestration, produced-skill anatomy, runtime assumptions
-version: 0.2.0
+version: 0.3.0
 ---
 
 # persona-distill — 架构文档（Architecture）
@@ -24,17 +24,18 @@ version: 0.2.0
 └───────────────▲────────────────────────────────────────────────────┘
                 │ spawns
 ┌────────────────────────────────────────────────────────────────────┐
-│  Layer 4: Sub-Agents (11 specialized agents under distill-meta)    │
+│  Layer 4: Sub-Agents (12 specialized agents under distill-meta)    │
 │   corpus-scout · persona-analyzer · expression-analyzer ·          │
 │   memory-extractor · mental-model-extractor · tension-finder ·     │
 │   iterative-deepener · candidate-merger · conflict-detector ·      │
-│   work-analyzer · validator · migrator                             │
+│   execution-profile-extractor · work-analyzer · validator · migrator│
 └───────────────▲────────────────────────────────────────────────────┘
                 │ references
 ┌────────────────────────────────────────────────────────────────────┐
 │  Layer 3: Reference Libraries (schemas / components / extraction)  │
-│   9+N schemas · 18 components · 7 extraction frameworks ·          │
-│   3 source policies · 1 decision tree · output spec · migration    │
+│   9+N schemas · 19 components · 7 extraction frameworks (incl.     │
+│   cdm-4sweep) · 3 source policies · 1 decision tree · output spec  │
+│   · migration                                                      │
 └───────────────▲────────────────────────────────────────────────────┘
                 │ validates against
 ┌────────────────────────────────────────────────────────────────────┐
@@ -66,12 +67,12 @@ persona-distill/
 │   └── schema-extension-contract.md            # 社区 schema 必须符合
 ├── skills/                                     # Layer 5 + 4 + 3
 │   ├── distill-meta/                           # 主编排器（Layer 5）
-│   │   ├── SKILL.md                            # 触发入口，7 阶段流程
-│   │   ├── agents/                             # Layer 4 — 11 子代理
+│   │   ├── SKILL.md                            # 触发入口，8 阶段流程
+│   │   ├── agents/                             # Layer 4 — 12 子代理
 │   │   ├── references/                         # Layer 3
 │   │   │   ├── schemas/                        #   9 core + community/
-│   │   │   ├── components/                     #   18 可复用组件
-│   │   │   ├── extraction/                     #   7 提取框架
+│   │   │   ├── components/                     #   19 可复用组件
+│   │   │   ├── extraction/                     #   7 提取框架（incl. cdm-4sweep）
 │   │   │   ├── source-policies/                #   中英文源策略
 │   │   │   ├── decision-tree.md                #   schema 决策树
 │   │   │   ├── output-spec.md                  #   产物目录规格
@@ -145,6 +146,14 @@ persona-distill/
    │                              │  spawn conflict-      │  4 类冲突扫描 ──▶│  knowledge/conflicts.md
    │                              │  detector             │                      │
    │                              │                       │                      │
+   │                              │ Phase 3.7             │                      │
+   │                              │  spawn execution-     │  CDM 4-sweep       │
+   │                              │  profile-extractor    │  (Incident →       │
+   │                              │                       │   Timeline →       │
+   │                              │                       │   10-Probe →       │
+   │                              │                       │   What-If)       ──▶│  components/execution-profile.md
+   │                              │                       │  + Knowledge Audit │  (+ honest-boundaries 追加)
+   │                              │                       │                      │
    │                              │ Phase 4（外部验证）   │                      │
    │                              │  Task persona-judge   │                      │
    │                              │   └ 新 context 启动 ─▶  12 维 rubric     │
@@ -216,11 +225,13 @@ alice-friend-skill/
 │   ├── shared-memories.md      # 共同经历（朋友 schema 特有）
 │   ├── emotional-patterns.md   # 情绪触发 + 应对
 │   ├── hard-rules.md           # 合规+安全边界
-│   └── honest-boundaries.md    # 资料不足之处
-├── knowledge/                  # 原始语料（脱敏后）+ 冲突
+│   ├── execution-profile.md    # Phase 3.7 产物（可选）：8 类指令条款
+│   └── honest-boundaries.md    # 资料不足之处（含 Execution Profile Gaps 段）
+├── knowledge/                  # 原始语料（脱敏后）+ 冲突 + 可选 trace
 │   ├── chats/imessage/alice.md
 │   ├── public/...              # 按来源平台分目录
-│   └── conflicts.md            # Phase 3.5 产物
+│   ├── conflicts.md            # Phase 3.5 产物
+│   └── execution-profile-trace.md  # Phase 3.7 可选：incident+probe 树
 └── validation-report.md        # persona-judge 输出（可再跑覆盖）
 ```
 
@@ -240,9 +251,9 @@ alice-friend-skill/
 **并发上限**：`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` 时走 agent teams；默认 5 路并发。
 **失败处理**：任一 agent 失败 → 主协调者补跑该路径，其它不回滚。
 
-### 串行依赖（Phase 2.5 → Phase 3.5 → Phase 4）
+### 串行依赖（Phase 2.5 → Phase 3.5 → Phase 3.7 → Phase 4）
 
-`iterative-deepener` 必须读 Phase 2 全部输出后才能决定"下一轮问什么"；`candidate-merger` 必须读 deepener 的候选才能决定回填哪些；`conflict-detector` 要所有组件都写完才能跨组件比对；`validator` 要产物完整才能活体测试。
+`iterative-deepener` 必须读 Phase 2 全部输出后才能决定"下一轮问什么"；`candidate-merger` 必须读 deepener 的候选才能决定回填哪些；`conflict-detector` 要所有组件都写完才能跨组件比对；`execution-profile-extractor` 需要 conflicts.md 作为 Sweep 1 的 incident 提示输入（但不作为 evidence 源），因此跟在 3.5 之后；`validator` 要产物完整才能活体测试。
 
 这些不能并行。
 

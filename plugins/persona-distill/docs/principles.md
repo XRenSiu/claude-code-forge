@@ -1,7 +1,7 @@
 ---
 name: principles
-description: The theory behind persona-distill — why distillation is parameterized composition, why self-containment is non-negotiable, why tensions are signal not noise
-version: 0.2.0
+description: The theory behind persona-distill — why distillation is parameterized composition, why self-containment is non-negotiable, why tensions are signal not noise, why execution ≠ description
+version: 0.3.0
 ---
 
 # persona-distill — 设计原理（Principles）
@@ -121,6 +121,25 @@ Verdict 分三档：
 Density = 每 1KB 文字包含的信息量。一个 persona skill 可以在 12 维 rubric 上刷高分（每维都"提到"了），但密度低 = 全是套话。
 
 独立的 density floor（< 3.0 强制 FAIL）防止**通过堆字数刷过 12 维**的作弊。这也是为什么 `persona-judge` 的 rubric 有反作弊章节。
+
+### 为什么要 execution-profile（v0.3.0 新增）？
+
+描述 ≠ 执行。`mental-models` 说"他怎么想"、`decision-heuristics` 给 IF-THEN 规则、`expression-dna` 说"怎么说"——三者加起来仍然是**描述性**的。加载 persona skill 后让 Claude 执行一个实际任务（拆解问题、选方案、判断要不要回头改），它会在**决策瞬间**漂回"标准中性助手"——因为描述没告诉它"现在这一秒该做什么"。
+
+解法：从 `knowledge/` 的**具体事件**反推**指令性**的"情境 → 动作"条款。方法来自：
+
+- **Klein 的 Recognition-Primed Decision 模型**（Klein 1998）：80% 专家决策不是列表权衡，是"识别情境 → 第一可行方案 → 心理模拟"。persona skill 的 Decision Making 段不能充斥"列 3 个选项权衡利弊"——那是 GPT 中性句式，不是 RPD 风格。
+- **CDM（Critical Decision Method，Hoffman-Crandall-Shadbolt 1998）**：从具体事件反向采访、套 10 项标准 probe（cues / knowledge / analogues / goals / options / experience / aiding / time pressure / errors / hypotheticals）追问隐性知识。
+- **Macrocognition 8 类**（Klein et al. 2003）：Sensemaking / Decision Making / Planning / Adaptation / Problem Detection / Coordination / Managing Uncertainty / Mental Simulation——任意任务执行时反复出现的 8 类认知活动，作为 Profile 的分类骨架。
+
+三条必须强制检查的红线：
+1. **专家说的 ≠ 专家做的**（Ericsson & Ward）—— evidence 不能全是自述，必须有事件/行为佐证。
+2. **80% 专家决策是 RPD 风格，不是分析比较** —— Decision Making 段里"列表对比"句式占比 > 50% 是红旗。
+3. **颗粒度必须是"情境-行动对"，不是抽象原则** —— 反例："注重长期价值"（Claude 不知道"长期"指什么）；正例："识别到方案有'为未来不存在的需求做准备'的味道 → 直接砍掉，从剩下里选 6 个月后改起来代价最小的"。
+
+诚实提醒：CTA/CDM 原本是**人采访人**的方法；LLM 从语料"模拟采访"质量有上限。但比凭空让 Claude 总结高得多——损耗对照实验在 v1.0.0 前完成。
+
+execution-profile **不取代**任何现有组件——它挂在组件图出口，把碎片编译成 Claude 运行时查询的"指令表"。见 `skills/distill-meta/references/extraction/cdm-4sweep.md`。
 
 ---
 

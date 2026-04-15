@@ -1,10 +1,13 @@
 ---
 rubric: persona-judge
-version: 0.1.0
+version: 0.2.0
 total_max: 110
 pass_threshold_raw: 82
 density_floor: 3.0
-borrowed_from: softaworks/agent-toolkit/skill-judge + nuwa-skill three-tests + anti-distill density
+borrowed_from: softaworks/agent-toolkit/skill-judge + nuwa-skill three-tests + anti-distill density + Klein/Crandall CDM (execution-profile anti-gaming)
+changelog:
+  - 0.2.0 — Added Mindset Transfer ±1 adjustment tied to execution-profile red-line compliance; added 2 anti-gaming entries for execution-profile fabricated evidence and GPT-style infection. Additive only — total_max and pass_threshold unchanged.
+  - 0.1.0 — Initial 12-dimension rubric.
 ---
 
 # persona-judge Rubric / 评分细则
@@ -91,6 +94,8 @@ borrowed_from: softaworks/agent-toolkit/skill-judge + nuwa-skill three-tests + a
 - **5**: 有倾向没有框架。
 - **3**: 事实堆砌穿插口号。
 - **0**: 只有事实，无任何可迁移的思考模式。
+
+**Execution-Profile bonus**（v0.2.0+ 新增，不变总分上限）：若 `components/execution-profile.md` 存在且 `red_line_summary` 全 0 fails，Mindset Transfer 维度**可累加 +1 最高封顶 10**；反之若存在但 red_line 任一失败 → 本维度扣 1 分（最低不低于 0）。判据来自本维度的核心定义："框架是否可迁移到新情境"恰好是 execution-profile 的 8 类指令产出的功能。
 
 ### 6. Anti-Pattern Specificity — 反模式具体度（max 10）
 
@@ -226,6 +231,8 @@ critical_failure_count: 2    # 触发强制 FAIL 的 0 分维度阈值
 | **Primary Source Mislabel** | manifest 中把二手引用标为 `primary` | 抽查 3 条交叉验证来源 URL / 出版类型 | 直接归为 `secondary` 重算比例 |
 | **Voice Mimicry Without Substance** | 刻意堆砌本人口头禅但无判断迁移 | Voice 高分但 Mindset Transfer 低于 3 的组合是红旗 | 在 `## Weaknesses` 强制记录 "voice-without-mindset" |
 | **Component Link Theater** | 大量空组件文件撑起 progressive disclosure 表象 | 组件文件行数 < 20 或 80% 为标题的比例 > 30% | Structure 判 1 |
+| **Execution-Profile Red-Line Evasion** | 声称全红线 PASS 但实际 evidence 指向 `components/*.md` 而非 `knowledge/` | 随机抽 3 条 instruction 跑 `grep -r "<source_id>" knowledge/`；任一不命中视作伪造 | Mindset Transfer -2 + `## Weaknesses` 强制记录 `execution-profile-fabricated-evidence` |
+| **Execution-Profile GPT-Style Infection** | Decision Making 段充斥 "weigh options / 权衡 / list 3 choices"（违反 RPD 红线 2）却未在 Red-Line Summary 自报失败 | grep `components/execution-profile.md` 下 Decision Making 段的列表对比句式占比，> 50% → 判发现 | Mindset Transfer 直接判 3，Anti-Pattern Specificity -1 |
 | **PRD Threshold Arbitrage** | 故意利用 75 与 82 的差异构造刚好卡在 [75, 82) 的 skill | 同一 persona 多次评估 raw 稳定落入此区间视为可疑 | 上游（distill-meta）记录迭代次数，超 3 次不再放行 `CONDITIONAL_PASS` |
 
 核心原则：**rubric 是审计工具不是考试大纲**。任何试图把 rubric 当规范刷分的行为本身就是退化信号，评审者应倾向扣分而非纵容。
