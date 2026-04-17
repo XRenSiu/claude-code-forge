@@ -1,6 +1,6 @@
 # Claude Code Plugins Marketplace
 
-> Six plugins that cover the end-to-end AI-assisted development loop: spec → code → review → debug → deploy, plus design reverse-engineering, persona distillation, and autonomous skill optimization.
+> Seven plugins that cover the end-to-end AI-assisted development loop: spec → code → review → debug → deploy, plus design reverse-engineering, persona distillation, autonomous skill optimization, and goal-driven autonomous task execution.
 
 **At a glance:**
 
@@ -10,6 +10,7 @@
 - **[Design Clone](#design-clone)** — extract Design DNA from a live website, or pixel-perfect clone it into a Next.js app
 - **[Persona Distill](#persona-distill)** — distill a person / expert / rule system into a self-contained, portable persona skill
 - **[Skill Evolve](#skill-evolve)** — autonomous Darwin-style hill-climbing optimizer for any existing SKILL.md
+- **[Ratchet](#ratchet)** — goal-driven master/subagent loop with independent evaluation + kill-and-restart for long-running autonomous tasks
 
 ## Contents
 
@@ -22,6 +23,7 @@
 - [Design Clone](#design-clone)
 - [Persona Distill](#persona-distill)
 - [Skill Evolve](#skill-evolve)
+- [Ratchet](#ratchet)
 - [Marketplace Management](#marketplace-management)
 - [Plugin Management](#plugin-management)
 - [Contributing](#contributing)
@@ -54,6 +56,9 @@
 
 # Install Skill Evolve (Darwin-style SKILL.md optimizer)
 /plugin install skill-evolve@XRenSiu/claude-code-forge
+
+# Install Ratchet (goal-driven master/subagent autonomous loop)
+/plugin install ratchet@XRenSiu/claude-code-forge
 ```
 
 ### Step 3: Use Plugin
@@ -78,6 +83,10 @@
 
 # Skill Evolve — autonomous Darwin-style optimizer for an existing SKILL.md
 /skill-evolve path/to/your-skill/SKILL.md --rounds 5
+
+# Ratchet — goal-driven autonomous loop until acceptance criteria pass
+"用 ratchet 帮我优化这个 lexer 直到差分测试通过 100%"
+"ratchet: 让这个 API 通过所有 schema + property-based 测试"
 ```
 
 ### Update
@@ -93,6 +102,7 @@
 /plugin update design-clone
 /plugin update persona-distill
 /plugin update skill-evolve
+/plugin update ratchet
 ```
 
 ## Available Plugins
@@ -105,6 +115,7 @@
 | [Design Clone](plugins/design-clone/) | 1.0.0 | Design DNA extraction + pixel-perfect website cloning. Browser-MCP-driven CSS introspection produces a 150+ field Design DNA profile; `--full` mode additionally spawns parallel builder agents to generate a Next.js clone. | Browser MCP |
 | [Persona Distill](plugins/persona-distill/) | 0.4.0 | Distill any persona (person or rule system) into a self-contained Claude Code skill. 5 skills, 9 schemas, 19 components, 12-dim rubric, 9-phase pipeline (CDM execution-profile + self-containment linter + fingerprint verifier). v0.4.0 security hardening: consent attestation gate, untrusted-corpus delimiters, rubric config range locks, corpus access declaration, 6 runnable parsers (iMessage/email/Twitter/generic/Telegram/Slack). | - |
 | [Skill Evolve](plugins/skill-evolve/) | 0.1.1 | Darwin-style autonomous SKILL.md optimizer. 8-dimension rubric + independent-subagent scoring + git-backed ratchet hill-climbing (keep-or-revert) to evolve any skill from initial draft toward 90+. | - |
+| [Ratchet](plugins/ratchet/) | 1.0.0 | Goal-driven master/subagent autonomous loop. Master only evaluates (via frozen script or independent judge subagent), subagent only executes; stalled or cheating workers are killed and restarted. Suitable for long-running tasks with verifiable deliverables and explicit termination conditions. | - |
 
 ### Which plugin to use?
 
@@ -121,6 +132,7 @@
 | Clone a live website (design DNA or pixel-perfect Next.js) | Design Clone |
 | Distill a persona / expert / rule system into a skill | Persona Distill |
 | Improve quality of an existing SKILL.md | Skill Evolve |
+| Long-running task with verifiable acceptance criteria (compiler fuzz, API schema conformance, perf target) | Ratchet |
 
 > **Agent Teams** plugins (Forge Teams, Adversarial Debugger) require the experimental Agent Teams feature:
 > ```json
@@ -408,6 +420,55 @@ Autonomous Darwin-style optimizer for an existing `SKILL.md`. Independent subage
 
 ---
 
+## Ratchet
+
+**Version**: 1.0.0 · **Category**: Automation · **Requires**: none
+
+Goal-driven, long-running autonomous loop with strict separation of judge and worker. The orchestrator (master) clarifies the goal, designs machine-verifiable acceptance criteria, generates a `ratchet.md` experiment protocol with frozen evaluation, then drives a worker subagent in a kill-and-restart loop until P0 criteria are green or a termination condition (convergence / budget) trips. Combines Goal-Driven master/subagent separation with AutoResearch signal design methodology.
+
+### Ratchet Workflow
+
+```
+"用 ratchet 优化 X 直到 Y 通过"
+    |
+    +-- Step 1: Goal Clarification
+    |       Q1 Goal · Q2 Criteria · Q3 Scope (CAN / CANNOT)
+    |
+    +-- Step 2: Criteria Design
+    |       Property-based criteria (round-trip / invariant / idempotent /
+    |       metamorphic / model-based oracle), P0/P1/P2 priority,
+    |       milestones, anti-cheat clauses
+    |
+    +-- Step 3: ratchet.md Generation
+    |       Read references/ratchet-template.md + criteria-guide.md
+    |       Write protocol + evaluate.sh / evaluate_criteria.md
+    |       Frozen test_data/ (worker cannot read or modify)
+    |
+    +-- Step 4: Master Loop (kill & restart)
+    |       Worker executes -> commits to filesystem
+    |    -> Master independently evaluates (Mode A: bash script,
+    |       Mode B: independent judge subagent)
+    |    -> score > best  → tag best-r{N}, reset stale_count
+    |    -> score == best → stale_count++; if >= N → kill & restart
+    |    -> done_when triggered → exit
+    |
+    +-- Step 5: Final Report
+            Restore best-r{N} → results.tsv summary →
+            Top-5 effective changes → Top-5 failed hypotheses →
+            Remaining gaps + next-step suggestions
+```
+
+### Key Design Choices
+
+- **Judge ≠ Worker.** The worker never sees the evaluation script or criteria thresholds — prevents reward hacking.
+- **State lives in the filesystem, not the context.** Each restarted worker reads `results.tsv` + `git log` + product files; no need to inherit the previous worker's reasoning.
+- **Three explicit exits.** `done_when.success` (P0 all green) / `done_when.convergence` (N rounds with no gain) / `done_when.budget` (max rounds or time). All three must be defined before the loop starts.
+- **Three example references** (`references/examples/`) cover compiler/interpreter (differential + fuzz), web API/service (schema + property-based), performance/quality optimization (hard metrics + reverse constraints).
+
+> Differs from `skill-evolve`: Ratchet is task-agnostic and runs against arbitrary product files; Skill Evolve is specialized for `SKILL.md` files using a fixed 8-dim rubric.
+
+---
+
 ## Marketplace Management
 
 ```bash
@@ -437,6 +498,7 @@ Autonomous Darwin-style optimizer for an existing `SKILL.md`. Independent subage
 /plugin install design-clone@XRenSiu/claude-code-forge
 /plugin install persona-distill@XRenSiu/claude-code-forge
 /plugin install skill-evolve@XRenSiu/claude-code-forge
+/plugin install ratchet@XRenSiu/claude-code-forge
 
 # Update plugin
 /plugin update pdforge

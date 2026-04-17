@@ -96,6 +96,21 @@
       "repository": "https://github.com/XRenSiu/claude-code-forge",
       "license": "MIT",
       "tags": ["skill-optimization", "hill-climbing", "ratchet-mechanism", "rubric-evaluation", "autonomous-improvement", "skill-meta", "darwin", "autoresearch", "claude-code-skill"]
+    },
+    {
+      "name": "ratchet",
+      "description": "Ratchet — Goal-driven multi-agent persistent optimization system. Combines Goal-Driven master/subagent separation with AutoResearch signal design methodology. Implements an 'independent evaluation + kill-and-restart + ratchet progress' autonomous loop: master only judges, subagent only executes; if a subagent stalls or claims success without meeting acceptance criteria, it is killed and replaced. Suitable for long-running autonomous coding tasks that require verifiable deliverables and explicit termination conditions.",
+      "version": "1.0.0",
+      "author": {
+        "name": "XRenSiu",
+        "email": "xrensiu@gmail.com"
+      },
+      "source": "./plugins/ratchet",
+      "category": "automation",
+      "homepage": "https://github.com/XRenSiu/claude-code-forge/tree/main/plugins/ratchet",
+      "repository": "https://github.com/XRenSiu/claude-code-forge",
+      "license": "MIT",
+      "tags": ["ratchet", "goal-driven", "autonomous-agent", "master-subagent", "independent-evaluation", "kill-and-restart", "acceptance-criteria", "autoresearch", "long-running-task", "verifiable-output"]
     }
   ]
 }
