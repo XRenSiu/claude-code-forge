@@ -178,6 +178,7 @@ forge-teams (多 agent 对抗):
 - **Implementers**: 并行实现无依赖的任务（delegate mode）
 - **TDD Guard**: 审查每个提交的 TDD 合规性
 - 文件所有权分配防止冲突
+- **自愈协议 + Wakeup Guard**: 心跳检测 + 任务迁移 + 健康评分；Lead 每次 SendMessage 后 `ScheduleWakeup` 定时唤醒扫描，防止单 agent 故障把整条流水线阻塞
 
 ### Phase 5: Red Team Review (红队审查)
 
@@ -364,8 +365,9 @@ forge-teams/
 │   └── verify-requirement/
 │       └── SKILL.md                   # /forge-verify (name: forge-verify): 独立需求验证
 ├── rules/
-│   ├── team-coordination.md           # Team lifecycle and communication rules
-│   └── adversarial-protocol.md        # Adversarial debate rules (10 rules)
+│   ├── team-coordination.md           # Team lifecycle + communication + Wakeup Guard (Rule 6)
+│   ├── adversarial-protocol.md        # Adversarial debate rules (10 rules)
+│   └── self-healing.md                # Phase 4 self-healing: heartbeat + migration + health + Lead Wakeup Guard
 ├── docs/
 │   ├── design-philosophy.md           # 总体设计哲学
 │   ├── phase-1-adversarial-requirements.md

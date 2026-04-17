@@ -245,34 +245,78 @@ SHARED (sequential write):
 
 ## Rule 6: Idle Teammate Handling (空闲 Teammate 处理)
 
-### 6.1 非 Phase 4 阶段 (P1, P2, P3, P5, P6, P7)
+### 6.1 Wakeup Guard 基础机制（所有阶段通用）
 
-使用基础 idle 检测阈值：
+**问题**: Lead 在等待 teammate 回复时，会阻塞在"等新消息"状态。如果对方卡住不响应，Lead 自己也无法主动触发状态检查，导致整条流水线停摆。
 
-| 任务类型 | 无响应阈值 |
-|---------|----------|
-| 调查任务 | 5 分钟 |
-| 辩论回合 | 3 分钟 |
-| 代码实现 | 10 分钟 |
+**解决**: Lead 每次通过 SendMessage 发送**期望对方回复才能继续的消息**时，必须同时调用 `ScheduleWakeup` 设置守卫定时器。守卫到期时 Lead 被叫醒，主动扫描收件箱与状态，避免无限阻塞。
 
-处理流程：
+**守卫到期时的标准检查**:
 
-1. **第一次**: SendMessage 询问状态
-2. **第二次** (再等 2 分钟): SendMessage 明确催促
-3. **第三次** (再等 2 分钟): 标记为 STUCK，重新分配任务或跳过
+1. 扫描收件箱：目标 teammate 是否已回复？
+   - **有回复** → 处理，结束本轮守卫
+   - **无回复** → 进入升级阶梯（见 6.2 / 6.3）
+2. 记录守卫事件：时间戳、检查结果、采取的动作
+
+**原则**:
+- Wakeup Guard **不替代**响应监听，而是兜底 — Lead 在任何时候收到回复都应立即处理，守卫只是防止永久阻塞
+- 同一 teammate 刚被确认有回复 → 重置守卫计数，不累加到下一阶段
+- 即使 Lead 被叫醒时发现一切正常，也应重新 `ScheduleWakeup` 继续下一轮守卫，直到期望的交付完成
+
+### 6.2 非 Phase 4 阶段的应用 (P1, P2, P3, P5, P6, P7)
+
+**首次 Wakeup 时长**（按任务类型）:
+
+| 任务类型 | 首次 Wakeup T |
+|---------|---------------|
+| 调查任务 | 5 min |
+| 辩论回合 | 3 min |
+| 代码实现 | 10 min |
+
+**三阶段升级流程**（全部由 `ScheduleWakeup` 硬性触发）:
 
 ```
-[IDLE CHECK]
+T=0     Lead 发送 SendMessage + ScheduleWakeup(T)
+        │
+T=T     守卫#1 到期 → 扫描收件箱
+        ├─ 有回复 → 处理，结束守卫
+        └─ 无回复 → 发 [IDLE CHECK] + ScheduleWakeup(+2min)
+        │
+T=T+2   守卫#2 到期 → 扫描收件箱
+        ├─ 有回复 → 处理，结束守卫
+        └─ 无回复 → 发 [IDLE URGENT] + ScheduleWakeup(+2min)
+        │
+T=T+4   守卫#3 到期 → 扫描收件箱
+        ├─ 有回复 → 处理，记录迟到
+        └─ 无回复 → 标记 STUCK，执行替换 / 重新分配 / 跳过
+```
+
+**消息模板**:
+
+```
+[IDLE CHECK]  — Nudge 1/2
 To: [teammate-name]
-Message: "Status check - please report your current progress. If blocked, describe the blocker."
+Message: "Status check — {T} min since my last message. Please reply with:
+  1. One-line current state (what you're doing now)
+  2. Any blocker (describe if present)
+  3. Continue autonomously or need help
+If no reply in 2 min I will escalate."
 ```
 
-Stuck Teammate 替换：
-1. 发送 shutdown_request
+```
+[IDLE URGENT]  — Nudge 2/2
+To: [teammate-name]
+Message: "Second status check — {T+2} min silent. Last chance before I
+reassign this task and spawn a replacement. Reply with status or blocker now."
+```
+
+**Stuck Teammate 替换**（守卫#3 到期无回复时）:
+
+1. 发送 `shutdown_request`（best-effort，不等待回复）
 2. 如需要，spawn 新 teammate 接替任务
 3. 新 teammate 从上一次已知状态继续
 
-### 6.2 Phase 4 (Parallel Implementation) — 自愈协议
+### 6.3 Phase 4 (Parallel Implementation) — 自愈协议
 
 > **Phase 4 使用自愈协议替代基础 idle 检测。** 完整定义见 `rules/self-healing.md`。
 
