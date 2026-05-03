@@ -1,0 +1,223 @@
+{
+  "system_name": "lamborghini",
+  "source": "open-design",
+  "extracted_at": "2026-05-03T13:38:57.547424Z",
+  "dialect": "A",
+  "fingerprint_hash": "ee84e6d0b5a779f53032fa8fec721c632d936a05006e97101150a882e43d7178",
+  "extraction_method": "programmatic_a1",
+  "tool_version": "1.0.0",
+  "color": {
+    "role_color_pairs": {
+      "lamborghini_gold": "#FFC000",
+      "pure_white": "#FFFFFF",
+      "dark_gold": "#917300",
+      "gold_text": "#FFCE3E",
+      "cyan_pulse": "#29ABE2",
+      "link_blue": "#3860BE",
+      "absolute_black": "#000000",
+      "charcoal": "#202020",
+      "dark_iron": "#181818",
+      "overlay_black": "rgba(0,0,0,0.7)",
+      "near_white": "#F8F8F8",
+      "mist": "#E6E6E6",
+      "smoke": "#F5F5F5",
+      "graphite": "#494949",
+      "ash": "#7D7D7D",
+      "steel": "#969696",
+      "slate": "#666666",
+      "iron": "#555555",
+      "shadow": "#313131",
+      "teal_action": "#1EAEDB"
+    },
+    "all_hex_colors": [
+      "#FFC000",
+      "#FFFFFF",
+      "#917300",
+      "#FFCE3E",
+      "#29ABE2",
+      "#3860BE",
+      "#000000",
+      "#202020",
+      "#181818",
+      "#F8F8F8",
+      "#E6E6E6",
+      "#F5F5F5",
+      "#494949",
+      "#7D7D7D",
+      "#969696",
+      "#666666",
+      "#555555",
+      "#313131",
+      "#1EAEDB"
+    ],
+    "all_rgba_colors": [
+      "rgba(0,0,0,0.7)"
+    ],
+    "all_hsla_colors": [],
+    "hex_count": 19,
+    "_extraction_method": "regex_role_pairs + hex_enum",
+    "_confidence": "high"
+  },
+  "typography": {
+    "families": [
+      {
+        "role": "display",
+        "family": "LamboType"
+      }
+    ],
+    "all_px_values": [
+      10.0,
+      12.0,
+      13.0,
+      14.0,
+      14.4,
+      16.0,
+      18.0,
+      24.0,
+      27.0,
+      40.0,
+      54.0,
+      80.0,
+      120.0
+    ],
+    "declared_scale_px": null,
+    "weights_seen": [
+      400
+    ],
+    "_extraction_method": "regex_family_role_pairs + px_enum + weight_enum",
+    "_confidence": "high"
+  },
+  "spacing": {
+    "base_unit_px": 8.0,
+    "declared_scale": null,
+    "all_px_values": [
+      1.0,
+      2.0,
+      4.0,
+      5.0,
+      8.0,
+      10.0,
+      12.0,
+      15.0,
+      16.0,
+      20.0,
+      24.0,
+      32.0,
+      40.0,
+      48.0,
+      56.0
+    ],
+    "_extraction_method": "regex_base_unit + scale_enum",
+    "_confidence": "medium"
+  },
+  "layout": {
+    "_extraction_method": "kept_section_text_for_a3",
+    "_confidence": "low",
+    "_section_size": 1357
+  },
+  "radius": {
+    "role_radius_pairs": {},
+    "all_px_values": [
+      1.0,
+      2.0,
+      4.0,
+      5.0,
+      8.0,
+      10.0,
+      12.0,
+      15.0,
+      16.0,
+      20.0,
+      24.0,
+      32.0,
+      40.0,
+      48.0,
+      56.0
+    ],
+    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_confidence": "low"
+  },
+  "depth_elevation": {
+    "rgba_shadows": [
+      "rgba(0,0,0,0.7)",
+      "rgba(0,0,0,0.5)",
+      "rgba(0,0,0,0.25)"
+    ],
+    "inset_shadows": [],
+    "_extraction_method": "regex_rgba_inset",
+    "_confidence": "medium"
+  },
+  "responsive": {
+    "breakpoints_named": {
+      "mobile": {
+        "min": 425,
+        "max": 576
+      },
+      "tablet_small": {
+        "min": 576,
+        "max": 768
+      },
+      "tablet": {
+        "min": 768,
+        "max": 1024
+      },
+      "desktop": {
+        "min": 1024,
+        "max": 1280
+      }
+    },
+    "_extraction_method": "regex_breakpoint_table",
+    "_confidence": "high"
+  },
+  "dos_donts": {
+    "dos": [
+      "Use absolute black (`#000000`) as the primary background — never dark gray as a substitute",
+      "Apply Lamborghini Gold (`#FFC000`) exclusively for primary CTA buttons — never for decorative purposes",
+      "Set all display headings in uppercase with LamboType — the brand voice is always SHOUTING",
+      "Use zero border-radius on buttons and cards — sharp angles are non-negotiable",
+      "Maintain tight line-heights (0.92–1.19) on display type to create dense, architectural text blocks",
+      "Use the transparent ghost button (white border, 50% opacity) as the secondary CTA on dark backgrounds",
+      "Let full-viewport video/photography carry emotional weight — UI is infrastructure, not decoration",
+      "Reserve hexagonal geometry for UI icons and the video control button",
+      "Use weight 400 (regular) for headlines — the typeface is distinctive enough without bold emphasis",
+      "Keep the gray palette achromatic — all neutrals are pure gray without color tinting"
+    ],
+    "donts": [
+      "Introduce additional accent colors beyond gold — the monochrome-plus-gold system is sacred",
+      "Apply border-radius to buttons or cards — curved edges contradict the angular vehicle aesthetic",
+      "Use LamboType in italic or decorative styles — the brand is always upright and direct",
+      "Add gradients to buttons or surfaces — depth comes from surface layering, not blending",
+      "Use light backgrounds as the primary canvas — darkness is the default state, light is the exception",
+      "Mix lowercase into display headings — the uppercase convention communicates authority and power",
+      "Add hover animations with scale or translate — interactions should be color-only (background/opacity shifts)",
+      "Use Open Sans for display text — LamboType must handle all visible typography",
+      "Create busy layouts with many small elements — Lamborghini's design is about singular, bold statements",
+      "Apply shadows to elements — on a black canvas, shadows are meaningless; use surface color shifts instead"
+    ],
+    "_extraction_method": "subsection_bullet_parse",
+    "_confidence": "high"
+  },
+  "sections_present": [
+    "visual_theme",
+    "color",
+    "typography",
+    "components",
+    "layout",
+    "depth_elevation",
+    "dos_donts",
+    "responsive",
+    "agent_guide"
+  ],
+  "sections_unhandled": [
+    "components",
+    "agent_guide"
+  ],
+  "sections_meta_for_llm": [
+    "visual_theme",
+    "agent_guide"
+  ],
+  "llm_followup_hints": [
+    "layout extraction has low confidence — recommend LLM review",
+    "radius extraction has low confidence — recommend LLM review"
+  ]
+}

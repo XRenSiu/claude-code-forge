@@ -1,0 +1,228 @@
+{
+  "system_name": "stripe",
+  "source": "open-design",
+  "extracted_at": "2026-05-03T13:38:57.582715Z",
+  "dialect": "A",
+  "fingerprint_hash": "66dea910aa4e4d7a2cbda9ad93496da5d464f40f343e7a14b8b8029d873535ae",
+  "extraction_method": "programmatic_a1",
+  "tool_version": "1.0.0",
+  "color": {
+    "role_color_pairs": {
+      "stripe_purple": "#533afd",
+      "deep_navy": "#061b31",
+      "pure_white": "#ffffff",
+      "brand_dark": "#1c1e54",
+      "dark_navy": "#0d253d",
+      "ruby": "#ea2261",
+      "magenta": "#f96bee",
+      "magenta_light": "#ffd7ef",
+      "primary_purple": "#533afd",
+      "purple_hover": "#4434d4",
+      "purple_deep": "#2e2b8c",
+      "purple_light": "#b9b9f9",
+      "purple_mid": "#665efd",
+      "heading": "#061b31",
+      "label": "#273951",
+      "body": "#64748d",
+      "success_green": "#15be53",
+      "success_text": "#108c3d",
+      "lemon": "#9b6829",
+      "border_default": "#e5edf5",
+      "border_purple": "#b9b9f9",
+      "border_soft_purple": "#d6d9fc",
+      "border_magenta": "#ffd7ef",
+      "border_dashed": "#362baa",
+      "shadow_blue": "rgba(50,50,93,0.25)",
+      "shadow_dark_blue": "rgba(3,3,39,0.25)",
+      "shadow_black": "rgba(0,0,0,0.1)",
+      "shadow_ambient": "rgba(23,23,23,0.08)",
+      "shadow_soft": "rgba(23,23,23,0.06)"
+    },
+    "all_hex_colors": [
+      "#533afd",
+      "#061b31",
+      "#ffffff",
+      "#1c1e54",
+      "#0d253d",
+      "#ea2261",
+      "#f96bee",
+      "#ffd7ef",
+      "#4434d4",
+      "#2e2b8c",
+      "#b9b9f9",
+      "#665efd",
+      "#273951",
+      "#64748d",
+      "#15be53",
+      "#108c3d",
+      "#9b6829",
+      "#e5edf5",
+      "#d6d9fc",
+      "#362baa"
+    ],
+    "all_rgba_colors": [
+      "rgba(50,50,93,0.25)",
+      "rgba(3,3,39,0.25)",
+      "rgba(0,0,0,0.1)",
+      "rgba(23,23,23,0.08)",
+      "rgba(23,23,23,0.06)"
+    ],
+    "all_hsla_colors": [],
+    "hex_count": 20,
+    "_extraction_method": "regex_role_pairs + hex_enum",
+    "_confidence": "high"
+  },
+  "typography": {
+    "families": [
+      {
+        "role": "mono",
+        "family": "SourceCodePro"
+      }
+    ],
+    "all_px_values": [
+      8.0,
+      9.0,
+      10.0,
+      12.0,
+      13.0,
+      14.0,
+      16.0,
+      18.0,
+      22.0,
+      26.0,
+      32.0,
+      48.0,
+      56.0
+    ],
+    "declared_scale_px": null,
+    "weights_seen": [
+      300
+    ],
+    "_extraction_method": "regex_family_role_pairs + px_enum + weight_enum",
+    "_confidence": "high"
+  },
+  "spacing": {
+    "base_unit_px": 8.0,
+    "declared_scale": null,
+    "all_px_values": [
+      1.0,
+      2.0,
+      4.0,
+      5.0,
+      6.0,
+      8.0,
+      10.0,
+      11.0,
+      12.0,
+      14.0,
+      16.0,
+      18.0,
+      20.0
+    ],
+    "_extraction_method": "regex_base_unit + scale_enum",
+    "_confidence": "medium"
+  },
+  "layout": {
+    "_extraction_method": "kept_section_text_for_a3",
+    "_confidence": "low",
+    "_section_size": 1589
+  },
+  "radius": {
+    "role_radius_pairs": {
+      "micro": 1.0,
+      "standard": 4.0,
+      "comfortable": 5.0,
+      "large": 8.0
+    },
+    "all_px_values": [
+      1.0,
+      2.0,
+      4.0,
+      5.0,
+      6.0,
+      8.0,
+      10.0,
+      11.0,
+      12.0,
+      14.0,
+      16.0,
+      18.0,
+      20.0
+    ],
+    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_confidence": "high"
+  },
+  "depth_elevation": {
+    "rgba_shadows": [
+      "rgba(23,23,23,0.06)",
+      "rgba(23,23,23,0.08)",
+      "rgba(50,50,93,0.25)",
+      "rgba(0,0,0,0.1)",
+      "rgba(3,3,39,0.25)",
+      "rgba(0,55,112,0.08)"
+    ],
+    "inset_shadows": [],
+    "_extraction_method": "regex_rgba_inset",
+    "_confidence": "medium"
+  },
+  "responsive": {
+    "breakpoints_named": {
+      "tablet": {
+        "min": 640,
+        "max": 1024
+      },
+      "desktop": {
+        "min": 1024,
+        "max": 1280
+      }
+    },
+    "_extraction_method": "regex_breakpoint_table",
+    "_confidence": "high"
+  },
+  "dos_donts": {
+    "dos": [
+      "Use sohne-var with `\"ss01\"` on every text element -- the stylistic set IS the brand",
+      "Use weight 300 for all headlines and body text -- lightness is the signature",
+      "Apply blue-tinted shadows (`rgba(50,50,93,0.25)`) for all elevated elements",
+      "Use `#061b31` (deep navy) for headings instead of `#000000` -- the warmth matters",
+      "Keep border-radius between 4px-8px -- conservative rounding is intentional",
+      "Use `\"tnum\"` for any tabular/financial number display",
+      "Layer shadows: blue-tinted far + neutral close for depth parallax",
+      "Use `#533afd` purple as the primary interactive/CTA color"
+    ],
+    "donts": [
+      "Don't use weight 600-700 for sohne-var headlines -- weight 300 is the brand voice",
+      "Don't use large border-radius (12px+, pill shapes) on cards or buttons -- Stripe is conservative",
+      "Don't use neutral gray shadows -- always tint with blue (`rgba(50,50,93,...)`)",
+      "Don't skip `\"ss01\"` on any sohne-var text -- the alternate glyphs define the personality",
+      "Don't use pure black (`#000000`) for headings -- always `#061b31` deep navy",
+      "Don't use warm accent colors (orange, yellow) for interactive elements -- purple is primary",
+      "Don't apply positive letter-spacing at display sizes -- Stripe tracks tight",
+      "Don't use the magenta/ruby accents for buttons or links -- they're decorative/gradient only"
+    ],
+    "_extraction_method": "subsection_bullet_parse",
+    "_confidence": "high"
+  },
+  "sections_present": [
+    "visual_theme",
+    "color",
+    "typography",
+    "components",
+    "layout",
+    "depth_elevation",
+    "dos_donts",
+    "responsive",
+    "agent_guide"
+  ],
+  "sections_unhandled": [
+    "components",
+    "agent_guide"
+  ],
+  "sections_meta_for_llm": [
+    "visual_theme",
+    "agent_guide"
+  ],
+  "llm_followup_hints": [
+    "layout extraction has low confidence — recommend LLM review"
+  ]
+}

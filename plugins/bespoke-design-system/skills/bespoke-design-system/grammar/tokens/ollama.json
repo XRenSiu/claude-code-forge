@@ -1,0 +1,190 @@
+{
+  "system_name": "ollama",
+  "source": "open-design",
+  "extracted_at": "2026-05-03T13:38:57.561951Z",
+  "dialect": "A",
+  "fingerprint_hash": "a40ef634612c07706462e081b1b77ba18915faa60d2dea1a19c2945aa448b3f7",
+  "extraction_method": "programmatic_a1",
+  "tool_version": "1.0.0",
+  "color": {
+    "role_color_pairs": {
+      "pure_black": "#000000",
+      "near_black": "#262626",
+      "darkest_surface": "#090909",
+      "pure_white": "#ffffff",
+      "snow": "#fafafa",
+      "light_gray": "#e5e5e5",
+      "stone": "#737373",
+      "mid_gray": "#525252",
+      "silver": "#a3a3a3",
+      "button_text_dark": "#404040",
+      "ring_blue": "#3b82f6",
+      "border_light": "#d4d4d4"
+    },
+    "all_hex_colors": [
+      "#000000",
+      "#262626",
+      "#090909",
+      "#ffffff",
+      "#fafafa",
+      "#e5e5e5",
+      "#737373",
+      "#525252",
+      "#a3a3a3",
+      "#404040",
+      "#3b82f6",
+      "#d4d4d4"
+    ],
+    "all_rgba_colors": [],
+    "all_hsla_colors": [],
+    "hex_count": 12,
+    "_extraction_method": "regex_role_pairs + hex_enum",
+    "_confidence": "high"
+  },
+  "typography": {
+    "families": [
+      {
+        "role": "display",
+        "family": "SF Pro Rounded"
+      }
+    ],
+    "all_px_values": [
+      12.0,
+      14.0,
+      16.0,
+      18.0,
+      24.0,
+      30.0,
+      36.0,
+      48.0
+    ],
+    "declared_scale_px": null,
+    "weights_seen": [],
+    "_extraction_method": "regex_family_role_pairs + px_enum + weight_enum",
+    "_confidence": "high"
+  },
+  "spacing": {
+    "base_unit_px": 8.0,
+    "declared_scale": null,
+    "all_px_values": [
+      4.0,
+      6.0,
+      8.0,
+      9.0,
+      10.0,
+      12.0,
+      14.0,
+      16.0,
+      20.0,
+      24.0,
+      32.0,
+      40.0,
+      48.0,
+      88.0,
+      112.0
+    ],
+    "_extraction_method": "regex_base_unit + scale_enum",
+    "_confidence": "medium"
+  },
+  "layout": {
+    "_extraction_method": "kept_section_text_for_a3",
+    "_confidence": "low",
+    "_section_size": 1397
+  },
+  "radius": {
+    "role_radius_pairs": {
+      "comfortably rounded": 12.0
+    },
+    "all_px_values": [
+      4.0,
+      6.0,
+      8.0,
+      9.0,
+      10.0,
+      12.0,
+      14.0,
+      16.0,
+      20.0,
+      24.0,
+      32.0,
+      40.0,
+      48.0,
+      88.0,
+      112.0
+    ],
+    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_confidence": "medium"
+  },
+  "depth_elevation": {
+    "rgba_shadows": [],
+    "inset_shadows": [],
+    "_extraction_method": "regex_rgba_inset",
+    "_confidence": "medium"
+  },
+  "responsive": {
+    "breakpoints_named": {
+      "tablet": {
+        "min": 768,
+        "max": 850
+      },
+      "desktop": {
+        "min": 850,
+        "max": 1024
+      },
+      "large_desktop": {
+        "min": 1024,
+        "max": 1280
+      }
+    },
+    "_extraction_method": "regex_breakpoint_table",
+    "_confidence": "high"
+  },
+  "dos_donts": {
+    "dos": [
+      "Use pure white (`#ffffff`) as the page background — never off-white or cream",
+      "Use pill-shaped (9999px) radius on all interactive elements — buttons, tabs, inputs, tags",
+      "Use 12px radius on all non-interactive containers — code blocks, cards, panels",
+      "Keep the palette strictly grayscale — no chromatic colors except the blue focus ring",
+      "Use SF Pro Rounded at weight 500 for display headings — the rounded terminals are the brand expression",
+      "Maintain zero shadows — depth comes from borders and background shifts only",
+      "Keep content density low — each section should present one clear idea",
+      "Use monospace for terminal commands and code — it's primary content, not decoration",
+      "Keep all buttons at 10px 24px padding with pill shape — consistency is absolute"
+    ],
+    "donts": [
+      "Don't introduce any chromatic color — no brand blue, no accent green, no warm tones",
+      "Don't use border-radius between 12px and 9999px — the system is binary",
+      "Don't add shadows to any element — the flat aesthetic is intentional",
+      "Don't use font weights above 500 — no bold, no black weight",
+      "Don't add decorative illustrations beyond the llama mascot",
+      "Don't use gradients anywhere — flat blocks and borders only",
+      "Don't overcomplicate the layout — two columns maximum, no complex grids",
+      "Don't use borders heavier than 1px — containment is always the lightest possible touch",
+      "Don't add hover animations or transitions — interactions should feel instant and direct"
+    ],
+    "_extraction_method": "subsection_bullet_parse",
+    "_confidence": "high"
+  },
+  "sections_present": [
+    "visual_theme",
+    "color",
+    "typography",
+    "components",
+    "layout",
+    "depth_elevation",
+    "dos_donts",
+    "responsive",
+    "agent_guide"
+  ],
+  "sections_unhandled": [
+    "components",
+    "agent_guide"
+  ],
+  "sections_meta_for_llm": [
+    "visual_theme",
+    "agent_guide"
+  ],
+  "llm_followup_hints": [
+    "layout extraction has low confidence — recommend LLM review"
+  ]
+}

@@ -1,0 +1,163 @@
+{
+  "system_name": "coinbase",
+  "source": "open-design",
+  "extracted_at": "2026-05-03T13:38:57.526868Z",
+  "dialect": "A",
+  "fingerprint_hash": "52d6851e1cf6701d7b2344d148868e12f46b08ac80a65a31026e08e8ea6af66c",
+  "extraction_method": "programmatic_a1",
+  "tool_version": "1.0.0",
+  "color": {
+    "role_color_pairs": {
+      "coinbase_blue": "#0052ff",
+      "pure_white": "#ffffff",
+      "near_black": "#0a0b0d",
+      "cool_gray_surface": "#eef0f3",
+      "hover_blue": "#578bfa",
+      "link_blue": "#0667d0",
+      "muted_blue": "#5b616e",
+      "dark_card": "#282b31",
+      "light_surface": "rgba(247,247,247,0.88)"
+    },
+    "all_hex_colors": [
+      "#0052ff",
+      "#ffffff",
+      "#0a0b0d",
+      "#eef0f3",
+      "#578bfa",
+      "#0667d0",
+      "#5b616e",
+      "#282b31"
+    ],
+    "all_rgba_colors": [
+      "rgba(247,247,247,0.88)"
+    ],
+    "all_hsla_colors": [],
+    "hex_count": 8,
+    "_extraction_method": "regex_role_pairs + hex_enum",
+    "_confidence": "high"
+  },
+  "typography": {
+    "families": [],
+    "all_px_values": [
+      13.0,
+      14.0,
+      16.0,
+      18.0,
+      32.0,
+      36.0,
+      52.0,
+      64.0,
+      80.0
+    ],
+    "declared_scale_px": null,
+    "weights_seen": [],
+    "_extraction_method": "regex_family_role_pairs + px_enum + weight_enum",
+    "_confidence": "medium"
+  },
+  "spacing": {
+    "base_unit_px": 8.0,
+    "declared_scale": null,
+    "all_px_values": [
+      1.0,
+      3.0,
+      4.0,
+      5.0,
+      6.0,
+      8.0,
+      10.0,
+      12.0,
+      15.0,
+      16.0,
+      20.0,
+      24.0,
+      25.0,
+      32.0,
+      40.0,
+      48.0,
+      56.0
+    ],
+    "_extraction_method": "regex_base_unit + scale_enum",
+    "_confidence": "medium"
+  },
+  "layout": {
+    "_extraction_method": "kept_section_text_for_a3",
+    "_confidence": "low",
+    "_section_size": 368
+  },
+  "radius": {
+    "role_radius_pairs": {
+      "xl": 40.0,
+      "pill": 56.0,
+      "full": 100000.0
+    },
+    "all_px_values": [
+      1.0,
+      3.0,
+      4.0,
+      5.0,
+      6.0,
+      8.0,
+      10.0,
+      12.0,
+      15.0,
+      16.0,
+      20.0,
+      24.0,
+      25.0,
+      32.0,
+      40.0,
+      48.0,
+      56.0
+    ],
+    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_confidence": "high"
+  },
+  "depth_elevation": {
+    "rgba_shadows": [],
+    "inset_shadows": [],
+    "_extraction_method": "regex_rgba_inset",
+    "_confidence": "medium"
+  },
+  "responsive": {
+    "breakpoints_named": {},
+    "_extraction_method": "regex_breakpoint_table",
+    "_confidence": "low"
+  },
+  "dos_donts": {
+    "dos": [
+      "Use Coinbase Blue (#0052ff) for primary interactive elements",
+      "Apply 56px radius for all CTA buttons",
+      "Use CoinbaseDisplay for hero headings only",
+      "Alternate dark (#0a0b0d) and white sections"
+    ],
+    "donts": [
+      "Don't use the blue decoratively — it's functional only",
+      "Don't use sharp corners on CTAs — 56px minimum"
+    ],
+    "_extraction_method": "subsection_bullet_parse",
+    "_confidence": "high"
+  },
+  "sections_present": [
+    "visual_theme",
+    "color",
+    "typography",
+    "components",
+    "layout",
+    "depth_elevation",
+    "dos_donts",
+    "responsive",
+    "agent_guide"
+  ],
+  "sections_unhandled": [
+    "components",
+    "agent_guide"
+  ],
+  "sections_meta_for_llm": [
+    "visual_theme",
+    "agent_guide"
+  ],
+  "llm_followup_hints": [
+    "layout extraction has low confidence — recommend LLM review",
+    "responsive extraction has low confidence — recommend LLM review"
+  ]
+}

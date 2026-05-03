@@ -1,0 +1,218 @@
+{
+  "system_name": "cursor",
+  "source": "open-design",
+  "extracted_at": "2026-05-03T13:38:57.530352Z",
+  "dialect": "A-variant",
+  "fingerprint_hash": "66f4f737a2fbc17cd37489f321bbfa799b202a28bcf0df2b86a70b7773926a69",
+  "extraction_method": "programmatic_a1",
+  "tool_version": "1.0.0",
+  "color": {
+    "role_color_pairs": {
+      "cursor_dark": "#26251e",
+      "cursor_cream": "#f2f1ed",
+      "cursor_light": "#e6e5e0",
+      "pure_white": "#ffffff",
+      "true_black": "#000000",
+      "cursor_orange": "#f54e00",
+      "gold": "#c08532",
+      "error": "#cf2d56",
+      "success": "#1f8a65",
+      "thinking": "#dfa88f",
+      "grep": "#9fc9a2",
+      "read": "#9fbbe0",
+      "edit": "#c0a8dd",
+      "surface_100": "#f7f7f4",
+      "surface_200": "#f2f1ed",
+      "surface_300": "#ebeae5",
+      "surface_400": "#e6e5e0",
+      "surface_500": "#e1e0db",
+      "border_strong": "rgba(38, 37, 30, 0.55)",
+      "border_solid": "#26251e",
+      "border_light": "#f2f1ed",
+      "card_shadow": "rgba(0,0,0,0.14)",
+      "ambient_shadow": "rgba(0,0,0,0.02)"
+    },
+    "all_hex_colors": [
+      "#26251e",
+      "#f2f1ed",
+      "#e6e5e0",
+      "#ffffff",
+      "#000000",
+      "#f54e00",
+      "#c08532",
+      "#cf2d56",
+      "#1f8a65",
+      "#dfa88f",
+      "#9fc9a2",
+      "#9fbbe0",
+      "#c0a8dd",
+      "#f7f7f4",
+      "#ebeae5",
+      "#e1e0db"
+    ],
+    "all_rgba_colors": [
+      "rgba(38, 37, 30, 0.55)",
+      "rgba(0,0,0,0.14)",
+      "rgba(0,0,0,0.1)",
+      "rgba(0,0,0,0.02)",
+      "rgba(0,0,0,0.008)"
+    ],
+    "all_hsla_colors": [],
+    "hex_count": 16,
+    "_extraction_method": "regex_role_pairs + hex_enum",
+    "_confidence": "high"
+  },
+  "typography": {
+    "families": [
+      {
+        "role": "display",
+        "family": "CursorGothic"
+      }
+    ],
+    "all_px_values": [
+      11.0,
+      12.0,
+      13.0,
+      14.0,
+      16.0,
+      17.28,
+      19.2,
+      20.0,
+      22.0,
+      26.0,
+      36.0,
+      72.0
+    ],
+    "declared_scale_px": null,
+    "weights_seen": [
+      400
+    ],
+    "_extraction_method": "regex_family_role_pairs + px_enum + weight_enum",
+    "_confidence": "high"
+  },
+  "spacing": {
+    "base_unit_px": 8.0,
+    "declared_scale": null,
+    "all_px_values": [
+      1.5,
+      2.0,
+      2.5,
+      3.0,
+      4.0,
+      5.0,
+      6.0,
+      8.0,
+      10.0,
+      12.0,
+      14.0,
+      16.0,
+      24.0,
+      32.0,
+      48.0,
+      64.0,
+      96.0,
+      120.0
+    ],
+    "_extraction_method": "regex_base_unit + scale_enum",
+    "_confidence": "medium"
+  },
+  "layout": {
+    "_extraction_method": "kept_section_text_for_a3",
+    "_confidence": "low",
+    "_section_size": 1533
+  },
+  "radius": {
+    "role_radius_pairs": {
+      "micro": 1.5,
+      "small": 2.0,
+      "medium": 3.0,
+      "standard": 4.0,
+      "comfortable": 8.0
+    },
+    "all_px_values": [
+      1.5,
+      2.0,
+      2.5,
+      3.0,
+      4.0,
+      5.0,
+      6.0,
+      8.0,
+      10.0,
+      12.0,
+      14.0,
+      16.0,
+      24.0,
+      32.0,
+      48.0,
+      64.0,
+      96.0,
+      120.0
+    ],
+    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_confidence": "high"
+  },
+  "depth_elevation": {
+    "rgba_shadows": [
+      "rgba(0,0,0,0.02)",
+      "rgba(0,0,0,0.008)",
+      "rgba(0,0,0,0.14)",
+      "rgba(0,0,0,0.1)"
+    ],
+    "inset_shadows": [],
+    "_extraction_method": "regex_rgba_inset",
+    "_confidence": "medium"
+  },
+  "motion": {
+    "durations_ms": [
+      150.0,
+      200.0
+    ],
+    "cubic_bezier_curves": [],
+    "easing_keywords": [
+      "ease"
+    ],
+    "_extraction_method": "regex_ms + bezier + keyword",
+    "_confidence": "high"
+  },
+  "responsive": {
+    "breakpoints_named": {
+      "tablet_small": {
+        "min": 600,
+        "max": 768
+      },
+      "tablet": {
+        "min": 768,
+        "max": 900
+      },
+      "desktop_small": {
+        "min": 900,
+        "max": 1279
+      }
+    },
+    "_extraction_method": "regex_breakpoint_table",
+    "_confidence": "high"
+  },
+  "sections_present": [
+    "visual_theme",
+    "color",
+    "typography",
+    "components",
+    "layout",
+    "depth_elevation",
+    "motion",
+    "responsive",
+    "agent_guide"
+  ],
+  "sections_unhandled": [
+    "components",
+    "agent_guide"
+  ],
+  "sections_meta_for_llm": [
+    "visual_theme",
+    "agent_guide"
+  ],
+  "llm_followup_hints": [
+    "layout extraction has low confidence — recommend LLM review"
+  ]
+}

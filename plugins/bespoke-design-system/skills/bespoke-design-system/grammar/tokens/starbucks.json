@@ -1,0 +1,215 @@
+{
+  "system_name": "starbucks",
+  "source": "open-design",
+  "extracted_at": "2026-05-03T13:38:57.581295Z",
+  "dialect": "A",
+  "fingerprint_hash": "25b116f858b197796ed4962457d07c9f0484e2d3c8e9a7604928358957bd61a3",
+  "extraction_method": "programmatic_a1",
+  "tool_version": "1.0.0",
+  "color": {
+    "role_color_pairs": {
+      "starbucks_green": "#006241",
+      "green_accent": "#00754A",
+      "house_green": "#1E3932",
+      "green_uplift": "#2b5148",
+      "green_light": "#d4e9e2",
+      "gold": "#cba258",
+      "gold_light": "#dfc49d",
+      "gold_lightest": "#faf6ee",
+      "white": "#ffffff",
+      "neutral_cool": "#f9f9f9",
+      "neutral_warm": "#f2f0eb",
+      "ceramic": "#edebe9",
+      "black": "#000000",
+      "text_black": "rgba(0, 0, 0, 0.87)",
+      "text_black_soft": "rgba(0, 0, 0, 0.58)",
+      "text_white": "rgba(255, 255, 255, 1)",
+      "text_white_soft": "rgba(255, 255, 255, 0.70)",
+      "rewards_green": "#33433d",
+      "red": "#c82014",
+      "yellow": "#fbbc05",
+      "red_tint": "hsl(4 82% 43% / 5%)"
+    },
+    "all_hex_colors": [
+      "#006241",
+      "#00754A",
+      "#1E3932",
+      "#2b5148",
+      "#d4e9e2",
+      "#cba258",
+      "#dfc49d",
+      "#faf6ee",
+      "#ffffff",
+      "#f9f9f9",
+      "#f2f0eb",
+      "#edebe9",
+      "#000000",
+      "#33433d",
+      "#c82014",
+      "#fbbc05"
+    ],
+    "all_rgba_colors": [
+      "rgba(0, 0, 0, 0.87)",
+      "rgba(0, 0, 0, 0.58)",
+      "rgba(255, 255, 255, 1)",
+      "rgba(255, 255, 255, 0.70)",
+      "rgba(0,0,0,0.06)",
+      "rgba(0,0,0,0.90)",
+      "rgba(255,255,255,0.10)",
+      "rgba(255,255,255,0.90)"
+    ],
+    "all_hsla_colors": [
+      "hsl(160 32% 87% / 33%)",
+      "hsl(4 82% 43% / 5%)"
+    ],
+    "hex_count": 16,
+    "_extraction_method": "regex_role_pairs + hex_enum",
+    "_confidence": "high"
+  },
+  "typography": {
+    "families": [],
+    "all_px_values": [
+      10.0,
+      13.0,
+      14.0,
+      16.0,
+      19.0,
+      24.0,
+      33.25,
+      36.0,
+      45.0,
+      58.0,
+      80.0
+    ],
+    "declared_scale_px": null,
+    "weights_seen": [],
+    "_extraction_method": "regex_family_role_pairs + px_enum + weight_enum",
+    "_confidence": "medium"
+  },
+  "spacing": {
+    "base_unit_px": 16.0,
+    "declared_scale": null,
+    "all_px_values": [
+      4.0,
+      8.0,
+      10.0,
+      12.0,
+      16.0,
+      24.0,
+      32.0,
+      40.0,
+      48.0,
+      50.0,
+      56.0,
+      64.0
+    ],
+    "_extraction_method": "regex_base_unit + scale_enum",
+    "_confidence": "medium"
+  },
+  "layout": {
+    "_extraction_method": "kept_section_text_for_a3",
+    "_confidence": "low",
+    "_section_size": 2220
+  },
+  "radius": {
+    "role_radius_pairs": {},
+    "all_px_values": [
+      4.0,
+      8.0,
+      10.0,
+      12.0,
+      16.0,
+      24.0,
+      32.0,
+      40.0,
+      48.0,
+      50.0,
+      56.0,
+      64.0
+    ],
+    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_confidence": "low"
+  },
+  "depth_elevation": {
+    "rgba_shadows": [
+      "rgba(0,0,0,0.14)",
+      "rgba(0,0,0,0.24)",
+      "rgba(0,0,0,0.1)",
+      "rgba(0,0,0,0.06)",
+      "rgba(0,0,0,0.07)",
+      "rgba(0,0,0,0.11)"
+    ],
+    "inset_shadows": [],
+    "_extraction_method": "regex_rgba_inset",
+    "_confidence": "medium"
+  },
+  "responsive": {
+    "breakpoints_named": {
+      "mobile": {
+        "min": 480,
+        "max": 767
+      },
+      "tablet": {
+        "min": 768,
+        "max": 1023
+      },
+      "desktop": {
+        "min": 1024,
+        "max": 1439
+      }
+    },
+    "_extraction_method": "regex_breakpoint_table",
+    "_confidence": "high"
+  },
+  "dos_donts": {
+    "dos": [
+      "Use Neutral Warm (`#f2f0eb`) or Ceramic (`#edebe9`) as page canvas instead of pure white — the warm cream is the signature",
+      "Map the green tiers to their intended surface role — Starbucks Green for headings, Green Accent for CTAs, House Green for deep bands, Uplift for decorative",
+      "Keep tracking tight at `-0.01em` / `-0.16px` on SoDoSans across the whole system",
+      "Use 50px full-pill radius on every button without exception",
+      "Apply `transform: scale(0.95)` as the universal button active state",
+      "Reserve Gold for Rewards-status ceremony moments only",
+      "Use SoDoSans for nearly everything; switch to Lander Tall serif only for Rewards editorial headlines; reserve Kalam script for Careers \"cup name\" moments",
+      "Layer 2–3 low-alpha shadows instead of one heavier drop shadow for elevation",
+      "Use the Frap circular CTA as the persistent floating order entry on every shopping surface",
+      "Let the cream canvas breathe between content cards — use whitespace, not dividers"
+    ],
+    "donts": [
+      "Don't use pure white as the page canvas — the warm cream temperature is load-bearing",
+      "Don't pick \"one brand green\" — the four-green system is intentional; using only `#006241` everywhere flattens the brand",
+      "Don't use Gold as a general-purpose accent — it's a Rewards signal only",
+      "Don't square the corners on buttons — the 50px pill is universal",
+      "Don't introduce gradient fills — the system is color-block throughout",
+      "Don't weight-contrast h1 and h2 by size — the hierarchy comes from weight + color (600 Starbucks-Green vs 400 Text Black)",
+      "Don't use pure black for body text — `rgba(0,0,0,0.87)` matches the warm canvas",
+      "Don't skip the `scale(0.95)` active feedback on buttons — it's a signature micro-interaction",
+      "Don't stack single heavy shadows; always layer 2–3 low-alpha ones",
+      "Don't introduce serifs or scripts into the main shopping flow — they belong to Rewards and Careers contexts respectively"
+    ],
+    "_extraction_method": "subsection_bullet_parse",
+    "_confidence": "high"
+  },
+  "sections_present": [
+    "visual_theme",
+    "color",
+    "typography",
+    "components",
+    "layout",
+    "depth_elevation",
+    "dos_donts",
+    "responsive",
+    "agent_guide"
+  ],
+  "sections_unhandled": [
+    "components",
+    "agent_guide"
+  ],
+  "sections_meta_for_llm": [
+    "visual_theme",
+    "agent_guide"
+  ],
+  "llm_followup_hints": [
+    "layout extraction has low confidence — recommend LLM review",
+    "radius extraction has low confidence — recommend LLM review"
+  ]
+}

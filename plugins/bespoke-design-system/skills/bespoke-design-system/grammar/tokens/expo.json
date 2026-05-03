@@ -1,0 +1,214 @@
+{
+  "system_name": "expo",
+  "source": "open-design",
+  "extracted_at": "2026-05-03T13:38:57.536552Z",
+  "dialect": "A",
+  "fingerprint_hash": "a1135f6a50e65ade8d129422922d7f63df41ed2929c2507e893e2582048c2849",
+  "extraction_method": "programmatic_a1",
+  "tool_version": "1.0.0",
+  "color": {
+    "role_color_pairs": {
+      "expo_black": "#000000",
+      "near_black": "#1c2024",
+      "link_cobalt": "#0d74ce",
+      "legal_blue": "#476cff",
+      "widget_sky": "#47c2ff",
+      "preview_purple": "#8145b5",
+      "cloud_gray": "#f0f0f3",
+      "pure_white": "#ffffff",
+      "widget_dark": "#1a1a1a",
+      "banner_dark": "#171717",
+      "slate_gray": "#60646c",
+      "mid_slate": "#555860",
+      "silver": "#b0b4ba",
+      "pewter": "#999999",
+      "light_silver": "#cccccc",
+      "dark_slate": "#363a3f",
+      "charcoal": "#333333",
+      "warning_amber": "#ab6400",
+      "destructive_rose": "#eb8e90",
+      "border_lavender": "#e0e1e6",
+      "input_border": "#d9d9e0",
+      "dark_focus_ring": "#2547d0"
+    },
+    "all_hex_colors": [
+      "#000000",
+      "#1c2024",
+      "#000",
+      "#0d74ce",
+      "#476cff",
+      "#47c2ff",
+      "#8145b5",
+      "#f0f0f3",
+      "#ffffff",
+      "#1a1a1a",
+      "#171717",
+      "#60646c",
+      "#555860",
+      "#b0b4ba",
+      "#999999",
+      "#cccccc",
+      "#363a3f",
+      "#333333",
+      "#ab6400",
+      "#eb8e90",
+      "#e0e1e6",
+      "#d9d9e0",
+      "#2547d0"
+    ],
+    "all_rgba_colors": [],
+    "all_hsla_colors": [],
+    "hex_count": 23,
+    "_extraction_method": "regex_role_pairs + hex_enum",
+    "_confidence": "high"
+  },
+  "typography": {
+    "families": [
+      {
+        "role": "primary",
+        "family": "Inter"
+      },
+      {
+        "role": "mono",
+        "family": "JetBrains Mono"
+      }
+    ],
+    "all_px_values": [
+      12.0,
+      14.0,
+      16.0,
+      18.0,
+      20.0,
+      48.0,
+      64.0
+    ],
+    "declared_scale_px": null,
+    "weights_seen": [
+      400
+    ],
+    "_extraction_method": "regex_family_role_pairs + px_enum + weight_enum",
+    "_confidence": "high"
+  },
+  "spacing": {
+    "base_unit_px": 8.0,
+    "declared_scale": null,
+    "all_px_values": [
+      1.0,
+      2.0,
+      4.0,
+      6.0,
+      8.0,
+      12.0,
+      16.0,
+      24.0,
+      32.0,
+      36.0,
+      40.0,
+      48.0,
+      64.0,
+      80.0,
+      96.0,
+      144.0
+    ],
+    "_extraction_method": "regex_base_unit + scale_enum",
+    "_confidence": "medium"
+  },
+  "layout": {
+    "_extraction_method": "kept_section_text_for_a3",
+    "_confidence": "low",
+    "_section_size": 1735
+  },
+  "radius": {
+    "role_radius_pairs": {
+      "comfortably rounded": 8.0
+    },
+    "all_px_values": [
+      1.0,
+      2.0,
+      4.0,
+      6.0,
+      8.0,
+      12.0,
+      16.0,
+      24.0,
+      32.0,
+      36.0,
+      40.0,
+      48.0,
+      64.0,
+      80.0,
+      96.0,
+      144.0
+    ],
+    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_confidence": "medium"
+  },
+  "depth_elevation": {
+    "rgba_shadows": [
+      "rgba(0,0,0,0.08)",
+      "rgba(0,0,0,0.07)",
+      "rgba(0,0,0,0.1)",
+      "rgba(0,0,0,0.05)"
+    ],
+    "inset_shadows": [],
+    "_extraction_method": "regex_rgba_inset",
+    "_confidence": "medium"
+  },
+  "responsive": {
+    "breakpoints_named": {
+      "tablet": {
+        "min": 640,
+        "max": 1024
+      }
+    },
+    "_extraction_method": "regex_breakpoint_table",
+    "_confidence": "high"
+  },
+  "dos_donts": {
+    "dos": [
+      "Use Cloud Gray (`#f0f0f3`) as the page background and Pure White (`#ffffff`) for elevated cards — the two-tone light system is essential",
+      "Keep display headlines at extreme negative letter-spacing (-1.6px to -3px at 64px) for the signature compressed look",
+      "Use pill-shaped (9999px) radius for primary CTA buttons — the organic shape is core to the identity",
+      "Reserve black (`#000000`) for headlines and primary CTAs — it carries maximum authority on the light canvas",
+      "Use Slate Gray (`#60646c`) for secondary text — it's the precise balance between readable and receded",
+      "Maintain enormous vertical spacing between sections (96px+) — the gallery pacing defines the premium feel",
+      "Use product screenshots as the primary visual content — the interface stays monochrome, the products bring color",
+      "Apply Inter at the full weight range (400–900) — weight contrast IS the hierarchy"
+    ],
+    "donts": [
+      "Don't introduce decorative colors into the interface chrome — the monochromatic palette is intentional",
+      "Don't use sharp corners (border-radius < 6px) on interactive elements — the pill/rounded geometry is the signature",
+      "Don't reduce section spacing below 64px — the breathing room is the design",
+      "Don't use heavy drop shadows — depth comes from background contrast and whisper-soft shadows",
+      "Don't mix in additional typefaces — Inter handles everything from display to caption",
+      "Don't use letter-spacing wider than -0.25px on body text — extreme tracking is reserved for display only",
+      "Don't use borders heavier than 2px — containment is subtle, achieved through background color and gentle borders",
+      "Don't add gradients to the interface — visual richness comes from content, not decoration",
+      "Don't use saturated colors outside of semantic contexts — the palette is strictly grayscale + functional blue"
+    ],
+    "_extraction_method": "subsection_bullet_parse",
+    "_confidence": "high"
+  },
+  "sections_present": [
+    "visual_theme",
+    "color",
+    "typography",
+    "components",
+    "layout",
+    "depth_elevation",
+    "dos_donts",
+    "responsive",
+    "agent_guide"
+  ],
+  "sections_unhandled": [
+    "components",
+    "agent_guide"
+  ],
+  "sections_meta_for_llm": [
+    "visual_theme",
+    "agent_guide"
+  ],
+  "llm_followup_hints": [
+    "layout extraction has low confidence — recommend LLM review"
+  ]
+}

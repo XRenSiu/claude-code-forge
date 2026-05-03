@@ -1,0 +1,138 @@
+{
+  "system_name": "github",
+  "source": "open-design",
+  "extracted_at": "2026-05-03T13:38:57.541780Z",
+  "dialect": "C-6section",
+  "fingerprint_hash": "80ea326a67e80bc613a68b45c290bad3e3ddd4fd170a75393b6bf793bc5e7cc3",
+  "extraction_method": "programmatic_a1",
+  "tool_version": "1.0.0",
+  "color": {
+    "role_color_pairs": {
+      "canvas_default": "#ffffff",
+      "canvas_subtle": "#f6f8fa",
+      "canvas_inset": "#eaeef2",
+      "fg_default": "#1f2328",
+      "fg_muted": "#656d76",
+      "primer_blue": "#0969da",
+      "primer_blue_hover": "#0550ae",
+      "accent_subtle": "#ddf4ff",
+      "success_/_merge_green": "#1a7f37",
+      "success_subtle": "#dafbe1",
+      "open_green": "#1a7f37",
+      "closed_/_danger_red": "#cf222e",
+      "danger_subtle": "#ffebe9",
+      "attention_/_warning_yellow": "#9a6700",
+      "attention_subtle": "#fff8c5",
+      "done_purple": "#8250df",
+      "sponsor_pink": "#bf3989",
+      "border_default": "#d0d7de",
+      "border_muted": "#d8dee4",
+      "border_subtle": "#eaeef2",
+      "dark_canvas": "#0d1117",
+      "dark_surface": "#161b22",
+      "dark_border": "#30363d",
+      "dark_fg": "#e6edf3"
+    },
+    "all_hex_colors": [
+      "#ffffff",
+      "#f6f8fa",
+      "#eaeef2",
+      "#1f2328",
+      "#656d76",
+      "#0969da",
+      "#0550ae",
+      "#ddf4ff",
+      "#1a7f37",
+      "#dafbe1",
+      "#cf222e",
+      "#ffebe9",
+      "#9a6700",
+      "#fff8c5",
+      "#8250df",
+      "#bf3989",
+      "#d0d7de",
+      "#d8dee4",
+      "#0d1117",
+      "#161b22",
+      "#30363d",
+      "#e6edf3"
+    ],
+    "all_rgba_colors": [],
+    "all_hsla_colors": [],
+    "hex_count": 22,
+    "_extraction_method": "regex_role_pairs + hex_enum",
+    "_confidence": "high"
+  },
+  "typography": {
+    "families": [],
+    "all_px_values": [
+      12.0,
+      14.0,
+      16.0,
+      20.0,
+      24.0,
+      32.0
+    ],
+    "declared_scale_px": null,
+    "weights_seen": [],
+    "_extraction_method": "regex_family_role_pairs + px_enum + weight_enum",
+    "_confidence": "medium"
+  },
+  "spacing": {
+    "base_unit_px": 4.0,
+    "declared_scale": null,
+    "all_px_values": [
+      4.0,
+      12.0,
+      16.0
+    ],
+    "_extraction_method": "regex_base_unit + scale_enum",
+    "_confidence": "medium"
+  },
+  "layout": {
+    "_extraction_method": "kept_section_text_for_a3",
+    "_confidence": "low",
+    "_section_size": 249
+  },
+  "radius": {
+    "role_radius_pairs": {},
+    "all_px_values": [
+      4.0,
+      12.0,
+      16.0
+    ],
+    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_confidence": "low"
+  },
+  "motion": {
+    "durations_ms": [
+      80.0,
+      200.0
+    ],
+    "cubic_bezier_curves": [],
+    "easing_keywords": [
+      "ease"
+    ],
+    "_extraction_method": "regex_ms + bezier + keyword",
+    "_confidence": "high"
+  },
+  "sections_present": [
+    "visual_theme",
+    "color",
+    "typography",
+    "components",
+    "layout",
+    "motion"
+  ],
+  "sections_unhandled": [
+    "components"
+  ],
+  "sections_meta_for_llm": [
+    "visual_theme",
+    "agent_guide"
+  ],
+  "llm_followup_hints": [
+    "layout extraction has low confidence — recommend LLM review",
+    "radius extraction has low confidence — recommend LLM review"
+  ]
+}

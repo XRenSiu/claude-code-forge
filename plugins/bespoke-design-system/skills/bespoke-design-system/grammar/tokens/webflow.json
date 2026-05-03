@@ -1,0 +1,165 @@
+{
+  "system_name": "webflow",
+  "source": "open-design",
+  "extracted_at": "2026-05-03T13:38:57.595143Z",
+  "dialect": "A-variant",
+  "fingerprint_hash": "0610a10e26546550ee70e8e1804d1222aaff6b355b68eacf8cab95f395516aba",
+  "extraction_method": "programmatic_a1",
+  "tool_version": "1.0.0",
+  "color": {
+    "role_color_pairs": {
+      "near_black": "#080808",
+      "webflow_blue": "#146ef5",
+      "blue_400": "#3b89ff",
+      "blue_300": "#006acc",
+      "button_hover_blue": "#0055d4",
+      "purple": "#7a3dff",
+      "pink": "#ed52cb",
+      "green": "#00d722",
+      "orange": "#ff6b00",
+      "yellow": "#ffae13",
+      "red": "#ee1d36",
+      "gray_800": "#222222",
+      "gray_700": "#363636",
+      "gray_300": "#ababab",
+      "mid_gray": "#5a5a5a",
+      "border_gray": "#d8d8d8",
+      "border_hover": "#898989"
+    },
+    "all_hex_colors": [
+      "#080808",
+      "#146ef5",
+      "#3b89ff",
+      "#006acc",
+      "#0055d4",
+      "#7a3dff",
+      "#ed52cb",
+      "#00d722",
+      "#ff6b00",
+      "#ffae13",
+      "#ee1d36",
+      "#222222",
+      "#363636",
+      "#ababab",
+      "#5a5a5a",
+      "#d8d8d8",
+      "#898989"
+    ],
+    "all_rgba_colors": [
+      "rgba(0,0,0,0)",
+      "rgba(0,0,0,0.01)",
+      "rgba(0,0,0,0.04)",
+      "rgba(0,0,0,0.08)",
+      "rgba(0,0,0,0.09)"
+    ],
+    "all_hsla_colors": [],
+    "hex_count": 17,
+    "_extraction_method": "regex_role_pairs + hex_enum",
+    "_confidence": "high"
+  },
+  "typography": {
+    "families": [],
+    "all_px_values": [
+      10.0,
+      12.8,
+      14.0,
+      15.0,
+      16.0,
+      20.0,
+      24.0,
+      32.0,
+      56.0,
+      80.0
+    ],
+    "declared_scale_px": null,
+    "weights_seen": [],
+    "_extraction_method": "regex_family_role_pairs + px_enum + weight_enum",
+    "_confidence": "medium"
+  },
+  "spacing": {
+    "base_unit_px": 4.0,
+    "declared_scale": null,
+    "all_px_values": [
+      1.0,
+      2.0,
+      2.4,
+      3.2,
+      4.0,
+      5.6,
+      6.0,
+      7.2,
+      8.0,
+      9.6,
+      12.0,
+      16.0,
+      24.0
+    ],
+    "_extraction_method": "regex_base_unit + scale_enum",
+    "_confidence": "medium"
+  },
+  "layout": {
+    "_extraction_method": "kept_section_text_for_a3",
+    "_confidence": "low",
+    "_section_size": 187
+  },
+  "radius": {
+    "role_radius_pairs": {},
+    "all_px_values": [
+      1.0,
+      2.0,
+      2.4,
+      3.2,
+      4.0,
+      5.6,
+      6.0,
+      7.2,
+      8.0,
+      9.6,
+      12.0,
+      16.0,
+      24.0
+    ],
+    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_confidence": "low"
+  },
+  "depth_elevation": {
+    "rgba_shadows": [],
+    "inset_shadows": [],
+    "_extraction_method": "regex_rgba_inset",
+    "_confidence": "medium"
+  },
+  "responsive": null,
+  "dos_donts": {
+    "dos": [
+      "Do: Use WF Visual Sans Variable at 500–600. Blue (#146ef5) for CTAs. 4px radius. translate(6px) hover."
+    ],
+    "donts": [
+      "Don't: Round beyond 8px for functional elements. Use secondary colors on primary CTAs."
+    ],
+    "_extraction_method": "subsection_bullet_parse",
+    "_confidence": "high"
+  },
+  "sections_present": [
+    "visual_theme",
+    "color",
+    "typography",
+    "components",
+    "layout",
+    "depth_elevation",
+    "dos_donts",
+    "responsive",
+    "agent_guide"
+  ],
+  "sections_unhandled": [
+    "components",
+    "agent_guide"
+  ],
+  "sections_meta_for_llm": [
+    "visual_theme",
+    "agent_guide"
+  ],
+  "llm_followup_hints": [
+    "layout extraction has low confidence — recommend LLM review",
+    "radius extraction has low confidence — recommend LLM review"
+  ]
+}

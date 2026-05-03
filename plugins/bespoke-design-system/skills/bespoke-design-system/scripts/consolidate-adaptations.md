@@ -1,6 +1,6 @@
 # consolidate-adaptations — 沉淀高频 adaptation 为新规则
 
-> 自演化机制的具体执行子流程。把 B 阶段反复出现的 adaptation 提议为派生规则，让规则库随真实使用场景有机生长。
+> 自演化机制的具体执行子流程。把 B 阶段反复出现的 adaptation 提议为派生规则。
 
 ## 输入
 
@@ -14,151 +14,114 @@
 
 ---
 
-## Step 1 — 扫描达阈值的 adaptation
+## Step 1 — 扫描达阈值的 adaptation（程序化）
 
-读 `grammar/meta/adaptation-stats.json`。默认阈值 `occurrences ≥ 5`（用户可在调用时覆盖：`沉淀 adaptation threshold=10`）。
+```bash
+# 用 jq 或 Python 简单扫
+python3 -c "
+import json
+stats = json.load(open('grammar/meta/adaptation-stats.json'))
+threshold = stats.get('sedimentation_threshold', 5)
+candidates = [(aid, info) for aid, info in stats.get('adaptations', {}).items()
+              if info['occurrences'] >= threshold and not info.get('sedimented')]
+print(f'{len(candidates)} candidate adaptations above threshold {threshold}:')
+for aid, info in candidates:
+    print(f'  {aid} ({info[\"occurrences\"]}x)')
+"
+```
 
-筛选出所有达阈值的条目。
+阈值默认 5，可在 `grammar/meta/adaptation-stats.json` 的 `sedimentation_threshold` 字段调。
 
-## Step 2 — 分析每条 adaptation
+## Step 2 — 模式一致度分析（LLM 半自动）
 
-对每条达阈值的 adaptation：
+对每条候选 adaptation：
 
-1. 查 `source_rule_id` → 找到原规则
-2. 提取 adaptation 的"模式"：
-   - 哪个 dimension 被改？
-   - from / to 的方向是否一致？（10 次中是否都是 saturation 降低？还是混乱方向？）
-   - 触发 adaptation 的 user_kansei 集合是什么？是否有共同子集？
-3. 计算"模式一致度"：
-   - dimension 一致：≥ 80% 的 contexts 改的是同一个 dimension
-   - 方向一致：≥ 80% 的 contexts 改的方向相同（都是降 / 都是升）
-   - 触发 kansei 一致：≥ 80% 的 contexts 包含某个共同 kansei 词
+1. 程序读 `info.contexts` 数组，计算：
+   - dimension 一致度：≥ 80% contexts 改的是同一 dimension？
+   - 方向一致度：≥ 80% contexts 都是降 / 都是升？
+   - 触发 kansei 一致度：≥ 80% contexts 含某共同 kansei 词？
+2. 一致度 < 80% → 标 `noisy`，跳过（不沉淀）
+3. 一致度 ≥ 80% → 进入 Step 3
 
-**只**对"模式一致度高"的 adaptation 提议沉淀。混乱的 adaptation 是噪音，不沉淀。
+## Step 3 — LLM 起草新规则提议
 
-## Step 3 — 生成提议文档
-
-对每条值得沉淀的 adaptation，生成一份提议条目：
+按 `references/design-md-spec.md` 的 rule schema，起草派生规则：
 
 ```yaml
 proposal:
-  adaptation_id: linear-color-balance-001:saturation_decrease_for_mystical
-  occurrences: 7
-  pattern_consistency:
-    dimension_consistency: 1.0
-    direction_consistency: 1.0
-    trigger_kansei_consistency: 0.86
+  adaptation_id: <id>
+  occurrences: <N>
+  pattern_consistency: <%>
 
   proposed_new_rule:
-    rule_id: generated-color-mystical-saturation-001
+    rule_id: generated-<section>-<short-name>-<seq>
     preconditions:
-      product_type: [spiritual_saas, content_platform, lifestyle_app]
-      tone: [professional, mystical]
-      kansei: [mystical, ancient, calm]
+      product_type: <list inferred from contexts>
+      tone: <inferred>
+      kansei: <common kansei words from contexts>
     action:
-      saturation_modifier: -0.15  # 在 base rule 的 saturation 上减 0.15
-    base_rule: linear-color-balance-001
+      <dimension>_modifier: <delta>      # 派生规则通常只在 base rule 的某 dimension 上加修饰
+    base_rule: <source_rule_id>
     why:
-      establish: ancient_mystical_atmosphere
-      avoid: [tech_brand_feeling]
-      balance: structure ↔ mystery
+      establish: <一句话>
+      avoid: <list>
     emerges_from:
-      - "[generated:mystical_saas_contexts]"
-      - linear  # base rule 的 emerges_from 之一
+      - "[generated:<context_type>]"
+      - <base rule's emerges_from[0]>
     provenance: generated
-    confidence: 0.6   # 派生规则起步置信度低于原生
-
-  expected_uses:
-    - 当用户产品同时含 [mystical, ancient] kansei 时
-    - 减少需要在 B4 反复手动调适
+    confidence: 0.6
+    sedimented_from_adaptation_id: <id>
 ```
 
-## Step 4 — 给用户审核
+## Step 4 — 用户审核
 
-输出所有提议给用户：
+把所有提议给用户：
 
 ```
 🌱 沉淀提议（N 条）
 
-下列 adaptation 已达沉淀阈值（occurrences ≥ 5）且模式一致度高，建议沉淀为新规则：
+以下 adaptation 已达沉淀阈值（occurrences ≥ 5）且模式一致度高：
 
-1. linear-color-balance-001:saturation_decrease_for_mystical (7 次)
-   → 提议规则：generated-color-mystical-saturation-001
-   → 影响：未来 [mystical, ancient] 类产品的 B4 阶段可直接用，无需重复调适
+1. <adaptation_id> (N 次)
+   → 提议规则: generated-<...>-001
+   → 影响: 未来 [kansei] 类产品的 B4 阶段可直接用，无需重复调适
+
    接受？(y/n/modify)
 
 2. ...
 ```
 
-逐条让用户决定：
+## Step 5 — 写入 _generated.yaml + 元数据
 
-- `y` → 沉淀
-- `n` → 跳过（不沉淀，但保留 adaptation-stats 中的统计）
-- `modify` → 用户调整提议规则的某些字段（比如把 confidence 改 0.7）
+接受的规则追加到 `grammar/rules/_generated.yaml`，加 `sedimented_*` 元数据。
 
-## Step 5 — 写入 _generated.yaml
+## Step 6 — 关系图重建（程序化）
 
-接受沉淀的规则追加到 `grammar/rules/_generated.yaml`：
-
-```yaml
-rules:
-  - rule_id: generated-color-mystical-saturation-001
-    preconditions: {...}
-    action: {...}
-    why: {...}
-    emerges_from: [...]
-    provenance: generated
-    confidence: 0.6
-    base_rule: linear-color-balance-001
-    sedimented_from_adaptation_id: linear-color-balance-001:saturation_decrease_for_mystical
-    sedimented_at: <ISO 8601>
-    sedimented_after_occurrences: 7
-  ...
+```bash
+python3 tools/rebuild_graph.py
 ```
 
-`sedimented_*` 元数据让派生规则可独立追溯/回滚——如果未来发现质量问题，可以按 `sedimented_at` 时间窗或 `base_rule` 反向定位。
+派生规则自动获得 depends_on（指向 base_rule）+ 继承 base_rule 的 co_occurs_with / conflicts_with。
 
-## Step 6 — 关系图更新
+## Step 7 — 标记 stats + bump 版本
 
-新派生规则需要加入关系图。**不**全量重建（成本高），而是：
+```bash
+# 标 sedimented (Python)
+python3 -c "
+import json
+stats = json.load(open('grammar/meta/adaptation-stats.json'))
+for aid in [<accepted_ids>]:
+    stats['adaptations'][aid]['sedimented'] = True
+    stats['adaptations'][aid]['sedimented_into_rule_id'] = '<new_rule_id>'
+json.dump(stats, open('grammar/meta/adaptation-stats.json','w'), indent=2)
+"
 
-1. depends_on：新规则自动 `depends_on: [base_rule]`，因为 action 是 base_rule 的修饰
-2. co_occurs_with：跟 base_rule 的所有 co_occurs_with 自动继承一份（频率 = base 的 0.8 倍，作为初始估计）
-3. conflicts_with：跟 base_rule 的 conflicts_with 自动继承
-4. constrains：base_rule 反向加 `constrains: [generated_rule]`
-
-**重要**：用户每接受 ≥ 5 条沉淀 → 建议跑一次 `scripts/rebuild-graph.md` 让派生规则的关系收敛。
-
-## Step 7 — 更新元数据
-
-- `grammar/meta/version.json`：rules_version minor +0.1.0（新增规则）
-- `grammar/meta/adaptation-stats.json`：被沉淀的 adaptation 标 `sedimented: true`，不再累计 occurrences（避免重复沉淀）
-
-## Step 8 — 报告
-
-```
-✅ Sedimentation complete
-   Proposals reviewed: NN
-   Accepted: NN
-   Skipped: NN
-   Modified before accepting: NN
-
-   New rules added to _generated.yaml: NN
-   Graph relations created: NN
-
-   Rules library version: x.y.z → x.y+1.0
-
-   💡 Recommend running "重建关系图" if NN+ rules were added.
+# bump rules_version (manual)
 ```
 
----
+## 派生规则的质量保护
 
-## 沉淀规则的质量保护
-
-派生规则比原生规则危险——它们没有经过设计师的真实验证，只是统计模式。所以：
-
-- **confidence 起步 0.6**，远低于原生规则的 0.85+
-- **provenance: generated** 让 B4 阶段在用到派生规则时优先级低于原生
-- **若派生规则在后续 P0 闸门反复被驳回**（rationale-judge 标 blocker 多次涉及该规则），应自动降级或撤销——这是 v1.x 的扩展功能
-
-每次沉淀都让用户审核，**不**自动沉淀。这是有意的"人在环上"机制。
+- **confidence 起步 0.6**（远低于原生规则的 0.85+）
+- **provenance: generated** 让 B4 阶段优先级低于原生
+- **若反复被 P0 闸门驳回** → 自动降级或撤销（v1.x 扩展）
+- **每次沉淀都让用户审核**——不自动沉淀，"人在环上"机制

@@ -1,0 +1,154 @@
+{
+  "system_name": "airtable",
+  "source": "open-design",
+  "extracted_at": "2026-05-03T13:38:57.513643Z",
+  "dialect": "A-variant",
+  "fingerprint_hash": "2bf4a6f853c23c8cf04f890654ad3cebec849a98de1655425b65e3ad25b69476",
+  "extraction_method": "programmatic_a1",
+  "tool_version": "1.0.0",
+  "color": {
+    "role_color_pairs": {
+      "deep_navy": "#181d26",
+      "airtable_blue": "#1b61c9",
+      "white": "#ffffff",
+      "spotlight": "rgba(249,252,255,0.97)",
+      "success_green": "#006400",
+      "weak_text": "rgba(4,14,32,0.69)",
+      "secondary_active": "rgba(7,12,20,0.82)",
+      "dark_gray": "#333333",
+      "mid_blue": "#254fad",
+      "border": "#e0e2e6",
+      "light_surface": "#f8fafc",
+      "blue-tinted": "rgba(0,0,0,0.32)",
+      "soft": "rgba(15,48,106,0.05)"
+    },
+    "all_hex_colors": [
+      "#181d26",
+      "#1b61c9",
+      "#ffffff",
+      "#006400",
+      "#333333",
+      "#254fad",
+      "#e0e2e6",
+      "#f8fafc"
+    ],
+    "all_rgba_colors": [
+      "rgba(249,252,255,0.97)",
+      "rgba(4,14,32,0.69)",
+      "rgba(7,12,20,0.82)",
+      "rgba(0,0,0,0.32)",
+      "rgba(0,0,0,0.08)",
+      "rgba(45,127,249,0.28)",
+      "rgba(0,0,0,0.06)",
+      "rgba(15,48,106,0.05)"
+    ],
+    "all_hsla_colors": [],
+    "hex_count": 8,
+    "_extraction_method": "regex_role_pairs + hex_enum",
+    "_confidence": "high"
+  },
+  "typography": {
+    "families": [
+      {
+        "role": "primary",
+        "family": "Haas"
+      },
+      {
+        "role": "display",
+        "family": "Haas Groot Disp"
+      }
+    ],
+    "all_px_values": [
+      14.0,
+      16.0,
+      18.0,
+      20.0,
+      24.0,
+      32.0,
+      40.0,
+      48.0
+    ],
+    "declared_scale_px": null,
+    "weights_seen": [],
+    "_extraction_method": "regex_family_role_pairs + px_enum + weight_enum",
+    "_confidence": "high"
+  },
+  "spacing": {
+    "base_unit_px": 48.0,
+    "declared_scale": null,
+    "all_px_values": [
+      2.0,
+      8.0,
+      12.0,
+      16.0,
+      24.0,
+      32.0,
+      48.0
+    ],
+    "_extraction_method": "regex_base_unit + scale_enum",
+    "_confidence": "medium"
+  },
+  "layout": {
+    "_extraction_method": "kept_section_text_for_a3",
+    "_confidence": "low",
+    "_section_size": 126
+  },
+  "radius": {
+    "role_radius_pairs": {},
+    "all_px_values": [
+      2.0,
+      8.0,
+      12.0,
+      16.0,
+      24.0,
+      32.0,
+      48.0
+    ],
+    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_confidence": "low"
+  },
+  "depth_elevation": {
+    "rgba_shadows": [
+      "rgba(15,48,106,0.05)"
+    ],
+    "inset_shadows": [],
+    "_extraction_method": "regex_rgba_inset",
+    "_confidence": "medium"
+  },
+  "responsive": {
+    "breakpoints_named": {},
+    "_extraction_method": "regex_breakpoint_table",
+    "_confidence": "low"
+  },
+  "dos_donts": {
+    "dos": [],
+    "donts": [],
+    "_extraction_method": "subsection_bullet_parse",
+    "_confidence": "low"
+  },
+  "sections_present": [
+    "visual_theme",
+    "color",
+    "typography",
+    "components",
+    "layout",
+    "depth_elevation",
+    "dos_donts",
+    "responsive",
+    "agent_guide"
+  ],
+  "sections_unhandled": [
+    "components",
+    "agent_guide"
+  ],
+  "sections_meta_for_llm": [
+    "visual_theme",
+    "agent_guide"
+  ],
+  "llm_followup_hints": [
+    "layout extraction has low confidence — recommend LLM review",
+    "radius extraction has low confidence — recommend LLM review",
+    "responsive extraction has low confidence — recommend LLM review",
+    "dos_donts extraction has low confidence — recommend LLM review"
+  ]
+}

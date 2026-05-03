@@ -1,0 +1,241 @@
+{
+  "system_name": "clay",
+  "source": "open-design",
+  "extracted_at": "2026-05-03T13:38:57.523946Z",
+  "dialect": "A",
+  "fingerprint_hash": "885f8be9e2d5c61b4cd024c9d5c308a791a0d4b0d464a2015094b67884890375",
+  "extraction_method": "programmatic_a1",
+  "tool_version": "1.0.0",
+  "color": {
+    "role_color_pairs": {
+      "clay_black": "#000000",
+      "pure_white": "#ffffff",
+      "warm_cream": "#faf9f7",
+      "matcha_300": "#84e7a5",
+      "matcha_600": "#078a52",
+      "matcha_800": "#02492a",
+      "slushie_500": "#3bd3fd",
+      "slushie_800": "#0089ad",
+      "lemon_400": "#f8cc65",
+      "lemon_500": "#fbbd41",
+      "lemon_700": "#d08a11",
+      "lemon_800": "#9d6a09",
+      "ube_300": "#c1b0ff",
+      "ube_800": "#43089f",
+      "ube_900": "#32037d",
+      "pomegranate_400": "#fc7981",
+      "blueberry_800": "#01418d",
+      "warm_silver": "#9f9b93",
+      "warm_charcoal": "#55534e",
+      "dark_charcoal": "#333333",
+      "oat_border": "#dad4c8",
+      "oat_light": "#eee9df",
+      "cool_border": "#e6e8ec",
+      "dark_border": "#525a69",
+      "light_frost": "#eff1f3",
+      "badge_blue_bg": "#f0f8ff",
+      "badge_blue_text": "#3859f9",
+      "focus_ring": "rgb(20, 110, 245)",
+      "clay_shadow": "rgba(0,0,0,0.1)",
+      "hard_offset": "rgb(0,0,0)"
+    },
+    "all_hex_colors": [
+      "#000000",
+      "#ffffff",
+      "#faf9f7",
+      "#84e7a5",
+      "#078a52",
+      "#02492a",
+      "#3bd3fd",
+      "#0089ad",
+      "#f8cc65",
+      "#fbbd41",
+      "#d08a11",
+      "#9d6a09",
+      "#c1b0ff",
+      "#43089f",
+      "#32037d",
+      "#fc7981",
+      "#01418d",
+      "#9f9b93",
+      "#55534e",
+      "#333333",
+      "#dad4c8",
+      "#eee9df",
+      "#e6e8ec",
+      "#525a69",
+      "#eff1f3",
+      "#f0f8ff",
+      "#3859f9"
+    ],
+    "all_rgba_colors": [
+      "rgb(20, 110, 245)",
+      "rgba(0,0,0,0.1)",
+      "rgba(0,0,0,0.04)",
+      "rgba(0,0,0,0.05)",
+      "rgb(0,0,0)"
+    ],
+    "all_hsla_colors": [],
+    "hex_count": 27,
+    "_extraction_method": "regex_role_pairs + hex_enum",
+    "_confidence": "high"
+  },
+  "typography": {
+    "families": [
+      {
+        "role": "primary",
+        "family": "Roobert"
+      },
+      {
+        "role": "mono",
+        "family": "Space Mono"
+      }
+    ],
+    "all_px_values": [
+      9.6,
+      12.0,
+      12.8,
+      14.0,
+      15.0,
+      16.0,
+      18.0,
+      20.0,
+      24.0,
+      32.0,
+      44.0,
+      60.0,
+      80.0
+    ],
+    "declared_scale_px": null,
+    "weights_seen": [
+      600
+    ],
+    "_extraction_method": "regex_family_role_pairs + px_enum + weight_enum",
+    "_confidence": "high"
+  },
+  "spacing": {
+    "base_unit_px": 8.0,
+    "declared_scale": null,
+    "all_px_values": [
+      1.0,
+      2.0,
+      4.0,
+      6.4,
+      8.0,
+      11.0,
+      12.0,
+      12.8,
+      16.0,
+      18.0,
+      20.0,
+      24.0,
+      40.0
+    ],
+    "_extraction_method": "regex_base_unit + scale_enum",
+    "_confidence": "medium"
+  },
+  "layout": {
+    "_extraction_method": "kept_section_text_for_a3",
+    "_confidence": "low",
+    "_section_size": 1198
+  },
+  "radius": {
+    "role_radius_pairs": {
+      "standard": 8.0,
+      "card": 12.0,
+      "pill": 1584.0
+    },
+    "all_px_values": [
+      1.0,
+      2.0,
+      4.0,
+      6.4,
+      8.0,
+      11.0,
+      12.0,
+      12.8,
+      16.0,
+      18.0,
+      20.0,
+      24.0,
+      40.0
+    ],
+    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_confidence": "high"
+  },
+  "depth_elevation": {
+    "rgba_shadows": [
+      "rgba(0,0,0,0.1)",
+      "rgba(0,0,0,0.04)",
+      "rgba(0,0,0,0.05)",
+      "rgb(0,0,0)",
+      "rgb(20, 110, 245)"
+    ],
+    "inset_shadows": [
+      "inset highlight |",
+      "inset highlight (`0px -1px 1px inset`)"
+    ],
+    "_extraction_method": "regex_rgba_inset",
+    "_confidence": "medium"
+  },
+  "responsive": {
+    "breakpoints_named": {
+      "mobile": {
+        "min": 479,
+        "max": 767
+      },
+      "tablet": {
+        "min": 768,
+        "max": 991
+      }
+    },
+    "_extraction_method": "regex_breakpoint_table",
+    "_confidence": "high"
+  },
+  "dos_donts": {
+    "dos": [
+      "Use warm cream (`#faf9f7`) as the page background — the warmth is the identity",
+      "Apply all 5 OpenType stylistic sets on Roobert headings: `\"ss01\", \"ss03\", \"ss10\", \"ss11\", \"ss12\"`",
+      "Use the named swatch palette (Matcha, Slushie, Lemon, Ube, Pomegranate, Blueberry) for section backgrounds",
+      "Apply the playful hover animation: `rotateZ(-8deg)`, `translateY(-80%)`, hard shadow `-7px 7px`",
+      "Use warm oat borders (`#dad4c8`) — not neutral gray",
+      "Mix solid and dashed borders for visual variety",
+      "Use generous radius: 24px for cards, 40px for sections",
+      "Use weight 600 exclusively for headings, 500 for UI, 400 for body"
+    ],
+    "donts": [
+      "Don't use cool gray backgrounds — the warm cream (`#faf9f7`) is non-negotiable",
+      "Don't use neutral gray borders (`#ccc`, `#ddd`) — always use the warm oat tones",
+      "Don't mix more than 2 swatch colors in the same section",
+      "Don't skip the OpenType stylistic sets — they define Roobert's character",
+      "Don't use subtle hover effects — the rotation + hard shadow is the signature interaction",
+      "Don't use small border radius (<12px) on feature cards — the generous rounding is structural",
+      "Don't use standard shadows (blur-based) — Clay uses hard offset and multi-layer inset",
+      "Don't forget the uppercase labels with 1.08px tracking — they're the wayfinding system"
+    ],
+    "_extraction_method": "subsection_bullet_parse",
+    "_confidence": "high"
+  },
+  "sections_present": [
+    "visual_theme",
+    "color",
+    "typography",
+    "components",
+    "layout",
+    "depth_elevation",
+    "dos_donts",
+    "responsive",
+    "agent_guide"
+  ],
+  "sections_unhandled": [
+    "components",
+    "agent_guide"
+  ],
+  "sections_meta_for_llm": [
+    "visual_theme",
+    "agent_guide"
+  ],
+  "llm_followup_hints": [
+    "layout extraction has low confidence — recommend LLM review"
+  ]
+}

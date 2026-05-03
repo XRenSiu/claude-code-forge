@@ -1,0 +1,276 @@
+{
+  "system_name": "meta",
+  "source": "open-design",
+  "extracted_at": "2026-05-03T13:38:57.552753Z",
+  "dialect": "A",
+  "fingerprint_hash": "1d981f34450ed843495c5d1680b7c8e4ff13a48851c17001a376941c6b45a547",
+  "extraction_method": "programmatic_a1",
+  "tool_version": "1.0.0",
+  "color": {
+    "role_color_pairs": {
+      "meta_blue": "#0064E0",
+      "meta_blue_hover": "#0143B5",
+      "meta_blue_pressed": "#004BB9",
+      "meta_blue_light": "#47A5FA",
+      "facebook_blue": "#1877F2",
+      "ray-ban_red": "#D6311F",
+      "oculus_purple": "#A121CE",
+      "work_purple": "#6441D2",
+      "portal_blue": "#1B365D",
+      "portal_hero_blue": "#C8E4E8",
+      "portal_light_blue": "#ADD4E0",
+      "white": "#FFFFFF",
+      "soft_gray": "#F1F4F7",
+      "warm_gray": "#F7F8FA",
+      "web_wash": "#F0F2F5",
+      "linen": "#F2F0E6",
+      "baby_blue": "#E8F3FF",
+      "near_black": "#1C1E21",
+      "oculus_light": "#181A1B",
+      "oculus_dark": "#000000",
+      "overlay": "rgba(0, 0, 0, 0.6)",
+      "primary_text": "#050505",
+      "dark_charcoal": "#1C2B33",
+      "icon_secondary": "#465A69",
+      "secondary_text": "#65676B",
+      "slate_gray": "#5D6C7B",
+      "section_header": "#4B4C4F",
+      "button_text_gray": "#444950",
+      "disabled_text": "#BCC0C4",
+      "cta_disabled_text": "#8595A4",
+      "divider": "#CED0D4",
+      "divider_gray": "#DEE3E9",
+      "cta_gray_border": "#CBD2D9",
+      "dark_gray_border": "#909396",
+      "success_green": "#31A24C",
+      "store_success": "#007D1E",
+      "error_red": "#E41E3F",
+      "store_error": "#C80A28",
+      "warning_amber": "#F7B928",
+      "positive_bg": "rgba(36, 228, 0, 0.15)",
+      "error_bg": "rgba(255, 123, 145, 0.15)",
+      "warning_bg": "rgba(255, 226, 0, 0.15)",
+      "info_bg": "rgba(0, 145, 255, 0.15)",
+      "cherry": "#F3425F",
+      "grape": "#9360F7",
+      "lime": "#45BD62",
+      "seafoam": "#54C7EC",
+      "teal": "#2ABBA7",
+      "tomato": "#FB724B",
+      "pink": "#FF66BF"
+    },
+    "all_hex_colors": [
+      "#0064E0",
+      "#0143B5",
+      "#004BB9",
+      "#47A5FA",
+      "#1877F2",
+      "#D6311F",
+      "#A121CE",
+      "#6441D2",
+      "#1B365D",
+      "#C8E4E8",
+      "#ADD4E0",
+      "#FFFFFF",
+      "#F1F4F7",
+      "#F7F8FA",
+      "#F0F2F5",
+      "#F2F0E6",
+      "#E8F3FF",
+      "#1C1E21",
+      "#181A1B",
+      "#000000",
+      "#050505",
+      "#1C2B33",
+      "#465A69",
+      "#65676B",
+      "#5D6C7B",
+      "#4B4C4F",
+      "#444950",
+      "#BCC0C4",
+      "#8595A4",
+      "#CED0D4",
+      "#DEE3E9",
+      "#CBD2D9",
+      "#909396",
+      "#31A24C",
+      "#007D1E",
+      "#E41E3F",
+      "#C80A28",
+      "#F7B928",
+      "#F3425F",
+      "#9360F7",
+      "#45BD62",
+      "#54C7EC",
+      "#2ABBA7",
+      "#FB724B",
+      "#FF66BF"
+    ],
+    "all_rgba_colors": [
+      "rgba(0, 0, 0, 0.6)",
+      "rgba(36, 228, 0, 0.15)",
+      "rgba(255, 123, 145, 0.15)",
+      "rgba(255, 226, 0, 0.15)",
+      "rgba(0, 145, 255, 0.15)",
+      "rgba(0,0,0,0)",
+      "rgba(0,0,0,0.6)"
+    ],
+    "all_hsla_colors": [],
+    "hex_count": 45,
+    "_extraction_method": "regex_role_pairs + hex_enum",
+    "_confidence": "high"
+  },
+  "typography": {
+    "families": [],
+    "all_px_values": [
+      12.0,
+      14.0,
+      16.0,
+      18.0,
+      28.0,
+      36.0,
+      48.0,
+      64.0
+    ],
+    "declared_scale_px": null,
+    "weights_seen": [
+      300,
+      500
+    ],
+    "_extraction_method": "regex_family_role_pairs + px_enum + weight_enum",
+    "_confidence": "medium"
+  },
+  "spacing": {
+    "base_unit_px": 8.0,
+    "declared_scale": null,
+    "all_px_values": [
+      1.0,
+      4.0,
+      8.0,
+      10.0,
+      12.0,
+      14.0,
+      16.0,
+      18.0,
+      20.0,
+      24.0,
+      32.0,
+      40.0,
+      48.0,
+      64.0,
+      80.0,
+      100.0
+    ],
+    "_extraction_method": "regex_base_unit + scale_enum",
+    "_confidence": "medium"
+  },
+  "layout": {
+    "_extraction_method": "kept_section_text_for_a3",
+    "_confidence": "low",
+    "_section_size": 1784
+  },
+  "radius": {
+    "role_radius_pairs": {},
+    "all_px_values": [
+      1.0,
+      4.0,
+      8.0,
+      10.0,
+      12.0,
+      14.0,
+      16.0,
+      18.0,
+      20.0,
+      24.0,
+      32.0,
+      40.0,
+      48.0,
+      64.0,
+      80.0,
+      100.0
+    ],
+    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_confidence": "low"
+  },
+  "depth_elevation": {
+    "rgba_shadows": [
+      "rgba(0,0,0,0.1)",
+      "rgba(0,0,0,0.2)",
+      "rgba(0,0,0,0.6)",
+      "rgba(255,255,255,0.5)",
+      "rgba(241, 244, 247, 0.8)",
+      "rgba(0,0,0,0)"
+    ],
+    "inset_shadows": [
+      "Inset | `rgba(255",
+      "inset | Inner glow on glass-effect surfaces |"
+    ],
+    "_extraction_method": "regex_rgba_inset",
+    "_confidence": "medium"
+  },
+  "responsive": {
+    "breakpoints_named": {
+      "tablet": {
+        "min": 768,
+        "max": 1024
+      },
+      "desktop": {
+        "min": 1024,
+        "max": 1440
+      }
+    },
+    "_extraction_method": "regex_breakpoint_table",
+    "_confidence": "high"
+  },
+  "dos_donts": {
+    "dos": [
+      "Use pill-shaped (100px radius) buttons for all primary and secondary CTAs",
+      "Let product photography dominate — make images the visual hero of every section",
+      "Alternate between light and dark surface sections to create visual rhythm",
+      "Use Optimistic VF with ss01 and ss02 features for all display text",
+      "Keep body copy brief and scannable — this is retail, not editorial",
+      "Use the dual-shadow pattern (ambient + direct) when elevation is needed",
+      "Apply Meta Blue (`#0064E0`) exclusively for actionable elements",
+      "Use generous whitespace (64-80px section padding) to convey premium feel",
+      "Apply gradient overlays on dark photography when placing text over images",
+      "Use the semantic color tokens (success, error, warning) consistently for status communication"
+    ],
+    "donts": [
+      "Don't use sharp corners (< 8px radius) — the Meta Store is all smooth curves",
+      "Don't mix product-specific accents (Ray-Ban Red with Quest Purple in the same section)",
+      "Don't add decorative borders or ornamental dividers — dividers are functional only",
+      "Don't place important text directly on photography without a gradient scrim",
+      "Don't use weight 300 for anything smaller than 28px — it becomes too thin",
+      "Don't use Facebook Blue (`#1877F2`) as a primary CTA color — use Meta Blue (`#0064E0`) instead",
+      "Don't crowd product images — maintain generous padding around all photography",
+      "Don't use more than 2 levels of text hierarchy in a single card",
+      "Don't add drop shadows to cards in dark sections — rely on border and color separation",
+      "Don't use long paragraphs — limit to 2-3 lines of body copy per block"
+    ],
+    "_extraction_method": "subsection_bullet_parse",
+    "_confidence": "high"
+  },
+  "sections_present": [
+    "visual_theme",
+    "color",
+    "typography",
+    "components",
+    "layout",
+    "depth_elevation",
+    "dos_donts",
+    "responsive",
+    "agent_guide"
+  ],
+  "sections_unhandled": [
+    "components",
+    "agent_guide"
+  ],
+  "sections_meta_for_llm": [
+    "visual_theme",
+    "agent_guide"
+  ],
+  "llm_followup_hints": [
+    "layout extraction has low confidence — recommend LLM review",
+    "radius extraction has low confidence — recommend LLM review"
+  ]
+}

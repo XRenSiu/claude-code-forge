@@ -1,0 +1,226 @@
+{
+  "system_name": "resend",
+  "source": "open-design",
+  "extracted_at": "2026-05-03T13:38:57.571944Z",
+  "dialect": "A",
+  "fingerprint_hash": "c6c22baba6e185d30e8da94dac45ebf5d1ae0f21ec88f5e1b3ceeacc14bfe00e",
+  "extraction_method": "programmatic_a1",
+  "tool_version": "1.0.0",
+  "color": {
+    "role_color_pairs": {
+      "void_black": "#000000",
+      "near_white": "#f0f0f0",
+      "pure_white": "#ffffff",
+      "orange_4": "#ff5900",
+      "orange_10": "#ff801f",
+      "orange_11": "#ffa057",
+      "green_3": "#22ff99",
+      "green_4": "#11ff99",
+      "blue_4": "#0075ff",
+      "blue_5": "#0081fd",
+      "blue_10": "#3b9eff",
+      "yellow_9": "#ffc53d",
+      "red_5": "#ff2047",
+      "silver": "#a1a4a5",
+      "dark_gray": "#464a4d",
+      "mid_gray": "#5c5c5c",
+      "medium_gray": "#494949",
+      "light_gray": "#f8f8f8",
+      "border_gray": "#eaeaea",
+      "edge_gray": "#ececec",
+      "mist_gray": "#dedfdf",
+      "soft_gray": "#e5e6e6",
+      "frost_primary": "#fcfdff",
+      "white_hover": "rgba(255, 255, 255, 0.28)",
+      "frost_border": "rgba(214, 235, 253, 0.19)",
+      "frost_border_alt": "rgba(217, 237, 254, 0.145)",
+      "ring_shadow": "rgba(176, 199, 217, 0.145)",
+      "focus_ring": "rgb(0, 0, 0)",
+      "subtle_shadow": "rgba(0, 0, 0, 0.1)"
+    },
+    "all_hex_colors": [
+      "#000000",
+      "#f0f0f0",
+      "#ffffff",
+      "#ff5900",
+      "#ff801f",
+      "#ffa057",
+      "#22ff99",
+      "#11ff99",
+      "#0075ff",
+      "#0081fd",
+      "#3b9eff",
+      "#ffc53d",
+      "#ff2047",
+      "#a1a4a5",
+      "#464a4d",
+      "#5c5c5c",
+      "#494949",
+      "#f8f8f8",
+      "#eaeaea",
+      "#ececec",
+      "#dedfdf",
+      "#e5e6e6",
+      "#fcfdff"
+    ],
+    "all_rgba_colors": [
+      "rgba(255, 255, 255, 0.28)",
+      "rgba(214, 235, 253, 0.19)",
+      "rgba(217, 237, 254, 0.145)",
+      "rgba(176, 199, 217, 0.145)",
+      "rgb(0, 0, 0)",
+      "rgba(0, 0, 0, 0.1)"
+    ],
+    "all_hsla_colors": [],
+    "hex_count": 23,
+    "_extraction_method": "regex_role_pairs + hex_enum",
+    "_confidence": "high"
+  },
+  "typography": {
+    "families": [],
+    "all_px_values": [
+      12.0,
+      14.0,
+      16.0,
+      18.0,
+      20.0,
+      24.0,
+      56.0,
+      76.8,
+      96.0
+    ],
+    "declared_scale_px": null,
+    "weights_seen": [],
+    "_extraction_method": "regex_family_role_pairs + px_enum + weight_enum",
+    "_confidence": "medium"
+  },
+  "spacing": {
+    "base_unit_px": 8.0,
+    "declared_scale": null,
+    "all_px_values": [
+      1.0,
+      2.0,
+      4.0,
+      5.0,
+      6.0,
+      7.0,
+      8.0,
+      10.0,
+      12.0,
+      16.0,
+      20.0,
+      24.0,
+      30.0,
+      32.0,
+      40.0,
+      80.0,
+      96.0,
+      120.0
+    ],
+    "_extraction_method": "regex_base_unit + scale_enum",
+    "_confidence": "medium"
+  },
+  "layout": {
+    "_extraction_method": "kept_section_text_for_a3",
+    "_confidence": "low",
+    "_section_size": 1334
+  },
+  "radius": {
+    "role_radius_pairs": {
+      "standard": 8.0,
+      "comfortable": 10.0,
+      "card": 12.0,
+      "large": 16.0,
+      "pill": 9999.0
+    },
+    "all_px_values": [
+      1.0,
+      2.0,
+      4.0,
+      5.0,
+      6.0,
+      7.0,
+      8.0,
+      10.0,
+      12.0,
+      16.0,
+      20.0,
+      24.0,
+      30.0,
+      32.0,
+      40.0,
+      80.0,
+      96.0,
+      120.0
+    ],
+    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_confidence": "high"
+  },
+  "depth_elevation": {
+    "rgba_shadows": [
+      "rgba(176, 199, 217, 0.145)",
+      "rgba(214, 235, 253, 0.19)",
+      "rgba(0, 0, 0, 0.1)",
+      "rgb(0, 0, 0)"
+    ],
+    "inset_shadows": [],
+    "_extraction_method": "regex_rgba_inset",
+    "_confidence": "medium"
+  },
+  "responsive": {
+    "breakpoints_named": {
+      "mobile": {
+        "min": 480,
+        "max": 600
+      }
+    },
+    "_extraction_method": "regex_breakpoint_table",
+    "_confidence": "high"
+  },
+  "dos_donts": {
+    "dos": [
+      "Use pure black (`#000000`) as the page background — the void is the canvas",
+      "Apply frost borders (`rgba(214, 235, 253, 0.19)`) for all structural lines — they're the blue-tinted signature",
+      "Use Domaine Display ONLY for hero headings (96px), ABC Favorit for section headings, Inter for everything else",
+      "Enable OpenType `\"ss01\"`, `\"ss04\"`, `\"ss11\"` on Domaine and ABC Favorit text",
+      "Apply pill radius (9999px) to primary CTAs and tags",
+      "Use the multi-color accent scale (orange/green/blue/yellow/red) with opacity variants for context-specific highlighting",
+      "Keep shadows at ring level (`0px 0px 0px 1px`) — on black, traditional shadows don't work",
+      "Use +0.35px letter-spacing on ABC Favorit nav links — the only positive tracking"
+    ],
+    "donts": [
+      "Don't lighten the background above `#000000` — the pure black void is non-negotiable",
+      "Don't use neutral gray borders — all borders must have the frost blue tint",
+      "Don't apply Domaine Display to body text — it's a display-only serif",
+      "Don't mix accent colors in the same component — each feature gets one accent color",
+      "Don't use box-shadow for elevation on the dark background — use frost borders instead",
+      "Don't skip the OpenType stylistic sets — they define the typographic character",
+      "Don't use negative letter-spacing on nav links — ABC Favorit nav uses positive +0.35px",
+      "Don't make buttons opaque on dark — transparency with frost border is the pattern"
+    ],
+    "_extraction_method": "subsection_bullet_parse",
+    "_confidence": "high"
+  },
+  "sections_present": [
+    "visual_theme",
+    "color",
+    "typography",
+    "components",
+    "layout",
+    "depth_elevation",
+    "dos_donts",
+    "responsive",
+    "agent_guide"
+  ],
+  "sections_unhandled": [
+    "components",
+    "agent_guide"
+  ],
+  "sections_meta_for_llm": [
+    "visual_theme",
+    "agent_guide"
+  ],
+  "llm_followup_hints": [
+    "layout extraction has low confidence — recommend LLM review"
+  ]
+}

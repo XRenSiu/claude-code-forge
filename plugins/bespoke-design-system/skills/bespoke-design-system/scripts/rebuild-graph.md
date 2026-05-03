@@ -1,119 +1,86 @@
 # rebuild-graph — 重建规则关系图
 
-> 用于已有规则库的全量重算。每加入一批新素材后建议跑一次，让 `co_occurs_with` 频率收敛到真实分布。
+> 程序化全量重算 `grammar/graph/rules_graph.json`。每批新规则加入后建议跑一次。
 
-## 输入
+## 触发
 
-`grammar/rules/*.yaml`（含 `_generated.yaml`）
+用户说："重建关系图" / "rebuild graph" / "刚加了几套，重新跑一下图"。
 
-## 输出
+也由 `import-from-collection.md` 在批量导入完成后自动建议。
 
-`grammar/graph/rules_graph.json` 全量重写
+## 用法
 
----
-
-## Step 1 — 加载所有规则
-
-读取 `grammar/rules/` 下所有 .yaml，构建规则字典 `rules: {rule_id → rule_object}`。
-
-读取 `grammar/meta/source-registry.json` 获取每个 system 的 rule_ids 列表。
-
-## Step 2 — 重算 depends_on / constrains
-
-对每条规则：
-
-1. 按 §extract-grammar.md A4 的"depends_on"逻辑重新扫描，但**不依赖之前的 graph 数据**——从 0 算
-2. 标准依赖关系（color → 其它、typography → spacing、components → 全部）按规则的 `section` 字段自动连边
-3. 自定义依赖（规则的 action 显式引用其它规则）按 action 文本扫描
-
-constrains = depends_on 的反向边。
-
-## Step 3 — 重算 co_occurs_with（带频率）
-
-对每对规则 `(A, B)`：
-
-```
-systems_with_A = set(s for s in source_systems if A in rules_of(s))
-systems_with_B = set(s for s in source_systems if B in rules_of(s))
-both = systems_with_A & systems_with_B
-either = systems_with_A | systems_with_B
-
-if |either| > 0:
-    frequency = |both| / |either|
-else:
-    frequency = 0
+```bash
+python3 tools/rebuild_graph.py
 ```
 
-阈值：`frequency >= 0.3` 才记入图（避免噪音）。
+或 dry-run 看影响（不写文件）：
 
-**优化**：实际上"语义相似"的规则才有共现意义。判断"语义相似"的方式：
+```bash
+python3 tools/rebuild_graph.py --dry-run
+```
 
-- 同 section
-- preconditions.kansei 重叠 ≥ 2 个词
-- action 描述的是同一类决策（都是 primary color、都是 type scale 等）
+## 工具自动做的步骤
 
-不满足"语义相似"的对即使共现也不算 co_occurs（避免无意义的 button 规则与 color 规则的共现噪音）。
+1. 加载 `grammar/rules/*.yaml`（含 `_generated.yaml`）
+2. **depends_on / constrains**：按 section 依赖图（components 依赖 color/typography/spacing/layout/depth_elevation；motion 依赖 components；typography/depth_elevation 依赖 color；layout 依赖 spacing），同源 system 内自动连边
+3. **co_occurs_with**：对每对（同 section + Kansei 重叠 ≥ 0.2 的）规则，计算 `emerges_from` 集合的 Jaccard 频率，≥ 0.3 阈值的连边
+4. **conflicts_with**：
+   - **吸入** rule yaml 里显式声明的 `known_conflicts`（A3 阶段 LLM 标的）
+   - **自动检测** Kansei 反义词对（modern↔classical, minimal↔ornate, ...）
+   - **自动检测** A.why.avoid 包含 B.why.establish 的语义引用
+5. 双向边对称性自动维护
+6. 写 `grammar/graph/rules_graph.json`，含 `version` / `rebuilt_at` / `node_count` / `edge_counts`
 
-## Step 4 — 重算 conflicts_with
+## 何时该跑
 
-对每对规则 `(A, B)`：
+| 场景 | 频率 |
+|---|---|
+| 新加了 ≥ 3 套规则 | 必跑 |
+| 修改了已有规则的 known_conflicts / kansei | 必跑 |
+| consolidate-adaptations 后产生派生规则 | 必跑 |
+| 单条规则微调 confidence | 不需要（图结构不变） |
 
-1. 检查 `A.why.avoid ∩ B.why.establish` 是否非空
-2. 检查 `A.action` 和 `B.action` 是否在同一 dimension 上方向相反，且 `A.preconditions.product_type ∩ B.preconditions.product_type` 非空
-3. 检查 `A.preconditions.kansei` 是否含 `B.preconditions.kansei` 的反义词（参考 `references/kansei-theory.md` 的反义对）
+## 完整性检查
 
-任一条件成立 → 加 `conflicts_with: {rule: B, reason: ...}`。
+工具完成后自动报告：
 
-**对称性**：conflicts_with 是双向的，A 列出 B 时 B 也要列出 A。
-
-## Step 5 — 写回
-
-把全部图结构写回 `grammar/graph/rules_graph.json`，覆盖原文件。文件结构：
-
-```json
+```
+Wrote .../grammar/graph/rules_graph.json
 {
-  "version": "<rules_version>",
-  "rebuilt_at": "<ISO 8601>",
-  "node_count": NN,
+  "rules_loaded": NN,
   "edge_counts": {
     "depends_on": NN,
     "constrains": NN,
     "co_occurs_with": NN,
     "conflicts_with": NN
   },
-  "nodes": [
-    {
-      "rule_id": "linear-color-balance-001",
-      "relations": {
-        "depends_on": [...],
-        "constrains": [...],
-        "co_occurs_with": [...],
-        "conflicts_with": [...]
-      }
-    },
-    ...
-  ]
+  "avg_degree": N.N,
+  "sections_seen": [...],
+  "systems_seen": [...]
 }
 ```
 
-## Step 6 — 完整性检查
+可以再跑健康检查：
 
-- [ ] 所有 depends_on 项的 rule 都存在于 rules 字典中（否则报告损坏的引用）
-- [ ] depends_on 与 constrains 双向对称
-- [ ] conflicts_with 双向对称
-- [ ] 所有规则都有 `relations` 字段（即使是空对象 `{}`）
-- [ ] 无自环（A 不能 depends_on / conflicts_with A 自己）
-
-## Step 7 — 报告
-
-```
-✅ Graph rebuilt
-   Nodes: NN
-   Edges: depends_on: NN, constrains: NN, co_occurs: NN, conflicts: NN
-   Avg degree: NN
-   Largest co-occur cluster: NN nodes (dominant systems: ...)
-   Conflict pairs: NN
-   Broken refs: NN  ← if > 0, list them
+```bash
+python3 -c "
+import json
+g = json.load(open('grammar/graph/rules_graph.json'))
+ids = {n['rule_id'] for n in g['nodes']}
+broken = []
+for n in g['nodes']:
+    for k in ['depends_on','constrains','co_occurs_with','conflicts_with']:
+        for e in n['relations'][k]:
+            if e['rule'] not in ids:
+                broken.append((n['rule_id'], k, e['rule']))
+print(f'Broken refs: {len(broken)}')
+print(f'Asymmetric (manual check needed): see node count vs edge count divisibility')
+"
 ```
 
-如果 broken refs > 0，告诉用户哪些规则引用了不存在的目标，建议删除或修正。
+## 失败处理
+
+- **PyYAML 缺失**：`pip install pyyaml`
+- **rules/ 目录为空**：图会是空的（合法状态）。提示用户先做 A3 写规则。
+- **rule yaml 损坏**：工具会 `WARN: skipping <fname>` 并继续。修复 yaml 后重跑。

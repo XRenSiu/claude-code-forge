@@ -1,0 +1,138 @@
+{
+  "system_name": "duolingo",
+  "source": "open-design",
+  "extracted_at": "2026-05-03T13:38:57.533698Z",
+  "dialect": "C-6section",
+  "fingerprint_hash": "6a7a3897b89024bae75f0678652748041d5df7581e5ef3783b0bd59c9fd3823b",
+  "extraction_method": "programmatic_a1",
+  "tool_version": "1.0.0",
+  "color": {
+    "role_color_pairs": {
+      "owl_green": "#58cc02",
+      "owl_green_deep": "#58a700",
+      "owl_green_light": "#89e219",
+      "owl_green_pale": "#dbf8c5",
+      "streak_orange": "#ff9600",
+      "streak_orange_deep": "#cc7a00",
+      "gem_pink": "#ce82ff",
+      "eel_blue": "#1cb0f6",
+      "cardinal_red": "#ff4b4b",
+      "bee_yellow": "#ffc800",
+      "snow": "#ffffff",
+      "eel": "#f7f7f7",
+      "swan": "#e5e5e5",
+      "wolf": "#777777",
+      "eel_black": "#3c3c3c",
+      "hare": "#afafaf"
+    },
+    "all_hex_colors": [
+      "#58cc02",
+      "#58a700",
+      "#89e219",
+      "#dbf8c5",
+      "#ff9600",
+      "#cc7a00",
+      "#ce82ff",
+      "#1cb0f6",
+      "#ff4b4b",
+      "#ffc800",
+      "#ffffff",
+      "#f7f7f7",
+      "#e5e5e5",
+      "#777777",
+      "#3c3c3c",
+      "#afafaf"
+    ],
+    "all_rgba_colors": [],
+    "all_hsla_colors": [],
+    "hex_count": 16,
+    "_extraction_method": "regex_role_pairs + hex_enum",
+    "_confidence": "high"
+  },
+  "typography": {
+    "families": [
+      {
+        "role": "display",
+        "family": "Feather Bold"
+      },
+      {
+        "role": "body",
+        "family": "Mona Sans"
+      }
+    ],
+    "all_px_values": [
+      13.0,
+      14.0,
+      15.0,
+      16.0,
+      17.0,
+      18.0,
+      24.0,
+      32.0,
+      56.0
+    ],
+    "declared_scale_px": null,
+    "weights_seen": [],
+    "_extraction_method": "regex_family_role_pairs + px_enum + weight_enum",
+    "_confidence": "high"
+  },
+  "spacing": {
+    "base_unit_px": 4.0,
+    "declared_scale": null,
+    "all_px_values": [
+      4.0,
+      24.0
+    ],
+    "_extraction_method": "regex_base_unit + scale_enum",
+    "_confidence": "medium"
+  },
+  "layout": {
+    "_extraction_method": "kept_section_text_for_a3",
+    "_confidence": "low",
+    "_section_size": 159
+  },
+  "radius": {
+    "role_radius_pairs": {},
+    "all_px_values": [
+      4.0,
+      24.0
+    ],
+    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_confidence": "low"
+  },
+  "motion": {
+    "durations_ms": [
+      180.0,
+      320.0,
+      480.0
+    ],
+    "cubic_bezier_curves": [
+      "cubic-bezier(0.34, 1.56, 0.64, 1)"
+    ],
+    "easing_keywords": [
+      "ease",
+      "spring"
+    ],
+    "_extraction_method": "regex_ms + bezier + keyword",
+    "_confidence": "high"
+  },
+  "sections_present": [
+    "visual_theme",
+    "color",
+    "typography",
+    "components",
+    "layout",
+    "motion"
+  ],
+  "sections_unhandled": [
+    "components"
+  ],
+  "sections_meta_for_llm": [
+    "visual_theme",
+    "agent_guide"
+  ],
+  "llm_followup_hints": [
+    "layout extraction has low confidence — recommend LLM review",
+    "radius extraction has low confidence — recommend LLM review"
+  ]
+}

@@ -1,0 +1,191 @@
+{
+  "system_name": "mistral-ai",
+  "source": "open-design",
+  "extracted_at": "2026-05-03T13:38:57.556022Z",
+  "dialect": "A",
+  "fingerprint_hash": "59424032ca98c9d00103a9dc65e3a0a25de1bf44c7e618cdb094376af72b84c1",
+  "extraction_method": "programmatic_a1",
+  "tool_version": "1.0.0",
+  "color": {
+    "role_color_pairs": {
+      "mistral_orange": "#fa520f",
+      "mistral_flame": "#fb6424",
+      "block_orange": "#ff8105",
+      "sunshine_900": "#ff8a00",
+      "sunshine_700": "#ffa110",
+      "sunshine_500": "#ffb83e",
+      "sunshine_300": "#ffd06a",
+      "block_gold": "#ffe295",
+      "bright_yellow": "#ffd900",
+      "warm_ivory": "#fffaeb",
+      "cream": "#fff0c2",
+      "pure_white": "#ffffff",
+      "mistral_black": "#1f1f1f"
+    },
+    "all_hex_colors": [
+      "#fa520f",
+      "#fb6424",
+      "#ff8105",
+      "#ff8a00",
+      "#ffa110",
+      "#ffb83e",
+      "#ffd06a",
+      "#ffe295",
+      "#ffd900",
+      "#fffaeb",
+      "#fff0c2",
+      "#ffffff",
+      "#1f1f1f",
+      "#000"
+    ],
+    "all_rgba_colors": [],
+    "all_hsla_colors": [
+      "hsl(17, 96%, 52%)",
+      "hsl(0, 0%, 24%)",
+      "hsl(240, 5.9%, 90%)"
+    ],
+    "hex_count": 14,
+    "_extraction_method": "regex_role_pairs + hex_enum",
+    "_confidence": "high"
+  },
+  "typography": {
+    "families": [],
+    "all_px_values": [
+      14.0,
+      16.0,
+      24.0,
+      30.0,
+      32.0,
+      48.0,
+      56.0,
+      82.0
+    ],
+    "declared_scale_px": null,
+    "weights_seen": [
+      400
+    ],
+    "_extraction_method": "regex_family_role_pairs + px_enum + weight_enum",
+    "_confidence": "medium"
+  },
+  "spacing": {
+    "base_unit_px": 8.0,
+    "declared_scale": null,
+    "all_px_values": [
+      2.0,
+      4.0,
+      8.0,
+      10.0,
+      12.0,
+      16.0,
+      20.0,
+      24.0,
+      32.0,
+      40.0,
+      48.0,
+      64.0,
+      80.0,
+      98.0,
+      100.0
+    ],
+    "_extraction_method": "regex_base_unit + scale_enum",
+    "_confidence": "medium"
+  },
+  "layout": {
+    "_extraction_method": "kept_section_text_for_a3",
+    "_confidence": "low",
+    "_section_size": 1110
+  },
+  "radius": {
+    "role_radius_pairs": {},
+    "all_px_values": [
+      2.0,
+      4.0,
+      8.0,
+      10.0,
+      12.0,
+      16.0,
+      20.0,
+      24.0,
+      32.0,
+      40.0,
+      48.0,
+      64.0,
+      80.0,
+      98.0,
+      100.0
+    ],
+    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_confidence": "low"
+  },
+  "depth_elevation": {
+    "rgba_shadows": [
+      "rgba(127, 99, 21, ...)"
+    ],
+    "inset_shadows": [],
+    "_extraction_method": "regex_rgba_inset",
+    "_confidence": "medium"
+  },
+  "responsive": {
+    "breakpoints_named": {
+      "tablet": {
+        "min": 640,
+        "max": 768
+      },
+      "desktop": {
+        "min": 1024,
+        "max": 1280
+      }
+    },
+    "_extraction_method": "regex_breakpoint_table",
+    "_confidence": "high"
+  },
+  "dos_donts": {
+    "dos": [
+      "Use the warm color spectrum exclusively: ivory, cream, amber, gold, orange",
+      "Keep display typography at 82px+ with -2.05px letter-spacing for hero sections",
+      "Use the Mistral block gradient (yellow → amber → orange) for brand moments",
+      "Apply warm golden shadows (amber-tinted rgba) for elevated elements",
+      "Use Mistral Black (#1f1f1f) for text — never pure #000000",
+      "Keep font weight at 400 throughout — let size and color carry hierarchy",
+      "Use sharp, architectural corners — near-zero border-radius",
+      "Apply uppercase on button labels and section markers for European formality",
+      "Use warm landscape photography with golden color grading"
+    ],
+    "donts": [
+      "Don't introduce cool colors (blue, green, purple) — the palette is exclusively warm",
+      "Don't use bold (700+) weight — 400 is the only weight",
+      "Don't round corners — the sharp geometry is intentional",
+      "Don't use cool-toned shadows — shadows must carry amber warmth",
+      "Don't use pure white as a page background — always warm-tinted (#fffaeb minimum)",
+      "Don't reduce hero text below 48px on desktop — the billboard scale is core",
+      "Don't use more than 2 font weights — size variation replaces weight variation",
+      "Don't add gradients outside the warm spectrum — no blue-to-purple, no cool transitions",
+      "Don't use generic gray for text — even neutrals should be warm-tinted"
+    ],
+    "_extraction_method": "subsection_bullet_parse",
+    "_confidence": "high"
+  },
+  "sections_present": [
+    "visual_theme",
+    "color",
+    "typography",
+    "components",
+    "layout",
+    "depth_elevation",
+    "dos_donts",
+    "responsive",
+    "agent_guide"
+  ],
+  "sections_unhandled": [
+    "components",
+    "agent_guide"
+  ],
+  "sections_meta_for_llm": [
+    "visual_theme",
+    "agent_guide"
+  ],
+  "llm_followup_hints": [
+    "layout extraction has low confidence — recommend LLM review",
+    "radius extraction has low confidence — recommend LLM review"
+  ]
+}

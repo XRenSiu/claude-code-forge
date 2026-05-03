@@ -1,0 +1,204 @@
+{
+  "system_name": "cal",
+  "source": "open-design",
+  "extracted_at": "2026-05-03T13:38:57.521421Z",
+  "dialect": "A",
+  "fingerprint_hash": "520e5c64e4dc6e368e4870ae2b0470225d587a41e426399475046e3932c690a1",
+  "extraction_method": "programmatic_a1",
+  "tool_version": "1.0.0",
+  "color": {
+    "role_color_pairs": {
+      "charcoal": "#242424",
+      "midnight": "#111111",
+      "white": "#ffffff",
+      "link_blue": "#0099ff",
+      "focus_ring": "#3b82f6",
+      "default_link": "#0000ee",
+      "pure_white": "#ffffff",
+      "mid_gray": "#898989",
+      "pure_black": "#000000"
+    },
+    "all_hex_colors": [
+      "#242424",
+      "#111111",
+      "#ffffff",
+      "#0099ff",
+      "#3b82f6",
+      "#0000ee",
+      "#f5f5f5",
+      "#898989",
+      "#000000"
+    ],
+    "all_rgba_colors": [
+      "rgba(34, 42, 53, 0.08–0.10)"
+    ],
+    "all_hsla_colors": [],
+    "hex_count": 9,
+    "_extraction_method": "regex_role_pairs + hex_enum",
+    "_confidence": "high"
+  },
+  "typography": {
+    "families": [],
+    "all_px_values": [
+      12.0,
+      14.0,
+      16.0,
+      18.0,
+      20.0,
+      24.0,
+      48.0,
+      64.0
+    ],
+    "declared_scale_px": null,
+    "weights_seen": [
+      300,
+      600
+    ],
+    "_extraction_method": "regex_family_role_pairs + px_enum + weight_enum",
+    "_confidence": "medium"
+  },
+  "spacing": {
+    "base_unit_px": 8.0,
+    "declared_scale": [
+      1.0,
+      2.0,
+      3.0,
+      4.0,
+      6.0,
+      8.0,
+      12.0,
+      16.0,
+      20.0,
+      24.0,
+      28.0,
+      80.0,
+      96.0
+    ],
+    "all_px_values": [
+      1.0,
+      2.0,
+      3.0,
+      4.0,
+      6.0,
+      7.0,
+      8.0,
+      12.0,
+      16.0,
+      20.0,
+      24.0,
+      28.0,
+      29.0,
+      80.0,
+      96.0,
+      98.0,
+      100.0
+    ],
+    "_extraction_method": "regex_base_unit + scale_enum",
+    "_confidence": "high"
+  },
+  "layout": {
+    "_extraction_method": "kept_section_text_for_a3",
+    "_confidence": "low",
+    "_section_size": 1508
+  },
+  "radius": {
+    "role_radius_pairs": {
+      "card padding": 12.0
+    },
+    "all_px_values": [
+      1.0,
+      2.0,
+      3.0,
+      4.0,
+      6.0,
+      7.0,
+      8.0,
+      12.0,
+      16.0,
+      20.0,
+      24.0,
+      28.0,
+      29.0,
+      80.0,
+      96.0,
+      98.0,
+      100.0
+    ],
+    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_confidence": "medium"
+  },
+  "depth_elevation": {
+    "rgba_shadows": [
+      "rgba(0,0,0,0.16)",
+      "rgba(19,19,22,0.7)",
+      "rgba(34,42,53,0.08)",
+      "rgba(34,42,53,0.05)",
+      "rgba(36,36,36,0.7)",
+      "rgba(36,36,36,0.05)",
+      "rgba(255,255,255,0.15)",
+      "rgb(255,255,255)"
+    ],
+    "inset_shadows": [
+      "Inset) | `rgba(0",
+      "inset` | Pressed/recessed elements",
+      "Inset Highlight) | `rgba(255",
+      "inset` or `rgb(255",
+      "inset` | Button inner highlight — 3D pressed effect |",
+      "Inset highlights**: White inset shadows at the top of buttons create a subtle 3D bevel"
+    ],
+    "_extraction_method": "regex_rgba_inset",
+    "_confidence": "medium"
+  },
+  "responsive": {
+    "breakpoints_named": {},
+    "_extraction_method": "regex_breakpoint_table",
+    "_confidence": "low"
+  },
+  "dos_donts": {
+    "dos": [
+      "Use Cal Sans exclusively for headings (24px+) and never for body text — it's a display font with tight default spacing",
+      "Apply positive letter-spacing (+0.2px) when using Cal Sans below 24px — the font cramps at small sizes without it",
+      "Maintain the grayscale palette — boldness comes from contrast, not color",
+      "Use the multi-layered shadow system for card elevation — ring shadow + diffused shadow + contact shadow",
+      "Keep backgrounds pure white — the monochrome philosophy requires a clean canvas",
+      "Use Inter for all body text at weight 300–600 — it's the reliable counterpart to Cal Sans's display personality",
+      "Let product screenshots be the visual content — no illustrations, no decorative graphics",
+      "Apply generous section spacing (80px–96px) — the breathing room is essential to the premium feel"
+    ],
+    "donts": [
+      "Use Cal Sans for body text or text below 16px — it wasn't designed for extended reading",
+      "Add brand colors — Cal.com is intentionally grayscale, color is reserved for links and UI states only",
+      "Use CSS borders when shadows can achieve the same containment — the ring-shadow technique is the system's approach",
+      "Apply negative letter-spacing to Cal Sans at small sizes — it needs positive spacing (+0.2px) below 24px",
+      "Create heavy, dark shadows — Cal.com's shadows are subtle (5% opacity diffused) with sharp contact edges",
+      "Use illustrations, abstract graphics, or decorative elements — the visual language is typography + product UI only",
+      "Mix Cal Sans weights — the font is designed for weight 600, other weights break the intended character",
+      "Reduce section spacing below 48px — the generous whitespace is core to the premium monochrome aesthetic"
+    ],
+    "_extraction_method": "subsection_bullet_parse",
+    "_confidence": "high"
+  },
+  "sections_present": [
+    "visual_theme",
+    "color",
+    "typography",
+    "components",
+    "layout",
+    "depth_elevation",
+    "dos_donts",
+    "responsive",
+    "agent_guide"
+  ],
+  "sections_unhandled": [
+    "components",
+    "agent_guide"
+  ],
+  "sections_meta_for_llm": [
+    "visual_theme",
+    "agent_guide"
+  ],
+  "llm_followup_hints": [
+    "layout extraction has low confidence — recommend LLM review",
+    "responsive extraction has low confidence — recommend LLM review"
+  ]
+}

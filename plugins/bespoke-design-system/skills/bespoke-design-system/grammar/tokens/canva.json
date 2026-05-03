@@ -1,0 +1,148 @@
+{
+  "system_name": "canva",
+  "source": "open-design",
+  "extracted_at": "2026-05-03T13:38:57.522342Z",
+  "dialect": "C-6section",
+  "fingerprint_hash": "0dd369bc89b510773c577d494eb7f4e7c6363444a900198d2e99c2d670c16b56",
+  "extraction_method": "programmatic_a1",
+  "tool_version": "1.0.0",
+  "color": {
+    "role_color_pairs": {
+      "canva_purple": "#7d2ae8",
+      "canva_cyan": "#00c4cc",
+      "canva_pink": "#ff5757",
+      "canvas": "#ffffff",
+      "surface_subtle": "#f4f5f7",
+      "surface_inset": "#e8eaed",
+      "surface_cool": "#eef0fc",
+      "ink_primary": "#0e1318",
+      "ink_secondary": "#3c4043",
+      "ink_muted": "#5f6368",
+      "ink_faint": "#9aa0a6",
+      "success": "#00b894",
+      "warning": "#ffb020",
+      "error": "#ff5757",
+      "info": "#0d99ff",
+      "coral": "#ff7059",
+      "tangerine": "#ff9633",
+      "mint": "#48c997",
+      "sky": "#3ea6ff",
+      "lavender": "#9b87f5",
+      "border_default": "#e1e3e6",
+      "border_strong": "#c7cdd3"
+    },
+    "all_hex_colors": [
+      "#7d2ae8",
+      "#00c4cc",
+      "#ff5757",
+      "#ffffff",
+      "#f4f5f7",
+      "#e8eaed",
+      "#eef0fc",
+      "#0e1318",
+      "#3c4043",
+      "#5f6368",
+      "#9aa0a6",
+      "#00b894",
+      "#ffb020",
+      "#0d99ff",
+      "#ff7059",
+      "#ff9633",
+      "#48c997",
+      "#3ea6ff",
+      "#9b87f5",
+      "#e1e3e6",
+      "#c7cdd3"
+    ],
+    "all_rgba_colors": [],
+    "all_hsla_colors": [],
+    "hex_count": 21,
+    "_extraction_method": "regex_role_pairs + hex_enum",
+    "_confidence": "high"
+  },
+  "typography": {
+    "families": [
+      {
+        "role": "display",
+        "family": "Canva Sans"
+      }
+    ],
+    "all_px_values": [
+      11.0,
+      12.0,
+      14.0,
+      16.0,
+      18.0,
+      24.0,
+      36.0,
+      64.0
+    ],
+    "declared_scale_px": null,
+    "weights_seen": [],
+    "_extraction_method": "regex_family_role_pairs + px_enum + weight_enum",
+    "_confidence": "high"
+  },
+  "spacing": {
+    "base_unit_px": 4.0,
+    "declared_scale": null,
+    "all_px_values": [
+      4.0,
+      16.0,
+      24.0,
+      32.0,
+      56.0
+    ],
+    "_extraction_method": "regex_base_unit + scale_enum",
+    "_confidence": "medium"
+  },
+  "layout": {
+    "_extraction_method": "kept_section_text_for_a3",
+    "_confidence": "low",
+    "_section_size": 219
+  },
+  "radius": {
+    "role_radius_pairs": {
+      "card grid gap": 16.0
+    },
+    "all_px_values": [
+      4.0,
+      16.0,
+      24.0,
+      32.0,
+      56.0
+    ],
+    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_confidence": "medium"
+  },
+  "motion": {
+    "durations_ms": [
+      180.0,
+      280.0,
+      420.0
+    ],
+    "cubic_bezier_curves": [
+      "cubic-bezier(0.4, 0, 0.2, 1)"
+    ],
+    "easing_keywords": [],
+    "_extraction_method": "regex_ms + bezier + keyword",
+    "_confidence": "high"
+  },
+  "sections_present": [
+    "visual_theme",
+    "color",
+    "typography",
+    "components",
+    "layout",
+    "motion"
+  ],
+  "sections_unhandled": [
+    "components"
+  ],
+  "sections_meta_for_llm": [
+    "visual_theme",
+    "agent_guide"
+  ],
+  "llm_followup_hints": [
+    "layout extraction has low confidence — recommend LLM review"
+  ]
+}

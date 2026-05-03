@@ -20,7 +20,17 @@
       "homepage": "https://github.com/XRenSiu/claude-code-forge/tree/main/plugins/pdforge",
       "repository": "https://github.com/XRenSiu/claude-code-forge",
       "license": "MIT",
-      "tags": ["brainstorming", "planning", "code-review", "product-development", "workflow", "tdd", "automation", "figma", "design-to-code"]
+      "tags": [
+        "brainstorming",
+        "planning",
+        "code-review",
+        "product-development",
+        "workflow",
+        "tdd",
+        "automation",
+        "figma",
+        "design-to-code"
+      ]
     },
     {
       "name": "adversarial-debugger",
@@ -35,7 +45,14 @@
       "homepage": "https://github.com/XRenSiu/claude-code-forge/tree/main/plugins/adversarial-debugger",
       "repository": "https://github.com/XRenSiu/claude-code-forge",
       "license": "MIT",
-      "tags": ["debugging", "adversarial", "agent-teams", "root-cause-analysis", "hypothesis-testing", "parallel-investigation"]
+      "tags": [
+        "debugging",
+        "adversarial",
+        "agent-teams",
+        "root-cause-analysis",
+        "hypothesis-testing",
+        "parallel-investigation"
+      ]
     },
     {
       "name": "design-clone",
@@ -50,7 +67,17 @@
       "homepage": "https://github.com/XRenSiu/claude-code-forge/tree/main/plugins/design-clone",
       "repository": "https://github.com/XRenSiu/claude-code-forge",
       "license": "MIT",
-      "tags": ["design-clone", "design-dna", "website-clone", "design-tokens", "design-system", "visual-effects", "reverse-engineering", "pixel-perfect", "browser-mcp"]
+      "tags": [
+        "design-clone",
+        "design-dna",
+        "website-clone",
+        "design-tokens",
+        "design-system",
+        "visual-effects",
+        "reverse-engineering",
+        "pixel-perfect",
+        "browser-mcp"
+      ]
     },
     {
       "name": "forge-teams",
@@ -65,7 +92,18 @@
       "homepage": "https://github.com/XRenSiu/claude-code-forge/tree/main/plugins/forge-teams",
       "repository": "https://github.com/XRenSiu/claude-code-forge",
       "license": "MIT",
-      "tags": ["agent-teams", "adversarial", "product-development", "red-team", "parallel-implementation", "debugging", "tdd", "bug-fix", "requirement-verification", "wakeup-guard"]
+      "tags": [
+        "agent-teams",
+        "adversarial",
+        "product-development",
+        "red-team",
+        "parallel-implementation",
+        "debugging",
+        "tdd",
+        "bug-fix",
+        "requirement-verification",
+        "wakeup-guard"
+      ]
     },
     {
       "name": "persona-distill",
@@ -80,11 +118,24 @@
       "homepage": "https://github.com/XRenSiu/claude-code-forge/tree/main/plugins/persona-distill",
       "repository": "https://github.com/XRenSiu/claude-code-forge",
       "license": "MIT",
-      "tags": ["persona-distillation", "skill-generation", "schema-library", "quality-evaluation", "multi-modal-collection", "persona-routing", "persona-debate", "cognitive-os", "self-contained-skills", "execution-profile", "cognitive-task-analysis", "recognition-primed-decision"]
+      "tags": [
+        "persona-distillation",
+        "skill-generation",
+        "schema-library",
+        "quality-evaluation",
+        "multi-modal-collection",
+        "persona-routing",
+        "persona-debate",
+        "cognitive-os",
+        "self-contained-skills",
+        "execution-profile",
+        "cognitive-task-analysis",
+        "recognition-primed-decision"
+      ]
     },
     {
       "name": "skill-evolve",
-      "description": "Skill Evolution Engine — Darwin-style autonomous SKILL.md optimizer. Applies an 8-dimension rubric (60 structural + 40 effectiveness), independent-subagent scoring, and git-backed ratchet hill-climbing (keep-or-revert) to evolve any Claude Code skill from initial draft toward 90+. Inspired by Karpathy's autoresearch and alchaincyf/darwin-skill.",
+      "description": "Skill Evolution Engine \u2014 Darwin-style autonomous SKILL.md optimizer. Applies an 8-dimension rubric (60 structural + 40 effectiveness), independent-subagent scoring, and git-backed ratchet hill-climbing (keep-or-revert) to evolve any Claude Code skill from initial draft toward 90+. Inspired by Karpathy's autoresearch and alchaincyf/darwin-skill.",
       "version": "0.1.1",
       "author": {
         "name": "XRenSiu",
@@ -95,11 +146,21 @@
       "homepage": "https://github.com/XRenSiu/claude-code-forge/tree/main/plugins/skill-evolve",
       "repository": "https://github.com/XRenSiu/claude-code-forge",
       "license": "MIT",
-      "tags": ["skill-optimization", "hill-climbing", "ratchet-mechanism", "rubric-evaluation", "autonomous-improvement", "skill-meta", "darwin", "autoresearch", "claude-code-skill"]
+      "tags": [
+        "skill-optimization",
+        "hill-climbing",
+        "ratchet-mechanism",
+        "rubric-evaluation",
+        "autonomous-improvement",
+        "skill-meta",
+        "darwin",
+        "autoresearch",
+        "claude-code-skill"
+      ]
     },
     {
       "name": "ratchet",
-      "description": "Ratchet — Goal-driven multi-agent persistent optimization system. Combines Goal-Driven master/subagent separation with AutoResearch signal design methodology. Implements an 'independent evaluation + kill-and-restart + ratchet progress' autonomous loop: master only judges, subagent only executes; if a subagent stalls or claims success without meeting acceptance criteria, it is killed and replaced. Suitable for long-running autonomous coding tasks that require verifiable deliverables and explicit termination conditions.",
+      "description": "Ratchet \u2014 Goal-driven multi-agent persistent optimization system. Combines Goal-Driven master/subagent separation with AutoResearch signal design methodology. Implements an 'independent evaluation + kill-and-restart + ratchet progress' autonomous loop: master only judges, subagent only executes; if a subagent stalls or claims success without meeting acceptance criteria, it is killed and replaced. Suitable for long-running autonomous coding tasks that require verifiable deliverables and explicit termination conditions.",
       "version": "1.0.0",
       "author": {
         "name": "XRenSiu",
@@ -110,12 +171,23 @@
       "homepage": "https://github.com/XRenSiu/claude-code-forge/tree/main/plugins/ratchet",
       "repository": "https://github.com/XRenSiu/claude-code-forge",
       "license": "MIT",
-      "tags": ["ratchet", "goal-driven", "autonomous-agent", "master-subagent", "independent-evaluation", "kill-and-restart", "acceptance-criteria", "autoresearch", "long-running-task", "verifiable-output"]
+      "tags": [
+        "ratchet",
+        "goal-driven",
+        "autonomous-agent",
+        "master-subagent",
+        "independent-evaluation",
+        "kill-and-restart",
+        "acceptance-criteria",
+        "autoresearch",
+        "long-running-task",
+        "verifiable-output"
+      ]
     },
     {
       "name": "bespoke-design-system",
-      "description": "Generate a bespoke DESIGN.md for any product brief by reverse-engineering a corpus of existing DESIGN.md design systems into a computable design grammar (rules + rationale + relationships), then forward-generating with three-part rationale (inheritance + adaptation + justification). Outputs OD-dialect 9-section DESIGN.md (Visual Theme / Color / Typography / Components / Layout / Depth & Elevation / Do's & Don'ts / Responsive / Agent Prompt Guide) consumable by any DESIGN.md-compatible tool. Two interaction modes: interactive (one-shot question batching, max 7 questions, never interrupts mid-generation) or auto (zero-questions inference). Self-evolving: high-frequency adaptations consolidate into new rules. Material library is decoupled — works with OD's ~140 systems, awesome-design-md, or any DESIGN.md collection.",
-      "version": "1.1.0",
+      "description": "Generate a bespoke DESIGN.md for any product brief by reverse-engineering a corpus of existing DESIGN.md design systems into a computable design grammar (rules + rationale + relationships), then forward-generating with three-part rationale (inheritance + adaptation + justification). Outputs OD-dialect 9-section DESIGN.md (Visual Theme / Color / Typography / Components / Layout / Depth & Elevation / Do's & Don'ts / Responsive / Agent Prompt Guide) consumable by any DESIGN.md-compatible tool. Two interaction modes: interactive (one-shot question batching, max 7 questions, never interrupts mid-generation) or auto (zero-questions inference). Self-evolving: high-frequency adaptations consolidate into new rules. Material library is decoupled \u2014 works with OD's ~140 systems, awesome-design-md, or any DESIGN.md collection.",
+      "version": "1.2.0",
       "author": {
         "name": "XRenSiu",
         "email": "xrensiu@gmail.com"
@@ -125,7 +197,20 @@
       "homepage": "https://github.com/XRenSiu/claude-code-forge/tree/main/plugins/bespoke-design-system",
       "repository": "https://github.com/XRenSiu/claude-code-forge",
       "license": "MIT",
-      "tags": ["design-system", "design-md", "bespoke", "design-grammar", "reverse-engineering", "shape-grammar", "kansei-engineering", "brand-archetype", "rationale-capture", "anti-slop", "self-evolving", "interactive-auto-modes"]
+      "tags": [
+        "design-system",
+        "design-md",
+        "bespoke",
+        "design-grammar",
+        "reverse-engineering",
+        "shape-grammar",
+        "kansei-engineering",
+        "brand-archetype",
+        "rationale-capture",
+        "anti-slop",
+        "self-evolving",
+        "interactive-auto-modes"
+      ]
     }
   ]
 }

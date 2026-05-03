@@ -1,0 +1,248 @@
+{
+  "system_name": "renault",
+  "source": "open-design",
+  "extracted_at": "2026-05-03T13:38:57.570178Z",
+  "dialect": "A",
+  "fingerprint_hash": "db03bb3402edff5e5e84395856777ea6629c40e12fc737c5ae935de5d613be37",
+  "extraction_method": "programmatic_a1",
+  "tool_version": "1.0.0",
+  "color": {
+    "role_color_pairs": {
+      "renault_yellow": "#EFDF00",
+      "absolute_black": "#000000",
+      "pure_white": "#FFFFFF",
+      "soft_yellow": "#F8EB4C",
+      "renault_blue": "#1883FD",
+      "warm_gray": "#D9D9D6",
+      "charcoal": "#222222",
+      "pale_silver": "#F2F2F2",
+      "border_gray": "#D1D1D1",
+      "success_green": "#8DC572",
+      "error_rose": "#BE6464",
+      "warning_amber": "#F0AD4E",
+      "info_blue": "#337AB7"
+    },
+    "all_hex_colors": [
+      "#EFDF00",
+      "#000000",
+      "#FFFFFF",
+      "#F8EB4C",
+      "#1883FD",
+      "#D9D9D6",
+      "#222222",
+      "#F2F2F2",
+      "#D1D1D1",
+      "#8DC572",
+      "#BE6464",
+      "#F0AD4E",
+      "#337AB7"
+    ],
+    "all_rgba_colors": [
+      "rgba(0,0,0,0.6)",
+      "rgba(0,0,0,0)"
+    ],
+    "all_hsla_colors": [],
+    "hex_count": 13,
+    "_extraction_method": "regex_role_pairs + hex_enum",
+    "_confidence": "high"
+  },
+  "typography": {
+    "families": [],
+    "all_px_values": [
+      8.5,
+      10.0,
+      12.0,
+      12.8,
+      13.0,
+      14.0,
+      14.4,
+      16.0,
+      18.0,
+      19.2,
+      20.0,
+      21.92,
+      24.0,
+      32.0,
+      38.0,
+      40.0,
+      53.2,
+      56.0
+    ],
+    "declared_scale_px": null,
+    "weights_seen": [
+      700
+    ],
+    "_extraction_method": "regex_family_role_pairs + px_enum + weight_enum",
+    "_confidence": "medium"
+  },
+  "spacing": {
+    "base_unit_px": 8.0,
+    "declared_scale": [
+      1.0,
+      4.0,
+      5.0,
+      6.0,
+      6.25,
+      8.0,
+      10.0,
+      12.0,
+      13.0,
+      15.0,
+      16.0,
+      20.0,
+      24.0,
+      32.0,
+      40.0
+    ],
+    "all_px_values": [
+      1.0,
+      2.0,
+      3.0,
+      4.0,
+      5.0,
+      6.0,
+      6.25,
+      8.0,
+      10.0,
+      12.0,
+      13.0,
+      15.0,
+      16.0,
+      20.0,
+      24.0,
+      32.0,
+      40.0,
+      46.0,
+      50.0,
+      80.0
+    ],
+    "_extraction_method": "regex_base_unit + scale_enum",
+    "_confidence": "high"
+  },
+  "layout": {
+    "_extraction_method": "kept_section_text_for_a3",
+    "_confidence": "low",
+    "_section_size": 1726
+  },
+  "radius": {
+    "role_radius_pairs": {},
+    "all_px_values": [
+      1.0,
+      2.0,
+      3.0,
+      4.0,
+      5.0,
+      6.0,
+      6.25,
+      8.0,
+      10.0,
+      12.0,
+      13.0,
+      15.0,
+      16.0,
+      20.0,
+      24.0,
+      32.0,
+      40.0,
+      46.0,
+      50.0,
+      80.0
+    ],
+    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_confidence": "low"
+  },
+  "depth_elevation": {
+    "rgba_shadows": [
+      "rgba(0,0,0,0.2)",
+      "rgba(0,0,0,0)",
+      "rgba(50,50,93,0.1)",
+      "rgba(0,0,0,0.15)",
+      "rgb(199,197,199)",
+      "rgba(0,0,0,0.6)"
+    ],
+    "inset_shadows": [],
+    "_extraction_method": "regex_rgba_inset",
+    "_confidence": "medium"
+  },
+  "responsive": {
+    "breakpoints_named": {
+      "mobile": {
+        "min": 426,
+        "max": 640
+      },
+      "tablet_small": {
+        "min": 641,
+        "max": 768
+      },
+      "tablet": {
+        "min": 769,
+        "max": 896
+      },
+      "desktop_small": {
+        "min": 897,
+        "max": 1024
+      },
+      "desktop": {
+        "min": 1025,
+        "max": 1280
+      },
+      "large_desktop": {
+        "min": 1281,
+        "max": 1440
+      }
+    },
+    "_extraction_method": "regex_breakpoint_table",
+    "_confidence": "high"
+  },
+  "dos_donts": {
+    "dos": [
+      "Use Renault Yellow (`#EFDF00`) exclusively for super-primary CTAs — it carries the full weight of the diamond logo's identity",
+      "Maintain zero border-radius on all buttons — sharp edges are non-negotiable in the Renault system",
+      "Use NouvelR Bold (700) as the default heading weight — the assertive weight is central to the brand's energetic personality",
+      "Apply the dark gradient overlay (`rgba(0,0,0,0.6) → transparent`) on PromoCards to ensure text legibility over photography",
+      "Keep hero line-heights ultra-tight (0.95) for display text — the compressed texture feels urgent and modern",
+      "Alternate between black and white sections to create the signature chessboard rhythm",
+      "Use `#1883FD` (Renault Blue) consistently for all link hover states — one interactive color signal",
+      "Set minimum interactive size at 46×46px for all buttons — accessibility built into the component spec",
+      "Reserve pill-shaped radius (46–50px) exclusively for search inputs and filter elements — never for buttons",
+      "Use the PromoCard gradient overlay on every card that has text over photography"
+    ],
+    "donts": [
+      "Apply Renault Yellow as a background color for sections or surfaces — it's a CTA signal, not an atmosphere color",
+      "Add border-radius to buttons — the zero-radius rectangle is a core brand marker",
+      "Use any typeface besides NouvelR — the single-family discipline is a brand pillar",
+      "Mix multiple chromatic accent colors in a single section — the palette is monochrome-plus-yellow",
+      "Soften heading weights to 400 or 500 — NouvelR Bold is the brand voice, lighter weights read as off-brand",
+      "Add decorative borders to PromoCards or content containers — separation comes from background color alternation",
+      "Use the semantic colors (Success Green, Error Rose) for decorative purposes — they're reserved for form states",
+      "Apply the 56px hero size to anything below the fold — hero typography scale is reserved for the carousel",
+      "Create rounded-pill buttons — pill shapes are reserved for inputs, never for action elements",
+      "Use flat CSS gradients on UI surfaces — the only gradients should be the photographic hero auroras and the text-legibility overlays"
+    ],
+    "_extraction_method": "subsection_bullet_parse",
+    "_confidence": "high"
+  },
+  "sections_present": [
+    "visual_theme",
+    "color",
+    "typography",
+    "components",
+    "layout",
+    "depth_elevation",
+    "dos_donts",
+    "responsive",
+    "agent_guide"
+  ],
+  "sections_unhandled": [
+    "components",
+    "agent_guide"
+  ],
+  "sections_meta_for_llm": [
+    "visual_theme",
+    "agent_guide"
+  ],
+  "llm_followup_hints": [
+    "layout extraction has low confidence — recommend LLM review",
+    "radius extraction has low confidence — recommend LLM review"
+  ]
+}

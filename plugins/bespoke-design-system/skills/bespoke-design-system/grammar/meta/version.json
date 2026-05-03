@@ -1,8 +1,8 @@
 {
-  "rules_version": "0.0.0",
+  "rules_version": "0.3.0",
   "schema_version": "1.0.0",
-  "last_updated": null,
-  "total_rules": 0,
-  "total_systems": 0,
-  "notes": "rules_version follows SemVer. Bump minor on each new system import or generated-rule sedimentation; bump major when rule schema changes incompatibly."
+  "last_updated": "2026-05-03T13:46:40.744721Z",
+  "total_rules": 20,
+  "total_systems": 137,
+  "notes": "0.3.0: full OD corpus (137 systems) registered + tokens extracted programmatically; 2 systems (linear-app, vercel) have full A1-A4. Tools v1.0 in place."
 }

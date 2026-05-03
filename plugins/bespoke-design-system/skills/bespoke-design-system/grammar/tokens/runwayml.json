@@ -1,0 +1,192 @@
+{
+  "system_name": "runwayml",
+  "source": "open-design",
+  "extracted_at": "2026-05-03T13:38:57.573837Z",
+  "dialect": "A",
+  "fingerprint_hash": "f873f90495a932a50d899f72600c231c76b3e706cdb17f90188747ad36613afc",
+  "extraction_method": "programmatic_a1",
+  "tool_version": "1.0.0",
+  "color": {
+    "role_color_pairs": {
+      "runway_black": "#000000",
+      "deep_black": "#030303",
+      "dark_surface": "#1a1a1a",
+      "pure_white": "#ffffff",
+      "near_white": "#fefefe",
+      "cool_cloud": "#e9ecf2",
+      "border_dark": "#27272a",
+      "charcoal": "#404040",
+      "near_charcoal": "#3f3f3f",
+      "cool_slate": "#767d88",
+      "mid_slate": "#7d848e",
+      "muted_gray": "#a7a7a7",
+      "cool_silver": "#c9ccd1",
+      "light_silver": "#d0d4d4",
+      "tailwind_gray": "#6b7280",
+      "dark_link": "#0c0c0c",
+      "footer_gray": "#999999"
+    },
+    "all_hex_colors": [
+      "#000000",
+      "#030303",
+      "#1a1a1a",
+      "#ffffff",
+      "#fefefe",
+      "#e9ecf2",
+      "#27272a",
+      "#404040",
+      "#3f3f3f",
+      "#767d88",
+      "#7d848e",
+      "#a7a7a7",
+      "#c9ccd1",
+      "#d0d4d4",
+      "#6b7280",
+      "#0c0c0c",
+      "#999999"
+    ],
+    "all_rgba_colors": [],
+    "all_hsla_colors": [],
+    "hex_count": 17,
+    "_extraction_method": "regex_role_pairs + hex_enum",
+    "_confidence": "high"
+  },
+  "typography": {
+    "families": [],
+    "all_px_values": [
+      11.0,
+      13.0,
+      14.0,
+      16.0,
+      20.0,
+      24.0,
+      36.0,
+      40.0,
+      48.0
+    ],
+    "declared_scale_px": null,
+    "weights_seen": [
+      450
+    ],
+    "_extraction_method": "regex_family_role_pairs + px_enum + weight_enum",
+    "_confidence": "medium"
+  },
+  "spacing": {
+    "base_unit_px": 8.0,
+    "declared_scale": null,
+    "all_px_values": [
+      4.0,
+      6.0,
+      8.0,
+      12.0,
+      16.0,
+      20.0,
+      24.0,
+      28.0,
+      32.0,
+      48.0,
+      64.0,
+      78.0
+    ],
+    "_extraction_method": "regex_base_unit + scale_enum",
+    "_confidence": "medium"
+  },
+  "layout": {
+    "_extraction_method": "kept_section_text_for_a3",
+    "_confidence": "low",
+    "_section_size": 1133
+  },
+  "radius": {
+    "role_radius_pairs": {
+      "comfortable": 8.0
+    },
+    "all_px_values": [
+      4.0,
+      6.0,
+      8.0,
+      12.0,
+      16.0,
+      20.0,
+      24.0,
+      28.0,
+      32.0,
+      48.0,
+      64.0,
+      78.0
+    ],
+    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_confidence": "medium"
+  },
+  "depth_elevation": {
+    "rgba_shadows": [],
+    "inset_shadows": [],
+    "_extraction_method": "regex_rgba_inset",
+    "_confidence": "medium"
+  },
+  "responsive": {
+    "breakpoints_named": {
+      "tablet": {
+        "min": 640,
+        "max": 768
+      },
+      "desktop": {
+        "min": 1024,
+        "max": 1280
+      },
+      "large_desktop": {
+        "min": 1280,
+        "max": 1600
+      }
+    },
+    "_extraction_method": "regex_breakpoint_table",
+    "_confidence": "high"
+  },
+  "dos_donts": {
+    "dos": [
+      "Use full-bleed cinematic photography as the primary visual element",
+      "Use abcNormal for all text — maintain the single-typeface commitment",
+      "Keep display line-heights at 1.0 with negative letter-spacing for film-title density",
+      "Use the cool-gray neutral palette (#767d88, #7d848e) for secondary text",
+      "Maintain zero shadows — depth comes from photography and section backgrounds",
+      "Use uppercase with letter-spacing for navigational labels (14px, 0.35px spacing)",
+      "Apply small border-radius (4–8px) — the design is NOT pill-shaped",
+      "Let visual content (photos, videos) dominate — the UI should be invisible",
+      "Use weight 450 for micro labels — the precision matters"
+    ],
+    "donts": [
+      "Don't add decorative colors to the interface — the only color comes from photography",
+      "Don't use heavy borders or shadows — the interface must be nearly invisible",
+      "Don't use pill-shaped radius — Runway's geometry is subtly rounded, not circular",
+      "Don't use bold (700+) weight — 400–600 is the full range, with 450 as a precision tool",
+      "Don't compete with the visual content — text overlays should be minimal and restrained",
+      "Don't use gradient backgrounds in the interface — gradients exist only in photography",
+      "Don't use more than one typeface — abcNormal handles everything",
+      "Don't use body line-height above 1.50 — the tight, editorial feel is core",
+      "Don't reduce image quality — cinematic photography IS the design"
+    ],
+    "_extraction_method": "subsection_bullet_parse",
+    "_confidence": "high"
+  },
+  "sections_present": [
+    "visual_theme",
+    "color",
+    "typography",
+    "components",
+    "layout",
+    "depth_elevation",
+    "dos_donts",
+    "responsive",
+    "agent_guide"
+  ],
+  "sections_unhandled": [
+    "components",
+    "agent_guide"
+  ],
+  "sections_meta_for_llm": [
+    "visual_theme",
+    "agent_guide"
+  ],
+  "llm_followup_hints": [
+    "layout extraction has low confidence — recommend LLM review"
+  ]
+}

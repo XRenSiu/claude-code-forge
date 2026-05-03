@@ -1,0 +1,214 @@
+{
+  "system_name": "spotify",
+  "source": "open-design",
+  "extracted_at": "2026-05-03T13:38:57.580261Z",
+  "dialect": "A",
+  "fingerprint_hash": "d7f3bc8413a01de9ef15cac8807990be3561f1897c37d1db9ccf23d84b5b1386",
+  "extraction_method": "programmatic_a1",
+  "tool_version": "1.0.0",
+  "color": {
+    "role_color_pairs": {
+      "spotify_green": "#1ed760",
+      "near_black": "#121212",
+      "dark_surface": "#181818",
+      "mid_dark": "#1f1f1f",
+      "white": "#ffffff",
+      "silver": "#b3b3b3",
+      "near_white": "#cbcbcb",
+      "light": "#fdfdfd",
+      "negative_red": "#f3727f",
+      "warning_orange": "#ffa42b",
+      "announcement_blue": "#539df5",
+      "dark_card": "#252525",
+      "mid_card": "#272727",
+      "border_gray": "#4d4d4d",
+      "light_border": "#7c7c7c",
+      "separator": "#b3b3b3",
+      "light_surface": "#eeeeee",
+      "spotify_green_border": "#1db954",
+      "heavy": "rgba(0,0,0,0.5)",
+      "medium": "rgba(0,0,0,0.3)",
+      "inset_border": "rgb(18,18,18)"
+    },
+    "all_hex_colors": [
+      "#1ed760",
+      "#121212",
+      "#181818",
+      "#1f1f1f",
+      "#ffffff",
+      "#b3b3b3",
+      "#cbcbcb",
+      "#fdfdfd",
+      "#f3727f",
+      "#ffa42b",
+      "#539df5",
+      "#252525",
+      "#272727",
+      "#4d4d4d",
+      "#7c7c7c",
+      "#eeeeee",
+      "#1db954"
+    ],
+    "all_rgba_colors": [
+      "rgba(0,0,0,0.5)",
+      "rgba(0,0,0,0.3)",
+      "rgb(18,18,18)",
+      "rgb(124,124,124)"
+    ],
+    "all_hsla_colors": [],
+    "hex_count": 17,
+    "_extraction_method": "regex_role_pairs + hex_enum",
+    "_confidence": "high"
+  },
+  "typography": {
+    "families": [],
+    "all_px_values": [
+      10.0,
+      10.5,
+      12.0,
+      14.0,
+      16.0,
+      18.0,
+      24.0
+    ],
+    "declared_scale_px": null,
+    "weights_seen": [],
+    "_extraction_method": "regex_family_role_pairs + px_enum + weight_enum",
+    "_confidence": "medium"
+  },
+  "spacing": {
+    "base_unit_px": 8.0,
+    "declared_scale": null,
+    "all_px_values": [
+      1.0,
+      2.0,
+      3.0,
+      4.0,
+      5.0,
+      6.0,
+      8.0,
+      10.0,
+      12.0,
+      14.0,
+      15.0,
+      16.0,
+      20.0,
+      100.0
+    ],
+    "_extraction_method": "regex_base_unit + scale_enum",
+    "_confidence": "medium"
+  },
+  "layout": {
+    "_extraction_method": "kept_section_text_for_a3",
+    "_confidence": "low",
+    "_section_size": 1067
+  },
+  "radius": {
+    "role_radius_pairs": {
+      "standard": 6.0,
+      "comfortable": 8.0,
+      "large": 100.0,
+      "pill": 500.0,
+      "full pill": 9999.0
+    },
+    "all_px_values": [
+      1.0,
+      2.0,
+      3.0,
+      4.0,
+      5.0,
+      6.0,
+      8.0,
+      10.0,
+      12.0,
+      14.0,
+      15.0,
+      16.0,
+      20.0,
+      100.0
+    ],
+    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_confidence": "high"
+  },
+  "depth_elevation": {
+    "rgba_shadows": [
+      "rgba(0,0,0,0.3)",
+      "rgba(0,0,0,0.5)",
+      "rgb(18,18,18)",
+      "rgb(124,124,124)"
+    ],
+    "inset_shadows": [
+      "Inset (Border) | `rgb(18",
+      "inset` | Input borders |",
+      "inset border-shadow combination on inputs creates a recessed"
+    ],
+    "_extraction_method": "regex_rgba_inset",
+    "_confidence": "medium"
+  },
+  "responsive": {
+    "breakpoints_named": {
+      "mobile": {
+        "min": 425,
+        "max": 576
+      },
+      "tablet": {
+        "min": 576,
+        "max": 768
+      },
+      "desktop_small": {
+        "min": 896,
+        "max": 1024
+      },
+      "desktop": {
+        "min": 1024,
+        "max": 1280
+      }
+    },
+    "_extraction_method": "regex_breakpoint_table",
+    "_confidence": "high"
+  },
+  "dos_donts": {
+    "dos": [
+      "Use near-black backgrounds (`#121212`–`#1f1f1f`) — depth through shade variation",
+      "Apply Spotify Green (`#1ed760`) only for play controls, active states, and primary CTAs",
+      "Use pill shape (500px–9999px) for all buttons — circular (50%) for play controls",
+      "Apply uppercase + wide letter-spacing (1.4px–2px) on button labels",
+      "Keep typography compact (10px–24px range) — this is an app, not a magazine",
+      "Use heavy shadows (`0.3–0.5 opacity`) for elevated elements on dark backgrounds",
+      "Let album art provide color — the UI itself is achromatic"
+    ],
+    "donts": [
+      "Don't use Spotify Green decoratively or on backgrounds — it's functional only",
+      "Don't use light backgrounds for primary surfaces — the dark immersion is core",
+      "Don't skip the pill/circle geometry on buttons — square buttons break the identity",
+      "Don't use thin/subtle shadows — on dark backgrounds, shadows need to be heavy to be visible",
+      "Don't add additional brand colors — green + achromatic grays is the complete palette",
+      "Don't use relaxed line-heights — Spotify's typography is compact and dense",
+      "Don't expose raw gray borders — use shadow-based or inset borders instead"
+    ],
+    "_extraction_method": "subsection_bullet_parse",
+    "_confidence": "high"
+  },
+  "sections_present": [
+    "visual_theme",
+    "color",
+    "typography",
+    "components",
+    "layout",
+    "depth_elevation",
+    "dos_donts",
+    "responsive",
+    "agent_guide"
+  ],
+  "sections_unhandled": [
+    "components",
+    "agent_guide"
+  ],
+  "sections_meta_for_llm": [
+    "visual_theme",
+    "agent_guide"
+  ],
+  "llm_followup_hints": [
+    "layout extraction has low confidence — recommend LLM review"
+  ]
+}

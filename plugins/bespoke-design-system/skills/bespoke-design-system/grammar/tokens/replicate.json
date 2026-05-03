@@ -1,0 +1,179 @@
+{
+  "system_name": "replicate",
+  "source": "open-design",
+  "extracted_at": "2026-05-03T13:38:57.571188Z",
+  "dialect": "A",
+  "fingerprint_hash": "c3932771f83333f143774ac5d18cf57e9a4083d1e6af7daec605bac715a62dfd",
+  "extraction_method": "programmatic_a1",
+  "tool_version": "1.0.0",
+  "color": {
+    "role_color_pairs": {
+      "replicate_dark": "#202020",
+      "replicate_red": "#ea2804",
+      "secondary_red": "#dd4425",
+      "status_green": "#2b9a66",
+      "github_dark": "#24292e",
+      "pure_white": "#ffffff",
+      "near_white": "#fcfcfc",
+      "medium_gray": "#646464",
+      "warm_gray": "#4e4e4e",
+      "mid_silver": "#8d8d8d",
+      "light_silver": "#bbbbbb",
+      "pure_black": "#000000"
+    },
+    "all_hex_colors": [
+      "#202020",
+      "#000",
+      "#ea2804",
+      "#dd4425",
+      "#2b9a66",
+      "#24292e",
+      "#ffffff",
+      "#fcfcfc",
+      "#646464",
+      "#4e4e4e",
+      "#8d8d8d",
+      "#bbbbbb",
+      "#000000"
+    ],
+    "all_rgba_colors": [],
+    "all_hsla_colors": [],
+    "hex_count": 13,
+    "_extraction_method": "regex_role_pairs + hex_enum",
+    "_confidence": "high"
+  },
+  "typography": {
+    "families": [],
+    "all_px_values": [
+      11.0,
+      12.0,
+      14.0,
+      18.0,
+      20.0,
+      30.0,
+      38.4,
+      48.0,
+      72.0,
+      128.0
+    ],
+    "declared_scale_px": null,
+    "weights_seen": [
+      600
+    ],
+    "_extraction_method": "regex_family_role_pairs + px_enum + weight_enum",
+    "_confidence": "medium"
+  },
+  "spacing": {
+    "base_unit_px": 8.0,
+    "declared_scale": null,
+    "all_px_values": [
+      1.0,
+      2.0,
+      4.0,
+      6.0,
+      8.0,
+      10.0,
+      12.0,
+      16.0,
+      24.0,
+      32.0,
+      48.0,
+      56.0,
+      64.0,
+      96.0,
+      160.0,
+      192.0
+    ],
+    "_extraction_method": "regex_base_unit + scale_enum",
+    "_confidence": "medium"
+  },
+  "layout": {
+    "_extraction_method": "kept_section_text_for_a3",
+    "_confidence": "low",
+    "_section_size": 1051
+  },
+  "radius": {
+    "role_radius_pairs": {},
+    "all_px_values": [
+      1.0,
+      2.0,
+      4.0,
+      6.0,
+      8.0,
+      10.0,
+      12.0,
+      16.0,
+      24.0,
+      32.0,
+      48.0,
+      56.0,
+      64.0,
+      96.0,
+      160.0,
+      192.0
+    ],
+    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_confidence": "low"
+  },
+  "depth_elevation": {
+    "rgba_shadows": [],
+    "inset_shadows": [],
+    "_extraction_method": "regex_rgba_inset",
+    "_confidence": "medium"
+  },
+  "responsive": {
+    "breakpoints_named": {},
+    "_extraction_method": "regex_breakpoint_table",
+    "_confidence": "low"
+  },
+  "dos_donts": {
+    "dos": [
+      "Use pill-shaped (9999px) radius on EVERYTHING — buttons, images, badges, containers",
+      "Use rb-freigeist-neue at weight 700 for display text — go big (72px+) or go home",
+      "Use the orange-red brand gradient for hero sections",
+      "Use Replicate Dark (#202020) as the primary dark — not pure black",
+      "Apply dotted underline decoration on text links (#bbbbbb)",
+      "Use Status Green (#2b9a66) for operational/success badges",
+      "Keep body text in basier-square at 400–600 weight",
+      "Use JetBrains Mono for all code content",
+      "Create a \"manifesto\" section with 128px type for emotional impact"
+    ],
+    "donts": [
+      "Don't use any border-radius other than 9999px — the pill system is absolute",
+      "Don't use the brand red (#ea2804) as a surface/background color — it's for gradients and accent borders",
+      "Don't reduce display text below 48px on desktop — the heavy display font needs size to breathe",
+      "Don't use light/thin font weights on rb-freigeist-neue — 600–700 is the range",
+      "Don't use solid underlines on links — dotted is the signature",
+      "Don't add drop shadows — depth comes from borders and background color",
+      "Don't use warm neutrals — the gray scale is purely neutral (#202020 → #bbbbbb)",
+      "Don't skip the code examples — they're primary content, not decoration",
+      "Don't make the hero gradient subtle — it should be BOLD and vibrant"
+    ],
+    "_extraction_method": "subsection_bullet_parse",
+    "_confidence": "high"
+  },
+  "sections_present": [
+    "visual_theme",
+    "color",
+    "typography",
+    "components",
+    "layout",
+    "depth_elevation",
+    "dos_donts",
+    "responsive",
+    "agent_guide"
+  ],
+  "sections_unhandled": [
+    "components",
+    "agent_guide"
+  ],
+  "sections_meta_for_llm": [
+    "visual_theme",
+    "agent_guide"
+  ],
+  "llm_followup_hints": [
+    "layout extraction has low confidence — recommend LLM review",
+    "radius extraction has low confidence — recommend LLM review",
+    "responsive extraction has low confidence — recommend LLM review"
+  ]
+}

@@ -1,0 +1,210 @@
+{
+  "system_name": "warp",
+  "source": "open-design",
+  "extracted_at": "2026-05-03T13:38:57.594310Z",
+  "dialect": "A",
+  "fingerprint_hash": "41e2006c2ee0c018673f8eed59de198d8ae08b0a4d3bca2a6bdf90a323e6463c",
+  "extraction_method": "programmatic_a1",
+  "tool_version": "1.0.0",
+  "color": {
+    "role_color_pairs": {
+      "warm_parchment": "#faf9f6",
+      "earth_gray": "#353534",
+      "stone_gray": "#868584",
+      "ash_gray": "#afaeac",
+      "purple-tint_gray": "#666469",
+      "frosted_veil": "rgba(255, 255, 255, 0.04)",
+      "mist_border": "rgba(226, 226, 226, 0.35)",
+      "translucent_parchment": "rgba(250, 249, 246, 0.9)",
+      "muted_purple": "#666469",
+      "dark_charcoal": "#454545"
+    },
+    "all_hex_colors": [
+      "#faf9f6",
+      "#353534",
+      "#868584",
+      "#afaeac",
+      "#666469",
+      "#454545"
+    ],
+    "all_rgba_colors": [
+      "rgba(255, 255, 255, 0.04)",
+      "rgba(226, 226, 226, 0.35)",
+      "rgba(227, 227, 227, 0.337)",
+      "rgba(250, 249, 246, 0.9)"
+    ],
+    "all_hsla_colors": [],
+    "hex_count": 6,
+    "_extraction_method": "regex_role_pairs + hex_enum",
+    "_confidence": "high"
+  },
+  "typography": {
+    "families": [],
+    "all_px_values": [
+      11.0,
+      12.0,
+      14.0,
+      16.0,
+      18.0,
+      20.0,
+      22.0,
+      24.0,
+      32.0,
+      36.0,
+      40.0,
+      42.0,
+      48.0,
+      56.0,
+      80.0
+    ],
+    "declared_scale_px": null,
+    "weights_seen": [
+      400,
+      500
+    ],
+    "_extraction_method": "regex_family_role_pairs + px_enum + weight_enum",
+    "_confidence": "medium"
+  },
+  "spacing": {
+    "base_unit_px": 8.0,
+    "declared_scale": [
+      1.0,
+      4.0,
+      5.0,
+      8.0,
+      10.0,
+      12.0,
+      14.0,
+      15.0,
+      16.0,
+      18.0,
+      24.0,
+      26.0,
+      30.0,
+      32.0,
+      36.0
+    ],
+    "all_px_values": [
+      1.0,
+      4.0,
+      5.0,
+      6.0,
+      8.0,
+      10.0,
+      12.0,
+      14.0,
+      15.0,
+      16.0,
+      18.0,
+      24.0,
+      26.0,
+      30.0,
+      32.0,
+      36.0,
+      40.0,
+      50.0,
+      80.0,
+      120.0,
+      200.0
+    ],
+    "_extraction_method": "regex_base_unit + scale_enum",
+    "_confidence": "high"
+  },
+  "layout": {
+    "_extraction_method": "kept_section_text_for_a3",
+    "_confidence": "low",
+    "_section_size": 1404
+  },
+  "radius": {
+    "role_radius_pairs": {
+      "card padding": 16.0
+    },
+    "all_px_values": [
+      1.0,
+      4.0,
+      5.0,
+      6.0,
+      8.0,
+      10.0,
+      12.0,
+      14.0,
+      15.0,
+      16.0,
+      18.0,
+      24.0,
+      26.0,
+      30.0,
+      32.0,
+      36.0,
+      40.0,
+      50.0,
+      80.0,
+      120.0,
+      200.0
+    ],
+    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_confidence": "medium"
+  },
+  "depth_elevation": {
+    "rgba_shadows": [
+      "rgba(255, 255, 255, 0.04)",
+      "rgba(226, 226, 226, 0.35)",
+      "rgba(0, 0, 0, 0.2)"
+    ],
+    "inset_shadows": [],
+    "_extraction_method": "regex_rgba_inset",
+    "_confidence": "medium"
+  },
+  "responsive": {
+    "breakpoints_named": {},
+    "_extraction_method": "regex_breakpoint_table",
+    "_confidence": "low"
+  },
+  "dos_donts": {
+    "dos": [
+      "Use warm off-white (`#faf9f6`) for text instead of pure white — the cream undertone is essential",
+      "Keep buttons restrained and muted — dark fill (#353534) with muted text (#afaeac), no bright CTAs",
+      "Apply Matter Regular (weight 400) for nearly everything — even headlines. Reserve Medium (500) for emphasis only",
+      "Use uppercase labels with wide letter-spacing (1.4px–2.4px) for categorization",
+      "Interleave nature photography with product screenshots — this is core to the brand identity",
+      "Maintain the almost monochromatic warm gray palette — no bold accent colors",
+      "Use semi-transparent borders (`rgba(226, 226, 226, 0.35)`) for card containment instead of shadows",
+      "Keep negative letter-spacing on headlines (-0.4px to -2.4px) for Matter's compressed display treatment"
+    ],
+    "donts": [
+      "Use pure white (#ffffff) for text — it's always warm parchment (#faf9f6)",
+      "Add bold accent colors (blue, red, green) — the system is deliberately monochromatic warm grays",
+      "Apply bold weight (700+) to any text — Warp never goes above Medium (500)",
+      "Use heavy drop shadows — depth comes from borders, photography, and opacity shifts",
+      "Create cold or blue-tinted dark backgrounds — the warmth is essential",
+      "Add decorative gradients or glow effects — the photography provides all visual interest",
+      "Use tight, compressed layouts — the editorial spacing is generous and contemplative",
+      "Mix in additional typefaces beyond the Matter family + Inter supplement"
+    ],
+    "_extraction_method": "subsection_bullet_parse",
+    "_confidence": "high"
+  },
+  "sections_present": [
+    "visual_theme",
+    "color",
+    "typography",
+    "components",
+    "layout",
+    "depth_elevation",
+    "dos_donts",
+    "responsive",
+    "agent_guide"
+  ],
+  "sections_unhandled": [
+    "components",
+    "agent_guide"
+  ],
+  "sections_meta_for_llm": [
+    "visual_theme",
+    "agent_guide"
+  ],
+  "llm_followup_hints": [
+    "layout extraction has low confidence — recommend LLM review",
+    "responsive extraction has low confidence — recommend LLM review"
+  ]
+}

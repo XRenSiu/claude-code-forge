@@ -1,238 +1,267 @@
 {
   "system_name": "linear-app",
   "source": "open-design",
-  "extracted_at": "2026-05-03T11:43:58Z",
-  "category_tag": "Productivity & SaaS",
-  "tagline": "Project management. Ultra-minimal, precise, purple accent.",
-
+  "extracted_at": "2026-05-03T13:38:57.548895Z",
+  "dialect": "A",
+  "fingerprint_hash": "4c7264d8bc0e26de761c550e9f0445b0e7d92078c1a288f3fdb604b4f6df8fb7",
+  "extraction_method": "programmatic_a1",
+  "tool_version": "1.0.0",
   "color": {
-    "background_surfaces": {
-      "marketing_black": "#08090a",
+    "role_color_pairs": {
+      "marketing_black": "#010102",
       "panel_dark": "#0f1011",
       "level_3_surface": "#191a1b",
       "secondary_surface": "#28282c",
-      "deepest_canvas": "#010102"
-    },
-    "text": {
-      "primary": "#f7f8f8",
-      "secondary": "#d0d6e0",
-      "tertiary": "#8a8f98",
-      "quaternary": "#62666d"
-    },
-    "brand": {
-      "primary": "#5e6ad2",
-      "accent": "#7170ff",
+      "primary_text": "#f7f8f8",
+      "secondary_text": "#d0d6e0",
+      "tertiary_text": "#8a8f98",
+      "quaternary_text": "#62666d",
+      "brand_indigo": "#5e6ad2",
+      "accent_violet": "#7170ff",
       "accent_hover": "#828fff",
-      "security_lavender": "#7a7fad"
-    },
-    "status": {
-      "success_green": "#27a644",
-      "emerald": "#10b981"
-    },
-    "borders": {
-      "primary_solid": "#23252a",
-      "secondary_solid": "#34343a",
-      "tertiary_solid": "#3e3e44",
-      "subtle_translucent": "rgba(255,255,255,0.05)",
-      "standard_translucent": "rgba(255,255,255,0.08)",
+      "security_lavender": "#7a7fad",
+      "green": "#27a644",
+      "emerald": "#10b981",
+      "border_primary": "#23252a",
+      "border_secondary": "#34343a",
+      "border_tertiary": "#3e3e44",
+      "border_subtle": "rgba(255,255,255,0.05)",
+      "border_standard": "rgba(255,255,255,0.08)",
       "line_tint": "#141516",
-      "line_tertiary": "#18191a"
+      "line_tertiary": "#18191a",
+      "light_background": "#f7f8f8",
+      "light_surface": "#f3f4f5",
+      "light_border": "#d0d6e0",
+      "light_border_alt": "#e6e6e6",
+      "pure_white": "#ffffff",
+      "overlay_primary": "rgba(0,0,0,0.85)"
     },
-    "light_mode_neutrals": {
-      "bg": "#f7f8f8",
-      "surface_a": "#f3f4f5",
-      "surface_b": "#f5f6f7",
-      "border": "#d0d6e0",
-      "border_alt": "#e6e6e6",
-      "white": "#ffffff"
-    },
-    "overlay": {
-      "modal_backdrop": "rgba(0,0,0,0.85)"
-    },
-    "_chromatic_summary": "near-monochrome dark + single brand chromatic (indigo-violet 240-260°)"
+    "all_hex_colors": [
+      "#010102",
+      "#08090a",
+      "#0f1011",
+      "#191a1b",
+      "#28282c",
+      "#f7f8f8",
+      "#d0d6e0",
+      "#8a8f98",
+      "#62666d",
+      "#5e6ad2",
+      "#7170ff",
+      "#828fff",
+      "#7a7fad",
+      "#27a644",
+      "#10b981",
+      "#23252a",
+      "#34343a",
+      "#3e3e44",
+      "#141516",
+      "#18191a",
+      "#f3f4f5",
+      "#f5f6f7",
+      "#e6e6e6",
+      "#ffffff"
+    ],
+    "all_rgba_colors": [
+      "rgba(255,255,255,0.05)",
+      "rgba(255,255,255,0.08)",
+      "rgba(0,0,0,0.85)"
+    ],
+    "all_hsla_colors": [],
+    "hex_count": 24,
+    "_extraction_method": "regex_role_pairs + hex_enum",
+    "_confidence": "high"
   },
-
   "typography": {
-    "primary_family": "Inter Variable",
-    "primary_fallbacks": ["SF Pro Display", "-apple-system", "system-ui", "Segoe UI", "Roboto"],
-    "mono_family": "Berkeley Mono",
-    "mono_fallbacks": ["ui-monospace", "SF Mono", "Menlo"],
-    "opentype_features": ["cv01", "ss03"],
-    "weight_system": {
-      "base_read": 400,
-      "signature_emphasis": 510,
-      "strong_emphasis": 590,
-      "deemphasized": 300,
-      "max_weight": 590,
-      "no_bold_700": true
-    },
-    "scale_px": [10, 11, 12, 13, 14, 15, 16, 17, 18, 20, 24, 32, 48, 64, 72],
-    "letter_spacing_rules": {
-      "72px": "-1.584px",
-      "64px": "-1.408px",
-      "48px": "-1.056px",
-      "32px": "-0.704px",
-      "24px": "-0.288px",
-      "20px": "-0.24px",
-      "18px": "-0.165px",
-      "16px": "normal",
-      "below_16px": "normal_or_slight_negative"
-    },
-    "line_height_rules": {
-      "display_72_to_48": 1.0,
-      "heading_32": 1.13,
-      "heading_24_to_20": 1.33,
-      "body_relaxed": 1.6,
-      "body_standard": 1.5,
-      "label": 1.4
-    }
+    "families": [
+      {
+        "role": "primary",
+        "family": "Inter Variable"
+      },
+      {
+        "role": "mono",
+        "family": "Berkeley Mono"
+      }
+    ],
+    "all_px_values": [
+      10.0,
+      11.0,
+      12.0,
+      13.0,
+      14.0,
+      15.0,
+      16.0,
+      17.0,
+      18.0,
+      20.0,
+      24.0,
+      32.0,
+      48.0,
+      64.0,
+      72.0
+    ],
+    "declared_scale_px": null,
+    "weights_seen": [],
+    "_extraction_method": "regex_family_role_pairs + px_enum + weight_enum",
+    "_confidence": "high"
   },
-
   "spacing": {
-    "base": 8,
-    "scale_px": [1, 4, 7, 8, 11, 12, 16, 19, 20, 22, 24, 28, 32, 35],
-    "primary_rhythm": [8, 16, 24, 32],
-    "section_vertical_padding_min_px": 80,
-    "notes": "Includes 7px and 11px micro-adjustments for optical alignment. Section isolation via vertical padding rather than dividers."
+    "base_unit_px": 8.0,
+    "declared_scale": null,
+    "all_px_values": [
+      1.0,
+      1.584,
+      2.0,
+      4.0,
+      6.0,
+      7.0,
+      8.0,
+      11.0,
+      12.0,
+      16.0,
+      19.0,
+      20.0,
+      22.0,
+      24.0,
+      28.0,
+      32.0,
+      35.0,
+      72.0,
+      80.0
+    ],
+    "_extraction_method": "regex_base_unit + scale_enum",
+    "_confidence": "medium"
   },
-
+  "layout": {
+    "_extraction_method": "kept_section_text_for_a3",
+    "_confidence": "low",
+    "_section_size": 1575
+  },
   "radius": {
-    "micro": 2,
-    "standard": 4,
-    "comfortable": 6,
-    "card": 8,
-    "panel": 12,
-    "large": 22,
-    "pill": 9999,
-    "circle_pct": 50
-  },
-
-  "elevation": {
-    "philosophy": "luminance_stepping",
-    "levels": {
-      "flat_0": "none",
-      "subtle_1": "rgba(0,0,0,0.03) 0px 1.2px 0px",
-      "surface_2": "bg rgba(255,255,255,0.02-0.05) + border rgba(255,255,255,0.05-0.08)",
-      "inset_2b": "rgba(0,0,0,0.2) 0px 0px 12px 0px inset",
-      "ring_3": "rgba(0,0,0,0.2) 0px 0px 0px 1px",
-      "elevated_4": "rgba(0,0,0,0.4) 0px 2px 4px",
-      "dialog_5": "multi-layer stack of 5 layers"
+    "role_radius_pairs": {
+      "micro": 2.0,
+      "standard": 4.0,
+      "comfortable": 6.0,
+      "card": 8.0,
+      "panel": 12.0,
+      "large": 22.0,
+      "full pill": 9999.0
     },
-    "uses_shadow_for_depth_on_dark": false,
-    "uses_background_luminance_stepping": true
+    "all_px_values": [
+      1.0,
+      1.584,
+      2.0,
+      4.0,
+      6.0,
+      7.0,
+      8.0,
+      11.0,
+      12.0,
+      16.0,
+      19.0,
+      20.0,
+      22.0,
+      24.0,
+      28.0,
+      32.0,
+      35.0,
+      72.0,
+      80.0
+    ],
+    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_confidence": "high"
   },
-
-  "components": {
-    "buttons": {
-      "ghost_default": {
-        "bg": "rgba(255,255,255,0.02)",
-        "text": "#e2e4e7",
-        "radius": 6,
-        "border": "1px solid rgb(36,40,44)",
-        "use": "standard secondary"
+  "depth_elevation": {
+    "rgba_shadows": [
+      "rgba(0,0,0,0.03)",
+      "rgba(255,255,255,0.05)",
+      "rgba(255,255,255,0.08)",
+      "rgba(0,0,0,0.2)",
+      "rgba(0,0,0,0.4)",
+      "rgba(0,0,0,0)",
+      "rgba(0,0,0,0.01)",
+      "rgba(0,0,0,0.04)",
+      "rgba(0,0,0,0.07)",
+      "rgba(0,0,0,0.08)",
+      "rgba(0,0,0,0.1)"
+    ],
+    "inset_shadows": [
+      "Inset (Level 2b) | `rgba(0",
+      "inset` | Recessed panels",
+      "inset shadow technique (`rgba(0",
+      "inset`) creates a unique \"sunken\" effect for recessed panels"
+    ],
+    "_extraction_method": "regex_rgba_inset",
+    "_confidence": "medium"
+  },
+  "responsive": {
+    "breakpoints_named": {
+      "mobile": {
+        "min": 600,
+        "max": 640
       },
-      "subtle": {
-        "bg": "rgba(255,255,255,0.04)",
-        "text": "#d0d6e0",
-        "radius": 6,
-        "padding": "0px 6px",
-        "use": "toolbar/contextual"
+      "tablet": {
+        "min": 640,
+        "max": 768
       },
-      "primary_brand": {
-        "bg": "#5e6ad2",
-        "text": "#ffffff",
-        "padding": "8px 16px",
-        "radius": 6,
-        "hover_color": "#828fff",
-        "use": "primary CTA"
+      "desktop_small": {
+        "min": 768,
+        "max": 1024
       },
-      "icon_circle": {
-        "bg": "rgba(255,255,255,0.03-0.05)",
-        "radius_pct": 50,
-        "border": "1px solid rgba(255,255,255,0.08)"
-      },
-      "pill": {
-        "bg": "transparent",
-        "text": "#d0d6e0",
-        "radius": 9999,
-        "border": "1px solid rgb(35,37,42)"
-      },
-      "small_toolbar": {
-        "bg": "rgba(255,255,255,0.05)",
-        "text": "#62666d",
-        "radius": 2,
-        "font": "12px weight 510"
+      "desktop": {
+        "min": 1024,
+        "max": 1280
       }
     },
-    "card": {
-      "bg": "rgba(255,255,255,0.02-0.05)",
-      "border": "1px solid rgba(255,255,255,0.05-0.08)",
-      "radius_options": [8, 12, 22],
-      "always_translucent": true,
-      "shadow": "ring or layered stack"
-    },
-    "input": {
-      "text_area_bg": "rgba(255,255,255,0.02)",
-      "text_area_border": "1px solid rgba(255,255,255,0.08)",
-      "padding": "12px 14px",
-      "radius": 6
-    },
-    "navigation": {
-      "header_bg": "near-black sticky",
-      "links_font": "Inter 13-14px weight 510",
-      "active_state": "text lightens to #f7f8f8",
-      "search_pattern": "command palette via / or Cmd+K"
-    }
+    "_extraction_method": "regex_breakpoint_table",
+    "_confidence": "high"
   },
-
-  "responsive": {
-    "breakpoints_px": {
-      "mobile_small": 600,
-      "mobile": 640,
-      "tablet": 768,
-      "desktop_small": 1024,
-      "desktop": 1280,
-      "large_desktop": null
-    },
-    "max_content_width": 1200,
-    "section_spacing_collapse": "80px+ -> 48px on mobile",
-    "display_text_collapse": "72px -> 48px -> 32px"
+  "dos_donts": {
+    "dos": [
+      "Use Inter Variable with `\"cv01\", \"ss03\"` on ALL text — these features are fundamental to Linear's typeface identity",
+      "Use weight 510 as your default emphasis weight — it's Linear's signature between-weight",
+      "Apply aggressive negative letter-spacing at display sizes (-1.584px at 72px, -1.056px at 48px)",
+      "Build on near-black backgrounds: `#08090a` for marketing, `#0f1011` for panels, `#191a1b` for elevated surfaces",
+      "Use semi-transparent white borders (`rgba(255,255,255,0.05)` to `rgba(255,255,255,0.08)`) instead of solid dark borders",
+      "Keep button backgrounds nearly transparent: `rgba(255,255,255,0.02)` to `rgba(255,255,255,0.05)`",
+      "Reserve brand indigo (`#5e6ad2` / `#7170ff`) for primary CTAs and interactive accents only",
+      "Use `#f7f8f8` for primary text — not pure `#ffffff`, which would be too harsh",
+      "Apply the luminance stacking model: deeper = darker bg, elevated = slightly lighter bg"
+    ],
+    "donts": [
+      "Don't use pure white (`#ffffff`) as primary text — `#f7f8f8` prevents eye strain",
+      "Don't use solid colored backgrounds for buttons — transparency is the system (rgba white at 0.02–0.05)",
+      "Don't apply the brand indigo decoratively — it's reserved for interactive/CTA elements only",
+      "Don't use positive letter-spacing on display text — Inter at large sizes always runs negative",
+      "Don't use visible/opaque borders on dark backgrounds — borders should be whisper-thin semi-transparent white",
+      "Don't skip the OpenType features (`\"cv01\", \"ss03\"`) — without them, it's generic Inter, not Linear's Inter",
+      "Don't use weight 700 (bold) — Linear's maximum weight is 590, with 510 as the workhorse",
+      "Don't introduce warm colors into the UI chrome — the palette is cool gray with blue-violet accent only",
+      "Don't use drop shadows for elevation on dark surfaces — use background luminance stepping instead"
+    ],
+    "_extraction_method": "subsection_bullet_parse",
+    "_confidence": "high"
   },
-
-  "interaction_motion_evidence": {
-    "hover_pattern": "subtle background opacity increase on cards/buttons",
-    "focus_pattern": "multi-layer shadow stacks for keyboard focus",
-    "no_explicit_motion_section": true,
-    "_note": "OD DESIGN.md format does not have a dedicated motion section; motion characteristics are inferred from interaction descriptions"
-  },
-
-  "extracted_dos": [
-    "Use Inter Variable with cv01,ss03 globally",
-    "Use weight 510 as default emphasis",
-    "Aggressive negative letter-spacing at display sizes",
-    "Build on near-black backgrounds (#08090a / #0f1011 / #191a1b)",
-    "Semi-transparent white borders not solid dark",
-    "Button bg nearly transparent (rgba white 0.02-0.05)",
-    "Reserve brand indigo for primary CTAs only",
-    "Use #f7f8f8 not #ffffff for primary text",
-    "Apply luminance stacking for elevation"
+  "sections_present": [
+    "visual_theme",
+    "color",
+    "typography",
+    "components",
+    "layout",
+    "depth_elevation",
+    "dos_donts",
+    "responsive",
+    "agent_guide"
   ],
-
-  "extracted_donts": [
-    "Don't use pure white (#ffffff) as primary text",
-    "Don't use solid colored backgrounds for buttons",
-    "Don't apply brand indigo decoratively",
-    "Don't use positive letter-spacing on display text",
-    "Don't use opaque borders on dark backgrounds",
-    "Don't skip OpenType cv01,ss03",
-    "Don't use weight 700",
-    "Don't introduce warm colors into UI chrome",
-    "Don't use drop shadows for elevation on dark surfaces"
+  "sections_unhandled": [
+    "components",
+    "agent_guide"
   ],
-
-  "_extraction_notes": [
-    "DESIGN.md follows OD/open-design 9-section dialect (Visual Theme & Atmosphere / Color Palette & Roles / Typography Rules / Component Stylings / Layout Principles / Depth & Elevation / Do's and Don'ts / Responsive Behavior / Agent Prompt Guide)",
-    "No dedicated 'Motion', 'Voice', 'Brand', or 'Anti-patterns' section names — these dimensions are distributed across other sections (especially Visual Theme, Do's/Don'ts)",
-    "All values transcribed verbatim from DESIGN.md — no inference at this stage"
+  "sections_meta_for_llm": [
+    "visual_theme",
+    "agent_guide"
+  ],
+  "llm_followup_hints": [
+    "layout extraction has low confidence — recommend LLM review"
   ]
 }

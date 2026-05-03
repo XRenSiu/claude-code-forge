@@ -1,0 +1,190 @@
+{
+  "system_name": "superhuman",
+  "source": "open-design",
+  "extracted_at": "2026-05-03T13:38:57.584511Z",
+  "dialect": "A",
+  "fingerprint_hash": "93f9375d392f77255f9a98640b53f181076515378b83326782c6e6e12dc51f8e",
+  "extraction_method": "programmatic_a1",
+  "tool_version": "1.0.0",
+  "color": {
+    "role_color_pairs": {
+      "mysteria_purple": "#1b1938",
+      "lavender_glow": "#cbb7fb",
+      "charcoal_ink": "#292827",
+      "amethyst_link": "#714cb6",
+      "pure_white": "#ffffff",
+      "warm_cream": "#e9e5dd",
+      "parchment_border": "#dcd7d3"
+    },
+    "all_hex_colors": [
+      "#1b1938",
+      "#cbb7fb",
+      "#292827",
+      "#714cb6",
+      "#ffffff",
+      "#e9e5dd",
+      "#dcd7d3"
+    ],
+    "all_rgba_colors": [],
+    "all_hsla_colors": [],
+    "hex_count": 7,
+    "_extraction_method": "regex_role_pairs + hex_enum",
+    "_confidence": "high"
+  },
+  "typography": {
+    "families": [
+      {
+        "role": "body",
+        "family": "In contrast"
+      }
+    ],
+    "all_px_values": [
+      12.0,
+      14.0,
+      16.0,
+      18.0,
+      20.0,
+      22.0,
+      26.0,
+      28.0,
+      48.0,
+      64.0
+    ],
+    "declared_scale_px": null,
+    "weights_seen": [],
+    "_extraction_method": "regex_family_role_pairs + px_enum + weight_enum",
+    "_confidence": "high"
+  },
+  "spacing": {
+    "base_unit_px": 8.0,
+    "declared_scale": [
+      2.0,
+      4.0,
+      6.0,
+      8.0,
+      12.0,
+      16.0,
+      18.0,
+      20.0,
+      24.0,
+      28.0,
+      32.0,
+      36.0,
+      40.0,
+      48.0,
+      56.0
+    ],
+    "all_px_values": [
+      2.0,
+      4.0,
+      6.0,
+      8.0,
+      12.0,
+      16.0,
+      18.0,
+      20.0,
+      24.0,
+      28.0,
+      32.0,
+      36.0,
+      40.0,
+      48.0,
+      50.0,
+      56.0,
+      80.0
+    ],
+    "_extraction_method": "regex_base_unit + scale_enum",
+    "_confidence": "high"
+  },
+  "layout": {
+    "_extraction_method": "kept_section_text_for_a3",
+    "_confidence": "low",
+    "_section_size": 1314
+  },
+  "radius": {
+    "role_radius_pairs": {
+      "card padding": 16.0
+    },
+    "all_px_values": [
+      2.0,
+      4.0,
+      6.0,
+      8.0,
+      12.0,
+      16.0,
+      18.0,
+      20.0,
+      24.0,
+      28.0,
+      32.0,
+      36.0,
+      40.0,
+      48.0,
+      50.0,
+      56.0,
+      80.0
+    ],
+    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_confidence": "medium"
+  },
+  "depth_elevation": {
+    "rgba_shadows": [
+      "rgba(255, 255, 255, 0.2)"
+    ],
+    "inset_shadows": [],
+    "_extraction_method": "regex_rgba_inset",
+    "_confidence": "medium"
+  },
+  "responsive": {
+    "breakpoints_named": {},
+    "_extraction_method": "regex_breakpoint_table",
+    "_confidence": "low"
+  },
+  "dos_donts": {
+    "dos": [
+      "Use Super Sans VF at weight 460 as the default — it's slightly heavier than regular, which is the brand's typographic signature",
+      "Keep display headlines at 0.96 line-height — the compression is intentional and powerful",
+      "Use Warm Cream (`#e9e5dd`) for primary buttons — not white, not gray, specifically warm cream",
+      "Limit border-radius to 8px (small) and 16px (large) — the binary radius system is deliberate",
+      "Apply negative letter-spacing on headlines only (-0.63px to -1.32px) — body text stays at 0px",
+      "Use Lavender Glow (`#cbb7fb`) as the only accent color — it's the sole color departure from the neutral palette",
+      "Let product screenshots be the primary visual content — the UI sells itself",
+      "Maintain the dramatic hero gradient as a singular gesture — the rest of the page is white"
+    ],
+    "donts": [
+      "Use conventional font weights (400, 500, 600) — Superhuman's 460 and 540 are deliberately between standard stops",
+      "Add bright or saturated CTA colors (blue, green, red) — buttons are intentionally muted in Warm Cream or Charcoal",
+      "Introduce additional accent colors beyond Lavender Glow — the palette is deliberately restrained to one accent",
+      "Apply shadows generously — depth comes from borders, color contrast, and photography, not box-shadows",
+      "Use tight line-height on body text — display is compressed (0.96) but body is generous (1.50)",
+      "Add decorative elements, icons, or illustrations — Superhuman relies on product UI and minimal typography",
+      "Create pill-shaped buttons — the system uses 8px radius, not rounded pills",
+      "Use pure black (`#000000`) for text — Charcoal Ink (`#292827`) is warmer and softer"
+    ],
+    "_extraction_method": "subsection_bullet_parse",
+    "_confidence": "high"
+  },
+  "sections_present": [
+    "visual_theme",
+    "color",
+    "typography",
+    "components",
+    "layout",
+    "depth_elevation",
+    "dos_donts",
+    "responsive",
+    "agent_guide"
+  ],
+  "sections_unhandled": [
+    "components",
+    "agent_guide"
+  ],
+  "sections_meta_for_llm": [
+    "visual_theme",
+    "agent_guide"
+  ],
+  "llm_followup_hints": [
+    "layout extraction has low confidence — recommend LLM review",
+    "responsive extraction has low confidence — recommend LLM review"
+  ]
+}

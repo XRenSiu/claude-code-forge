@@ -1,0 +1,221 @@
+{
+  "system_name": "mongodb",
+  "source": "open-design",
+  "extracted_at": "2026-05-03T13:38:57.557336Z",
+  "dialect": "A",
+  "fingerprint_hash": "8ade6a733fe3d4d264d3ce13dc8720203898c514568f39e9fcd26438c34a2ec7",
+  "extraction_method": "programmatic_a1",
+  "tool_version": "1.0.0",
+  "color": {
+    "role_color_pairs": {
+      "forest_black": "#001e2b",
+      "mongodb_green": "#00ed64",
+      "dark_green": "#00684a",
+      "action_blue": "#006cfa",
+      "hover_blue": "#3860be",
+      "teal_active": "#1eaedb",
+      "deep_teal": "#1c2d38",
+      "teal_gray": "#3d4f58",
+      "dark_slate": "#21313c",
+      "cool_gray": "#5c6c75",
+      "silver_teal": "#b8c4c2",
+      "light_input": "#e8edeb",
+      "pure_white": "#ffffff",
+      "black": "#000000",
+      "forest_shadow": "rgba(0, 30, 43, 0.12)",
+      "standard_shadow": "rgba(0, 0, 0, 0.15)",
+      "subtle_shadow": "rgba(0, 0, 0, 0.1)"
+    },
+    "all_hex_colors": [
+      "#001e2b",
+      "#00ed64",
+      "#00684a",
+      "#006cfa",
+      "#3860be",
+      "#1eaedb",
+      "#1c2d38",
+      "#3d4f58",
+      "#21313c",
+      "#5c6c75",
+      "#b8c4c2",
+      "#e8edeb",
+      "#ffffff",
+      "#000000"
+    ],
+    "all_rgba_colors": [
+      "rgba(0, 30, 43, 0.12)",
+      "rgba(0, 0, 0, 0.13)",
+      "rgba(0, 0, 0, 0.15)",
+      "rgba(0, 0, 0, 0.1)"
+    ],
+    "all_hsla_colors": [],
+    "hex_count": 14,
+    "_extraction_method": "regex_role_pairs + hex_enum",
+    "_confidence": "high"
+  },
+  "typography": {
+    "families": [],
+    "all_px_values": [
+      9.0,
+      11.0,
+      13.5,
+      14.0,
+      15.0,
+      16.0,
+      18.0,
+      20.0,
+      24.0,
+      36.0,
+      40.0,
+      64.0,
+      96.0
+    ],
+    "declared_scale_px": null,
+    "weights_seen": [
+      300
+    ],
+    "_extraction_method": "regex_family_role_pairs + px_enum + weight_enum",
+    "_confidence": "medium"
+  },
+  "spacing": {
+    "base_unit_px": 8.0,
+    "declared_scale": null,
+    "all_px_values": [
+      1.0,
+      2.0,
+      4.0,
+      7.0,
+      8.0,
+      10.0,
+      12.0,
+      14.0,
+      15.0,
+      16.0,
+      18.0,
+      20.0,
+      24.0,
+      30.0,
+      32.0,
+      48.0,
+      80.0,
+      100.0
+    ],
+    "_extraction_method": "regex_base_unit + scale_enum",
+    "_confidence": "medium"
+  },
+  "layout": {
+    "_extraction_method": "kept_section_text_for_a3",
+    "_confidence": "low",
+    "_section_size": 1102
+  },
+  "radius": {
+    "role_radius_pairs": {
+      "standard": 8.0,
+      "card": 16.0,
+      "large": 24.0,
+      "full": 9999.0
+    },
+    "all_px_values": [
+      1.0,
+      2.0,
+      4.0,
+      7.0,
+      8.0,
+      10.0,
+      12.0,
+      14.0,
+      15.0,
+      16.0,
+      18.0,
+      20.0,
+      24.0,
+      30.0,
+      32.0,
+      48.0,
+      80.0,
+      100.0
+    ],
+    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_confidence": "high"
+  },
+  "depth_elevation": {
+    "rgba_shadows": [
+      "rgba(0,0,0,0.1)",
+      "rgba(0,0,0,0.15)",
+      "rgba(0,30,43,0.12)",
+      "rgba(0,0,0,0.13)",
+      "rgba(0, 30, 43, 0.12)"
+    ],
+    "inset_shadows": [],
+    "_extraction_method": "regex_rgba_inset",
+    "_confidence": "medium"
+  },
+  "responsive": {
+    "breakpoints_named": {
+      "mobile": {
+        "min": 425,
+        "max": 768
+      },
+      "tablet": {
+        "min": 768,
+        "max": 1024
+      },
+      "desktop": {
+        "min": 1024,
+        "max": 1280
+      },
+      "large_desktop": {
+        "min": 1280,
+        "max": 1440
+      }
+    },
+    "_extraction_method": "regex_breakpoint_table",
+    "_confidence": "high"
+  },
+  "dos_donts": {
+    "dos": [
+      "Use `#001e2b` (forest-black) for dark sections — not pure black",
+      "Apply MongoDB Green (`#00ed64`) sparingly for maximum electric impact",
+      "Use MongoDB Value Serif ONLY for hero/display headings — Euclid Circular A for everything else",
+      "Apply Source Code Pro uppercase with wide tracking (1px–3px) for technical labels",
+      "Use teal-tinted shadows (`rgba(0,30,43,0.12)`) for primary card elevation",
+      "Maintain the dark/light section duality — dramatic contrast between modes",
+      "Use weight 300 for body text — the light weight is the readable voice",
+      "Apply pill radius (100px) to primary action buttons"
+    ],
+    "donts": [
+      "Don't use pure black (`#000000`) for dark backgrounds — always use teal-black (`#001e2b`)",
+      "Don't use MongoDB Green (`#00ed64`) on backgrounds — it's an accent for text, underlines, and small highlights",
+      "Don't use standard gray shadows — always use teal-tinted (`rgba(0,30,43,...)`)",
+      "Don't apply serif font to body text — MongoDB Value Serif is hero-only",
+      "Don't use narrow letter-spacing on Source Code Pro labels — the wide tracking IS the identity",
+      "Don't mix dark and light section treatments within the same section",
+      "Don't use warm colors — the palette is strictly cool (teal, green, blue)",
+      "Don't forget the green accent underlines — they're the signature decorative element"
+    ],
+    "_extraction_method": "subsection_bullet_parse",
+    "_confidence": "high"
+  },
+  "sections_present": [
+    "visual_theme",
+    "color",
+    "typography",
+    "components",
+    "layout",
+    "depth_elevation",
+    "dos_donts",
+    "responsive",
+    "agent_guide"
+  ],
+  "sections_unhandled": [
+    "components",
+    "agent_guide"
+  ],
+  "sections_meta_for_llm": [
+    "visual_theme",
+    "agent_guide"
+  ],
+  "llm_followup_hints": [
+    "layout extraction has low confidence — recommend LLM review"
+  ]
+}

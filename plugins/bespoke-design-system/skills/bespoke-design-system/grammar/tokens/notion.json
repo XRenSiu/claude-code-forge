@@ -1,0 +1,208 @@
+{
+  "system_name": "notion",
+  "source": "open-design",
+  "extracted_at": "2026-05-03T13:38:57.560409Z",
+  "dialect": "A-variant",
+  "fingerprint_hash": "94c550cc035a90aa08b6645e7b3105d2e579453f8415e57b3639319fdb7e5b23",
+  "extraction_method": "programmatic_a1",
+  "tool_version": "1.0.0",
+  "color": {
+    "role_color_pairs": {
+      "notion_black": "rgba(0,0,0,0.95)",
+      "pure_white": "#ffffff",
+      "notion_blue": "#0075de",
+      "deep_navy": "#213183",
+      "active_blue": "#005bab",
+      "warm_white": "#f6f5f4",
+      "warm_dark": "#31302e",
+      "warm_gray_500": "#615d59",
+      "warm_gray_300": "#a39e98",
+      "teal": "#2a9d99",
+      "green": "#1aae39",
+      "orange": "#dd5b00",
+      "pink": "#ff64c8",
+      "purple": "#391c57",
+      "brown": "#523410",
+      "link_blue": "#0075de",
+      "link_light_blue": "#62aef0",
+      "focus_blue": "#097fe8",
+      "badge_blue_bg": "#f2f9ff",
+      "badge_blue_text": "#097fe8",
+      "card_shadow": "rgba(0,0,0,0.04)",
+      "deep_shadow": "rgba(0,0,0,0.01)"
+    },
+    "all_hex_colors": [
+      "#000000f2",
+      "#ffffff",
+      "#0075de",
+      "#213183",
+      "#005bab",
+      "#f6f5f4",
+      "#31302e",
+      "#615d59",
+      "#a39e98",
+      "#2a9d99",
+      "#1aae39",
+      "#dd5b00",
+      "#ff64c8",
+      "#391c57",
+      "#523410",
+      "#62aef0",
+      "#097fe8",
+      "#f2f9ff"
+    ],
+    "all_rgba_colors": [
+      "rgba(0,0,0,0.95)",
+      "rgba(0,0,0,0.04)",
+      "rgba(0,0,0,0.027)",
+      "rgba(0,0,0,0.02)",
+      "rgba(0,0,0,0.01)",
+      "rgba(0,0,0,0.05)",
+      "rgba(0,0,0,0.1)"
+    ],
+    "all_hsla_colors": [],
+    "hex_count": 18,
+    "_extraction_method": "regex_role_pairs + hex_enum",
+    "_confidence": "high"
+  },
+  "typography": {
+    "families": [
+      {
+        "role": "primary",
+        "family": "NotionInter"
+      }
+    ],
+    "all_px_values": [
+      12.0,
+      14.0,
+      15.0,
+      16.0,
+      20.0,
+      22.0,
+      26.0,
+      40.0,
+      48.0,
+      54.0,
+      64.0
+    ],
+    "declared_scale_px": null,
+    "weights_seen": [],
+    "_extraction_method": "regex_family_role_pairs + px_enum + weight_enum",
+    "_confidence": "high"
+  },
+  "spacing": {
+    "base_unit_px": 8.0,
+    "declared_scale": null,
+    "all_px_values": [
+      2.0,
+      3.0,
+      4.0,
+      5.0,
+      5.6,
+      6.0,
+      6.4,
+      7.0,
+      8.0,
+      11.0,
+      12.0,
+      14.0,
+      16.0,
+      24.0,
+      32.0,
+      120.0
+    ],
+    "_extraction_method": "regex_base_unit + scale_enum",
+    "_confidence": "medium"
+  },
+  "layout": {
+    "_extraction_method": "kept_section_text_for_a3",
+    "_confidence": "low",
+    "_section_size": 1401
+  },
+  "radius": {
+    "role_radius_pairs": {
+      "micro": 4.0,
+      "standard": 8.0,
+      "comfortable": 12.0,
+      "large": 16.0,
+      "full pill": 9999.0
+    },
+    "all_px_values": [
+      2.0,
+      3.0,
+      4.0,
+      5.0,
+      5.6,
+      6.0,
+      6.4,
+      7.0,
+      8.0,
+      11.0,
+      12.0,
+      14.0,
+      16.0,
+      24.0,
+      32.0,
+      120.0
+    ],
+    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_confidence": "high"
+  },
+  "depth_elevation": {
+    "rgba_shadows": [
+      "rgba(0,0,0,0.1)"
+    ],
+    "inset_shadows": [],
+    "_extraction_method": "regex_rgba_inset",
+    "_confidence": "medium"
+  },
+  "responsive": {
+    "breakpoints_named": {
+      "mobile": {
+        "min": 400,
+        "max": 600
+      },
+      "tablet_small": {
+        "min": 600,
+        "max": 768
+      },
+      "tablet": {
+        "min": 768,
+        "max": 1080
+      },
+      "desktop_small": {
+        "min": 1080,
+        "max": 1200
+      },
+      "desktop": {
+        "min": 1200,
+        "max": 1440
+      }
+    },
+    "_extraction_method": "regex_breakpoint_table",
+    "_confidence": "high"
+  },
+  "sections_present": [
+    "visual_theme",
+    "color",
+    "typography",
+    "components",
+    "layout",
+    "depth_elevation",
+    "responsive",
+    "accessibility",
+    "agent_guide"
+  ],
+  "sections_unhandled": [
+    "components",
+    "accessibility",
+    "agent_guide"
+  ],
+  "sections_meta_for_llm": [
+    "visual_theme",
+    "agent_guide"
+  ],
+  "llm_followup_hints": [
+    "layout extraction has low confidence — recommend LLM review"
+  ]
+}

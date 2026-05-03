@@ -4,165 +4,162 @@
 
 ## 输入
 
-一个具体的 `<system_name>`（例如 `linear`），其 DESIGN.md 已经位于 `source-design-systems/<system_name>/DESIGN.md`。
+一个具体的 `<system_name>`，其 DESIGN.md 已位于 `source-design-systems/<system_name>/DESIGN.md`。
 
 ## 输出
 
-- `grammar/tokens/<system_name>.json`
-- `grammar/rationale/<system_name>.md`
-- `grammar/rules/<system_name>.yaml`
-- 更新 `grammar/graph/rules_graph.json`（增量）
+- `grammar/tokens/<system_name>.json` (A1，程序化)
+- `grammar/rationale/<system_name>.md` (A2，LLM)
+- `grammar/rules/<system_name>.yaml` (A3，LLM)
+- 更新 `grammar/graph/rules_graph.json` (A4，程序化)
 
 ---
 
-## A1 — Token 层提取
+## 工作分配（关键架构）
 
-### 目标
-
-把 9-section 中所有显式参数结构化，作为后续步骤的事实锚点。
-
-### 步骤
-
-1. Read `source-design-systems/<system_name>/DESIGN.md`
-2. 按 schema（SKILL.md §六 3.3.1）提取：
-   - **Color**：所有 hex / rgb / hsl 值，区分 primary / neutral_scale / semantic
-   - **Typography**：字体家族、scale 数组、line_height 规则
-   - **Spacing**：base unit + scale 数组
-   - **Radius / Shadow / Motion**：所有原始值
-   - **Components**：button / card / input 等的描述（保留原文）
-3. 写到 `grammar/tokens/<system_name>.json`，源字段 `source` 设为对应集合（如 "open-design-71"），`extracted_at` 用当前 ISO 8601
-
-### 质量检查
-
-- [ ] 9 个 section 都被扫描，缺失项标 `null` 而非省略
-- [ ] 颜色值统一格式（建议 hex；hsl 的转 hex 时同时保留原始 hsl 在 `_raw` 字段）
-- [ ] scale 数组元素是 number 不是 string
-
----
-
-## A2 — Rationale 层抽取
-
-### 目标
-
-把每个 token 背后的"为什么"叙事化，**必须三段式**：`trade_off` / `intent` / `avoid`。
-
-### 步骤
-
-1. 重新读 DESIGN.md，重点关注每个 section 中的散文段落（不仅是参数表）
-2. 对每个关键决策（一套设计系统通常 30-60 个）抽取：
-   - `decision`：用一句话描述这个决策（例如"主色 #5E6AD2 偏紫的冷蓝"）
-   - `trade_off`：在哪两端取了平衡（例如"工程精度感 ↔ 人文温度"）
-   - `intent`：希望传达的核心感受（例如"严肃但不冷漠"）
-   - `avoid[]`：明确想避免的视觉/感受（例如["纯蓝带来的医疗器械感", "纯紫带来的游戏 UI 感"]）
-3. 如果 DESIGN.md 没明说 trade_off / avoid，**用文本证据推断**——但必须在 rationale 文件里加注 `[inferred]`，让后续读者知道哪条不是原文
-4. 写到 `grammar/rationale/<system_name>.md`，按 section 分组
-
-### 质量检查
-
-- [ ] 每个 decision 三段式都有内容（trade_off / intent / avoid 都不是空字符串）
-- [ ] avoid 项的措辞是具体的（"医疗器械感"），不是抽象的（"不专业感"）
-- [ ] 推断条目标 `[inferred]`
-- [ ] 如果某个 section（如 voice / motion）DESIGN.md 写得很简短，rationale 也对应简短，**不**强行编造
-
----
-
-## A3 — Rule 层抽象
-
-### 目标
-
-把具体值（`#5E6AD2`）抽象成参数化模式（`hue: 240°-260°`），打 Kansei 标签作为 B 阶段检索的通用语言。
-
-### 步骤
-
-1. 读 tokens.json + rationale.md
-2. 对每个 rationale decision 输出一条 rule，schema 见 SKILL.md §六 3.3.3：
-   - `rule_id`：`<system>-<section>-<sequence>` 例如 `linear-color-balance-001`
-   - `preconditions.product_type`：从 DESIGN.md 推断（这套设计系统主要服务什么类型产品）
-   - `preconditions.tone`：从 rationale.intent 提取
-   - `preconditions.kansei`：用 `references/kansei-theory.md` 的词表，给 3-5 个调性词
-   - `action`：把具体值转参数化范围（hex → hue/saturation/lightness 区间；px → 倍数关系；font → category + tone）
-   - `why.establish` / `why.avoid` / `why.balance`：直接复制 rationale 的对应字段
-   - `emerges_from`：[<system_name>]（首次拆解时只有自己）
-   - `provenance: original`
-   - `confidence: 0.5`（首次单一系统拆解默认中等；后续合并 / 共现会自动调高）
-3. 写到 `grammar/rules/<system_name>.yaml`
-
-### 关键：参数化的颗粒度
-
-| 维度 | 具体值 | 参数化模式 |
+| 步骤 | 谁做 | 为什么 |
 |---|---|---|
-| Color | `#5E6AD2` | `hue: 240°-260°, saturation: 0.40-0.50, lightness: 0.50-0.60` |
-| Spacing | `16px` | `base * 4`（如果 base=4） |
-| Type scale | `[12,14,16,18,24,32,48]` | `geometric ratio ~1.25-1.5` 或 `linear +2px steps for body / +8px for display` |
-| Radius | `8px md` | `medium-soft (4-12px)` |
-| Easing | `cubic-bezier(0.16,1,0.3,1)` | `out-expo (gentle, dramatic landing)` |
+| **A1** Token 提取 | `tools/extract_tokens.py`（程序化） | 90%+ 字段是显式参数（hex / px / family / weight），正则就行 |
+| **A2** Rationale 三段式 | LLM | 设计判断（trade_off / intent / avoid）需要语义理解，不能正则 |
+| **A3** Rule 抽象 + Kansei 标签 | LLM | 参数化模式 + Kansei 词需要设计直觉 + 理论引用 |
+| **A4** 关系图 | `tools/rebuild_graph.py`（程序化） | 4 类关系基于显式 yaml 字段，确定性算法 |
 
-### 质量检查
-
-- [ ] 每条规则都有完整 preconditions（product_type 不为空 / kansei 不为空）
-- [ ] action 是参数化的，不是具体值（具体值已在 tokens.json）
-- [ ] kansei 词与 `references/kansei-theory.md` 词表对齐（不要造词）
-- [ ] confidence 在 [0, 1]
+**不要让 LLM 重复程序化部分能做的事**——A1/A4 必须走 tools。LLM 只做 A2/A3。
 
 ---
 
-## A4 — Pattern Language 关系图构建（增量）
+## A1 — Token 层提取（程序化）
 
-### 目标
+**直接调工具**：
 
-把新规则与已有规则的 4 类关系（depends_on / constrains / co_occurs_with / conflicts_with）写入 `grammar/graph/rules_graph.json`。
-
-### 步骤
-
-#### depends_on
-
-对每条新规则 R，扫描已有规则：
-
-- 如果 R 的 action 引用了某个其它规则的产物（例如 R 是 button 颜色规则，依赖 color-palette 规则的 primary color），加 `depends_on: [{rule: <prereq>, reason: ...}]`
-- 标准依赖关系（**color → 其它**、**typography → spacing**、**components → 全部**）默认补全
-
-#### constrains
-
-`A constrains B` 是 `B depends_on A` 的反向边。对每条新规则的 depends_on 自动写入对应的 constrains。
-
-#### co_occurs_with（带频率）
-
-对每条新规则 R，扫描所有 source systems 中是否同时出现"语义相似"的规则。频率计算：
-
-```
-frequency = systems_having_both / systems_having_either
+```bash
+python3 tools/extract_tokens.py source-design-systems/<system_name>/DESIGN.md
+# 输出 grammar/tokens/<system_name>.json
 ```
 
-如果新规则与某个旧规则在 ≥3 套素材中共现 → 加 `co_occurs_with: {rule: ..., frequency: ...}`。**首次拆解时这个数据可能不充分**，没关系——`scripts/rebuild-graph.md` 会全量重算。
+工具自动：
+- 调用 `tools/scan_dialect.py` 识别方言（A/B/C/...）+ 切片成 9-section 内部 slug
+- 跑各 section 的字段抽取器（color hex / typography family + scale / spacing base + scale / radius / motion duration / breakpoints / dos_donts bullets）
+- 标 `_confidence: high|medium|low` 让你（LLM）知道哪些字段质量高、哪些需要补
 
-#### conflicts_with
+**LLM 仅在以下情况介入**：
 
-对每条新规则 R，扫描已有规则：
+- 程序化输出含 `_confidence: low` 的字段 → 读原文 + 用 markdown 解析手动补
+- `sections_unhandled` 或 `sections_meta_for_llm` 列出的 section（visual_theme, agent_guide）→ 读原文 + 总结进散文/QA 字段
 
-- 如果 R 的 `why.avoid` 包含旧规则的 `why.establish` → 加 `conflicts_with: {rule: ..., reason: 该规则的 establish 是 R 的 avoid}`
-- 如果 R 和旧规则的 `action` 在同一 dimension 上是相反方向（一个高饱和度、一个低饱和度，且在同一 product_type 区间）→ 同样加 conflicts_with
+**质量检查**：
+- [ ] tokens.json 文件存在且 parse 通过
+- [ ] color/typography/spacing 的 high-confidence 字段非空
+- [ ] sections_present 与 DESIGN.md 实际 section 数对得上
 
-### 质量检查
+---
 
-- [ ] 每条新规则的 4 类关系都已扫描（即使是空的）
-- [ ] depends_on 的 reverse（constrains）已自动补
-- [ ] co_occurs_with 频率值在 [0, 1]
-- [ ] conflicts_with 必须有 reason 文本，不能是空字符串
+## A2 — Rationale 层抽取（LLM 主体工作）
+
+**输入**：tokens.json + 原始 DESIGN.md
+
+**输出**：`grammar/rationale/<system_name>.md`
+
+**关键要求**：每个 decision 必须**三段式**：`trade_off` / `intent` / `avoid`。详见 `references/reflective-practice.md`。
+
+**LLM 操作步骤**：
+
+1. 读 `grammar/tokens/<system_name>.json`（含 dialect 标记 + sections_present + 程序化抽到的字段）
+2. 读 `source-design-systems/<system_name>/DESIGN.md` 全文（关键关注散文段落 + Do's/Don'ts）
+3. 对每个关键决策（一套设计系统通常 8-15 个），抽取：
+   - `decision` —— 一句话描述（"主色 #5E6AD2 偏紫的冷蓝"）
+   - `trade_off` —— 在哪两端取了平衡（"工程精度感 ↔ 人文温度"）
+   - `intent` —— 希望传达的核心感受（"严肃但不冷漠"）
+   - `avoid[]` —— 明确想避免的视觉/感受（["纯蓝带来的医疗器械感", "纯紫带来的游戏 UI 感"]）
+4. DESIGN.md 没明说时 → 用文本证据推断，**必须**在条目上标 `[inferred]`
+5. 写到 `grammar/rationale/<system_name>.md`，按 section 分组
+
+**质量检查**：
+- [ ] 每个 decision 三段式都有内容（不空）
+- [ ] avoid 项措辞具体（"医疗器械感"），不抽象（"不专业感"）
+- [ ] 推断条目标 `[inferred]`
+- [ ] 不强行编造（如某 section DESIGN.md 写得很简短，rationale 也对应简短）
+
+---
+
+## A3 — Rule 层抽象（LLM 主体工作）
+
+**输入**：tokens.json + rationale.md
+
+**输出**：`grammar/rules/<system_name>.yaml`
+
+**LLM 操作步骤**：
+
+1. 对每个 rationale decision 输出一条 rule，按 schema（详见 `references/design-md-spec.md` 的 8 个 rule-bearing slug）：
+   ```yaml
+   - rule_id: <system>-<section_slug>-<sequence>     # e.g. linear-app-color-balance-001
+     section: color | typography | spacing | layout | components | depth_elevation | motion | voice | anti_patterns
+     preconditions:
+       product_type: [...]
+       tone: [...]
+       kansei: [...]                                  # 词表见 references/kansei-theory.md
+       sd_anchors: { warm_to_cold, ornate_to_minimal, serious_to_playful, modern_to_classical }  # optional
+     action:
+       <参数化模式 — 不放具体值（具体值在 tokens.json）>
+     why:
+       establish: <一句话>
+       avoid: [...]
+       balance: <a ↔ b>
+     emerges_from: [<system_name>]                    # 首次拆解只有自己
+     provenance: original                              # original | generated | merged
+     confidence: 0.5-0.9
+     known_conflicts:                                  # 可选 — 如观察到与已有规则冲突
+       - rule: <rule_id>
+         reason: <一句话>
+   ```
+
+2. **关键参数化**：把具体值（`#5E6AD2`）抽象成参数化模式（`hue: 240°-260°`）；具体值留在 tokens.json
+3. **Kansei 标签**：用 `references/kansei-theory.md` 的词表，给 3-5 个调性词（不要造词）
+4. **Confidence 起步**：单一系统拆解默认 0.5-0.7；后续合并 / 共现会自动调高
+5. 如果你（LLM）观察到这条规则与某已有规则有显然冲突（如 dark canvas vs white canvas），**直接在 rule yaml 加 `known_conflicts`**——A4 阶段会把这些声明吸入图
+
+**质量检查**：
+- [ ] 每条规则有完整 preconditions（product_type / kansei 不为空）
+- [ ] action 是参数化的，不是具体值
+- [ ] kansei 词与 `references/kansei-theory.md` 词表对齐
+- [ ] confidence ∈ [0, 1]
+- [ ] section slug 是 8 个统一 slug 之一（不要造新名）
+
+---
+
+## A4 — Pattern Language 关系图构建（程序化）
+
+**直接调工具**（不要让 LLM 推关系——确定性算法更可靠）：
+
+```bash
+python3 tools/rebuild_graph.py
+# 全量重算 grammar/graph/rules_graph.json
+```
+
+工具自动：
+- 加载 `grammar/rules/*.yaml`（含 `_generated.yaml`）
+- 按 section_dependency_order 推 depends_on / constrains
+- 按 kansei 重叠 + 同 section 判 co_occurs_with（带 frequency）
+- 按 kansei 反义词 + why.avoid 互引判 conflicts_with
+- 吸入 yaml 中显式声明的 `known_conflicts`（A3 阶段标的）
+- 双向边对称性自动维护
+
+**何时跑**：每加 ≥ 3 套新规则、或修改了 conflict 判断逻辑后。每批结束的固定动作。
 
 ---
 
 ## 收尾
 
-1. 更新 `grammar/meta/source-registry.json`：该 system 的 `last_extracted_at`
-2. 更新 `grammar/meta/version.json`：`rules_version` minor +0.1.0（新增系统）
+1. 更新 `grammar/meta/source-registry.json`（`tools/register_systems.py` 自动跑）
+2. 更新 `grammar/meta/version.json` 的 `rules_version`（minor +0.1.0）
 3. 更新 `grammar/meta/provenance-index.json`：登记新规则的 rule_ids → system 映射
 
-完成后输出：
+完成后输出报告：
 
 ```
 ✅ Extracted <system_name>
-   tokens: NN fields
-   rationale: NN decisions
-   rules: NN rules
-   graph: +NN nodes, +NN edges (depends_on: NN, constrains: NN, co_occurs: NN, conflicts: NN)
+   tokens: NN fields (programmatic, _confidence histogram: ...)
+   rationale: NN decisions (LLM)
+   rules: NN rules (LLM)
+   graph: incremental NN nodes, NN edges (programmatic)
 ```

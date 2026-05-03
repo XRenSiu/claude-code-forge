@@ -1,0 +1,218 @@
+{
+  "system_name": "composio",
+  "source": "open-design",
+  "extracted_at": "2026-05-03T13:38:57.527933Z",
+  "dialect": "A",
+  "fingerprint_hash": "c844f7873b28076dcce380204f5c79fbf3b63ce48a4f435907a36ad02bf5337d",
+  "extraction_method": "programmatic_a1",
+  "tool_version": "1.0.0",
+  "color": {
+    "role_color_pairs": {
+      "composio_cobalt": "#0007cd",
+      "electric_cyan": "#00ffff",
+      "signal_blue": "#0089ff",
+      "ocean_blue": "#0096ff",
+      "void_black": "#0f0f0f",
+      "pure_black": "#000000",
+      "charcoal": "#2c2c2c",
+      "pure_white": "#ffffff",
+      "muted_smoke": "#444444",
+      "ghost_white": "rgba(255,255,255,0.6)",
+      "whisper_white": "rgba(255,255,255,0.5)",
+      "phantom_white": "rgba(255,255,255,0.2)",
+      "border_mist_12": "rgba(255,255,255,0.12)",
+      "border_mist_10": "rgba(255,255,255,0.10)",
+      "border_mist_08": "rgba(255,255,255,0.08)",
+      "border_mist_06": "rgba(255,255,255,0.06)",
+      "border_mist_04": "rgba(255,255,255,0.04)",
+      "light_border": "#e0e0e0"
+    },
+    "all_hex_colors": [
+      "#0007cd",
+      "#00ffff",
+      "#0089ff",
+      "#0096ff",
+      "#0f0f0f",
+      "#000000",
+      "#2c2c2c",
+      "#ffffff",
+      "#444444",
+      "#e0e0e0"
+    ],
+    "all_rgba_colors": [
+      "rgba(0,255,255,0.12)",
+      "rgb(0,137,255)",
+      "rgb(0,150,255)",
+      "rgb(44,44,44)",
+      "rgba(255,255,255,0.6)",
+      "rgba(255,255,255,0.5)",
+      "rgba(255,255,255,0.2)",
+      "rgba(255,255,255,0.12)",
+      "rgba(255,255,255,0.10)",
+      "rgba(255,255,255,0.08)",
+      "rgba(255,255,255,0.06)",
+      "rgba(255,255,255,0.04)",
+      "rgb(224,224,224)"
+    ],
+    "all_hsla_colors": [],
+    "hex_count": 10,
+    "_extraction_method": "regex_role_pairs + hex_enum",
+    "_confidence": "high"
+  },
+  "typography": {
+    "families": [
+      {
+        "role": "mono",
+        "family": "JetBrains Mono"
+      }
+    ],
+    "all_px_values": [
+      10.0,
+      11.0,
+      12.0,
+      13.0,
+      14.0,
+      15.0,
+      16.0,
+      18.0,
+      20.0,
+      24.0,
+      28.0,
+      40.0,
+      48.0,
+      64.0
+    ],
+    "declared_scale_px": null,
+    "weights_seen": [
+      400,
+      500,
+      700
+    ],
+    "_extraction_method": "regex_family_role_pairs + px_enum + weight_enum",
+    "_confidence": "high"
+  },
+  "spacing": {
+    "base_unit_px": 8.0,
+    "declared_scale": null,
+    "all_px_values": [
+      1.0,
+      2.0,
+      4.0,
+      6.0,
+      8.0,
+      10.0,
+      12.0,
+      14.0,
+      16.0,
+      18.0,
+      20.0,
+      24.0,
+      30.0,
+      32.0,
+      37.0,
+      40.0,
+      120.0
+    ],
+    "_extraction_method": "regex_base_unit + scale_enum",
+    "_confidence": "medium"
+  },
+  "layout": {
+    "_extraction_method": "kept_section_text_for_a3",
+    "_confidence": "low",
+    "_section_size": 1519
+  },
+  "radius": {
+    "role_radius_pairs": {},
+    "all_px_values": [
+      1.0,
+      2.0,
+      4.0,
+      6.0,
+      8.0,
+      10.0,
+      12.0,
+      14.0,
+      16.0,
+      18.0,
+      20.0,
+      24.0,
+      30.0,
+      32.0,
+      37.0,
+      40.0,
+      120.0
+    ],
+    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_confidence": "low"
+  },
+  "depth_elevation": {
+    "rgba_shadows": [],
+    "inset_shadows": [],
+    "_extraction_method": "regex_rgba_inset",
+    "_confidence": "medium"
+  },
+  "responsive": {
+    "breakpoints_named": {
+      "tablet": {
+        "min": 768,
+        "max": 1024
+      },
+      "desktop": {
+        "min": 1024,
+        "max": 1440
+      }
+    },
+    "_extraction_method": "regex_breakpoint_table",
+    "_confidence": "high"
+  },
+  "dos_donts": {
+    "dos": [
+      "Use Void Black (`#0f0f0f`) as the primary page background — never pure white for main surfaces",
+      "Keep heading line-heights ultra-tight (0.87-1.0) for compressed, authoritative text blocks",
+      "Use white-opacity borders (4-12%) for containment — they're more important than shadows here",
+      "Reserve Electric Cyan (`#00ffff`) for high-signal moments only — CTAs, glows, interactive accents",
+      "Pair abcDiatype with JetBrains Mono to reinforce the developer-tool identity",
+      "Use the hard-offset shadow (`4px 4px`) intentionally on select elements for brutalist personality",
+      "Keep button text dark (`oklch(0.145 0 0)`) even on the darkest backgrounds — buttons carry their own surface",
+      "Layer opacity-based borders to create subtle depth without shadows",
+      "Use uppercase + letter-spacing only for tiny overline labels (12px or smaller)"
+    ],
+    "donts": [
+      "Don't use bright backgrounds or light surfaces as primary containers",
+      "Don't apply heavy shadows everywhere — depth comes from border opacity, not box-shadow",
+      "Don't use Composio Cobalt (`#0007cd`) as a text color — it's too dark on dark and too saturated on light",
+      "Don't increase heading line-heights beyond 1.2 — the compressed feel is core to the identity",
+      "Don't use bold (700) weight for body or heading text — 400-500 is the ceiling",
+      "Don't mix warm colors — the palette is strictly cool (blue, cyan, white, black)",
+      "Don't use border-radius larger than 4px on content cards — the precision of near-square corners is intentional",
+      "Don't place Electric Cyan at full opacity on large surfaces — it's an accent, used at 12% max for backgrounds",
+      "Don't use decorative serif or handwritten fonts — the entire identity is geometric sans + monospace",
+      "Don't skip the monospace font for technical content — JetBrains Mono is not decorative, it's a credibility signal"
+    ],
+    "_extraction_method": "subsection_bullet_parse",
+    "_confidence": "high"
+  },
+  "sections_present": [
+    "visual_theme",
+    "color",
+    "typography",
+    "components",
+    "layout",
+    "depth_elevation",
+    "dos_donts",
+    "responsive",
+    "agent_guide"
+  ],
+  "sections_unhandled": [
+    "components",
+    "agent_guide"
+  ],
+  "sections_meta_for_llm": [
+    "visual_theme",
+    "agent_guide"
+  ],
+  "llm_followup_hints": [
+    "layout extraction has low confidence — recommend LLM review",
+    "radius extraction has low confidence — recommend LLM review"
+  ]
+}

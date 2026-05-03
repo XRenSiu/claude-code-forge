@@ -1,0 +1,192 @@
+{
+  "system_name": "intercom",
+  "source": "open-design",
+  "extracted_at": "2026-05-03T13:38:57.545286Z",
+  "dialect": "A",
+  "fingerprint_hash": "00015191406ee315f7d9ef97a72f5272d9f47ce6fa7899332584a1990800aa72",
+  "extraction_method": "programmatic_a1",
+  "tool_version": "1.0.0",
+  "color": {
+    "role_color_pairs": {
+      "off_black": "#111111",
+      "pure_white": "#ffffff",
+      "warm_cream": "#faf9f6",
+      "fin_orange": "#ff5600",
+      "report_orange": "#fe4c02",
+      "report_blue": "#65b5ff",
+      "report_green": "#0bdf50",
+      "report_red": "#c41c1c",
+      "report_pink": "#ff2067",
+      "report_lime": "#b3e01c",
+      "green": "#00da00",
+      "deep_blue": "#0007cb",
+      "black_80": "#313130",
+      "black_60": "#626260",
+      "black_50": "#7b7b78",
+      "content_tertiary": "#9c9fa5",
+      "oat_border": "#dedbd6",
+      "warm_sand": "#d3cec6"
+    },
+    "all_hex_colors": [
+      "#111111",
+      "#ffffff",
+      "#faf9f6",
+      "#ff5600",
+      "#fe4c02",
+      "#65b5ff",
+      "#0bdf50",
+      "#c41c1c",
+      "#ff2067",
+      "#b3e01c",
+      "#00da00",
+      "#0007cb",
+      "#313130",
+      "#626260",
+      "#7b7b78",
+      "#9c9fa5",
+      "#dedbd6",
+      "#d3cec6"
+    ],
+    "all_rgba_colors": [],
+    "all_hsla_colors": [],
+    "hex_count": 18,
+    "_extraction_method": "regex_role_pairs + hex_enum",
+    "_confidence": "high"
+  },
+  "typography": {
+    "families": [
+      {
+        "role": "primary",
+        "family": "Saans"
+      },
+      {
+        "role": "serif",
+        "family": "Serrif"
+      },
+      {
+        "role": "mono",
+        "family": "SaansMono"
+      }
+    ],
+    "all_px_values": [
+      12.0,
+      14.0,
+      16.0,
+      18.0,
+      20.0,
+      24.0,
+      32.0,
+      40.0,
+      54.0,
+      80.0
+    ],
+    "declared_scale_px": null,
+    "weights_seen": [],
+    "_extraction_method": "regex_family_role_pairs + px_enum + weight_enum",
+    "_confidence": "high"
+  },
+  "spacing": {
+    "base_unit_px": 8.0,
+    "declared_scale": null,
+    "all_px_values": [
+      4.0,
+      6.0,
+      8.0,
+      10.0,
+      12.0,
+      14.0,
+      16.0,
+      20.0,
+      24.0,
+      32.0,
+      40.0,
+      48.0,
+      60.0,
+      64.0,
+      80.0,
+      96.0
+    ],
+    "_extraction_method": "regex_base_unit + scale_enum",
+    "_confidence": "medium"
+  },
+  "layout": {
+    "_extraction_method": "kept_section_text_for_a3",
+    "_confidence": "low",
+    "_section_size": 169
+  },
+  "radius": {
+    "role_radius_pairs": {},
+    "all_px_values": [
+      4.0,
+      6.0,
+      8.0,
+      10.0,
+      12.0,
+      14.0,
+      16.0,
+      20.0,
+      24.0,
+      32.0,
+      40.0,
+      48.0,
+      60.0,
+      64.0,
+      80.0,
+      96.0
+    ],
+    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_confidence": "low"
+  },
+  "depth_elevation": {
+    "rgba_shadows": [],
+    "inset_shadows": [],
+    "_extraction_method": "regex_rgba_inset",
+    "_confidence": "medium"
+  },
+  "responsive": {
+    "breakpoints_named": {},
+    "_extraction_method": "regex_breakpoint_table",
+    "_confidence": "low"
+  },
+  "dos_donts": {
+    "dos": [
+      "Use Saans with 1.00 line-height and negative tracking on all headings",
+      "Apply 4px radius on buttons — sharp geometry is the identity",
+      "Use Fin Orange (#ff5600) for AI/brand accent only",
+      "Apply scale(1.1) hover on buttons",
+      "Use warm neutrals (#faf9f6, #dedbd6)"
+    ],
+    "donts": [
+      "Don't round buttons beyond 4px",
+      "Don't use Fin Orange decoratively",
+      "Don't use cool gray borders — always warm oat tones",
+      "Don't skip the negative tracking on headings"
+    ],
+    "_extraction_method": "subsection_bullet_parse",
+    "_confidence": "high"
+  },
+  "sections_present": [
+    "visual_theme",
+    "color",
+    "typography",
+    "components",
+    "layout",
+    "depth_elevation",
+    "dos_donts",
+    "responsive",
+    "agent_guide"
+  ],
+  "sections_unhandled": [
+    "components",
+    "agent_guide"
+  ],
+  "sections_meta_for_llm": [
+    "visual_theme",
+    "agent_guide"
+  ],
+  "llm_followup_hints": [
+    "layout extraction has low confidence — recommend LLM review",
+    "radius extraction has low confidence — recommend LLM review",
+    "responsive extraction has low confidence — recommend LLM review"
+  ]
+}

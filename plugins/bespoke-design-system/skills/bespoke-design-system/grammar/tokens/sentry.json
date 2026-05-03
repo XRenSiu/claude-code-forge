@@ -1,0 +1,224 @@
+{
+  "system_name": "sentry",
+  "source": "open-design",
+  "extracted_at": "2026-05-03T13:38:57.575646Z",
+  "dialect": "A",
+  "fingerprint_hash": "a5140c9bbf0bd45426646f087691abed9f8bd70d94d3e4368745622e5163cdaa",
+  "extraction_method": "programmatic_a1",
+  "tool_version": "1.0.0",
+  "color": {
+    "role_color_pairs": {
+      "deep_purple": "#1f1633",
+      "darker_purple": "#150f23",
+      "border_purple": "#362d59",
+      "sentry_purple": "#6a5fc1",
+      "muted_purple": "#79628c",
+      "deep_violet": "#422082",
+      "lime_green": "#c2ef4e",
+      "coral": "#ffb287",
+      "pink": "#fa7faa",
+      "pure_white": "#ffffff",
+      "light_gray": "#e5e7eb",
+      "code_yellow": "#dcdcaa",
+      "glass_white": "rgba(255, 255, 255, 0.18)",
+      "glass_dark": "rgba(54, 22, 107, 0.14)",
+      "input_white": "#ffffff",
+      "input_border": "#cfcfdb",
+      "ambient_glow": "rgba(22, 15, 36, 0.9)",
+      "button_hover": "rgba(0, 0, 0, 0.18)",
+      "card_shadow": "rgba(0, 0, 0, 0.1)",
+      "inset_button": "rgba(0, 0, 0, 0.1)"
+    },
+    "all_hex_colors": [
+      "#1f1633",
+      "#150f23",
+      "#362d59",
+      "#6a5fc1",
+      "#79628c",
+      "#422082",
+      "#c2ef4e",
+      "#ffb287",
+      "#fa7faa",
+      "#ffffff",
+      "#e5e7eb",
+      "#dcdcaa",
+      "#cfcfdb"
+    ],
+    "all_rgba_colors": [
+      "rgba(255, 255, 255, 0.18)",
+      "rgba(54, 22, 107, 0.14)",
+      "rgba(22, 15, 36, 0.9)",
+      "rgba(0, 0, 0, 0.18)",
+      "rgba(0, 0, 0, 0.1)"
+    ],
+    "all_hsla_colors": [],
+    "hex_count": 13,
+    "_extraction_method": "regex_role_pairs + hex_enum",
+    "_confidence": "high"
+  },
+  "typography": {
+    "families": [
+      {
+        "role": "primary",
+        "family": "Rubik"
+      },
+      {
+        "role": "mono",
+        "family": "Monaco"
+      }
+    ],
+    "all_px_values": [
+      10.0,
+      12.0,
+      14.0,
+      15.0,
+      16.0,
+      20.0,
+      24.0,
+      27.0,
+      30.0,
+      60.0,
+      88.0
+    ],
+    "declared_scale_px": null,
+    "weights_seen": [],
+    "_extraction_method": "regex_family_role_pairs + px_enum + weight_enum",
+    "_confidence": "high"
+  },
+  "spacing": {
+    "base_unit_px": 8.0,
+    "declared_scale": null,
+    "all_px_values": [
+      1.0,
+      2.0,
+      4.0,
+      5.0,
+      6.0,
+      8.0,
+      10.0,
+      12.0,
+      13.0,
+      16.0,
+      18.0,
+      24.0,
+      32.0,
+      40.0,
+      44.0,
+      45.0,
+      47.0,
+      64.0,
+      80.0
+    ],
+    "_extraction_method": "regex_base_unit + scale_enum",
+    "_confidence": "medium"
+  },
+  "layout": {
+    "_extraction_method": "kept_section_text_for_a3",
+    "_confidence": "low",
+    "_section_size": 1396
+  },
+  "radius": {
+    "role_radius_pairs": {
+      "standard": 8.0,
+      "pill": 18.0
+    },
+    "all_px_values": [
+      1.0,
+      2.0,
+      4.0,
+      5.0,
+      6.0,
+      8.0,
+      10.0,
+      12.0,
+      13.0,
+      16.0,
+      18.0,
+      24.0,
+      32.0,
+      40.0,
+      44.0,
+      45.0,
+      47.0,
+      64.0,
+      80.0
+    ],
+    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_confidence": "medium"
+  },
+  "depth_elevation": {
+    "rgba_shadows": [
+      "rgba(0, 0, 0, 0.1)",
+      "rgba(0, 0, 0, 0.08)",
+      "rgba(0, 0, 0, 0.18)",
+      "rgba(22, 15, 36, 0.9)"
+    ],
+    "inset_shadows": [
+      "Inset shadow `rgba(0",
+      "inset` | Primary buttons (tactile pressed feel) |",
+      "inset shadows (buttons feel pressed INTO the surface) and ambient glows (content radiates from the dark background). The deep purple ambient shadow (`rgba(22"
+    ],
+    "_extraction_method": "regex_rgba_inset",
+    "_confidence": "medium"
+  },
+  "responsive": {
+    "breakpoints_named": {
+      "tablet": {
+        "min": 576,
+        "max": 768
+      },
+      "desktop": {
+        "min": 992,
+        "max": 1152
+      }
+    },
+    "_extraction_method": "regex_breakpoint_table",
+    "_confidence": "high"
+  },
+  "dos_donts": {
+    "dos": [
+      "Use deep purple backgrounds (`#1f1633`, `#150f23`) — never pure black (`#000000`)",
+      "Apply inset shadows on primary buttons for the tactile pressed effect",
+      "Use Dammit Sans ONLY for hero/display headings — Rubik for everything else",
+      "Apply `text-transform: uppercase` with `letter-spacing: 0.2px` on buttons and labels",
+      "Use the lime-green accent (`#c2ef4e`) sparingly for maximum impact",
+      "Employ frosted glass effects (`blur(18px) saturate(180%)`) for layered surfaces",
+      "Maintain the warm purple shadow tones — shadows should feel purple-tinted, not neutral gray",
+      "Use Rubik's 4-tier weight system: 400 (body), 500 (nav/emphasis), 600 (titles), 700 (CTAs)"
+    ],
+    "donts": [
+      "Don't use pure black (`#000000`) for backgrounds — always use the warm purple-blacks",
+      "Don't apply Dammit Sans to body text or UI elements — it's display-only",
+      "Don't use standard gray (`#666`, `#999`) for borders — use purple-tinted grays (`#362d59`, `#584674`)",
+      "Don't drop the uppercase treatment on buttons — it's a system-wide pattern",
+      "Don't use sharp corners (0px radius) — minimum 6px for all interactive elements",
+      "Don't mix the lime-green accent with the coral/pink accents in the same component",
+      "Don't use flat (non-inset) shadows on primary buttons — the tactile quality is signature",
+      "Don't forget letter-spacing on uppercase text — 0.2px minimum"
+    ],
+    "_extraction_method": "subsection_bullet_parse",
+    "_confidence": "high"
+  },
+  "sections_present": [
+    "visual_theme",
+    "color",
+    "typography",
+    "components",
+    "layout",
+    "depth_elevation",
+    "dos_donts",
+    "responsive",
+    "agent_guide"
+  ],
+  "sections_unhandled": [
+    "components",
+    "agent_guide"
+  ],
+  "sections_meta_for_llm": [
+    "visual_theme",
+    "agent_guide"
+  ],
+  "llm_followup_hints": [
+    "layout extraction has low confidence — recommend LLM review"
+  ]
+}

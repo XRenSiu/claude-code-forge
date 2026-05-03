@@ -1,241 +1,253 @@
 {
   "system_name": "vercel",
   "source": "open-design",
-  "extracted_at": "2026-05-03T11:43:58Z",
-  "category_tag": "Developer Tools",
-  "tagline": "Frontend deployment. Black and white precision, Geist font.",
-
+  "extracted_at": "2026-05-03T13:38:57.589916Z",
+  "dialect": "A",
+  "fingerprint_hash": "17d533f0ff2e1b5d9be3e69335ab7fc599d1ddf52bc9ac2f2dd36479676cbd3d",
+  "extraction_method": "programmatic_a1",
+  "tool_version": "1.0.0",
   "color": {
-    "primary_neutrals": {
+    "role_color_pairs": {
       "vercel_black": "#171717",
       "pure_white": "#ffffff",
-      "true_black": "#000000"
-    },
-    "neutral_scale": {
+      "true_black": "#000000",
+      "ship_red": "#ff5b4f",
+      "preview_pink": "#de1d8d",
+      "develop_blue": "#0a72ef",
+      "console_blue": "#0070f3",
+      "console_purple": "#7928ca",
+      "console_pink": "#eb367f",
+      "link_blue": "#0072f5",
+      "focus_blue": "hsla(212, 100%, 48%, 1)",
+      "ring_blue": "rgba(147, 197, 253, 0.5)",
       "gray_900": "#171717",
       "gray_600": "#4d4d4d",
       "gray_500": "#666666",
       "gray_400": "#808080",
       "gray_100": "#ebebeb",
-      "gray_50": "#fafafa"
-    },
-    "workflow_accents": {
-      "ship_red": "#ff5b4f",
-      "preview_pink": "#de1d8d",
-      "develop_blue": "#0a72ef"
-    },
-    "console_code": {
-      "blue": "#0070f3",
-      "purple": "#7928ca",
-      "pink": "#eb367f"
-    },
-    "interactive": {
-      "link_blue": "#0072f5",
-      "focus_blue": "hsla(212, 100%, 48%, 1)",
-      "ring_blue": "rgba(147, 197, 253, 0.5)"
-    },
-    "surface_overlay": {
+      "gray_50": "#fafafa",
       "overlay_backdrop": "hsla(0, 0%, 98%, 1)",
       "selection_text": "hsla(0, 0%, 95%, 1)",
       "badge_blue_bg": "#ebf5ff",
-      "badge_blue_text": "#0068d6"
+      "badge_blue_text": "#0068d6",
+      "border_shadow": "rgba(0, 0, 0, 0.08)",
+      "subtle_elevation": "rgba(0, 0, 0, 0.04)",
+      "card_stack": "rgba(0,0,0,0.08)",
+      "ring_border": "rgb(235, 235, 235)"
     },
-    "shadow_borders": {
-      "primary_border_shadow": "rgba(0,0,0,0.08) 0px 0px 0px 1px",
-      "subtle_elevation": "rgba(0,0,0,0.04) 0px 2px 2px",
-      "card_stack": "rgba(0,0,0,0.08) 0px 0px 0px 1px, rgba(0,0,0,0.04) 0px 2px 2px, rgba(0,0,0,0.04) 0px 8px 8px -8px, #fafafa 0px 0px 0px 1px",
-      "ring_border_light": "rgb(235,235,235) 0px 0px 0px 1px"
-    },
-    "_chromatic_summary": "near-pure achromatic (white + #171717 black) + 3 functional workflow accents + 1 link blue. No decorative chromatic use."
+    "all_hex_colors": [
+      "#171717",
+      "#ffffff",
+      "#000000",
+      "#ff5b4f",
+      "#de1d8d",
+      "#0a72ef",
+      "#0070f3",
+      "#7928ca",
+      "#eb367f",
+      "#0072f5",
+      "#4d4d4d",
+      "#666666",
+      "#808080",
+      "#ebebeb",
+      "#fafafa",
+      "#ebf5ff",
+      "#0068d6"
+    ],
+    "all_rgba_colors": [
+      "rgba(147, 197, 253, 0.5)",
+      "rgba(0, 0, 0, 0.08)",
+      "rgba(0, 0, 0, 0.04)",
+      "rgba(0,0,0,0.08)",
+      "rgba(0,0,0,0.04)",
+      "rgb(235, 235, 235)"
+    ],
+    "all_hsla_colors": [
+      "hsla(212, 100%, 48%, 1)",
+      "hsla(0, 0%, 98%, 1)",
+      "hsla(0, 0%, 95%, 1)"
+    ],
+    "hex_count": 17,
+    "_extraction_method": "regex_role_pairs + hex_enum",
+    "_confidence": "high"
   },
-
   "typography": {
-    "primary_family": "Geist",
-    "primary_fallbacks": ["Arial", "Apple Color Emoji", "Segoe UI Emoji"],
-    "mono_family": "Geist Mono",
-    "mono_fallbacks": ["ui-monospace", "SFMono-Regular", "Roboto Mono", "Menlo"],
-    "opentype_features": ["liga", "tnum"],
-    "weight_system": {
-      "base_read": 400,
-      "ui_interact": 500,
-      "headings_emphasis": 600,
-      "max_weight": 600,
-      "no_bold_700_in_body": true,
-      "weight_700_only_for_micro_badges": true
-    },
-    "scale_px": [7, 12, 13, 14, 16, 18, 20, 24, 32, 40, 48],
-    "letter_spacing_rules": {
-      "48px": "-2.4px to -2.88px",
-      "40px": "-2.4px",
-      "32px": "-1.28px",
-      "24px": "-0.96px",
-      "16px_semibold": "-0.32px",
-      "16px_default": "normal",
-      "14px": "normal"
-    },
-    "line_height_rules": {
-      "display_48": "1.00 to 1.17",
-      "section_40": 1.2,
-      "subhead_32": 1.25,
-      "card_24": 1.33,
-      "body_large_20": 1.8,
-      "body_18": 1.56,
-      "body_16": 1.5,
-      "button_14": 1.43,
-      "caption_12": 1.33
-    }
+    "families": [
+      {
+        "role": "primary",
+        "family": "Geist"
+      },
+      {
+        "role": "mono",
+        "family": "Geist Mono"
+      }
+    ],
+    "all_px_values": [
+      12.0,
+      13.0,
+      14.0,
+      16.0,
+      18.0,
+      20.0,
+      24.0,
+      32.0,
+      40.0,
+      48.0
+    ],
+    "declared_scale_px": null,
+    "weights_seen": [],
+    "_extraction_method": "regex_family_role_pairs + px_enum + weight_enum",
+    "_confidence": "high"
   },
-
   "spacing": {
-    "base": 8,
-    "scale_px": [1, 2, 3, 4, 5, 6, 8, 10, 12, 14, 16, 32, 36, 40],
-    "primary_rhythm": [8, 16, 32],
-    "scale_gap": "jumps from 16 to 32 — no 20 or 24 in primary scale",
-    "section_vertical_padding_min_px": 80,
-    "section_vertical_padding_max_px": 120,
-    "notes": "Spacing scale is gap-driven (no mid-range 20/24); section rhythm is 80-120px+."
+    "base_unit_px": 8.0,
+    "declared_scale": null,
+    "all_px_values": [
+      1.0,
+      2.0,
+      3.0,
+      4.0,
+      5.0,
+      6.0,
+      8.0,
+      10.0,
+      12.0,
+      14.0,
+      16.0,
+      20.0,
+      24.0,
+      32.0,
+      36.0,
+      40.0,
+      64.0,
+      80.0,
+      100.0,
+      120.0
+    ],
+    "_extraction_method": "regex_base_unit + scale_enum",
+    "_confidence": "medium"
   },
-
+  "layout": {
+    "_extraction_method": "kept_section_text_for_a3",
+    "_confidence": "low",
+    "_section_size": 1511
+  },
   "radius": {
-    "micro": 2,
-    "subtle": 4,
-    "standard": 6,
-    "comfortable": 8,
-    "image": 12,
-    "tab_pill_large": 64,
-    "nav_pill_xl": 100,
-    "full_pill": 9999,
-    "circle_pct": 50
+    "role_radius_pairs": {
+      "micro": 2.0,
+      "standard": 6.0,
+      "comfortable": 8.0,
+      "image": 12.0,
+      "large": 64.0,
+      "xl": 100.0,
+      "full pill": 9999.0
+    },
+    "all_px_values": [
+      1.0,
+      2.0,
+      3.0,
+      4.0,
+      5.0,
+      6.0,
+      8.0,
+      10.0,
+      12.0,
+      14.0,
+      16.0,
+      20.0,
+      24.0,
+      32.0,
+      36.0,
+      40.0,
+      64.0,
+      80.0,
+      100.0,
+      120.0
+    ],
+    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_confidence": "high"
   },
-
-  "elevation": {
-    "philosophy": "shadow_as_border",
-    "signature_technique": "box-shadow 0px 0px 0px 1px rgba(0,0,0,0.08) replaces CSS border",
-    "levels": {
-      "flat_0": "none",
-      "ring_1": "rgba(0,0,0,0.08) 0px 0px 0px 1px",
-      "light_ring_1b": "rgb(235,235,235) 0px 0px 0px 1px",
-      "subtle_card_2": "ring + rgba(0,0,0,0.04) 0px 2px 2px",
-      "full_card_3": "ring + subtle + rgba(0,0,0,0.04) 0px 8px 8px -8px + inner #fafafa ring",
-      "focus": "2px solid hsla(212,100%,48%,1) outline"
-    },
-    "uses_inner_fafafa_ring_for_glow": true,
-    "no_traditional_css_borders": true
+  "depth_elevation": {
+    "rgba_shadows": [
+      "rgba(0,0,0,0.08)",
+      "rgb(235,235,235)",
+      "rgba(0,0,0,0.04)"
+    ],
+    "inset_shadows": [],
+    "_extraction_method": "regex_rgba_inset",
+    "_confidence": "medium"
   },
-
-  "components": {
-    "buttons": {
-      "primary_white_shadow_bordered": {
-        "bg": "#ffffff",
-        "text": "#171717",
-        "padding": "0px 6px",
-        "radius": 6,
-        "shadow": "rgb(235,235,235) 0px 0px 0px 1px",
-        "use": "secondary"
-      },
-      "primary_dark": {
-        "bg": "#171717",
-        "text": "#ffffff",
-        "padding": "8px 16px",
-        "radius": 6,
-        "use": "primary CTA"
-      },
-      "pill_badge": {
-        "bg": "#ebf5ff",
-        "text": "#0068d6",
-        "padding": "0px 10px",
-        "radius": 9999,
-        "font": "12px weight 500",
-        "use": "status badges, tags"
-      },
-      "large_pill_nav": {
-        "bg": "transparent or #171717",
-        "radius_options": [64, 100],
-        "use": "tab navigation, section selectors"
-      }
-    },
-    "card": {
-      "bg": "#ffffff",
-      "border": "via shadow only — rgba(0,0,0,0.08) 0px 0px 0px 1px",
-      "radius_options": [8, 12],
-      "shadow_stack": "rgba(0,0,0,0.08) 0px 0px 0px 1px, rgba(0,0,0,0.04) 0px 2px 2px, #fafafa 0px 0px 0px 1px",
-      "image_card_border": "1px solid #ebebeb"
-    },
-    "input": {
-      "border_via": "shadow technique",
-      "focus_outline": "2px solid hsla(212,100%,48%,1)"
-    },
-    "navigation": {
-      "header_bg": "white sticky",
-      "logotype_size_px": "262x52",
-      "links_font": "Geist 14px weight 500",
-      "active_state": "weight 600 or underline"
-    },
-    "distinctive": {
-      "workflow_pipeline": {
-        "structure": "3-step horizontal: Develop -> Preview -> Ship",
-        "colors_per_step": {"develop": "#0a72ef", "preview": "#de1d8d", "ship": "#ff5b4f"},
-        "purpose": "visual metaphor for core value prop"
-      },
-      "trust_bar": {
-        "treatment": "logos in grayscale + #ebebeb subtle border separation"
-      },
-      "metric_card": {
-        "metric": "Geist 48px weight 600",
-        "description": "gray body text",
-        "container": "shadow-bordered card"
-      }
-    }
-  },
-
   "responsive": {
-    "breakpoints_px": {
-      "mobile_small": 400,
-      "mobile": 600,
-      "tablet_small": 768,
-      "tablet": 1024,
-      "desktop_small": 1200,
-      "desktop": 1400,
-      "large_desktop": null
+    "breakpoints_named": {
+      "mobile": {
+        "min": 400,
+        "max": 600
+      },
+      "tablet_small": {
+        "min": 600,
+        "max": 768
+      },
+      "tablet": {
+        "min": 768,
+        "max": 1024
+      },
+      "desktop_small": {
+        "min": 1024,
+        "max": 1200
+      },
+      "desktop": {
+        "min": 1200,
+        "max": 1400
+      }
     },
-    "max_content_width": 1200,
-    "section_spacing_collapse": "80px+ -> 48px on mobile",
-    "display_text_collapse": "48px scales down maintaining negative tracking proportionally"
+    "_extraction_method": "regex_breakpoint_table",
+    "_confidence": "high"
   },
-
-  "interaction_motion_evidence": {
-    "hover_pattern": "subtle shadow intensification on cards",
-    "focus_pattern": "2px solid focus blue outline + shadow",
-    "no_explicit_motion_section": true
+  "dos_donts": {
+    "dos": [
+      "Use Geist Sans with aggressive negative letter-spacing at display sizes (-2.4px to -2.88px at 48px)",
+      "Use shadow-as-border (`0px 0px 0px 1px rgba(0,0,0,0.08)`) instead of traditional CSS borders",
+      "Enable `\"liga\"` on all Geist text — ligatures are structural, not optional",
+      "Use the three-weight system: 400 (body), 500 (UI), 600 (headings)",
+      "Apply workflow accent colors (Red/Pink/Blue) only in their workflow context",
+      "Use multi-layer shadow stacks for cards (border + elevation + ambient + inner highlight)",
+      "Keep the color palette achromatic — grays from `#171717` to `#ffffff` are the system",
+      "Use `#171717` instead of `#000000` for primary text — the micro-warmth matters"
+    ],
+    "donts": [
+      "Don't use positive letter-spacing on Geist Sans — it's always negative or zero",
+      "Don't use weight 700 (bold) on body text — 600 is the maximum, used only for headings",
+      "Don't use traditional CSS `border` on cards — use the shadow-border technique",
+      "Don't introduce warm colors (oranges, yellows, greens) into the UI chrome",
+      "Don't apply the workflow accent colors (Ship Red, Preview Pink, Develop Blue) decoratively",
+      "Don't use heavy shadows (> 0.1 opacity) — the shadow system is whisper-level",
+      "Don't increase body text letter-spacing — Geist is designed to run tight",
+      "Don't use pill radius (9999px) on primary action buttons — pills are for badges/tags only",
+      "Don't skip the inner `#fafafa` ring in card shadows — it's the glow that makes the system work"
+    ],
+    "_extraction_method": "subsection_bullet_parse",
+    "_confidence": "high"
   },
-
-  "extracted_dos": [
-    "Use Geist Sans with aggressive negative letter-spacing (-2.4 to -2.88px at 48px)",
-    "Use shadow-as-border (0px 0px 0px 1px rgba(0,0,0,0.08)) instead of CSS border",
-    "Enable 'liga' on all Geist text",
-    "Three-weight system: 400/500/600",
-    "Apply workflow accents only in workflow context",
-    "Multi-layer shadow stacks for cards (border + elevation + ambient + inner glow)",
-    "Achromatic palette — grays from #171717 to #ffffff",
-    "Use #171717 not #000000 for text"
+  "sections_present": [
+    "visual_theme",
+    "color",
+    "typography",
+    "components",
+    "layout",
+    "depth_elevation",
+    "dos_donts",
+    "responsive",
+    "agent_guide"
   ],
-
-  "extracted_donts": [
-    "Don't use positive letter-spacing on Geist Sans",
-    "Don't use weight 700 on body text",
-    "Don't use traditional CSS border on cards",
-    "Don't introduce warm colors (orange/yellow/green) into UI chrome",
-    "Don't apply workflow accents decoratively",
-    "Don't use heavy shadows (>0.1 opacity)",
-    "Don't increase body text letter-spacing",
-    "Don't use pill radius (9999) on primary action buttons",
-    "Don't skip inner #fafafa ring in card shadows"
+  "sections_unhandled": [
+    "components",
+    "agent_guide"
   ],
-
-  "_extraction_notes": [
-    "Same OD 9-section dialect as linear-app",
-    "Visual Theme & Atmosphere section contains brand essence + visual metaphor — corresponds to what spec called 'Brand'",
-    "Do's and Don'ts contain inverted anti-patterns — corresponds to what spec called 'Anti-patterns'",
-    "No dedicated Motion section, so motion data is sparse; this is a structural limitation of OD format we must accommodate"
+  "sections_meta_for_llm": [
+    "visual_theme",
+    "agent_guide"
+  ],
+  "llm_followup_hints": [
+    "layout extraction has low confidence — recommend LLM review"
   ]
 }

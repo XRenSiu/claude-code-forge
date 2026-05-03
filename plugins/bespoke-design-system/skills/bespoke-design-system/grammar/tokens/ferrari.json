@@ -1,0 +1,240 @@
+{
+  "system_name": "ferrari",
+  "source": "open-design",
+  "extracted_at": "2026-05-03T13:38:57.538228Z",
+  "dialect": "A",
+  "fingerprint_hash": "b77c3efadbc1a2f761ca5c66919d186e749067aa2c73c936b41708d35f7f1a3a",
+  "extraction_method": "programmatic_a1",
+  "tool_version": "1.0.0",
+  "color": {
+    "role_color_pairs": {
+      "ferrari_red": "#DA291C",
+      "pure_white": "#FFFFFF",
+      "dark_red": "#B01E0A",
+      "deep_red": "#9D2211",
+      "racing_yellow": "#FFF200",
+      "modena_yellow": "#F6E500",
+      "absolute_black": "#000000",
+      "dark_surface": "#303030",
+      "light_gray_surface": "#D2D2D2",
+      "overlay_dark": "hsla(0, 0%, 7%, 0.8)",
+      "near_black": "#181818",
+      "dark_gray": "#666666",
+      "mid_gray": "#8F8F8F",
+      "silver_gray": "#969696",
+      "warning_red": "#F13A2C",
+      "success_green": "#03904A",
+      "info_blue": "#4C98B9",
+      "link_hover_blue": "#3860BE"
+    },
+    "all_hex_colors": [
+      "#DA291C",
+      "#FFFFFF",
+      "#B01E0A",
+      "#9D2211",
+      "#FFF200",
+      "#F6E500",
+      "#000000",
+      "#303030",
+      "#D2D2D2",
+      "#181818",
+      "#666666",
+      "#8F8F8F",
+      "#969696",
+      "#F13A2C",
+      "#03904A",
+      "#4C98B9",
+      "#3860BE"
+    ],
+    "all_rgba_colors": [],
+    "all_hsla_colors": [
+      "hsla(0, 0%, 7%, 0.8)"
+    ],
+    "hex_count": 17,
+    "_extraction_method": "regex_role_pairs + hex_enum",
+    "_confidence": "high"
+  },
+  "typography": {
+    "families": [
+      {
+        "role": "body",
+        "family": "Secondary typeface for captions"
+      }
+    ],
+    "all_px_values": [
+      11.0,
+      12.0,
+      13.0,
+      14.4,
+      16.0,
+      18.0,
+      24.0,
+      26.0,
+      45.0
+    ],
+    "declared_scale_px": null,
+    "weights_seen": [
+      400,
+      500,
+      600,
+      700
+    ],
+    "_extraction_method": "regex_family_role_pairs + px_enum + weight_enum",
+    "_confidence": "high"
+  },
+  "spacing": {
+    "base_unit_px": 8.0,
+    "declared_scale": [
+      1.0,
+      2.0,
+      4.0,
+      5.0,
+      6.0,
+      9.0,
+      10.0,
+      11.2,
+      12.0,
+      13.0,
+      15.0,
+      16.0,
+      19.0,
+      20.0,
+      25.0
+    ],
+    "all_px_values": [
+      1.0,
+      2.0,
+      4.0,
+      5.0,
+      6.0,
+      8.0,
+      9.0,
+      10.0,
+      11.2,
+      12.0,
+      13.0,
+      15.0,
+      16.0,
+      19.0,
+      20.0,
+      25.0,
+      80.0
+    ],
+    "_extraction_method": "regex_base_unit + scale_enum",
+    "_confidence": "high"
+  },
+  "layout": {
+    "_extraction_method": "kept_section_text_for_a3",
+    "_confidence": "low",
+    "_section_size": 1783
+  },
+  "radius": {
+    "role_radius_pairs": {},
+    "all_px_values": [
+      1.0,
+      2.0,
+      4.0,
+      5.0,
+      6.0,
+      8.0,
+      9.0,
+      10.0,
+      11.2,
+      12.0,
+      13.0,
+      15.0,
+      16.0,
+      19.0,
+      20.0,
+      25.0,
+      80.0
+    ],
+    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_confidence": "low"
+  },
+  "depth_elevation": {
+    "rgba_shadows": [
+      "rgb(153, 153, 153)"
+    ],
+    "inset_shadows": [],
+    "_extraction_method": "regex_rgba_inset",
+    "_confidence": "medium"
+  },
+  "responsive": {
+    "breakpoints_named": {
+      "mobile": {
+        "min": 376,
+        "max": 600
+      },
+      "tablet_small": {
+        "min": 601,
+        "max": 768
+      },
+      "tablet": {
+        "min": 769,
+        "max": 960
+      },
+      "desktop": {
+        "min": 961,
+        "max": 1280
+      },
+      "large_desktop": {
+        "min": 1281,
+        "max": 1920
+      }
+    },
+    "_extraction_method": "regex_breakpoint_table",
+    "_confidence": "high"
+  },
+  "dos_donts": {
+    "dos": [
+      "Use Ferrari Red (`#DA291C`) sparingly — only for primary CTAs and brand-critical moments. Its power comes from restraint",
+      "Alternate between black cinematic sections and white editorial sections to create the signature chiaroscuro rhythm",
+      "Use FerrariSans at weight 500 as the default heading voice — it's the typographic equivalent of the engine note",
+      "Apply Body-Font in uppercase with 1px letter-spacing for all labels, category tags, and structural annotations",
+      "Keep border-radius at 2px for all interactive elements — razor precision, not rounded friendliness",
+      "Let photography carry the emotional weight — every image should be art-directed studio quality",
+      "Use the Prancing Horse emblem as a standalone hero element on black — never crowd it with adjacent content",
+      "Maintain the 12px/10px button padding ratio — compact, purposeful, no excess",
+      "Use `#181818` (Near Black) for body text instead of pure `#000000` — the subtle warmth improves readability",
+      "Reserve the yellow accents (`#FFF200`, `#F6E500`) strictly for motorsport and racing heritage contexts"
+    ],
+    "donts": [
+      "Scatter Ferrari Red across the interface as decoration — it's a CTA signal, not a theme color",
+      "Use rounded-pill buttons or large border-radii — the 2px precision is non-negotiable",
+      "Add box-shadows to cards or content containers — depth comes from surface color contrast and photography",
+      "Mix FerrariSans and Body-Font within the same text block — they serve separate hierarchical functions",
+      "Use colorful backgrounds (blue, green, etc.) for sections — the palette is exclusively black/white/gray with red and yellow accents",
+      "Apply text transforms to FerrariSans headings — uppercase is reserved for Body-Font labels only",
+      "Display low-quality or user-generated imagery — every photograph must meet editorial standards",
+      "Use the Link Hover Blue (`#3860BE`) for anything other than interactive hover states — it's not a brand color",
+      "Create busy layouts with multiple competing focal points — each section should have one clear story",
+      "Override the semantic color system (warning, success, info) with brand colors — `#F13A2C` warning is deliberately different from `#DA291C` brand red"
+    ],
+    "_extraction_method": "subsection_bullet_parse",
+    "_confidence": "high"
+  },
+  "sections_present": [
+    "visual_theme",
+    "color",
+    "typography",
+    "components",
+    "layout",
+    "depth_elevation",
+    "dos_donts",
+    "responsive",
+    "agent_guide"
+  ],
+  "sections_unhandled": [
+    "components",
+    "agent_guide"
+  ],
+  "sections_meta_for_llm": [
+    "visual_theme",
+    "agent_guide"
+  ],
+  "llm_followup_hints": [
+    "layout extraction has low confidence — recommend LLM review",
+    "radius extraction has low confidence — recommend LLM review"
+  ]
+}

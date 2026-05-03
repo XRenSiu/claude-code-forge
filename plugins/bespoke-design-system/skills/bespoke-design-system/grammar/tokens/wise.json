@@ -1,0 +1,205 @@
+{
+  "system_name": "wise",
+  "source": "open-design",
+  "extracted_at": "2026-05-03T13:38:57.596653Z",
+  "dialect": "A",
+  "fingerprint_hash": "71f1c384405e4641784aa0917b3eebb1ccb478fe11ea0cd6098b4979d4aaf59f",
+  "extraction_method": "programmatic_a1",
+  "tool_version": "1.0.0",
+  "color": {
+    "role_color_pairs": {
+      "near_black": "#0e0f0c",
+      "wise_green": "#9fe870",
+      "dark_green": "#163300",
+      "light_mint": "#e2f6d5",
+      "pastel_green": "#cdffad",
+      "positive_green": "#054d28",
+      "danger_red": "#d03238",
+      "warning_yellow": "#ffd11a",
+      "background_cyan": "rgba(56,200,255,0.10)",
+      "bright_orange": "#ffc091",
+      "warm_dark": "#454745",
+      "gray": "#868685",
+      "light_surface": "#e8ebe6"
+    },
+    "all_hex_colors": [
+      "#0e0f0c",
+      "#9fe870",
+      "#163300",
+      "#e2f6d5",
+      "#cdffad",
+      "#054d28",
+      "#d03238",
+      "#ffd11a",
+      "#ffc091",
+      "#454745",
+      "#868685",
+      "#e8ebe6"
+    ],
+    "all_rgba_colors": [
+      "rgba(56,200,255,0.10)"
+    ],
+    "all_hsla_colors": [],
+    "hex_count": 12,
+    "_extraction_method": "regex_role_pairs + hex_enum",
+    "_confidence": "high"
+  },
+  "typography": {
+    "families": [
+      {
+        "role": "display",
+        "family": "Wise Sans"
+      },
+      {
+        "role": "body",
+        "family": "Inter"
+      }
+    ],
+    "all_px_values": [
+      12.0,
+      14.0,
+      18.0,
+      22.0,
+      26.0,
+      40.0,
+      64.0,
+      78.0,
+      96.0,
+      126.0
+    ],
+    "declared_scale_px": null,
+    "weights_seen": [
+      600,
+      900
+    ],
+    "_extraction_method": "regex_family_role_pairs + px_enum + weight_enum",
+    "_confidence": "high"
+  },
+  "spacing": {
+    "base_unit_px": 8.0,
+    "declared_scale": null,
+    "all_px_values": [
+      1.0,
+      2.0,
+      3.0,
+      4.0,
+      5.0,
+      8.0,
+      10.0,
+      11.0,
+      12.0,
+      16.0,
+      18.0,
+      19.0,
+      20.0,
+      22.0,
+      24.0,
+      30.0,
+      40.0
+    ],
+    "_extraction_method": "regex_base_unit + scale_enum",
+    "_confidence": "medium"
+  },
+  "layout": {
+    "_extraction_method": "kept_section_text_for_a3",
+    "_confidence": "low",
+    "_section_size": 475
+  },
+  "radius": {
+    "role_radius_pairs": {
+      "standard": 10.0,
+      "card": 16.0,
+      "medium": 20.0,
+      "large": 30.0,
+      "pill": 9999.0
+    },
+    "all_px_values": [
+      1.0,
+      2.0,
+      3.0,
+      4.0,
+      5.0,
+      8.0,
+      10.0,
+      11.0,
+      12.0,
+      16.0,
+      18.0,
+      19.0,
+      20.0,
+      22.0,
+      24.0,
+      30.0,
+      40.0
+    ],
+    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_confidence": "high"
+  },
+  "depth_elevation": {
+    "rgba_shadows": [
+      "rgba(14,15,12,0.12)",
+      "rgb(134,134,133)"
+    ],
+    "inset_shadows": [
+      "Inset (Level 2) | `rgb(134",
+      "inset` | Input focus |"
+    ],
+    "_extraction_method": "regex_rgba_inset",
+    "_confidence": "medium"
+  },
+  "responsive": {
+    "breakpoints_named": {
+      "tablet": {
+        "min": 576,
+        "max": 992
+      },
+      "desktop": {
+        "min": 992,
+        "max": 1440
+      }
+    },
+    "_extraction_method": "regex_breakpoint_table",
+    "_confidence": "high"
+  },
+  "dos_donts": {
+    "dos": [
+      "Use Wise Sans weight 900 for display — the extreme boldness IS the brand",
+      "Apply line-height 0.85 on Wise Sans display — ultra-tight is intentional",
+      "Use Lime Green (#9fe870) for primary CTAs with Dark Green (#163300) text",
+      "Apply scale(1.05) hover and scale(0.95) active on buttons",
+      "Enable \"calt\" on all text",
+      "Use Inter weight 600 as the body default"
+    ],
+    "donts": [
+      "Don't use light font weights for Wise Sans — only 900",
+      "Don't relax the 0.85 line-height on display — the density is the identity",
+      "Don't use the Wise Green as background for large surfaces — it's for buttons and accents",
+      "Don't skip the scale animation on buttons",
+      "Don't use traditional shadows — ring shadows only"
+    ],
+    "_extraction_method": "subsection_bullet_parse",
+    "_confidence": "high"
+  },
+  "sections_present": [
+    "visual_theme",
+    "color",
+    "typography",
+    "components",
+    "layout",
+    "depth_elevation",
+    "dos_donts",
+    "responsive",
+    "agent_guide"
+  ],
+  "sections_unhandled": [
+    "components",
+    "agent_guide"
+  ],
+  "sections_meta_for_llm": [
+    "visual_theme",
+    "agent_guide"
+  ],
+  "llm_followup_hints": [
+    "layout extraction has low confidence — recommend LLM review"
+  ]
+}

@@ -1,0 +1,190 @@
+{
+  "system_name": "together-ai",
+  "source": "open-design",
+  "extracted_at": "2026-05-03T13:38:57.588205Z",
+  "dialect": "A",
+  "fingerprint_hash": "e1b6715a344774cf315eb011bc67252871531b0d8d8c55f650cb5a92aac52b4b",
+  "extraction_method": "programmatic_a1",
+  "tool_version": "1.0.0",
+  "color": {
+    "role_color_pairs": {
+      "brand_magenta": "#ef2cc1",
+      "brand_orange": "#fc4c02",
+      "dark_blue": "#010120",
+      "soft_lavender": "#bdbbff",
+      "black_40": "#00000066",
+      "pure_white": "#ffffff",
+      "glass_light": "rgba(255, 255, 255, 0.12)",
+      "glass_dark": "rgba(0, 0, 0, 0.08)",
+      "pure_black": "#000000"
+    },
+    "all_hex_colors": [
+      "#ef2cc1",
+      "#fc4c02",
+      "#010120",
+      "#bdbbff",
+      "#00000066",
+      "#ffffff",
+      "#000000"
+    ],
+    "all_rgba_colors": [
+      "rgba(255, 255, 255, 0.12)",
+      "rgba(0, 0, 0, 0.08)"
+    ],
+    "all_hsla_colors": [],
+    "hex_count": 7,
+    "_extraction_method": "regex_role_pairs + hex_enum",
+    "_confidence": "high"
+  },
+  "typography": {
+    "families": [
+      {
+        "role": "primary",
+        "family": "The Future"
+      },
+      {
+        "role": "mono",
+        "family": "PP Neue Montreal Mono"
+      }
+    ],
+    "all_px_values": [
+      10.0,
+      11.0,
+      14.0,
+      16.0,
+      18.0,
+      22.0,
+      28.0,
+      40.0,
+      64.0
+    ],
+    "declared_scale_px": null,
+    "weights_seen": [
+      500
+    ],
+    "_extraction_method": "regex_family_role_pairs + px_enum + weight_enum",
+    "_confidence": "high"
+  },
+  "spacing": {
+    "base_unit_px": 8.0,
+    "declared_scale": null,
+    "all_px_values": [
+      1.0,
+      2.0,
+      4.0,
+      8.0,
+      10.0,
+      12.0,
+      16.0,
+      20.0,
+      24.0,
+      32.0,
+      44.0,
+      48.0,
+      80.0,
+      100.0,
+      120.0
+    ],
+    "_extraction_method": "regex_base_unit + scale_enum",
+    "_confidence": "medium"
+  },
+  "layout": {
+    "_extraction_method": "kept_section_text_for_a3",
+    "_confidence": "low",
+    "_section_size": 1202
+  },
+  "radius": {
+    "role_radius_pairs": {
+      "comfortable": 8.0
+    },
+    "all_px_values": [
+      1.0,
+      2.0,
+      4.0,
+      8.0,
+      10.0,
+      12.0,
+      16.0,
+      20.0,
+      24.0,
+      32.0,
+      44.0,
+      48.0,
+      80.0,
+      100.0,
+      120.0
+    ],
+    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_confidence": "medium"
+  },
+  "depth_elevation": {
+    "rgba_shadows": [
+      "rgba(0,0,0,0.08)",
+      "rgba(255,255,255,0.12)",
+      "rgba(1, 1, 32, 0.1)"
+    ],
+    "inset_shadows": [],
+    "_extraction_method": "regex_rgba_inset",
+    "_confidence": "medium"
+  },
+  "responsive": {
+    "breakpoints_named": {
+      "mobile": {
+        "min": 479,
+        "max": 767
+      },
+      "tablet": {
+        "min": 768,
+        "max": 991
+      }
+    },
+    "_extraction_method": "regex_breakpoint_table",
+    "_confidence": "high"
+  },
+  "dos_donts": {
+    "dos": [
+      "Use pastel gradients (pink/blue/lavender) for hero illustrations and decorative backgrounds",
+      "Use Dark Blue (#010120) for dark sections — never generic gray-black",
+      "Apply negative letter-spacing on all \"The Future\" text (scaled by size)",
+      "Use PP Neue Montreal Mono in uppercase for section labels and technical markers",
+      "Keep border-radius sharp (4px) for badges and interactive elements",
+      "Use the dark-blue-tinted shadow for elevation",
+      "Maintain the light/dark section duality — business (light) vs research (dark)",
+      "Show enterprise stats prominently with large display numbers"
+    ],
+    "donts": [
+      "Don't use Brand Magenta (#ef2cc1) or Brand Orange (#fc4c02) as UI colors — they're for illustrations only",
+      "Don't use pill-shaped or generously rounded corners — the geometry is sharp",
+      "Don't use generic gray-black for dark sections — always Dark Blue (#010120)",
+      "Don't use positive letter-spacing on \"The Future\" — it's always negative",
+      "Don't use bold (700+) weight — 400–500 is the full range",
+      "Don't use warm-toned shadows — always dark-blue-tinted",
+      "Don't reduce section spacing below 48px — the open feeling is core",
+      "Don't mix in additional typefaces — \"The Future\" + PP Neue Montreal Mono is the pair"
+    ],
+    "_extraction_method": "subsection_bullet_parse",
+    "_confidence": "high"
+  },
+  "sections_present": [
+    "visual_theme",
+    "color",
+    "typography",
+    "components",
+    "layout",
+    "depth_elevation",
+    "dos_donts",
+    "responsive",
+    "agent_guide"
+  ],
+  "sections_unhandled": [
+    "components",
+    "agent_guide"
+  ],
+  "sections_meta_for_llm": [
+    "visual_theme",
+    "agent_guide"
+  ],
+  "llm_followup_hints": [
+    "layout extraction has low confidence — recommend LLM review"
+  ]
+}

@@ -1,0 +1,214 @@
+{
+  "system_name": "pinterest",
+  "source": "open-design",
+  "extracted_at": "2026-05-03T13:38:57.564737Z",
+  "dialect": "A",
+  "fingerprint_hash": "e6cb634aca8404b43b9eaeaf650bb64b0d26b1240bb3c33da643fded1fe1ecaa",
+  "extraction_method": "programmatic_a1",
+  "tool_version": "1.0.0",
+  "color": {
+    "role_color_pairs": {
+      "pinterest_red": "#e60023",
+      "green_700": "#103c25",
+      "green_700_hover": "#0b2819",
+      "plum_black": "#211922",
+      "black": "#000000",
+      "olive_gray": "#62625b",
+      "warm_silver": "#91918c",
+      "white": "#ffffff",
+      "focus_blue": "#435ee5",
+      "performance_purple": "#6845ab",
+      "recommendation_purple": "#7e238b",
+      "link_blue": "#2b48d4",
+      "facebook_blue": "#0866ff",
+      "pressed_blue": "#617bff",
+      "sand_gray": "#e5e5e0",
+      "warm_light": "#e0e0d9",
+      "warm_wash": "hsla(60, 20%, 98%, 0.5)",
+      "fog": "#f6f6f3",
+      "border_disabled": "#c8c8c1",
+      "hover_gray": "#bcbcb3",
+      "dark_surface": "#33332e",
+      "error_red": "#9e0a0a"
+    },
+    "all_hex_colors": [
+      "#e60023",
+      "#103c25",
+      "#0b2819",
+      "#211922",
+      "#000000",
+      "#62625b",
+      "#91918c",
+      "#ffffff",
+      "#435ee5",
+      "#6845ab",
+      "#7e238b",
+      "#2b48d4",
+      "#0866ff",
+      "#617bff",
+      "#e5e5e0",
+      "#e0e0d9",
+      "#f6f6f3",
+      "#c8c8c1",
+      "#bcbcb3",
+      "#33332e",
+      "#9e0a0a"
+    ],
+    "all_rgba_colors": [],
+    "all_hsla_colors": [
+      "hsla(60, 20%, 98%, 0.5)"
+    ],
+    "hex_count": 21,
+    "_extraction_method": "regex_role_pairs + hex_enum",
+    "_confidence": "high"
+  },
+  "typography": {
+    "families": [
+      {
+        "role": "primary",
+        "family": "Pin Sans"
+      }
+    ],
+    "all_px_values": [
+      12.0,
+      14.0,
+      16.0,
+      28.0,
+      70.0
+    ],
+    "declared_scale_px": null,
+    "weights_seen": [],
+    "_extraction_method": "regex_family_role_pairs + px_enum + weight_enum",
+    "_confidence": "high"
+  },
+  "spacing": {
+    "base_unit_px": 8.0,
+    "declared_scale": null,
+    "all_px_values": [
+      4.0,
+      6.0,
+      7.0,
+      8.0,
+      10.0,
+      11.0,
+      12.0,
+      16.0,
+      18.0,
+      20.0,
+      22.0,
+      24.0,
+      28.0,
+      32.0,
+      40.0,
+      80.0,
+      100.0
+    ],
+    "_extraction_method": "regex_base_unit + scale_enum",
+    "_confidence": "medium"
+  },
+  "layout": {
+    "_extraction_method": "kept_section_text_for_a3",
+    "_confidence": "low",
+    "_section_size": 1017
+  },
+  "radius": {
+    "role_radius_pairs": {
+      "standard": 12.0,
+      "comfortable": 20.0,
+      "large": 28.0
+    },
+    "all_px_values": [
+      4.0,
+      6.0,
+      7.0,
+      8.0,
+      10.0,
+      11.0,
+      12.0,
+      16.0,
+      18.0,
+      20.0,
+      22.0,
+      24.0,
+      28.0,
+      32.0,
+      40.0,
+      80.0,
+      100.0
+    ],
+    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_confidence": "high"
+  },
+  "depth_elevation": {
+    "rgba_shadows": [],
+    "inset_shadows": [],
+    "_extraction_method": "regex_rgba_inset",
+    "_confidence": "medium"
+  },
+  "responsive": {
+    "breakpoints_named": {
+      "tablet": {
+        "min": 768,
+        "max": 890
+      },
+      "desktop_small": {
+        "min": 890,
+        "max": 1312
+      },
+      "desktop": {
+        "min": 1312,
+        "max": 1440
+      },
+      "large_desktop": {
+        "min": 1440,
+        "max": 1680
+      }
+    },
+    "_extraction_method": "regex_breakpoint_table",
+    "_confidence": "high"
+  },
+  "dos_donts": {
+    "dos": [
+      "Use warm neutrals (`#e5e5e0`, `#e0e0d9`, `#91918c`) — the warm olive/sand tone is the identity",
+      "Apply Pinterest Red (`#e60023`) only for primary CTAs — it's bold and singular",
+      "Use Pin Sans exclusively — one font for everything",
+      "Apply generous border-radius: 16px for buttons/inputs, 20px+ for cards",
+      "Keep the masonry grid dense — content density is the value",
+      "Use warm badge backgrounds (`hsla(60,20%,98%,.5)`) for subtle warm washes",
+      "Use `#211922` (plum black) for primary text — it's warmer than pure black"
+    ],
+    "donts": [
+      "Don't use cool gray neutrals — always warm/olive-toned",
+      "Don't use pure black (`#000000`) as primary text — use plum black (`#211922`)",
+      "Don't use pill-shaped buttons — 16px radius is rounded but not pill",
+      "Don't add heavy shadows — Pinterest is flat by design, depth from content",
+      "Don't use small border-radius (<12px) on cards — the generous rounding is core",
+      "Don't introduce additional brand colors — red + warm neutrals is the complete palette",
+      "Don't use thin font weights — Pin Sans at 400 minimum"
+    ],
+    "_extraction_method": "subsection_bullet_parse",
+    "_confidence": "high"
+  },
+  "sections_present": [
+    "visual_theme",
+    "color",
+    "typography",
+    "components",
+    "layout",
+    "depth_elevation",
+    "dos_donts",
+    "responsive",
+    "agent_guide"
+  ],
+  "sections_unhandled": [
+    "components",
+    "agent_guide"
+  ],
+  "sections_meta_for_llm": [
+    "visual_theme",
+    "agent_guide"
+  ],
+  "llm_followup_hints": [
+    "layout extraction has low confidence — recommend LLM review"
+  ]
+}

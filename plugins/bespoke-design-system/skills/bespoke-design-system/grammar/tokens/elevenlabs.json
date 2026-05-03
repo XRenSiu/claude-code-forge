@@ -1,0 +1,219 @@
+{
+  "system_name": "elevenlabs",
+  "source": "open-design",
+  "extracted_at": "2026-05-03T13:38:57.535027Z",
+  "dialect": "A",
+  "fingerprint_hash": "272e7f135ed7413ed666907c23a4d7ef2f4b7940fd5b796ae1b736927f45e011",
+  "extraction_method": "programmatic_a1",
+  "tool_version": "1.0.0",
+  "color": {
+    "role_color_pairs": {
+      "pure_white": "#ffffff",
+      "light_gray": "#f5f5f5",
+      "warm_stone": "#f5f2ef",
+      "black": "#000000",
+      "dark_gray": "#4e4e4e",
+      "warm_gray": "#777169",
+      "near_white": "#f6f6f6",
+      "grid_cyan": "#7fffff",
+      "ring_blue": "rgb(147 197 253 / 0.5)",
+      "border_light": "#e5e5e5",
+      "border_subtle": "rgba(0, 0, 0, 0.05)",
+      "inset_border": "rgba(0,0,0,0.075)",
+      "inset_dark": "rgba(0,0,0,0.1)",
+      "outline_ring": "rgba(0,0,0,0.06)",
+      "soft_elevation": "rgba(0,0,0,0.04)",
+      "card_shadow": "rgba(0,0,0,0.4)",
+      "warm_shadow": "rgba(78,50,23,0.04)",
+      "edge_shadow": "rgba(0,0,0,0.08)",
+      "inset_ring": "rgba(0,0,0,0.1)"
+    },
+    "all_hex_colors": [
+      "#ffffff",
+      "#f5f5f5",
+      "#f5f2ef",
+      "#000000",
+      "#4e4e4e",
+      "#777169",
+      "#f6f6f6",
+      "#7fffff",
+      "#e5e5e5"
+    ],
+    "all_rgba_colors": [
+      "rgb(147 197 253 / 0.5)",
+      "rgba(0, 0, 0, 0.05)",
+      "rgba(0,0,0,0.075)",
+      "rgba(0,0,0,0.1)",
+      "rgba(0,0,0,0.06)",
+      "rgba(0,0,0,0.04)",
+      "rgba(0,0,0,0.4)",
+      "rgba(78,50,23,0.04)",
+      "rgba(0,0,0,0.08)"
+    ],
+    "all_hsla_colors": [],
+    "hex_count": 9,
+    "_extraction_method": "regex_role_pairs + hex_enum",
+    "_confidence": "high"
+  },
+  "typography": {
+    "families": [
+      {
+        "role": "display",
+        "family": "Waldenburg"
+      },
+      {
+        "role": "display",
+        "family": "WaldenburgFH"
+      },
+      {
+        "role": "body",
+        "family": "Inter"
+      }
+    ],
+    "all_px_values": [
+      10.0,
+      12.0,
+      13.0,
+      14.0,
+      15.0,
+      16.0,
+      18.0,
+      20.0,
+      32.0,
+      36.0,
+      48.0
+    ],
+    "declared_scale_px": null,
+    "weights_seen": [],
+    "_extraction_method": "regex_family_role_pairs + px_enum + weight_enum",
+    "_confidence": "high"
+  },
+  "spacing": {
+    "base_unit_px": 8.0,
+    "declared_scale": null,
+    "all_px_values": [
+      1.0,
+      2.0,
+      3.0,
+      4.0,
+      8.0,
+      9.0,
+      10.0,
+      11.0,
+      12.0,
+      16.0,
+      18.0,
+      20.0,
+      24.0,
+      28.0,
+      30.0,
+      32.0,
+      40.0
+    ],
+    "_extraction_method": "regex_base_unit + scale_enum",
+    "_confidence": "medium"
+  },
+  "layout": {
+    "_extraction_method": "kept_section_text_for_a3",
+    "_confidence": "low",
+    "_section_size": 1204
+  },
+  "radius": {
+    "role_radius_pairs": {
+      "standard": 8.0,
+      "card": 16.0,
+      "pill": 9999.0
+    },
+    "all_px_values": [
+      1.0,
+      2.0,
+      3.0,
+      4.0,
+      8.0,
+      9.0,
+      10.0,
+      11.0,
+      12.0,
+      16.0,
+      18.0,
+      20.0,
+      24.0,
+      28.0,
+      30.0,
+      32.0,
+      40.0
+    ],
+    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_confidence": "high"
+  },
+  "depth_elevation": {
+    "rgba_shadows": [
+      "rgba(0,0,0,0.075)",
+      "rgba(0,0,0,0.06)",
+      "rgba(0,0,0,0.04)",
+      "rgba(0,0,0,0.4)",
+      "rgba(78,50,23,0.04)",
+      "rgba(78,50,23,...)"
+    ],
+    "inset_shadows": [
+      "Inset Edge (Level 0.5) | `rgba(0",
+      "inset` | Internal border definition |",
+      "inset components",
+      "inset half-pixel borders (`0px 0px 0px 0.5px inset`) create edges so subtle they're felt rather than seen — surfaces define themselves through the lightest possible touch."
+    ],
+    "_extraction_method": "regex_rgba_inset",
+    "_confidence": "medium"
+  },
+  "responsive": {
+    "breakpoints_named": {},
+    "_extraction_method": "regex_breakpoint_table",
+    "_confidence": "low"
+  },
+  "dos_donts": {
+    "dos": [
+      "Use Waldenburg weight 300 for all display headings — the lightness IS the brand",
+      "Apply multi-layer shadows (inset + outline + elevation) at sub-0.1 opacity",
+      "Use warm stone tints (`#f5f2ef`, `rgba(245,242,239,0.8)`) for featured elements",
+      "Apply positive letter-spacing (+0.14px to +0.18px) on Inter body text",
+      "Use 9999px radius for primary buttons — pill shape is standard",
+      "Use warm-tinted shadows (`rgba(78,50,23,0.04)`) on featured CTAs",
+      "Keep the page predominantly white with subtle gray section differentiation",
+      "Use WaldenburgFH bold uppercase ONLY for specific CTA button labels"
+    ],
+    "donts": [
+      "Don't use bold (700) Waldenburg for headings — weight 300 is non-negotiable",
+      "Don't use heavy shadows (>0.1 opacity) — the ethereal quality requires whisper-level depth",
+      "Don't use cool gray borders — the system is warm-tinted throughout",
+      "Don't skip the inset shadow component — half-pixel inset borders define edges",
+      "Don't apply negative letter-spacing to body text — Inter uses positive tracking",
+      "Don't use sharp corners (<8px) on cards — the generous radius is structural",
+      "Don't introduce brand colors — the palette is intentionally achromatic with warm undertones",
+      "Don't make buttons opaque and heavy — the warm translucent stone treatment is the signature"
+    ],
+    "_extraction_method": "subsection_bullet_parse",
+    "_confidence": "high"
+  },
+  "sections_present": [
+    "visual_theme",
+    "color",
+    "typography",
+    "components",
+    "layout",
+    "depth_elevation",
+    "dos_donts",
+    "responsive",
+    "agent_guide"
+  ],
+  "sections_unhandled": [
+    "components",
+    "agent_guide"
+  ],
+  "sections_meta_for_llm": [
+    "visual_theme",
+    "agent_guide"
+  ],
+  "llm_followup_hints": [
+    "layout extraction has low confidence — recommend LLM review",
+    "responsive extraction has low confidence — recommend LLM review"
+  ]
+}

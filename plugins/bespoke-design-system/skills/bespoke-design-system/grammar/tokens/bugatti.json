@@ -1,0 +1,155 @@
+{
+  "system_name": "bugatti",
+  "source": "open-design",
+  "extracted_at": "2026-05-03T13:38:57.519835Z",
+  "dialect": "A",
+  "fingerprint_hash": "67f88865f620c03d2582af03fa2a1ca87599633deaab240035feb1ab8255cd05",
+  "extraction_method": "programmatic_a1",
+  "tool_version": "1.0.0",
+  "color": {
+    "role_color_pairs": {
+      "velvet_black": "#000000",
+      "showroom_white": "#ffffff",
+      "silver_mist": "#999999",
+      "primary_text": "#ffffff",
+      "tertiary_text": "#999999",
+      "tailwind_ring_leak": "rgba(59, 130, 246, 0.5)"
+    },
+    "all_hex_colors": [
+      "#000000",
+      "#000",
+      "#ffffff",
+      "#999999"
+    ],
+    "all_rgba_colors": [
+      "rgba(59, 130, 246, 0.5)"
+    ],
+    "all_hsla_colors": [],
+    "hex_count": 4,
+    "_extraction_method": "regex_role_pairs + hex_enum",
+    "_confidence": "high"
+  },
+  "typography": {
+    "families": [],
+    "all_px_values": [
+      12.0,
+      14.0,
+      16.0,
+      20.0,
+      36.0,
+      60.0,
+      128.0,
+      200.0
+    ],
+    "declared_scale_px": null,
+    "weights_seen": [],
+    "_extraction_method": "regex_family_role_pairs + px_enum + weight_enum",
+    "_confidence": "medium"
+  },
+  "spacing": {
+    "base_unit_px": 12.0,
+    "declared_scale": null,
+    "all_px_values": [
+      6.0,
+      8.0,
+      12.0,
+      20.0,
+      24.0,
+      64.0
+    ],
+    "_extraction_method": "regex_base_unit + scale_enum",
+    "_confidence": "medium"
+  },
+  "layout": {
+    "_extraction_method": "kept_section_text_for_a3",
+    "_confidence": "low",
+    "_section_size": 2089
+  },
+  "radius": {
+    "role_radius_pairs": {},
+    "all_px_values": [
+      6.0,
+      8.0,
+      12.0,
+      20.0,
+      24.0,
+      64.0
+    ],
+    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_confidence": "low"
+  },
+  "depth_elevation": {
+    "rgba_shadows": [
+      "rgba(0, 0, 0, 0.4)"
+    ],
+    "inset_shadows": [],
+    "_extraction_method": "regex_rgba_inset",
+    "_confidence": "medium"
+  },
+  "responsive": {
+    "breakpoints_named": {
+      "tablet": {
+        "min": 768,
+        "max": 1023
+      },
+      "desktop": {
+        "min": 1280,
+        "max": 1535
+      },
+      "large_desktop": {
+        "min": 1536,
+        "max": 1719
+      }
+    },
+    "_extraction_method": "regex_breakpoint_table",
+    "_confidence": "high"
+  },
+  "dos_donts": {
+    "dos": [
+      "**Do** keep the entire canvas `#000000`. No off-black, no near-black, no warm black. Bugatti is pure black.",
+      "**Do** use Bugatti Display at architectural scale — minimum 36px, ideally 60px+, and once per page land a monumental 200px+ headline.",
+      "**Do** use Bugatti Monospace UPPERCASE with 1.2–1.4px tracking for every button, link, nav item, and caption.",
+      "**Do** use only white text at rest. `#999999` is only for disabled, tertiary, and thin borders.",
+      "**Do** use 9999px border radius for primary buttons — full pill, thin 1px white outline, transparent fill.",
+      "**Do** use full-bleed video and photography for every hero section. The product is the UI.",
+      "**Do** maintain line-height 1.00–1.11 on display headlines. Tight leading is the architecture.",
+      "**Do** treat whitespace like cinematic negative space — give every block its own silent room."
+    ],
+    "donts": [
+      "**Don't** introduce accent colors. No blue, no red, no commerce orange, no hover cyan, no warning red. The palette is black, white, and one gray.",
+      "**Don't** use bold weights for hierarchy. Scale is the only hierarchy device — make it bigger, not heavier.",
+      "**Don't** use drop shadows on any element. Bugatti has no `box-shadow` in its chrome.",
+      "**Don't** use cards or elevated surfaces. Bugatti has no card component.",
+      "**Don't** use rounded rectangles between 6px and 9999px. The radius system is rectangle, slightly-rounded utility, or full pill — nothing in between.",
+      "**Don't** use Bugatti Display for body, buttons, or UI labels. Reserve it for headlines at 36px+.",
+      "**Don't** use Bugatti Monospace in lowercase for primary UI. Buttons and nav links are always ALL CAPS.",
+      "**Don't** add gradients, glows, blurs, or glassmorphism anywhere. The chrome is silent.",
+      "**Don't** put text over photography without a `rgba(0, 0, 0, 0.4)` bottom-up vignette if legibility is at risk."
+    ],
+    "_extraction_method": "subsection_bullet_parse",
+    "_confidence": "high"
+  },
+  "sections_present": [
+    "visual_theme",
+    "color",
+    "typography",
+    "components",
+    "layout",
+    "depth_elevation",
+    "dos_donts",
+    "responsive",
+    "agent_guide"
+  ],
+  "sections_unhandled": [
+    "components",
+    "agent_guide"
+  ],
+  "sections_meta_for_llm": [
+    "visual_theme",
+    "agent_guide"
+  ],
+  "llm_followup_hints": [
+    "layout extraction has low confidence — recommend LLM review",
+    "radius extraction has low confidence — recommend LLM review"
+  ]
+}

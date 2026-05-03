@@ -1,0 +1,205 @@
+{
+  "system_name": "framer",
+  "source": "open-design",
+  "extracted_at": "2026-05-03T13:38:57.540301Z",
+  "dialect": "A",
+  "fingerprint_hash": "35d8767071c0d155864e1abbceb6c874b6c461986092e0bceb9f8bdf6dfdf0cc",
+  "extraction_method": "programmatic_a1",
+  "tool_version": "1.0.0",
+  "color": {
+    "role_color_pairs": {
+      "pure_black": "#000000",
+      "pure_white": "#ffffff",
+      "framer_blue": "#0099ff",
+      "muted_silver": "#a6a6a6",
+      "near_black": "#090909",
+      "void_black": "#000000",
+      "frosted_white": "rgba(255, 255, 255, 0.1)",
+      "subtle_white": "rgba(255, 255, 255, 0.5)",
+      "ghost_white": "rgba(255, 255, 255, 0.6)",
+      "blue_glow": "rgba(0, 153, 255, 0.15)",
+      "default_link_blue": "#0000ee"
+    },
+    "all_hex_colors": [
+      "#000000",
+      "#ffffff",
+      "#0099ff",
+      "#a6a6a6",
+      "#090909",
+      "#0000ee"
+    ],
+    "all_rgba_colors": [
+      "rgba(255, 255, 255, 0.1)",
+      "rgba(255, 255, 255, 0.5)",
+      "rgba(255, 255, 255, 0.6)",
+      "rgba(0, 153, 255, 0.15)"
+    ],
+    "all_hsla_colors": [],
+    "hex_count": 6,
+    "_extraction_method": "regex_role_pairs + hex_enum",
+    "_confidence": "high"
+  },
+  "typography": {
+    "families": [],
+    "all_px_values": [
+      9.0,
+      10.4,
+      12.0,
+      13.0,
+      14.0,
+      15.0,
+      18.0,
+      20.0,
+      22.0,
+      24.0,
+      32.0,
+      61.5,
+      62.0,
+      85.0,
+      110.0
+    ],
+    "declared_scale_px": null,
+    "weights_seen": [
+      500
+    ],
+    "_extraction_method": "regex_family_role_pairs + px_enum + weight_enum",
+    "_confidence": "medium"
+  },
+  "spacing": {
+    "base_unit_px": 8.0,
+    "declared_scale": [
+      1.0,
+      2.0,
+      3.0,
+      4.0,
+      5.0,
+      6.0,
+      8.0,
+      10.0,
+      12.0,
+      15.0,
+      20.0,
+      30.0,
+      35.0
+    ],
+    "all_px_values": [
+      1.0,
+      2.0,
+      3.0,
+      4.0,
+      5.0,
+      6.0,
+      7.0,
+      8.0,
+      10.0,
+      12.0,
+      15.0,
+      20.0,
+      30.0,
+      35.0,
+      40.0,
+      80.0,
+      100.0,
+      120.0
+    ],
+    "_extraction_method": "regex_base_unit + scale_enum",
+    "_confidence": "high"
+  },
+  "layout": {
+    "_extraction_method": "kept_section_text_for_a3",
+    "_confidence": "low",
+    "_section_size": 1552
+  },
+  "radius": {
+    "role_radius_pairs": {
+      "card padding": 15.0
+    },
+    "all_px_values": [
+      1.0,
+      2.0,
+      3.0,
+      4.0,
+      5.0,
+      6.0,
+      7.0,
+      8.0,
+      10.0,
+      12.0,
+      15.0,
+      20.0,
+      30.0,
+      35.0,
+      40.0,
+      80.0,
+      100.0,
+      120.0
+    ],
+    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_confidence": "medium"
+  },
+  "depth_elevation": {
+    "rgba_shadows": [
+      "rgba(0, 153, 255, 0.15)",
+      "rgb(9, 9, 9)",
+      "rgba(255, 255, 255, 0.1)",
+      "rgba(0, 0, 0, 0.25)"
+    ],
+    "inset_shadows": [],
+    "_extraction_method": "regex_rgba_inset",
+    "_confidence": "medium"
+  },
+  "responsive": {
+    "breakpoints_named": {},
+    "_extraction_method": "regex_breakpoint_table",
+    "_confidence": "low"
+  },
+  "dos_donts": {
+    "dos": [
+      "Use pure black (`#000000`) as the primary background — not dark gray, not charcoal",
+      "Apply extreme negative letter-spacing on GT Walsheim display text (-3px to -5.5px)",
+      "Keep all buttons pill-shaped (40px+ radius) — never use squared or slightly-rounded buttons",
+      "Use Framer Blue (`#0099ff`) exclusively for interactive accents — links, borders, focus states",
+      "Deploy `rgba(255, 255, 255, 0.1)` for frosted glass surfaces on dark backgrounds",
+      "Maintain GT Walsheim at weight 500 only — the medium weight IS the brand",
+      "Use extensive OpenType features on Inter text (cv01, cv05, cv09, cv11, ss03, ss07)",
+      "Let product screenshots be the visual centerpiece — the tool markets itself",
+      "Apply blue ring shadows (`rgba(0, 153, 255, 0.15) 0px 0px 0px 1px`) for card containment"
+    ],
+    "donts": [
+      "Use warm dark backgrounds (no `#1a1a1a`, `#2d2d2d`, or brownish blacks)",
+      "Apply bold (700+) weight to GT Walsheim display text — medium 500 only",
+      "Introduce additional accent colors beyond Framer Blue — this is a one-accent-color system",
+      "Use large border-radius on non-interactive elements (cards use 10px–15px, only buttons get 40px+)",
+      "Add decorative imagery, illustrations, or icons — the product IS the illustration",
+      "Use positive letter-spacing on headlines — everything is compressed, negative tracking",
+      "Create heavy drop shadows — depth is communicated through subtle rings and minimal ambients",
+      "Place light/white backgrounds behind content sections — the void is sacred",
+      "Use serif or display-weight fonts — the system is geometric sans-serif only"
+    ],
+    "_extraction_method": "subsection_bullet_parse",
+    "_confidence": "high"
+  },
+  "sections_present": [
+    "visual_theme",
+    "color",
+    "typography",
+    "components",
+    "layout",
+    "depth_elevation",
+    "dos_donts",
+    "responsive",
+    "agent_guide"
+  ],
+  "sections_unhandled": [
+    "components",
+    "agent_guide"
+  ],
+  "sections_meta_for_llm": [
+    "visual_theme",
+    "agent_guide"
+  ],
+  "llm_followup_hints": [
+    "layout extraction has low confidence — recommend LLM review",
+    "responsive extraction has low confidence — recommend LLM review"
+  ]
+}

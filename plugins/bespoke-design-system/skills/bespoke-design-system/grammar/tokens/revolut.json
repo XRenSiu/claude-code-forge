@@ -1,0 +1,193 @@
+{
+  "system_name": "revolut",
+  "source": "open-design",
+  "extracted_at": "2026-05-03T13:38:57.573200Z",
+  "dialect": "A",
+  "fingerprint_hash": "62501c2f1441717ee7e93f7df4f8acd637cdd25bc983db45c5d6c69be10a797a",
+  "extraction_method": "programmatic_a1",
+  "tool_version": "1.0.0",
+  "color": {
+    "role_color_pairs": {
+      "revolut_dark": "#191c1f",
+      "pure_white": "#ffffff",
+      "light_surface": "#f4f4f4",
+      "revolut_blue": "#494fdf",
+      "action_blue": "#4f55f1",
+      "blue_text": "#376cd5",
+      "danger_red": "#e23b4a",
+      "deep_pink": "#e61e49",
+      "warning_orange": "#ec7e00",
+      "yellow": "#b09000",
+      "teal": "#00a87e",
+      "light_green": "#428619",
+      "green_text": "#006400",
+      "light_blue": "#007bc2",
+      "brown": "#936d62",
+      "red_text": "#8b0000",
+      "mid_slate": "#505a63",
+      "cool_gray": "#8d969e",
+      "gray_tone": "#c9c9cd"
+    },
+    "all_hex_colors": [
+      "#191c1f",
+      "#ffffff",
+      "#f4f4f4",
+      "#494fdf",
+      "#4f55f1",
+      "#376cd5",
+      "#e23b4a",
+      "#e61e49",
+      "#ec7e00",
+      "#b09000",
+      "#00a87e",
+      "#428619",
+      "#006400",
+      "#007bc2",
+      "#936d62",
+      "#8b0000",
+      "#505a63",
+      "#8d969e",
+      "#c9c9cd"
+    ],
+    "all_rgba_colors": [],
+    "all_hsla_colors": [],
+    "hex_count": 19,
+    "_extraction_method": "regex_role_pairs + hex_enum",
+    "_confidence": "high"
+  },
+  "typography": {
+    "families": [],
+    "all_px_values": [
+      16.0,
+      18.0,
+      20.0,
+      24.0,
+      32.0,
+      40.0,
+      48.0,
+      80.0,
+      136.0
+    ],
+    "declared_scale_px": null,
+    "weights_seen": [
+      500
+    ],
+    "_extraction_method": "regex_family_role_pairs + px_enum + weight_enum",
+    "_confidence": "medium"
+  },
+  "spacing": {
+    "base_unit_px": 8.0,
+    "declared_scale": null,
+    "all_px_values": [
+      4.0,
+      6.0,
+      8.0,
+      12.0,
+      14.0,
+      16.0,
+      20.0,
+      24.0,
+      32.0,
+      40.0,
+      48.0,
+      80.0,
+      88.0,
+      120.0
+    ],
+    "_extraction_method": "regex_base_unit + scale_enum",
+    "_confidence": "medium"
+  },
+  "layout": {
+    "_extraction_method": "kept_section_text_for_a3",
+    "_confidence": "low",
+    "_section_size": 283
+  },
+  "radius": {
+    "role_radius_pairs": {
+      "standard": 12.0,
+      "card": 20.0,
+      "pill": 9999.0
+    },
+    "all_px_values": [
+      4.0,
+      6.0,
+      8.0,
+      12.0,
+      14.0,
+      16.0,
+      20.0,
+      24.0,
+      32.0,
+      40.0,
+      48.0,
+      80.0,
+      88.0,
+      120.0
+    ],
+    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_confidence": "high"
+  },
+  "depth_elevation": {
+    "rgba_shadows": [],
+    "inset_shadows": [],
+    "_extraction_method": "regex_rgba_inset",
+    "_confidence": "medium"
+  },
+  "responsive": {
+    "breakpoints_named": {
+      "mobile": {
+        "min": 400,
+        "max": 720
+      },
+      "tablet": {
+        "min": 720,
+        "max": 1024
+      },
+      "desktop": {
+        "min": 1024,
+        "max": 1280
+      }
+    },
+    "_extraction_method": "regex_breakpoint_table",
+    "_confidence": "high"
+  },
+  "dos_donts": {
+    "dos": [
+      "Use Aeonik Pro weight 500 for all display headings",
+      "Apply 9999px radius to all buttons — pill shape is universal",
+      "Use generous button padding (14px 32px)",
+      "Keep the palette to near-black + white for marketing surfaces",
+      "Apply positive letter-spacing on Inter body text"
+    ],
+    "donts": [
+      "Don't use shadows — Revolut is flat by design",
+      "Don't use bold (700) for Aeonik Pro headings — 500 is the weight",
+      "Don't use small buttons — the generous padding is intentional",
+      "Don't apply semantic colors to marketing surfaces — they're for the product"
+    ],
+    "_extraction_method": "subsection_bullet_parse",
+    "_confidence": "high"
+  },
+  "sections_present": [
+    "visual_theme",
+    "color",
+    "typography",
+    "components",
+    "layout",
+    "depth_elevation",
+    "dos_donts",
+    "responsive",
+    "agent_guide"
+  ],
+  "sections_unhandled": [
+    "components",
+    "agent_guide"
+  ],
+  "sections_meta_for_llm": [
+    "visual_theme",
+    "agent_guide"
+  ],
+  "llm_followup_hints": [
+    "layout extraction has low confidence — recommend LLM review"
+  ]
+}

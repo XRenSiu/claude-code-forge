@@ -1,0 +1,217 @@
+{
+  "system_name": "lovable",
+  "source": "open-design",
+  "extracted_at": "2026-05-03T13:38:57.550252Z",
+  "dialect": "A",
+  "fingerprint_hash": "8a568b388dca500e2eeb631eb05c6d10b7f64a6bdbd7401634a86ec4e1fd5191",
+  "extraction_method": "programmatic_a1",
+  "tool_version": "1.0.0",
+  "color": {
+    "role_color_pairs": {
+      "cream": "#f7f4ed",
+      "charcoal": "#1c1c1c",
+      "off-white": "#fcfbf8",
+      "muted_gray": "#5f5f5d",
+      "light_cream": "#eceae4",
+      "cream_surface": "#f7f4ed",
+      "ring_blue": "#3b82f6",
+      "focus_shadow": "rgba(0,0,0,0.1)",
+      "button_inset": "rgba(255,255,255,0.2)"
+    },
+    "all_hex_colors": [
+      "#f7f4ed",
+      "#1c1c1c",
+      "#fcfbf8",
+      "#5f5f5d",
+      "#eceae4",
+      "#3b82f6"
+    ],
+    "all_rgba_colors": [
+      "rgba(28,28,28,0.83)",
+      "rgba(28,28,28,0.82)",
+      "rgba(28,28,28,0.4)",
+      "rgba(28,28,28,0.04)",
+      "rgba(28,28,28,0.03)",
+      "rgba(0,0,0,0.1)",
+      "rgba(255,255,255,0.2)",
+      "rgba(0,0,0,0.2)",
+      "rgba(0,0,0,0.05)"
+    ],
+    "all_hsla_colors": [],
+    "hex_count": 6,
+    "_extraction_method": "regex_role_pairs + hex_enum",
+    "_confidence": "high"
+  },
+  "typography": {
+    "families": [
+      {
+        "role": "primary",
+        "family": "Camera Plain Variable"
+      }
+    ],
+    "all_px_values": [
+      14.0,
+      16.0,
+      18.0,
+      20.0,
+      36.0,
+      48.0,
+      60.0
+    ],
+    "declared_scale_px": null,
+    "weights_seen": [
+      480
+    ],
+    "_extraction_method": "regex_family_role_pairs + px_enum + weight_enum",
+    "_confidence": "high"
+  },
+  "spacing": {
+    "base_unit_px": 8.0,
+    "declared_scale": null,
+    "all_px_values": [
+      1.0,
+      4.0,
+      6.0,
+      8.0,
+      10.0,
+      12.0,
+      16.0,
+      24.0,
+      32.0,
+      40.0,
+      56.0,
+      80.0,
+      96.0,
+      128.0,
+      176.0,
+      192.0
+    ],
+    "_extraction_method": "regex_base_unit + scale_enum",
+    "_confidence": "medium"
+  },
+  "layout": {
+    "_extraction_method": "kept_section_text_for_a3",
+    "_confidence": "low",
+    "_section_size": 1405
+  },
+  "radius": {
+    "role_radius_pairs": {
+      "micro": 4.0,
+      "standard": 6.0,
+      "comfortable": 8.0,
+      "card": 12.0,
+      "full pill": 9999.0
+    },
+    "all_px_values": [
+      1.0,
+      4.0,
+      6.0,
+      8.0,
+      10.0,
+      12.0,
+      16.0,
+      24.0,
+      32.0,
+      40.0,
+      56.0,
+      80.0,
+      96.0,
+      128.0,
+      176.0,
+      192.0
+    ],
+    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_confidence": "high"
+  },
+  "depth_elevation": {
+    "rgba_shadows": [
+      "rgba(255,255,255,0.2)",
+      "rgba(0,0,0,0.2)",
+      "rgba(0,0,0,0.05)",
+      "rgba(0,0,0,0.1)",
+      "rgba(59,130,246,0.5)"
+    ],
+    "inset_shadows": [
+      "Inset (Level 2) | `rgba(255",
+      "inset shadow on dark buttons — a subtle multi-layer technique where a white highlight line sits at the top edge while a dark ring and soft drop handle the bottom. This creates a tactile"
+    ],
+    "_extraction_method": "regex_rgba_inset",
+    "_confidence": "medium"
+  },
+  "responsive": {
+    "breakpoints_named": {
+      "mobile": {
+        "min": 600,
+        "max": 640
+      },
+      "tablet_small": {
+        "min": 640,
+        "max": 700
+      },
+      "tablet": {
+        "min": 700,
+        "max": 768
+      },
+      "desktop_small": {
+        "min": 768,
+        "max": 1024
+      },
+      "desktop": {
+        "min": 1024,
+        "max": 1280
+      },
+      "large_desktop": {
+        "min": 1280,
+        "max": 1536
+      }
+    },
+    "_extraction_method": "regex_breakpoint_table",
+    "_confidence": "high"
+  },
+  "dos_donts": {
+    "dos": [
+      "Use the warm cream background (`#f7f4ed`) as the page foundation — it's the brand's signature warmth",
+      "Use Camera Plain Variable at display sizes with negative letter-spacing (-0.9px to -1.5px)",
+      "Derive all grays from `#1c1c1c` at varying opacity levels for tonal unity",
+      "Use the inset shadow technique on dark buttons for tactile depth",
+      "Use `#eceae4` borders instead of shadows for card containment",
+      "Keep the weight system narrow: 400 for body/UI, 600 for headings",
+      "Use full-pill radius (9999px) only for action pills and icon buttons",
+      "Apply opacity 0.8 on active states for responsive tactile feedback"
+    ],
+    "donts": [
+      "Don't use pure white (`#ffffff`) as a page background — the cream is intentional",
+      "Don't use heavy box-shadows for cards — borders are the containment mechanism",
+      "Don't introduce saturated accent colors — the palette is intentionally warm-neutral",
+      "Don't use weight 700 (bold) — 600 is the maximum weight in the system",
+      "Don't apply 9999px radius on rectangular buttons — pills are for icon/action toggles",
+      "Don't use sharp focus outlines — the system uses soft shadow-based focus indicators",
+      "Don't mix border styles — `#eceae4` for passive, `rgba(28,28,28,0.4)` for interactive",
+      "Don't increase letter-spacing on headings — Camera Plain is designed to run tight at scale"
+    ],
+    "_extraction_method": "subsection_bullet_parse",
+    "_confidence": "high"
+  },
+  "sections_present": [
+    "visual_theme",
+    "color",
+    "typography",
+    "components",
+    "layout",
+    "depth_elevation",
+    "dos_donts",
+    "responsive",
+    "agent_guide"
+  ],
+  "sections_unhandled": [
+    "components",
+    "agent_guide"
+  ],
+  "sections_meta_for_llm": [
+    "visual_theme",
+    "agent_guide"
+  ],
+  "llm_followup_hints": [
+    "layout extraction has low confidence — recommend LLM review"
+  ]
+}

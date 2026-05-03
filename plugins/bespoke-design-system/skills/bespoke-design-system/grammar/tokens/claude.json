@@ -1,0 +1,217 @@
+{
+  "system_name": "claude",
+  "source": "open-design",
+  "extracted_at": "2026-05-03T13:38:57.522969Z",
+  "dialect": "A",
+  "fingerprint_hash": "79063565b490ace245dbca4d134c5aff849d16b7004c1e8e23cea1ea98fa7eb5",
+  "extraction_method": "programmatic_a1",
+  "tool_version": "1.0.0",
+  "color": {
+    "role_color_pairs": {
+      "anthropic_near_black": "#141413",
+      "terracotta_brand": "#c96442",
+      "coral_accent": "#d97757",
+      "error_crimson": "#b53333",
+      "focus_blue": "#3898ec",
+      "parchment": "#f5f4ed",
+      "ivory": "#faf9f5",
+      "pure_white": "#ffffff",
+      "warm_sand": "#e8e6dc",
+      "dark_surface": "#30302e",
+      "deep_dark": "#141413",
+      "charcoal_warm": "#4d4c48",
+      "olive_gray": "#5e5d59",
+      "stone_gray": "#87867f",
+      "dark_warm": "#3d3d3a",
+      "warm_silver": "#b0aea5",
+      "border_cream": "#f0eee6",
+      "border_warm": "#e8e6dc",
+      "border_dark": "#30302e",
+      "ring_warm": "#d1cfc5",
+      "ring_subtle": "#dedc01",
+      "ring_deep": "#c2c0b6"
+    },
+    "all_hex_colors": [
+      "#141413",
+      "#c96442",
+      "#d97757",
+      "#b53333",
+      "#3898ec",
+      "#f5f4ed",
+      "#faf9f5",
+      "#ffffff",
+      "#e8e6dc",
+      "#30302e",
+      "#4d4c48",
+      "#5e5d59",
+      "#87867f",
+      "#3d3d3a",
+      "#b0aea5",
+      "#f0eee6",
+      "#d1cfc5",
+      "#dedc01",
+      "#c2c0b6"
+    ],
+    "all_rgba_colors": [],
+    "all_hsla_colors": [],
+    "hex_count": 19,
+    "_extraction_method": "regex_role_pairs + hex_enum",
+    "_confidence": "high"
+  },
+  "typography": {
+    "families": [
+      {
+        "role": "body",
+        "family": "Anthropic Sans"
+      },
+      {
+        "role": "code",
+        "family": "Anthropic Mono"
+      }
+    ],
+    "all_px_values": [
+      9.6,
+      10.0,
+      12.0,
+      14.0,
+      15.0,
+      16.0,
+      17.0,
+      20.0,
+      20.8,
+      25.6,
+      32.0,
+      36.8,
+      52.0,
+      64.0
+    ],
+    "declared_scale_px": null,
+    "weights_seen": [
+      500
+    ],
+    "_extraction_method": "regex_family_role_pairs + px_enum + weight_enum",
+    "_confidence": "high"
+  },
+  "spacing": {
+    "base_unit_px": 8.0,
+    "declared_scale": null,
+    "all_px_values": [
+      3.0,
+      4.0,
+      6.0,
+      7.5,
+      8.0,
+      8.5,
+      10.0,
+      12.0,
+      16.0,
+      20.0,
+      24.0,
+      30.0,
+      32.0,
+      120.0
+    ],
+    "_extraction_method": "regex_base_unit + scale_enum",
+    "_confidence": "medium"
+  },
+  "layout": {
+    "_extraction_method": "kept_section_text_for_a3",
+    "_confidence": "low",
+    "_section_size": 1479
+  },
+  "radius": {
+    "role_radius_pairs": {},
+    "all_px_values": [
+      3.0,
+      4.0,
+      6.0,
+      7.5,
+      8.0,
+      8.5,
+      10.0,
+      12.0,
+      16.0,
+      20.0,
+      24.0,
+      30.0,
+      32.0,
+      120.0
+    ],
+    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_confidence": "low"
+  },
+  "depth_elevation": {
+    "rgba_shadows": [
+      "rgba(0,0,0,0.05)"
+    ],
+    "inset_shadows": [
+      "Inset (Level 4) | `inset 0px 0px 0px 1px` at 15% opacity | Active/pressed button states |"
+    ],
+    "_extraction_method": "regex_rgba_inset",
+    "_confidence": "medium"
+  },
+  "responsive": {
+    "breakpoints_named": {
+      "mobile": {
+        "min": 640,
+        "max": 767
+      },
+      "tablet": {
+        "min": 768,
+        "max": 991
+      }
+    },
+    "_extraction_method": "regex_breakpoint_table",
+    "_confidence": "high"
+  },
+  "dos_donts": {
+    "dos": [
+      "Use Parchment (`#f5f4ed`) as the primary light background — the warm cream tone IS the Claude personality",
+      "Use Anthropic Serif at weight 500 for all headlines — the single-weight consistency is intentional",
+      "Use Terracotta Brand (`#c96442`) only for primary CTAs and the highest-signal brand moments",
+      "Keep all neutrals warm-toned — every gray should have a yellow-brown undertone",
+      "Use ring shadows (`0px 0px 0px 1px`) for interactive element states instead of drop shadows",
+      "Maintain the editorial serif/sans hierarchy — serif for content headlines, sans for UI",
+      "Use generous body line-height (1.60) for a literary reading experience",
+      "Alternate between light and dark sections to create chapter-like page rhythm",
+      "Apply generous border-radius (12–32px) for a soft, approachable feel"
+    ],
+    "donts": [
+      "Don't use cool blue-grays anywhere — the palette is exclusively warm-toned",
+      "Don't use bold (700+) weight on Anthropic Serif — weight 500 is the ceiling for serifs",
+      "Don't introduce saturated colors beyond Terracotta — the palette is deliberately muted",
+      "Don't use sharp corners (< 6px radius) on buttons or cards — softness is core to the identity",
+      "Don't apply heavy drop shadows — depth comes from ring shadows and background color shifts",
+      "Don't use pure white (`#ffffff`) as a page background — Parchment (`#f5f4ed`) or Ivory (`#faf9f5`) are always warmer",
+      "Don't use geometric/tech-style illustrations — Claude's illustrations are organic and hand-drawn-feeling",
+      "Don't reduce body line-height below 1.40 — the generous spacing supports the editorial personality",
+      "Don't use monospace fonts for non-code content — Anthropic Mono is strictly for code",
+      "Don't mix in sans-serif for headlines — the serif/sans split is the typographic identity"
+    ],
+    "_extraction_method": "subsection_bullet_parse",
+    "_confidence": "high"
+  },
+  "sections_present": [
+    "visual_theme",
+    "color",
+    "typography",
+    "components",
+    "layout",
+    "depth_elevation",
+    "dos_donts",
+    "responsive",
+    "agent_guide"
+  ],
+  "sections_unhandled": [
+    "components",
+    "agent_guide"
+  ],
+  "sections_meta_for_llm": [
+    "visual_theme",
+    "agent_guide"
+  ],
+  "llm_followup_hints": [
+    "layout extraction has low confidence — recommend LLM review",
+    "radius extraction has low confidence — recommend LLM review"
+  ]
+}

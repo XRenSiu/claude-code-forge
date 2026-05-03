@@ -1,0 +1,208 @@
+{
+  "system_name": "shopify",
+  "source": "open-design",
+  "extracted_at": "2026-05-03T13:38:57.577203Z",
+  "dialect": "A",
+  "fingerprint_hash": "ab10135212d6d8a0eaf4003f29cf5072f9390c27fb5e109a7bb8d4e2a28f4931",
+  "extraction_method": "programmatic_a1",
+  "tool_version": "1.0.0",
+  "color": {
+    "role_color_pairs": {
+      "shopify_white": "#FFFFFF",
+      "shopify_black": "#000000",
+      "neon_green": "#36F4A4",
+      "aloe": "#C1FBD4",
+      "pistachio": "#D4F9E0",
+      "void": "#000000",
+      "deep_teal": "#02090A",
+      "dark_forest": "#061A1C",
+      "forest": "#102620",
+      "dark_card_border": "#1E2C31",
+      "shade-30": "#D4D4D8",
+      "muted_text": "#A1A1AA",
+      "shade-50": "#71717A",
+      "shade-60": "#52525B",
+      "shade-70": "#3F3F46",
+      "light_border": "#E4E4E7",
+      "link_muted": "#9797A2",
+      "link_sage": "#9DABAD",
+      "link_lavender": "#BDBDCA",
+      "link_mint": "#99B3AD"
+    },
+    "all_hex_colors": [
+      "#FFFFFF",
+      "#000000",
+      "#36F4A4",
+      "#C1FBD4",
+      "#D4F9E0",
+      "#02090A",
+      "#061A1C",
+      "#102620",
+      "#1E2C31",
+      "#D4D4D8",
+      "#A1A1AA",
+      "#71717A",
+      "#52525B",
+      "#3F3F46",
+      "#E4E4E7",
+      "#9797A2",
+      "#9DABAD",
+      "#BDBDCA",
+      "#99B3AD"
+    ],
+    "all_rgba_colors": [],
+    "all_hsla_colors": [],
+    "hex_count": 19,
+    "_extraction_method": "regex_role_pairs + hex_enum",
+    "_confidence": "high"
+  },
+  "typography": {
+    "families": [],
+    "all_px_values": [
+      12.0,
+      13.0,
+      14.0,
+      15.36,
+      16.0,
+      18.0,
+      20.0,
+      24.0,
+      28.0,
+      32.0,
+      48.0,
+      55.0,
+      70.0,
+      90.74,
+      96.0
+    ],
+    "declared_scale_px": null,
+    "weights_seen": [
+      330
+    ],
+    "_extraction_method": "regex_family_role_pairs + px_enum + weight_enum",
+    "_confidence": "medium"
+  },
+  "spacing": {
+    "base_unit_px": 8.0,
+    "declared_scale": null,
+    "all_px_values": [
+      4.0,
+      8.0,
+      12.0,
+      16.0,
+      20.0,
+      24.0,
+      28.0,
+      32.0,
+      36.0,
+      40.0,
+      64.0,
+      80.0,
+      120.0
+    ],
+    "_extraction_method": "regex_base_unit + scale_enum",
+    "_confidence": "medium"
+  },
+  "layout": {
+    "_extraction_method": "kept_section_text_for_a3",
+    "_confidence": "low",
+    "_section_size": 1785
+  },
+  "radius": {
+    "role_radius_pairs": {},
+    "all_px_values": [
+      4.0,
+      8.0,
+      12.0,
+      16.0,
+      20.0,
+      24.0,
+      28.0,
+      32.0,
+      36.0,
+      40.0,
+      64.0,
+      80.0,
+      120.0
+    ],
+    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_confidence": "low"
+  },
+  "depth_elevation": {
+    "rgba_shadows": [
+      "rgba(0,0,0,0.1)",
+      "rgba(0,0,0,0.25)",
+      "rgba(255,255,255,0.03)"
+    ],
+    "inset_shadows": [
+      "inset white glow | Resting cards |",
+      "inset white glow (`rgba(255",
+      "inset box-shadow"
+    ],
+    "_extraction_method": "regex_rgba_inset",
+    "_confidence": "medium"
+  },
+  "responsive": {
+    "breakpoints_named": {
+      "tablet": {
+        "min": 640,
+        "max": 1024
+      },
+      "desktop": {
+        "min": 1024,
+        "max": 1440
+      }
+    },
+    "_extraction_method": "regex_breakpoint_table",
+    "_confidence": "high"
+  },
+  "dos_donts": {
+    "dos": [
+      "Use the dark teal-black surface hierarchy (Void → Deep Teal → Dark Forest → Forest) for depth",
+      "Keep display typography at weight 330-400 — the ethereal lightness is the design's signature",
+      "Use Neon Green (`#36F4A4`) exclusively for focus states and critical accent highlights",
+      "Apply 9999px radius to all primary CTA buttons — the full pill is non-negotiable",
+      "Use the multi-layered shadow system for card elevation — single shadows look flat",
+      "Maintain the `ss03` OpenType feature across all text — it's part of the typographic identity",
+      "Use Inter Variable for body text and NeueHaasGrotesk for headings — never mix their roles",
+      "Create theatrical spacing between sections (80px+) for cinematic pacing"
+    ],
+    "donts": [
+      "Don't use pure black (#000000) for text on dark backgrounds — use white (#FFFFFF) only",
+      "Don't introduce warm colors (orange, red, yellow) — the palette is strictly cool (greens, teals, neutrals)",
+      "Don't use font weights above 500 for NeueHaasGrotesk body text — heavy weights break the ethereal feel",
+      "Don't apply green accents to large surfaces — Neon Green is for small, precise highlights only",
+      "Don't use sharp corners (0px radius) on interactive elements — everything rounds",
+      "Don't add bright backgrounds — the dark theme is fundamental, not optional",
+      "Don't use single-layer box shadows — the stacked approach is the system",
+      "Don't set line-height above 1.56 for body text — Shopify's text is relatively compact",
+      "Don't mix NeueHaasGrotesk and Inter at the same size/role — their weight scales differ",
+      "Don't use letter-spacing below 0 for headings — Shopify headings track neutral or positive"
+    ],
+    "_extraction_method": "subsection_bullet_parse",
+    "_confidence": "high"
+  },
+  "sections_present": [
+    "visual_theme",
+    "color",
+    "typography",
+    "components",
+    "layout",
+    "depth_elevation",
+    "dos_donts",
+    "responsive",
+    "agent_guide"
+  ],
+  "sections_unhandled": [
+    "components",
+    "agent_guide"
+  ],
+  "sections_meta_for_llm": [
+    "visual_theme",
+    "agent_guide"
+  ],
+  "llm_followup_hints": [
+    "layout extraction has low confidence — recommend LLM review",
+    "radius extraction has low confidence — recommend LLM review"
+  ]
+}

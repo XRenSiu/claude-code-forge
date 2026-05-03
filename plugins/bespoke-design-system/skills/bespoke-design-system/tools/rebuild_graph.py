@@ -1,0 +1,298 @@
+#!/usr/bin/env python3
+"""
+rebuild_graph.py — Programmatic A4 phase: rebuild the rules relationship graph.
+
+Reads grammar/rules/*.yaml (incl. _generated.yaml) and writes
+grammar/graph/rules_graph.json with 4 deterministic relation types:
+  - depends_on  (and constrains as reverse)
+  - co_occurs_with (with frequency)
+  - conflicts_with
+
+Algorithm is fully deterministic (no LLM). Each invocation produces
+identical output for identical input.
+
+Usage:
+  python3 rebuild_graph.py [--rules-dir <path>] [--output <path>] [--dry-run]
+"""
+import os, sys, re, json, argparse, datetime
+from collections import defaultdict
+
+try:
+    import yaml
+except ImportError:
+    print('ERROR: PyYAML required. Install with: pip install pyyaml', file=sys.stderr)
+    sys.exit(2)
+
+
+# Standard rule-bearing section dependency hierarchy.
+# A rule in section S depends on stable foundations from earlier section(s).
+SECTION_DEPENDENCY_ORDER = ['color', 'typography', 'spacing', 'layout', 'depth_elevation', 'components', 'motion', 'voice']
+DEPENDS_ON_RULES = {
+    'components': ['color', 'typography', 'spacing', 'layout', 'depth_elevation'],
+    'motion': ['components'],
+    'voice': [],          # voice is independent
+    'anti_patterns': [],  # cross-cutting
+    'depth_elevation': ['color'],
+    'layout': ['spacing'],
+    'typography': ['color'],   # text color depends on palette
+    'spacing': [],
+    'color': [],
+}
+
+
+def load_rules(rules_dir):
+    """Load every rule from grammar/rules/*.yaml and return {rule_id: rule_obj}."""
+    rules = {}
+    for fname in sorted(os.listdir(rules_dir)):
+        if not fname.endswith('.yaml') and not fname.endswith('.yml'):
+            continue
+        path = os.path.join(rules_dir, fname)
+        try:
+            with open(path) as f:
+                data = yaml.safe_load(f)
+        except Exception as e:
+            print(f'WARN: skipping {fname}: {e}', file=sys.stderr)
+            continue
+        if not data:
+            continue
+        rule_list = data.get('rules', [])
+        for r in rule_list:
+            rid = r.get('rule_id')
+            if not rid:
+                continue
+            r['_source_file'] = fname
+            rules[rid] = r
+    return rules
+
+
+def kansei_overlap(rule_a, rule_b):
+    """Jaccard overlap of rule.preconditions.kansei sets."""
+    ka = set(rule_a.get('preconditions', {}).get('kansei', []) or [])
+    kb = set(rule_b.get('preconditions', {}).get('kansei', []) or [])
+    if not ka and not kb:
+        return 0.0
+    return len(ka & kb) / len(ka | kb)
+
+
+def kansei_words_for_system(rules_by_system, system):
+    """All Kansei words used by rules of a single source system."""
+    words = set()
+    for r in rules_by_system.get(system, []):
+        words.update(r.get('preconditions', {}).get('kansei', []) or [])
+    return words
+
+
+# Built-in Kansei antonym pairs — used to detect conflicts_with.
+KANSEI_ANTONYMS = [
+    ('modern', 'classical'), ('modern', 'ancient'), ('modern', 'traditional'),
+    ('minimal', 'ornate'), ('minimal', 'decorative'), ('minimal', 'rich'),
+    ('serious', 'playful'), ('serious', 'whimsical'),
+    ('cold', 'warm'), ('clinical', 'cozy'),
+    ('precise', 'organic'), ('structured', 'organic'),
+    ('confident', 'humble'),
+    ('energetic', 'calm'),
+    ('aggressive', 'gentle'), ('aggressive', 'nurturing'),
+]
+ANTONYM_LOOKUP = defaultdict(set)
+for a, b in KANSEI_ANTONYMS:
+    ANTONYM_LOOKUP[a].add(b)
+    ANTONYM_LOOKUP[b].add(a)
+
+
+def detect_conflicts(rule_a, rule_b):
+    """Return (is_conflict, reason) for ordered pair (A, B). Symmetric — caller may dedupe."""
+    pa = rule_a.get('preconditions', {})
+    pb = rule_b.get('preconditions', {})
+    ka = set(pa.get('kansei', []) or [])
+    kb = set(pb.get('kansei', []) or [])
+
+    # 1. Antonym-based: any kansei word in A is the antonym of any in B
+    for a in ka:
+        if a in ANTONYM_LOOKUP and ANTONYM_LOOKUP[a] & kb:
+            common = ANTONYM_LOOKUP[a] & kb
+            return True, f"kansei antonym: A has '{a}', B has {sorted(common)}"
+
+    # 2. why.avoid in A intersects why.establish in B (and vice versa)
+    why_a = rule_a.get('why', {}) or {}
+    why_b = rule_b.get('why', {}) or {}
+    avoid_a = set([v.strip() for v in (why_a.get('avoid', []) or [])])
+    establ_b = why_b.get('establish', '')
+    if establ_b and any(token in establ_b for token in avoid_a if token):
+        return True, f"A.why.avoid mentions B's establish ({establ_b})"
+
+    # 3. Same section + same product_type AND opposite directions on a known dimension.
+    # (Heuristic: requires explicit dimension annotations in rule.action — skip if absent.)
+    return False, None
+
+
+def detect_co_occurrence(rule_a, rule_b, rules_by_system):
+    """Estimate how often A and B emerge from the same source systems.
+       Returns (frequency 0.0-1.0, both_count, either_count) only if non-trivial."""
+    sa = set(rule_a.get('emerges_from', []) or [])
+    sb = set(rule_b.get('emerges_from', []) or [])
+    if not sa or not sb:
+        return None
+    both = sa & sb
+    either = sa | sb
+    if not either:
+        return None
+    return len(both) / len(either), len(both), len(either)
+
+
+def detect_semantic_similarity(rule_a, rule_b):
+    """Two rules are 'semantically similar' if same section + non-trivial kansei overlap.
+       Used to gate co_occurs_with (otherwise every rule in same system would 'co-occur' with every other rule)."""
+    if rule_a.get('section') != rule_b.get('section'):
+        return False
+    if rule_a.get('rule_id') == rule_b.get('rule_id'):
+        return False
+    return kansei_overlap(rule_a, rule_b) >= 0.2
+
+
+def build_graph(rules):
+    """Return {'nodes': [...], edge counts} given rules dict."""
+    rule_ids = sorted(rules.keys())
+    relations = defaultdict(lambda: {
+        'depends_on': [],
+        'constrains': [],
+        'co_occurs_with': [],
+        'conflicts_with': [],
+    })
+
+    # 1. Section-driven depends_on / constrains
+    for rid, r in rules.items():
+        section = r.get('section', '')
+        deps_sections = DEPENDS_ON_RULES.get(section, [])
+        for dep_section in deps_sections:
+            # Find rules from same source systems with that dep_section
+            for other_rid, other in rules.items():
+                if other.get('section') == dep_section and other_rid != rid:
+                    # Co-system match boosts dependency relevance
+                    sa = set(r.get('emerges_from', []) or [])
+                    sb = set(other.get('emerges_from', []) or [])
+                    if sa & sb:
+                        relations[rid]['depends_on'].append({
+                            'rule': other_rid,
+                            'reason': f'{section} depends on {dep_section} foundation (same source: {sorted(sa & sb)[0]})'
+                        })
+                        relations[other_rid]['constrains'].append({'rule': rid})
+                        break  # one dep per section is enough
+
+    # 2. Pairwise co_occurs_with (semantically similar pairs only)
+    for i, rid_a in enumerate(rule_ids):
+        rule_a = rules[rid_a]
+        for rid_b in rule_ids[i+1:]:
+            rule_b = rules[rid_b]
+            if not detect_semantic_similarity(rule_a, rule_b):
+                continue
+            co = detect_co_occurrence(rule_a, rule_b, None)
+            if co is None:
+                continue
+            freq, both, either = co
+            if freq >= 0.3:  # threshold from spec
+                relations[rid_a]['co_occurs_with'].append({
+                    'rule': rid_b, 'frequency': round(freq, 2)
+                })
+                relations[rid_b]['co_occurs_with'].append({
+                    'rule': rid_a, 'frequency': round(freq, 2)
+                })
+
+    # 3a. Explicit known_conflicts in rule yaml (LLM-declared during A3)
+    for rid, r in rules.items():
+        for kc in (r.get('known_conflicts', []) or []):
+            target_id = kc.get('rule') if isinstance(kc, dict) else kc
+            reason = kc.get('reason', 'declared in rule yaml') if isinstance(kc, dict) else 'declared in rule yaml'
+            if target_id in rules:
+                # Add symmetric edge
+                if not any(c['rule'] == target_id for c in relations[rid]['conflicts_with']):
+                    relations[rid]['conflicts_with'].append({'rule': target_id, 'reason': reason})
+                if not any(c['rule'] == rid for c in relations[target_id]['conflicts_with']):
+                    relations[target_id]['conflicts_with'].append({'rule': rid, 'reason': reason})
+
+    # 3b. Auto-detected pairwise conflicts (Kansei antonyms / why.avoid mention)
+    for i, rid_a in enumerate(rule_ids):
+        rule_a = rules[rid_a]
+        for rid_b in rule_ids[i+1:]:
+            rule_b = rules[rid_b]
+            is_conflict, reason = detect_conflicts(rule_a, rule_b)
+            if is_conflict:
+                # Skip if already declared
+                if any(c['rule'] == rid_b for c in relations[rid_a]['conflicts_with']):
+                    continue
+                relations[rid_a]['conflicts_with'].append({'rule': rid_b, 'reason': reason})
+                relations[rid_b]['conflicts_with'].append({'rule': rid_a, 'reason': reason})
+
+    # Materialize nodes
+    nodes = []
+    for rid in rule_ids:
+        nodes.append({'rule_id': rid, 'relations': dict(relations[rid])})
+
+    edge_counts = {
+        'depends_on': sum(len(n['relations']['depends_on']) for n in nodes),
+        'constrains': sum(len(n['relations']['constrains']) for n in nodes),
+        'co_occurs_with': sum(len(n['relations']['co_occurs_with']) for n in nodes) // 2,  # symmetric
+        'conflicts_with': sum(len(n['relations']['conflicts_with']) for n in nodes) // 2,  # symmetric
+    }
+
+    return nodes, edge_counts
+
+
+def main():
+    p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    here = os.path.dirname(os.path.abspath(__file__))
+    p.add_argument('--rules-dir', default=os.path.normpath(os.path.join(here, '..', 'grammar', 'rules')))
+    p.add_argument('--output', default=os.path.normpath(os.path.join(here, '..', 'grammar', 'graph', 'rules_graph.json')))
+    p.add_argument('--rules-version', default=None, help='Stamp version field on output (default: read from version.json)')
+    p.add_argument('--dry-run', action='store_true', help='Print summary only, do not write')
+    args = p.parse_args()
+
+    if not os.path.isdir(args.rules_dir):
+        print(f'ERROR: rules dir not found: {args.rules_dir}', file=sys.stderr)
+        sys.exit(2)
+
+    rules = load_rules(args.rules_dir)
+    if not rules:
+        print('No rules found. Graph will be empty.')
+
+    nodes, edge_counts = build_graph(rules)
+
+    rules_version = args.rules_version
+    if rules_version is None:
+        version_json = os.path.normpath(os.path.join(here, '..', 'grammar', 'meta', 'version.json'))
+        try:
+            with open(version_json) as f:
+                rules_version = json.load(f).get('rules_version', '0.0.0')
+        except Exception:
+            rules_version = '0.0.0'
+
+    output = {
+        '$schema_description': 'Rules relationship graph. Rebuilt by tools/rebuild_graph.py.',
+        'version': rules_version,
+        'rebuilt_at': datetime.datetime.utcnow().isoformat() + 'Z',
+        'node_count': len(nodes),
+        'edge_counts': edge_counts,
+        'nodes': nodes,
+    }
+
+    summary = {
+        'rules_loaded': len(rules),
+        'edge_counts': edge_counts,
+        'avg_degree': round(sum(edge_counts.values()) * 2 / max(len(rules), 1), 2),
+        'sections_seen': sorted(set(r.get('section', 'unknown') for r in rules.values())),
+        'systems_seen': sorted(set(s for r in rules.values() for s in (r.get('emerges_from', []) or []))),
+    }
+
+    if args.dry_run:
+        print(json.dumps(summary, indent=2))
+        return
+
+    os.makedirs(os.path.dirname(args.output), exist_ok=True)
+    with open(args.output, 'w') as f:
+        json.dump(output, f, indent=2, ensure_ascii=False)
+
+    print(f'Wrote {args.output}')
+    print(json.dumps(summary, indent=2))
+
+
+if __name__ == '__main__':
+    main()

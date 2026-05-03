@@ -1,0 +1,178 @@
+{
+  "system_name": "kami",
+  "source": "open-design",
+  "extracted_at": "2026-05-03T13:38:57.545891Z",
+  "dialect": "A",
+  "fingerprint_hash": "1699afb7a8edaab78f6829a140c273b7556ec730a8dd5a0e797642735ccf8cd5",
+  "extraction_method": "programmatic_a1",
+  "tool_version": "1.0.0",
+  "color": {
+    "role_color_pairs": {
+      "ink_blue": "#1B365D",
+      "ink_light": "#2D5A8A",
+      "parchment": "#f5f4ed",
+      "ivory": "#faf9f5",
+      "warm_sand": "#e8e6dc",
+      "dark_surface": "#30302e",
+      "deep_dark": "#141413",
+      "near_black": "#141413",
+      "dark_warm": "#3d3d3a",
+      "olive": "#504e49",
+      "stone": "#6b6a64",
+      "border": "#e8e6dc",
+      "border_soft": "#e5e3d8"
+    },
+    "all_hex_colors": [
+      "#1B365D",
+      "#2D5A8A",
+      "#f5f4ed",
+      "#faf9f5",
+      "#e8e6dc",
+      "#30302e",
+      "#141413",
+      "#000000",
+      "#3d3d3a",
+      "#504e49",
+      "#4d4c48",
+      "#6b6a64",
+      "#e5e3d8",
+      "#EEF2F7",
+      "#E4ECF5",
+      "#D0DCE9",
+      "#D6E1EE",
+      "#ffffff",
+      "#f8f9fa",
+      "#f3f4f6"
+    ],
+    "all_rgba_colors": [],
+    "all_hsla_colors": [],
+    "hex_count": 20,
+    "_extraction_method": "regex_role_pairs + hex_enum",
+    "_confidence": "high"
+  },
+  "typography": {
+    "families": [],
+    "all_px_values": [
+      8.0,
+      12.0,
+      13.0,
+      14.0,
+      16.0,
+      18.0,
+      20.0,
+      22.0,
+      24.0,
+      29.0,
+      32.0,
+      36.0,
+      64.0,
+      106.0
+    ],
+    "declared_scale_px": null,
+    "weights_seen": [
+      500
+    ],
+    "_extraction_method": "regex_family_role_pairs + px_enum + weight_enum",
+    "_confidence": "medium"
+  },
+  "spacing": {
+    "base_unit_px": 120.0,
+    "declared_scale": null,
+    "all_px_values": [
+      64.0,
+      72.0,
+      80.0,
+      88.0,
+      120.0
+    ],
+    "_extraction_method": "regex_base_unit + scale_enum",
+    "_confidence": "medium"
+  },
+  "layout": {
+    "_extraction_method": "kept_section_text_for_a3",
+    "_confidence": "low",
+    "_section_size": 1110
+  },
+  "radius": {
+    "role_radius_pairs": {},
+    "all_px_values": [
+      64.0,
+      72.0,
+      80.0,
+      88.0,
+      120.0
+    ],
+    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_confidence": "low"
+  },
+  "depth_elevation": {
+    "rgba_shadows": [
+      "rgba(0,0,0,0.05)",
+      "rgba(0,0,0,0.25)"
+    ],
+    "inset_shadows": [],
+    "_extraction_method": "regex_rgba_inset",
+    "_confidence": "medium"
+  },
+  "responsive": {
+    "breakpoints_named": {
+      "tablet": {
+        "min": 768,
+        "max": 979
+      }
+    },
+    "_extraction_method": "regex_breakpoint_table",
+    "_confidence": "high"
+  },
+  "dos_donts": {
+    "dos": [
+      "Use parchment (`#f5f4ed`) as the page background — the warm cream tone *is* the kami personality.",
+      "Use a single serif weight (500) for every heading; let size carry hierarchy.",
+      "Use ink-blue (`#1B365D`) only for primary CTAs, section numbers, links, the left rule of a quote, and the W500 in metrics.",
+      "Keep every gray warm (yellow-brown undertone). When in doubt, sample with `R ≈ G > B`.",
+      "Use ring shadows or whisper shadows for elevation; never hard drops.",
+      "Set tag backgrounds as solid hex pre-blended over parchment, never `rgba()`.",
+      "Set numbers in `font-variant-numeric: tabular-nums`.",
+      "Pair the section number with the section title in the same serif — no eyebrow needed.",
+      "Default bullets to ink-blue en-dashes (`–`)."
+    ],
+    "donts": [
+      "Don't use `#ffffff` as page background, anywhere.",
+      "Don't introduce a second accent color or a chromatic gradient.",
+      "Don't use cool blue-grays (`slate-*`, `#f3f4f6`, `#6b7280`). Every neutral is warm.",
+      "Don't use bold (700+) on serif — weight 500 is the ceiling.",
+      "**Don't use italic anywhere.** No `font-style: italic`. Swap to ink-blue or a tag instead.",
+      "Don't use sans-serif for headlines or body — sans is reserved for eyebrows, switchers, and small labels (and the sans stack literally equals the serif stack).",
+      "Don't drop body line-height below 1.4 or push it above 1.55 — that range *is* kami's reading rhythm.",
+      "Don't use round-disc bullets, drop shadows, or pill-shaped chips with heavy borders.",
+      "Don't apply `backdrop-filter`, `mix-blend-mode`, or any modern compositing trick — the system targets print fidelity."
+    ],
+    "_extraction_method": "subsection_bullet_parse",
+    "_confidence": "high"
+  },
+  "sections_present": [
+    "visual_theme",
+    "color",
+    "typography",
+    "components",
+    "layout",
+    "depth_elevation",
+    "dos_donts",
+    "responsive",
+    "agent_guide",
+    "attribution"
+  ],
+  "sections_unhandled": [
+    "components",
+    "agent_guide",
+    "attribution"
+  ],
+  "sections_meta_for_llm": [
+    "visual_theme",
+    "agent_guide"
+  ],
+  "llm_followup_hints": [
+    "layout extraction has low confidence — recommend LLM review",
+    "radius extraction has low confidence — recommend LLM review"
+  ]
+}

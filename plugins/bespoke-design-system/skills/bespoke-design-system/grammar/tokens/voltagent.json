@@ -1,0 +1,230 @@
+{
+  "system_name": "voltagent",
+  "source": "open-design",
+  "extracted_at": "2026-05-03T13:38:57.592772Z",
+  "dialect": "A",
+  "fingerprint_hash": "2f58cadf75642185b09493a7bf00e81461acd67bdd543c021b22e254e3b2a32f",
+  "extraction_method": "programmatic_a1",
+  "tool_version": "1.0.0",
+  "color": {
+    "role_color_pairs": {
+      "warm_ambient_haze": "rgba(92, 88, 85, 0.2)",
+      "deep_dramatic_elevation": "rgba(0, 0, 0, 0.7)",
+      "emerald_signal_green": "#00d992",
+      "voltagent_mint": "#2fd6a1",
+      "tailwind_emerald": "#10b981",
+      "soft_purple": "#818cf8",
+      "cobalt_primary": "#306cce",
+      "deep_cobalt": "#2554a0",
+      "ring_blue": "#3b82f6",
+      "abyss_black": "#050507",
+      "carbon_surface": "#101010",
+      "warm_charcoal_border": "#3d3a39",
+      "snow_white": "#f2f2f2",
+      "pure_white": "#ffffff",
+      "warm_parchment": "#b8b3b0",
+      "steel_slate": "#8b949e",
+      "fog_gray": "#bdbdbd",
+      "mist_gray": "#dcdcdc",
+      "near_white": "#eeeeee",
+      "success_emerald": "#008b00",
+      "success_light": "#80d280",
+      "warning_amber": "#ffba00",
+      "warning_pale": "#ffdd80",
+      "danger_coral": "#fb565b",
+      "danger_rose": "#fd9c9f",
+      "info_teal": "#4cb3d4",
+      "dashed_border_slate": "#4f5d75"
+    },
+    "all_hex_colors": [
+      "#00d992",
+      "#2fd6a1",
+      "#10b981",
+      "#818cf8",
+      "#306cce",
+      "#2554a0",
+      "#3b82f6",
+      "#050507",
+      "#101010",
+      "#3d3a39",
+      "#f2f2f2",
+      "#ffffff",
+      "#b8b3b0",
+      "#8b949e",
+      "#bdbdbd",
+      "#dcdcdc",
+      "#eeeeee",
+      "#008b00",
+      "#80d280",
+      "#ffba00",
+      "#ffdd80",
+      "#fb565b",
+      "#fd9c9f",
+      "#4cb3d4",
+      "#4f5d75"
+    ],
+    "all_rgba_colors": [
+      "rgba(92, 88, 85, 0.2)",
+      "rgba(0, 0, 0, 0.7)",
+      "rgba(148, 163, 184, 0.1)"
+    ],
+    "all_hsla_colors": [],
+    "hex_count": 25,
+    "_extraction_method": "regex_role_pairs + hex_enum",
+    "_confidence": "high"
+  },
+  "typography": {
+    "families": [],
+    "all_px_values": [
+      12.0,
+      13.0,
+      14.0,
+      14.45,
+      16.0,
+      18.0,
+      20.0,
+      24.0,
+      36.0,
+      60.0
+    ],
+    "declared_scale_px": null,
+    "weights_seen": [],
+    "_extraction_method": "regex_family_role_pairs + px_enum + weight_enum",
+    "_confidence": "medium"
+  },
+  "spacing": {
+    "base_unit_px": 8.0,
+    "declared_scale": null,
+    "all_px_values": [
+      2.0,
+      4.0,
+      5.0,
+      6.0,
+      6.4,
+      8.0,
+      12.0,
+      16.0,
+      20.0,
+      24.0,
+      28.0,
+      32.0,
+      40.0,
+      48.0,
+      64.0,
+      96.0
+    ],
+    "_extraction_method": "regex_base_unit + scale_enum",
+    "_confidence": "medium"
+  },
+  "layout": {
+    "_extraction_method": "kept_section_text_for_a3",
+    "_confidence": "low",
+    "_section_size": 2215
+  },
+  "radius": {
+    "role_radius_pairs": {
+      "comfortably rounded": 8.0
+    },
+    "all_px_values": [
+      2.0,
+      4.0,
+      5.0,
+      6.0,
+      6.4,
+      8.0,
+      12.0,
+      16.0,
+      20.0,
+      24.0,
+      28.0,
+      32.0,
+      40.0,
+      48.0,
+      64.0,
+      96.0
+    ],
+    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_confidence": "medium"
+  },
+  "depth_elevation": {
+    "rgba_shadows": [
+      "rgba(92, 88, 85, 0.2)",
+      "rgba(0, 0, 0, 0.7)",
+      "rgba(148, 163, 184, 0.1)",
+      "rgba(79, 93, 117, 0.4)"
+    ],
+    "inset_shadows": [
+      "inset` | Hero feature showcase"
+    ],
+    "_extraction_method": "regex_rgba_inset",
+    "_confidence": "medium"
+  },
+  "responsive": {
+    "breakpoints_named": {
+      "mobile": {
+        "min": 420,
+        "max": 767
+      },
+      "tablet": {
+        "min": 768,
+        "max": 1024
+      },
+      "desktop": {
+        "min": 1025,
+        "max": 1440
+      }
+    },
+    "_extraction_method": "regex_breakpoint_table",
+    "_confidence": "high"
+  },
+  "dos_donts": {
+    "dos": [
+      "Use Abyss Black (`#050507`) as the landing page background and Carbon Surface (`#101010`) for all contained elements — the two-shade dark system is essential",
+      "Reserve Emerald Signal Green (`#00d992`) exclusively for high-signal moments: active borders, glow effects, and the most important interactive accents",
+      "Use VoltAgent Mint (`#2fd6a1`) for button text on dark surfaces — it's more readable than pure Signal Green",
+      "Keep heading line-heights compressed (1.0–1.11) with negative letter-spacing for dense, authoritative text blocks",
+      "Use the warm gray palette (`#3d3a39`, `#8b949e`, `#b8b3b0`) for borders and secondary text — warmth prevents the dark theme from feeling sterile",
+      "Present code snippets as primary content — they're hero elements, not supporting illustrations",
+      "Use border weight (1px → 2px → 3px) and color shifts (`#3d3a39` → `#00d992`) to communicate depth and importance, rather than relying on shadows",
+      "Pair system-ui for headings with Inter for body text — the speed/authority of native fonts combined with the precision of a geometric sans",
+      "Use SFMono-Regular for all code content — it's the developer credibility signal",
+      "Apply `\"calt\"` and `\"rlig\"` OpenType features across all text"
+    ],
+    "donts": [
+      "Don't use bright or light backgrounds as primary surfaces — the entire identity lives on near-black",
+      "Don't introduce warm colors (orange, red, yellow) as decorative accents — the palette is strictly green + warm neutrals on black. Warm colors are reserved for semantic states (warning, error) only",
+      "Don't use Emerald Signal Green (`#00d992`) on large surfaces or as background fills — it's an accent, never a surface",
+      "Don't increase heading line-heights beyond 1.33 — the compressed density is core to the engineering-platform identity",
+      "Don't use heavy shadows generously — depth comes from border treatment, not box-shadow. Shadows are reserved for Level 4–5 elevation only",
+      "Don't use pure white (`#ffffff`) as default body text — Snow White (`#f2f2f2`) is the standard. Pure white is reserved for maximum-emphasis headings and button text",
+      "Don't mix in serif or decorative fonts — the entire system is geometric sans + monospace",
+      "Don't use border-radius larger than 8px on content cards — 9999px (pill) is only for small tags and badges",
+      "Don't skip the warm-gray border system — cards without `#3d3a39` borders lose their containment and float ambiguously on the dark canvas",
+      "Don't animate aggressively — animations are slow and subtle (25–100s durations for marquee, gentle glow pulses). Fast motion contradicts the \"engineering precision\" atmosphere"
+    ],
+    "_extraction_method": "subsection_bullet_parse",
+    "_confidence": "high"
+  },
+  "sections_present": [
+    "visual_theme",
+    "color",
+    "typography",
+    "components",
+    "layout",
+    "depth_elevation",
+    "dos_donts",
+    "responsive",
+    "agent_guide"
+  ],
+  "sections_unhandled": [
+    "components",
+    "agent_guide"
+  ],
+  "sections_meta_for_llm": [
+    "visual_theme",
+    "agent_guide"
+  ],
+  "llm_followup_hints": [
+    "layout extraction has low confidence — recommend LLM review"
+  ]
+}

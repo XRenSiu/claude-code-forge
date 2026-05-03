@@ -1,31 +1,61 @@
 {
-  "$schema_description": "Rules relationship graph. Manually constructed for the linear-app + vercel pilot run. Will be rebuilt by scripts/rebuild-graph.md when more systems are imported.",
-  "version": "0.2.0",
-  "rebuilt_at": "2026-05-03T11:43:58Z",
+  "$schema_description": "Rules relationship graph. Rebuilt by tools/rebuild_graph.py.",
+  "version": "0.0.0",
+  "rebuilt_at": "2026-05-03T13:41:56.442471Z",
   "node_count": 20,
   "edge_counts": {
-    "depends_on": 4,
-    "constrains": 4,
-    "co_occurs_with": 18,
+    "depends_on": 17,
+    "constrains": 17,
+    "co_occurs_with": 10,
     "conflicts_with": 6
   },
   "nodes": [
+    {
+      "rule_id": "linear-app-anti-pattern-warmth-in-chrome-010",
+      "relations": {
+        "depends_on": [],
+        "constrains": [],
+        "co_occurs_with": [],
+        "conflicts_with": []
+      }
+    },
     {
       "rule_id": "linear-app-color-dark-native-001",
       "relations": {
         "depends_on": [],
         "constrains": [
-          {"rule": "linear-app-components-button-near-zero-opacity-006"},
-          {"rule": "linear-app-elevation-luminance-stepping-007"}
+          {
+            "rule": "linear-app-typography-geometric-sans-with-features-004"
+          },
+          {
+            "rule": "linear-app-typography-display-compression-005"
+          },
+          {
+            "rule": "linear-app-components-button-near-zero-opacity-006"
+          },
+          {
+            "rule": "linear-app-elevation-luminance-stepping-007"
+          }
         ],
         "co_occurs_with": [
-          {"rule": "linear-app-color-translucent-borders-003", "frequency": 1.0},
-          {"rule": "linear-app-color-single-chromatic-anchor-002", "frequency": 1.0},
-          {"rule": "linear-app-typography-geometric-sans-with-features-004", "frequency": 1.0}
+          {
+            "rule": "linear-app-color-single-chromatic-anchor-002",
+            "frequency": 1.0
+          },
+          {
+            "rule": "linear-app-color-translucent-borders-003",
+            "frequency": 1.0
+          }
         ],
         "conflicts_with": [
-          {"rule": "vercel-color-extreme-white-minimalism-001", "reason": "dark-native canvas vs pure-white canvas — opposite base assumptions"},
-          {"rule": "vercel-color-near-black-text-002", "reason": "primary-text rules apply to opposite background contexts; can't both be active"}
+          {
+            "rule": "vercel-color-extreme-white-minimalism-001",
+            "reason": "dark-native canvas vs pure-white canvas — opposite base assumptions"
+          },
+          {
+            "rule": "vercel-color-near-black-text-002",
+            "reason": "text rules apply to opposite background contexts"
+          }
         ]
       }
     },
@@ -35,8 +65,14 @@
         "depends_on": [],
         "constrains": [],
         "co_occurs_with": [
-          {"rule": "linear-app-color-dark-native-001", "frequency": 1.0},
-          {"rule": "vercel-color-functional-only-accents-003", "frequency": 0.5, "_note": "both restrict chromatic accents but on different bases — partial overlap"}
+          {
+            "rule": "linear-app-color-dark-native-001",
+            "frequency": 1.0
+          },
+          {
+            "rule": "linear-app-color-translucent-borders-003",
+            "frequency": 1.0
+          }
         ],
         "conflicts_with": []
       }
@@ -44,55 +80,54 @@
     {
       "rule_id": "linear-app-color-translucent-borders-003",
       "relations": {
-        "depends_on": [
-          {"rule": "linear-app-color-dark-native-001", "reason": "translucent white only makes sense on dark surface"}
-        ],
+        "depends_on": [],
         "constrains": [],
         "co_occurs_with": [
-          {"rule": "linear-app-color-dark-native-001", "frequency": 1.0}
+          {
+            "rule": "linear-app-color-dark-native-001",
+            "frequency": 1.0
+          },
+          {
+            "rule": "linear-app-color-single-chromatic-anchor-002",
+            "frequency": 1.0
+          }
         ],
         "conflicts_with": [
-          {"rule": "vercel-elevation-shadow-as-border-005", "reason": "translucent border vs shadow-as-border — different border philosophies"}
+          {
+            "rule": "vercel-elevation-shadow-as-border-005",
+            "reason": "translucent-white-border vs shadow-as-border — different border philosophies for different canvases"
+          }
         ]
-      }
-    },
-    {
-      "rule_id": "linear-app-typography-geometric-sans-with-features-004",
-      "relations": {
-        "depends_on": [],
-        "constrains": [
-          {"rule": "linear-app-typography-display-compression-005"}
-        ],
-        "co_occurs_with": [
-          {"rule": "vercel-typography-geometric-sans-extreme-tracking-004", "frequency": 1.0, "_note": "both use geometric sans + OpenType features + narrow weight range"},
-          {"rule": "linear-app-color-dark-native-001", "frequency": 1.0}
-        ],
-        "conflicts_with": []
-      }
-    },
-    {
-      "rule_id": "linear-app-typography-display-compression-005",
-      "relations": {
-        "depends_on": [
-          {"rule": "linear-app-typography-geometric-sans-with-features-004", "reason": "compression rules apply to the chosen typeface family"}
-        ],
-        "constrains": [],
-        "co_occurs_with": [
-          {"rule": "vercel-typography-geometric-sans-extreme-tracking-004", "frequency": 1.0, "_note": "both use aggressive negative letter-spacing at display sizes — strong style island"}
-        ],
-        "conflicts_with": []
       }
     },
     {
       "rule_id": "linear-app-components-button-near-zero-opacity-006",
       "relations": {
         "depends_on": [
-          {"rule": "linear-app-color-dark-native-001", "reason": "near-zero-opacity buttons require dark canvas"}
+          {
+            "rule": "linear-app-color-dark-native-001",
+            "reason": "components depends on color foundation (same source: linear-app)"
+          },
+          {
+            "rule": "linear-app-typography-geometric-sans-with-features-004",
+            "reason": "components depends on typography foundation (same source: linear-app)"
+          },
+          {
+            "rule": "linear-app-spacing-8px-base-with-optical-008",
+            "reason": "components depends on layout foundation (same source: linear-app)"
+          },
+          {
+            "rule": "linear-app-elevation-luminance-stepping-007",
+            "reason": "components depends on depth_elevation foundation (same source: linear-app)"
+          }
         ],
         "constrains": [],
         "co_occurs_with": [],
         "conflicts_with": [
-          {"rule": "vercel-components-dark-pill-cta-007", "reason": "transparent ghost button vs solid dark CTA — opposite primary-button strategies"}
+          {
+            "rule": "vercel-components-dark-pill-cta-007",
+            "reason": "transparent ghost button vs solid dark CTA — opposite primary-button strategies"
+          }
         ]
       }
     },
@@ -100,13 +135,26 @@
       "rule_id": "linear-app-elevation-luminance-stepping-007",
       "relations": {
         "depends_on": [
-          {"rule": "linear-app-color-dark-native-001", "reason": "luminance stepping requires dark canvas"}
+          {
+            "rule": "linear-app-color-dark-native-001",
+            "reason": "depth_elevation depends on color foundation (same source: linear-app)"
+          }
         ],
-        "constrains": [],
+        "constrains": [
+          {
+            "rule": "linear-app-components-button-near-zero-opacity-006"
+          }
+        ],
         "co_occurs_with": [],
         "conflicts_with": [
-          {"rule": "vercel-elevation-shadow-as-border-005", "reason": "luminance-stepping vs shadow-as-border — different elevation systems for different canvases"},
-          {"rule": "vercel-elevation-multi-layer-shadow-stack-006", "reason": "no-shadow-on-dark vs multi-layer-shadow — incompatible philosophies"}
+          {
+            "rule": "vercel-elevation-shadow-as-border-005",
+            "reason": "luminance-stepping vs shadow-as-border — different elevation systems for different canvases"
+          },
+          {
+            "rule": "vercel-elevation-multi-layer-shadow-stack-006",
+            "reason": "no-shadow-on-dark vs multi-layer-shadow — incompatible philosophies"
+          }
         ]
       }
     },
@@ -114,9 +162,53 @@
       "rule_id": "linear-app-spacing-8px-base-with-optical-008",
       "relations": {
         "depends_on": [],
+        "constrains": [
+          {
+            "rule": "linear-app-components-button-near-zero-opacity-006"
+          }
+        ],
+        "co_occurs_with": [],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "linear-app-typography-display-compression-005",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "linear-app-color-dark-native-001",
+            "reason": "typography depends on color foundation (same source: linear-app)"
+          }
+        ],
         "constrains": [],
         "co_occurs_with": [
-          {"rule": "vercel-spacing-jump-scale-008", "frequency": 0.7, "_note": "both use 8px base; differ on mid-range (Linear has 20/24, Vercel jumps)"}
+          {
+            "rule": "linear-app-typography-geometric-sans-with-features-004",
+            "frequency": 1.0
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "linear-app-typography-geometric-sans-with-features-004",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "linear-app-color-dark-native-001",
+            "reason": "typography depends on color foundation (same source: linear-app)"
+          }
+        ],
+        "constrains": [
+          {
+            "rule": "linear-app-components-button-near-zero-opacity-006"
+          }
+        ],
+        "co_occurs_with": [
+          {
+            "rule": "linear-app-typography-display-compression-005",
+            "frequency": 1.0
+          }
         ],
         "conflicts_with": []
       }
@@ -126,52 +218,52 @@
       "relations": {
         "depends_on": [],
         "constrains": [],
-        "co_occurs_with": [
-          {"rule": "vercel-voice-infrastructure-invisible-009", "frequency": 1.0, "_note": "both reject marketing-orchestral voice in favor of structural restraint"}
-        ],
+        "co_occurs_with": [],
         "conflicts_with": []
       }
     },
     {
-      "rule_id": "linear-app-anti-pattern-warmth-in-chrome-010",
+      "rule_id": "vercel-anti-pattern-decoration-creep-010",
       "relations": {
         "depends_on": [],
         "constrains": [],
-        "co_occurs_with": [
-          {"rule": "vercel-anti-pattern-decoration-creep-010", "frequency": 0.8, "_note": "both reject warm colors and decorative drift"}
-        ],
+        "co_occurs_with": [],
         "conflicts_with": []
       }
     },
-
     {
       "rule_id": "vercel-color-extreme-white-minimalism-001",
       "relations": {
         "depends_on": [],
         "constrains": [
-          {"rule": "vercel-components-dark-pill-cta-007"}
+          {
+            "rule": "vercel-typography-geometric-sans-extreme-tracking-004"
+          },
+          {
+            "rule": "vercel-elevation-shadow-as-border-005"
+          },
+          {
+            "rule": "vercel-elevation-multi-layer-shadow-stack-006"
+          },
+          {
+            "rule": "vercel-components-dark-pill-cta-007"
+          }
         ],
         "co_occurs_with": [
-          {"rule": "vercel-color-near-black-text-002", "frequency": 1.0},
-          {"rule": "vercel-elevation-shadow-as-border-005", "frequency": 1.0}
+          {
+            "rule": "vercel-color-functional-only-accents-003",
+            "frequency": 1.0
+          },
+          {
+            "rule": "vercel-color-near-black-text-002",
+            "frequency": 1.0
+          }
         ],
         "conflicts_with": [
-          {"rule": "linear-app-color-dark-native-001", "reason": "as above (symmetric)"}
-        ]
-      }
-    },
-    {
-      "rule_id": "vercel-color-near-black-text-002",
-      "relations": {
-        "depends_on": [],
-        "constrains": [
-          {"rule": "vercel-components-dark-pill-cta-007"}
-        ],
-        "co_occurs_with": [
-          {"rule": "vercel-color-extreme-white-minimalism-001", "frequency": 1.0}
-        ],
-        "conflicts_with": [
-          {"rule": "linear-app-color-dark-native-001", "reason": "primary-text rules for opposite background contexts"}
+          {
+            "rule": "linear-app-color-dark-native-001",
+            "reason": "dark-native canvas vs pure-white canvas — opposite base assumptions"
+          }
         ]
       }
     },
@@ -181,49 +273,38 @@
         "depends_on": [],
         "constrains": [],
         "co_occurs_with": [
-          {"rule": "linear-app-color-single-chromatic-anchor-002", "frequency": 0.5}
+          {
+            "rule": "vercel-color-extreme-white-minimalism-001",
+            "frequency": 1.0
+          },
+          {
+            "rule": "vercel-color-near-black-text-002",
+            "frequency": 1.0
+          }
         ],
         "conflicts_with": []
       }
     },
     {
-      "rule_id": "vercel-typography-geometric-sans-extreme-tracking-004",
+      "rule_id": "vercel-color-near-black-text-002",
       "relations": {
         "depends_on": [],
         "constrains": [],
         "co_occurs_with": [
-          {"rule": "linear-app-typography-geometric-sans-with-features-004", "frequency": 1.0},
-          {"rule": "linear-app-typography-display-compression-005", "frequency": 1.0}
-        ],
-        "conflicts_with": []
-      }
-    },
-    {
-      "rule_id": "vercel-elevation-shadow-as-border-005",
-      "relations": {
-        "depends_on": [],
-        "constrains": [
-          {"rule": "vercel-elevation-multi-layer-shadow-stack-006"}
-        ],
-        "co_occurs_with": [
-          {"rule": "vercel-color-extreme-white-minimalism-001", "frequency": 1.0}
+          {
+            "rule": "vercel-color-extreme-white-minimalism-001",
+            "frequency": 1.0
+          },
+          {
+            "rule": "vercel-color-functional-only-accents-003",
+            "frequency": 1.0
+          }
         ],
         "conflicts_with": [
-          {"rule": "linear-app-color-translucent-borders-003", "reason": "shadow-as-border vs translucent-white-border"},
-          {"rule": "linear-app-elevation-luminance-stepping-007", "reason": "different elevation systems"}
-        ]
-      }
-    },
-    {
-      "rule_id": "vercel-elevation-multi-layer-shadow-stack-006",
-      "relations": {
-        "depends_on": [
-          {"rule": "vercel-elevation-shadow-as-border-005", "reason": "stack builds on the shadow-border layer"}
-        ],
-        "constrains": [],
-        "co_occurs_with": [],
-        "conflicts_with": [
-          {"rule": "linear-app-elevation-luminance-stepping-007", "reason": "shadow-stack vs no-shadow"}
+          {
+            "rule": "linear-app-color-dark-native-001",
+            "reason": "text rules apply to opposite background contexts"
+          }
         ]
       }
     },
@@ -231,13 +312,111 @@
       "rule_id": "vercel-components-dark-pill-cta-007",
       "relations": {
         "depends_on": [
-          {"rule": "vercel-color-extreme-white-minimalism-001", "reason": "dark CTA needs white canvas to work as anchor"},
-          {"rule": "vercel-color-near-black-text-002", "reason": "shares the #171717 black"}
+          {
+            "rule": "vercel-color-extreme-white-minimalism-001",
+            "reason": "components depends on color foundation (same source: vercel)"
+          },
+          {
+            "rule": "vercel-typography-geometric-sans-extreme-tracking-004",
+            "reason": "components depends on typography foundation (same source: vercel)"
+          },
+          {
+            "rule": "vercel-spacing-jump-scale-008",
+            "reason": "components depends on layout foundation (same source: vercel)"
+          }
         ],
         "constrains": [],
-        "co_occurs_with": [],
+        "co_occurs_with": [
+          {
+            "rule": "vercel-elevation-multi-layer-shadow-stack-006",
+            "frequency": 1.0
+          },
+          {
+            "rule": "vercel-elevation-shadow-as-border-005",
+            "frequency": 1.0
+          }
+        ],
         "conflicts_with": [
-          {"rule": "linear-app-components-button-near-zero-opacity-006", "reason": "opposite primary CTA strategies"}
+          {
+            "rule": "linear-app-components-button-near-zero-opacity-006",
+            "reason": "transparent ghost button vs solid dark CTA — opposite primary-button strategies"
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "vercel-elevation-multi-layer-shadow-stack-006",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "vercel-color-extreme-white-minimalism-001",
+            "reason": "components depends on color foundation (same source: vercel)"
+          },
+          {
+            "rule": "vercel-typography-geometric-sans-extreme-tracking-004",
+            "reason": "components depends on typography foundation (same source: vercel)"
+          },
+          {
+            "rule": "vercel-spacing-jump-scale-008",
+            "reason": "components depends on layout foundation (same source: vercel)"
+          }
+        ],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "vercel-components-dark-pill-cta-007",
+            "frequency": 1.0
+          },
+          {
+            "rule": "vercel-elevation-shadow-as-border-005",
+            "frequency": 1.0
+          }
+        ],
+        "conflicts_with": [
+          {
+            "rule": "linear-app-elevation-luminance-stepping-007",
+            "reason": "no-shadow-on-dark vs multi-layer-shadow — incompatible philosophies"
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "vercel-elevation-shadow-as-border-005",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "vercel-color-extreme-white-minimalism-001",
+            "reason": "components depends on color foundation (same source: vercel)"
+          },
+          {
+            "rule": "vercel-typography-geometric-sans-extreme-tracking-004",
+            "reason": "components depends on typography foundation (same source: vercel)"
+          },
+          {
+            "rule": "vercel-spacing-jump-scale-008",
+            "reason": "components depends on layout foundation (same source: vercel)"
+          }
+        ],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "vercel-components-dark-pill-cta-007",
+            "frequency": 1.0
+          },
+          {
+            "rule": "vercel-elevation-multi-layer-shadow-stack-006",
+            "frequency": 1.0
+          }
+        ],
+        "conflicts_with": [
+          {
+            "rule": "linear-app-color-translucent-borders-003",
+            "reason": "translucent-white-border vs shadow-as-border — different border philosophies for different canvases"
+          },
+          {
+            "rule": "linear-app-elevation-luminance-stepping-007",
+            "reason": "luminance-stepping vs shadow-as-border — different elevation systems for different canvases"
+          }
         ]
       }
     },
@@ -245,10 +424,42 @@
       "rule_id": "vercel-spacing-jump-scale-008",
       "relations": {
         "depends_on": [],
-        "constrains": [],
-        "co_occurs_with": [
-          {"rule": "linear-app-spacing-8px-base-with-optical-008", "frequency": 0.7}
+        "constrains": [
+          {
+            "rule": "vercel-elevation-shadow-as-border-005"
+          },
+          {
+            "rule": "vercel-elevation-multi-layer-shadow-stack-006"
+          },
+          {
+            "rule": "vercel-components-dark-pill-cta-007"
+          }
         ],
+        "co_occurs_with": [],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "vercel-typography-geometric-sans-extreme-tracking-004",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "vercel-color-extreme-white-minimalism-001",
+            "reason": "typography depends on color foundation (same source: vercel)"
+          }
+        ],
+        "constrains": [
+          {
+            "rule": "vercel-elevation-shadow-as-border-005"
+          },
+          {
+            "rule": "vercel-elevation-multi-layer-shadow-stack-006"
+          },
+          {
+            "rule": "vercel-components-dark-pill-cta-007"
+          }
+        ],
+        "co_occurs_with": [],
         "conflicts_with": []
       }
     },
@@ -257,20 +468,7 @@
       "relations": {
         "depends_on": [],
         "constrains": [],
-        "co_occurs_with": [
-          {"rule": "linear-app-voice-engineered-not-designed-009", "frequency": 1.0}
-        ],
-        "conflicts_with": []
-      }
-    },
-    {
-      "rule_id": "vercel-anti-pattern-decoration-creep-010",
-      "relations": {
-        "depends_on": [],
-        "constrains": [],
-        "co_occurs_with": [
-          {"rule": "linear-app-anti-pattern-warmth-in-chrome-010", "frequency": 0.8}
-        ],
+        "co_occurs_with": [],
         "conflicts_with": []
       }
     }

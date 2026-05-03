@@ -1,0 +1,193 @@
+{
+  "system_name": "mastercard",
+  "source": "open-design",
+  "extracted_at": "2026-05-03T13:38:57.551430Z",
+  "dialect": "A",
+  "fingerprint_hash": "ba5a4f889cd52286b87cd06ebb9646ed91ea631dc6249491c0d27dde940f05c6",
+  "extraction_method": "programmatic_a1",
+  "tool_version": "1.0.0",
+  "color": {
+    "role_color_pairs": {
+      "mastercard_red": "#EB001B",
+      "mastercard_yellow": "#F79E1B",
+      "ink_black": "#141413",
+      "signal_orange": "#CF4500",
+      "light_signal_orange": "#F37338",
+      "clay_brown": "#9A3A0A",
+      "canvas_cream": "#F3F0EE",
+      "lifted_cream": "#FCFBFA",
+      "white": "#FFFFFF",
+      "soft_bone": "#F4F4F4",
+      "charcoal": "#262627",
+      "slate_gray": "#696969",
+      "granite": "#555555",
+      "graphite": "#565656",
+      "dust_taupe": "#D1CDC7",
+      "link_blue": "#3860BE"
+    },
+    "all_hex_colors": [
+      "#EB001B",
+      "#F79E1B",
+      "#141413",
+      "#CF4500",
+      "#F37338",
+      "#9A3A0A",
+      "#F3F0EE",
+      "#FCFBFA",
+      "#FFFFFF",
+      "#F4F4F4",
+      "#262627",
+      "#696969",
+      "#555555",
+      "#565656",
+      "#D1CDC7",
+      "#3860BE"
+    ],
+    "all_rgba_colors": [
+      "rgba(0,0,0,0.08)"
+    ],
+    "all_hsla_colors": [],
+    "hex_count": 16,
+    "_extraction_method": "regex_role_pairs + hex_enum",
+    "_confidence": "high"
+  },
+  "typography": {
+    "families": [],
+    "all_px_values": [
+      14.0,
+      16.0,
+      18.2,
+      20.0,
+      22.4,
+      24.0,
+      28.8,
+      36.0,
+      44.0,
+      64.0
+    ],
+    "declared_scale_px": null,
+    "weights_seen": [
+      400,
+      450
+    ],
+    "_extraction_method": "regex_family_role_pairs + px_enum + weight_enum",
+    "_confidence": "medium"
+  },
+  "spacing": {
+    "base_unit_px": 24.0,
+    "declared_scale": [
+      8.0,
+      16.0,
+      24.0,
+      32.0,
+      48.0,
+      64.0,
+      96.0,
+      128.0
+    ],
+    "all_px_values": [
+      6.0,
+      8.0,
+      20.0,
+      24.0,
+      40.0,
+      64.0,
+      99.0,
+      100.0,
+      128.0
+    ],
+    "_extraction_method": "regex_base_unit + scale_enum",
+    "_confidence": "high"
+  },
+  "layout": {
+    "_extraction_method": "kept_section_text_for_a3",
+    "_confidence": "low",
+    "_section_size": 2143
+  },
+  "radius": {
+    "role_radius_pairs": {},
+    "all_px_values": [
+      6.0,
+      8.0,
+      20.0,
+      24.0,
+      40.0,
+      64.0,
+      99.0,
+      100.0,
+      128.0
+    ],
+    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_confidence": "low"
+  },
+  "depth_elevation": {
+    "rgba_shadows": [
+      "rgba(0, 0, 0, 0.04)",
+      "rgba(0, 0, 0, 0.08)",
+      "rgba(0, 0, 0, 0.25)"
+    ],
+    "inset_shadows": [],
+    "_extraction_method": "regex_rgba_inset",
+    "_confidence": "medium"
+  },
+  "responsive": {
+    "breakpoints_named": {
+      "tablet": {
+        "min": 768,
+        "max": 1023
+      }
+    },
+    "_extraction_method": "regex_breakpoint_table",
+    "_confidence": "high"
+  },
+  "dos_donts": {
+    "dos": [
+      "Use Canvas Cream (`#F3F0EE`) as the default body background — never pure white",
+      "Mask service/feature imagery as perfect circles, not rectangles or rounded rectangles",
+      "Attach a white satellite CTA to the bottom-right of each circular portrait",
+      "Set headlines in MarkForMC weight 500 with -2% letter-spacing",
+      "Use weight 450 (not 400) for body paragraphs",
+      "Keep primary CTAs as Ink Black pills (20px radius) with cream text",
+      "Use Signal Orange only on consent, legal, or compliance actions",
+      "Float the nav as a rounded white pill below the viewport top, not flush at y=0",
+      "Build page rhythm from three surface tones: canvas cream → lifted cream → ink footer",
+      "Use thin Light Signal Orange arcs between service cards to imply connection"
+    ],
+    "donts": [
+      "Don't use pure white as a page background — it breaks the warm editorial tone",
+      "Don't round image frames at 8–16px — Mastercard either uses full-pill, 40px, or full-circle. In-between radii look generic",
+      "Don't use Signal Orange for marketing CTAs — it reads as cookie-consent orange and dilutes the legal color signal",
+      "Don't mix typefaces — no serif accent, no script, no secondary display font",
+      "Don't crowd the nav with more than six top-level links — the pill is meant to feel airy",
+      "Don't drop hard shadows — all elevation should use 48px+ spread and ≤10% opacity",
+      "Don't use uppercase for anything larger than the 14px eyebrow label",
+      "Don't omit the tiny accent dot before eyebrow labels — it's the identity",
+      "Don't place circular portraits on a grid — their magic comes from asymmetric placement"
+    ],
+    "_extraction_method": "subsection_bullet_parse",
+    "_confidence": "high"
+  },
+  "sections_present": [
+    "visual_theme",
+    "color",
+    "typography",
+    "components",
+    "layout",
+    "depth_elevation",
+    "dos_donts",
+    "responsive",
+    "agent_guide"
+  ],
+  "sections_unhandled": [
+    "components",
+    "agent_guide"
+  ],
+  "sections_meta_for_llm": [
+    "visual_theme",
+    "agent_guide"
+  ],
+  "llm_followup_hints": [
+    "layout extraction has low confidence — recommend LLM review",
+    "radius extraction has low confidence — recommend LLM review"
+  ]
+}

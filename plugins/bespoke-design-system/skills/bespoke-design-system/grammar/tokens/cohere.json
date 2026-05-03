@@ -1,0 +1,209 @@
+{
+  "system_name": "cohere",
+  "source": "open-design",
+  "extracted_at": "2026-05-03T13:38:57.526183Z",
+  "dialect": "A",
+  "fingerprint_hash": "c0a7270cd888b74a4cebb9621f075f9f2e2bca9712723110e890fe2366032668",
+  "extraction_method": "programmatic_a1",
+  "tool_version": "1.0.0",
+  "color": {
+    "role_color_pairs": {
+      "cohere_black": "#000000",
+      "near_black": "#212121",
+      "deep_dark": "#17171c",
+      "interaction_blue": "#1863dc",
+      "ring_blue": "#4c6ee6",
+      "focus_purple": "#9b60aa",
+      "pure_white": "#ffffff",
+      "snow": "#fafafa",
+      "lightest_gray": "#f2f2f2",
+      "muted_slate": "#93939f",
+      "border_cool": "#d9d9dd",
+      "border_light": "#e5e7eb"
+    },
+    "all_hex_colors": [
+      "#000000",
+      "#212121",
+      "#17171c",
+      "#1863dc",
+      "#4c6ee6",
+      "#9b60aa",
+      "#ffffff",
+      "#fafafa",
+      "#f2f2f2",
+      "#93939f",
+      "#d9d9dd",
+      "#e5e7eb"
+    ],
+    "all_rgba_colors": [],
+    "all_hsla_colors": [],
+    "hex_count": 12,
+    "_extraction_method": "regex_role_pairs + hex_enum",
+    "_confidence": "high"
+  },
+  "typography": {
+    "families": [
+      {
+        "role": "display",
+        "family": "CohereText"
+      },
+      {
+        "role": "body",
+        "family": "Unica77 Cohere Web"
+      },
+      {
+        "role": "code",
+        "family": "CohereMono"
+      }
+    ],
+    "all_px_values": [
+      8.0,
+      12.0,
+      14.0,
+      16.0,
+      18.0,
+      24.0,
+      32.0,
+      48.0,
+      60.0,
+      72.0
+    ],
+    "declared_scale_px": null,
+    "weights_seen": [
+      400,
+      500
+    ],
+    "_extraction_method": "regex_family_role_pairs + px_enum + weight_enum",
+    "_confidence": "high"
+  },
+  "spacing": {
+    "base_unit_px": 8.0,
+    "declared_scale": null,
+    "all_px_values": [
+      2.0,
+      4.0,
+      6.0,
+      8.0,
+      10.0,
+      12.0,
+      16.0,
+      20.0,
+      22.0,
+      24.0,
+      28.0,
+      32.0,
+      36.0,
+      40.0,
+      56.0,
+      60.0
+    ],
+    "_extraction_method": "regex_base_unit + scale_enum",
+    "_confidence": "medium"
+  },
+  "layout": {
+    "_extraction_method": "kept_section_text_for_a3",
+    "_confidence": "low",
+    "_section_size": 1307
+  },
+  "radius": {
+    "role_radius_pairs": {
+      "comfortable": 8.0,
+      "large": 20.0,
+      "pill": 9999.0
+    },
+    "all_px_values": [
+      2.0,
+      4.0,
+      6.0,
+      8.0,
+      10.0,
+      12.0,
+      16.0,
+      20.0,
+      22.0,
+      24.0,
+      28.0,
+      32.0,
+      36.0,
+      40.0,
+      56.0,
+      60.0
+    ],
+    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_confidence": "high"
+  },
+  "depth_elevation": {
+    "rgba_shadows": [],
+    "inset_shadows": [],
+    "_extraction_method": "regex_rgba_inset",
+    "_confidence": "medium"
+  },
+  "responsive": {
+    "breakpoints_named": {
+      "mobile": {
+        "min": 640,
+        "max": 768
+      },
+      "tablet": {
+        "min": 768,
+        "max": 1024
+      },
+      "desktop": {
+        "min": 1024,
+        "max": 1440
+      },
+      "large_desktop": {
+        "min": 1440,
+        "max": 2560
+      }
+    },
+    "_extraction_method": "regex_breakpoint_table",
+    "_confidence": "high"
+  },
+  "dos_donts": {
+    "dos": [
+      "Use 22px border-radius on all primary cards and containers — it's the visual signature",
+      "Use CohereText for display headings (72px, 60px) with negative letter-spacing",
+      "Use Unica77 for all body and UI text at weight 400",
+      "Keep the palette black-and-white with cool gray borders",
+      "Use Interaction Blue (#1863dc) only for hover/focus interactive states",
+      "Use deep purple sections for dramatic visual breaks and product showcases",
+      "Apply uppercase + letter-spacing on CohereMono for section labels",
+      "Maintain enterprise-appropriate photography with diverse subjects"
+    ],
+    "donts": [
+      "Don't use border-radius other than 22px on primary cards — the signature radius matters",
+      "Don't introduce warm colors — the palette is strictly cool-toned",
+      "Don't use heavy shadows — depth comes from color contrast and borders",
+      "Don't use bold (700+) weight on body text — 400–500 is the range",
+      "Don't skip the serif/sans hierarchy — CohereText for headlines, Unica77 for body",
+      "Don't use purple as a surface color for cards — purple is reserved for full-width sections",
+      "Don't reduce section spacing below 40px — enterprise layouts need breathing room",
+      "Don't use decoration on buttons by default — ghost/transparent is the base state"
+    ],
+    "_extraction_method": "subsection_bullet_parse",
+    "_confidence": "high"
+  },
+  "sections_present": [
+    "visual_theme",
+    "color",
+    "typography",
+    "components",
+    "layout",
+    "depth_elevation",
+    "dos_donts",
+    "responsive",
+    "agent_guide"
+  ],
+  "sections_unhandled": [
+    "components",
+    "agent_guide"
+  ],
+  "sections_meta_for_llm": [
+    "visual_theme",
+    "agent_guide"
+  ],
+  "llm_followup_hints": [
+    "layout extraction has low confidence — recommend LLM review"
+  ]
+}

@@ -1,0 +1,197 @@
+{
+  "system_name": "airbnb",
+  "source": "open-design",
+  "extracted_at": "2026-05-03T13:38:57.511803Z",
+  "dialect": "A",
+  "fingerprint_hash": "4cd7b1972080ebeb2c360b27271e1d898c153c46c9d7f038ed512bb5130577fc",
+  "extraction_method": "programmatic_a1",
+  "tool_version": "1.0.0",
+  "color": {
+    "role_color_pairs": {
+      "rausch": "#ff385c",
+      "deep_rausch": "#e00b41",
+      "plus_magenta": "#92174d",
+      "luxe_purple": "#460479",
+      "info_blue": "#428bff",
+      "canvas_white": "#ffffff",
+      "soft_cloud": "#f7f7f7",
+      "hairline_gray": "#dddddd",
+      "ink_black": "#222222",
+      "charcoal": "#3f3f3f",
+      "ash_gray": "#6a6a6a",
+      "mute_gray": "#929292",
+      "stone_gray": "#c1c1c1",
+      "error_red": "#c13515",
+      "deep_error": "#b32505",
+      "translucent_black": "rgba(0, 0, 0, 0.24)"
+    },
+    "all_hex_colors": [
+      "#ff385c",
+      "#e00b41",
+      "#92174d",
+      "#460479",
+      "#428bff",
+      "#ffffff",
+      "#f7f7f7",
+      "#dddddd",
+      "#222222",
+      "#3f3f3f",
+      "#6a6a6a",
+      "#929292",
+      "#c1c1c1",
+      "#c13515",
+      "#b32505"
+    ],
+    "all_rgba_colors": [
+      "rgba(0, 0, 0, 0.24)"
+    ],
+    "all_hsla_colors": [],
+    "hex_count": 15,
+    "_extraction_method": "regex_role_pairs + hex_enum",
+    "_confidence": "high"
+  },
+  "typography": {
+    "families": [],
+    "all_px_values": [
+      8.0,
+      11.0,
+      12.0,
+      13.0,
+      14.0,
+      16.0,
+      20.0,
+      21.0,
+      22.0,
+      28.0
+    ],
+    "declared_scale_px": null,
+    "weights_seen": [
+      500,
+      600,
+      700
+    ],
+    "_extraction_method": "regex_family_role_pairs + px_enum + weight_enum",
+    "_confidence": "medium"
+  },
+  "spacing": {
+    "base_unit_px": 8.0,
+    "declared_scale": null,
+    "all_px_values": [
+      4.0,
+      8.0,
+      12.0,
+      14.0,
+      16.0,
+      20.0,
+      24.0,
+      32.0,
+      64.0
+    ],
+    "_extraction_method": "regex_base_unit + scale_enum",
+    "_confidence": "medium"
+  },
+  "layout": {
+    "_extraction_method": "kept_section_text_for_a3",
+    "_confidence": "low",
+    "_section_size": 1981
+  },
+  "radius": {
+    "role_radius_pairs": {
+      "card internal padding": 24.0,
+      "gutter between listing cards": 24.0
+    },
+    "all_px_values": [
+      4.0,
+      8.0,
+      12.0,
+      14.0,
+      16.0,
+      20.0,
+      24.0,
+      32.0,
+      64.0
+    ],
+    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_confidence": "medium"
+  },
+  "depth_elevation": {
+    "rgba_shadows": [
+      "rgba(0, 0, 0, 0.08)",
+      "rgba(0, 0, 0, 0.02)",
+      "rgba(0, 0, 0, 0.04)",
+      "rgba(0, 0, 0, 0.1)",
+      "rgb(255, 255, 255)"
+    ],
+    "inset_shadows": [],
+    "_extraction_method": "regex_rgba_inset",
+    "_confidence": "medium"
+  },
+  "responsive": {
+    "breakpoints_named": {
+      "xl": {
+        "min": 1440,
+        "max": 1759
+      },
+      "desktop": {
+        "min": 1128,
+        "max": 1439
+      },
+      "tablet": {
+        "min": 550,
+        "max": 799
+      },
+      "mobile": {
+        "min": 375,
+        "max": 549
+      }
+    },
+    "_extraction_method": "regex_breakpoint_table",
+    "_confidence": "high"
+  },
+  "dos_donts": {
+    "dos": [
+      "Reserve Rausch `#ff385c` for primary actions and the active-tab indicator — never dilute it with decorative uses.",
+      "Let photography breathe — 4:3 crops with 14–20px rounded corners, no overlaid text, no gradient scrims.",
+      "Use Ink Black `#222222` for every text layer below Rausch — this is the system's near-black, never true `#000000`.",
+      "Pair the tri-tab category picker's 3D illustrated icons with flat typography — don't mix illustration styles within a single surface.",
+      "Stack three low-opacity shadows (~2%, 4%, 10%) to create the signature booking-panel elevation.",
+      "Use Hairline Gray `#dddddd` 1px borders for every card-to-card and row-to-row divider.",
+      "Treat the booking panel as sticky on desktop, collapsing to a bottom-anchored reserve bar on mobile.",
+      "Use 4–8px spacing within metadata groups and 24px between cards — information density is intentional."
+    ],
+    "donts": [
+      "Don't introduce secondary accent colors outside the Rausch / Plus Magenta / Luxe Purple product-tier palette.",
+      "Don't place text inside photographs — captions always sit below the image, never overlaid.",
+      "Don't use all-caps labels except the single 8px superscript role.",
+      "Don't round icon buttons to anything other than 50% — circular is the system's signature geometry.",
+      "Don't add drop shadows to listing cards — they sit on white canvas with no elevation.",
+      "Don't use gradient backgrounds — the only gradient in the system is a narrow Rausch → magenta sweep on the wordmark.",
+      "Don't use the 400-regular font weight — Airbnb Cereal's body weight is 500.",
+      "Don't override Airbnb Cereal VF with a different display face — the system is intentionally single-family."
+    ],
+    "_extraction_method": "subsection_bullet_parse",
+    "_confidence": "high"
+  },
+  "sections_present": [
+    "visual_theme",
+    "color",
+    "typography",
+    "components",
+    "layout",
+    "depth_elevation",
+    "dos_donts",
+    "responsive",
+    "agent_guide"
+  ],
+  "sections_unhandled": [
+    "components",
+    "agent_guide"
+  ],
+  "sections_meta_for_llm": [
+    "visual_theme",
+    "agent_guide"
+  ],
+  "llm_followup_hints": [
+    "layout extraction has low confidence — recommend LLM review"
+  ]
+}

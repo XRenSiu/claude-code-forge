@@ -1,0 +1,189 @@
+{
+  "system_name": "mintlify",
+  "source": "open-design",
+  "extracted_at": "2026-05-03T13:38:57.554836Z",
+  "dialect": "A-variant",
+  "fingerprint_hash": "ada2deafc02f37cc83570319e5309e767164a6a52b1b097d85f667bfa0c911df",
+  "extraction_method": "programmatic_a1",
+  "tool_version": "1.0.0",
+  "color": {
+    "role_color_pairs": {
+      "near_black": "#0d0d0d",
+      "pure_white": "#ffffff",
+      "brand_green": "#18E299",
+      "brand_green_light": "#d4fae8",
+      "brand_green_deep": "#0fa76e",
+      "warm_amber": "#c37d0d",
+      "soft_blue": "#3772cf",
+      "error_red": "#d45656",
+      "gray_900": "#0d0d0d",
+      "gray_700": "#333333",
+      "gray_500": "#666666",
+      "gray_400": "#888888",
+      "gray_200": "#e5e5e5",
+      "gray_100": "#f5f5f5",
+      "gray_50": "#fafafa",
+      "link_default": "#0d0d0d",
+      "link_hover": "#18E299",
+      "focus_ring": "#18E299",
+      "card_background": "#ffffff",
+      "border_subtle": "rgba(0,0,0,0.05)",
+      "border_medium": "rgba(0,0,0,0.08)",
+      "card_shadow": "rgba(0,0,0,0.03)",
+      "button_shadow": "rgba(0,0,0,0.06)"
+    },
+    "all_hex_colors": [
+      "#0d0d0d",
+      "#ffffff",
+      "#18E299",
+      "#d4fae8",
+      "#0fa76e",
+      "#c37d0d",
+      "#3772cf",
+      "#d45656",
+      "#333333",
+      "#666666",
+      "#888888",
+      "#e5e5e5",
+      "#f5f5f5",
+      "#fafafa"
+    ],
+    "all_rgba_colors": [
+      "rgba(0,0,0,0.05)",
+      "rgba(0,0,0,0.08)",
+      "rgba(0,0,0,0.03)",
+      "rgba(0,0,0,0.06)"
+    ],
+    "all_hsla_colors": [],
+    "hex_count": 14,
+    "_extraction_method": "regex_role_pairs + hex_enum",
+    "_confidence": "high"
+  },
+  "typography": {
+    "families": [
+      {
+        "role": "primary",
+        "family": "Inter"
+      },
+      {
+        "role": "mono",
+        "family": "Geist Mono"
+      }
+    ],
+    "all_px_values": [
+      10.0,
+      12.0,
+      13.0,
+      14.0,
+      15.0,
+      16.0,
+      18.0,
+      20.0,
+      24.0,
+      40.0,
+      64.0
+    ],
+    "declared_scale_px": null,
+    "weights_seen": [],
+    "_extraction_method": "regex_family_role_pairs + px_enum + weight_enum",
+    "_confidence": "high"
+  },
+  "spacing": {
+    "base_unit_px": 8.0,
+    "declared_scale": null,
+    "all_px_values": [
+      2.0,
+      4.0,
+      5.0,
+      6.0,
+      7.0,
+      8.0,
+      10.0,
+      12.0,
+      16.0,
+      24.0,
+      32.0,
+      48.0,
+      64.0,
+      96.0
+    ],
+    "_extraction_method": "regex_base_unit + scale_enum",
+    "_confidence": "medium"
+  },
+  "layout": {
+    "_extraction_method": "kept_section_text_for_a3",
+    "_confidence": "low",
+    "_section_size": 1326
+  },
+  "radius": {
+    "role_radius_pairs": {
+      "small": 4.0,
+      "medium": 8.0,
+      "standard": 16.0,
+      "large": 24.0,
+      "full pill": 9999.0
+    },
+    "all_px_values": [
+      2.0,
+      4.0,
+      5.0,
+      6.0,
+      7.0,
+      8.0,
+      10.0,
+      12.0,
+      16.0,
+      24.0,
+      32.0,
+      48.0,
+      64.0,
+      96.0
+    ],
+    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_confidence": "high"
+  },
+  "depth_elevation": {
+    "rgba_shadows": [
+      "rgba(0,0,0,0.05)",
+      "rgba(0,0,0,0.08)",
+      "rgba(0,0,0,0.03)",
+      "rgba(0,0,0,0.06)"
+    ],
+    "inset_shadows": [],
+    "_extraction_method": "regex_rgba_inset",
+    "_confidence": "medium"
+  },
+  "responsive": {
+    "breakpoints_named": {
+      "tablet": {
+        "min": 768,
+        "max": 1024
+      }
+    },
+    "_extraction_method": "regex_breakpoint_table",
+    "_confidence": "high"
+  },
+  "sections_present": [
+    "visual_theme",
+    "color",
+    "typography",
+    "components",
+    "layout",
+    "depth_elevation",
+    "dark_mode",
+    "responsive",
+    "agent_guide"
+  ],
+  "sections_unhandled": [
+    "components",
+    "dark_mode",
+    "agent_guide"
+  ],
+  "sections_meta_for_llm": [
+    "visual_theme",
+    "agent_guide"
+  ],
+  "llm_followup_hints": [
+    "layout extraction has low confidence — recommend LLM review"
+  ]
+}

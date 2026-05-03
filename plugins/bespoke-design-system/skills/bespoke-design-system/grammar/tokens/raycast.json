@@ -1,0 +1,252 @@
+{
+  "system_name": "raycast",
+  "source": "open-design",
+  "extracted_at": "2026-05-03T13:38:57.568847Z",
+  "dialect": "A",
+  "fingerprint_hash": "20e65e05ed2eee597dcdb6c7b056bd70842d786c0888592dda255ef672d8dd60",
+  "extraction_method": "programmatic_a1",
+  "tool_version": "1.0.0",
+  "color": {
+    "role_color_pairs": {
+      "warm_glow": "rgba(215, 201, 175, 0.05)",
+      "near-black_blue": "#07080a",
+      "pure_white": "#ffffff",
+      "raycast_red": "#FF6363",
+      "raycast_blue": "hsl(202, 100%, 67%)",
+      "raycast_green": "hsl(151, 59%, 59%)",
+      "raycast_yellow": "hsl(43, 100%, 60%)",
+      "blue_transparent": "hsla(202, 100%, 67%, 0.15)",
+      "red_transparent": "hsla(0, 100%, 69%, 0.15)",
+      "deep_background": "#07080a",
+      "surface_100": "#101111",
+      "key_start": "#121212",
+      "key_end": "#0d0d0d",
+      "card_surface": "#1b1c1e",
+      "button_foreground": "#18191a",
+      "near_white": "#f9f9f9",
+      "light_gray": "#cecece",
+      "silver": "#c0c0c0",
+      "medium_gray": "#9c9c9d",
+      "dim_gray": "#6a6b6c",
+      "dark_gray": "#434345",
+      "border": "hsl(195, 5%, 15%)",
+      "dark_border": "#2f3031",
+      "error_red": "hsl(0, 100%, 69%)",
+      "success_green": "hsl(151, 59%, 59%)",
+      "warning_yellow": "hsl(43, 100%, 60%)",
+      "info_blue": "hsl(202, 100%, 67%)"
+    },
+    "all_hex_colors": [
+      "#07080a",
+      "#ffffff",
+      "#FF6363",
+      "#55b3ff",
+      "#5fc992",
+      "#ffbc33",
+      "#101111",
+      "#121212",
+      "#0d0d0d",
+      "#1b1c1e",
+      "#18191a",
+      "#f9f9f9",
+      "#cecece",
+      "#cdcdce",
+      "#c0c0c0",
+      "#9c9c9d",
+      "#6a6b6c",
+      "#434345",
+      "#252829",
+      "#2f3031"
+    ],
+    "all_rgba_colors": [
+      "rgba(215, 201, 175, 0.05)"
+    ],
+    "all_hsla_colors": [
+      "hsl(0, 100%, 69%)",
+      "hsl(202, 100%, 67%)",
+      "hsl(151, 59%, 59%)",
+      "hsl(43, 100%, 60%)",
+      "hsla(202, 100%, 67%, 0.15)",
+      "hsla(0, 100%, 69%, 0.15)",
+      "hsl(240, 11%, 96%)",
+      "hsl(195, 5%, 15%)"
+    ],
+    "hex_count": 20,
+    "_extraction_method": "regex_role_pairs + hex_enum",
+    "_confidence": "high"
+  },
+  "typography": {
+    "families": [],
+    "all_px_values": [
+      12.0,
+      14.0,
+      16.0,
+      18.0,
+      20.0,
+      22.0,
+      24.0,
+      56.0,
+      64.0
+    ],
+    "declared_scale_px": null,
+    "weights_seen": [
+      500
+    ],
+    "_extraction_method": "regex_family_role_pairs + px_enum + weight_enum",
+    "_confidence": "medium"
+  },
+  "spacing": {
+    "base_unit_px": 8.0,
+    "declared_scale": [
+      1.0,
+      2.0,
+      3.0,
+      4.0,
+      8.0,
+      10.0,
+      12.0,
+      16.0,
+      20.0,
+      24.0,
+      32.0,
+      40.0
+    ],
+    "all_px_values": [
+      1.0,
+      2.0,
+      3.0,
+      4.0,
+      5.0,
+      6.0,
+      8.0,
+      9.0,
+      10.0,
+      11.0,
+      12.0,
+      16.0,
+      20.0,
+      24.0,
+      32.0,
+      40.0,
+      80.0,
+      86.0,
+      120.0
+    ],
+    "_extraction_method": "regex_base_unit + scale_enum",
+    "_confidence": "high"
+  },
+  "layout": {
+    "_extraction_method": "kept_section_text_for_a3",
+    "_confidence": "low",
+    "_section_size": 1394
+  },
+  "radius": {
+    "role_radius_pairs": {
+      "card padding": 16.0
+    },
+    "all_px_values": [
+      1.0,
+      2.0,
+      3.0,
+      4.0,
+      5.0,
+      6.0,
+      8.0,
+      9.0,
+      10.0,
+      11.0,
+      12.0,
+      16.0,
+      20.0,
+      24.0,
+      32.0,
+      40.0,
+      80.0,
+      86.0,
+      120.0
+    ],
+    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_confidence": "medium"
+  },
+  "depth_elevation": {
+    "rgba_shadows": [
+      "rgba(0, 0, 0, 0.28)",
+      "rgb(27, 28, 30)",
+      "rgb(7, 8, 10)",
+      "rgba(255, 255, 255, 0.05)",
+      "rgba(255, 255, 255, 0.25)",
+      "rgba(0, 0, 0, 0.2)",
+      "rgba(0, 0, 0, 0.5)",
+      "rgba(255, 255, 255, 0.19)",
+      "rgba(255, 255, 255, 0.05–0.25)",
+      "rgba(215, 201, 175, 0.05)",
+      "rgba(0, 153, 255, 0.15)",
+      "rgba(255, 99, 99, 0.15)"
+    ],
+    "inset_shadows": [
+      "inset` inner | Card containment",
+      "inset` + `rgba(255",
+      "inset` | macOS-native button press — white highlight top",
+      "inset bottom |",
+      "inset press effects | Keyboard shortcut key caps — physical 3D appearance |",
+      "insets | Command palette",
+      "Inset top highlights** (`rgba(255",
+      "Inset bottom darks** (`rgba(0"
+    ],
+    "_extraction_method": "regex_rgba_inset",
+    "_confidence": "medium"
+  },
+  "responsive": {
+    "breakpoints_named": {},
+    "_extraction_method": "regex_breakpoint_table",
+    "_confidence": "low"
+  },
+  "dos_donts": {
+    "dos": [
+      "Use `#07080a` (not pure black) as the background — the blue-cold tint is essential to the Raycast feel",
+      "Apply positive letter-spacing (+0.2px) on body text — this is deliberately different from most dark UIs",
+      "Use multi-layer shadows with inset highlights for interactive elements — the macOS-native depth is signature",
+      "Keep Raycast Red (`#FF6363`) as punctuation, not pervasive — reserve it for hero moments and error states",
+      "Use `rgba(255, 255, 255, 0.06)` borders for card containment — barely visible, structurally essential",
+      "Apply weight 500 as the body text baseline — medium weight improves dark-mode legibility",
+      "Use pill shapes (86px+ radius) for primary CTAs, rectangular shapes (6px–8px) for secondary actions",
+      "Enable OpenType features `calt`, `kern`, `liga`, `ss03` on all Inter text",
+      "Use opacity transitions (hover: opacity 0.6) for button interactions, not color changes"
+    ],
+    "donts": [
+      "Use pure black (`#000000`) as the background — the blue tint differentiates Raycast from generic dark themes",
+      "Apply negative letter-spacing on body text — Raycast deliberately uses positive spacing for readability",
+      "Use Raycast Blue as the primary accent for everything — blue is for interactive/info, red is the brand color",
+      "Create single-layer flat shadows — the multi-layer inset system is core to the macOS-native aesthetic",
+      "Use regular weight (400) for body text when 500 is available — the extra weight prevents dark-mode text from feeling thin",
+      "Mix warm and cool borders — stick to the cool gray (`hsl(195, 5%, 15%)`) border palette",
+      "Apply heavy drop shadows without inset companions — shadows always come in pairs (outer + inset)",
+      "Use decorative elements, gradients, or colorful backgrounds — the dark void is the stage, content is the performer"
+    ],
+    "_extraction_method": "subsection_bullet_parse",
+    "_confidence": "high"
+  },
+  "sections_present": [
+    "visual_theme",
+    "color",
+    "typography",
+    "components",
+    "layout",
+    "depth_elevation",
+    "dos_donts",
+    "responsive",
+    "agent_guide"
+  ],
+  "sections_unhandled": [
+    "components",
+    "agent_guide"
+  ],
+  "sections_meta_for_llm": [
+    "visual_theme",
+    "agent_guide"
+  ],
+  "llm_followup_hints": [
+    "layout extraction has low confidence — recommend LLM review",
+    "responsive extraction has low confidence — recommend LLM review"
+  ]
+}

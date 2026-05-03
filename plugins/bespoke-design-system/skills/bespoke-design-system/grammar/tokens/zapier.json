@@ -1,0 +1,229 @@
+{
+  "system_name": "zapier",
+  "source": "open-design",
+  "extracted_at": "2026-05-03T13:38:57.599068Z",
+  "dialect": "A",
+  "fingerprint_hash": "01a80cc76a4c32defdca2efa34ebb34ba5a14ee6553894252a705d8e52228de4",
+  "extraction_method": "programmatic_a1",
+  "tool_version": "1.0.0",
+  "color": {
+    "role_color_pairs": {
+      "zapier_black": "#201515",
+      "cream_white": "#fffefb",
+      "off-white": "#fffdf9",
+      "zapier_orange": "#ff4f00",
+      "dark_charcoal": "#36342e",
+      "warm_gray": "#939084",
+      "sand": "#c5c0b1",
+      "light_sand": "#eceae3",
+      "mid_warm": "#b5b2aa",
+      "orange_cta": "#ff4f00",
+      "dark_cta": "#201515",
+      "light_cta": "#eceae3",
+      "link_default": "#201515",
+      "semi-transparent_dark": "rgba(45, 45, 46, 0.5)",
+      "pill_surface": "#fffefb",
+      "inset_underline": "rgb(255, 79, 0)",
+      "hover_underline": "rgb(197, 192, 177)"
+    },
+    "all_hex_colors": [
+      "#201515",
+      "#fffefb",
+      "#fffdf9",
+      "#ff4f00",
+      "#36342e",
+      "#939084",
+      "#c5c0b1",
+      "#eceae3",
+      "#b5b2aa"
+    ],
+    "all_rgba_colors": [
+      "rgba(45, 45, 46, 0.5)",
+      "rgb(255, 79, 0)",
+      "rgb(197, 192, 177)"
+    ],
+    "all_hsla_colors": [],
+    "hex_count": 9,
+    "_extraction_method": "regex_role_pairs + hex_enum",
+    "_confidence": "high"
+  },
+  "typography": {
+    "families": [
+      {
+        "role": "primary",
+        "family": "Inter"
+      }
+    ],
+    "all_px_values": [
+      12.0,
+      13.0,
+      14.0,
+      16.0,
+      18.0,
+      20.0,
+      24.0,
+      28.0,
+      32.0,
+      36.0,
+      40.0,
+      48.0,
+      56.0,
+      80.0
+    ],
+    "declared_scale_px": null,
+    "weights_seen": [],
+    "_extraction_method": "regex_family_role_pairs + px_enum + weight_enum",
+    "_confidence": "high"
+  },
+  "spacing": {
+    "base_unit_px": 8.0,
+    "declared_scale": null,
+    "all_px_values": [
+      1.0,
+      3.0,
+      4.0,
+      5.0,
+      6.0,
+      8.0,
+      10.0,
+      12.0,
+      14.0,
+      16.0,
+      20.0,
+      24.0,
+      32.0,
+      40.0,
+      48.0,
+      56.0,
+      64.0,
+      72.0,
+      80.0
+    ],
+    "_extraction_method": "regex_base_unit + scale_enum",
+    "_confidence": "medium"
+  },
+  "layout": {
+    "_extraction_method": "kept_section_text_for_a3",
+    "_confidence": "low",
+    "_section_size": 1375
+  },
+  "radius": {
+    "role_radius_pairs": {
+      "standard": 4.0,
+      "comfortable": 8.0,
+      "pill": 20.0
+    },
+    "all_px_values": [
+      1.0,
+      3.0,
+      4.0,
+      5.0,
+      6.0,
+      8.0,
+      10.0,
+      12.0,
+      14.0,
+      16.0,
+      20.0,
+      24.0,
+      32.0,
+      40.0,
+      48.0,
+      56.0,
+      64.0,
+      72.0,
+      80.0
+    ],
+    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_confidence": "high"
+  },
+  "depth_elevation": {
+    "rgba_shadows": [
+      "rgb(255, 79, 0)",
+      "rgb(197, 192, 177)"
+    ],
+    "inset_shadows": [
+      "inset` | Active tab underline (orange) |",
+      "inset` | Hover tab underline (sand) |",
+      "inset box-shadow used for tab underlines",
+      "inset` shadow creates a bottom-bar indicator. This border-first approach keeps the design grounded and tangible rather than floating.",
+      "inset underline on active tabs creates visual \"weight\" at the bottom of elements"
+    ],
+    "_extraction_method": "regex_rgba_inset",
+    "_confidence": "medium"
+  },
+  "responsive": {
+    "breakpoints_named": {
+      "mobile": {
+        "min": 450,
+        "max": 600
+      },
+      "tablet_small": {
+        "min": 640,
+        "max": 680
+      },
+      "tablet": {
+        "min": 680,
+        "max": 768
+      },
+      "desktop_small": {
+        "min": 991,
+        "max": 1024
+      },
+      "desktop": {
+        "min": 1024,
+        "max": 1280
+      }
+    },
+    "_extraction_method": "regex_breakpoint_table",
+    "_confidence": "high"
+  },
+  "dos_donts": {
+    "dos": [
+      "Use Degular Display exclusively for hero-scale headlines (40px+) with 0.90 line-height for compressed impact",
+      "Use Inter for all functional UI -- navigation, body text, buttons, labels",
+      "Apply warm cream (`#fffefb`) as the background, never pure white",
+      "Use `#201515` for text, never pure black -- the reddish warmth matters",
+      "Keep Zapier Orange (`#ff4f00`) reserved for primary CTAs and active state indicators",
+      "Use sand (`#c5c0b1`) borders as the primary structural element instead of shadows",
+      "Apply generous button padding (20px 24px) for large CTAs to match Zapier's spacious button style",
+      "Use inset box-shadow underlines for tab navigation rather than border-bottom",
+      "Apply uppercase with 0.5px letter-spacing for section labels and micro-categorization"
+    ],
+    "donts": [
+      "Don't use Degular Display for body text or UI elements -- it's display-only",
+      "Don't use pure white (`#ffffff`) or pure black (`#000000`) -- Zapier's palette is warm-shifted",
+      "Don't apply box-shadow elevation to cards -- use borders instead",
+      "Don't scatter Zapier Orange across the UI -- it's reserved for CTAs and active states",
+      "Don't use tight padding on large CTA buttons -- Zapier's buttons are deliberately spacious",
+      "Don't ignore the warm neutral system -- borders should be `#c5c0b1`, not gray",
+      "Don't use GT Alpina for functional UI -- it's an editorial accent at thin weights only",
+      "Don't apply positive letter-spacing to GT Alpina -- it uses aggressive negative tracking (-1.6px to -1.92px)",
+      "Don't use rounded pill shapes (9999px) for primary buttons -- pills are for tags and social icons"
+    ],
+    "_extraction_method": "subsection_bullet_parse",
+    "_confidence": "high"
+  },
+  "sections_present": [
+    "visual_theme",
+    "color",
+    "typography",
+    "components",
+    "layout",
+    "depth_elevation",
+    "dos_donts",
+    "responsive",
+    "agent_guide"
+  ],
+  "sections_unhandled": [
+    "components",
+    "agent_guide"
+  ],
+  "sections_meta_for_llm": [
+    "visual_theme",
+    "agent_guide"
+  ],
+  "llm_followup_hints": [
+    "layout extraction has low confidence — recommend LLM review"
+  ]
+}

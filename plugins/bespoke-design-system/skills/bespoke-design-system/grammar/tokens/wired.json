@@ -1,0 +1,183 @@
+{
+  "system_name": "wired",
+  "source": "open-design",
+  "extracted_at": "2026-05-03T13:38:57.595665Z",
+  "dialect": "A",
+  "fingerprint_hash": "2c370c20aec5d1a8ccb42e8788cb68b768f0f26f69e0e7f995f468fd96cac57f",
+  "extraction_method": "programmatic_a1",
+  "tool_version": "1.0.0",
+  "color": {
+    "role_color_pairs": {
+      "wired_black": "#000000",
+      "page_ink": "#1a1a1a",
+      "paper_white": "#ffffff",
+      "link_blue": "#057dbc",
+      "newsprint": "#ffffff",
+      "footer_ink": "#1a1a1a",
+      "hairline_tint": "#e2e8f0",
+      "headline_black": "#1a1a1a",
+      "body_gray": "#1a1a1a",
+      "caption_gray": "#757575",
+      "disabled_gray": "#999999",
+      "hairline_border": "#e2e8f0",
+      "brand_hover_blue": "#057dbc"
+    },
+    "all_hex_colors": [
+      "#000000",
+      "#1a1a1a",
+      "#ffffff",
+      "#057dbc",
+      "#e2e8f0",
+      "#757575",
+      "#999999"
+    ],
+    "all_rgba_colors": [],
+    "all_hsla_colors": [],
+    "hex_count": 7,
+    "_extraction_method": "regex_role_pairs + hex_enum",
+    "_confidence": "high"
+  },
+  "typography": {
+    "families": [],
+    "all_px_values": [
+      11.0,
+      12.0,
+      12.73,
+      13.0,
+      14.0,
+      16.0,
+      17.0,
+      19.0,
+      20.0,
+      26.0,
+      64.0
+    ],
+    "declared_scale_px": null,
+    "weights_seen": [
+      700
+    ],
+    "_extraction_method": "regex_family_role_pairs + px_enum + weight_enum",
+    "_confidence": "medium"
+  },
+  "spacing": {
+    "base_unit_px": 8.0,
+    "declared_scale": [
+      1.0
+    ],
+    "all_px_values": [
+      1.0,
+      4.0,
+      8.0,
+      12.0,
+      14.11,
+      15.0,
+      16.0,
+      24.0,
+      25.46,
+      29.66,
+      32.0,
+      40.0,
+      48.0,
+      64.0
+    ],
+    "_extraction_method": "regex_base_unit + scale_enum",
+    "_confidence": "high"
+  },
+  "layout": {
+    "_extraction_method": "kept_section_text_for_a3",
+    "_confidence": "low",
+    "_section_size": 1890
+  },
+  "radius": {
+    "role_radius_pairs": {},
+    "all_px_values": [
+      1.0,
+      4.0,
+      8.0,
+      12.0,
+      14.11,
+      15.0,
+      16.0,
+      24.0,
+      25.46,
+      29.66,
+      32.0,
+      40.0,
+      48.0,
+      64.0
+    ],
+    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_confidence": "low"
+  },
+  "depth_elevation": {
+    "rgba_shadows": [],
+    "inset_shadows": [],
+    "_extraction_method": "regex_rgba_inset",
+    "_confidence": "medium"
+  },
+  "responsive": {
+    "breakpoints_named": {
+      "mobile": {
+        "min": 375,
+        "max": 767
+      },
+      "tablet": {
+        "min": 768,
+        "max": 1023
+      },
+      "desktop": {
+        "min": 1024,
+        "max": 1599
+      }
+    },
+    "_extraction_method": "regex_breakpoint_table",
+    "_confidence": "high"
+  },
+  "dos_donts": {
+    "dos": [
+      "**Do** use 2px hard black borders on every primary button — no 1px softness, no rounded edges.",
+      "**Do** put a WiredMono ALL-CAPS kicker above every story headline (4–8px above, 0.9–1.2px tracking).",
+      "**Do** use BreveText for any paragraph longer than two lines — Apercu is for UI, not reading.",
+      "**Do** keep images square-cornered, edge-to-edge, with the caption hugging the bottom edge.",
+      "**Do** separate story tiles with hairline rules or whitespace, never with cards or shadows.",
+      "**Do** invert (black background, white type) only for footers, ribbons, and the utility nav strip.",
+      "**Do** use `#057dbc` link blue exclusively for hover states — never as a background or button fill.",
+      "**Do** scale headlines aggressively: 64px on hero, 26px on grid blocks, never 32px \"safe middle ground\"."
+    ],
+    "donts": [
+      "**Don't** add `box-shadow` to anything. Ever. WIRED doesn't ship shadows.",
+      "**Don't** round corners on rectangular containers — `border-radius: 0` is law.",
+      "**Don't** mix typefaces inside one role: WiredDisplay never sets body, BreveText never sets buttons.",
+      "**Don't** use color outside grayscale + `#057dbc`. No orange CTAs, no green success pills.",
+      "**Don't** use Apercu in lowercase for kickers — that's WiredMono's job, and it must be UPPERCASE.",
+      "**Don't** use gradients, blurs, glassmorphism, or atmospheric effects — they break the printerly contract.",
+      "**Don't** rely on hover lift effects. WIRED's hover is a color swap on text, nothing more.",
+      "**Don't** invent new pill shapes. Round = icons only. Pill = inline text spans only. Everything else is square."
+    ],
+    "_extraction_method": "subsection_bullet_parse",
+    "_confidence": "high"
+  },
+  "sections_present": [
+    "visual_theme",
+    "color",
+    "typography",
+    "components",
+    "layout",
+    "depth_elevation",
+    "dos_donts",
+    "responsive",
+    "agent_guide"
+  ],
+  "sections_unhandled": [
+    "components",
+    "agent_guide"
+  ],
+  "sections_meta_for_llm": [
+    "visual_theme",
+    "agent_guide"
+  ],
+  "llm_followup_hints": [
+    "layout extraction has low confidence — recommend LLM review",
+    "radius extraction has low confidence — recommend LLM review"
+  ]
+}

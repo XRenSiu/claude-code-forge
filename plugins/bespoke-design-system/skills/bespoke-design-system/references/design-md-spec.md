@@ -1,32 +1,73 @@
-# DESIGN.md 9-Section 标准（OD/awesome-design-md 方言）
+# DESIGN.md 9-Section 标准（OD 双方言并存）
 
-> 本 skill 输出严格遵循 **OD（`nexu-io/open-design`）+ `VoltAgent/awesome-design-md` 共识方言**——这是当前 DESIGN.md 生态的事实标准（OD 库已收录 ~140 套，且持续增长）。该方言被 OD、Claude Design、Stitch 等工具直接消费。
+> 本 skill 输出兼容 OD（`nexu-io/open-design`，~140 套）+ `VoltAgent/awesome-design-md` 生态。**实测仓库内有两大主流方言并存（A: 48% / B: 42%）**，本 skill 内部用统一的规则 schema，输出时按用户选择或素材主导方言决定 section 命名。
 
 ## 重要历史
 
-更早期版本（包括本 skill 早期 spec 草稿）流传过另一套 9-section 命名：`Color / Typography / Spacing / Layout / Components / Motion / Voice / Brand / Anti-patterns`。**这套命名不是事实标准**，使用它会让产物**不能被 OD 兼容工具消费**。本 skill 已统一到下面的 OD 方言。
+早期 spec 草稿写过 `Color / Typography / Spacing / Layout / Components / Motion / Voice / Brand / Anti-patterns` 这套命名。**实测发现这就是 Dialect B**（OD 仓库 137 套中 57 套用此方言，约 42%）——并非虚构。同时另有 Dialect A（66 套，48%）使用 `Visual Theme & Atmosphere / Color Palette & Roles / Typography Rules / Component Stylings / Layout Principles / Depth & Elevation / Do's and Don'ts / Responsive Behavior / Agent Prompt Guide`。两者**都是事实标准**。
+
+## 两大方言对照
 
 ---
 
-## 9 个 Section（必须按此顺序）
+## Dialect A 模板（66 套使用，含 apple / linear-app / vercel / stripe / notion / claude）
 
 ```markdown
 # Design System for <Product Name>
 
-> Optional: meta line — generator / version / date / mode
-
-## 1. Visual Theme & Atmosphere
-## 2. Color Palette & Roles
-## 3. Typography Rules
-## 4. Component Stylings
-## 5. Layout Principles
-## 6. Depth & Elevation
-## 7. Do's and Don'ts
-## 8. Responsive Behavior
-## 9. Agent Prompt Guide
+## 1. Visual Theme & Atmosphere    ← 元 section（散文综合）
+## 2. Color Palette & Roles         ← rule-bearing
+## 3. Typography Rules              ← rule-bearing
+## 4. Component Stylings            ← rule-bearing
+## 5. Layout Principles             ← rule-bearing
+## 6. Depth & Elevation             ← rule-bearing
+## 7. Do's and Don'ts               ← 元 section（反向汇总 anti-pattern）
+## 8. Responsive Behavior           ← 元 section（layout 派生）
+## 9. Agent Prompt Guide            ← 元 section（综合派生）
 ```
 
-每个 section 都**必须存在**（OD 兼容工具会按位置/顺序解析）。即使 degraded（规则库覆盖不足），也必须存在并加 `> ⚠️ degraded section` 提示。
+## Dialect B 模板（57 套使用，含 brutalism / bento / openai / mistral-ai / 等）
+
+```markdown
+# Design System for <Product Name>
+
+## 1. Visual Theme & Atmosphere    ← 元 section
+## 2. Color                         ← rule-bearing
+## 3. Typography                    ← rule-bearing
+## 4. Spacing & Grid                ← rule-bearing
+## 5. Layout & Composition          ← rule-bearing
+## 6. Components                    ← rule-bearing
+## 7. Motion & Interaction          ← rule-bearing
+## 8. Voice & Brand                 ← 元 section（综合派生）
+## 9. Anti-patterns                 ← 元 section（反向汇总）
+```
+
+## 内部统一规则 section slug（rule.section 字段枚举）
+
+无论素材是哪种方言，规则 yaml 里的 `section` 字段必须从下面**统一的 8 个 rule-bearing slug** 中选：
+
+| slug | Dialect A 输出位置 | Dialect B 输出位置 |
+|---|---|---|
+| `color` | § 2 Color Palette & Roles | § 2 Color |
+| `typography` | § 3 Typography Rules | § 3 Typography |
+| `spacing` | § 5 Layout Principles 内 | § 4 Spacing & Grid |
+| `layout` | § 5 Layout Principles | § 5 Layout & Composition |
+| `components` | § 4 Component Stylings | § 6 Components |
+| `depth_elevation` | § 6 Depth & Elevation | § 6 Components 散文段落 |
+| `motion` | § 4 散文 + § 9 Agent Guide | § 7 Motion & Interaction |
+| `voice` | § 1 / § 9 散文段落 | § 8 Voice & Brand 内的 voice 部分 |
+
+`anti_patterns` 是特殊 slug——既不在 rule-bearing 里也不算元 section，规则在 yaml 里独立标 `section: anti_patterns`，B6 输出时映射到 Dialect A § 7 Don't 列表 / Dialect B § 9 Anti-patterns。
+
+每个 section 都**必须存在**（OD 兼容工具按位置解析）。即使 degraded，也必须存在并加 `> ⚠️ degraded` 提示。
+
+## B6 阶段如何选方言
+
+1. 用户调用时显式指定（`mode=auto dialect=A`）→ 按指定
+2. 主导素材风格岛的方言（B3 阶段输出的 `dominant_dialect` 字段）→ 默认按主导方言
+3. 都没有 → 默认 Dialect A（更工程化、含 Agent Prompt Guide，对 AI 工具更友好）
+
+无论哪种方言，三份产物（DESIGN.md / provenance.yaml / negotiation-summary.md）都不变；只是 DESIGN.md 文件的 section 编号和命名不同。
 
 ---
 

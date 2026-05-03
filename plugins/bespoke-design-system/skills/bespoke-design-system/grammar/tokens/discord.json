@@ -1,0 +1,143 @@
+{
+  "system_name": "discord",
+  "source": "open-design",
+  "extracted_at": "2026-05-03T13:38:57.532049Z",
+  "dialect": "C-6section",
+  "fingerprint_hash": "1379f6462fcf258c3f46df692178a96b77188a11ce53bc7873e88f7705bdde76",
+  "extraction_method": "programmatic_a1",
+  "tool_version": "1.0.0",
+  "color": {
+    "role_color_pairs": {
+      "blurple": "#5865f2",
+      "blurple_hover": "#4752c4",
+      "blurple_soft": "#7289da",
+      "background_tertiary": "#1e1f22",
+      "background_secondary": "#2b2d31",
+      "background_primary": "#313338",
+      "background_floating": "#111214",
+      "background_modifier_hover": "rgba(78, 80, 88, 0.3)",
+      "background_modifier_selected": "rgba(78, 80, 88, 0.6)",
+      "light_bg_primary": "#ffffff",
+      "light_bg_secondary": "#f2f3f5",
+      "light_bg_tertiary": "#e3e5e8",
+      "header_primary": "#f2f3f5",
+      "header_secondary": "#b5bac1",
+      "text_normal": "#dbdee1",
+      "text_muted": "#949ba4",
+      "text_link": "#00a8fc",
+      "channels_default": "#80848e",
+      "status_online": "#23a55a",
+      "status_idle": "#f0b232",
+      "status_dnd": "#f23f43",
+      "status_streaming": "#593695",
+      "status_offline": "#80848e",
+      "mention_highlight": "rgba(88, 101, 242, 0.1)",
+      "background_modifier_accent": "rgba(255, 255, 255, 0.06)",
+      "border_subtle": "#3f4147"
+    },
+    "all_hex_colors": [
+      "#5865f2",
+      "#4752c4",
+      "#7289da",
+      "#1e1f22",
+      "#2b2d31",
+      "#313338",
+      "#111214",
+      "#ffffff",
+      "#f2f3f5",
+      "#e3e5e8",
+      "#b5bac1",
+      "#dbdee1",
+      "#949ba4",
+      "#00a8fc",
+      "#80848e",
+      "#23a55a",
+      "#f0b232",
+      "#f23f43",
+      "#593695",
+      "#3f4147"
+    ],
+    "all_rgba_colors": [
+      "rgba(78, 80, 88, 0.3)",
+      "rgba(78, 80, 88, 0.6)",
+      "rgba(88, 101, 242, 0.1)",
+      "rgba(255, 255, 255, 0.06)"
+    ],
+    "all_hsla_colors": [],
+    "hex_count": 20,
+    "_extraction_method": "regex_role_pairs + hex_enum",
+    "_confidence": "high"
+  },
+  "typography": {
+    "families": [],
+    "all_px_values": [
+      12.0,
+      14.0,
+      16.0,
+      24.0,
+      56.0
+    ],
+    "declared_scale_px": null,
+    "weights_seen": [],
+    "_extraction_method": "regex_family_role_pairs + px_enum + weight_enum",
+    "_confidence": "medium"
+  },
+  "spacing": {
+    "base_unit_px": 240.0,
+    "declared_scale": null,
+    "all_px_values": [
+      4.0,
+      72.0
+    ],
+    "_extraction_method": "regex_base_unit + scale_enum",
+    "_confidence": "medium"
+  },
+  "layout": {
+    "_extraction_method": "kept_section_text_for_a3",
+    "_confidence": "low",
+    "_section_size": 209
+  },
+  "radius": {
+    "role_radius_pairs": {},
+    "all_px_values": [
+      4.0,
+      72.0
+    ],
+    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_confidence": "low"
+  },
+  "motion": {
+    "durations_ms": [
+      80.0,
+      200.0,
+      350.0
+    ],
+    "cubic_bezier_curves": [
+      "cubic-bezier(0.215, 0.61, 0.355, 1)"
+    ],
+    "easing_keywords": [
+      "ease"
+    ],
+    "_extraction_method": "regex_ms + bezier + keyword",
+    "_confidence": "high"
+  },
+  "sections_present": [
+    "visual_theme",
+    "color",
+    "typography",
+    "components",
+    "layout",
+    "motion"
+  ],
+  "sections_unhandled": [
+    "components"
+  ],
+  "sections_meta_for_llm": [
+    "visual_theme",
+    "agent_guide"
+  ],
+  "llm_followup_hints": [
+    "layout extraction has low confidence — recommend LLM review",
+    "radius extraction has low confidence — recommend LLM review"
+  ]
+}

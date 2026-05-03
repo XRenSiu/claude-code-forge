@@ -1,0 +1,165 @@
+{
+  "system_name": "miro",
+  "source": "open-design",
+  "extracted_at": "2026-05-03T13:38:57.555511Z",
+  "dialect": "A",
+  "fingerprint_hash": "51f348feaf10f92873854e49dccb1c03a32bbb573f1de0bc87981d4d540f91d8",
+  "extraction_method": "programmatic_a1",
+  "tool_version": "1.0.0",
+  "color": {
+    "role_color_pairs": {
+      "near_black": "#1c1c1e",
+      "white": "#ffffff",
+      "blue_450": "#5b76fe",
+      "actionable_pressed": "#2a41b6",
+      "pink": "#fde0f0",
+      "red": "#fbd4d4",
+      "dark_red": "#e3c5c5",
+      "success": "#00b473",
+      "slate": "#555a6a",
+      "input_placeholder": "#a5a8b5",
+      "border": "#c7cad5",
+      "ring": "rgb(224,226,232)"
+    },
+    "all_hex_colors": [
+      "#1c1c1e",
+      "#ffffff",
+      "#5b76fe",
+      "#2a41b6",
+      "#ffc6c6",
+      "#600000",
+      "#ffd8f4",
+      "#c3faf5",
+      "#187574",
+      "#ffe6cd",
+      "#746019",
+      "#fde0f0",
+      "#fbd4d4",
+      "#e3c5c5",
+      "#00b473",
+      "#555a6a",
+      "#a5a8b5",
+      "#c7cad5"
+    ],
+    "all_rgba_colors": [
+      "rgb(224,226,232)"
+    ],
+    "all_hsla_colors": [],
+    "hex_count": 18,
+    "_extraction_method": "regex_role_pairs + hex_enum",
+    "_confidence": "high"
+  },
+  "typography": {
+    "families": [
+      {
+        "role": "display",
+        "family": "Roobert PRO Medium"
+      },
+      {
+        "role": "display",
+        "family": "Roobert PRO SemiBold"
+      }
+    ],
+    "all_px_values": [
+      10.5,
+      12.0,
+      14.0,
+      16.0,
+      17.5,
+      18.0,
+      22.0,
+      24.0,
+      48.0,
+      56.0
+    ],
+    "declared_scale_px": null,
+    "weights_seen": [],
+    "_extraction_method": "regex_family_role_pairs + px_enum + weight_enum",
+    "_confidence": "high"
+  },
+  "spacing": {
+    "base_unit_px": 0.0,
+    "declared_scale": null,
+    "all_px_values": [
+      1.0,
+      8.0,
+      10.0,
+      12.0,
+      20.0,
+      24.0,
+      40.0,
+      50.0
+    ],
+    "_extraction_method": "regex_base_unit + scale_enum",
+    "_confidence": "low"
+  },
+  "layout": {
+    "_extraction_method": "kept_section_text_for_a3",
+    "_confidence": "low",
+    "_section_size": 171
+  },
+  "radius": {
+    "role_radius_pairs": {},
+    "all_px_values": [
+      1.0,
+      8.0,
+      10.0,
+      12.0,
+      20.0,
+      24.0,
+      40.0,
+      50.0
+    ],
+    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_confidence": "low"
+  },
+  "depth_elevation": {
+    "rgba_shadows": [],
+    "inset_shadows": [],
+    "_extraction_method": "regex_rgba_inset",
+    "_confidence": "medium"
+  },
+  "responsive": {
+    "breakpoints_named": {},
+    "_extraction_method": "regex_breakpoint_table",
+    "_confidence": "low"
+  },
+  "dos_donts": {
+    "dos": [
+      "Use pastel light/dark pairs for feature sections",
+      "Apply Roobert PRO with OpenType character variants",
+      "Use Blue 450 (#5b76fe) for interactive elements"
+    ],
+    "donts": [
+      "Don't use heavy shadows",
+      "Don't mix more than 2 pastel accents per section"
+    ],
+    "_extraction_method": "subsection_bullet_parse",
+    "_confidence": "high"
+  },
+  "sections_present": [
+    "visual_theme",
+    "color",
+    "typography",
+    "components",
+    "layout",
+    "depth_elevation",
+    "dos_donts",
+    "responsive",
+    "agent_guide"
+  ],
+  "sections_unhandled": [
+    "components",
+    "agent_guide"
+  ],
+  "sections_meta_for_llm": [
+    "visual_theme",
+    "agent_guide"
+  ],
+  "llm_followup_hints": [
+    "spacing extraction has low confidence — recommend LLM review",
+    "layout extraction has low confidence — recommend LLM review",
+    "radius extraction has low confidence — recommend LLM review",
+    "responsive extraction has low confidence — recommend LLM review"
+  ]
+}

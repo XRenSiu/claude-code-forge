@@ -1,0 +1,191 @@
+{
+  "system_name": "bmw",
+  "source": "open-design",
+  "extracted_at": "2026-05-03T13:38:57.518426Z",
+  "dialect": "A",
+  "fingerprint_hash": "f04fb9e29769c567674bfbba43bebaa01760f303d5bd544770dd80bdf7e807fb",
+  "extraction_method": "programmatic_a1",
+  "tool_version": "1.0.0",
+  "color": {
+    "role_color_pairs": {
+      "pure_white": "#ffffff",
+      "bmw_blue": "#1c69d4",
+      "bmw_focus_blue": "#0653b6",
+      "near_black": "#262626",
+      "meta_gray": "#757575",
+      "silver": "#bbbbbb"
+    },
+    "all_hex_colors": [
+      "#ffffff",
+      "#1c69d4",
+      "#0653b6",
+      "#262626",
+      "#757575",
+      "#bbbbbb"
+    ],
+    "all_rgba_colors": [],
+    "all_hsla_colors": [],
+    "hex_count": 6,
+    "_extraction_method": "regex_role_pairs + hex_enum",
+    "_confidence": "high"
+  },
+  "typography": {
+    "families": [
+      {
+        "role": "display",
+        "family": "BMWTypeNextLatin Light"
+      },
+      {
+        "role": "body",
+        "family": "BMWTypeNextLatin"
+      }
+    ],
+    "all_px_values": [
+      16.0,
+      18.0,
+      32.0,
+      60.0
+    ],
+    "declared_scale_px": null,
+    "weights_seen": [
+      300,
+      900
+    ],
+    "_extraction_method": "regex_family_role_pairs + px_enum + weight_enum",
+    "_confidence": "high"
+  },
+  "spacing": {
+    "base_unit_px": 8.0,
+    "declared_scale": null,
+    "all_px_values": [
+      1.0,
+      5.0,
+      8.0,
+      10.0,
+      12.0,
+      15.0,
+      16.0,
+      20.0,
+      24.0,
+      30.0,
+      32.0,
+      40.0,
+      45.0,
+      56.0,
+      60.0
+    ],
+    "_extraction_method": "regex_base_unit + scale_enum",
+    "_confidence": "medium"
+  },
+  "layout": {
+    "_extraction_method": "kept_section_text_for_a3",
+    "_confidence": "low",
+    "_section_size": 717
+  },
+  "radius": {
+    "role_radius_pairs": {},
+    "all_px_values": [
+      1.0,
+      5.0,
+      8.0,
+      10.0,
+      12.0,
+      15.0,
+      16.0,
+      20.0,
+      24.0,
+      30.0,
+      32.0,
+      40.0,
+      45.0,
+      56.0,
+      60.0
+    ],
+    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_confidence": "low"
+  },
+  "depth_elevation": {
+    "rgba_shadows": [],
+    "inset_shadows": [],
+    "_extraction_method": "regex_rgba_inset",
+    "_confidence": "medium"
+  },
+  "responsive": {
+    "breakpoints_named": {
+      "mobile": {
+        "min": 375,
+        "max": 480
+      },
+      "tablet_small": {
+        "min": 640,
+        "max": 768
+      },
+      "tablet": {
+        "min": 768,
+        "max": 920
+      },
+      "desktop_small": {
+        "min": 920,
+        "max": 1024
+      },
+      "desktop": {
+        "min": 1024,
+        "max": 1280
+      },
+      "large_desktop": {
+        "min": 1280,
+        "max": 1440
+      },
+      "wide": {
+        "min": 1440,
+        "max": 1600
+      }
+    },
+    "_extraction_method": "regex_breakpoint_table",
+    "_confidence": "high"
+  },
+  "dos_donts": {
+    "dos": [
+      "Use BMWTypeNextLatin Light (300) uppercase for all display headings",
+      "Keep ALL corners sharp (0px radius) — angular geometry is non-negotiable",
+      "Use BMW Blue (`#1c69d4`) only for interactive elements — never decoratively",
+      "Apply weight 900 for navigation emphasis — the extreme weight contrast is intentional",
+      "Use full-bleed automotive photography for hero sections",
+      "Keep line-heights tight (1.15–1.30) throughout",
+      "Use `--site-context-*` CSS variables for theming"
+    ],
+    "donts": [
+      "Don't round corners — zero radius is the BMW identity",
+      "Don't use BMW Blue for backgrounds or large surfaces — it's an accent only",
+      "Don't use medium font weights (500–600) — the system uses 300, 400, 700, 900 extremes",
+      "Don't add decorative elements — the photography and typography carry everything",
+      "Don't use relaxed line-heights — BMW text is always compressed",
+      "Don't lighten the dark hero sections — the contrast with white IS the design"
+    ],
+    "_extraction_method": "subsection_bullet_parse",
+    "_confidence": "high"
+  },
+  "sections_present": [
+    "visual_theme",
+    "color",
+    "typography",
+    "components",
+    "layout",
+    "depth_elevation",
+    "dos_donts",
+    "responsive",
+    "agent_guide"
+  ],
+  "sections_unhandled": [
+    "components",
+    "agent_guide"
+  ],
+  "sections_meta_for_llm": [
+    "visual_theme",
+    "agent_guide"
+  ],
+  "llm_followup_hints": [
+    "layout extraction has low confidence — recommend LLM review",
+    "radius extraction has low confidence — recommend LLM review"
+  ]
+}

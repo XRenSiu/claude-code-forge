@@ -1,0 +1,231 @@
+{
+  "system_name": "minimax",
+  "source": "open-design",
+  "extracted_at": "2026-05-03T13:38:57.553994Z",
+  "dialect": "A",
+  "fingerprint_hash": "2960199d25c4b9a1fd8bc4756d998ee49c6315d7db23ad7ac0e274365f91ac9e",
+  "extraction_method": "programmatic_a1",
+  "tool_version": "1.0.0",
+  "color": {
+    "role_color_pairs": {
+      "brand_blue": "#1456f0",
+      "sky_blue": "#3daeff",
+      "brand_pink": "#ea5ec1",
+      "primary_200": "#bfdbfe",
+      "primary_light": "#60a5fa",
+      "primary_500": "#3b82f6",
+      "primary_600": "#2563eb",
+      "primary_700": "#1d4ed8",
+      "brand_deep": "#17437d",
+      "near_black": "#222222",
+      "dark": "#18181b",
+      "charcoal": "#181e25",
+      "dark_gray": "#45515e",
+      "mid_gray": "#8e8e93",
+      "light_gray": "#5f5f5f",
+      "pure_white": "#ffffff",
+      "glass_white": "hsla(0, 0%, 100%, 0.4)",
+      "border_light": "#f2f3f5",
+      "border_gray": "#e5e7eb",
+      "success_background": "#e8ffea",
+      "standard": "rgba(0, 0, 0, 0.08)",
+      "soft_glow": "rgba(0, 0, 0, 0.08)",
+      "brand_purple": "rgba(44, 30, 116, 0.16)",
+      "brand_purple_offset": "rgba(44, 30, 116, 0.11)",
+      "card_elevation": "rgba(36, 36, 36, 0.08)"
+    },
+    "all_hex_colors": [
+      "#1456f0",
+      "#3daeff",
+      "#ea5ec1",
+      "#bfdbfe",
+      "#60a5fa",
+      "#3b82f6",
+      "#2563eb",
+      "#1d4ed8",
+      "#17437d",
+      "#222222",
+      "#18181b",
+      "#181e25",
+      "#45515e",
+      "#8e8e93",
+      "#5f5f5f",
+      "#ffffff",
+      "#f0f0f0",
+      "#f2f3f5",
+      "#e5e7eb",
+      "#e8ffea"
+    ],
+    "all_rgba_colors": [
+      "rgba(0, 0, 0, 0.08)",
+      "rgba(44, 30, 116, 0.16)",
+      "rgba(44, 30, 116, 0.11)",
+      "rgba(36, 36, 36, 0.08)"
+    ],
+    "all_hsla_colors": [
+      "hsla(0, 0%, 100%, 0.4)"
+    ],
+    "hex_count": 20,
+    "_extraction_method": "regex_role_pairs + hex_enum",
+    "_confidence": "high"
+  },
+  "typography": {
+    "families": [
+      {
+        "role": "primary",
+        "family": "DM Sans"
+      },
+      {
+        "role": "display",
+        "family": "Outfit"
+      }
+    ],
+    "all_px_values": [
+      10.0,
+      12.0,
+      13.0,
+      14.0,
+      16.0,
+      18.0,
+      20.0,
+      24.0,
+      28.0,
+      31.0,
+      32.0,
+      80.0
+    ],
+    "declared_scale_px": null,
+    "weights_seen": [
+      500
+    ],
+    "_extraction_method": "regex_family_role_pairs + px_enum + weight_enum",
+    "_confidence": "high"
+  },
+  "spacing": {
+    "base_unit_px": 8.0,
+    "declared_scale": null,
+    "all_px_values": [
+      1.0,
+      2.0,
+      4.0,
+      6.0,
+      8.0,
+      10.0,
+      11.0,
+      13.0,
+      14.0,
+      16.0,
+      20.0,
+      22.0,
+      24.0,
+      30.0,
+      32.0,
+      40.0,
+      50.0,
+      64.0,
+      80.0
+    ],
+    "_extraction_method": "regex_base_unit + scale_enum",
+    "_confidence": "medium"
+  },
+  "layout": {
+    "_extraction_method": "kept_section_text_for_a3",
+    "_confidence": "low",
+    "_section_size": 1303
+  },
+  "radius": {
+    "role_radius_pairs": {
+      "standard": 8.0,
+      "full": 9999.0
+    },
+    "all_px_values": [
+      1.0,
+      2.0,
+      4.0,
+      6.0,
+      8.0,
+      10.0,
+      11.0,
+      13.0,
+      14.0,
+      16.0,
+      20.0,
+      22.0,
+      24.0,
+      30.0,
+      32.0,
+      40.0,
+      50.0,
+      64.0,
+      80.0
+    ],
+    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_confidence": "medium"
+  },
+  "depth_elevation": {
+    "rgba_shadows": [
+      "rgba(0, 0, 0, 0.08)",
+      "rgba(44, 30, 116, 0.16)",
+      "rgba(36, 36, 36, 0.08)",
+      "rgba(44, 30, 116, ...)"
+    ],
+    "inset_shadows": [],
+    "_extraction_method": "regex_rgba_inset",
+    "_confidence": "medium"
+  },
+  "responsive": {
+    "breakpoints_named": {
+      "tablet": {
+        "min": 768,
+        "max": 1024
+      }
+    },
+    "_extraction_method": "regex_breakpoint_table",
+    "_confidence": "high"
+  },
+  "dos_donts": {
+    "dos": [
+      "Use white as the dominant background — let product cards provide the color",
+      "Apply pill radius (9999px) for navigation tabs and toggle buttons",
+      "Use generous border radius (20px–24px) for product showcase cards",
+      "Employ the purple-tinted shadow for featured/hero product cards",
+      "Keep body text at DM Sans weight 400–500 — heavier weights for buttons only",
+      "Use Outfit for display headings, DM Sans for everything functional",
+      "Maintain the universal 1.50 line-height across body text",
+      "Let colorful product illustrations/gradients serve as the primary visual interest"
+    ],
+    "donts": [
+      "Don't add colored backgrounds to main content sections — white is structural",
+      "Don't use sharp corners (0–4px radius) on product cards — the rounded aesthetic is core",
+      "Don't apply the brand pink (`#ea5ec1`) to text or buttons — it's for logo and decorative accents only",
+      "Don't mix more than one display font per section (Outfit OR Poppins, not both)",
+      "Don't use weight 700 for headings — 500–600 is the range, 700 is reserved for strong emphasis in body text",
+      "Don't darken shadows beyond 0.16 opacity — the light, airy feel requires restraint",
+      "Don't use Roboto for headings — it's the data/technical context font only"
+    ],
+    "_extraction_method": "subsection_bullet_parse",
+    "_confidence": "high"
+  },
+  "sections_present": [
+    "visual_theme",
+    "color",
+    "typography",
+    "components",
+    "layout",
+    "depth_elevation",
+    "dos_donts",
+    "responsive",
+    "agent_guide"
+  ],
+  "sections_unhandled": [
+    "components",
+    "agent_guide"
+  ],
+  "sections_meta_for_llm": [
+    "visual_theme",
+    "agent_guide"
+  ],
+  "llm_followup_hints": [
+    "layout extraction has low confidence — recommend LLM review"
+  ]
+}

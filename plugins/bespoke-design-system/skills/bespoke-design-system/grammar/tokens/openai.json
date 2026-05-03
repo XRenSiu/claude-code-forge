@@ -1,0 +1,148 @@
+{
+  "system_name": "openai",
+  "source": "open-design",
+  "extracted_at": "2026-05-03T13:38:57.562649Z",
+  "dialect": "C-6section",
+  "fingerprint_hash": "d9abf17a413c5b07bfd6e3306347a51b41b298470ca1d0fc37af2698250da76f",
+  "extraction_method": "programmatic_a1",
+  "tool_version": "1.0.0",
+  "color": {
+    "role_color_pairs": {
+      "pure_white": "#ffffff",
+      "ink_black": "#0d0d0d",
+      "soft_black": "#1a1a1a",
+      "mist": "#fafafa",
+      "pearl": "#f5f5f5",
+      "cloud": "#ececec",
+      "openai_teal": "#10a37f",
+      "teal_deep": "#0a7a5e",
+      "teal_soft": "#e8f5f0",
+      "graphite": "#3c3c3c",
+      "slate": "#6e6e6e",
+      "ash": "#9b9b9b",
+      "stone": "#c4c4c4",
+      "border_hairline": "#e5e5e5",
+      "border_soft": "#ededed",
+      "error": "#ef4146",
+      "warning": "#f5a623",
+      "info": "#2563eb"
+    },
+    "all_hex_colors": [
+      "#ffffff",
+      "#0d0d0d",
+      "#1a1a1a",
+      "#fafafa",
+      "#f5f5f5",
+      "#ececec",
+      "#10a37f",
+      "#0a7a5e",
+      "#e8f5f0",
+      "#3c3c3c",
+      "#6e6e6e",
+      "#9b9b9b",
+      "#c4c4c4",
+      "#e5e5e5",
+      "#ededed",
+      "#ef4146",
+      "#f5a623",
+      "#2563eb"
+    ],
+    "all_rgba_colors": [],
+    "all_hsla_colors": [],
+    "hex_count": 18,
+    "_extraction_method": "regex_role_pairs + hex_enum",
+    "_confidence": "high"
+  },
+  "typography": {
+    "families": [
+      {
+        "role": "display",
+        "family": "Signifier"
+      },
+      {
+        "role": "body",
+        "family": "Söhne"
+      },
+      {
+        "role": "code",
+        "family": "Söhne Mono"
+      }
+    ],
+    "all_px_values": [
+      12.0,
+      13.0,
+      14.0,
+      16.0,
+      18.0,
+      20.0,
+      28.0,
+      40.0,
+      56.0
+    ],
+    "declared_scale_px": null,
+    "weights_seen": [],
+    "_extraction_method": "regex_family_role_pairs + px_enum + weight_enum",
+    "_confidence": "high"
+  },
+  "spacing": {
+    "base_unit_px": 24.0,
+    "declared_scale": null,
+    "all_px_values": [
+      4.0,
+      24.0,
+      48.0,
+      64.0,
+      128.0
+    ],
+    "_extraction_method": "regex_base_unit + scale_enum",
+    "_confidence": "medium"
+  },
+  "layout": {
+    "_extraction_method": "kept_section_text_for_a3",
+    "_confidence": "low",
+    "_section_size": 280
+  },
+  "radius": {
+    "role_radius_pairs": {},
+    "all_px_values": [
+      4.0,
+      24.0,
+      48.0,
+      64.0,
+      128.0
+    ],
+    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_confidence": "low"
+  },
+  "motion": {
+    "durations_ms": [
+      220.0,
+      360.0
+    ],
+    "cubic_bezier_curves": [
+      "cubic-bezier(0.16, 1, 0.3, 1)"
+    ],
+    "easing_keywords": [],
+    "_extraction_method": "regex_ms + bezier + keyword",
+    "_confidence": "high"
+  },
+  "sections_present": [
+    "visual_theme",
+    "color",
+    "typography",
+    "components",
+    "layout",
+    "motion"
+  ],
+  "sections_unhandled": [
+    "components"
+  ],
+  "sections_meta_for_llm": [
+    "visual_theme",
+    "agent_guide"
+  ],
+  "llm_followup_hints": [
+    "layout extraction has low confidence — recommend LLM review",
+    "radius extraction has low confidence — recommend LLM review"
+  ]
+}

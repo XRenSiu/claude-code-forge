@@ -1,0 +1,237 @@
+{
+  "system_name": "playstation",
+  "source": "open-design",
+  "extracted_at": "2026-05-03T13:38:57.565491Z",
+  "dialect": "A",
+  "fingerprint_hash": "aa328bc329428dd69daee224a64d8ad793dbdd340d9bb1cb8df2794dbbafabd6",
+  "extraction_method": "programmatic_a1",
+  "tool_version": "1.0.0",
+  "color": {
+    "role_color_pairs": {
+      "playstation_blue": "#0070cc",
+      "console_black": "#000000",
+      "playstation_cyan": "#1eaedb",
+      "link_hover_blue": "#1883fd",
+      "dark_link_blue": "#0068bd",
+      "paper_white": "#ffffff",
+      "ice_mist": "#f5f7fa",
+      "divider_tint": "#f3f3f3",
+      "masthead_black": "#000000",
+      "shadow_black": "#121314",
+      "filter_mist": "rgba(245, 247, 250, 0.3)",
+      "display_ink": "#000000",
+      "deep_charcoal": "#1f1f1f",
+      "body_gray": "#6b6b6b",
+      "mute_gray": "#cccccc",
+      "placeholder_ink": "rgba(0, 0, 0, 0.6)",
+      "inverse_white": "#ffffff",
+      "dark-link_blue": "#53b1ff",
+      "commerce_orange": "#d53b00",
+      "commerce_orange_active": "#aa2f00",
+      "warning_red": "#c81b3a",
+      "shadow_wash_80": "rgba(0, 0, 0, 0.8)",
+      "shadow_wash_16": "rgba(0, 0, 0, 0.16)",
+      "shadow_wash_08": "rgba(0, 0, 0, 0.08)",
+      "shadow_wash_06": "rgba(0, 0, 0, 0.06)"
+    },
+    "all_hex_colors": [
+      "#0070cc",
+      "#000000",
+      "#1eaedb",
+      "#ffffff",
+      "#1883fd",
+      "#0068bd",
+      "#f5f7fa",
+      "#f3f3f3",
+      "#121314",
+      "#1f1f1f",
+      "#6b6b6b",
+      "#cccccc",
+      "#53b1ff",
+      "#d53b00",
+      "#aa2f00",
+      "#c81b3a"
+    ],
+    "all_rgba_colors": [
+      "rgba(245, 247, 250, 0.3)",
+      "rgba(0, 0, 0, 0.6)",
+      "rgba(0, 0, 0, 0.8)",
+      "rgba(0, 0, 0, 0.16)",
+      "rgba(0, 0, 0, 0.08)",
+      "rgba(0, 0, 0, 0.06)"
+    ],
+    "all_hsla_colors": [],
+    "hex_count": 16,
+    "_extraction_method": "regex_role_pairs + hex_enum",
+    "_confidence": "high"
+  },
+  "typography": {
+    "families": [],
+    "all_px_values": [
+      12.0,
+      12.06,
+      12.8,
+      14.0,
+      14.4,
+      18.0,
+      22.0,
+      22.5,
+      28.0,
+      35.0,
+      44.0,
+      54.0
+    ],
+    "declared_scale_px": null,
+    "weights_seen": [
+      300
+    ],
+    "_extraction_method": "regex_family_role_pairs + px_enum + weight_enum",
+    "_confidence": "medium"
+  },
+  "spacing": {
+    "base_unit_px": 12.0,
+    "declared_scale": [
+      1.0,
+      2.0,
+      3.0,
+      4.5,
+      5.0,
+      8.0,
+      9.0,
+      10.0,
+      12.0,
+      14.0,
+      15.0,
+      16.0,
+      18.0,
+      20.0,
+      21.0
+    ],
+    "all_px_values": [
+      1.0,
+      2.0,
+      3.0,
+      6.0,
+      8.0,
+      12.0,
+      13.0,
+      16.0,
+      19.0,
+      20.0,
+      21.0,
+      24.0,
+      32.0,
+      36.0,
+      48.0,
+      96.0
+    ],
+    "_extraction_method": "regex_base_unit + scale_enum",
+    "_confidence": "high"
+  },
+  "layout": {
+    "_extraction_method": "kept_section_text_for_a3",
+    "_confidence": "low",
+    "_section_size": 2373
+  },
+  "radius": {
+    "role_radius_pairs": {},
+    "all_px_values": [
+      1.0,
+      2.0,
+      3.0,
+      6.0,
+      8.0,
+      12.0,
+      13.0,
+      16.0,
+      19.0,
+      20.0,
+      21.0,
+      24.0,
+      32.0,
+      36.0,
+      48.0,
+      96.0
+    ],
+    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_confidence": "low"
+  },
+  "depth_elevation": {
+    "rgba_shadows": [
+      "rgba(0, 0, 0, 0.06)",
+      "rgba(0, 0, 0, 0.08)",
+      "rgba(0, 0, 0, 0.16)",
+      "rgba(0, 0, 0, 0.8)"
+    ],
+    "inset_shadows": [],
+    "_extraction_method": "regex_rgba_inset",
+    "_confidence": "medium"
+  },
+  "responsive": {
+    "breakpoints_named": {
+      "mobile": {
+        "min": 600,
+        "max": 767
+      },
+      "desktop": {
+        "min": 1280,
+        "max": 1599
+      },
+      "large_desktop": {
+        "min": 1600,
+        "max": 1919
+      }
+    },
+    "_extraction_method": "regex_breakpoint_table",
+    "_confidence": "high"
+  },
+  "dos_donts": {
+    "dos": [
+      "**Do** use PlayStation Blue (`#0070cc`) as the primary CTA fill and the footer anchor. It is the brand's anchor color.",
+      "**Do** use SST weight 300 for every display headline 22px and above. The quiet-weight headline is the voice.",
+      "**Do** apply the full hover signature to every primary button: cyan fill + 2px white border + 2px blue outer ring + `scale(1.2)`.",
+      "**Do** use full-pill radius (`999px`) on primary and commerce buttons.",
+      "**Do** reserve PlayStation Cyan (`#1eaedb`) exclusively for hover, focus, and active states — never as a resting background.",
+      "**Do** use Commerce Orange (`#d53b00`) only on PlayStation Store / purchase CTAs and price callouts.",
+      "**Do** alternate dark hero panels with white content panels and anchor with a deep blue footer — the three-surface channel layout is the page rhythm.",
+      "**Do** use dramatic `rgba(0, 0, 0, 0.8)` hero drop shadows when a card overlaps product photography.",
+      "**Do** keep the top nav black on every scroll position — it does not invert to white over light panels."
+    ],
+    "donts": [
+      "**Don't** bold display headlines. Weight 300 at 22–54px is the PlayStation voice. Weight 700 display type reads as \"another game retailer\".",
+      "**Don't** use ALL-CAPS labels or kickers. PlayStation rarely uses uppercase — it is a quiet-authority brand, not a hazard-tape one.",
+      "**Don't** use gradient buttons, text, or backgrounds outside the two declared section gradients.",
+      "**Don't** introduce warm colors outside Commerce Orange. No red CTAs, no yellow highlights, no green success pills.",
+      "**Don't** use square corners on buttons or media. The system has eleven radii — pick one, but never `0`.",
+      "**Don't** skip the `scale(1.2)` hover move on primary buttons. The lift-scale is a brand interaction signature.",
+      "**Don't** use serif type. The system is 100% SST sans.",
+      "**Don't** let cyan `#1eaedb` appear as a text or background color at rest. It only exists in motion.",
+      "**Don't** design panels that fight for attention. PlayStation's whitespace rhythm gives each module its own \"gallery room\"."
+    ],
+    "_extraction_method": "subsection_bullet_parse",
+    "_confidence": "high"
+  },
+  "sections_present": [
+    "visual_theme",
+    "color",
+    "typography",
+    "components",
+    "layout",
+    "depth_elevation",
+    "dos_donts",
+    "responsive",
+    "agent_guide"
+  ],
+  "sections_unhandled": [
+    "components",
+    "agent_guide"
+  ],
+  "sections_meta_for_llm": [
+    "visual_theme",
+    "agent_guide"
+  ],
+  "llm_followup_hints": [
+    "layout extraction has low confidence — recommend LLM review",
+    "radius extraction has low confidence — recommend LLM review"
+  ]
+}

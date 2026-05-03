@@ -26,6 +26,11 @@ rules:
     emerges_from: [linear-app]
     provenance: original
     confidence: 0.7
+    known_conflicts:
+      - rule: vercel-color-extreme-white-minimalism-001
+        reason: dark-native canvas vs pure-white canvas — opposite base assumptions
+      - rule: vercel-color-near-black-text-002
+        reason: text rules apply to opposite background contexts
 
   - rule_id: linear-app-color-single-chromatic-anchor-002
     section: color
@@ -64,6 +69,9 @@ rules:
     emerges_from: [linear-app]
     provenance: original
     confidence: 0.7
+    known_conflicts:
+      - rule: vercel-elevation-shadow-as-border-005
+        reason: translucent-white-border vs shadow-as-border — different border philosophies for different canvases
 
   - rule_id: linear-app-typography-geometric-sans-with-features-004
     section: typography
@@ -127,9 +135,12 @@ rules:
     emerges_from: [linear-app]
     provenance: original
     confidence: 0.65
+    known_conflicts:
+      - rule: vercel-components-dark-pill-cta-007
+        reason: transparent ghost button vs solid dark CTA — opposite primary-button strategies
 
   - rule_id: linear-app-elevation-luminance-stepping-007
-    section: elevation
+    section: depth_elevation
     preconditions:
       product_type: [developer_tool, b2b_saas, productivity_saas]
       tone: [refined, modern]
@@ -147,6 +158,11 @@ rules:
     emerges_from: [linear-app]
     provenance: original
     confidence: 0.7
+    known_conflicts:
+      - rule: vercel-elevation-shadow-as-border-005
+        reason: luminance-stepping vs shadow-as-border — different elevation systems for different canvases
+      - rule: vercel-elevation-multi-layer-shadow-stack-006
+        reason: no-shadow-on-dark vs multi-layer-shadow — incompatible philosophies
 
   - rule_id: linear-app-spacing-8px-base-with-optical-008
     section: layout

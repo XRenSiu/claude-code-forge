@@ -1,0 +1,141 @@
+{
+  "system_name": "dashboard",
+  "source": "open-design",
+  "extracted_at": "2026-05-03T13:38:57.531259Z",
+  "dialect": "B",
+  "fingerprint_hash": "b87278ceecc58ad91ac97c14a1b8d657782f498f652e8100b9caf546742de4c2",
+  "extraction_method": "programmatic_a1",
+  "tool_version": "1.0.0",
+  "color": {
+    "role_color_pairs": {
+      "primary": "#0C5CAB",
+      "secondary": "#0A4A8A",
+      "success": "#10B981",
+      "warning": "#F59E0B",
+      "danger": "#EF4444",
+      "surface": "#09090B",
+      "text": "#FAFAFA",
+      "neutral": "#09090B"
+    },
+    "all_hex_colors": [
+      "#0C5CAB",
+      "#0A4A8A",
+      "#10B981",
+      "#F59E0B",
+      "#EF4444",
+      "#09090B",
+      "#FAFAFA"
+    ],
+    "all_rgba_colors": [],
+    "all_hsla_colors": [],
+    "hex_count": 7,
+    "_extraction_method": "regex_role_pairs + hex_enum",
+    "_confidence": "high"
+  },
+  "typography": {
+    "families": [
+      {
+        "role": "primary",
+        "family": "IBM Plex Sans"
+      },
+      {
+        "role": "display",
+        "family": "IBM Plex Sans"
+      },
+      {
+        "role": "mono",
+        "family": "IBM Plex Sans"
+      }
+    ],
+    "all_px_values": [],
+    "declared_scale_px": [
+      12.0,
+      14.0,
+      16.0,
+      20.0,
+      24.0,
+      32.0
+    ],
+    "weights_seen": [
+      100,
+      200,
+      300,
+      400,
+      500,
+      600,
+      700,
+      800,
+      900
+    ],
+    "_extraction_method": "regex_family_role_pairs + px_enum + weight_enum",
+    "_confidence": "medium"
+  },
+  "spacing": {
+    "base_unit_px": 8.0,
+    "declared_scale": null,
+    "all_px_values": [],
+    "_extraction_method": "regex_base_unit + scale_enum",
+    "_confidence": "medium"
+  },
+  "layout": {
+    "_extraction_method": "kept_section_text_for_a3",
+    "_confidence": "low",
+    "_section_size": 203
+  },
+  "radius": {
+    "role_radius_pairs": {},
+    "all_px_values": [],
+    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_confidence": "low"
+  },
+  "motion": {
+    "durations_ms": [
+      250.0
+    ],
+    "cubic_bezier_curves": [],
+    "easing_keywords": [],
+    "_extraction_method": "regex_ms + bezier + keyword",
+    "_confidence": "high"
+  },
+  "anti_patterns": {
+    "dos": [
+      "Do not introduce off-palette colors when an existing token can solve the problem.",
+      "Do not flatten hierarchy by using the same type size/weight for all text.",
+      "Do not add decorative effects that reduce readability or accessibility.",
+      "Do not mix unrelated visual metaphors in the same interface."
+    ],
+    "donts": [],
+    "_extraction_method": "subsection_bullet_parse",
+    "_confidence": "high"
+  },
+  "voice": {
+    "cta_or_phrase_examples": [],
+    "section_text_size": 235,
+    "_extraction_method": "regex_quoted_phrase",
+    "_confidence": "low",
+    "_needs_llm": "tone_personality_archetype_inference"
+  },
+  "sections_present": [
+    "visual_theme",
+    "color",
+    "typography",
+    "spacing",
+    "layout",
+    "components",
+    "motion",
+    "voice",
+    "anti_patterns"
+  ],
+  "sections_unhandled": [
+    "components"
+  ],
+  "sections_meta_for_llm": [
+    "visual_theme",
+    "agent_guide"
+  ],
+  "llm_followup_hints": [
+    "layout extraction has low confidence — recommend LLM review",
+    "radius extraction has low confidence — recommend LLM review",
+    "voice extraction has low confidence — recommend LLM review"
+  ]
+}

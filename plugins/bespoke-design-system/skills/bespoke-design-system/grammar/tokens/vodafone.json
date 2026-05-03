@@ -1,0 +1,189 @@
+{
+  "system_name": "vodafone",
+  "source": "open-design",
+  "extracted_at": "2026-05-03T13:38:57.591589Z",
+  "dialect": "A",
+  "fingerprint_hash": "53a9b5279d5405a16952eaa9477f363519710a80a58db7d87fb6570327ccc860",
+  "extraction_method": "programmatic_a1",
+  "tool_version": "1.0.0",
+  "color": {
+    "role_color_pairs": {
+      "vodafone_red": "#e60000",
+      "pure_white": "#ffffff",
+      "signal_blue": "#3860be",
+      "deep_brand_red_shade": "#ac1811",
+      "canvas_white": "#ffffff",
+      "light_neutral": "#f2f2f2",
+      "charcoal_institutional_panel": "#25282b",
+      "translucent_white_overlay": "rgba(255,255,255,0.1)",
+      "charcoal_headline": "#25282b",
+      "secondary_body_grey": "#7e7e7e",
+      "form_text_grey": "#333333",
+      "disabled_grey": "#bebebe",
+      "translucent_white_divider": "rgba(255,255,255,0.25)",
+      "surface_red_band": "#e60000",
+      "tag_pill_red_border": "#e60000"
+    },
+    "all_hex_colors": [
+      "#e60000",
+      "#ffffff",
+      "#3860be",
+      "#ac1811",
+      "#f2f2f2",
+      "#25282b",
+      "#7e7e7e",
+      "#333333",
+      "#bebebe"
+    ],
+    "all_rgba_colors": [
+      "rgba(255,255,255,0.1)",
+      "rgba(255,255,255,0.25)"
+    ],
+    "all_hsla_colors": [],
+    "hex_count": 9,
+    "_extraction_method": "regex_role_pairs + hex_enum",
+    "_confidence": "high"
+  },
+  "typography": {
+    "families": [],
+    "all_px_values": [
+      8.5,
+      12.0,
+      14.0,
+      14.4,
+      16.0,
+      18.0,
+      20.0,
+      24.0,
+      32.0,
+      40.0,
+      48.0,
+      70.0,
+      80.0,
+      90.0,
+      126.0,
+      144.0
+    ],
+    "declared_scale_px": null,
+    "weights_seen": [],
+    "_extraction_method": "regex_family_role_pairs + px_enum + weight_enum",
+    "_confidence": "medium"
+  },
+  "spacing": {
+    "base_unit_px": 16.0,
+    "declared_scale": null,
+    "all_px_values": [
+      1.0,
+      2.0,
+      4.0,
+      6.0,
+      8.0,
+      12.0,
+      16.0,
+      20.0,
+      24.0,
+      32.0,
+      38.0,
+      60.0,
+      96.0
+    ],
+    "_extraction_method": "regex_base_unit + scale_enum",
+    "_confidence": "medium"
+  },
+  "layout": {
+    "_extraction_method": "kept_section_text_for_a3",
+    "_confidence": "low",
+    "_section_size": 2563
+  },
+  "radius": {
+    "role_radius_pairs": {
+      "gutters between cards": 24.0
+    },
+    "all_px_values": [
+      1.0,
+      2.0,
+      4.0,
+      6.0,
+      8.0,
+      12.0,
+      16.0,
+      20.0,
+      24.0,
+      32.0,
+      38.0,
+      60.0,
+      96.0
+    ],
+    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_confidence": "medium"
+  },
+  "depth_elevation": {
+    "rgba_shadows": [],
+    "inset_shadows": [
+      "Inset Highlight | `inset 0 0 0 1px` on focus | Pressed / focused controls |",
+      "inset focus rings. The dominant \"elevation\" in the system is a **color surface shift** — switching from the white editorial canvas to the charcoal institutional panel — rather than a lift-off drop shadow."
+    ],
+    "_extraction_method": "regex_rgba_inset",
+    "_confidence": "medium"
+  },
+  "responsive": {
+    "breakpoints_named": {
+      "tablet": {
+        "min": 768,
+        "max": 1023
+      },
+      "desktop": {
+        "min": 1200,
+        "max": 1439
+      }
+    },
+    "_extraction_method": "regex_breakpoint_table",
+    "_confidence": "high"
+  },
+  "dos_donts": {
+    "dos": [
+      "Use Vodafone Red (`#e60000`) as the single loudest element on any screen — one primary CTA per fold, one red band per editorial break",
+      "Set display headlines in uppercase 800-weight with tight negative tracking; let them run to 90-144px on desktop",
+      "Pair monumental display type with calm 16-18px body copy — the scale jump is the system",
+      "Switch the button radius based on context: 2px rectangles for form and utility actions, 60px pills for editorial content CTAs",
+      "Let documentary photography breathe at 16:9 or 1:1 on a 6px radius — no decorative borders, no heavy overlays",
+      "Use the red band as a full-width chapter divider between every hero and the content below it",
+      "Anchor every page with a charcoal institutional surface (`#25282b`) — the footer always, and on investor/sustainability pages extend the same color up to include the share ticker or the global-impact map",
+      "Respect the universal page rhythm: dark hero → red band → white editorial → charcoal institutional → charcoal footer"
+    ],
+    "donts": [
+      "Don't introduce a second brand hue to rival Vodafone Red — no teals, no purples, no orange accents",
+      "Don't soften rectangle button corners beyond 2px, and don't shrink pill button corners below 60px — the two shapes are both load-bearing",
+      "Don't add drop shadows to cards or buttons — the system is intentionally flat and uses surface color to carry elevation",
+      "Don't use gradients on backgrounds, buttons, or text",
+      "Don't mix uppercase tracking on body text — uppercase is reserved for display, labels, and micro-labels",
+      "Don't use italics for emphasis — use weight 600/700 instead",
+      "Don't decorate headlines with colored underlines or highlights — the type does the work",
+      "Don't use pure black (`#000000`) for text or surfaces — always use Charcoal Headline (`#25282b`)"
+    ],
+    "_extraction_method": "subsection_bullet_parse",
+    "_confidence": "high"
+  },
+  "sections_present": [
+    "visual_theme",
+    "color",
+    "typography",
+    "components",
+    "layout",
+    "depth_elevation",
+    "dos_donts",
+    "responsive",
+    "agent_guide"
+  ],
+  "sections_unhandled": [
+    "components",
+    "agent_guide"
+  ],
+  "sections_meta_for_llm": [
+    "visual_theme",
+    "agent_guide"
+  ],
+  "llm_followup_hints": [
+    "layout extraction has low confidence — recommend LLM review"
+  ]
+}

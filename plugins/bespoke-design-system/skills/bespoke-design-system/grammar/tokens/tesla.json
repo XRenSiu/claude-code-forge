@@ -1,0 +1,170 @@
+{
+  "system_name": "tesla",
+  "source": "open-design",
+  "extracted_at": "2026-05-03T13:38:57.585529Z",
+  "dialect": "A",
+  "fingerprint_hash": "ee98b4b8acb7a0e5d25921e085661bb855e3dbd04c98a5f2885c458a680594e3",
+  "extraction_method": "programmatic_a1",
+  "tool_version": "1.0.0",
+  "color": {
+    "role_color_pairs": {
+      "electric_blue": "#3E6AE1",
+      "pure_white": "#FFFFFF",
+      "promo_blue": "#3E6AE1",
+      "white_canvas": "#FFFFFF",
+      "light_ash": "#F4F4F4",
+      "carbon_dark": "#171A20",
+      "frosted_glass": "rgba(255, 255, 255, 0.75)",
+      "graphite": "#393C41",
+      "pewter": "#5C5E62",
+      "silver_fog": "#8E8E8E",
+      "cloud_gray": "#EEEEEE",
+      "pale_silver": "#D0D1D2"
+    },
+    "all_hex_colors": [
+      "#3E6AE1",
+      "#FFFFFF",
+      "#F4F4F4",
+      "#171A20",
+      "#393C41",
+      "#5C5E62",
+      "#8E8E8E",
+      "#EEEEEE",
+      "#D0D1D2"
+    ],
+    "all_rgba_colors": [
+      "rgba(255, 255, 255, 0.75)"
+    ],
+    "all_hsla_colors": [],
+    "hex_count": 9,
+    "_extraction_method": "regex_role_pairs + hex_enum",
+    "_confidence": "high"
+  },
+  "typography": {
+    "families": [
+      {
+        "role": "display",
+        "family": "Universal Sans Display"
+      }
+    ],
+    "all_px_values": [
+      14.0,
+      16.0,
+      16.8,
+      17.0,
+      20.0,
+      22.0,
+      40.0,
+      48.0
+    ],
+    "declared_scale_px": null,
+    "weights_seen": [],
+    "_extraction_method": "regex_family_role_pairs + px_enum + weight_enum",
+    "_confidence": "high"
+  },
+  "spacing": {
+    "base_unit_px": 16.0,
+    "declared_scale": null,
+    "all_px_values": [
+      4.0,
+      8.0,
+      12.0,
+      16.0,
+      21.44
+    ],
+    "_extraction_method": "regex_base_unit + scale_enum",
+    "_confidence": "medium"
+  },
+  "layout": {
+    "_extraction_method": "kept_section_text_for_a3",
+    "_confidence": "low",
+    "_section_size": 1480
+  },
+  "radius": {
+    "role_radius_pairs": {},
+    "all_px_values": [
+      4.0,
+      8.0,
+      12.0,
+      16.0,
+      21.44
+    ],
+    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_confidence": "low"
+  },
+  "depth_elevation": {
+    "rgba_shadows": [
+      "rgba(255,255,255,0.75)",
+      "rgba(128,128,128,0.65)",
+      "rgba(0,0,0,0.05)"
+    ],
+    "inset_shadows": [],
+    "_extraction_method": "regex_rgba_inset",
+    "_confidence": "medium"
+  },
+  "responsive": {
+    "breakpoints_named": {
+      "tablet": {
+        "min": 768,
+        "max": 1024
+      },
+      "desktop": {
+        "min": 1024,
+        "max": 1440
+      }
+    },
+    "_extraction_method": "regex_breakpoint_table",
+    "_confidence": "high"
+  },
+  "dos_donts": {
+    "dos": [
+      "Let photography dominate every screen — the product IS the design",
+      "Use Electric Blue (`#3E6AE1`) exclusively for primary CTAs — never for decorative purposes",
+      "Maintain viewport-height sections for major content blocks — one message per screen",
+      "Keep typography at weight 400-500 only — no bold, no light, no extremes",
+      "Use 4px border-radius for all interactive elements — precision over playfulness",
+      "Trust whitespace as a luxury signal — never fill available space just because it's empty",
+      "Keep all transitions at 0.33s — consistency in motion is as important as consistency in color",
+      "Use transparent PNG vehicle imagery on white backgrounds for product showcases",
+      "Center CTAs horizontally below model names — the vertical rhythm is model → subtitle → buttons",
+      "Maintain the Display/Text font split — Display for hero-scale text only, Text for everything else"
+    ],
+    "donts": [
+      "Add shadows to any element — elevation through shadow contradicts the flat, gallery aesthetic",
+      "Use more than one chromatic color besides the blue CTA — the palette is intentionally monochrome-plus-one",
+      "Apply gradients, patterns, or decorative backgrounds to surfaces — white and photography are the only backgrounds",
+      "Use text larger than 40px on the web — the typography is deliberately restrained even at hero scale",
+      "Add borders to cards or containers — separation is achieved through spacing, not lines",
+      "Use uppercase text transforms — Tesla's confidence is expressed through lowercase calm",
+      "Introduce rounded-pill buttons or large border-radii — the 4px radius is deliberate and precise",
+      "Override the Universal Sans family with other typefaces — cross-platform consistency is a core brand value",
+      "Add hover animations with scale/translate transforms — Tesla's interactions are color-only (background and border transitions)",
+      "Clutter the viewport with multiple CTAs — every screen should have at most two action buttons"
+    ],
+    "_extraction_method": "subsection_bullet_parse",
+    "_confidence": "high"
+  },
+  "sections_present": [
+    "visual_theme",
+    "color",
+    "typography",
+    "components",
+    "layout",
+    "depth_elevation",
+    "dos_donts",
+    "responsive",
+    "agent_guide"
+  ],
+  "sections_unhandled": [
+    "components",
+    "agent_guide"
+  ],
+  "sections_meta_for_llm": [
+    "visual_theme",
+    "agent_guide"
+  ],
+  "llm_followup_hints": [
+    "layout extraction has low confidence — recommend LLM review",
+    "radius extraction has low confidence — recommend LLM review"
+  ]
+}

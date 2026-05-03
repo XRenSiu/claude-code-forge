@@ -1,0 +1,191 @@
+{
+  "system_name": "sanity",
+  "source": "open-design",
+  "extracted_at": "2026-05-03T13:38:57.574614Z",
+  "dialect": "A",
+  "fingerprint_hash": "52354c55c1c62dd16aeffc037fad7494a6de918a59bd65843ebcb9e6357928fa",
+  "extraction_method": "programmatic_a1",
+  "tool_version": "1.0.0",
+  "color": {
+    "role_color_pairs": {
+      "sanity_black": "#0b0b0b",
+      "pure_black": "#000000",
+      "sanity_red": "#f36458",
+      "electric_blue": "#0052ef",
+      "light_blue": "#55beff",
+      "near_black": "#0b0b0b",
+      "dark_gray": "#212121",
+      "medium_dark": "#353535",
+      "pure_white": "#ffffff",
+      "light_gray": "#ededed",
+      "white": "#ffffff",
+      "silver": "#b9b9b9",
+      "medium_gray": "#797979",
+      "charcoal": "#212121",
+      "near_black_text": "#0b0b0b",
+      "error_red": "#dd0000",
+      "gpc_green": "#37cd84",
+      "focus_ring_blue": "#0052ef",
+      "dark_border": "#0b0b0b",
+      "subtle_border": "#212121",
+      "medium_border": "#353535",
+      "light_border": "#ffffff"
+    },
+    "all_hex_colors": [
+      "#0b0b0b",
+      "#000000",
+      "#f36458",
+      "#0052ef",
+      "#55beff",
+      "#afe3ff",
+      "#19d600",
+      "#212121",
+      "#353535",
+      "#ffffff",
+      "#ededed",
+      "#b9b9b9",
+      "#797979",
+      "#dd0000",
+      "#37cd84"
+    ],
+    "all_rgba_colors": [],
+    "all_hsla_colors": [],
+    "hex_count": 15,
+    "_extraction_method": "regex_role_pairs + hex_enum",
+    "_confidence": "high"
+  },
+  "typography": {
+    "families": [
+      {
+        "role": "code",
+        "family": "IBM Plex Mono"
+      }
+    ],
+    "all_px_values": [
+      11.0,
+      12.0,
+      13.0,
+      15.0,
+      16.0,
+      18.0,
+      20.0,
+      24.0,
+      32.0,
+      38.0,
+      48.0,
+      72.0,
+      112.0
+    ],
+    "declared_scale_px": null,
+    "weights_seen": [],
+    "_extraction_method": "regex_family_role_pairs + px_enum + weight_enum",
+    "_confidence": "high"
+  },
+  "spacing": {
+    "base_unit_px": 32.0,
+    "declared_scale": null,
+    "all_px_values": [
+      1.0,
+      2.0,
+      3.0,
+      4.0,
+      5.0,
+      6.0,
+      8.0,
+      12.0,
+      16.0,
+      24.0,
+      32.0,
+      48.0,
+      64.0,
+      120.0
+    ],
+    "_extraction_method": "regex_base_unit + scale_enum",
+    "_confidence": "medium"
+  },
+  "layout": {
+    "_extraction_method": "kept_section_text_for_a3",
+    "_confidence": "low",
+    "_section_size": 1833
+  },
+  "radius": {
+    "role_radius_pairs": {},
+    "all_px_values": [
+      1.0,
+      2.0,
+      3.0,
+      4.0,
+      5.0,
+      6.0,
+      8.0,
+      12.0,
+      16.0,
+      24.0,
+      32.0,
+      48.0,
+      64.0,
+      120.0
+    ],
+    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_confidence": "low"
+  },
+  "depth_elevation": {
+    "rgba_shadows": [],
+    "inset_shadows": [],
+    "_extraction_method": "regex_rgba_inset",
+    "_confidence": "medium"
+  },
+  "responsive": {
+    "breakpoints_named": {},
+    "_extraction_method": "regex_breakpoint_table",
+    "_confidence": "low"
+  },
+  "dos_donts": {
+    "dos": [
+      "Use the achromatic gray scale as the foundation -- maintain pure neutral discipline with no warm/cool tinting",
+      "Apply Electric Blue (`#0052ef`) consistently as the universal hover/active state across all interactive elements",
+      "Use extreme negative letter-spacing (-2px to -4.48px) on display headings 48px and above",
+      "Keep primary CTAs as full-pill shapes (99999px radius) with the coral-red (`#f36458`)",
+      "Use IBM Plex Mono uppercase for technical labels, tags, and system metadata",
+      "Communicate depth through surface color (dark-to-light) rather than shadows",
+      "Maintain generous vertical section spacing (64-120px) on the dark canvas",
+      "Use `\"cv01\", \"cv11\", \"cv12\", \"cv13\", \"ss07\"` OpenType features for display typography"
+    ],
+    "donts": [
+      "Don't introduce warm or cool color tints to the neutral scale -- Sanity's grays are pure achromatic",
+      "Don't use drop shadows for elevation -- dark interfaces demand colorimetric depth",
+      "Don't apply border-radius between 13px and 99998px -- the system jumps from 12px (large card) directly to pill (99999px)",
+      "Don't mix the coral-red CTA with the electric blue interactive color in the same element",
+      "Don't use heavy font weights (700+) -- the system maxes out at 600 and only for 11px uppercase labels",
+      "Don't place light text on light surfaces or dark text on dark surfaces without checking the gray-on-gray contrast ratio",
+      "Don't use traditional offset box-shadows -- ring shadows (0 0 0 Npx) or border-based containment only",
+      "Don't break the tight line-height on headings -- 1.00-1.24 is the range, never go to 1.5+ for display text"
+    ],
+    "_extraction_method": "subsection_bullet_parse",
+    "_confidence": "high"
+  },
+  "sections_present": [
+    "visual_theme",
+    "color",
+    "typography",
+    "components",
+    "layout",
+    "depth_elevation",
+    "dos_donts",
+    "responsive",
+    "agent_guide"
+  ],
+  "sections_unhandled": [
+    "components",
+    "agent_guide"
+  ],
+  "sections_meta_for_llm": [
+    "visual_theme",
+    "agent_guide"
+  ],
+  "llm_followup_hints": [
+    "layout extraction has low confidence — recommend LLM review",
+    "radius extraction has low confidence — recommend LLM review",
+    "responsive extraction has low confidence — recommend LLM review"
+  ]
+}

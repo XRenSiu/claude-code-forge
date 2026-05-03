@@ -1,0 +1,179 @@
+{
+  "system_name": "figma",
+  "source": "open-design",
+  "extracted_at": "2026-05-03T13:38:57.539278Z",
+  "dialect": "A",
+  "fingerprint_hash": "69ec480da3a8befab7b44ffd5cc4deca0c8ae8ac5ee690335413063fa1a38292",
+  "extraction_method": "programmatic_a1",
+  "tool_version": "1.0.0",
+  "color": {
+    "role_color_pairs": {
+      "pure_black": "#000000",
+      "pure_white": "#ffffff",
+      "glass_black": "rgba(0, 0, 0, 0.08)",
+      "glass_white": "rgba(255, 255, 255, 0.16)"
+    },
+    "all_hex_colors": [
+      "#000000",
+      "#ffffff"
+    ],
+    "all_rgba_colors": [
+      "rgba(0, 0, 0, 0.08)",
+      "rgba(255, 255, 255, 0.16)"
+    ],
+    "all_hsla_colors": [],
+    "hex_count": 2,
+    "_extraction_method": "regex_role_pairs + hex_enum",
+    "_confidence": "high"
+  },
+  "typography": {
+    "families": [],
+    "all_px_values": [
+      12.0,
+      16.0,
+      18.0,
+      20.0,
+      24.0,
+      26.0,
+      64.0,
+      86.0
+    ],
+    "declared_scale_px": null,
+    "weights_seen": [
+      320,
+      330,
+      340,
+      450,
+      480,
+      540
+    ],
+    "_extraction_method": "regex_family_role_pairs + px_enum + weight_enum",
+    "_confidence": "medium"
+  },
+  "spacing": {
+    "base_unit_px": 8.0,
+    "declared_scale": null,
+    "all_px_values": [
+      1.0,
+      2.0,
+      4.0,
+      4.5,
+      6.0,
+      8.0,
+      10.0,
+      12.0,
+      16.0,
+      18.0,
+      24.0,
+      32.0,
+      40.0,
+      46.0,
+      48.0,
+      50.0
+    ],
+    "_extraction_method": "regex_base_unit + scale_enum",
+    "_confidence": "medium"
+  },
+  "layout": {
+    "_extraction_method": "kept_section_text_for_a3",
+    "_confidence": "low",
+    "_section_size": 853
+  },
+  "radius": {
+    "role_radius_pairs": {
+      "comfortable": 8.0,
+      "pill": 50.0
+    },
+    "all_px_values": [
+      1.0,
+      2.0,
+      4.0,
+      4.5,
+      6.0,
+      8.0,
+      10.0,
+      12.0,
+      16.0,
+      18.0,
+      24.0,
+      32.0,
+      40.0,
+      46.0,
+      48.0,
+      50.0
+    ],
+    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_confidence": "medium"
+  },
+  "depth_elevation": {
+    "rgba_shadows": [],
+    "inset_shadows": [],
+    "_extraction_method": "regex_rgba_inset",
+    "_confidence": "medium"
+  },
+  "responsive": {
+    "breakpoints_named": {
+      "tablet": {
+        "min": 560,
+        "max": 768
+      },
+      "desktop": {
+        "min": 960,
+        "max": 1280
+      },
+      "large_desktop": {
+        "min": 1280,
+        "max": 1440
+      },
+      "wide": {
+        "min": 1440,
+        "max": 1920
+      }
+    },
+    "_extraction_method": "regex_breakpoint_table",
+    "_confidence": "high"
+  },
+  "dos_donts": {
+    "dos": [
+      "Use figmaSans with precise variable weights (320–540) — the granular weight control IS the design",
+      "Keep the interface strictly black-and-white — color comes from product content only",
+      "Use pill (50px) and circular (50%) geometry for all interactive elements",
+      "Apply dashed 2px focus outlines — the signature accessibility pattern",
+      "Enable `\"kern\"` feature on all text",
+      "Use figmaMono in uppercase with positive letter-spacing for labels",
+      "Apply negative letter-spacing throughout (-0.1px to -1.72px)"
+    ],
+    "donts": [
+      "Don't add interface colors — the monochrome palette is absolute",
+      "Don't use standard font weights (400, 500, 600, 700) — use the variable font's unique stops (320, 330, 340, 450, 480, 540)",
+      "Don't use sharp corners on buttons — pill and circular geometry only",
+      "Don't use solid focus outlines — dashed is the signature",
+      "Don't increase body font weight above 450 — the light-weight aesthetic is core",
+      "Don't use positive letter-spacing on body text — it's always negative"
+    ],
+    "_extraction_method": "subsection_bullet_parse",
+    "_confidence": "high"
+  },
+  "sections_present": [
+    "visual_theme",
+    "color",
+    "typography",
+    "components",
+    "layout",
+    "depth_elevation",
+    "dos_donts",
+    "responsive",
+    "agent_guide"
+  ],
+  "sections_unhandled": [
+    "components",
+    "agent_guide"
+  ],
+  "sections_meta_for_llm": [
+    "visual_theme",
+    "agent_guide"
+  ],
+  "llm_followup_hints": [
+    "layout extraction has low confidence — recommend LLM review"
+  ]
+}

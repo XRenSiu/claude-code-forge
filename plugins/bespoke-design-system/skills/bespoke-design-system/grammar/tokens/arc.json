@@ -1,0 +1,161 @@
+{
+  "system_name": "arc",
+  "source": "open-design",
+  "extracted_at": "2026-05-03T13:38:57.515910Z",
+  "dialect": "C-6section",
+  "fingerprint_hash": "59eec6f733a4a55f95f3c1e7b6cb329349c9b3f1774d74042146ad42809f430f",
+  "extraction_method": "programmatic_a1",
+  "tool_version": "1.0.0",
+  "color": {
+    "role_color_pairs": {
+      "sunset_start": "#ff7e5f",
+      "sunset_end": "#feb47b",
+      "twilight_start": "#7f5af0",
+      "twilight_end": "#e84393",
+      "aurora_start": "#16f2b3",
+      "aurora_end": "#0db4f7",
+      "glass_light": "rgba(255, 255, 255, 0.7)",
+      "glass_medium": "rgba(255, 255, 255, 0.5)",
+      "glass_heavy": "rgba(255, 255, 255, 0.85)",
+      "glass_dark": "rgba(20, 20, 25, 0.6)",
+      "ink_primary": "#1a1a1f",
+      "ink_secondary": "#54545a",
+      "ink_muted": "#8c8c93",
+      "ink_inverse": "#fafafa",
+      "border_glass": "rgba(255, 255, 255, 0.4)",
+      "border_hairline": "rgba(0, 0, 0, 0.06)",
+      "border_active": "rgba(0, 0, 0, 0.18)",
+      "arc_coral": "#ff5f5f",
+      "arc_lavender": "#b794f4",
+      "success": "#48bb78",
+      "warning": "#f6ad55",
+      "error": "#f56565"
+    },
+    "all_hex_colors": [
+      "#ff7e5f",
+      "#feb47b",
+      "#7f5af0",
+      "#e84393",
+      "#16f2b3",
+      "#0db4f7",
+      "#1a1a1f",
+      "#54545a",
+      "#8c8c93",
+      "#fafafa",
+      "#ff5f5f",
+      "#b794f4",
+      "#48bb78",
+      "#f6ad55",
+      "#f56565"
+    ],
+    "all_rgba_colors": [
+      "rgba(255, 255, 255, 0.7)",
+      "rgba(255, 255, 255, 0.5)",
+      "rgba(255, 255, 255, 0.85)",
+      "rgba(20, 20, 25, 0.6)",
+      "rgba(255, 255, 255, 0.4)",
+      "rgba(0, 0, 0, 0.06)",
+      "rgba(0, 0, 0, 0.18)"
+    ],
+    "all_hsla_colors": [],
+    "hex_count": 15,
+    "_extraction_method": "regex_role_pairs + hex_enum",
+    "_confidence": "high"
+  },
+  "typography": {
+    "families": [
+      {
+        "role": "display",
+        "family": "Argent CF"
+      },
+      {
+        "role": "body",
+        "family": "Inter"
+      },
+      {
+        "role": "code",
+        "family": "Berkeley Mono"
+      },
+      {
+        "role": "serif",
+        "family": "Argent CF appears only in marketing"
+      }
+    ],
+    "all_px_values": [
+      12.0,
+      13.0,
+      15.0,
+      22.0,
+      32.0,
+      40.0,
+      72.0
+    ],
+    "declared_scale_px": null,
+    "weights_seen": [],
+    "_extraction_method": "regex_family_role_pairs + px_enum + weight_enum",
+    "_confidence": "high"
+  },
+  "spacing": {
+    "base_unit_px": 4.0,
+    "declared_scale": null,
+    "all_px_values": [
+      4.0,
+      12.0,
+      24.0,
+      56.0
+    ],
+    "_extraction_method": "regex_base_unit + scale_enum",
+    "_confidence": "medium"
+  },
+  "layout": {
+    "_extraction_method": "kept_section_text_for_a3",
+    "_confidence": "low",
+    "_section_size": 213
+  },
+  "radius": {
+    "role_radius_pairs": {
+      "window radius": 12.0
+    },
+    "all_px_values": [
+      4.0,
+      12.0,
+      24.0,
+      56.0
+    ],
+    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_confidence": "medium"
+  },
+  "motion": {
+    "durations_ms": [
+      200.0,
+      320.0,
+      480.0
+    ],
+    "cubic_bezier_curves": [
+      "cubic-bezier(0.32, 0.72, 0, 1)"
+    ],
+    "easing_keywords": [
+      "spring"
+    ],
+    "_extraction_method": "regex_ms + bezier + keyword",
+    "_confidence": "high"
+  },
+  "sections_present": [
+    "visual_theme",
+    "color",
+    "typography",
+    "components",
+    "layout",
+    "motion"
+  ],
+  "sections_unhandled": [
+    "components"
+  ],
+  "sections_meta_for_llm": [
+    "visual_theme",
+    "agent_guide"
+  ],
+  "llm_followup_hints": [
+    "layout extraction has low confidence — recommend LLM review"
+  ]
+}

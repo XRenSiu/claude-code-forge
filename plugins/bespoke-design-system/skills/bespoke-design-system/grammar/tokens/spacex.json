@@ -1,0 +1,168 @@
+{
+  "system_name": "spacex",
+  "source": "open-design",
+  "extracted_at": "2026-05-03T13:38:57.579320Z",
+  "dialect": "A",
+  "fingerprint_hash": "ead7689f96a1c44f43cee4831b1525d52757c6aca820b9cf85569651d46ab0b7",
+  "extraction_method": "programmatic_a1",
+  "tool_version": "1.0.0",
+  "color": {
+    "role_color_pairs": {
+      "space_black": "#000000",
+      "spectral_white": "#f0f0fa",
+      "ghost_surface": "rgba(240, 240, 250, 0.1)",
+      "ghost_border": "rgba(240, 240, 250, 0.35)",
+      "dark_overlay": "rgba(0, 0, 0, 0.5)"
+    },
+    "all_hex_colors": [
+      "#000000",
+      "#f0f0fa"
+    ],
+    "all_rgba_colors": [
+      "rgba(240, 240, 250, 0.1)",
+      "rgba(240, 240, 250, 0.35)",
+      "rgba(0, 0, 0, 0.5)"
+    ],
+    "all_hsla_colors": [],
+    "hex_count": 2,
+    "_extraction_method": "regex_role_pairs + hex_enum",
+    "_confidence": "high"
+  },
+  "typography": {
+    "families": [
+      {
+        "role": "body",
+        "family": "D-DIN"
+      }
+    ],
+    "all_px_values": [
+      10.0,
+      12.0,
+      13.0,
+      16.0,
+      48.0
+    ],
+    "declared_scale_px": null,
+    "weights_seen": [],
+    "_extraction_method": "regex_family_role_pairs + px_enum + weight_enum",
+    "_confidence": "high"
+  },
+  "spacing": {
+    "base_unit_px": 8.0,
+    "declared_scale": null,
+    "all_px_values": [
+      3.0,
+      4.0,
+      5.0,
+      8.0,
+      12.0,
+      15.0,
+      18.0,
+      20.0,
+      24.0,
+      30.0,
+      32.0
+    ],
+    "_extraction_method": "regex_base_unit + scale_enum",
+    "_confidence": "medium"
+  },
+  "layout": {
+    "_extraction_method": "kept_section_text_for_a3",
+    "_confidence": "low",
+    "_section_size": 973
+  },
+  "radius": {
+    "role_radius_pairs": {},
+    "all_px_values": [
+      3.0,
+      4.0,
+      5.0,
+      8.0,
+      12.0,
+      15.0,
+      18.0,
+      20.0,
+      24.0,
+      30.0,
+      32.0
+    ],
+    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_confidence": "low"
+  },
+  "depth_elevation": {
+    "rgba_shadows": [
+      "rgba(0, 0, 0, 0.5)",
+      "rgba(240, 240, 250, 0.1)"
+    ],
+    "inset_shadows": [],
+    "_extraction_method": "regex_rgba_inset",
+    "_confidence": "medium"
+  },
+  "responsive": {
+    "breakpoints_named": {
+      "tablet_small": {
+        "min": 600,
+        "max": 960
+      },
+      "tablet": {
+        "min": 960,
+        "max": 1280
+      },
+      "desktop": {
+        "min": 1280,
+        "max": 1350
+      },
+      "large_desktop": {
+        "min": 1350,
+        "max": 1500
+      }
+    },
+    "_extraction_method": "regex_breakpoint_table",
+    "_confidence": "high"
+  },
+  "dos_donts": {
+    "dos": [
+      "Use full-viewport photography as the primary design element — every section is a scene",
+      "Apply uppercase + positive letter-spacing to ALL text — the aerospace stencil voice",
+      "Use D-DIN exclusively — no other fonts exist in the system",
+      "Keep the color palette to black + spectral white (`#f0f0fa`) only",
+      "Use ghost buttons (`rgba(240,240,250,0.1)`) as the sole interactive element",
+      "Apply dark gradient overlays for text legibility on photographs",
+      "Let photography carry the emotional weight — the type system is functional, not expressive"
+    ],
+    "donts": [
+      "Don't add cards, panels, or containers — text sits directly on photography",
+      "Don't use shadows — they have no meaning in a photographic context",
+      "Don't introduce colors — the palette is strictly achromatic with spectral tint",
+      "Don't use sentence case — everything is uppercase",
+      "Don't use negative letter-spacing — all tracking is positive (0.96px–1.17px)",
+      "Don't reduce photography to thumbnails — every image is full-viewport",
+      "Don't add decorative elements (icons, badges, dividers) — the design is photography + type + one button"
+    ],
+    "_extraction_method": "subsection_bullet_parse",
+    "_confidence": "high"
+  },
+  "sections_present": [
+    "visual_theme",
+    "color",
+    "typography",
+    "components",
+    "layout",
+    "depth_elevation",
+    "dos_donts",
+    "responsive",
+    "agent_guide"
+  ],
+  "sections_unhandled": [
+    "components",
+    "agent_guide"
+  ],
+  "sections_meta_for_llm": [
+    "visual_theme",
+    "agent_guide"
+  ],
+  "llm_followup_hints": [
+    "layout extraction has low confidence — recommend LLM review",
+    "radius extraction has low confidence — recommend LLM review"
+  ]
+}

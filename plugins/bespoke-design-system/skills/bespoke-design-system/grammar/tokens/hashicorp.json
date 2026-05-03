@@ -1,0 +1,222 @@
+{
+  "system_name": "hashicorp",
+  "source": "open-design",
+  "extracted_at": "2026-05-03T13:38:57.543115Z",
+  "dialect": "A",
+  "fingerprint_hash": "7532880ef6c1bd586a5fb6229563b69f26ee841994f5616c698e0316813042c6",
+  "extraction_method": "programmatic_a1",
+  "tool_version": "1.0.0",
+  "color": {
+    "role_color_pairs": {
+      "black": "#000000",
+      "dark_charcoal": "#15181e",
+      "near_black": "#0d0e12",
+      "light_gray": "#f1f2f3",
+      "mid_gray": "#d5d7db",
+      "cool_gray": "#b2b6bd",
+      "dark_gray": "#656a76",
+      "charcoal": "#3b3d45",
+      "near_white": "#efeff1",
+      "terraform_purple": "#7b42bc",
+      "vault_yellow": "#ffcf25",
+      "waypoint_teal": "#14c6cb",
+      "waypoint_teal_hover": "#12b6bb",
+      "vagrant_blue": "#1868f2",
+      "purple_accent": "#911ced",
+      "visited_purple": "#a737ff",
+      "action_blue": "#1060ff",
+      "link_blue": "#2264d6",
+      "bright_blue": "#2b89ff",
+      "amber": "#bb5a00",
+      "amber_light": "#fbeabf",
+      "vault_faint_yellow": "#fff9cf",
+      "orange": "#a9722e",
+      "red": "#731e25",
+      "navy": "#101a59",
+      "micro_shadow": "rgba(97, 104, 117, 0.05)"
+    },
+    "all_hex_colors": [
+      "#000000",
+      "#15181e",
+      "#0d0e12",
+      "#f1f2f3",
+      "#d5d7db",
+      "#b2b6bd",
+      "#656a76",
+      "#3b3d45",
+      "#efeff1",
+      "#7b42bc",
+      "#ffcf25",
+      "#14c6cb",
+      "#12b6bb",
+      "#1868f2",
+      "#911ced",
+      "#a737ff",
+      "#1060ff",
+      "#2264d6",
+      "#2b89ff",
+      "#bb5a00",
+      "#fbeabf",
+      "#fff9cf",
+      "#a9722e",
+      "#731e25",
+      "#101a59"
+    ],
+    "all_rgba_colors": [
+      "rgba(97, 104, 117, 0.05)"
+    ],
+    "all_hsla_colors": [],
+    "hex_count": 25,
+    "_extraction_method": "regex_role_pairs + hex_enum",
+    "_confidence": "high"
+  },
+  "typography": {
+    "families": [],
+    "all_px_values": [
+      13.0,
+      14.0,
+      15.0,
+      16.0,
+      17.0,
+      19.0,
+      20.0,
+      26.0,
+      34.0,
+      42.0,
+      52.0,
+      82.0
+    ],
+    "declared_scale_px": null,
+    "weights_seen": [
+      600
+    ],
+    "_extraction_method": "regex_family_role_pairs + px_enum + weight_enum",
+    "_confidence": "medium"
+  },
+  "spacing": {
+    "base_unit_px": 8.0,
+    "declared_scale": null,
+    "all_px_values": [
+      2.0,
+      3.0,
+      4.0,
+      5.0,
+      6.0,
+      7.0,
+      8.0,
+      9.0,
+      11.0,
+      12.0,
+      16.0,
+      20.0,
+      24.0,
+      32.0,
+      40.0,
+      48.0,
+      80.0
+    ],
+    "_extraction_method": "regex_base_unit + scale_enum",
+    "_confidence": "medium"
+  },
+  "layout": {
+    "_extraction_method": "kept_section_text_for_a3",
+    "_confidence": "low",
+    "_section_size": 1447
+  },
+  "radius": {
+    "role_radius_pairs": {
+      "standard": 4.0,
+      "comfortable": 5.0,
+      "card": 8.0
+    },
+    "all_px_values": [
+      2.0,
+      3.0,
+      4.0,
+      5.0,
+      6.0,
+      7.0,
+      8.0,
+      9.0,
+      11.0,
+      12.0,
+      16.0,
+      20.0,
+      24.0,
+      32.0,
+      40.0,
+      48.0,
+      80.0
+    ],
+    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_confidence": "high"
+  },
+  "depth_elevation": {
+    "rgba_shadows": [
+      "rgba(97, 104, 117, 0.05)"
+    ],
+    "inset_shadows": [],
+    "_extraction_method": "regex_rgba_inset",
+    "_confidence": "medium"
+  },
+  "responsive": {
+    "breakpoints_named": {
+      "tablet": {
+        "min": 768,
+        "max": 992
+      },
+      "desktop": {
+        "min": 992,
+        "max": 1150
+      }
+    },
+    "_extraction_method": "regex_breakpoint_table",
+    "_confidence": "high"
+  },
+  "dos_donts": {
+    "dos": [
+      "Use HashiCorp Sans for headings and brand text, system-ui for body and UI text",
+      "Enable `\"kern\"` on all HashiCorp Sans text",
+      "Use product brand colors ONLY for their respective products (Terraform = purple, Vault = yellow, etc.)",
+      "Apply uppercase labels at 13px weight 600 with 1.3px letter-spacing for section markers",
+      "Keep shadows at the \"whisper\" level (0.05 opacity dual-layer)",
+      "Use the `--mds-color-*` token system for consistent color application",
+      "Maintain the tight-heading / relaxed-body rhythm (1.17–1.21 vs 1.50–1.69 line-heights)",
+      "Use `3px solid` focus outlines for accessibility"
+    ],
+    "donts": [
+      "Don't use product brand colors outside their product context (no Terraform purple on Vault content)",
+      "Don't increase shadow opacity above 0.1 — the whisper level is intentional",
+      "Don't use pill-shaped buttons (>8px radius) — the sharp, minimal radius is structural",
+      "Don't skip the `\"kern\"` feature on headings — the font requires it",
+      "Don't use HashiCorp Sans for small body text — it's designed for 17px+ heading use",
+      "Don't mix product colors in the same component — each product has one color",
+      "Don't use pure black (`#000000`) for dark backgrounds — use `#15181e` or `#0d0e12`",
+      "Don't forget the asymmetric button padding — 9px 9px 9px 15px is intentional"
+    ],
+    "_extraction_method": "subsection_bullet_parse",
+    "_confidence": "high"
+  },
+  "sections_present": [
+    "visual_theme",
+    "color",
+    "typography",
+    "components",
+    "layout",
+    "depth_elevation",
+    "dos_donts",
+    "responsive",
+    "agent_guide"
+  ],
+  "sections_unhandled": [
+    "components",
+    "agent_guide"
+  ],
+  "sections_meta_for_llm": [
+    "visual_theme",
+    "agent_guide"
+  ],
+  "llm_followup_hints": [
+    "layout extraction has low confidence — recommend LLM review"
+  ]
+}

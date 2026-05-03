@@ -1,0 +1,207 @@
+{
+  "system_name": "ibm",
+  "source": "open-design",
+  "extracted_at": "2026-05-03T13:38:57.544486Z",
+  "dialect": "A",
+  "fingerprint_hash": "eab18ea70c2e4da497a2e90a25e6e9919ac18a4136f1dcd35ce838c37c2586da",
+  "extraction_method": "programmatic_a1",
+  "tool_version": "1.0.0",
+  "color": {
+    "role_color_pairs": {
+      "ibm_blue_60": "#0f62fe",
+      "white": "#ffffff",
+      "gray_100": "#161616",
+      "gray_90": "#262626",
+      "gray_80": "#393939",
+      "gray_70": "#525252",
+      "gray_60": "#6f6f6f",
+      "gray_50": "#8d8d8d",
+      "gray_30": "#c6c6c6",
+      "gray_20": "#e0e0e0",
+      "gray_10": "#f4f4f4",
+      "gray_10_hover": "#e8e8e8",
+      "blue_60": "#0f62fe",
+      "blue_70": "#0043ce",
+      "blue_80": "#002d9c",
+      "blue_10": "#edf5ff",
+      "focus_blue": "#0f62fe",
+      "focus_inset": "#ffffff",
+      "red_60": "#da1e28",
+      "green_50": "#24a148",
+      "yellow_30": "#f1c21b"
+    },
+    "all_hex_colors": [
+      "#0f62fe",
+      "#ffffff",
+      "#161616",
+      "#262626",
+      "#393939",
+      "#525252",
+      "#6f6f6f",
+      "#8d8d8d",
+      "#c6c6c6",
+      "#e0e0e0",
+      "#f4f4f4",
+      "#e8e8e8",
+      "#0043ce",
+      "#002d9c",
+      "#edf5ff",
+      "#da1e28",
+      "#24a148",
+      "#f1c21b",
+      "#78a9ff"
+    ],
+    "all_rgba_colors": [],
+    "all_hsla_colors": [],
+    "hex_count": 19,
+    "_extraction_method": "regex_role_pairs + hex_enum",
+    "_confidence": "high"
+  },
+  "typography": {
+    "families": [
+      {
+        "role": "primary",
+        "family": "IBM Plex Sans"
+      },
+      {
+        "role": "mono",
+        "family": "IBM Plex Mono"
+      }
+    ],
+    "all_px_values": [
+      12.0,
+      14.0,
+      16.0,
+      18.0,
+      20.0,
+      24.0,
+      28.0,
+      32.0,
+      40.0,
+      42.0,
+      48.0,
+      50.0,
+      56.0,
+      60.0,
+      70.0
+    ],
+    "declared_scale_px": null,
+    "weights_seen": [
+      300,
+      700
+    ],
+    "_extraction_method": "regex_family_role_pairs + px_enum + weight_enum",
+    "_confidence": "high"
+  },
+  "spacing": {
+    "base_unit_px": 8.0,
+    "declared_scale": null,
+    "all_px_values": [
+      1.0,
+      2.0,
+      4.0,
+      8.0,
+      12.0,
+      16.0,
+      24.0,
+      32.0,
+      40.0,
+      48.0,
+      64.0,
+      80.0,
+      96.0,
+      160.0
+    ],
+    "_extraction_method": "regex_base_unit + scale_enum",
+    "_confidence": "medium"
+  },
+  "layout": {
+    "_extraction_method": "kept_section_text_for_a3",
+    "_confidence": "low",
+    "_section_size": 1495
+  },
+  "radius": {
+    "role_radius_pairs": {},
+    "all_px_values": [
+      1.0,
+      2.0,
+      4.0,
+      8.0,
+      12.0,
+      16.0,
+      24.0,
+      32.0,
+      40.0,
+      48.0,
+      64.0,
+      80.0,
+      96.0,
+      160.0
+    ],
+    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_confidence": "low"
+  },
+  "depth_elevation": {
+    "rgba_shadows": [
+      "rgba(0,0,0,0.3)"
+    ],
+    "inset_shadows": [
+      "inset + `1px solid #ffffff` | Keyboard focus ring |"
+    ],
+    "_extraction_method": "regex_rgba_inset",
+    "_confidence": "medium"
+  },
+  "responsive": {
+    "breakpoints_named": {},
+    "_extraction_method": "regex_breakpoint_table",
+    "_confidence": "low"
+  },
+  "dos_donts": {
+    "dos": [
+      "Use IBM Plex Sans at weight 300 for display sizes (42px+) — the lightness is intentional",
+      "Apply 0.16px letter-spacing on 14px body text and 0.32px on 12px captions",
+      "Use 0px border-radius on buttons, inputs, cards, and tiles — rectangles are the system",
+      "Reference `--cds-*` token names when implementing (e.g., `--cds-button-primary`, `--cds-text-primary`)",
+      "Use background-color layering (white → gray 10 → gray 20) for depth instead of shadows",
+      "Use bottom-border (not box) for input field indicators",
+      "Maintain the 48px default button height and asymmetric padding for icon accommodation",
+      "Apply Blue 60 (`#0f62fe`) as the sole accent — one blue to rule them all"
+    ],
+    "donts": [
+      "Don't round button corners — 0px radius is the Carbon identity",
+      "Don't use shadows on cards or tiles — flatness is the point",
+      "Don't introduce additional accent colors — IBM's system is monochromatic + blue",
+      "Don't use weight 700 (Bold) — the scale stops at 600 (Semibold)",
+      "Don't add letter-spacing to display-size text — tracking is only for 14px and below",
+      "Don't box inputs with full borders — Carbon inputs use bottom-border only",
+      "Don't use gradient backgrounds — IBM's surfaces are flat, solid colors",
+      "Don't deviate from the 8px spacing grid — every value should be divisible by 8 (with 2px and 4px for micro-adjustments)"
+    ],
+    "_extraction_method": "subsection_bullet_parse",
+    "_confidence": "high"
+  },
+  "sections_present": [
+    "visual_theme",
+    "color",
+    "typography",
+    "components",
+    "layout",
+    "depth_elevation",
+    "dos_donts",
+    "responsive",
+    "agent_guide"
+  ],
+  "sections_unhandled": [
+    "components",
+    "agent_guide"
+  ],
+  "sections_meta_for_llm": [
+    "visual_theme",
+    "agent_guide"
+  ],
+  "llm_followup_hints": [
+    "layout extraction has low confidence — recommend LLM review",
+    "radius extraction has low confidence — recommend LLM review",
+    "responsive extraction has low confidence — recommend LLM review"
+  ]
+}

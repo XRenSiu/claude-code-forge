@@ -1,0 +1,229 @@
+{
+  "system_name": "theverge",
+  "source": "open-design",
+  "extracted_at": "2026-05-03T13:38:57.586902Z",
+  "dialect": "A",
+  "fingerprint_hash": "094db6e7a6369bef4539f7319b5bca116ed1b8e8784c51f8f36be84e566b46ce",
+  "extraction_method": "programmatic_a1",
+  "tool_version": "1.0.0",
+  "color": {
+    "role_color_pairs": {
+      "jelly_mint": "#3cffd0",
+      "verge_ultraviolet": "#5200ff",
+      "console_mint_border": "#309875",
+      "deep_link_blue": "#3860be",
+      "focus_cyan": "#1eaedb",
+      "purple_rule": "#3d00bf",
+      "canvas_black": "#131313",
+      "surface_slate": "#2d2d2d",
+      "image_frame": "#313131",
+      "hazard_white": "#ffffff",
+      "absolute_black": "#000000",
+      "primary_text": "#ffffff",
+      "secondary_text": "#949494",
+      "muted_text": "#e9e9e9",
+      "inverted_text": "#131313",
+      "focus_ring": "#1eaedb",
+      "overlay_black": "rgba(0, 0, 0, 0.33)",
+      "dim_gray": "#8c8c8c"
+    },
+    "all_hex_colors": [
+      "#3cffd0",
+      "#5200ff",
+      "#309875",
+      "#3860be",
+      "#1eaedb",
+      "#3d00bf",
+      "#131313",
+      "#2d2d2d",
+      "#313131",
+      "#ffffff",
+      "#000000",
+      "#949494",
+      "#e9e9e9",
+      "#8c8c8c"
+    ],
+    "all_rgba_colors": [
+      "rgba(0, 0, 0, 0.33)"
+    ],
+    "all_hsla_colors": [],
+    "hex_count": 14,
+    "_extraction_method": "regex_role_pairs + hex_enum",
+    "_confidence": "high"
+  },
+  "typography": {
+    "families": [],
+    "all_px_values": [
+      10.0,
+      11.0,
+      12.0,
+      13.0,
+      15.0,
+      16.0,
+      18.0,
+      19.0,
+      20.0,
+      24.0,
+      32.0,
+      34.0,
+      60.0,
+      90.0,
+      107.0
+    ],
+    "declared_scale_px": null,
+    "weights_seen": [],
+    "_extraction_method": "regex_family_role_pairs + px_enum + weight_enum",
+    "_confidence": "medium"
+  },
+  "spacing": {
+    "base_unit_px": 24.0,
+    "declared_scale": [
+      1.0,
+      2.0,
+      4.0,
+      5.0,
+      6.0,
+      8.0,
+      9.0,
+      10.0,
+      12.0,
+      14.0,
+      15.0,
+      16.0,
+      20.0,
+      24.0,
+      25.0
+    ],
+    "all_px_values": [
+      2.0,
+      3.0,
+      4.0,
+      8.0,
+      10.0,
+      12.0,
+      14.0,
+      16.0,
+      20.0,
+      24.0,
+      25.0,
+      30.0,
+      32.0,
+      40.0,
+      48.0,
+      64.0
+    ],
+    "_extraction_method": "regex_base_unit + scale_enum",
+    "_confidence": "high"
+  },
+  "layout": {
+    "_extraction_method": "kept_section_text_for_a3",
+    "_confidence": "low",
+    "_section_size": 2245
+  },
+  "radius": {
+    "role_radius_pairs": {},
+    "all_px_values": [
+      2.0,
+      3.0,
+      4.0,
+      8.0,
+      10.0,
+      12.0,
+      14.0,
+      16.0,
+      20.0,
+      24.0,
+      25.0,
+      30.0,
+      32.0,
+      40.0,
+      48.0,
+      64.0
+    ],
+    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_confidence": "low"
+  },
+  "depth_elevation": {
+    "rgba_shadows": [
+      "rgba(0,0,0,0)",
+      "rgba(0, 0, 0, 0.33)"
+    ],
+    "inset_shadows": [
+      "inset` (placeholder) | Reset state for interactive elements |",
+      "inset` (mint/black/white) | Active tab underline — a signature Verge move |",
+      "inset underlines (0px -1px inset) or near-transparent 1px rings — none of them are traditional elevation shadows. The `#131313` canvas stays perfectly flat throughout",
+      "inset underline** on active tabs/nav links (mint"
+    ],
+    "_extraction_method": "regex_rgba_inset",
+    "_confidence": "medium"
+  },
+  "responsive": {
+    "breakpoints_named": {
+      "mobile": {
+        "min": 550,
+        "max": 767
+      },
+      "tablet": {
+        "min": 768,
+        "max": 1023
+      },
+      "desktop": {
+        "min": 1180,
+        "max": 1299
+      }
+    },
+    "_extraction_method": "regex_breakpoint_table",
+    "_confidence": "high"
+  },
+  "dos_donts": {
+    "dos": [
+      "**Do** use `#131313` as the canvas for every view. There is no light mode.",
+      "**Do** use Jelly Mint (`#3cffd0`) and Verge Ultraviolet (`#5200ff`) as hazard accents — buttons, borders, active states, and saturated color-block tiles.",
+      "**Do** use Manuka exclusively at 60px+ for hero headlines. Treat anything smaller as a bug.",
+      "**Do** round everything: 20px for cards, 24px for feature cards, 30–40px for pill buttons.",
+      "**Do** use PolySans Mono for UPPERCASE labels, timestamps, kickers, and button text. Lowercase mono doesn't exist here.",
+      "**Do** apply 1.5–1.9px letter-spacing to every ALL-CAPS label — this is a Verge signature.",
+      "**Do** use saturated color-block tiles (mint, purple, yellow, pink, orange, white) to elevate a story — never a drop shadow.",
+      "**Do** use `#3860be` (deep link blue) as the hover color on every link, regardless of base color.",
+      "**Do** apply the StoryStream timeline rail (1px dashed/solid `#3d00bf` or white) on feed views.",
+      "**Do** use thin-weight (300) PolySans at 19–20px with 1.9px tracking for \"fashion-whisper\" capitalized eyebrows — the contrast with the 107px Manuka shout is the whole voice."
+    ],
+    "donts": [
+      "**Don't** use a light background. The dark canvas is the product.",
+      "**Don't** add `box-shadow` for elevation. Use 1px borders or saturated accent fills instead.",
+      "**Don't** use square corners. Every interactive and content container is rounded.",
+      "**Don't** use Manuka for UI, buttons, or body copy. It's strictly display.",
+      "**Don't** use lowercase mono. PolySans Mono is always UPPERCASE.",
+      "**Don't** let mint and ultraviolet appear as background washes — they're hazard accents, not canvas tints.",
+      "**Don't** use gradients anywhere. The system is solid color blocks only.",
+      "**Don't** introduce new accent colors outside the declared mint / purple / yellow / pink / orange tile palette.",
+      "**Don't** pair Manuka with FK Roman Standard in the same headline cluster — Manuka is the only display shout, serif pulls are reserved for body moments.",
+      "**Don't** use `#3cffd0` text on a `#131313` background at under 16px — the contrast vibrates at small sizes."
+    ],
+    "_extraction_method": "subsection_bullet_parse",
+    "_confidence": "high"
+  },
+  "sections_present": [
+    "visual_theme",
+    "color",
+    "typography",
+    "components",
+    "layout",
+    "depth_elevation",
+    "dos_donts",
+    "responsive",
+    "agent_guide"
+  ],
+  "sections_unhandled": [
+    "components",
+    "agent_guide"
+  ],
+  "sections_meta_for_llm": [
+    "visual_theme",
+    "agent_guide"
+  ],
+  "llm_followup_hints": [
+    "layout extraction has low confidence — recommend LLM review",
+    "radius extraction has low confidence — recommend LLM review"
+  ]
+}
