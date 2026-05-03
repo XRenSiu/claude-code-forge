@@ -1,0 +1,258 @@
+# Rules — stripe
+
+rules:
+
+  - rule_id: stripe-color-navy-purple-foundation-001
+    section: color
+    preconditions:
+      product_type: [fintech, payment_infrastructure, b2b_saas, financial_services]
+      tone: [refined, engineered, premium]
+      kansei: [refined, structured, premium, sophisticated]
+      sd_anchors:
+        warm_to_cold: 0.0
+        ornate_to_minimal: 0.6
+        serious_to_playful: -0.5
+        modern_to_classical: -0.3
+    action:
+      base_canvas: '#ffffff'
+      heading_color: '#061b31'   # deep navy not black
+      brand_chromatic: '#533afd'   # saturated blue-violet
+      brand_dark_section: '#1c1e54'
+      no_pure_black_anywhere: true
+    why:
+      establish: warm-fintech-not-cold-enterprise
+      avoid: [pure_black_heading, cold_blue_brand, generic_fintech_palette]
+      balance: financial_authority ↔ warmth
+    emerges_from: [stripe]
+    provenance: original
+    confidence: 0.7
+
+  - rule_id: stripe-color-purple-ladder-002
+    section: color
+    preconditions:
+      product_type: [fintech, b2b_saas]
+      tone: [structured]
+      kansei: [structured, refined]
+    action:
+      brand_chromatic_ladder: 5-shade
+      typical_shades: ['#533afd primary', '#4434d4 hover', '#2e2b8c deep', '#b9b9f9 light', '#665efd mid']
+      no_opacity_substitute: true   # use real shades not single + alpha
+    why:
+      establish: state-aware-chromatic-ladder
+      avoid: [single_purple_with_opacity_states, multi_brand_color_competing]
+      balance: state_richness ↔ chromatic_discipline
+    emerges_from: [stripe]
+    provenance: original
+    confidence: 0.55
+
+  - rule_id: stripe-color-decorative-only-magenta-ruby-003
+    section: color
+    preconditions:
+      product_type: [fintech, marketing_app]
+      kansei: [refined, premium]
+    action:
+      decorative_accents: ['#ea2261 ruby', '#f96bee magenta']
+      decorative_role: gradient + hero_decoration (only)
+      no_interactive_use_of_decorative: true
+    why:
+      establish: decorative-not-interactive-color
+      avoid: [magenta_ruby_buttons_diluting_purple_cta]
+      balance: decorative_richness ↔ interactive_clarity
+    emerges_from: [stripe]
+    provenance: original
+    confidence: 0.5
+
+  - rule_id: stripe-color-blue-tinted-shadow-004
+    section: depth_elevation
+    preconditions:
+      product_type: [fintech, b2b_saas]
+      tone: [refined, atmospheric]
+      kansei: [refined, premium]
+      requires: [stripe-color-navy-purple-foundation-001]
+    action:
+      primary_shadow_color: 'rgba(50,50,93,0.25)'
+      secondary_shadow_color: 'rgba(0,0,0,0.1)'
+      shadow_strategy: multi_layer_with_negative_spread
+      typical_4_layer_stack: |
+        rgba(50,50,93,0.25) 0px 30px 45px -30px,
+        rgba(0,0,0,0.1) 0px 18px 36px -18px
+      no_neutral_gray_shadow: true
+    why:
+      establish: branded-atmospheric-depth
+      avoid: [generic_gray_shadow, single_layer_shadow_no_parallax, positive_spread_horizontal_blur]
+      balance: depth_signaling ↔ brand_atmosphere
+    emerges_from: [stripe]
+    provenance: original
+    confidence: 0.65
+
+  - rule_id: stripe-typography-sohne-ss01-required-005
+    section: typography
+    preconditions:
+      product_type: [fintech, b2b_saas]
+      tone: [refined, sophisticated]
+      kansei: [refined, sophisticated, structured]
+    action:
+      family_class: sohne_var_or_substitute (SF Pro Display fallback)
+      opentype_features_required: [ss01]
+      ss01_on_all_text: true   # not optional
+      tnum_for_financial_data: true
+    why:
+      establish: opentype-as-brand-DNA
+      avoid: [generic_sohne_without_ss01, oldstyle_numerals_in_data_tables]
+      balance: brand_distinctiveness ↔ readability
+    emerges_from: [stripe]
+    provenance: original
+    confidence: 0.65
+
+  - rule_id: stripe-typography-light-weight-300-signature-006
+    section: typography
+    preconditions:
+      product_type: [fintech, b2b_saas, premium_brand]
+      tone: [refined, premium, whisper_authority]
+      kansei: [refined, premium, calm]
+    action:
+      display_weight_default: 300
+      body_weight_default: 300
+      ui_weight: 400 (buttons/nav only)
+      no_weight_above_400_in_primary_text: true
+      reason: lightness_as_luxury_anti_convention
+    why:
+      establish: whisper-weight-luxury
+      avoid: [bold_hero_too_loud, weight_700_anywhere_except_code, ultra_light_below_300_unreadable]
+      balance: luxury_whisper ↔ readability
+    emerges_from: [stripe]
+    provenance: original
+    confidence: 0.7
+    known_conflicts:
+      - rule: duolingo-typography-extra-bold-rounded-display-003
+        reason: weight 300 luxury whisper vs weight 800 confident shout — opposite typographic stances
+
+  - rule_id: stripe-typography-progressive-tracking-007
+    section: typography
+    preconditions:
+      product_type: [fintech, b2b_saas]
+      tone: [refined]
+      kansei: [refined, structured]
+    action:
+      tracking_at_56px: -1.4
+      tracking_at_48px: -0.96
+      tracking_at_32px: -0.64
+      tracking_at_26px: -0.26
+      tracking_at_16px: normal
+      no_positive_tracking_at_display: true
+    why:
+      establish: code-like-compression
+      avoid: [positive_tracking_at_display, uniform_tight_tracking_at_body]
+      balance: density ↔ readability
+    emerges_from: [stripe]
+    provenance: original
+    confidence: 0.55
+
+  - rule_id: stripe-components-conservative-radius-008
+    section: components
+    preconditions:
+      product_type: [fintech, b2b_saas, financial_services]
+      tone: [conservative, engineered]
+      kansei: [structured, refined, conservative]
+    action:
+      radius_range: 4-8px
+      no_pill_buttons: true
+      no_large_radius_above_12px: true
+      reason: fintech_engineering_trustworthy_micro_warmth
+    why:
+      establish: conservative-engineering-radius
+      avoid: [pill_buttons_too_friendly_fintech, sharp_zero_radius_too_cold]
+      balance: micro_warmth ↔ professional_authority
+    emerges_from: [stripe]
+    provenance: original
+    confidence: 0.55
+
+  - rule_id: stripe-components-dashed-affordance-009
+    section: components
+    preconditions:
+      product_type: [fintech, b2b_saas, drag_drop_app]
+      kansei: [structured]
+    action:
+      dashed_border_use: placeholder_drop_zones (purple) + decorative_accents (magenta)
+      solid_border_for_committed_state: true
+    why:
+      establish: dashed-as-incomplete-affordance
+      avoid: [solid_border_for_drop_zone_breaks_affordance]
+      balance: visual_clarity ↔ interaction_signaling
+    emerges_from: [stripe]
+    provenance: original
+    confidence: 0.5
+
+  - rule_id: stripe-spacing-fine-grained-financial-010
+    section: spacing
+    preconditions:
+      product_type: [fintech, b2b_saas, financial_services, dense_data]
+      kansei: [structured, dense]
+    action:
+      base_unit: 8
+      scale: [1, 2, 4, 6, 8, 10, 11, 12, 14, 16, 18, 20]
+      dense_at_small_end: true
+      reason: financial_chart_annotations_table_cells_need_micro_alignment
+    why:
+      establish: fine-grained-financial-precision
+      avoid: [coarse_8_only_breaking_chart_alignment]
+      balance: structure ↔ data_density_alignment
+    emerges_from: [stripe]
+    provenance: original
+    confidence: 0.5
+
+  - rule_id: stripe-layout-dense-data-generous-chrome-011
+    section: layout
+    preconditions:
+      product_type: [fintech, b2b_saas, financial_services]
+      kansei: [structured, dense]
+    action:
+      data_density: tight (financial tables/charts)
+      chrome_density: generous (UI surrounding data)
+      strategy: controlled_density (not uniform)
+    why:
+      establish: spreadsheet-in-beautiful-frame
+      avoid: [uniform_dense_overwhelming, uniform_generous_data_loose]
+      balance: information_density ↔ visual_calm
+    emerges_from: [stripe]
+    provenance: original
+    confidence: 0.5
+
+  - rule_id: stripe-voice-engineering-luxury-012
+    section: voice
+    preconditions:
+      product_type: [fintech, b2b_saas, premium_brand]
+      tone: [refined, engineered]
+      kansei: [refined, premium, sophisticated]
+    action:
+      voice_personality: engineering_luxury (engineering paper as luxury magazine)
+      avoid_marketing_bro_tone: true
+      avoid_overdose_jargon: true
+    why:
+      establish: financial-grade-restraint
+      avoid: [marketing_friendly_fintech_tone, technical_specs_dump]
+      balance: precision_communication ↔ tone_restraint
+    emerges_from: [stripe]
+    provenance: original
+    confidence: 0.5
+
+  - rule_id: stripe-anti-pattern-decoration-creep-013
+    section: anti_patterns
+    preconditions:
+      kansei: [refined, sophisticated, premium]
+    action:
+      forbidden:
+        - weight_600_700_for_sohne_headlines
+        - large_border_radius_or_pill_buttons
+        - neutral_gray_shadows_no_blue_tint
+        - skipping_ss01_opentype_feature
+        - pure_black_headings_breaking_navy_warmth
+        - magenta_ruby_for_interactive_buttons
+        - positive_letter_spacing_at_display
+        - oldstyle_numerals_in_financial_tables
+    why:
+      establish: discipline-of-engineering-luxury
+      avoid: [drift_into_friendly_fintech, drift_into_loud_marketing]
+    emerges_from: [stripe]
+    provenance: original
+    confidence: 0.6

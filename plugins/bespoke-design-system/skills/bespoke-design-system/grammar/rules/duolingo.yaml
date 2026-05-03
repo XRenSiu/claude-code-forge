@@ -1,0 +1,192 @@
+# Rules — duolingo
+
+rules:
+
+  - rule_id: duolingo-color-dominant-chromatic-001
+    section: color
+    preconditions:
+      product_type: [education, learning_game, gamified_app, kids_friendly_app]
+      tone: [friendly, energetic, encouraging, playful]
+      kansei: [playful, energetic, encouraging, friendly, optimistic]
+      sd_anchors:
+        warm_to_cold: -0.4
+        ornate_to_minimal: -0.2
+        serious_to_playful: 0.6
+        modern_to_classical: -0.5
+    action:
+      base_canvas: pure white #ffffff
+      primary_chromatic_dominance: 30% surface coverage (not spot use)
+      primary_hue_range: [85, 110]   # owl green
+      primary_saturation: 0.85+
+      primary_lightness: 0.45-0.55
+      family_required: 4-shade (deep/mid/light/pale) for state coverage
+    why:
+      establish: gamification-via-chromatic-saturation
+      avoid: [chromatic_spot_use_only, single_shade_no_states, ai_slop_purple]
+      balance: brand_loudness ↔ legibility
+    emerges_from: [duolingo]
+    provenance: original
+    confidence: 0.7
+    known_conflicts:
+      - rule: linear-app-color-dark-native-001
+        reason: white canvas + dominant green vs near-black canvas + spot brand — opposite chromatic strategies
+
+  - rule_id: duolingo-color-dopamine-mapped-accents-002
+    section: color
+    preconditions:
+      product_type: [education, learning_game, gamified_app]
+      tone: [encouraging]
+      kansei: [playful, encouraging]
+    action:
+      accent_count: 5_to_7 (one per game-mechanic)
+      mapping_discipline: each_accent_maps_one_concept_only
+      no_decorative_use: true
+      typical_accents: [streak_orange, gem_pink_purple, info_blue, error_red, premium_yellow]
+    why:
+      establish: visual-memory-training
+      avoid: [decorative_color_use, multi_concept_color_overlap]
+      balance: visual_richness ↔ semantic_clarity
+    emerges_from: [duolingo]
+    provenance: original
+    confidence: 0.65
+
+  - rule_id: duolingo-typography-extra-bold-rounded-display-003
+    section: typography
+    preconditions:
+      product_type: [education, learning_game, kids_friendly_app, gamified_app]
+      tone: [confident, friendly]
+      kansei: [playful, confident, encouraging]
+    action:
+      display_family_class: rounded_geometric_sans_with_bold_default
+      display_weight_default: 800
+      no_weight_below: 700 (in chrome)
+      body_family_separate: humanist_sans_or_inter
+      display_size_default_min: 48px
+      letter_forms: rounded_terminals (no sharp serifs)
+    why:
+      establish: confidence-as-loud-identity
+      avoid: [whisper_weight_300, sharp_serif_breaking_friendliness, weight_700_feels_weak]
+      balance: brand_loudness ↔ body_readability
+    emerges_from: [duolingo]
+    provenance: original
+    confidence: 0.7
+    known_conflicts:
+      - rule: stripe-typography-light-weight-300-signature
+        reason: extra-bold-default vs whisper-weight-300 — opposite typographic stances
+
+  - rule_id: duolingo-components-tactile-press-button-004
+    section: components
+    preconditions:
+      product_type: [education, learning_game, gamified_app, mobile_app]
+      tone: [friendly, tactile]
+      kansei: [playful, encouraging, tactile]
+    action:
+      button_radius_px: 16
+      button_chunky_bottom_shadow: 4px solid (darker variant)
+      active_state: translate-y +4px AND remove bottom-shadow
+      hover_state: lighter background variant
+      reveal_via: physical_press_affordance
+    why:
+      establish: dopamine-via-tactile-press
+      avoid: [flat_modern_no_affordance, blur_box_shadow_too_soft, static_hover_only]
+      balance: physicality ↔ visual_simplicity
+    emerges_from: [duolingo]
+    provenance: original
+    confidence: 0.7
+
+  - rule_id: duolingo-components-skill-tree-node-005
+    section: components
+    preconditions:
+      product_type: [education, learning_game, gamified_app]
+      tone: [exploratory]
+      kansei: [playful, exploratory, encouraging]
+    action:
+      node_shape: circular (50% radius)
+      node_size_px: 70-90 range
+      node_chunky_bottom_border: 6px darker variant
+      active_pulse: 1.0 to 1.05 every 1.6s
+      locked_state: gray tint
+    why:
+      establish: spatial-progression-as-game-map
+      avoid: [linear_list_navigation, list_view_killing_game_metaphor]
+      balance: navigation_clarity ↔ game_metaphor
+    emerges_from: [duolingo]
+    provenance: original
+    confidence: 0.65
+
+  - rule_id: duolingo-components-borders-chunky-only-006
+    section: components
+    preconditions:
+      product_type: [education, learning_game, gamified_app]
+      tone: [tactile, friendly]
+      kansei: [playful, tactile]
+    action:
+      border_min_width: 2px
+      preferred_border_width: 2-3px
+      no_hairlines_below_2px: true
+      border_color_strategy: solid neutral (not translucent)
+    why:
+      establish: cardgame-physical-boundary
+      avoid: [hairline_modern_minimalism, translucent_border_softening]
+      balance: physicality ↔ modern_legibility
+    emerges_from: [duolingo]
+    provenance: original
+    confidence: 0.6
+
+  - rule_id: duolingo-spacing-4px-base-007
+    section: spacing
+    preconditions:
+      product_type: [education, learning_game, mobile_app]
+      tone: [tactile]
+      kansei: [playful, tactile]
+    action:
+      base_unit: 4
+      scale: [4, 8, 12, 16, 24, 32, 48, 64]
+      reason_for_4: required for chunky shadow alignment increments
+    why:
+      establish: micro-grid-supports-chunky-shadow-alignment
+      avoid: [8px_only_grid_too_coarse]
+      balance: alignment_precision ↔ rhythm
+    emerges_from: [duolingo]
+    provenance: original
+    confidence: 0.55
+
+  - rule_id: duolingo-motion-overshoot-easing-008
+    section: motion
+    preconditions:
+      product_type: [education, learning_game, gamified_app]
+      tone: [playful, encouraging]
+      kansei: [playful, encouraging, exploratory]
+    action:
+      easing_for_unlocks: cubic-bezier(0.34, 1.56, 0.64, 1)   # back-out overshoot
+      easing_for_press: ease-out (180ms)
+      duration_press_ms: 180
+      duration_unlock_ms: 320
+      character_animation_required: mascot blinks/idle/celebrate
+    why:
+      establish: emotional-reward-via-overshoot
+      avoid: [linear_easing, ease-out-only_no_emotion, static_brand_logo]
+      balance: emotional_signal ↔ feedback_clarity
+    emerges_from: [duolingo]
+    provenance: original
+    confidence: 0.65
+
+  - rule_id: duolingo-anti-pattern-flatten-009
+    section: anti_patterns
+    preconditions:
+      kansei: [playful, encouraging, tactile]
+    action:
+      forbidden:
+        - hairline_borders_below_2px
+        - removing_chunky_bottom_shadow_from_buttons
+        - weight_below_700_in_chrome
+        - sharp_serif_typography
+        - second_dominant_chromatic_competing_with_primary_green
+        - making_mascot_static_or_logo_only
+        - blur_heavy_box_shadow_softening_chunky_system
+    why:
+      establish: discipline-of-tactile-game-aesthetic
+      avoid: [drift_into_modern_flat_minimalism, drift_into_static_brand_logo]
+    emerges_from: [duolingo]
+    provenance: original
+    confidence: 0.7

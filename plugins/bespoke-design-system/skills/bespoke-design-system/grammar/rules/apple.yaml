@@ -1,0 +1,249 @@
+# Rules — apple
+
+rules:
+
+  - rule_id: apple-color-binary-section-rhythm-001
+    section: color
+    preconditions:
+      product_type: [premium_electronics, premium_consumer_brand, ecommerce, lifestyle_app]
+      tone: [restrained, premium, cinematic]
+      kansei: [premium, refined, structured, restrained]
+      sd_anchors:
+        warm_to_cold: 0.0
+        ornate_to_minimal: 0.7
+        serious_to_playful: -0.5
+        modern_to_classical: -0.3
+    action:
+      base_canvas_strategy: alternating_chapters
+      chapter_dark: '#000000'
+      chapter_neutral: '#f5f5f7'
+      chapter_white: '#ffffff'
+      no_4th_base_chapter: true
+    why:
+      establish: cinematic-chapter-rhythm
+      avoid: [single_surface_visual_monotony, color_chapter_breaking_chromatic_restraint]
+      balance: visual_drama ↔ chromatic_discipline
+    emerges_from: [apple]
+    provenance: original
+    confidence: 0.7
+
+  - rule_id: apple-color-blue-action-only-002
+    section: color
+    preconditions:
+      product_type: [premium_consumer_brand, ecommerce]
+      tone: [restrained]
+      kansei: [structured, refined]
+    action:
+      action_color_family: 3 shade ['#0071e3', '#0066cc', '#2997ff']
+      action_role: cta + link + selection + focus (only)
+      no_decorative_blue_use: true
+    why:
+      establish: blue-as-universal-action-signal
+      avoid: [decorative_blue, multi_brand_color_competing]
+      balance: signal_clarity ↔ chromatic_minimalism
+    emerges_from: [apple]
+    provenance: original
+    confidence: 0.65
+
+  - rule_id: apple-color-near-black-text-1d1d1f-003
+    section: color
+    preconditions:
+      product_type: [premium_consumer_brand, content_platform]
+      tone: [refined, premium]
+      kansei: [refined, premium]
+    action:
+      primary_text_hex: '#1d1d1f'   # near-black with subtle warmth
+      reason: 1.1_percent_offset_for_warmth
+      no_pure_black_text: true
+    why:
+      establish: warm-subtle-text
+      avoid: [pure_black_breaking_warm_subtlety]
+      balance: contrast ↔ warmth
+    emerges_from: [apple]
+    provenance: original
+    confidence: 0.55
+
+  - rule_id: apple-color-dark-surface-4-step-004
+    section: color
+    preconditions:
+      product_type: [premium_consumer_brand, dual_mode_app]
+      kansei: [structured, refined]
+    action:
+      dark_surface_ladder: 4 steps ['#272729', '#262629', '#28282b', '#2a2a2c']
+      reason: dark_chapter_internal_hierarchy_without_chromatic_break
+      no_single_dark_surface: true
+    why:
+      establish: dark-chapter-fine-grained-hierarchy
+      avoid: [single_dark_no_layering, large_chromatic_step_breaking_subtlety]
+      balance: layering_depth ↔ chromatic_restraint
+    emerges_from: [apple]
+    provenance: original
+    confidence: 0.5
+
+  - rule_id: apple-typography-display-text-dual-005
+    section: typography
+    preconditions:
+      product_type: [premium_consumer_brand, dual_mode_app, marketing_and_commerce]
+      tone: [refined, premium]
+      kansei: [refined, premium, structured]
+    action:
+      display_family_class: SF_Pro_Display_or_substitute (for hero/headline)
+      text_family_class: SF_Pro_Text_or_substitute (for retail/dense_ui)
+      role_split: display_for_hero_text_for_retail
+      no_text_family_for_hero_or_display_for_retail: true
+    why:
+      establish: family-as-reading-mode
+      avoid: [single_family_breaking_reading_mode_distinction]
+      balance: identity ↔ reading_optimization
+    emerges_from: [apple]
+    provenance: original
+    confidence: 0.6
+
+  - rule_id: apple-typography-billboard-display-tight-tracking-006
+    section: typography
+    preconditions:
+      product_type: [premium_consumer_brand, marketing_app]
+      tone: [premium, cinematic]
+      kansei: [premium, refined]
+    action:
+      hero_size_px_max: 80
+      tracking_at_80px: -1.2
+      tracking_at_56px: -0.28
+      no_positive_tracking_at_display: true
+      reason: billboard_scale_with_engineering_restraint
+    why:
+      establish: large-but-controlled-display
+      avoid: [positive_tracking_at_display_loose_advertising, small_display_killing_product_launch]
+      balance: visual_impact ↔ engineering_restraint
+    emerges_from: [apple]
+    provenance: original
+    confidence: 0.6
+
+  - rule_id: apple-typography-600-dominant-emphasis-007
+    section: typography
+    preconditions:
+      product_type: [premium_consumer_brand]
+      kansei: [refined, restrained]
+    action:
+      dominant_emphasis_weight: 600
+      selective_strong_weight: 700
+      selective_light_weight: 300
+      no_uniform_weight: true
+    why:
+      establish: 600-as-confident-default-with-selective-extremes
+      avoid: [uniform_700_bold_loud, uniform_300_light_weak_authority]
+      balance: hierarchy_clarity ↔ visual_calm
+    emerges_from: [apple]
+    provenance: original
+    confidence: 0.55
+
+  - rule_id: apple-components-pill-capsule-family-008
+    section: components
+    preconditions:
+      product_type: [premium_consumer_brand, ecommerce]
+      tone: [refined, premium]
+      kansei: [refined, premium, structured]
+    action:
+      cta_radius_options: [18, 28, 36, 56, 100, 980]   # capsule/pill family
+      circle_radius: 50%
+      standard_button_radius: 8
+      reason: capsule_signature_anchored_but_soft
+    why:
+      establish: capsule-signature
+      avoid: [rectangular_cta, full_pill_only_breaking_anchored, single_radius_breaking_capsule_family]
+      balance: softness ↔ anchored_authority
+    emerges_from: [apple]
+    provenance: original
+    confidence: 0.6
+
+  - rule_id: apple-components-restraint-depth-009
+    section: depth_elevation
+    preconditions:
+      product_type: [premium_consumer_brand]
+      tone: [restrained]
+      kansei: [restrained, refined]
+    action:
+      shadow_strategy: contrast_and_surface_led (shadows secondary)
+      shadow_alpha_max: 0.22
+      preferred_separation: surface_color_change
+      no_heavy_shadow_stacks: true
+    why:
+      establish: contrast-led-not-shadow-led
+      avoid: [heavy_shadow_breaking_restraint, no_elevation_no_hierarchy]
+      balance: depth ↔ restraint
+    emerges_from: [apple]
+    provenance: original
+    confidence: 0.55
+
+  - rule_id: apple-components-border-led-retail-010
+    section: components
+    preconditions:
+      product_type: [ecommerce, retail_app, dense_ui]
+      kansei: [structured, dense, refined]
+    action:
+      retail_card_strategy: border_led_containment (not heavy card decoration)
+      typical_borders: ['#d2d2d7 soft', '#86868b stronger']
+      avoid_heavy_card_ornamentation: true
+    why:
+      establish: dense-info-light-containment
+      avoid: [heavy_borders_visual_weight, no_borders_dense_info_lost_structure]
+      balance: structure ↔ visual_weight
+    emerges_from: [apple]
+    provenance: original
+    confidence: 0.5
+
+  - rule_id: apple-spacing-8-base-with-microsteps-011
+    section: spacing
+    preconditions:
+      product_type: [premium_consumer_brand, ecommerce]
+      kansei: [structured, dense]
+    action:
+      base_unit: 8
+      micro_step_values: [2, 4, 6, 7, 9, 10]
+      utility_intervals: [14, 17, 20]
+      reason: retail_density_requires_fine_grained_choices
+    why:
+      establish: rigid-grid-with-retail-flexibility
+      avoid: [pure_8_only_too_coarse_for_retail]
+      balance: structure ↔ density_flexibility
+    emerges_from: [apple]
+    provenance: original
+    confidence: 0.5
+
+  - rule_id: apple-voice-product-first-restrained-012
+    section: voice
+    preconditions:
+      product_type: [premium_consumer_brand, marketing_app]
+      tone: [restrained, premium]
+      kansei: [restrained, premium]
+    action:
+      voice_personality: product_first_keynote_register
+      avoid_marketing_superlatives: true
+      avoid_overdose_specs: true
+    why:
+      establish: keynote-restraint
+      avoid: [marketing_hyperbole, technical_spec_dump]
+      balance: claim_strength ↔ tone_restraint
+    emerges_from: [apple]
+    provenance: original
+    confidence: 0.5
+
+  - rule_id: apple-anti-pattern-decoration-creep-013
+    section: anti_patterns
+    preconditions:
+      kansei: [restrained, premium, refined]
+    action:
+      forbidden:
+        - broad_secondary_accents_competing_with_apple_blue
+        - heavy_shadows_glow_decorative_gradients
+        - mixed_unrelated_fonts
+        - single_radius_for_all_components
+        - thick_borders_loud_effects_in_commerce
+        - removing_dark_light_chapter_rhythm
+        - treating_marketing_and_purchase_as_separate_systems
+    why:
+      establish: discipline-of-restrained-premium
+      avoid: [drift_into_loud_marketing, drift_into_decorative_chrome]
+    emerges_from: [apple]
+    provenance: original
+    confidence: 0.6

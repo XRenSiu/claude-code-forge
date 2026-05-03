@@ -1,15 +1,1582 @@
 {
   "$schema_description": "Rules relationship graph. Rebuilt by tools/rebuild_graph.py.",
-  "version": "0.0.0",
-  "rebuilt_at": "2026-05-03T13:41:56.442471Z",
-  "node_count": 20,
+  "version": "0.3.0",
+  "rebuilt_at": "2026-05-03T14:08:38.124108Z",
+  "node_count": 127,
   "edge_counts": {
-    "depends_on": 17,
-    "constrains": 17,
-    "co_occurs_with": 10,
-    "conflicts_with": 6
+    "depends_on": 123,
+    "constrains": 123,
+    "co_occurs_with": 68,
+    "conflicts_with": 11
   },
   "nodes": [
+    {
+      "rule_id": "airbnb-anti-pattern-photography-disrespect-011",
+      "relations": {
+        "depends_on": [],
+        "constrains": [],
+        "co_occurs_with": [],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "airbnb-color-photography-first-canvas-001",
+      "relations": {
+        "depends_on": [],
+        "constrains": [
+          {
+            "rule": "airbnb-typography-single-family-vf-004"
+          },
+          {
+            "rule": "airbnb-typography-500-is-regular-005"
+          },
+          {
+            "rule": "airbnb-typography-display-tight-body-relaxed-006"
+          },
+          {
+            "rule": "airbnb-components-rounded-photo-cards-007"
+          },
+          {
+            "rule": "airbnb-components-circular-icon-buttons-008"
+          },
+          {
+            "rule": "airbnb-components-sticky-booking-009"
+          }
+        ],
+        "co_occurs_with": [
+          {
+            "rule": "airbnb-color-rausch-key-actions-only-002",
+            "frequency": 1.0
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "airbnb-color-rausch-key-actions-only-002",
+      "relations": {
+        "depends_on": [],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "airbnb-color-photography-first-canvas-001",
+            "frequency": 1.0
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "airbnb-color-singular-text-token-003",
+      "relations": {
+        "depends_on": [],
+        "constrains": [],
+        "co_occurs_with": [],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "airbnb-components-circular-icon-buttons-008",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "airbnb-color-photography-first-canvas-001",
+            "reason": "components depends on color foundation (same source: airbnb)"
+          },
+          {
+            "rule": "airbnb-typography-single-family-vf-004",
+            "reason": "components depends on typography foundation (same source: airbnb)"
+          },
+          {
+            "rule": "airbnb-layout-hairline-separators-010",
+            "reason": "components depends on layout foundation (same source: airbnb)"
+          }
+        ],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "airbnb-components-rounded-photo-cards-007",
+            "frequency": 1.0
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "airbnb-components-rounded-photo-cards-007",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "airbnb-color-photography-first-canvas-001",
+            "reason": "components depends on color foundation (same source: airbnb)"
+          },
+          {
+            "rule": "airbnb-typography-single-family-vf-004",
+            "reason": "components depends on typography foundation (same source: airbnb)"
+          },
+          {
+            "rule": "airbnb-layout-hairline-separators-010",
+            "reason": "components depends on layout foundation (same source: airbnb)"
+          }
+        ],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "airbnb-components-circular-icon-buttons-008",
+            "frequency": 1.0
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "airbnb-components-sticky-booking-009",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "airbnb-color-photography-first-canvas-001",
+            "reason": "components depends on color foundation (same source: airbnb)"
+          },
+          {
+            "rule": "airbnb-typography-single-family-vf-004",
+            "reason": "components depends on typography foundation (same source: airbnb)"
+          },
+          {
+            "rule": "airbnb-layout-hairline-separators-010",
+            "reason": "components depends on layout foundation (same source: airbnb)"
+          }
+        ],
+        "constrains": [],
+        "co_occurs_with": [],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "airbnb-layout-hairline-separators-010",
+      "relations": {
+        "depends_on": [],
+        "constrains": [
+          {
+            "rule": "airbnb-components-rounded-photo-cards-007"
+          },
+          {
+            "rule": "airbnb-components-circular-icon-buttons-008"
+          },
+          {
+            "rule": "airbnb-components-sticky-booking-009"
+          }
+        ],
+        "co_occurs_with": [],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "airbnb-typography-500-is-regular-005",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "airbnb-color-photography-first-canvas-001",
+            "reason": "typography depends on color foundation (same source: airbnb)"
+          }
+        ],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "airbnb-typography-display-tight-body-relaxed-006",
+            "frequency": 1.0
+          },
+          {
+            "rule": "airbnb-typography-single-family-vf-004",
+            "frequency": 1.0
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "airbnb-typography-display-tight-body-relaxed-006",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "airbnb-color-photography-first-canvas-001",
+            "reason": "typography depends on color foundation (same source: airbnb)"
+          }
+        ],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "airbnb-typography-500-is-regular-005",
+            "frequency": 1.0
+          },
+          {
+            "rule": "airbnb-typography-single-family-vf-004",
+            "frequency": 1.0
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "airbnb-typography-single-family-vf-004",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "airbnb-color-photography-first-canvas-001",
+            "reason": "typography depends on color foundation (same source: airbnb)"
+          }
+        ],
+        "constrains": [
+          {
+            "rule": "airbnb-components-rounded-photo-cards-007"
+          },
+          {
+            "rule": "airbnb-components-circular-icon-buttons-008"
+          },
+          {
+            "rule": "airbnb-components-sticky-booking-009"
+          }
+        ],
+        "co_occurs_with": [
+          {
+            "rule": "airbnb-typography-500-is-regular-005",
+            "frequency": 1.0
+          },
+          {
+            "rule": "airbnb-typography-display-tight-body-relaxed-006",
+            "frequency": 1.0
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "apple-anti-pattern-decoration-creep-013",
+      "relations": {
+        "depends_on": [],
+        "constrains": [],
+        "co_occurs_with": [],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "apple-color-binary-section-rhythm-001",
+      "relations": {
+        "depends_on": [],
+        "constrains": [
+          {
+            "rule": "apple-typography-display-text-dual-005"
+          },
+          {
+            "rule": "apple-typography-billboard-display-tight-tracking-006"
+          },
+          {
+            "rule": "apple-typography-600-dominant-emphasis-007"
+          },
+          {
+            "rule": "apple-components-pill-capsule-family-008"
+          },
+          {
+            "rule": "apple-components-restraint-depth-009"
+          },
+          {
+            "rule": "apple-components-border-led-retail-010"
+          }
+        ],
+        "co_occurs_with": [
+          {
+            "rule": "apple-color-blue-action-only-002",
+            "frequency": 1.0
+          },
+          {
+            "rule": "apple-color-dark-surface-4-step-004",
+            "frequency": 1.0
+          },
+          {
+            "rule": "apple-color-near-black-text-1d1d1f-003",
+            "frequency": 1.0
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "apple-color-blue-action-only-002",
+      "relations": {
+        "depends_on": [],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "apple-color-binary-section-rhythm-001",
+            "frequency": 1.0
+          },
+          {
+            "rule": "apple-color-dark-surface-4-step-004",
+            "frequency": 1.0
+          },
+          {
+            "rule": "apple-color-near-black-text-1d1d1f-003",
+            "frequency": 1.0
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "apple-color-dark-surface-4-step-004",
+      "relations": {
+        "depends_on": [],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "apple-color-binary-section-rhythm-001",
+            "frequency": 1.0
+          },
+          {
+            "rule": "apple-color-blue-action-only-002",
+            "frequency": 1.0
+          },
+          {
+            "rule": "apple-color-near-black-text-1d1d1f-003",
+            "frequency": 1.0
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "apple-color-near-black-text-1d1d1f-003",
+      "relations": {
+        "depends_on": [],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "apple-color-binary-section-rhythm-001",
+            "frequency": 1.0
+          },
+          {
+            "rule": "apple-color-blue-action-only-002",
+            "frequency": 1.0
+          },
+          {
+            "rule": "apple-color-dark-surface-4-step-004",
+            "frequency": 1.0
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "apple-components-border-led-retail-010",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "apple-color-binary-section-rhythm-001",
+            "reason": "components depends on color foundation (same source: apple)"
+          },
+          {
+            "rule": "apple-typography-display-text-dual-005",
+            "reason": "components depends on typography foundation (same source: apple)"
+          },
+          {
+            "rule": "apple-spacing-8-base-with-microsteps-011",
+            "reason": "components depends on spacing foundation (same source: apple)"
+          },
+          {
+            "rule": "apple-components-restraint-depth-009",
+            "reason": "components depends on depth_elevation foundation (same source: apple)"
+          }
+        ],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "apple-components-pill-capsule-family-008",
+            "frequency": 1.0
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "apple-components-pill-capsule-family-008",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "apple-color-binary-section-rhythm-001",
+            "reason": "components depends on color foundation (same source: apple)"
+          },
+          {
+            "rule": "apple-typography-display-text-dual-005",
+            "reason": "components depends on typography foundation (same source: apple)"
+          },
+          {
+            "rule": "apple-spacing-8-base-with-microsteps-011",
+            "reason": "components depends on spacing foundation (same source: apple)"
+          },
+          {
+            "rule": "apple-components-restraint-depth-009",
+            "reason": "components depends on depth_elevation foundation (same source: apple)"
+          }
+        ],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "apple-components-border-led-retail-010",
+            "frequency": 1.0
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "apple-components-restraint-depth-009",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "apple-color-binary-section-rhythm-001",
+            "reason": "depth_elevation depends on color foundation (same source: apple)"
+          }
+        ],
+        "constrains": [
+          {
+            "rule": "apple-components-pill-capsule-family-008"
+          },
+          {
+            "rule": "apple-components-border-led-retail-010"
+          }
+        ],
+        "co_occurs_with": [],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "apple-spacing-8-base-with-microsteps-011",
+      "relations": {
+        "depends_on": [],
+        "constrains": [
+          {
+            "rule": "apple-components-pill-capsule-family-008"
+          },
+          {
+            "rule": "apple-components-border-led-retail-010"
+          }
+        ],
+        "co_occurs_with": [],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "apple-typography-600-dominant-emphasis-007",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "apple-color-binary-section-rhythm-001",
+            "reason": "typography depends on color foundation (same source: apple)"
+          }
+        ],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "apple-typography-billboard-display-tight-tracking-006",
+            "frequency": 1.0
+          },
+          {
+            "rule": "apple-typography-display-text-dual-005",
+            "frequency": 1.0
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "apple-typography-billboard-display-tight-tracking-006",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "apple-color-binary-section-rhythm-001",
+            "reason": "typography depends on color foundation (same source: apple)"
+          }
+        ],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "apple-typography-600-dominant-emphasis-007",
+            "frequency": 1.0
+          },
+          {
+            "rule": "apple-typography-display-text-dual-005",
+            "frequency": 1.0
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "apple-typography-display-text-dual-005",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "apple-color-binary-section-rhythm-001",
+            "reason": "typography depends on color foundation (same source: apple)"
+          }
+        ],
+        "constrains": [
+          {
+            "rule": "apple-components-pill-capsule-family-008"
+          },
+          {
+            "rule": "apple-components-border-led-retail-010"
+          }
+        ],
+        "co_occurs_with": [
+          {
+            "rule": "apple-typography-600-dominant-emphasis-007",
+            "frequency": 1.0
+          },
+          {
+            "rule": "apple-typography-billboard-display-tight-tracking-006",
+            "frequency": 1.0
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "apple-voice-product-first-restrained-012",
+      "relations": {
+        "depends_on": [],
+        "constrains": [],
+        "co_occurs_with": [],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "brutalism-anti-pattern-decoration-creep-007",
+      "relations": {
+        "depends_on": [],
+        "constrains": [],
+        "co_occurs_with": [],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "brutalism-color-warm-functional-binary-001",
+      "relations": {
+        "depends_on": [],
+        "constrains": [
+          {
+            "rule": "brutalism-typography-grotesque-broad-weight-002"
+          },
+          {
+            "rule": "brutalism-components-single-chromatic-anchor-004"
+          }
+        ],
+        "co_occurs_with": [],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "brutalism-components-single-chromatic-anchor-004",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "brutalism-color-warm-functional-binary-001",
+            "reason": "components depends on color foundation (same source: brutalism)"
+          },
+          {
+            "rule": "brutalism-typography-grotesque-broad-weight-002",
+            "reason": "components depends on typography foundation (same source: brutalism)"
+          },
+          {
+            "rule": "brutalism-spacing-tight-functional-003",
+            "reason": "components depends on spacing foundation (same source: brutalism)"
+          }
+        ],
+        "constrains": [
+          {
+            "rule": "brutalism-motion-functional-not-dramatic-005"
+          }
+        ],
+        "co_occurs_with": [],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "brutalism-motion-functional-not-dramatic-005",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "brutalism-components-single-chromatic-anchor-004",
+            "reason": "motion depends on components foundation (same source: brutalism)"
+          }
+        ],
+        "constrains": [],
+        "co_occurs_with": [],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "brutalism-spacing-tight-functional-003",
+      "relations": {
+        "depends_on": [],
+        "constrains": [
+          {
+            "rule": "brutalism-components-single-chromatic-anchor-004"
+          }
+        ],
+        "co_occurs_with": [],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "brutalism-typography-grotesque-broad-weight-002",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "brutalism-color-warm-functional-binary-001",
+            "reason": "typography depends on color foundation (same source: brutalism)"
+          }
+        ],
+        "constrains": [
+          {
+            "rule": "brutalism-components-single-chromatic-anchor-004"
+          }
+        ],
+        "co_occurs_with": [],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "brutalism-voice-imperative-no-marketing-006",
+      "relations": {
+        "depends_on": [],
+        "constrains": [],
+        "co_occurs_with": [],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "claude-anti-pattern-tech-creep-011",
+      "relations": {
+        "depends_on": [],
+        "constrains": [],
+        "co_occurs_with": [],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "claude-color-focus-blue-only-cool-004",
+      "relations": {
+        "depends_on": [],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "claude-color-terracotta-brand-002",
+            "frequency": 1.0
+          },
+          {
+            "rule": "claude-color-warm-near-black-text-003",
+            "frequency": 1.0
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "claude-color-parchment-canvas-001",
+      "relations": {
+        "depends_on": [],
+        "constrains": [
+          {
+            "rule": "claude-typography-serif-single-weight-005"
+          },
+          {
+            "rule": "claude-typography-relaxed-1.60-body-006"
+          },
+          {
+            "rule": "claude-components-ring-shadow-warm-halo-007"
+          },
+          {
+            "rule": "claude-components-generous-radius-008"
+          }
+        ],
+        "co_occurs_with": [
+          {
+            "rule": "claude-color-terracotta-brand-002",
+            "frequency": 1.0
+          },
+          {
+            "rule": "claude-color-warm-near-black-text-003",
+            "frequency": 1.0
+          }
+        ],
+        "conflicts_with": [
+          {
+            "rule": "figma-color-binary-chrome-001",
+            "reason": "warm-cream canvas vs binary-chrome — opposite chromatic philosophies"
+          },
+          {
+            "rule": "linear-app-color-dark-native-001",
+            "reason": "warm-light canvas vs cool-dark canvas — opposite ambient strategies"
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "claude-color-terracotta-brand-002",
+      "relations": {
+        "depends_on": [],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "claude-color-focus-blue-only-cool-004",
+            "frequency": 1.0
+          },
+          {
+            "rule": "claude-color-parchment-canvas-001",
+            "frequency": 1.0
+          },
+          {
+            "rule": "claude-color-warm-near-black-text-003",
+            "frequency": 1.0
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "claude-color-warm-near-black-text-003",
+      "relations": {
+        "depends_on": [],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "claude-color-focus-blue-only-cool-004",
+            "frequency": 1.0
+          },
+          {
+            "rule": "claude-color-parchment-canvas-001",
+            "frequency": 1.0
+          },
+          {
+            "rule": "claude-color-terracotta-brand-002",
+            "frequency": 1.0
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "claude-components-generous-radius-008",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "claude-color-parchment-canvas-001",
+            "reason": "components depends on color foundation (same source: claude)"
+          },
+          {
+            "rule": "claude-typography-serif-single-weight-005",
+            "reason": "components depends on typography foundation (same source: claude)"
+          },
+          {
+            "rule": "claude-layout-light-dark-alternation-009",
+            "reason": "components depends on layout foundation (same source: claude)"
+          },
+          {
+            "rule": "claude-components-ring-shadow-warm-halo-007",
+            "reason": "components depends on depth_elevation foundation (same source: claude)"
+          }
+        ],
+        "constrains": [],
+        "co_occurs_with": [],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "claude-components-ring-shadow-warm-halo-007",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "claude-color-parchment-canvas-001",
+            "reason": "depth_elevation depends on color foundation (same source: claude)"
+          }
+        ],
+        "constrains": [
+          {
+            "rule": "claude-components-generous-radius-008"
+          }
+        ],
+        "co_occurs_with": [],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "claude-layout-light-dark-alternation-009",
+      "relations": {
+        "depends_on": [],
+        "constrains": [
+          {
+            "rule": "claude-components-generous-radius-008"
+          }
+        ],
+        "co_occurs_with": [],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "claude-typography-relaxed-1.60-body-006",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "claude-color-parchment-canvas-001",
+            "reason": "typography depends on color foundation (same source: claude)"
+          }
+        ],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "claude-typography-serif-single-weight-005",
+            "frequency": 1.0
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "claude-typography-serif-single-weight-005",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "claude-color-parchment-canvas-001",
+            "reason": "typography depends on color foundation (same source: claude)"
+          }
+        ],
+        "constrains": [
+          {
+            "rule": "claude-components-generous-radius-008"
+          }
+        ],
+        "co_occurs_with": [
+          {
+            "rule": "claude-typography-relaxed-1.60-body-006",
+            "frequency": 1.0
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "claude-voice-thoughtful-companion-010",
+      "relations": {
+        "depends_on": [],
+        "constrains": [],
+        "co_occurs_with": [],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "discord-anti-pattern-chat-clarity-012",
+      "relations": {
+        "depends_on": [],
+        "constrains": [],
+        "co_occurs_with": [],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "discord-color-dark-first-3-step-depth-001",
+      "relations": {
+        "depends_on": [],
+        "constrains": [
+          {
+            "rule": "discord-typography-friendly-geometric-single-family-004"
+          },
+          {
+            "rule": "discord-typography-weight-not-color-hierarchy-005"
+          },
+          {
+            "rule": "discord-components-morph-avatar-006"
+          },
+          {
+            "rule": "discord-components-status-notch-007"
+          },
+          {
+            "rule": "discord-components-tight-chat-row-008"
+          },
+          {
+            "rule": "discord-components-embed-left-border-009"
+          }
+        ],
+        "co_occurs_with": [
+          {
+            "rule": "discord-color-single-saturated-anchor-002",
+            "frequency": 1.0
+          },
+          {
+            "rule": "discord-color-traffic-light-status-003",
+            "frequency": 1.0
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "discord-color-single-saturated-anchor-002",
+      "relations": {
+        "depends_on": [],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "discord-color-dark-first-3-step-depth-001",
+            "frequency": 1.0
+          },
+          {
+            "rule": "discord-color-traffic-light-status-003",
+            "frequency": 1.0
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "discord-color-traffic-light-status-003",
+      "relations": {
+        "depends_on": [],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "discord-color-dark-first-3-step-depth-001",
+            "frequency": 1.0
+          },
+          {
+            "rule": "discord-color-single-saturated-anchor-002",
+            "frequency": 1.0
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "discord-components-embed-left-border-009",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "discord-color-dark-first-3-step-depth-001",
+            "reason": "components depends on color foundation (same source: discord)"
+          },
+          {
+            "rule": "discord-typography-friendly-geometric-single-family-004",
+            "reason": "components depends on typography foundation (same source: discord)"
+          },
+          {
+            "rule": "discord-layout-fixed-spatial-anchors-010",
+            "reason": "components depends on layout foundation (same source: discord)"
+          }
+        ],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "discord-components-status-notch-007",
+            "frequency": 1.0
+          },
+          {
+            "rule": "discord-components-tight-chat-row-008",
+            "frequency": 1.0
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "discord-components-morph-avatar-006",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "discord-color-dark-first-3-step-depth-001",
+            "reason": "components depends on color foundation (same source: discord)"
+          },
+          {
+            "rule": "discord-typography-friendly-geometric-single-family-004",
+            "reason": "components depends on typography foundation (same source: discord)"
+          },
+          {
+            "rule": "discord-layout-fixed-spatial-anchors-010",
+            "reason": "components depends on layout foundation (same source: discord)"
+          }
+        ],
+        "constrains": [
+          {
+            "rule": "discord-motion-functional-fade-011"
+          }
+        ],
+        "co_occurs_with": [],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "discord-components-status-notch-007",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "discord-color-dark-first-3-step-depth-001",
+            "reason": "components depends on color foundation (same source: discord)"
+          },
+          {
+            "rule": "discord-typography-friendly-geometric-single-family-004",
+            "reason": "components depends on typography foundation (same source: discord)"
+          },
+          {
+            "rule": "discord-layout-fixed-spatial-anchors-010",
+            "reason": "components depends on layout foundation (same source: discord)"
+          }
+        ],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "discord-components-embed-left-border-009",
+            "frequency": 1.0
+          },
+          {
+            "rule": "discord-components-tight-chat-row-008",
+            "frequency": 1.0
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "discord-components-tight-chat-row-008",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "discord-color-dark-first-3-step-depth-001",
+            "reason": "components depends on color foundation (same source: discord)"
+          },
+          {
+            "rule": "discord-typography-friendly-geometric-single-family-004",
+            "reason": "components depends on typography foundation (same source: discord)"
+          },
+          {
+            "rule": "discord-layout-fixed-spatial-anchors-010",
+            "reason": "components depends on layout foundation (same source: discord)"
+          }
+        ],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "discord-components-embed-left-border-009",
+            "frequency": 1.0
+          },
+          {
+            "rule": "discord-components-status-notch-007",
+            "frequency": 1.0
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "discord-layout-fixed-spatial-anchors-010",
+      "relations": {
+        "depends_on": [],
+        "constrains": [
+          {
+            "rule": "discord-components-morph-avatar-006"
+          },
+          {
+            "rule": "discord-components-status-notch-007"
+          },
+          {
+            "rule": "discord-components-tight-chat-row-008"
+          },
+          {
+            "rule": "discord-components-embed-left-border-009"
+          }
+        ],
+        "co_occurs_with": [],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "discord-motion-functional-fade-011",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "discord-components-morph-avatar-006",
+            "reason": "motion depends on components foundation (same source: discord)"
+          }
+        ],
+        "constrains": [],
+        "co_occurs_with": [],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "discord-typography-friendly-geometric-single-family-004",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "discord-color-dark-first-3-step-depth-001",
+            "reason": "typography depends on color foundation (same source: discord)"
+          }
+        ],
+        "constrains": [
+          {
+            "rule": "discord-components-morph-avatar-006"
+          },
+          {
+            "rule": "discord-components-status-notch-007"
+          },
+          {
+            "rule": "discord-components-tight-chat-row-008"
+          },
+          {
+            "rule": "discord-components-embed-left-border-009"
+          }
+        ],
+        "co_occurs_with": [],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "discord-typography-weight-not-color-hierarchy-005",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "discord-color-dark-first-3-step-depth-001",
+            "reason": "typography depends on color foundation (same source: discord)"
+          }
+        ],
+        "constrains": [],
+        "co_occurs_with": [],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "duolingo-anti-pattern-flatten-009",
+      "relations": {
+        "depends_on": [],
+        "constrains": [],
+        "co_occurs_with": [],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "duolingo-color-dominant-chromatic-001",
+      "relations": {
+        "depends_on": [],
+        "constrains": [
+          {
+            "rule": "duolingo-typography-extra-bold-rounded-display-003"
+          },
+          {
+            "rule": "duolingo-components-tactile-press-button-004"
+          },
+          {
+            "rule": "duolingo-components-skill-tree-node-005"
+          },
+          {
+            "rule": "duolingo-components-borders-chunky-only-006"
+          }
+        ],
+        "co_occurs_with": [
+          {
+            "rule": "duolingo-color-dopamine-mapped-accents-002",
+            "frequency": 1.0
+          }
+        ],
+        "conflicts_with": [
+          {
+            "rule": "linear-app-color-dark-native-001",
+            "reason": "white canvas + dominant green vs near-black canvas + spot brand — opposite chromatic strategies"
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "duolingo-color-dopamine-mapped-accents-002",
+      "relations": {
+        "depends_on": [],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "duolingo-color-dominant-chromatic-001",
+            "frequency": 1.0
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "duolingo-components-borders-chunky-only-006",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "duolingo-color-dominant-chromatic-001",
+            "reason": "components depends on color foundation (same source: duolingo)"
+          },
+          {
+            "rule": "duolingo-typography-extra-bold-rounded-display-003",
+            "reason": "components depends on typography foundation (same source: duolingo)"
+          },
+          {
+            "rule": "duolingo-spacing-4px-base-007",
+            "reason": "components depends on spacing foundation (same source: duolingo)"
+          }
+        ],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "duolingo-components-skill-tree-node-005",
+            "frequency": 1.0
+          },
+          {
+            "rule": "duolingo-components-tactile-press-button-004",
+            "frequency": 1.0
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "duolingo-components-skill-tree-node-005",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "duolingo-color-dominant-chromatic-001",
+            "reason": "components depends on color foundation (same source: duolingo)"
+          },
+          {
+            "rule": "duolingo-typography-extra-bold-rounded-display-003",
+            "reason": "components depends on typography foundation (same source: duolingo)"
+          },
+          {
+            "rule": "duolingo-spacing-4px-base-007",
+            "reason": "components depends on spacing foundation (same source: duolingo)"
+          }
+        ],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "duolingo-components-borders-chunky-only-006",
+            "frequency": 1.0
+          },
+          {
+            "rule": "duolingo-components-tactile-press-button-004",
+            "frequency": 1.0
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "duolingo-components-tactile-press-button-004",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "duolingo-color-dominant-chromatic-001",
+            "reason": "components depends on color foundation (same source: duolingo)"
+          },
+          {
+            "rule": "duolingo-typography-extra-bold-rounded-display-003",
+            "reason": "components depends on typography foundation (same source: duolingo)"
+          },
+          {
+            "rule": "duolingo-spacing-4px-base-007",
+            "reason": "components depends on spacing foundation (same source: duolingo)"
+          }
+        ],
+        "constrains": [
+          {
+            "rule": "duolingo-motion-overshoot-easing-008"
+          }
+        ],
+        "co_occurs_with": [
+          {
+            "rule": "duolingo-components-borders-chunky-only-006",
+            "frequency": 1.0
+          },
+          {
+            "rule": "duolingo-components-skill-tree-node-005",
+            "frequency": 1.0
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "duolingo-motion-overshoot-easing-008",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "duolingo-components-tactile-press-button-004",
+            "reason": "motion depends on components foundation (same source: duolingo)"
+          }
+        ],
+        "constrains": [],
+        "co_occurs_with": [],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "duolingo-spacing-4px-base-007",
+      "relations": {
+        "depends_on": [],
+        "constrains": [
+          {
+            "rule": "duolingo-components-tactile-press-button-004"
+          },
+          {
+            "rule": "duolingo-components-skill-tree-node-005"
+          },
+          {
+            "rule": "duolingo-components-borders-chunky-only-006"
+          }
+        ],
+        "co_occurs_with": [],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "duolingo-typography-extra-bold-rounded-display-003",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "duolingo-color-dominant-chromatic-001",
+            "reason": "typography depends on color foundation (same source: duolingo)"
+          }
+        ],
+        "constrains": [
+          {
+            "rule": "duolingo-components-tactile-press-button-004"
+          },
+          {
+            "rule": "duolingo-components-skill-tree-node-005"
+          },
+          {
+            "rule": "duolingo-components-borders-chunky-only-006"
+          }
+        ],
+        "co_occurs_with": [],
+        "conflicts_with": [
+          {
+            "rule": "stripe-typography-light-weight-300-signature-006",
+            "reason": "weight 300 luxury whisper vs weight 800 confident shout — opposite typographic stances"
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "figma-anti-pattern-chromatic-creep-009",
+      "relations": {
+        "depends_on": [],
+        "constrains": [],
+        "co_occurs_with": [],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "figma-color-binary-chrome-001",
+      "relations": {
+        "depends_on": [],
+        "constrains": [
+          {
+            "rule": "figma-typography-variable-microstep-weights-003"
+          },
+          {
+            "rule": "figma-typography-light-base-004"
+          },
+          {
+            "rule": "figma-typography-negative-tracking-everywhere-005"
+          },
+          {
+            "rule": "figma-typography-mono-uppercase-signposts-006"
+          },
+          {
+            "rule": "figma-components-pill-circle-geometry-007"
+          },
+          {
+            "rule": "figma-components-dashed-focus-outline-008"
+          }
+        ],
+        "co_occurs_with": [
+          {
+            "rule": "figma-color-glass-overlay-002",
+            "frequency": 1.0
+          }
+        ],
+        "conflicts_with": [
+          {
+            "rule": "claude-color-parchment-canvas-001",
+            "reason": "warm-cream canvas vs binary-chrome — opposite chromatic philosophies"
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "figma-color-glass-overlay-002",
+      "relations": {
+        "depends_on": [],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "figma-color-binary-chrome-001",
+            "frequency": 1.0
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "figma-components-dashed-focus-outline-008",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "figma-color-binary-chrome-001",
+            "reason": "components depends on color foundation (same source: figma)"
+          },
+          {
+            "rule": "figma-typography-variable-microstep-weights-003",
+            "reason": "components depends on typography foundation (same source: figma)"
+          }
+        ],
+        "constrains": [],
+        "co_occurs_with": [],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "figma-components-pill-circle-geometry-007",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "figma-color-binary-chrome-001",
+            "reason": "components depends on color foundation (same source: figma)"
+          },
+          {
+            "rule": "figma-typography-variable-microstep-weights-003",
+            "reason": "components depends on typography foundation (same source: figma)"
+          }
+        ],
+        "constrains": [],
+        "co_occurs_with": [],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "figma-typography-light-base-004",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "figma-color-binary-chrome-001",
+            "reason": "typography depends on color foundation (same source: figma)"
+          }
+        ],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "figma-typography-mono-uppercase-signposts-006",
+            "frequency": 1.0
+          },
+          {
+            "rule": "figma-typography-negative-tracking-everywhere-005",
+            "frequency": 1.0
+          },
+          {
+            "rule": "figma-typography-variable-microstep-weights-003",
+            "frequency": 1.0
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "figma-typography-mono-uppercase-signposts-006",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "figma-color-binary-chrome-001",
+            "reason": "typography depends on color foundation (same source: figma)"
+          }
+        ],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "figma-typography-light-base-004",
+            "frequency": 1.0
+          },
+          {
+            "rule": "figma-typography-negative-tracking-everywhere-005",
+            "frequency": 1.0
+          },
+          {
+            "rule": "figma-typography-variable-microstep-weights-003",
+            "frequency": 1.0
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "figma-typography-negative-tracking-everywhere-005",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "figma-color-binary-chrome-001",
+            "reason": "typography depends on color foundation (same source: figma)"
+          }
+        ],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "figma-typography-light-base-004",
+            "frequency": 1.0
+          },
+          {
+            "rule": "figma-typography-mono-uppercase-signposts-006",
+            "frequency": 1.0
+          },
+          {
+            "rule": "figma-typography-variable-microstep-weights-003",
+            "frequency": 1.0
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "figma-typography-variable-microstep-weights-003",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "figma-color-binary-chrome-001",
+            "reason": "typography depends on color foundation (same source: figma)"
+          }
+        ],
+        "constrains": [
+          {
+            "rule": "figma-components-pill-circle-geometry-007"
+          },
+          {
+            "rule": "figma-components-dashed-focus-outline-008"
+          }
+        ],
+        "co_occurs_with": [
+          {
+            "rule": "figma-typography-light-base-004",
+            "frequency": 1.0
+          },
+          {
+            "rule": "figma-typography-mono-uppercase-signposts-006",
+            "frequency": 1.0
+          },
+          {
+            "rule": "figma-typography-negative-tracking-everywhere-005",
+            "frequency": 1.0
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
     {
       "rule_id": "linear-app-anti-pattern-warmth-in-chrome-010",
       "relations": {
@@ -49,12 +1616,24 @@
         ],
         "conflicts_with": [
           {
+            "rule": "claude-color-parchment-canvas-001",
+            "reason": "warm-light canvas vs cool-dark canvas — opposite ambient strategies"
+          },
+          {
+            "rule": "duolingo-color-dominant-chromatic-001",
+            "reason": "white canvas + dominant green vs near-black canvas + spot brand — opposite chromatic strategies"
+          },
+          {
             "rule": "vercel-color-extreme-white-minimalism-001",
             "reason": "dark-native canvas vs pure-white canvas — opposite base assumptions"
           },
           {
             "rule": "vercel-color-near-black-text-002",
             "reason": "text rules apply to opposite background contexts"
+          },
+          {
+            "rule": "notion-color-warm-neutrals-001",
+            "reason": "warm-light canvas vs cool-dark canvas — opposite ambient strategies"
           }
         ]
       }
@@ -215,6 +1794,796 @@
     },
     {
       "rule_id": "linear-app-voice-engineered-not-designed-009",
+      "relations": {
+        "depends_on": [],
+        "constrains": [],
+        "co_occurs_with": [],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "mintlify-anti-pattern-marketing-creep-010",
+      "relations": {
+        "depends_on": [],
+        "constrains": [],
+        "co_occurs_with": [],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "mintlify-color-7tier-gray-scale-003",
+      "relations": {
+        "depends_on": [],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "mintlify-color-white-canvas-fresh-accent-001",
+            "frequency": 1.0
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "mintlify-color-near-black-text-002",
+      "relations": {
+        "depends_on": [],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "mintlify-color-white-canvas-fresh-accent-001",
+            "frequency": 1.0
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "mintlify-color-white-canvas-fresh-accent-001",
+      "relations": {
+        "depends_on": [],
+        "constrains": [
+          {
+            "rule": "mintlify-typography-inter-tight-display-004"
+          },
+          {
+            "rule": "mintlify-typography-relaxed-body-line-height-005"
+          },
+          {
+            "rule": "mintlify-typography-three-weight-006"
+          },
+          {
+            "rule": "mintlify-components-ultra-round-corners-007"
+          },
+          {
+            "rule": "mintlify-components-whisper-borders-008"
+          }
+        ],
+        "co_occurs_with": [
+          {
+            "rule": "mintlify-color-7tier-gray-scale-003",
+            "frequency": 1.0
+          },
+          {
+            "rule": "mintlify-color-near-black-text-002",
+            "frequency": 1.0
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "mintlify-components-ultra-round-corners-007",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "mintlify-color-white-canvas-fresh-accent-001",
+            "reason": "components depends on color foundation (same source: mintlify)"
+          },
+          {
+            "rule": "mintlify-typography-inter-tight-display-004",
+            "reason": "components depends on typography foundation (same source: mintlify)"
+          },
+          {
+            "rule": "mintlify-spacing-generous-sections-009",
+            "reason": "components depends on spacing foundation (same source: mintlify)"
+          }
+        ],
+        "constrains": [],
+        "co_occurs_with": [],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "mintlify-components-whisper-borders-008",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "mintlify-color-white-canvas-fresh-accent-001",
+            "reason": "components depends on color foundation (same source: mintlify)"
+          },
+          {
+            "rule": "mintlify-typography-inter-tight-display-004",
+            "reason": "components depends on typography foundation (same source: mintlify)"
+          },
+          {
+            "rule": "mintlify-spacing-generous-sections-009",
+            "reason": "components depends on spacing foundation (same source: mintlify)"
+          }
+        ],
+        "constrains": [],
+        "co_occurs_with": [],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "mintlify-spacing-generous-sections-009",
+      "relations": {
+        "depends_on": [],
+        "constrains": [
+          {
+            "rule": "mintlify-components-ultra-round-corners-007"
+          },
+          {
+            "rule": "mintlify-components-whisper-borders-008"
+          }
+        ],
+        "co_occurs_with": [],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "mintlify-typography-inter-tight-display-004",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "mintlify-color-white-canvas-fresh-accent-001",
+            "reason": "typography depends on color foundation (same source: mintlify)"
+          }
+        ],
+        "constrains": [
+          {
+            "rule": "mintlify-components-ultra-round-corners-007"
+          },
+          {
+            "rule": "mintlify-components-whisper-borders-008"
+          }
+        ],
+        "co_occurs_with": [
+          {
+            "rule": "mintlify-typography-relaxed-body-line-height-005",
+            "frequency": 1.0
+          },
+          {
+            "rule": "mintlify-typography-three-weight-006",
+            "frequency": 1.0
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "mintlify-typography-relaxed-body-line-height-005",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "mintlify-color-white-canvas-fresh-accent-001",
+            "reason": "typography depends on color foundation (same source: mintlify)"
+          }
+        ],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "mintlify-typography-inter-tight-display-004",
+            "frequency": 1.0
+          },
+          {
+            "rule": "mintlify-typography-three-weight-006",
+            "frequency": 1.0
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "mintlify-typography-three-weight-006",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "mintlify-color-white-canvas-fresh-accent-001",
+            "reason": "typography depends on color foundation (same source: mintlify)"
+          }
+        ],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "mintlify-typography-inter-tight-display-004",
+            "frequency": 1.0
+          },
+          {
+            "rule": "mintlify-typography-relaxed-body-line-height-005",
+            "frequency": 1.0
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "notion-anti-pattern-coldness-012",
+      "relations": {
+        "depends_on": [],
+        "constrains": [],
+        "co_occurs_with": [],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "notion-color-content-tagging-palette-004",
+      "relations": {
+        "depends_on": [],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "notion-color-warm-neutrals-001",
+            "frequency": 1.0
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "notion-color-multi-layer-whisper-shadow-005",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "notion-color-warm-neutrals-001",
+            "reason": "depth_elevation depends on color foundation (same source: notion)"
+          }
+        ],
+        "constrains": [
+          {
+            "rule": "notion-components-translucent-secondary-button-009"
+          },
+          {
+            "rule": "notion-components-subtle-card-radius-010"
+          }
+        ],
+        "co_occurs_with": [],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "notion-color-near-black-text-95-002",
+      "relations": {
+        "depends_on": [],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "notion-color-single-blue-anchor-003",
+            "frequency": 1.0
+          },
+          {
+            "rule": "notion-color-warm-neutrals-001",
+            "frequency": 1.0
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "notion-color-single-blue-anchor-003",
+      "relations": {
+        "depends_on": [],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "notion-color-near-black-text-95-002",
+            "frequency": 1.0
+          },
+          {
+            "rule": "notion-color-warm-neutrals-001",
+            "frequency": 1.0
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "notion-color-warm-neutrals-001",
+      "relations": {
+        "depends_on": [],
+        "constrains": [
+          {
+            "rule": "notion-color-multi-layer-whisper-shadow-005"
+          },
+          {
+            "rule": "notion-typography-modified-inter-with-tight-display-006"
+          },
+          {
+            "rule": "notion-typography-4-weight-system-007"
+          },
+          {
+            "rule": "notion-typography-12px-positive-tracking-exception-008"
+          },
+          {
+            "rule": "notion-components-translucent-secondary-button-009"
+          },
+          {
+            "rule": "notion-components-subtle-card-radius-010"
+          }
+        ],
+        "co_occurs_with": [
+          {
+            "rule": "notion-color-content-tagging-palette-004",
+            "frequency": 1.0
+          },
+          {
+            "rule": "notion-color-near-black-text-95-002",
+            "frequency": 1.0
+          },
+          {
+            "rule": "notion-color-single-blue-anchor-003",
+            "frequency": 1.0
+          }
+        ],
+        "conflicts_with": [
+          {
+            "rule": "linear-app-color-dark-native-001",
+            "reason": "warm-light canvas vs cool-dark canvas — opposite ambient strategies"
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "notion-components-subtle-card-radius-010",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "notion-color-warm-neutrals-001",
+            "reason": "components depends on color foundation (same source: notion)"
+          },
+          {
+            "rule": "notion-typography-modified-inter-with-tight-display-006",
+            "reason": "components depends on typography foundation (same source: notion)"
+          },
+          {
+            "rule": "notion-spacing-organic-non-rigid-011",
+            "reason": "components depends on spacing foundation (same source: notion)"
+          },
+          {
+            "rule": "notion-color-multi-layer-whisper-shadow-005",
+            "reason": "components depends on depth_elevation foundation (same source: notion)"
+          }
+        ],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "notion-components-translucent-secondary-button-009",
+            "frequency": 1.0
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "notion-components-translucent-secondary-button-009",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "notion-color-warm-neutrals-001",
+            "reason": "components depends on color foundation (same source: notion)"
+          },
+          {
+            "rule": "notion-typography-modified-inter-with-tight-display-006",
+            "reason": "components depends on typography foundation (same source: notion)"
+          },
+          {
+            "rule": "notion-spacing-organic-non-rigid-011",
+            "reason": "components depends on spacing foundation (same source: notion)"
+          },
+          {
+            "rule": "notion-color-multi-layer-whisper-shadow-005",
+            "reason": "components depends on depth_elevation foundation (same source: notion)"
+          }
+        ],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "notion-components-subtle-card-radius-010",
+            "frequency": 1.0
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "notion-spacing-organic-non-rigid-011",
+      "relations": {
+        "depends_on": [],
+        "constrains": [
+          {
+            "rule": "notion-components-translucent-secondary-button-009"
+          },
+          {
+            "rule": "notion-components-subtle-card-radius-010"
+          }
+        ],
+        "co_occurs_with": [],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "notion-typography-12px-positive-tracking-exception-008",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "notion-color-warm-neutrals-001",
+            "reason": "typography depends on color foundation (same source: notion)"
+          }
+        ],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "notion-typography-4-weight-system-007",
+            "frequency": 1.0
+          },
+          {
+            "rule": "notion-typography-modified-inter-with-tight-display-006",
+            "frequency": 1.0
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "notion-typography-4-weight-system-007",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "notion-color-warm-neutrals-001",
+            "reason": "typography depends on color foundation (same source: notion)"
+          }
+        ],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "notion-typography-12px-positive-tracking-exception-008",
+            "frequency": 1.0
+          },
+          {
+            "rule": "notion-typography-modified-inter-with-tight-display-006",
+            "frequency": 1.0
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "notion-typography-modified-inter-with-tight-display-006",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "notion-color-warm-neutrals-001",
+            "reason": "typography depends on color foundation (same source: notion)"
+          }
+        ],
+        "constrains": [
+          {
+            "rule": "notion-components-translucent-secondary-button-009"
+          },
+          {
+            "rule": "notion-components-subtle-card-radius-010"
+          }
+        ],
+        "co_occurs_with": [
+          {
+            "rule": "notion-typography-12px-positive-tracking-exception-008",
+            "frequency": 1.0
+          },
+          {
+            "rule": "notion-typography-4-weight-system-007",
+            "frequency": 1.0
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "stripe-anti-pattern-decoration-creep-013",
+      "relations": {
+        "depends_on": [],
+        "constrains": [],
+        "co_occurs_with": [],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "stripe-color-blue-tinted-shadow-004",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "stripe-color-navy-purple-foundation-001",
+            "reason": "depth_elevation depends on color foundation (same source: stripe)"
+          }
+        ],
+        "constrains": [
+          {
+            "rule": "stripe-components-conservative-radius-008"
+          },
+          {
+            "rule": "stripe-components-dashed-affordance-009"
+          }
+        ],
+        "co_occurs_with": [],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "stripe-color-decorative-only-magenta-ruby-003",
+      "relations": {
+        "depends_on": [],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "stripe-color-navy-purple-foundation-001",
+            "frequency": 1.0
+          },
+          {
+            "rule": "stripe-color-purple-ladder-002",
+            "frequency": 1.0
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "stripe-color-navy-purple-foundation-001",
+      "relations": {
+        "depends_on": [],
+        "constrains": [
+          {
+            "rule": "stripe-color-blue-tinted-shadow-004"
+          },
+          {
+            "rule": "stripe-typography-sohne-ss01-required-005"
+          },
+          {
+            "rule": "stripe-typography-light-weight-300-signature-006"
+          },
+          {
+            "rule": "stripe-typography-progressive-tracking-007"
+          },
+          {
+            "rule": "stripe-components-conservative-radius-008"
+          },
+          {
+            "rule": "stripe-components-dashed-affordance-009"
+          }
+        ],
+        "co_occurs_with": [
+          {
+            "rule": "stripe-color-decorative-only-magenta-ruby-003",
+            "frequency": 1.0
+          },
+          {
+            "rule": "stripe-color-purple-ladder-002",
+            "frequency": 1.0
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "stripe-color-purple-ladder-002",
+      "relations": {
+        "depends_on": [],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "stripe-color-decorative-only-magenta-ruby-003",
+            "frequency": 1.0
+          },
+          {
+            "rule": "stripe-color-navy-purple-foundation-001",
+            "frequency": 1.0
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "stripe-components-conservative-radius-008",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "stripe-color-navy-purple-foundation-001",
+            "reason": "components depends on color foundation (same source: stripe)"
+          },
+          {
+            "rule": "stripe-typography-sohne-ss01-required-005",
+            "reason": "components depends on typography foundation (same source: stripe)"
+          },
+          {
+            "rule": "stripe-spacing-fine-grained-financial-010",
+            "reason": "components depends on spacing foundation (same source: stripe)"
+          },
+          {
+            "rule": "stripe-layout-dense-data-generous-chrome-011",
+            "reason": "components depends on layout foundation (same source: stripe)"
+          },
+          {
+            "rule": "stripe-color-blue-tinted-shadow-004",
+            "reason": "components depends on depth_elevation foundation (same source: stripe)"
+          }
+        ],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "stripe-components-dashed-affordance-009",
+            "frequency": 1.0
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "stripe-components-dashed-affordance-009",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "stripe-color-navy-purple-foundation-001",
+            "reason": "components depends on color foundation (same source: stripe)"
+          },
+          {
+            "rule": "stripe-typography-sohne-ss01-required-005",
+            "reason": "components depends on typography foundation (same source: stripe)"
+          },
+          {
+            "rule": "stripe-spacing-fine-grained-financial-010",
+            "reason": "components depends on spacing foundation (same source: stripe)"
+          },
+          {
+            "rule": "stripe-layout-dense-data-generous-chrome-011",
+            "reason": "components depends on layout foundation (same source: stripe)"
+          },
+          {
+            "rule": "stripe-color-blue-tinted-shadow-004",
+            "reason": "components depends on depth_elevation foundation (same source: stripe)"
+          }
+        ],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "stripe-components-conservative-radius-008",
+            "frequency": 1.0
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "stripe-layout-dense-data-generous-chrome-011",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "stripe-spacing-fine-grained-financial-010",
+            "reason": "layout depends on spacing foundation (same source: stripe)"
+          }
+        ],
+        "constrains": [
+          {
+            "rule": "stripe-components-conservative-radius-008"
+          },
+          {
+            "rule": "stripe-components-dashed-affordance-009"
+          }
+        ],
+        "co_occurs_with": [],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "stripe-spacing-fine-grained-financial-010",
+      "relations": {
+        "depends_on": [],
+        "constrains": [
+          {
+            "rule": "stripe-components-conservative-radius-008"
+          },
+          {
+            "rule": "stripe-components-dashed-affordance-009"
+          },
+          {
+            "rule": "stripe-layout-dense-data-generous-chrome-011"
+          }
+        ],
+        "co_occurs_with": [],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "stripe-typography-light-weight-300-signature-006",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "stripe-color-navy-purple-foundation-001",
+            "reason": "typography depends on color foundation (same source: stripe)"
+          }
+        ],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "stripe-typography-progressive-tracking-007",
+            "frequency": 1.0
+          },
+          {
+            "rule": "stripe-typography-sohne-ss01-required-005",
+            "frequency": 1.0
+          }
+        ],
+        "conflicts_with": [
+          {
+            "rule": "duolingo-typography-extra-bold-rounded-display-003",
+            "reason": "weight 300 luxury whisper vs weight 800 confident shout — opposite typographic stances"
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "stripe-typography-progressive-tracking-007",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "stripe-color-navy-purple-foundation-001",
+            "reason": "typography depends on color foundation (same source: stripe)"
+          }
+        ],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "stripe-typography-light-weight-300-signature-006",
+            "frequency": 1.0
+          },
+          {
+            "rule": "stripe-typography-sohne-ss01-required-005",
+            "frequency": 1.0
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "stripe-typography-sohne-ss01-required-005",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "stripe-color-navy-purple-foundation-001",
+            "reason": "typography depends on color foundation (same source: stripe)"
+          }
+        ],
+        "constrains": [
+          {
+            "rule": "stripe-components-conservative-radius-008"
+          },
+          {
+            "rule": "stripe-components-dashed-affordance-009"
+          }
+        ],
+        "co_occurs_with": [
+          {
+            "rule": "stripe-typography-light-weight-300-signature-006",
+            "frequency": 1.0
+          },
+          {
+            "rule": "stripe-typography-progressive-tracking-007",
+            "frequency": 1.0
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "stripe-voice-engineering-luxury-012",
       "relations": {
         "depends_on": [],
         "constrains": [],

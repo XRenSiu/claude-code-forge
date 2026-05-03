@@ -100,28 +100,44 @@ for a, b in KANSEI_ANTONYMS:
 
 
 def detect_conflicts(rule_a, rule_b):
-    """Return (is_conflict, reason) for ordered pair (A, B). Symmetric — caller may dedupe."""
+    """Return (is_conflict, reason) for ordered pair (A, B). Symmetric — caller may dedupe.
+
+    Conservative — auto-detected conflicts only fire when:
+    1. Same section AND >=2 antonym pairs (single-antonym false positives explode the graph)
+    2. why.avoid mentions establish across same or directly related sections
+
+    Cross-section conflicts should be declared explicitly via known_conflicts in yaml.
+    """
     pa = rule_a.get('preconditions', {})
     pb = rule_b.get('preconditions', {})
     ka = set(pa.get('kansei', []) or [])
     kb = set(pb.get('kansei', []) or [])
+    sec_a = rule_a.get('section', '')
+    sec_b = rule_b.get('section', '')
 
-    # 1. Antonym-based: any kansei word in A is the antonym of any in B
-    for a in ka:
-        if a in ANTONYM_LOOKUP and ANTONYM_LOOKUP[a] & kb:
-            common = ANTONYM_LOOKUP[a] & kb
-            return True, f"kansei antonym: A has '{a}', B has {sorted(common)}"
+    # 1. Antonym-based — only fires when SAME SECTION + at least 2 antonym pairs
+    if sec_a == sec_b and sec_a:
+        antonym_hits = []
+        for a in ka:
+            if a in ANTONYM_LOOKUP:
+                common = ANTONYM_LOOKUP[a] & kb
+                if common:
+                    antonym_hits.append((a, sorted(common)))
+        if len(antonym_hits) >= 2:
+            return True, f"same-section ({sec_a}) kansei antonyms: {antonym_hits[:3]}"
 
-    # 2. why.avoid in A intersects why.establish in B (and vice versa)
-    why_a = rule_a.get('why', {}) or {}
-    why_b = rule_b.get('why', {}) or {}
-    avoid_a = set([v.strip() for v in (why_a.get('avoid', []) or [])])
-    establ_b = why_b.get('establish', '')
-    if establ_b and any(token in establ_b for token in avoid_a if token):
-        return True, f"A.why.avoid mentions B's establish ({establ_b})"
+    # 2. why.avoid mentions establish — only across same or directly related sections
+    related_sections = {sec_a, sec_b}
+    if len(related_sections) <= 2:
+        why_a = rule_a.get('why', {}) or {}
+        why_b = rule_b.get('why', {}) or {}
+        avoid_a = set([v.strip() for v in (why_a.get('avoid', []) or [])])
+        establ_b = why_b.get('establish', '')
+        # require avoid item to be substantial (>= 4 chars, not generic words)
+        meaningful_avoids = {v for v in avoid_a if v and len(v) >= 4 and v not in {'true', 'false', 'none', 'null'}}
+        if establ_b and any(token in establ_b for token in meaningful_avoids):
+            return True, f"A.why.avoid mentions B's establish ({establ_b})"
 
-    # 3. Same section + same product_type AND opposite directions on a known dimension.
-    # (Heuristic: requires explicit dimension annotations in rule.action — skip if absent.)
     return False, None
 
 

@@ -1,0 +1,176 @@
+# Rules — figma
+
+rules:
+
+  - rule_id: figma-color-binary-chrome-001
+    section: color
+    preconditions:
+      product_type: [design_tool, creator_tool, art_platform, gallery]
+      tone: [precise, sophisticated, restrained]
+      kansei: [precise, sophisticated, calm, refined]
+      sd_anchors:
+        warm_to_cold: 0.0
+        ornate_to_minimal: 0.9
+        serious_to_playful: -0.3
+        modern_to_classical: -0.6
+    action:
+      base_canvas: pure white #ffffff
+      chrome_chromatic_count: 0   # only #000000 and #ffffff in chrome
+      gray_via_alpha_only: true   # rgba black 0.08 or rgba white 0.16
+      product_content_can_be_multicolor: true
+    why:
+      establish: gallery-wall-chrome (let product be the art)
+      avoid: [chrome_chromatic_decoration, gray_ladder_breaking_binary, brand_color_in_chrome]
+      balance: chromatic_discipline ↔ product_visibility
+    emerges_from: [figma]
+    provenance: original
+    confidence: 0.7
+    known_conflicts:
+      - rule: stripe-typography-and-purple-chromatic-anchor
+        reason: chromatic-free chrome vs persistent purple chromatic — opposite chrome strategies
+
+  - rule_id: figma-color-glass-overlay-002
+    section: color
+    preconditions:
+      product_type: [design_tool, creator_tool]
+      kansei: [precise, sophisticated]
+      requires: [figma-color-binary-chrome-001]
+    action:
+      glass_dark_alpha: 0.08
+      glass_light_alpha: 0.16
+      no_solid_secondary_surfaces: true
+      use: glass_overlay_for_secondary_actions_on_colored_or_image_backgrounds
+    why:
+      establish: depth-without-breaking-binary
+      avoid: [solid_secondary_surface, high_alpha_overlays]
+      balance: surface_depth ↔ chrome_purity
+    emerges_from: [figma]
+    provenance: original
+    confidence: 0.55
+
+  - rule_id: figma-typography-variable-microstep-weights-003
+    section: typography
+    preconditions:
+      product_type: [design_tool, creator_tool]
+      tone: [precise, sophisticated]
+      kansei: [precise, sophisticated, refined]
+    action:
+      family_class: variable_font_with_microstep_weights
+      typical_weights_used: [320, 330, 340, 400, 450, 480, 540, 700]
+      hierarchy_via: micro_weight_differences (not size_jump)
+      no_blunt_400_700_only: true
+    why:
+      establish: typographic-precision-as-design-tool-DNA
+      avoid: [blunt_regular_vs_bold, standard_400_500_600_ladder]
+      balance: hierarchy_clarity ↔ typographic_subtlety
+    emerges_from: [figma]
+    provenance: original
+    confidence: 0.65
+
+  - rule_id: figma-typography-light-base-004
+    section: typography
+    preconditions:
+      product_type: [design_tool, creator_tool, art_platform]
+      kansei: [precise, sophisticated, calm]
+    action:
+      body_weight_default: 320-340  # lighter than 400 typical
+      reason: ethereal_airy_design_tool_aesthetic
+    why:
+      establish: light-weight-as-craft-aesthetic
+      avoid: [standard_regular_weight_no_character, ultra_light_below_300_unreadable]
+      balance: airiness ↔ readability
+    emerges_from: [figma]
+    provenance: original
+    confidence: 0.55
+
+  - rule_id: figma-typography-negative-tracking-everywhere-005
+    section: typography
+    preconditions:
+      product_type: [design_tool, creator_tool]
+      kansei: [precise, refined]
+    action:
+      tracking_at_display: -0.96 to -1.72px
+      tracking_at_body: -0.14 to -0.26px
+      no_positive_tracking_at_any_size: true
+      kerning_required: true
+    why:
+      establish: universal-tight-text
+      avoid: [positive_tracking_anywhere, default_zero_tracking_at_body]
+      balance: density ↔ legibility
+    emerges_from: [figma]
+    provenance: original
+    confidence: 0.55
+
+  - rule_id: figma-typography-mono-uppercase-signposts-006
+    section: typography
+    preconditions:
+      product_type: [design_tool, creator_tool]
+      kansei: [precise, technical]
+    action:
+      mono_role: technical_signposts (uppercase labels)
+      mono_letter_spacing: 0.54 to 0.6 px (positive — exception to global negative)
+      mono_for_code_or_uppercase_label_only: true
+      no_mono_for_prose: true
+    why:
+      establish: mono-as-context-marker
+      avoid: [mono_in_prose_too_dense, lowercase_mono_weak_signal]
+      balance: technical_voice ↔ reading_comfort
+    emerges_from: [figma]
+    provenance: original
+    confidence: 0.55
+
+  - rule_id: figma-components-pill-circle-geometry-007
+    section: components
+    preconditions:
+      product_type: [design_tool, creator_tool, tool_palette_app]
+      tone: [organic, tactile]
+      kansei: [organic, refined, approachable]
+    action:
+      button_radius_options: 50px (pill), 50% (circle)
+      no_standard_4_8px_buttons: true
+      cards_can_use_smaller_radius_6_8px: true
+      reason: tool_palette_organic_feel
+    why:
+      establish: organic-tool-vocabulary
+      avoid: [rectangular_serious_buttons, sharp_corners_breaking_organic]
+      balance: organic_form ↔ functional_clarity
+    emerges_from: [figma]
+    provenance: original
+    confidence: 0.6
+
+  - rule_id: figma-components-dashed-focus-outline-008
+    section: components
+    preconditions:
+      product_type: [design_tool, creator_tool]
+      kansei: [precise, self_referential]
+    action:
+      focus_outline: 2px dashed
+      reason: echoes_figma_editor_selection_handles (self-referential brand moment)
+      no_solid_focus_ring: true
+    why:
+      establish: meta-design-self-reference
+      avoid: [solid_focus_ring_missing_brand_moment]
+      balance: brand_identity ↔ accessibility_clarity
+    emerges_from: [figma]
+    provenance: original
+    confidence: 0.5
+
+  - rule_id: figma-anti-pattern-chromatic-creep-009
+    section: anti_patterns
+    preconditions:
+      kansei: [precise, sophisticated]
+    action:
+      forbidden:
+        - chrome_chromatic_decoration
+        - gray_ladder_in_chrome (rgba alpha only)
+        - standard_400_500_600_weight_ladder
+        - positive_tracking_at_any_size
+        - solid_focus_outline_missing_dashed_signature
+        - mono_typography_for_prose
+        - rectangular_buttons_with_standard_8px_radius
+    why:
+      establish: discipline-of-design-tool-precision
+      avoid: [drift_into_generic_saas, drift_into_marketing_chrome]
+    emerges_from: [figma]
+    provenance: original
+    confidence: 0.6

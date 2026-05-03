@@ -1,8 +1,8 @@
 {
-  "rules_version": "0.3.0",
+  "rules_version": "0.4.0",
   "schema_version": "1.0.0",
-  "last_updated": "2026-05-03T13:46:40.744721Z",
-  "total_rules": 20,
+  "last_updated": "2026-05-03T14:08:55.507067Z",
+  "total_rules": 127,
   "total_systems": 137,
-  "notes": "0.3.0: full OD corpus (137 systems) registered + tokens extracted programmatically; 2 systems (linear-app, vercel) have full A1-A4. Tools v1.0 in place."
+  "notes": "0.4.0: 12 systems with full A1-A4 (linear-app/vercel from v0.3.0 + 10 new: apple/claude/notion/stripe/airbnb/figma/duolingo/discord/brutalism/mintlify). 127 rules, 9 sections covered. Conservative same-section-only conflict detection."
 }
