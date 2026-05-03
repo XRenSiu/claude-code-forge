@@ -1,8 +1,8 @@
 {
-  "rules_version": "0.4.0",
+  "rules_version": "0.5.0",
   "schema_version": "1.0.0",
-  "last_updated": "2026-05-03T14:08:55.507067Z",
+  "last_updated": "2026-05-03T14:59:40.128907Z",
   "total_rules": 127,
   "total_systems": 137,
-  "notes": "0.4.0: 12 systems with full A1-A4 (linear-app/vercel from v0.3.0 + 10 new: apple/claude/notion/stripe/airbnb/figma/duolingo/discord/brutalism/mintlify). 127 rules, 9 sections covered. Conservative same-section-only conflict detection."
+  "notes": "0.5.0: v4 quality-judge architecture \u2014 4 Python checks (coherence/archetype/kansei/neighbor) + 1 LLM judge (rationale-judge angle-limited to argument quality only). Tools: build_neighbor_corpus + checks/. References: 5 new theory docs."
 }

@@ -1,0 +1,293 @@
+{
+  "$schema_description": "12 brand archetype visual rules (always/never/tend_to). Each rule is structured as an assertion archetype_check.py can evaluate against tokens.json. Sources: Mark & Pearson 'The Hero and the Outlaw' + real brand corpus + references/archetype-do-dont-table.md.",
+  "$assertion_grammar": {
+    "field": "Path into tokens.json (dotted) — e.g. 'color.brand.saturation_max'",
+    "operator": "lt | lte | gt | gte | eq | neq | in | not_in | exists | not_exists | between | contains_text | matches_regex",
+    "value": "RHS value (number, string, list, or [min, max] for between)",
+    "rationale": "One sentence WHY this rule (for issue messages)",
+    "_note": "Some rules may have severity hint and applies_to_section"
+  },
+
+  "Sage": {
+    "description": "Wisdom, knowledge, truth-conveying. Linear, Notion, Stripe partial.",
+    "always": [
+      {"field": "color.contrast.body_on_bg", "operator": "gte", "value": 4.5,
+       "rationale": "Sage's clarity demands at least WCAG AA contrast"},
+      {"field": "spacing.base", "operator": "gte", "value": 4,
+       "rationale": "Sufficient breathing room is core to Sage's calm authority"},
+      {"field": "color.brand.chromatic_count", "operator": "lte", "value": 1,
+       "rationale": "Sage uses one chromatic anchor maximum, restraint is the message"}
+    ],
+    "never": [
+      {"field": "color.brand.saturation_max", "operator": "gt", "value": 0.7,
+       "rationale": "High saturation destroys Sage's calm authority",
+       "severity": "blocker"},
+      {"field": "color.gradient_count", "operator": "gt", "value": 1,
+       "rationale": "Decorative gradients undermine Sage's clarity",
+       "severity": "blocker"},
+      {"field": "radius.max", "operator": "gt", "value": 16,
+       "rationale": "Large radii feel playful, not sage-like",
+       "severity": "warning"},
+      {"field": "motion.has_bounce_easing", "operator": "eq", "value": true,
+       "rationale": "Sage motion is functional, not theatrical",
+       "severity": "warning"}
+    ],
+    "tend_to": [
+      {"field": "color.palette_temperature", "operator": "in", "value": ["cool", "neutral"],
+       "rationale": "Sage skews toward cool/neutral palettes"},
+      {"field": "typography.body_line_height", "operator": "gte", "value": 1.5,
+       "rationale": "Generous body line-height supports reading-first"}
+    ]
+  },
+
+  "Magician": {
+    "description": "Transformation, vision, mystical. Apple keynote, Stripe dark sections.",
+    "always": [
+      {"field": "color.dark_surface.lightness_min", "operator": "lte", "value": 0.20,
+       "rationale": "Magician needs deep darks for transformation atmosphere"},
+      {"field": "color.brand.saturation_max", "operator": "gte", "value": 0.5,
+       "rationale": "At least one chromatic moment must signal transformation"}
+    ],
+    "never": [
+      {"field": "color.is_pure_monochromatic", "operator": "eq", "value": true,
+       "rationale": "Pure monochromatic loses magical layering",
+       "severity": "warning"},
+      {"field": "design.flat_only", "operator": "eq", "value": true,
+       "rationale": "Pure flat design (no shadows, no depth) breaks Magician's mystery",
+       "severity": "warning"}
+    ],
+    "tend_to": [
+      {"field": "color.palette_includes_purple_or_metallic", "operator": "eq", "value": true,
+       "rationale": "Magician palettes commonly include purple, deep blue, or metallic"},
+      {"field": "typography.has_serif_or_strong_weight_contrast", "operator": "eq", "value": true,
+       "rationale": "Texture differentiation supports magical hierarchy"}
+    ]
+  },
+
+  "Hero": {
+    "description": "Courage, mastery, achievement. Nike, Apple Watch, Stripe Connect.",
+    "always": [
+      {"field": "color.contrast.body_on_bg", "operator": "gte", "value": 4.5,
+       "rationale": "Hero demands clear, bold contrast"},
+      {"field": "typography.weight_ladder_max", "operator": "gte", "value": 600,
+       "rationale": "Hero needs at least one strong weight tier for command"}
+    ],
+    "never": [
+      {"field": "typography.weight_ladder_max", "operator": "lt", "value": 500,
+       "rationale": "Whisper-weight typography lacks Hero's command",
+       "severity": "blocker"},
+      {"field": "color.palette_temperature", "operator": "eq", "value": "pastel",
+       "rationale": "Pastel palettes contradict Hero's strength",
+       "severity": "warning"}
+    ],
+    "tend_to": [
+      {"field": "color.brand.saturation_avg", "operator": "gte", "value": 0.5,
+       "rationale": "Hero brands lean toward saturated, decisive color"},
+      {"field": "radius.medium", "operator": "lte", "value": 8,
+       "rationale": "Hero geometry is sharper, not soft-rounded"}
+    ]
+  },
+
+  "Outlaw": {
+    "description": "Rebellion, disruption, anti-establishment. Brutalism, Vimeo (early), Are.na.",
+    "always": [
+      {"field": "design.has_anti_pattern_intent", "operator": "eq", "value": true,
+       "rationale": "Outlaw deliberately breaks conventional rules"}
+    ],
+    "never": [
+      {"field": "design.is_corporate_template", "operator": "eq", "value": true,
+       "rationale": "Corporate template aesthetic is the opposite of Outlaw",
+       "severity": "blocker"},
+      {"field": "color.brand.is_safe_blue_purple", "operator": "eq", "value": true,
+       "rationale": "Safe SaaS-blue-purple is what Outlaw rebels against",
+       "severity": "warning"},
+      {"field": "design.has_decorative_polish", "operator": "eq", "value": true,
+       "rationale": "Polished decoration undermines raw, anti-aesthetic intent",
+       "severity": "warning"}
+    ],
+    "tend_to": [
+      {"field": "color.has_high_contrast_binary", "operator": "eq", "value": true,
+       "rationale": "Outlaw often uses raw black/white binaries"},
+      {"field": "typography.allows_extreme_weight_jump", "operator": "eq", "value": true,
+       "rationale": "Expressive weight contrast over uniform ladder"}
+    ]
+  },
+
+  "Explorer": {
+    "description": "Freedom, discovery, ruggedness. Patagonia, Airbnb, REI.",
+    "always": [
+      {"field": "design.imagery_role", "operator": "in", "value": ["hero", "primary"],
+       "rationale": "Explorer products are anchored in real-world imagery"}
+    ],
+    "never": [
+      {"field": "design.is_synthetic_aesthetic", "operator": "eq", "value": true,
+       "rationale": "Synthetic / over-rendered aesthetics fight Explorer's authenticity",
+       "severity": "warning"}
+    ],
+    "tend_to": [
+      {"field": "color.palette_has_earth_tones", "operator": "eq", "value": true,
+       "rationale": "Earth tones (browns, forest greens, ocean blues) common in Explorer"},
+      {"field": "typography.has_humanist_or_serif", "operator": "eq", "value": true,
+       "rationale": "Humanist or serif typefaces for grounded, authentic voice"}
+    ]
+  },
+
+  "Creator": {
+    "description": "Imagination, expression, craft. LEGO, Adobe, Figma, Vercel.",
+    "always": [
+      {"field": "design.allows_color_in_content", "operator": "eq", "value": true,
+       "rationale": "Creator products celebrate user-created color content"}
+    ],
+    "never": [
+      {"field": "design.locks_user_to_one_aesthetic", "operator": "eq", "value": true,
+       "rationale": "Creator brand should not constrain user expression",
+       "severity": "warning"}
+    ],
+    "tend_to": [
+      {"field": "design.has_disciplined_chrome_with_rich_content", "operator": "eq", "value": true,
+       "rationale": "Often uses disciplined neutral chrome to let user content shine (Figma pattern)"},
+      {"field": "typography.has_distinctive_typography", "operator": "eq", "value": true,
+       "rationale": "Custom or unusual typefaces signal craft awareness"}
+    ]
+  },
+
+  "Innocent": {
+    "description": "Optimism, simplicity, kindness. Coca-Cola, Dove, Aveeno, kids products.",
+    "always": [
+      {"field": "color.palette_temperature", "operator": "in", "value": ["warm", "soft"],
+       "rationale": "Innocent palettes are warm and soft, never harsh"},
+      {"field": "radius.medium", "operator": "gte", "value": 8,
+       "rationale": "Soft, rounded forms are core to Innocent feel"}
+    ],
+    "never": [
+      {"field": "color.has_high_contrast_severe", "operator": "eq", "value": true,
+       "rationale": "Severe high-contrast palettes feel harsh, not innocent",
+       "severity": "warning"},
+      {"field": "typography.is_geometric_cold", "operator": "eq", "value": true,
+       "rationale": "Cold geometric sans contradicts Innocent warmth",
+       "severity": "warning"}
+    ],
+    "tend_to": [
+      {"field": "color.uses_pastel_or_soft_tints", "operator": "eq", "value": true,
+       "rationale": "Pastels and soft tints are signature Innocent palette"},
+      {"field": "typography.has_humanist_or_rounded", "operator": "eq", "value": true,
+       "rationale": "Rounded humanist sans or rounded display typefaces"}
+    ]
+  },
+
+  "Lover": {
+    "description": "Intimacy, beauty, indulgence. Chanel, Tiffany, Godiva, luxury brands.",
+    "always": [
+      {"field": "design.has_generous_whitespace", "operator": "eq", "value": true,
+       "rationale": "Lover designs always breathe — luxury is space"}
+    ],
+    "never": [
+      {"field": "design.is_dense_information", "operator": "eq", "value": true,
+       "rationale": "Dense information layouts contradict Lover's indulgence",
+       "severity": "warning"},
+      {"field": "typography.is_geometric_only", "operator": "eq", "value": true,
+       "rationale": "Geometric-only typography feels mechanical, not sensual",
+       "severity": "warning"}
+    ],
+    "tend_to": [
+      {"field": "color.palette_temperature", "operator": "in", "value": ["warm", "neutral_warm"],
+       "rationale": "Lover palettes lean warm — beige, dusty rose, dark gold"},
+      {"field": "typography.has_serif", "operator": "eq", "value": true,
+       "rationale": "Serif (especially Didone) typefaces signal Lover's refinement"},
+      {"field": "design.has_delicate_details", "operator": "eq", "value": true,
+       "rationale": "Hairlines, fine borders, soft shadows"}
+    ]
+  },
+
+  "Caregiver": {
+    "description": "Service, nurturing, protection. Johnson & Johnson, UNICEF, Volvo, healthcare.",
+    "always": [
+      {"field": "color.contrast.body_on_bg", "operator": "gte", "value": 4.5,
+       "rationale": "Caregiver values clarity and accessibility"},
+      {"field": "radius.medium", "operator": "gte", "value": 6,
+       "rationale": "Soft rounded forms for approachability"}
+    ],
+    "never": [
+      {"field": "color.has_aggressive_palette", "operator": "eq", "value": true,
+       "rationale": "Aggressive palettes contradict Caregiver's nurture",
+       "severity": "blocker"},
+      {"field": "design.has_severe_geometry", "operator": "eq", "value": true,
+       "rationale": "Severe sharp geometry undermines warmth",
+       "severity": "warning"}
+    ],
+    "tend_to": [
+      {"field": "color.palette_temperature", "operator": "in", "value": ["warm", "neutral_warm", "cool_friendly"],
+       "rationale": "Caregiver palettes balance warmth (trust) with cool blues (calm)"}
+    ]
+  },
+
+  "Ruler": {
+    "description": "Authority, control, prestige. Rolex, Mercedes, IBM enterprise, Microsoft.",
+    "always": [
+      {"field": "design.has_grid_strict_alignment", "operator": "eq", "value": true,
+       "rationale": "Ruler demands strict grid order"},
+      {"field": "color.palette_includes_dark_or_metallic", "operator": "eq", "value": true,
+       "rationale": "Ruler palettes feature deep blacks, navy, or metallic accents"}
+    ],
+    "never": [
+      {"field": "design.feels_casual_or_playful", "operator": "eq", "value": true,
+       "rationale": "Casual or playful aesthetic undermines Ruler's authority",
+       "severity": "warning"},
+      {"field": "typography.has_handwritten_or_quirky", "operator": "eq", "value": true,
+       "rationale": "Handwritten or quirky typography breaks Ruler's gravitas",
+       "severity": "warning"}
+    ],
+    "tend_to": [
+      {"field": "typography.has_serif_or_strong_geometric_sans", "operator": "eq", "value": true,
+       "rationale": "Serif or strong geometric sans typefaces"},
+      {"field": "color.brand.is_dark_or_navy", "operator": "eq", "value": true,
+       "rationale": "Dark navy / deep black brand color"}
+    ]
+  },
+
+  "Jester": {
+    "description": "Joy, playfulness, levity. Old Spice, M&M's, Mailchimp (mature).",
+    "always": [
+      {"field": "color.brand.saturation_max", "operator": "gte", "value": 0.6,
+       "rationale": "Jester needs high-saturation joy"}
+    ],
+    "never": [
+      {"field": "design.feels_corporate_serious", "operator": "eq", "value": true,
+       "rationale": "Corporate seriousness contradicts Jester's joy",
+       "severity": "blocker"},
+      {"field": "color.palette_is_monochromatic_only", "operator": "eq", "value": true,
+       "rationale": "Pure monochromatic feels too restrained for Jester",
+       "severity": "warning"}
+    ],
+    "tend_to": [
+      {"field": "color.has_multiple_brand_colors", "operator": "eq", "value": true,
+       "rationale": "Multi-color brand palettes are common in Jester"},
+      {"field": "radius.max", "operator": "gte", "value": 12,
+       "rationale": "Generous rounded shapes signal playfulness"},
+      {"field": "motion.has_bounce_or_overshoot", "operator": "eq", "value": true,
+       "rationale": "Elastic / bounce motion supports Jester's joy"}
+    ]
+  },
+
+  "Everyman": {
+    "description": "Belonging, accessibility, friendliness. IKEA, Target, Levi's, Slack.",
+    "always": [
+      {"field": "color.contrast.body_on_bg", "operator": "gte", "value": 4.5,
+       "rationale": "Everyman prioritizes accessible, friendly clarity"}
+    ],
+    "never": [
+      {"field": "design.feels_elite_or_exclusive", "operator": "eq", "value": true,
+       "rationale": "Elite/exclusive aesthetic contradicts Everyman's belonging",
+       "severity": "warning"},
+      {"field": "design.feels_mysterious_or_inaccessible", "operator": "eq", "value": true,
+       "rationale": "Mystery contradicts Everyman's friendliness",
+       "severity": "warning"}
+    ],
+    "tend_to": [
+      {"field": "typography.is_humanist_sans", "operator": "eq", "value": true,
+       "rationale": "Humanist sans-serif (warm, approachable) is the Everyman default"},
+      {"field": "color.palette_temperature", "operator": "in", "value": ["warm", "neutral", "neutral_warm"],
+       "rationale": "Everyman palettes are friendly, never cold or extreme"}
+    ]
+  }
+}

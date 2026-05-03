@@ -153,12 +153,31 @@ degraded_sections: [...]
 
 告诉我具体哪个决策、改成什么方向。
 
-## 已知限制
+## 品味终审需由人完成（v4 必须显示，铁律 3）
 
-- <列出 B5 闸门给的非 blocker warnings>
+> 这份 DESIGN.md 通过了 5 项可计算 check（数学正确 + 语境贴合 + 不出格 + 论证通），但**这不等于它有品味**。
+>
+> 学界共识（Polanyi 1966；CHI 2024）：design taste 是 tacit knowledge，无法形式化。任何声称"AI 自动生成有品味设计"的工具都是伪科学。
+>
+> 本 skill 替代的是"硬选 5 个固定方向"或"硬选别人 DESIGN.md"这个低质量起点。**最终是否有品味必须由设计师审看判断**。
+>
+> 详见 `references/tacit-knowledge-boundary.md`。
+
+## 已知限制（来自 P0 闸门 5 项 check 的 warnings）
+
+- <列出 coherence_check 的非 blocker warnings>
+- <列出 archetype_check 的 warning 级 violation>
+- <列出 kansei_coverage_check 的 uncovered list>
+- <列出 neighbor_check 的 verdict（特别是 needs_review 时的距离）>
+- <列出 rationale_judge 的非 blocker issues>
 - <列出 degraded sections>
-- <列出 anti-slop check 的 suspicions>
 ```
+
+## Step 4.5 — check-report.json 落地（v4 新增）
+
+把 B5 阶段产出的合并 check_report 直接落到 `<output_dir>/check-report.json`。schema 见 SKILL.md §六 3.3.8。
+
+这份是审计 artifact，让用户事后能查"这份产物当时通过了哪些 check / 哪些 warning"。
 
 ## Step 5 — 触发自演化
 

@@ -1,0 +1,297 @@
+{
+  "verdict": "pass",
+  "iteration": 1,
+  "checks": {
+    "coherence": {
+      "passed": true,
+      "score": 0.765,
+      "blocker_count": 0,
+      "warning_count": 1,
+      "subchecks": {
+        "wcag_contrast": {
+          "passed": true,
+          "evaluable": true,
+          "pairs_checked": [
+            {
+              "fg": "primary_text (#f7f8f8)",
+              "bg": "marketing_black (#010102)",
+              "ratio": 19.61,
+              "tier": "body",
+              "required": 4.5,
+              "passes": true
+            },
+            {
+              "fg": "secondary_text (#d0d6e0)",
+              "bg": "marketing_black (#010102)",
+              "ratio": 14.28,
+              "tier": "large",
+              "required": 3.0,
+              "passes": true
+            },
+            {
+              "fg": "tertiary_text (#8a8f98)",
+              "bg": "pure_white (#ffffff)",
+              "ratio": 3.25,
+              "tier": "large",
+              "required": 3.0,
+              "passes": true
+            },
+            {
+              "fg": "quaternary_text (#62666d)",
+              "bg": "pure_white (#ffffff)",
+              "ratio": 5.77,
+              "tier": "optional",
+              "required": 0.0,
+              "passes": true
+            },
+            {
+              "fg": "brand_indigo (#5e6ad2)",
+              "bg": "pure_white (#ffffff)",
+              "ratio": 4.7,
+              "tier": "large",
+              "required": 3.0,
+              "passes": true
+            },
+            {
+              "fg": "accent_violet (#7170ff)",
+              "bg": "pure_white (#ffffff)",
+              "ratio": 3.84,
+              "tier": "large",
+              "required": 3.0,
+              "passes": true
+            },
+            {
+              "fg": "accent_hover (#828fff)",
+              "bg": "pure_white (#ffffff)",
+              "ratio": 2.87,
+              "tier": "optional",
+              "required": 0.0,
+              "passes": true
+            }
+          ],
+          "failures": [],
+          "warnings": []
+        },
+        "oklch_uniformity": {
+          "passed": true,
+          "evaluable": false,
+          "reason": "no neutral_scale found in tokens.color"
+        },
+        "hue_harmony": {
+          "passed": true,
+          "evaluable": true,
+          "scheme": "free_combination",
+          "confidence": 0.0,
+          "chromatic_count": 6,
+          "is_free_combination": true
+        },
+        "modular_scale": {
+          "passed": true,
+          "evaluable": true,
+          "ratio_median": 1.0955,
+          "ratio_per_step": [
+            1.1,
+            1.0909,
+            1.0833,
+            1.0769,
+            1.0714,
+            1.0667,
+            1.0625,
+            1.0588,
+            1.1111,
+            1.2,
+            1.3333,
+            1.5,
+            1.3333,
+            1.125
+          ],
+          "within_tolerance": false,
+          "nearest_known": [
+            "minor_second",
+            1.067,
+            0.02845454545454551
+          ],
+          "deviation_pct": 0.3693
+        },
+        "vertical_rhythm": {
+          "passed": true,
+          "evaluable": true,
+          "rhythm_ok": true,
+          "line_box": 24.0,
+          "remainder": 0.0,
+          "issue": null
+        },
+        "grid_consistency": {
+          "passed": false,
+          "evaluable": true,
+          "spacing_grid": {
+            "aligned": false,
+            "off_grid": [
+              [
+                11.0,
+                8.0
+              ],
+              [
+                19.0,
+                16.0
+              ],
+              [
+                22.0,
+                24.0
+              ],
+              [
+                35.0,
+                32.0
+              ]
+            ],
+            "unit": "half-base",
+            "base": 8.0
+          },
+          "radius_grid": {
+            "aligned": false,
+            "off_grid": [
+              [
+                2.0,
+                0.0
+              ],
+              [
+                6.0,
+                8.0
+              ],
+              [
+                22.0,
+                24.0
+              ]
+            ],
+            "unit": "half-base",
+            "base": 8.0
+          },
+          "radius_proportion": {
+            "reasonable": true,
+            "ratios": [
+              2.0,
+              1.5,
+              1.33,
+              1.5,
+              1.83
+            ],
+            "issues": []
+          },
+          "issues": [
+            "spacing values off-grid: [(11.0, 8.0), (19.0, 16.0), (22.0, 24.0), (35.0, 32.0)]",
+            "radius values off-grid (excluding pills): [(2.0, 0.0), (6.0, 8.0), (22.0, 24.0)]"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "subcheck": "grid_consistency",
+          "severity": "warning",
+          "message": "grid_consistency failed: ['spacing values off-grid: [(11.0, 8.0), (19.0, 16.0), (22.0, 24.0), (35.0, 32.0)]', 'radius values off-grid (excluding pills): [(2.0, 0.0), (6.0, 8.0), (22.0, 24.0)]']"
+        }
+      ]
+    },
+    "archetype": {
+      "passed": true,
+      "evaluable": true,
+      "primary": "Sage",
+      "secondary": "Creator",
+      "blocker_count": 0,
+      "warning_count": 2,
+      "violations": [
+        {
+          "archetype": "Sage",
+          "role": "primary",
+          "block": "never",
+          "rule": "Large radii feel playful, not sage-like",
+          "field": "radius.max",
+          "severity": "warning",
+          "diagnostic": null
+        },
+        {
+          "archetype": "Sage",
+          "role": "primary",
+          "block": "always",
+          "rule": "Sage uses one chromatic anchor maximum, restraint is the message",
+          "field": "color.brand.chromatic_count",
+          "severity": "warning",
+          "diagnostic": null
+        }
+      ],
+      "derived_signals_summary": {
+        "sat_max": 0.207,
+        "sat_avg": 0.154,
+        "palette_temperature": "neutral",
+        "L_min": 0.069,
+        "has_serif": false,
+        "weight_max": 0,
+        "radius_max": 22.0
+      }
+    },
+    "kansei_coverage": {
+      "passed": true,
+      "coverage_rate": 1.0,
+      "addressed": [
+        "calm",
+        "confident",
+        "focused",
+        "modern",
+        "precise",
+        "structured"
+      ],
+      "addressed_in_user_positive": [
+        "calm",
+        "confident",
+        "focused",
+        "modern",
+        "precise",
+        "structured"
+      ],
+      "uncovered": [],
+      "reverse_violations": [],
+      "threshold": 0.8
+    },
+    "neighbor": {
+      "passed": true,
+      "evaluable": true,
+      "verdict": "pass",
+      "nearest_distance": 0.0,
+      "nearest_systems": [
+        {
+          "name": "linear-app",
+          "distance": 0.0
+        },
+        {
+          "name": "ollama",
+          "distance": 0.2182
+        },
+        {
+          "name": "cohere",
+          "distance": 0.2312
+        },
+        {
+          "name": "expo",
+          "distance": 0.2503
+        },
+        {
+          "name": "uber",
+          "distance": 0.2937
+        }
+      ],
+      "warning": null,
+      "thresholds": {
+        "pass": 0.3,
+        "warn": 0.6
+      }
+    }
+  },
+  "rationale_judge_verdict": {
+    "note": "pilot run — rationale-judge not invoked here",
+    "verdict": "skipped_for_pilot"
+  },
+  "summary": {
+    "total_blockers": 0,
+    "total_warnings": 3,
+    "verdict_reason": "4/4 Python checks passed; rationale-judge skipped (pilot)"
+  }
+}
