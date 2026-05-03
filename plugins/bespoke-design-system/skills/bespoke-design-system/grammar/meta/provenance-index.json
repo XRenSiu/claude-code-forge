@@ -1,0 +1,12 @@
+{
+  "$schema_description": "Reverse index: rule_id -> source system(s). Used by B4 to construct inheritance.source_systems quickly.",
+  "rules": {},
+  "_template": {
+    "<rule_id>": {
+      "system": "<primary source system>",
+      "co_emerges_from": ["<other systems this rule pattern was found in>"],
+      "provenance": "original | generated | merged",
+      "added_at": "<ISO 8601>"
+    }
+  }
+}

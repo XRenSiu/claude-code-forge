@@ -1,0 +1,152 @@
+# defaults.yaml — auto 模式的默认推断策略
+#
+# B1b 在 auto 模式下读这份文件，对识别出的 product_category 应用对应的默认值。
+# 默认值会被用户消息上下文 / 已有项目资产 / 反向声明覆盖。
+#
+# 维护：当 grammar/meta/adaptation-stats.json 中某 category 的某 dimension 反复被调整时，
+# 考虑更新此文件中该 category 的默认值（让默认更接近真实使用模式）。
+
+category_defaults:
+
+  # 灵性 / 命理 / 玄学 SaaS（八字、塔罗、占星、奇门等）
+  spiritual_saas:
+    likely_archetypes: [Sage, Magician]
+    likely_kansei: [mystical, trustworthy, calm, structured, ancient]
+    avoid_kansei: [aggressive, playful, decorative, casual, generic_corporate]
+    sd_defaults:
+      warm_to_cold: -0.1        # 略偏暖（不要冷感太重）
+      ornate_to_minimal: 0.2    # 偏极简（避免淘宝算命店感）
+      serious_to_playful: -0.6  # 严肃
+      modern_to_classical: 0.0  # 平衡
+    backstop_rules:
+      color: ["spiritual-color-deep-twilight"]
+      typography: ["spiritual-typography-serif-display"]
+
+  # 开发者工具（CLI、IDE、API 平台、文档站）
+  developer_tool:
+    likely_archetypes: [Sage, Creator]
+    likely_kansei: [structured, precise, modern, calm, confident]
+    avoid_kansei: [decorative, playful, ornate]
+    sd_defaults:
+      warm_to_cold: 0.2         # 略冷
+      ornate_to_minimal: 0.6    # 极简
+      serious_to_playful: -0.3
+      modern_to_classical: -0.4 # 现代
+    backstop_rules:
+      color: ["dev-color-neutral-blue"]
+      typography: ["dev-typography-mono-mix"]
+
+  # B2B SaaS（CRM、HR、Sales、运营等）
+  b2b_saas:
+    likely_archetypes: [Sage, Caregiver]
+    likely_kansei: [trustworthy, professional, clear, calm, confident]
+    avoid_kansei: [aggressive, mystical, decorative]
+    sd_defaults:
+      warm_to_cold: 0.0
+      ornate_to_minimal: 0.4
+      serious_to_playful: -0.5
+      modern_to_classical: -0.3
+
+  # 内容平台（博客、媒体、Newsletter 工具）
+  content_platform:
+    likely_archetypes: [Sage, Creator]
+    likely_kansei: [readable, structured, calm, modern]
+    avoid_kansei: [aggressive, cluttered]
+    sd_defaults:
+      warm_to_cold: 0.1
+      ornate_to_minimal: 0.3
+      serious_to_playful: -0.2
+      modern_to_classical: -0.1
+
+  # 电商
+  ecommerce:
+    likely_archetypes: [Everyman, Lover]
+    likely_kansei: [inviting, trustworthy, clear, energetic]
+    avoid_kansei: [cold, severe]
+    sd_defaults:
+      warm_to_cold: -0.3        # 偏暖
+      ornate_to_minimal: -0.1
+      serious_to_playful: 0.1
+      modern_to_classical: -0.2
+
+  # 高端 / 奢侈品 / 精品
+  luxury:
+    likely_archetypes: [Lover, Ruler]
+    likely_kansei: [refined, sensual, authoritative, calm]
+    avoid_kansei: [casual, cheap, aggressive]
+    sd_defaults:
+      warm_to_cold: 0.0
+      ornate_to_minimal: -0.2   # 偏装饰（精致细节）
+      serious_to_playful: -0.6
+      modern_to_classical: 0.4  # 偏古典
+
+  # 创作工具（设计、写作、视频编辑）
+  creator_tool:
+    likely_archetypes: [Creator, Magician]
+    likely_kansei: [imaginative, precise, inspiring, modern]
+    avoid_kansei: [bureaucratic, cold, generic]
+    sd_defaults:
+      warm_to_cold: 0.1
+      ornate_to_minimal: 0.3
+      serious_to_playful: -0.1
+      modern_to_classical: -0.4
+
+  # 健康 / 医疗 / 健身
+  health_wellness:
+    likely_archetypes: [Caregiver, Innocent]
+    likely_kansei: [nurturing, calm, trustworthy, clear, warm]
+    avoid_kansei: [aggressive, cold, clinical]
+    sd_defaults:
+      warm_to_cold: -0.4
+      ornate_to_minimal: 0.2
+      serious_to_playful: -0.2
+      modern_to_classical: -0.2
+
+  # 金融 / Fintech
+  fintech:
+    likely_archetypes: [Sage, Ruler]
+    likely_kansei: [trustworthy, precise, structured, confident]
+    avoid_kansei: [playful, decorative, casual]
+    sd_defaults:
+      warm_to_cold: 0.1
+      ornate_to_minimal: 0.4
+      serious_to_playful: -0.6
+      modern_to_classical: -0.2
+
+  # 教育 / 学习
+  education:
+    likely_archetypes: [Sage, Caregiver]
+    likely_kansei: [clear, encouraging, structured, calm]
+    avoid_kansei: [aggressive, cold]
+    sd_defaults:
+      warm_to_cold: -0.2
+      ornate_to_minimal: 0.2
+      serious_to_playful: -0.1
+      modern_to_classical: -0.2
+
+  # 游戏 / 娱乐
+  gaming_entertainment:
+    likely_archetypes: [Hero, Jester, Outlaw]
+    likely_kansei: [energetic, daring, immersive, bold]
+    avoid_kansei: [bureaucratic, generic]
+    sd_defaults:
+      warm_to_cold: 0.0
+      ornate_to_minimal: -0.3
+      serious_to_playful: 0.3
+      modern_to_classical: -0.1
+
+  # 兜底（无法归类）
+  _uncategorized:
+    likely_archetypes: [Sage, Everyman]
+    likely_kansei: [trustworthy, clear, calm]
+    avoid_kansei: [aggressive]
+    sd_defaults:
+      warm_to_cold: 0.0
+      ornate_to_minimal: 0.0
+      serious_to_playful: -0.2
+      modern_to_classical: -0.2
+
+# 全局兜底 reverse_constraint（任何 category 都自动加）
+universal_reverse_constraints:
+  - ai_slop                # 紫渐变 + Inter + 圆角卡片那一套
+  - generic_corporate      # 无个性的企业站感

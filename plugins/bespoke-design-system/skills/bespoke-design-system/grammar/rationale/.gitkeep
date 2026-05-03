@@ -1,0 +1,11 @@
+# rationale/
+
+每套素材的 rationale 抽取产物（A2 阶段输出）。
+
+文件命名：`<system_name>.md`，例如 `linear.md`。
+
+每个 decision 三段式：`decision` / `trade_off` / `intent` / `avoid[]`。
+
+详见 scripts/extract-grammar.md A2 部分与 references/reflective-practice.md。
+
+首次安装时本目录为空。

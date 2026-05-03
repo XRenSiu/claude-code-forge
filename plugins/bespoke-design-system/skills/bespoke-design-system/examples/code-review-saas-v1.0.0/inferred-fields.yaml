@@ -1,0 +1,85 @@
+# B1b — auto-inference for "code-review-saas"
+# Walked the b1b-auto-inference.md prompt step by step.
+
+mode: auto
+
+inferred_fields:
+  - field: product_context.category
+    value: developer_tool
+    source: brief keywords ["代码审查", "技术团队", "工程师", "review"]
+    confidence: high
+
+  - field: product_context.audience
+    value: "tech leads + senior engineers in product engineering teams"
+    source: brief explicit ("技术团队的 lead 和资深工程师")
+    confidence: high
+
+  - field: product_context.unique_constraints
+    value:
+      - reduce_review_noise
+      - surface_only_judgment_worthy_diffs
+      - not_yet_another_enterprise_saas
+    source: brief explicit
+    confidence: high
+
+  - field: brand_archetypes.primary
+    value: Sage
+    source: developer_tool default + reduce-noise emphasis maps to Sage's "understand and convey truth"
+    confidence: high
+
+  - field: brand_archetypes.secondary
+    value: Creator
+    source: developer_tool default ([Sage, Creator])
+    confidence: medium
+
+  - field: kansei_words.positive
+    value: [structured, precise, modern, calm, confident, focused]
+    source: developer_tool default + brief's "judgment-worthy" emphasis -> add "focused"
+    confidence: medium
+
+  - field: kansei_words.reverse_constraint
+    value: [ai_slop, generic_corporate, decorative, playful, ornate, aggressive]
+    source: universal_reverse_constraints + developer_tool defaults + brief "不要又一个企业 SaaS"
+    confidence: high
+
+  - field: semantic_differentials.warm_to_cold
+    value: 0.2
+    source: developer_tool default
+    confidence: medium
+
+  - field: semantic_differentials.ornate_to_minimal
+    value: 0.6
+    source: developer_tool default + "减少噪音" reinforcement
+    confidence: high
+
+  - field: semantic_differentials.serious_to_playful
+    value: -0.3
+    source: developer_tool default
+    confidence: medium
+
+  - field: semantic_differentials.modern_to_classical
+    value: -0.4
+    source: developer_tool default
+    confidence: medium
+
+# Final synthesized profile
+user_profile:
+  mode: auto
+  product_context:
+    category: developer_tool
+    audience: "tech leads + senior engineers in product engineering teams"
+    unique_constraints:
+      - reduce_review_noise
+      - surface_only_judgment_worthy_diffs
+      - not_yet_another_enterprise_saas
+  brand_archetypes:
+    primary: Sage
+    secondary: Creator
+  kansei_words:
+    positive: [structured, precise, modern, calm, confident, focused]
+    reverse_constraint: [ai_slop, generic_corporate, decorative, playful, ornate, aggressive]
+  semantic_differentials:
+    warm_to_cold: 0.2
+    ornate_to_minimal: 0.6
+    serious_to_playful: -0.3
+    modern_to_classical: -0.4

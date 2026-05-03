@@ -1,0 +1,42 @@
+{
+  "$schema_description": "Registry of imported design systems. Updated by scripts/add-new-design-system.md and scripts/import-from-collection.md.",
+  "systems": {
+    "linear-app": {
+      "added_at": "2026-05-03T11:43:58.655717Z",
+      "source_type": "open_source",
+      "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/linear-app/DESIGN.md",
+      "license": "see open-design repo (Apache-2.0)",
+      "commercial_use": "permitted",
+      "last_extracted_at": "2026-05-03T11:43:58.655717Z",
+      "rule_count": 0,
+      "fingerprint_hash": "4c7264d8bc0e26de761c550e9f0445b0e7d92078c1a288f3fdb604b4f6df8fb7",
+      "also_found_in": []
+    },
+    "vercel": {
+      "added_at": "2026-05-03T11:43:58.655717Z",
+      "source_type": "open_source",
+      "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/vercel/DESIGN.md",
+      "license": "see open-design repo (Apache-2.0)",
+      "commercial_use": "permitted",
+      "last_extracted_at": "2026-05-03T11:43:58.655717Z",
+      "rule_count": 0,
+      "fingerprint_hash": "17d533f0ff2e1b5d9be3e69335ab7fc599d1ddf52bc9ac2f2dd36479676cbd3d",
+      "also_found_in": []
+    }
+  },
+  "_template": {
+    "<system_name>": {
+      "added_at": "<ISO 8601>",
+      "source_type": "user_original | open_source | public_company_doc | fair_use_reference",
+      "source_url": "<git url or canonical doc url>",
+      "license": "<license name or 'unknown'>",
+      "commercial_use": "permitted | restricted | prohibited | unknown",
+      "last_extracted_at": "<ISO 8601>",
+      "rule_count": 0,
+      "fingerprint_hash": "<sha256 of the DESIGN.md content>",
+      "also_found_in": [
+        "<other collections that contain this system>"
+      ]
+    }
+  }
+}

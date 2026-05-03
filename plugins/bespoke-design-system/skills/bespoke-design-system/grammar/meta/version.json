@@ -1,0 +1,8 @@
+{
+  "rules_version": "0.0.0",
+  "schema_version": "1.0.0",
+  "last_updated": null,
+  "total_rules": 0,
+  "total_systems": 0,
+  "notes": "rules_version follows SemVer. Bump minor on each new system import or generated-rule sedimentation; bump major when rule schema changes incompatibly."
+}

@@ -111,6 +111,21 @@
       "repository": "https://github.com/XRenSiu/claude-code-forge",
       "license": "MIT",
       "tags": ["ratchet", "goal-driven", "autonomous-agent", "master-subagent", "independent-evaluation", "kill-and-restart", "acceptance-criteria", "autoresearch", "long-running-task", "verifiable-output"]
+    },
+    {
+      "name": "bespoke-design-system",
+      "description": "Generate a bespoke DESIGN.md for any product brief by reverse-engineering a corpus of existing DESIGN.md design systems into a computable design grammar (rules + rationale + relationships), then forward-generating with three-part rationale (inheritance + adaptation + justification). Outputs OD-dialect 9-section DESIGN.md (Visual Theme / Color / Typography / Components / Layout / Depth & Elevation / Do's & Don'ts / Responsive / Agent Prompt Guide) consumable by any DESIGN.md-compatible tool. Two interaction modes: interactive (one-shot question batching, max 7 questions, never interrupts mid-generation) or auto (zero-questions inference). Self-evolving: high-frequency adaptations consolidate into new rules. Material library is decoupled — works with OD's ~140 systems, awesome-design-md, or any DESIGN.md collection.",
+      "version": "1.1.0",
+      "author": {
+        "name": "XRenSiu",
+        "email": "xrensiu@gmail.com"
+      },
+      "source": "./plugins/bespoke-design-system",
+      "category": "design",
+      "homepage": "https://github.com/XRenSiu/claude-code-forge/tree/main/plugins/bespoke-design-system",
+      "repository": "https://github.com/XRenSiu/claude-code-forge",
+      "license": "MIT",
+      "tags": ["design-system", "design-md", "bespoke", "design-grammar", "reverse-engineering", "shape-grammar", "kansei-engineering", "brand-archetype", "rationale-capture", "anti-slop", "self-evolving", "interactive-auto-modes"]
     }
   ]
 }

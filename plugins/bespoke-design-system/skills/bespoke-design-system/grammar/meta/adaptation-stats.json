@@ -1,0 +1,23 @@
+{
+  "$schema_description": "Frequency stats of adaptations applied during B4. Updated after each successful generation. Read by scripts/consolidate-adaptations.md to find sedimentation candidates.",
+  "adaptations": {},
+  "_template": {
+    "<adaptation_id>": {
+      "occurrences": 0,
+      "contexts": [
+        {
+          "user_kansei": ["..."],
+          "from": "<original value>",
+          "to": "<adapted value>",
+          "generated_at": "<ISO 8601>"
+        }
+      ],
+      "first_seen": "<ISO 8601>",
+      "last_seen": "<ISO 8601>",
+      "sedimented": false,
+      "sedimented_into_rule_id": null
+    }
+  },
+  "sedimentation_threshold": 5,
+  "pattern_consistency_threshold": 0.8
+}

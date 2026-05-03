@@ -1,0 +1,11 @@
+# rules/
+
+每套素材的规则抽象产物（A3 阶段输出）。
+
+文件命名：
+- `<system_name>.yaml` — 原生规则（来自具体素材的拆解）
+- `_generated.yaml` — 派生规则（自演化机制沉淀产生）
+
+Schema 见 SKILL.md §六 3.3.3。
+
+首次安装时本目录除 `_generated.yaml` 外为空。运行 `import-from-collection.md` 或 `add-new-design-system.md` 来填充原生规则。

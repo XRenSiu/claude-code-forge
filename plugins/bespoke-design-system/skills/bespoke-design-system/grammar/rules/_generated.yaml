@@ -1,0 +1,12 @@
+# _generated.yaml — 派生规则
+#
+# 本文件存放从 grammar/meta/adaptation-stats.json 中沉淀产生的派生规则。
+# 由 scripts/consolidate-adaptations.md 维护。
+#
+# 派生规则与原生规则的区别：
+# - provenance: generated（原生为 original）
+# - confidence 起步 0.6（原生通常 0.7-0.9）
+# - 含 sedimented_from_adaptation_id / sedimented_at / base_rule 等元数据
+# - 在 B4 阶段优先级低于原生规则（同分情况下原生优先）
+
+rules: []

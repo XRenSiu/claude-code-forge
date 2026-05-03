@@ -1,0 +1,376 @@
+meta:
+  generator: bespoke-design-system
+  version: 1.1.0
+  generated_at: 2026-05-03T12:30:00Z
+  user_profile_hash: sha256-stub-pilot-run-v1.1.0
+  rules_library_version: 0.2.0
+  source_systems_referenced: [linear-app, vercel]
+  mode: auto
+  gate_rounds: 2   # round 1 needs_revision (5 issues), round 2 pass after fixes below
+  gate_subagent_mode: fallback_general_purpose   # rationale-judge invoked via Agent tool with subagent_type=forge-teams:code-reviewer (rationale-judge agent doc loaded as instructions)
+  gate_round_1_findings:
+    - "BLOCKER: layout-spacing decision claimed 64px section padding as 'preserved' but source rules require 80px min — undeclared deviation"
+    - "WARNING: color-review-blue saturation 0.55→0.50 framed as adaptation but 0.50 is within Linear rule's [0.40, 0.55] range"
+    - "WARNING: typography-inter-510 triggers anti-slop B1 (Inter for both display and body) without direct justification beyond inheritance"
+    - "WARNING: layout-spacing 'from' field cited a 14-element Vercel scale that is not in vercel rule yaml (rule only has primary_rhythm: [8,16,32])"
+    - "WARNING: anti-pattern-enforcement fully_aligned_kansei included 'minimal' which is not in user profile kansei_words.positive"
+  gate_round_2_resolution: pass after fixes
+  inferred_fields:
+    - product_context.category
+    - brand_archetypes.primary
+    - brand_archetypes.secondary
+    - kansei_words.positive
+    - kansei_words.reverse_constraint
+    - semantic_differentials.warm_to_cold
+    - semantic_differentials.ornate_to_minimal
+    - semantic_differentials.serious_to_playful
+    - semantic_differentials.modern_to_classical
+
+decisions:
+
+  - decision: Canvas Black #0c0d0f as primary background
+    section: color
+    inheritance:
+      source_rules: [linear-app-color-dark-native-001]
+      source_systems: [linear-app]
+      original_rationale: |
+        Establish dark-mode-as-native-medium quality. Avoid generic dark theme,
+        light-theme-inverted, eye strain from pure white. Balance: precision ↔ readability.
+    adaptation:
+      fully_aligned_kansei: [structured, precise, calm, confident]
+      needs_extension_kansei: [focused]   # focused added via brief's "judgment-worthy diffs" emphasis
+      modifications:
+        - dimension: lightness
+          from: 0.04 (Linear's #08090a)
+          to: 0.05 (#0c0d0f)
+          reason: very slight lightness lift (≈0.01) softens code-on-canvas contrast for long review sessions; still meets dark-native rule
+      preserved:
+        - cool undertone (no warmth)
+        - 4-tier achromatic text scale (just shifted to #f4-#5d range from Linear's #f7-#62)
+    justification:
+      internal_consistency:
+        - Pairs with section 3 typography color #f4f5f7 (16:1 contrast on canvas)
+        - Pairs with section 6 elevation system: luminance stepping requires dark canvas
+        - Pairs with section 4 ghost button strategy: rgba white at 0.02–0.05 only works on dark
+      user_kansei_coverage:
+        addressed_in_this_decision: [structured, precise, calm, confident]
+        addressed_elsewhere: [focused, modern]
+        uncovered: []
+      conflict_check:
+        none
+    confidence: high
+
+  - decision: Single chromatic anchor — Review Blue #4d7df0
+    section: color
+    inheritance:
+      source_rules: [linear-app-color-single-chromatic-anchor-002, vercel-color-functional-only-accents-003]
+      source_systems: [linear-app, vercel]
+      original_rationale: |
+        Linear: brand-as-attention-anchor. Avoid decorative use, avoid medical pure blue,
+        avoid gaming pure purple. Vercel: color = function. Avoid decorative chromatic use.
+    adaptation:
+      fully_aligned_kansei: [structured, calm, confident, focused]
+      needs_extension_kansei: []
+      modifications:
+        - dimension: hue
+          from: 240-270° (Linear's indigo-violet, hue ~250°)
+          to: 220° (calmed teal-blue)
+          reason: profile reverse_constraint includes 'aggressive'; pure violet leans aggressive when amplified by code-review tension. Teal-leaning blue stays cool but reads as "supportive" rather than "warning"
+      preserved:
+        - chromatic_count: 1 (single anchor)
+        - usage_constraint: only on primary CTA + active state
+        - saturation: 0.50 (within Linear rule's allowed 0.40-0.55 range — within-range choice favoring slight calm; not a deviation requiring adaptation framing — corrected from B5 round-1 finding)
+    justification:
+      internal_consistency:
+        - Diff comment thread uses rgba(77,125,240,0.3) left-border — same hue at low alpha for thread accent (chromatic discipline preserved)
+        - Status colors (green/red/amber) are not part of brand chromatic count — they're functional-only as per rule 002
+      user_kansei_coverage:
+        addressed_in_this_decision: [focused, calm, confident]
+        addressed_elsewhere: [structured, precise]
+        uncovered: []
+      conflict_check:
+        none
+    confidence: medium
+
+  - decision: Inter Variable + cv01,ss03 + 510 signature weight
+    section: typography
+    inheritance:
+      source_rules: [linear-app-typography-geometric-sans-with-features-004, vercel-typography-geometric-sans-extreme-tracking-004]
+      source_systems: [linear-app, vercel]
+      original_rationale: |
+        Both source systems use geometric sans with OpenType features and narrow weight range.
+        Linear's signature is 510 between regular and medium. Both reject weight 700.
+    adaptation:
+      fully_aligned_kansei: [structured, precise, modern, confident]
+      needs_extension_kansei: [focused]
+      modifications:
+        - dimension: typeface_choice
+          from: Inter Variable (Linear) OR Geist (Vercel)
+          to: Inter Variable
+          reason: profile leans toward Linear's broader range and signature 510 weight; Geist's extreme negative tracking would over-amplify "urgent" beyond review-tool calm
+      preserved:
+        - cv01,ss03 features (from Linear)
+        - 3-tier weight discipline (400/510/590, no 700)
+        - aggressive negative letter-spacing at display only
+    justification:
+      internal_consistency:
+        - Heading hierarchy uses 510 throughout (matches the rule's signature weight choice)
+        - Active-state UI uses 590 (the strong-emphasis weight defined here)
+        - Diff code uses JetBrains Mono — separate family for code, consistent with both source systems' mono treatment
+      user_kansei_coverage:
+        addressed_in_this_decision: [structured, precise, modern]
+        addressed_elsewhere: [focused, calm, confident]
+        uncovered: []
+      conflict_check:
+        none
+      anti_slop_rebuttal:
+        pattern: B1_inter_default_font (Inter for both display and body)
+        why_not_slop_here: |
+          Inter is the default-slop choice ONLY when paired with default weight (regular)
+          and default features (none). Here it is mandatorily used with cv01+ss03 OpenType
+          features and the 510 signature weight — this combination is recognizable as
+          Linear's specific Inter usage, not generic Inter. The single OpenType setting
+          alone visibly differentiates 'a' and 'l' glyphs, which is why Linear specified
+          the rule. For Sage+Creator profiles requiring "engineered precision", Inter+cv01+ss03
+          is one of two production-validated choices (Linear's Inter or Vercel's Geist) —
+          we chose Inter because Geist's -2.4px tracking would over-amplify urgency for a
+          calm review tool. The Sage archetype's "geometric humanist" typeface tendency
+          (per references/brand-archetypes.md) makes Inter substantively right, not default.
+    confidence: high
+
+  - decision: Display compression with negative letter-spacing
+    section: typography
+    inheritance:
+      source_rules: [linear-app-typography-display-compression-005]
+      source_systems: [linear-app]
+      original_rationale: |
+        Establish minified-engineered-headline quality. Avoid loose advertising tracking.
+        Tracking scales with size; relaxes at body sizes for readability.
+    adaptation:
+      fully_aligned_kansei: [structured, precise, confident]
+      needs_extension_kansei: []
+      modifications:
+        - dimension: tracking_at_48px
+          from: -1.056px (Linear)
+          to: -1.056px
+          reason: preserved — Linear's value already optimal for this profile
+      preserved:
+        - All tracking values (display through body)
+        - normal-tracking floor at 14px (body size in our system)
+    justification:
+      internal_consistency:
+        - Tracking values exactly match the heading hierarchy table in section 3
+      user_kansei_coverage:
+        addressed_in_this_decision: [precise, confident]
+        addressed_elsewhere: [structured, modern]
+        uncovered: []
+      conflict_check:
+        none
+    confidence: high
+
+  - decision: Ghost button as default secondary
+    section: components
+    inheritance:
+      source_rules: [linear-app-components-button-near-zero-opacity-006]
+      source_systems: [linear-app]
+      original_rationale: |
+        Establish UI-that-doesn't-shout. Avoid solid buttons on dark, avoid gradient CTAs.
+        Reveal interaction via hover opacity increase.
+    adaptation:
+      fully_aligned_kansei: [structured, calm]
+      needs_extension_kansei: [focused]
+      modifications:
+        - dimension: text_color
+          from: #e2e4e7 (Linear)
+          to: #cbd0d9 (our secondary text token)
+          reason: aligns ghost button text with our text token system (consistency over verbatim copy)
+      preserved:
+        - bg alpha range 0.02–0.05
+        - radius 6px
+        - reveal-via-hover-opacity strategy
+    justification:
+      internal_consistency:
+        - Ghost button text token matches body-secondary token in section 3
+        - Border alpha 0.08 matches the standard border in section 5
+      user_kansei_coverage:
+        addressed_in_this_decision: [structured, calm]
+        addressed_elsewhere: [focused, precise]
+        uncovered: []
+      conflict_check:
+        none
+    confidence: medium
+
+  - decision: Luminance stepping for elevation (no drop shadow on dark)
+    section: depth_elevation
+    inheritance:
+      source_rules: [linear-app-elevation-luminance-stepping-007]
+      source_systems: [linear-app]
+      original_rationale: |
+        Establish depth-system-native-to-dark-medium. Avoid invisible dark shadows on dark,
+        avoid plastic floating cards.
+    adaptation:
+      fully_aligned_kansei: [structured, calm]
+      needs_extension_kansei: []
+      modifications: []
+      preserved:
+        - bg alpha increments per level
+        - inset shadow technique for recessed
+        - no drop shadow on dark surfaces
+    justification:
+      internal_consistency:
+        - Elevation table in section 6 follows the stepping (level 1 0.02 → level 2 0.04 → level 3 solid #1f2023 → level 4 with inset glow)
+        - Modal backdrop rgba(0,0,0,0.85) preserved from Linear
+      user_kansei_coverage:
+        addressed_in_this_decision: [structured, calm]
+        addressed_elsewhere: [precise]
+        uncovered: []
+      conflict_check:
+        none
+    confidence: high
+
+  - decision: 8px base spacing with optical micro-corrections
+    section: layout
+    inheritance:
+      source_rules: [linear-app-spacing-8px-base-with-optical-008, vercel-spacing-jump-scale-008]
+      source_systems: [linear-app, vercel]
+      original_rationale: |
+        Linear (linear-app-spacing-8px-base-with-optical-008): mathematical precision with optical
+        correction. base_unit: 8. scale: [1,4,7,8,11,12,16,19,20,22,24,28,32,35].
+        section_vertical_padding_min: 80. Avoids pure-grid-no-optical-correction and
+        dense-section-packing.
+
+        Vercel (vercel-spacing-jump-scale-008): forced structural choice. base_unit: 8.
+        primary_rhythm: [8, 16, 32] (mid-range gap is intentional — no 20/24 in primary scale).
+        section_vertical_padding_min: 80, max: 120. Avoids continuous-spacing-inconsistency.
+    adaptation:
+      fully_aligned_kansei: [structured, precise]
+      needs_extension_kansei: []
+      modifications:
+        - dimension: scale_density
+          from: Linear's full scale [4,7,8,11,12,16,19,20,22,24,28,32,35]
+          to: [4, 7, 8, 11, 12, 16, 20, 24, 32, 48, 64, 96]
+          reason: |
+            Kept Linear's optical correction (7, 11) and 8/16/24/32 backbone.
+            Removed Linear's 19/22/28/35 as redundant for review-tool layout density.
+            Added 48/64/96 for section-level rhythm (Linear's max was 35 — too small for our
+            section padding requirements).
+            Vercel's principle of "deliberate mid-range" was acknowledged but NOT adopted
+            (Vercel skips 20/24 entirely; we kept them because diff/comment indentation needs
+            them — this is a content-driven divergence, not a Vercel inheritance).
+      preserved:
+        - 'base_unit: 8 (from both source rules)'
+        - 'optical_micro_adjustments: 7, 11 (from Linear)'
+        - 'section_vertical_padding_min: 80 (from BOTH source rules — round-1 finding corrected; earlier draft incorrectly listed 64px which was an undeclared deviation)'
+        - 'section_vertical_padding_max: 120 (from Vercel)'
+    justification:
+      internal_consistency:
+        - Diff line height 1.5 with 8px row vertical padding (8 from base_unit)
+        - Comment thread indent uses 24px (mid-range value retained, content-driven)
+        - Section padding minimum 80px (preserved from both source rules — DESIGN.md section 5 updated to match)
+        - Landing page section padding 96-120px (within Vercel's 80-120 range)
+      user_kansei_coverage:
+        addressed_in_this_decision: [structured, precise]
+        addressed_elsewhere: [calm]
+        uncovered: []
+      conflict_check:
+        none
+    confidence: medium
+
+  - decision: Voice — engineered restraint, infrastructure made invisible
+    section: voice
+    inheritance:
+      source_rules: [linear-app-voice-engineered-not-designed-009, vercel-voice-infrastructure-invisible-009]
+      source_systems: [linear-app, vercel]
+      original_rationale: |
+        Both reject marketing-orchestral voice. Linear: every-decoration-has-functional-justification.
+        Vercel: presence-through-structure-not-decoration.
+    adaptation:
+      fully_aligned_kansei: [structured, precise, calm, confident]
+      needs_extension_kansei: [focused]
+      modifications:
+        - dimension: cta_register
+          from: Linear's "Start building" / Vercel's "Start Deploying"
+          to: imperative + diff-context verbs ("Submit review", "Approve", "Request changes", "View diff")
+          reason: review tool's CTAs are workflow-bound rather than acquisition-bound; both source systems are marketing CTAs which don't apply
+      preserved:
+        - reject marketing orchestral
+        - reject emoji in voice
+        - prefer short imperative verbs
+    justification:
+      internal_consistency:
+        - Section 4 button labels reflect this voice (no "Get started for free" — explicitly avoided as ai_slop pattern B4 in anti-slop blacklist)
+      user_kansei_coverage:
+        addressed_in_this_decision: [structured, calm, confident]
+        addressed_elsewhere: [precise, focused]
+        uncovered: []
+      conflict_check:
+        none
+    confidence: medium
+
+  - decision: Anti-pattern enforcement (do's and don'ts)
+    section: anti_patterns
+    inheritance:
+      source_rules: [linear-app-anti-pattern-warmth-in-chrome-010, vercel-anti-pattern-decoration-creep-010]
+      source_systems: [linear-app, vercel]
+      original_rationale: |
+        Linear: discipline-of-cool-restraint. Vercel: discipline-of-engineered-minimalism.
+        Both reject warm colors in chrome, decorative drift, weight 700, ai_slop signals.
+    adaptation:
+      fully_aligned_kansei: [structured, calm, modern, precise]   # 'minimal' removed in round-2 revision: not in user_profile.kansei_words.positive
+      needs_extension_kansei: []
+      modifications:
+        - dimension: anti_pattern_set
+          from: union of both source rule forbidden lists
+          to: 'same union + brief-derived: "not yet another enterprise SaaS"'
+          reason: brief explicitly rejects enterprise SaaS template; we add this constraint to anti-patterns and to the Don'ts list
+      preserved:
+        - all forbidden patterns from both sources
+    justification:
+      internal_consistency:
+        - Section 7 Don'ts list operationalizes every forbidden item from both source rules + the brief constraint
+      user_kansei_coverage:
+        addressed_in_this_decision: [structured, calm, modern, precise]
+        addressed_elsewhere: [confident, focused]
+        uncovered: []
+      conflict_check:
+        none
+    confidence: high
+
+dropped_during_b3:
+  - rule_id: vercel-color-extreme-white-minimalism-001
+    reason: conflicts_with linear-app-color-dark-native-001 (canvas philosophy clash); Linear scored 0.657 vs Vercel 0.372
+  - rule_id: vercel-color-near-black-text-002
+    reason: conflicts_with linear-app-color-dark-native-001 (text rules apply to opposite background contexts)
+  - rule_id: vercel-elevation-shadow-as-border-005
+    reason: conflicts_with linear-app-color-translucent-borders-003 (different border philosophies; translucent fits dark canvas better)
+  - rule_id: vercel-elevation-multi-layer-shadow-stack-006
+    reason: conflicts_with linear-app-elevation-luminance-stepping-007 (incompatible elevation philosophies for dark canvas)
+  - rule_id: vercel-components-dark-pill-cta-007
+    reason: dependency_loss — depends_on vercel-color-extreme-white-minimalism-001 which was dropped
+
+degraded_sections: []
+
+retained_subset_summary:
+  total: 14
+  by_section:
+    color: 4
+    typography: 3
+    components: 1
+    depth_elevation: 1
+    layout: 2
+    voice: 2
+    anti_patterns: 2
+  by_source:
+    linear-app: 10
+    vercel: 4
+  primary_style_island:
+    members: [linear-app-001, linear-app-003, linear-app-007, linear-app-002, linear-app-004]
+    density: 1.0
+    dominant_systems: [linear-app]
+
+self_evolution_notes:
+  adaptation_count: 5
+  most_promising_for_sedimentation: |
+    "Calmed-blue chromatic for review/judgment-tool contexts" (hue 220 + saturation 0.50)
+    is potentially a new pattern — currently 1 occurrence. Watch for repeat in future
+    review/judgment-tool generations to consider sedimentation.

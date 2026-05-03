@@ -1,0 +1,9 @@
+# tokens/
+
+每套素材的 token 提取产物（A1 阶段输出）。
+
+文件命名：`<system_name>.json`，例如 `linear.json`。
+
+Schema 见 SKILL.md §六 3.3.1 或 scripts/extract-grammar.md A1 部分。
+
+首次安装时本目录为空。运行 `import-from-collection.md` 或 `add-new-design-system.md` 来填充。
