@@ -1,12 +1,12 @@
 {
   "$schema_description": "Rules relationship graph. Rebuilt by tools/rebuild_graph.py.",
-  "version": "0.3.0",
-  "rebuilt_at": "2026-05-03T14:08:38.124108Z",
+  "version": "0.6.0",
+  "rebuilt_at": "2026-05-03T16:23:41.926073Z",
   "node_count": 127,
   "edge_counts": {
     "depends_on": 123,
     "constrains": 123,
-    "co_occurs_with": 68,
+    "co_occurs_with": 110,
     "conflicts_with": 11
   },
   "nodes": [
@@ -46,7 +46,7 @@
         "co_occurs_with": [
           {
             "rule": "airbnb-color-rausch-key-actions-only-002",
-            "frequency": 1.0
+            "frequency": 0.76
           }
         ],
         "conflicts_with": []
@@ -60,7 +60,7 @@
         "co_occurs_with": [
           {
             "rule": "airbnb-color-photography-first-canvas-001",
-            "frequency": 1.0
+            "frequency": 0.76
           }
         ],
         "conflicts_with": []
@@ -96,7 +96,7 @@
         "co_occurs_with": [
           {
             "rule": "airbnb-components-rounded-photo-cards-007",
-            "frequency": 1.0
+            "frequency": 0.7
           }
         ],
         "conflicts_with": []
@@ -123,7 +123,7 @@
         "co_occurs_with": [
           {
             "rule": "airbnb-components-circular-icon-buttons-008",
-            "frequency": 1.0
+            "frequency": 0.7
           }
         ],
         "conflicts_with": []
@@ -183,11 +183,11 @@
         "co_occurs_with": [
           {
             "rule": "airbnb-typography-display-tight-body-relaxed-006",
-            "frequency": 1.0
+            "frequency": 0.73
           },
           {
             "rule": "airbnb-typography-single-family-vf-004",
-            "frequency": 1.0
+            "frequency": 0.7
           }
         ],
         "conflicts_with": []
@@ -206,11 +206,11 @@
         "co_occurs_with": [
           {
             "rule": "airbnb-typography-500-is-regular-005",
-            "frequency": 1.0
+            "frequency": 0.73
           },
           {
             "rule": "airbnb-typography-single-family-vf-004",
-            "frequency": 1.0
+            "frequency": 0.7
           }
         ],
         "conflicts_with": []
@@ -239,11 +239,11 @@
         "co_occurs_with": [
           {
             "rule": "airbnb-typography-500-is-regular-005",
-            "frequency": 1.0
+            "frequency": 0.7
           },
           {
             "rule": "airbnb-typography-display-tight-body-relaxed-006",
-            "frequency": 1.0
+            "frequency": 0.7
           }
         ],
         "conflicts_with": []
@@ -285,15 +285,15 @@
         "co_occurs_with": [
           {
             "rule": "apple-color-blue-action-only-002",
-            "frequency": 1.0
+            "frequency": 0.8
           },
           {
             "rule": "apple-color-dark-surface-4-step-004",
-            "frequency": 1.0
+            "frequency": 0.8
           },
           {
             "rule": "apple-color-near-black-text-1d1d1f-003",
-            "frequency": 1.0
+            "frequency": 0.8
           }
         ],
         "conflicts_with": []
@@ -307,7 +307,7 @@
         "co_occurs_with": [
           {
             "rule": "apple-color-binary-section-rhythm-001",
-            "frequency": 1.0
+            "frequency": 0.8
           },
           {
             "rule": "apple-color-dark-surface-4-step-004",
@@ -315,7 +315,11 @@
           },
           {
             "rule": "apple-color-near-black-text-1d1d1f-003",
-            "frequency": 1.0
+            "frequency": 0.73
+          },
+          {
+            "rule": "stripe-color-purple-ladder-002",
+            "frequency": 0.4
           }
         ],
         "conflicts_with": []
@@ -329,7 +333,7 @@
         "co_occurs_with": [
           {
             "rule": "apple-color-binary-section-rhythm-001",
-            "frequency": 1.0
+            "frequency": 0.8
           },
           {
             "rule": "apple-color-blue-action-only-002",
@@ -337,7 +341,11 @@
           },
           {
             "rule": "apple-color-near-black-text-1d1d1f-003",
-            "frequency": 1.0
+            "frequency": 0.73
+          },
+          {
+            "rule": "stripe-color-purple-ladder-002",
+            "frequency": 0.4
           }
         ],
         "conflicts_with": []
@@ -351,15 +359,19 @@
         "co_occurs_with": [
           {
             "rule": "apple-color-binary-section-rhythm-001",
-            "frequency": 1.0
+            "frequency": 0.8
           },
           {
             "rule": "apple-color-blue-action-only-002",
-            "frequency": 1.0
+            "frequency": 0.73
           },
           {
             "rule": "apple-color-dark-surface-4-step-004",
-            "frequency": 1.0
+            "frequency": 0.73
+          },
+          {
+            "rule": "stripe-color-decorative-only-magenta-ruby-003",
+            "frequency": 0.4
           }
         ],
         "conflicts_with": []
@@ -390,7 +402,7 @@
         "co_occurs_with": [
           {
             "rule": "apple-components-pill-capsule-family-008",
-            "frequency": 1.0
+            "frequency": 0.8
           }
         ],
         "conflicts_with": []
@@ -421,7 +433,7 @@
         "co_occurs_with": [
           {
             "rule": "apple-components-border-led-retail-010",
-            "frequency": 1.0
+            "frequency": 0.8
           }
         ],
         "conflicts_with": []
@@ -460,7 +472,12 @@
             "rule": "apple-components-border-led-retail-010"
           }
         ],
-        "co_occurs_with": [],
+        "co_occurs_with": [
+          {
+            "rule": "stripe-spacing-fine-grained-financial-010",
+            "frequency": 0.4
+          }
+        ],
         "conflicts_with": []
       }
     },
@@ -477,11 +494,11 @@
         "co_occurs_with": [
           {
             "rule": "apple-typography-billboard-display-tight-tracking-006",
-            "frequency": 1.0
+            "frequency": 0.73
           },
           {
             "rule": "apple-typography-display-text-dual-005",
-            "frequency": 1.0
+            "frequency": 0.7
           }
         ],
         "conflicts_with": []
@@ -500,11 +517,11 @@
         "co_occurs_with": [
           {
             "rule": "apple-typography-600-dominant-emphasis-007",
-            "frequency": 1.0
+            "frequency": 0.73
           },
           {
             "rule": "apple-typography-display-text-dual-005",
-            "frequency": 1.0
+            "frequency": 0.87
           }
         ],
         "conflicts_with": []
@@ -530,11 +547,11 @@
         "co_occurs_with": [
           {
             "rule": "apple-typography-600-dominant-emphasis-007",
-            "frequency": 1.0
+            "frequency": 0.7
           },
           {
             "rule": "apple-typography-billboard-display-tight-tracking-006",
-            "frequency": 1.0
+            "frequency": 0.87
           }
         ],
         "conflicts_with": []
@@ -671,11 +688,11 @@
         "co_occurs_with": [
           {
             "rule": "claude-color-terracotta-brand-002",
-            "frequency": 1.0
+            "frequency": 0.7
           },
           {
             "rule": "claude-color-warm-near-black-text-003",
-            "frequency": 1.0
+            "frequency": 0.7
           }
         ],
         "conflicts_with": []
@@ -702,11 +719,11 @@
         "co_occurs_with": [
           {
             "rule": "claude-color-terracotta-brand-002",
-            "frequency": 1.0
+            "frequency": 0.84
           },
           {
             "rule": "claude-color-warm-near-black-text-003",
-            "frequency": 1.0
+            "frequency": 0.73
           }
         ],
         "conflicts_with": [
@@ -729,15 +746,15 @@
         "co_occurs_with": [
           {
             "rule": "claude-color-focus-blue-only-cool-004",
-            "frequency": 1.0
+            "frequency": 0.7
           },
           {
             "rule": "claude-color-parchment-canvas-001",
-            "frequency": 1.0
+            "frequency": 0.84
           },
           {
             "rule": "claude-color-warm-near-black-text-003",
-            "frequency": 1.0
+            "frequency": 0.68
           }
         ],
         "conflicts_with": []
@@ -751,15 +768,23 @@
         "co_occurs_with": [
           {
             "rule": "claude-color-focus-blue-only-cool-004",
-            "frequency": 1.0
+            "frequency": 0.7
           },
           {
             "rule": "claude-color-parchment-canvas-001",
-            "frequency": 1.0
+            "frequency": 0.73
           },
           {
             "rule": "claude-color-terracotta-brand-002",
-            "frequency": 1.0
+            "frequency": 0.68
+          },
+          {
+            "rule": "mintlify-color-near-black-text-002",
+            "frequency": 0.33
+          },
+          {
+            "rule": "notion-color-near-black-text-95-002",
+            "frequency": 0.33
           }
         ],
         "conflicts_with": []
@@ -835,7 +860,11 @@
         "co_occurs_with": [
           {
             "rule": "claude-typography-serif-single-weight-005",
-            "frequency": 1.0
+            "frequency": 0.68
+          },
+          {
+            "rule": "mintlify-typography-relaxed-body-line-height-005",
+            "frequency": 0.33
           }
         ],
         "conflicts_with": []
@@ -858,7 +887,7 @@
         "co_occurs_with": [
           {
             "rule": "claude-typography-relaxed-1.60-body-006",
-            "frequency": 1.0
+            "frequency": 0.68
           }
         ],
         "conflicts_with": []
@@ -913,7 +942,7 @@
           },
           {
             "rule": "discord-color-traffic-light-status-003",
-            "frequency": 1.0
+            "frequency": 0.73
           }
         ],
         "conflicts_with": []
@@ -931,7 +960,7 @@
           },
           {
             "rule": "discord-color-traffic-light-status-003",
-            "frequency": 1.0
+            "frequency": 0.73
           }
         ],
         "conflicts_with": []
@@ -945,11 +974,11 @@
         "co_occurs_with": [
           {
             "rule": "discord-color-dark-first-3-step-depth-001",
-            "frequency": 1.0
+            "frequency": 0.73
           },
           {
             "rule": "discord-color-single-saturated-anchor-002",
-            "frequency": 1.0
+            "frequency": 0.73
           }
         ],
         "conflicts_with": []
@@ -980,7 +1009,11 @@
           },
           {
             "rule": "discord-components-tight-chat-row-008",
-            "frequency": 1.0
+            "frequency": 0.8
+          },
+          {
+            "rule": "stripe-components-dashed-affordance-009",
+            "frequency": 0.4
           }
         ],
         "conflicts_with": []
@@ -1037,7 +1070,11 @@
           },
           {
             "rule": "discord-components-tight-chat-row-008",
-            "frequency": 1.0
+            "frequency": 0.8
+          },
+          {
+            "rule": "stripe-components-dashed-affordance-009",
+            "frequency": 0.4
           }
         ],
         "conflicts_with": []
@@ -1064,11 +1101,11 @@
         "co_occurs_with": [
           {
             "rule": "discord-components-embed-left-border-009",
-            "frequency": 1.0
+            "frequency": 0.8
           },
           {
             "rule": "discord-components-status-notch-007",
-            "frequency": 1.0
+            "frequency": 0.8
           }
         ],
         "conflicts_with": []
@@ -1181,7 +1218,7 @@
         "co_occurs_with": [
           {
             "rule": "duolingo-color-dopamine-mapped-accents-002",
-            "frequency": 1.0
+            "frequency": 0.76
           }
         ],
         "conflicts_with": [
@@ -1200,7 +1237,7 @@
         "co_occurs_with": [
           {
             "rule": "duolingo-color-dominant-chromatic-001",
-            "frequency": 1.0
+            "frequency": 0.76
           }
         ],
         "conflicts_with": []
@@ -1227,11 +1264,11 @@
         "co_occurs_with": [
           {
             "rule": "duolingo-components-skill-tree-node-005",
-            "frequency": 1.0
+            "frequency": 0.7
           },
           {
             "rule": "duolingo-components-tactile-press-button-004",
-            "frequency": 1.0
+            "frequency": 0.87
           }
         ],
         "conflicts_with": []
@@ -1258,11 +1295,11 @@
         "co_occurs_with": [
           {
             "rule": "duolingo-components-borders-chunky-only-006",
-            "frequency": 1.0
+            "frequency": 0.7
           },
           {
             "rule": "duolingo-components-tactile-press-button-004",
-            "frequency": 1.0
+            "frequency": 0.8
           }
         ],
         "conflicts_with": []
@@ -1293,11 +1330,11 @@
         "co_occurs_with": [
           {
             "rule": "duolingo-components-borders-chunky-only-006",
-            "frequency": 1.0
+            "frequency": 0.87
           },
           {
             "rule": "duolingo-components-skill-tree-node-005",
-            "frequency": 1.0
+            "frequency": 0.8
           }
         ],
         "conflicts_with": []
@@ -1401,7 +1438,11 @@
         "co_occurs_with": [
           {
             "rule": "figma-color-glass-overlay-002",
-            "frequency": 1.0
+            "frequency": 0.8
+          },
+          {
+            "rule": "linear-app-color-dark-native-001",
+            "frequency": 0.33
           }
         ],
         "conflicts_with": [
@@ -1420,7 +1461,7 @@
         "co_occurs_with": [
           {
             "rule": "figma-color-binary-chrome-001",
-            "frequency": 1.0
+            "frequency": 0.8
           }
         ],
         "conflicts_with": []
@@ -1475,15 +1516,15 @@
         "co_occurs_with": [
           {
             "rule": "figma-typography-mono-uppercase-signposts-006",
-            "frequency": 1.0
+            "frequency": 0.7
           },
           {
             "rule": "figma-typography-negative-tracking-everywhere-005",
-            "frequency": 1.0
+            "frequency": 0.7
           },
           {
             "rule": "figma-typography-variable-microstep-weights-003",
-            "frequency": 1.0
+            "frequency": 0.8
           }
         ],
         "conflicts_with": []
@@ -1502,15 +1543,23 @@
         "co_occurs_with": [
           {
             "rule": "figma-typography-light-base-004",
-            "frequency": 1.0
+            "frequency": 0.7
           },
           {
             "rule": "figma-typography-negative-tracking-everywhere-005",
-            "frequency": 1.0
+            "frequency": 0.73
           },
           {
             "rule": "figma-typography-variable-microstep-weights-003",
-            "frequency": 1.0
+            "frequency": 0.7
+          },
+          {
+            "rule": "linear-app-typography-display-compression-005",
+            "frequency": 0.3
+          },
+          {
+            "rule": "linear-app-typography-geometric-sans-with-features-004",
+            "frequency": 0.3
           }
         ],
         "conflicts_with": []
@@ -1529,15 +1578,23 @@
         "co_occurs_with": [
           {
             "rule": "figma-typography-light-base-004",
-            "frequency": 1.0
+            "frequency": 0.7
           },
           {
             "rule": "figma-typography-mono-uppercase-signposts-006",
-            "frequency": 1.0
+            "frequency": 0.73
           },
           {
             "rule": "figma-typography-variable-microstep-weights-003",
-            "frequency": 1.0
+            "frequency": 0.87
+          },
+          {
+            "rule": "linear-app-typography-display-compression-005",
+            "frequency": 0.3
+          },
+          {
+            "rule": "linear-app-typography-geometric-sans-with-features-004",
+            "frequency": 0.3
           }
         ],
         "conflicts_with": []
@@ -1563,15 +1620,15 @@
         "co_occurs_with": [
           {
             "rule": "figma-typography-light-base-004",
-            "frequency": 1.0
+            "frequency": 0.8
           },
           {
             "rule": "figma-typography-mono-uppercase-signposts-006",
-            "frequency": 1.0
+            "frequency": 0.7
           },
           {
             "rule": "figma-typography-negative-tracking-everywhere-005",
-            "frequency": 1.0
+            "frequency": 0.87
           }
         ],
         "conflicts_with": []
@@ -1606,12 +1663,24 @@
         ],
         "co_occurs_with": [
           {
+            "rule": "figma-color-binary-chrome-001",
+            "frequency": 0.33
+          },
+          {
             "rule": "linear-app-color-single-chromatic-anchor-002",
-            "frequency": 1.0
+            "frequency": 0.9
           },
           {
             "rule": "linear-app-color-translucent-borders-003",
-            "frequency": 1.0
+            "frequency": 0.8
+          },
+          {
+            "rule": "notion-color-warm-neutrals-001",
+            "frequency": 0.33
+          },
+          {
+            "rule": "vercel-color-extreme-white-minimalism-001",
+            "frequency": 0.31
           }
         ],
         "conflicts_with": [
@@ -1646,11 +1715,27 @@
         "co_occurs_with": [
           {
             "rule": "linear-app-color-dark-native-001",
-            "frequency": 1.0
+            "frequency": 0.9
           },
           {
             "rule": "linear-app-color-translucent-borders-003",
-            "frequency": 1.0
+            "frequency": 0.87
+          },
+          {
+            "rule": "notion-color-content-tagging-palette-004",
+            "frequency": 0.3
+          },
+          {
+            "rule": "notion-color-near-black-text-95-002",
+            "frequency": 0.3
+          },
+          {
+            "rule": "notion-color-single-blue-anchor-003",
+            "frequency": 0.3
+          },
+          {
+            "rule": "notion-color-warm-neutrals-001",
+            "frequency": 0.36
           }
         ],
         "conflicts_with": []
@@ -1664,11 +1749,27 @@
         "co_occurs_with": [
           {
             "rule": "linear-app-color-dark-native-001",
-            "frequency": 1.0
+            "frequency": 0.8
           },
           {
             "rule": "linear-app-color-single-chromatic-anchor-002",
-            "frequency": 1.0
+            "frequency": 0.87
+          },
+          {
+            "rule": "notion-color-content-tagging-palette-004",
+            "frequency": 0.33
+          },
+          {
+            "rule": "notion-color-near-black-text-95-002",
+            "frequency": 0.33
+          },
+          {
+            "rule": "notion-color-single-blue-anchor-003",
+            "frequency": 0.33
+          },
+          {
+            "rule": "notion-color-warm-neutrals-001",
+            "frequency": 0.4
           }
         ],
         "conflicts_with": [
@@ -1701,7 +1802,20 @@
           }
         ],
         "constrains": [],
-        "co_occurs_with": [],
+        "co_occurs_with": [
+          {
+            "rule": "mintlify-components-whisper-borders-008",
+            "frequency": 0.47
+          },
+          {
+            "rule": "notion-components-subtle-card-radius-010",
+            "frequency": 0.6
+          },
+          {
+            "rule": "notion-components-translucent-secondary-button-009",
+            "frequency": 0.4
+          }
+        ],
         "conflicts_with": [
           {
             "rule": "vercel-components-dark-pill-cta-007",
@@ -1724,7 +1838,12 @@
             "rule": "linear-app-components-button-near-zero-opacity-006"
           }
         ],
-        "co_occurs_with": [],
+        "co_occurs_with": [
+          {
+            "rule": "notion-color-multi-layer-whisper-shadow-005",
+            "frequency": 0.33
+          }
+        ],
         "conflicts_with": [
           {
             "rule": "vercel-elevation-shadow-as-border-005",
@@ -1746,7 +1865,12 @@
             "rule": "linear-app-components-button-near-zero-opacity-006"
           }
         ],
-        "co_occurs_with": [],
+        "co_occurs_with": [
+          {
+            "rule": "vercel-spacing-jump-scale-008",
+            "frequency": 0.33
+          }
+        ],
         "conflicts_with": []
       }
     },
@@ -1762,8 +1886,28 @@
         "constrains": [],
         "co_occurs_with": [
           {
+            "rule": "figma-typography-mono-uppercase-signposts-006",
+            "frequency": 0.3
+          },
+          {
+            "rule": "figma-typography-negative-tracking-everywhere-005",
+            "frequency": 0.3
+          },
+          {
             "rule": "linear-app-typography-geometric-sans-with-features-004",
-            "frequency": 1.0
+            "frequency": 0.8
+          },
+          {
+            "rule": "notion-typography-12px-positive-tracking-exception-008",
+            "frequency": 0.33
+          },
+          {
+            "rule": "notion-typography-4-weight-system-007",
+            "frequency": 0.33
+          },
+          {
+            "rule": "vercel-typography-geometric-sans-extreme-tracking-004",
+            "frequency": 0.37
           }
         ],
         "conflicts_with": []
@@ -1785,8 +1929,32 @@
         ],
         "co_occurs_with": [
           {
+            "rule": "figma-typography-mono-uppercase-signposts-006",
+            "frequency": 0.3
+          },
+          {
+            "rule": "figma-typography-negative-tracking-everywhere-005",
+            "frequency": 0.3
+          },
+          {
             "rule": "linear-app-typography-display-compression-005",
-            "frequency": 1.0
+            "frequency": 0.8
+          },
+          {
+            "rule": "notion-typography-12px-positive-tracking-exception-008",
+            "frequency": 0.33
+          },
+          {
+            "rule": "notion-typography-4-weight-system-007",
+            "frequency": 0.33
+          },
+          {
+            "rule": "notion-typography-modified-inter-with-tight-display-006",
+            "frequency": 0.4
+          },
+          {
+            "rule": "vercel-typography-geometric-sans-extreme-tracking-004",
+            "frequency": 0.37
           }
         ],
         "conflicts_with": []
@@ -1797,7 +1965,12 @@
       "relations": {
         "depends_on": [],
         "constrains": [],
-        "co_occurs_with": [],
+        "co_occurs_with": [
+          {
+            "rule": "vercel-voice-infrastructure-invisible-009",
+            "frequency": 0.37
+          }
+        ],
         "conflicts_with": []
       }
     },
@@ -1818,7 +1991,7 @@
         "co_occurs_with": [
           {
             "rule": "mintlify-color-white-canvas-fresh-accent-001",
-            "frequency": 1.0
+            "frequency": 0.7
           }
         ],
         "conflicts_with": []
@@ -1831,8 +2004,16 @@
         "constrains": [],
         "co_occurs_with": [
           {
+            "rule": "claude-color-warm-near-black-text-003",
+            "frequency": 0.33
+          },
+          {
             "rule": "mintlify-color-white-canvas-fresh-accent-001",
-            "frequency": 1.0
+            "frequency": 0.68
+          },
+          {
+            "rule": "notion-color-near-black-text-95-002",
+            "frequency": 0.47
           }
         ],
         "conflicts_with": []
@@ -1862,11 +2043,15 @@
         "co_occurs_with": [
           {
             "rule": "mintlify-color-7tier-gray-scale-003",
-            "frequency": 1.0
+            "frequency": 0.7
           },
           {
             "rule": "mintlify-color-near-black-text-002",
-            "frequency": 1.0
+            "frequency": 0.68
+          },
+          {
+            "rule": "notion-color-warm-neutrals-001",
+            "frequency": 0.31
           }
         ],
         "conflicts_with": []
@@ -1912,7 +2097,16 @@
           }
         ],
         "constrains": [],
-        "co_occurs_with": [],
+        "co_occurs_with": [
+          {
+            "rule": "linear-app-components-button-near-zero-opacity-006",
+            "frequency": 0.47
+          },
+          {
+            "rule": "notion-components-subtle-card-radius-010",
+            "frequency": 0.47
+          }
+        ],
         "conflicts_with": []
       }
     },
@@ -1952,11 +2146,15 @@
         "co_occurs_with": [
           {
             "rule": "mintlify-typography-relaxed-body-line-height-005",
-            "frequency": 1.0
+            "frequency": 0.7
           },
           {
             "rule": "mintlify-typography-three-weight-006",
-            "frequency": 1.0
+            "frequency": 0.87
+          },
+          {
+            "rule": "notion-typography-modified-inter-with-tight-display-006",
+            "frequency": 0.47
           }
         ],
         "conflicts_with": []
@@ -1974,12 +2172,16 @@
         "constrains": [],
         "co_occurs_with": [
           {
+            "rule": "claude-typography-relaxed-1.60-body-006",
+            "frequency": 0.33
+          },
+          {
             "rule": "mintlify-typography-inter-tight-display-004",
-            "frequency": 1.0
+            "frequency": 0.7
           },
           {
             "rule": "mintlify-typography-three-weight-006",
-            "frequency": 1.0
+            "frequency": 0.73
           }
         ],
         "conflicts_with": []
@@ -1998,11 +2200,15 @@
         "co_occurs_with": [
           {
             "rule": "mintlify-typography-inter-tight-display-004",
-            "frequency": 1.0
+            "frequency": 0.87
           },
           {
             "rule": "mintlify-typography-relaxed-body-line-height-005",
-            "frequency": 1.0
+            "frequency": 0.73
+          },
+          {
+            "rule": "notion-typography-modified-inter-with-tight-display-006",
+            "frequency": 0.33
           }
         ],
         "conflicts_with": []
@@ -2024,8 +2230,16 @@
         "constrains": [],
         "co_occurs_with": [
           {
+            "rule": "linear-app-color-single-chromatic-anchor-002",
+            "frequency": 0.3
+          },
+          {
+            "rule": "linear-app-color-translucent-borders-003",
+            "frequency": 0.33
+          },
+          {
             "rule": "notion-color-warm-neutrals-001",
-            "frequency": 1.0
+            "frequency": 0.68
           }
         ],
         "conflicts_with": []
@@ -2048,7 +2262,12 @@
             "rule": "notion-components-subtle-card-radius-010"
           }
         ],
-        "co_occurs_with": [],
+        "co_occurs_with": [
+          {
+            "rule": "linear-app-elevation-luminance-stepping-007",
+            "frequency": 0.33
+          }
+        ],
         "conflicts_with": []
       }
     },
@@ -2059,12 +2278,28 @@
         "constrains": [],
         "co_occurs_with": [
           {
+            "rule": "claude-color-warm-near-black-text-003",
+            "frequency": 0.33
+          },
+          {
+            "rule": "linear-app-color-single-chromatic-anchor-002",
+            "frequency": 0.3
+          },
+          {
+            "rule": "linear-app-color-translucent-borders-003",
+            "frequency": 0.33
+          },
+          {
+            "rule": "mintlify-color-near-black-text-002",
+            "frequency": 0.47
+          },
+          {
             "rule": "notion-color-single-blue-anchor-003",
-            "frequency": 1.0
+            "frequency": 0.73
           },
           {
             "rule": "notion-color-warm-neutrals-001",
-            "frequency": 1.0
+            "frequency": 0.68
           }
         ],
         "conflicts_with": []
@@ -2077,12 +2312,20 @@
         "constrains": [],
         "co_occurs_with": [
           {
+            "rule": "linear-app-color-single-chromatic-anchor-002",
+            "frequency": 0.3
+          },
+          {
+            "rule": "linear-app-color-translucent-borders-003",
+            "frequency": 0.33
+          },
+          {
             "rule": "notion-color-near-black-text-95-002",
-            "frequency": 1.0
+            "frequency": 0.73
           },
           {
             "rule": "notion-color-warm-neutrals-001",
-            "frequency": 1.0
+            "frequency": 0.68
           }
         ],
         "conflicts_with": []
@@ -2114,16 +2357,32 @@
         ],
         "co_occurs_with": [
           {
+            "rule": "linear-app-color-dark-native-001",
+            "frequency": 0.33
+          },
+          {
+            "rule": "linear-app-color-single-chromatic-anchor-002",
+            "frequency": 0.36
+          },
+          {
+            "rule": "linear-app-color-translucent-borders-003",
+            "frequency": 0.4
+          },
+          {
+            "rule": "mintlify-color-white-canvas-fresh-accent-001",
+            "frequency": 0.31
+          },
+          {
             "rule": "notion-color-content-tagging-palette-004",
-            "frequency": 1.0
+            "frequency": 0.68
           },
           {
             "rule": "notion-color-near-black-text-95-002",
-            "frequency": 1.0
+            "frequency": 0.68
           },
           {
             "rule": "notion-color-single-blue-anchor-003",
-            "frequency": 1.0
+            "frequency": 0.68
           }
         ],
         "conflicts_with": [
@@ -2158,8 +2417,16 @@
         "constrains": [],
         "co_occurs_with": [
           {
+            "rule": "linear-app-components-button-near-zero-opacity-006",
+            "frequency": 0.6
+          },
+          {
+            "rule": "mintlify-components-whisper-borders-008",
+            "frequency": 0.47
+          },
+          {
             "rule": "notion-components-translucent-secondary-button-009",
-            "frequency": 1.0
+            "frequency": 0.8
           }
         ],
         "conflicts_with": []
@@ -2189,8 +2456,12 @@
         "constrains": [],
         "co_occurs_with": [
           {
+            "rule": "linear-app-components-button-near-zero-opacity-006",
+            "frequency": 0.4
+          },
+          {
             "rule": "notion-components-subtle-card-radius-010",
-            "frequency": 1.0
+            "frequency": 0.8
           }
         ],
         "conflicts_with": []
@@ -2224,12 +2495,20 @@
         "constrains": [],
         "co_occurs_with": [
           {
+            "rule": "linear-app-typography-display-compression-005",
+            "frequency": 0.33
+          },
+          {
+            "rule": "linear-app-typography-geometric-sans-with-features-004",
+            "frequency": 0.33
+          },
+          {
             "rule": "notion-typography-4-weight-system-007",
             "frequency": 1.0
           },
           {
             "rule": "notion-typography-modified-inter-with-tight-display-006",
-            "frequency": 1.0
+            "frequency": 0.73
           }
         ],
         "conflicts_with": []
@@ -2247,12 +2526,20 @@
         "constrains": [],
         "co_occurs_with": [
           {
+            "rule": "linear-app-typography-display-compression-005",
+            "frequency": 0.33
+          },
+          {
+            "rule": "linear-app-typography-geometric-sans-with-features-004",
+            "frequency": 0.33
+          },
+          {
             "rule": "notion-typography-12px-positive-tracking-exception-008",
             "frequency": 1.0
           },
           {
             "rule": "notion-typography-modified-inter-with-tight-display-006",
-            "frequency": 1.0
+            "frequency": 0.73
           }
         ],
         "conflicts_with": []
@@ -2277,12 +2564,24 @@
         ],
         "co_occurs_with": [
           {
+            "rule": "linear-app-typography-geometric-sans-with-features-004",
+            "frequency": 0.4
+          },
+          {
+            "rule": "mintlify-typography-inter-tight-display-004",
+            "frequency": 0.47
+          },
+          {
+            "rule": "mintlify-typography-three-weight-006",
+            "frequency": 0.33
+          },
+          {
             "rule": "notion-typography-12px-positive-tracking-exception-008",
-            "frequency": 1.0
+            "frequency": 0.73
           },
           {
             "rule": "notion-typography-4-weight-system-007",
-            "frequency": 1.0
+            "frequency": 0.73
           }
         ],
         "conflicts_with": []
@@ -2325,12 +2624,16 @@
         "constrains": [],
         "co_occurs_with": [
           {
+            "rule": "apple-color-near-black-text-1d1d1f-003",
+            "frequency": 0.4
+          },
+          {
             "rule": "stripe-color-navy-purple-foundation-001",
-            "frequency": 1.0
+            "frequency": 0.8
           },
           {
             "rule": "stripe-color-purple-ladder-002",
-            "frequency": 1.0
+            "frequency": 0.73
           }
         ],
         "conflicts_with": []
@@ -2363,11 +2666,11 @@
         "co_occurs_with": [
           {
             "rule": "stripe-color-decorative-only-magenta-ruby-003",
-            "frequency": 1.0
+            "frequency": 0.8
           },
           {
             "rule": "stripe-color-purple-ladder-002",
-            "frequency": 1.0
+            "frequency": 0.8
           }
         ],
         "conflicts_with": []
@@ -2380,12 +2683,20 @@
         "constrains": [],
         "co_occurs_with": [
           {
+            "rule": "apple-color-blue-action-only-002",
+            "frequency": 0.4
+          },
+          {
+            "rule": "apple-color-dark-surface-4-step-004",
+            "frequency": 0.4
+          },
+          {
             "rule": "stripe-color-decorative-only-magenta-ruby-003",
-            "frequency": 1.0
+            "frequency": 0.73
           },
           {
             "rule": "stripe-color-navy-purple-foundation-001",
-            "frequency": 1.0
+            "frequency": 0.8
           }
         ],
         "conflicts_with": []
@@ -2420,7 +2731,7 @@
         "co_occurs_with": [
           {
             "rule": "stripe-components-dashed-affordance-009",
-            "frequency": 1.0
+            "frequency": 0.73
           }
         ],
         "conflicts_with": []
@@ -2454,8 +2765,16 @@
         "constrains": [],
         "co_occurs_with": [
           {
+            "rule": "discord-components-embed-left-border-009",
+            "frequency": 0.4
+          },
+          {
+            "rule": "discord-components-status-notch-007",
+            "frequency": 0.4
+          },
+          {
             "rule": "stripe-components-conservative-radius-008",
-            "frequency": 1.0
+            "frequency": 0.73
           }
         ],
         "conflicts_with": []
@@ -2497,7 +2816,12 @@
             "rule": "stripe-layout-dense-data-generous-chrome-011"
           }
         ],
-        "co_occurs_with": [],
+        "co_occurs_with": [
+          {
+            "rule": "apple-spacing-8-base-with-microsteps-011",
+            "frequency": 0.4
+          }
+        ],
         "conflicts_with": []
       }
     },
@@ -2514,11 +2838,11 @@
         "co_occurs_with": [
           {
             "rule": "stripe-typography-progressive-tracking-007",
-            "frequency": 1.0
+            "frequency": 0.7
           },
           {
             "rule": "stripe-typography-sohne-ss01-required-005",
-            "frequency": 1.0
+            "frequency": 0.68
           }
         ],
         "conflicts_with": [
@@ -2542,11 +2866,11 @@
         "co_occurs_with": [
           {
             "rule": "stripe-typography-light-weight-300-signature-006",
-            "frequency": 1.0
+            "frequency": 0.7
           },
           {
             "rule": "stripe-typography-sohne-ss01-required-005",
-            "frequency": 1.0
+            "frequency": 0.87
           }
         ],
         "conflicts_with": []
@@ -2572,11 +2896,11 @@
         "co_occurs_with": [
           {
             "rule": "stripe-typography-light-weight-300-signature-006",
-            "frequency": 1.0
+            "frequency": 0.68
           },
           {
             "rule": "stripe-typography-progressive-tracking-007",
-            "frequency": 1.0
+            "frequency": 0.87
           }
         ],
         "conflicts_with": []
@@ -2620,12 +2944,16 @@
         ],
         "co_occurs_with": [
           {
+            "rule": "linear-app-color-dark-native-001",
+            "frequency": 0.31
+          },
+          {
             "rule": "vercel-color-functional-only-accents-003",
-            "frequency": 1.0
+            "frequency": 0.9
           },
           {
             "rule": "vercel-color-near-black-text-002",
-            "frequency": 1.0
+            "frequency": 0.8
           }
         ],
         "conflicts_with": [
@@ -2644,11 +2972,11 @@
         "co_occurs_with": [
           {
             "rule": "vercel-color-extreme-white-minimalism-001",
-            "frequency": 1.0
+            "frequency": 0.9
           },
           {
             "rule": "vercel-color-near-black-text-002",
-            "frequency": 1.0
+            "frequency": 0.87
           }
         ],
         "conflicts_with": []
@@ -2662,11 +2990,11 @@
         "co_occurs_with": [
           {
             "rule": "vercel-color-extreme-white-minimalism-001",
-            "frequency": 1.0
+            "frequency": 0.8
           },
           {
             "rule": "vercel-color-functional-only-accents-003",
-            "frequency": 1.0
+            "frequency": 0.87
           }
         ],
         "conflicts_with": [
@@ -2698,11 +3026,11 @@
         "co_occurs_with": [
           {
             "rule": "vercel-elevation-multi-layer-shadow-stack-006",
-            "frequency": 1.0
+            "frequency": 0.7
           },
           {
             "rule": "vercel-elevation-shadow-as-border-005",
-            "frequency": 1.0
+            "frequency": 0.7
           }
         ],
         "conflicts_with": [
@@ -2734,7 +3062,7 @@
         "co_occurs_with": [
           {
             "rule": "vercel-components-dark-pill-cta-007",
-            "frequency": 1.0
+            "frequency": 0.7
           },
           {
             "rule": "vercel-elevation-shadow-as-border-005",
@@ -2770,7 +3098,7 @@
         "co_occurs_with": [
           {
             "rule": "vercel-components-dark-pill-cta-007",
-            "frequency": 1.0
+            "frequency": 0.7
           },
           {
             "rule": "vercel-elevation-multi-layer-shadow-stack-006",
@@ -2804,7 +3132,12 @@
             "rule": "vercel-components-dark-pill-cta-007"
           }
         ],
-        "co_occurs_with": [],
+        "co_occurs_with": [
+          {
+            "rule": "linear-app-spacing-8px-base-with-optical-008",
+            "frequency": 0.33
+          }
+        ],
         "conflicts_with": []
       }
     },
@@ -2828,7 +3161,16 @@
             "rule": "vercel-components-dark-pill-cta-007"
           }
         ],
-        "co_occurs_with": [],
+        "co_occurs_with": [
+          {
+            "rule": "linear-app-typography-display-compression-005",
+            "frequency": 0.37
+          },
+          {
+            "rule": "linear-app-typography-geometric-sans-with-features-004",
+            "frequency": 0.37
+          }
+        ],
         "conflicts_with": []
       }
     },
@@ -2837,7 +3179,12 @@
       "relations": {
         "depends_on": [],
         "constrains": [],
-        "co_occurs_with": [],
+        "co_occurs_with": [
+          {
+            "rule": "linear-app-voice-engineered-not-designed-009",
+            "frequency": 0.37
+          }
+        ],
         "conflicts_with": []
       }
     }

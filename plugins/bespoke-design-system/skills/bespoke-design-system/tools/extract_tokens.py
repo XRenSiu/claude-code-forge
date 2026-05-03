@@ -396,6 +396,51 @@ def process_one(design_md_path, system_name=None, source='open-design'):
     return extract_tokens_full(scan, system_name=system_name, source=source)
 
 
+def update_registry_state(system_name, state, registry_path=None):
+    """v1.5.0 Issue 1 fix: Sync source-registry.json extraction_state with disk truth
+    after each extraction. Valid states: 'pending' / 'tokens_only' / 'rationale_only' / 'rules' / 'full'.
+    Computes the correct state from on-disk grammar/tokens/, /rationale/, /rules/ presence."""
+    if registry_path is None:
+        here = os.path.dirname(os.path.abspath(__file__))
+        registry_path = os.path.normpath(
+            os.path.join(here, '..', 'grammar', 'meta', 'source-registry.json'))
+    if not os.path.isfile(registry_path):
+        return  # no registry yet, nothing to sync
+    try:
+        with open(registry_path) as f:
+            registry = json.load(f)
+        systems = registry.setdefault('systems', {})
+        entry = systems.get(system_name)
+        if entry is None:
+            return  # system not registered, skip
+        entry['extraction_state'] = state
+        entry['last_extracted_at'] = datetime.datetime.now(datetime.timezone.utc).isoformat()
+        with open(registry_path, 'w') as f:
+            json.dump(registry, f, indent=2, ensure_ascii=False)
+    except Exception:
+        pass  # don't break extraction if registry write fails
+
+
+def derive_extraction_state(system_name, grammar_root=None):
+    """Look at disk: tokens/<name>.json exists? rationale/<name>.md? rules/<name>.yaml?
+    Return canonical state for source-registry."""
+    if grammar_root is None:
+        here = os.path.dirname(os.path.abspath(__file__))
+        grammar_root = os.path.normpath(os.path.join(here, '..', 'grammar'))
+    has_tokens = os.path.isfile(os.path.join(grammar_root, 'tokens', f'{system_name}.json'))
+    has_rationale = os.path.isfile(os.path.join(grammar_root, 'rationale', f'{system_name}.md'))
+    has_rules = os.path.isfile(os.path.join(grammar_root, 'rules', f'{system_name}.yaml'))
+    if has_tokens and has_rationale and has_rules:
+        return 'full'
+    if has_rationale and has_rules:
+        return 'rules'
+    if has_rationale:
+        return 'rationale_only'
+    if has_tokens:
+        return 'tokens_only'
+    return 'pending'
+
+
 def main():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument('path', help='Path to DESIGN.md or (with --batch) source-design-systems/ root')
@@ -427,6 +472,8 @@ def main():
                 with open(out_file, 'w') as f:
                     json.dump(tokens, f, indent=2, ensure_ascii=False)
                 results[entry] = {'ok': True, 'sections': len(tokens.get('sections_present', []))}
+                # v1.5.0 Issue 1: sync registry extraction_state
+                update_registry_state(entry, derive_extraction_state(entry))
             except Exception as e:
                 results[entry] = {'ok': False, 'error': str(e)}
         print(json.dumps({
@@ -446,6 +493,8 @@ def main():
             with open(out_file, 'w') as f:
                 json.dump(tokens, f, indent=2, ensure_ascii=False)
             print(f'Wrote {out_file}')
+            # v1.5.0 Issue 1: sync registry extraction_state
+            update_registry_state(name, derive_extraction_state(name))
 
 
 if __name__ == '__main__':

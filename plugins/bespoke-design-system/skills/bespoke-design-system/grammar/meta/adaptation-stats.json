@@ -1,12 +1,130 @@
 {
   "$schema_description": "Frequency stats of adaptations applied during B4. Updated after each successful generation. Read by scripts/consolidate-adaptations.md to find sedimentation candidates.",
-  "adaptations": {},
+  "adaptations": {
+    "linear-app-color-single-chromatic-anchor-002:hue_shift_cooler_for_anti_gaming_purple": {
+      "adaptation_id": "linear-app-color-single-chromatic-anchor-002:hue_shift_cooler_for_anti_gaming_purple",
+      "occurrences": 1,
+      "contexts": [
+        {
+          "user_kansei": [
+            "structured",
+            "precise",
+            "modern",
+            "calm",
+            "confident",
+            "transparent",
+            "restrained",
+            "technical"
+          ],
+          "generated_at": "2026-05-03T00:00:00Z",
+          "product": "OPC Control Center",
+          "from": "[240,270]",
+          "to": 234
+        }
+      ],
+      "last_seen": "2026-05-03T00:00:00Z"
+    },
+    "linear-app-color-single-chromatic-anchor-002:saturation_increase_for_magician_signal": {
+      "adaptation_id": "linear-app-color-single-chromatic-anchor-002:saturation_increase_for_magician_signal",
+      "occurrences": 1,
+      "contexts": [
+        {
+          "user_kansei": [
+            "structured",
+            "precise",
+            "modern",
+            "calm",
+            "confident",
+            "transparent",
+            "restrained",
+            "technical"
+          ],
+          "generated_at": "2026-05-03T00:00:00Z",
+          "product": "OPC Control Center",
+          "from": "[0.40,0.55]",
+          "to": 0.6
+        }
+      ],
+      "last_seen": "2026-05-03T00:00:00Z"
+    },
+    "linear-app-elevation-luminance-stepping-007:lightness_step_double_for_multi_panel": {
+      "adaptation_id": "linear-app-elevation-luminance-stepping-007:lightness_step_double_for_multi_panel",
+      "occurrences": 1,
+      "contexts": [
+        {
+          "user_kansei": [
+            "structured",
+            "precise",
+            "modern",
+            "calm",
+            "confident",
+            "transparent",
+            "restrained",
+            "technical"
+          ],
+          "generated_at": "2026-05-03T00:00:00Z",
+          "product": "OPC Control Center",
+          "from": "+0.02",
+          "to": "+0.04"
+        }
+      ],
+      "last_seen": "2026-05-03T00:00:00Z"
+    },
+    "linear-app-spacing-8px-base-with-optical-008:base_unit_halved_for_panel_density": {
+      "adaptation_id": "linear-app-spacing-8px-base-with-optical-008:base_unit_halved_for_panel_density",
+      "occurrences": 1,
+      "contexts": [
+        {
+          "user_kansei": [
+            "structured",
+            "precise",
+            "modern",
+            "calm",
+            "confident",
+            "transparent",
+            "restrained",
+            "technical"
+          ],
+          "generated_at": "2026-05-03T00:00:00Z",
+          "product": "OPC Control Center",
+          "from": 8,
+          "to": 4
+        }
+      ],
+      "last_seen": "2026-05-03T00:00:00Z"
+    },
+    "vercel-components-dark-pill-cta-007:transposed_to_dark_canvas_essence_only": {
+      "adaptation_id": "vercel-components-dark-pill-cta-007:transposed_to_dark_canvas_essence_only",
+      "occurrences": 1,
+      "contexts": [
+        {
+          "user_kansei": [
+            "structured",
+            "precise",
+            "modern",
+            "calm",
+            "confident",
+            "transparent",
+            "restrained",
+            "technical"
+          ],
+          "generated_at": "2026-05-03T00:00:00Z",
+          "product": "OPC Control Center",
+          "from": "near-black-on-white",
+          "to": "brand-on-dark"
+        }
+      ],
+      "last_seen": "2026-05-03T00:00:00Z"
+    }
+  },
   "_template": {
     "<adaptation_id>": {
       "occurrences": 0,
       "contexts": [
         {
-          "user_kansei": ["..."],
+          "user_kansei": [
+            "..."
+          ],
           "from": "<original value>",
           "to": "<adapted value>",
           "generated_at": "<ISO 8601>"

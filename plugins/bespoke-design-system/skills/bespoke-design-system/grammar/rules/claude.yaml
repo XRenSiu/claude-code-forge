@@ -1,228 +1,368 @@
-# Rules — claude (Anthropic)
-
 rules:
-
-  - rule_id: claude-color-parchment-canvas-001
-    section: color
-    preconditions:
-      product_type: [ai_assistant, content_platform, literary_app, thoughtful_tool]
-      tone: [warm, refined, literary, thoughtful]
-      kansei: [warm, refined, calm, thoughtful, intellectual]
-      sd_anchors:
-        warm_to_cold: -0.7
-        ornate_to_minimal: 0.3
-        serious_to_playful: -0.5
-        modern_to_classical: 0.2
-    action:
-      base_canvas: parchment cream #f5f4ed
-      reason: evokes_premium_paper_not_screen
-      no_pure_white_canvas: true
-      no_cool_blue_grays_anywhere: true
-    why:
-      establish: literary-salon-not-tech-tool
-      avoid: [cold_sterile_glass, pure_white_too_clinical, blue_undertone_too_tech]
-      balance: warmth ↔ professionalism
-    emerges_from: [claude]
-    provenance: original
-    confidence: 0.7
-    known_conflicts:
-      - rule: figma-color-binary-chrome-001
-        reason: warm-cream canvas vs binary-chrome — opposite chromatic philosophies
-      - rule: linear-app-color-dark-native-001
-        reason: warm-light canvas vs cool-dark canvas — opposite ambient strategies
-
-  - rule_id: claude-color-terracotta-brand-002
-    section: color
-    preconditions:
-      product_type: [ai_assistant, literary_app, thoughtful_tool]
-      tone: [warm, deliberately_un_tech]
-      kansei: [warm, refined, intellectual]
-    action:
-      brand_chromatic_count: 1
-      brand_hex: '#c96442'   # terracotta
-      brand_hue: ~16
-      brand_saturation: 0.6
-      brand_lightness: 0.53
-      reason: earthy_anti_silicon_valley_anti_tech
-      brand_role: cta + brand_moments + signature_accent (only)
-    why:
-      establish: anti-tech-warmth
-      avoid: [generic_blue_purple_brand, decorative_terracotta_use]
-      balance: brand_distinctiveness ↔ warm_palette_cohesion
-    emerges_from: [claude]
-    provenance: original
-    confidence: 0.7
-
-  - rule_id: claude-color-warm-near-black-text-003
-    section: color
-    preconditions:
-      product_type: [ai_assistant, content_platform, literary_app]
-      tone: [warm, readable]
-      kansei: [warm, calm, readable]
-    action:
-      primary_text: '#141413'   # warm near-black with olive tint
-      reason: warmest_dark_in_tech_for_palette_cohesion
-      no_pure_black: true
-    why:
-      establish: warm-dark-text
-      avoid: [pure_black_breaking_warm_system]
-      balance: contrast ↔ warmth
-    emerges_from: [claude]
-    provenance: original
-    confidence: 0.6
-
-  - rule_id: claude-color-focus-blue-only-cool-004
-    section: color
-    preconditions:
-      product_type: [ai_assistant, accessibility_first]
-      tone: [accessible]
-      kansei: [accessible, warm]
-    action:
-      focus_ring_color: '#3898ec'   # standard blue
-      reason: a11y_consensus_overrides_warm_palette_only_for_focus
-      no_other_cool_colors_anywhere: true
-    why:
-      establish: a11y-takes-priority-only-for-focus
-      avoid: [warm_focus_ring_breaking_a11y, cool_colors_elsewhere_breaking_warm_system]
-      balance: a11y ↔ chromatic_warmth
-    emerges_from: [claude]
-    provenance: original
-    confidence: 0.55
-
-  - rule_id: claude-typography-serif-single-weight-005
-    section: typography
-    preconditions:
-      product_type: [ai_assistant, literary_app, content_platform]
-      tone: [literary, refined]
-      kansei: [literary, refined, thoughtful]
-    action:
-      headline_family_class: serif (Anthropic Serif or Georgia substitute)
-      headline_weight_only: 500   # single weight discipline
-      body_family_class: humanist_sans (separate)
-      strict_serif_sans_split: true
-    why:
-      establish: literary-headline-authority
-      avoid: [bold_serif_breaking_consistency, sans_for_headline_breaking_literary, mixed_in_serif_for_button]
-      balance: literary_voice ↔ functional_clarity
-    emerges_from: [claude]
-    provenance: original
-    confidence: 0.7
-
-  - rule_id: claude-typography-relaxed-1.60-body-006
-    section: typography
-    preconditions:
-      product_type: [ai_assistant, content_platform, literary_app]
-      tone: [literary, generous]
-      kansei: [calm, literary, readable]
-    action:
-      body_line_height: 1.60   # generous, book-like
-      heading_line_height: 1.10-1.30   # tight but not claustrophobic
-      reason: serif_letterforms_need_more_breathing_than_sans
-    why:
-      establish: book-reading-rhythm
-      avoid: [tight_body_below_1_4, claustrophobic_serif_headlines]
-      balance: literary_pacing ↔ information_density
-    emerges_from: [claude]
-    provenance: original
-    confidence: 0.6
-
-  - rule_id: claude-components-ring-shadow-warm-halo-007
-    section: depth_elevation
-    preconditions:
-      product_type: [ai_assistant, content_platform, literary_app]
-      tone: [warm, refined]
-      kansei: [warm, refined]
-      requires: [claude-color-parchment-canvas-001]
-    action:
-      shadow_strategy: ring_shadow_0_0_0_1px (warm-toned)
-      ring_colors: warm_grays only (#d1cfc5, #c2c0b6)
-      no_cool_drop_shadows: true
-      whisper_drop_shadow_for_lift: rgba(0,0,0,0.05) 0px 4px 24px
-    why:
-      establish: warm-halo-not-cool-shadow
-      avoid: [cool_neutral_drop_shadow, heavy_box_shadow]
-      balance: depth_signaling ↔ warm_palette_cohesion
-    emerges_from: [claude]
-    provenance: original
-    confidence: 0.6
-
-  - rule_id: claude-components-generous-radius-008
-    section: components
-    preconditions:
-      product_type: [ai_assistant, literary_app]
-      tone: [approachable, refined]
-      kansei: [approachable, soft, refined]
-    action:
-      button_radius_range: [8, 12]
-      card_radius_default: 8-16
-      featured_radius: 32
-      no_corners_below_6px: true
-      no_pill_radius_9999: true   # too anchored-less
-    why:
-      establish: manuscript-margin-softness
-      avoid: [sharp_4px_tech_default, pill_breaking_anchored_feeling]
-      balance: softness ↔ structure
-    emerges_from: [claude]
-    provenance: original
-    confidence: 0.55
-
-  - rule_id: claude-layout-light-dark-alternation-009
-    section: layout
-    preconditions:
-      product_type: [ai_assistant, content_platform, literary_app]
-      tone: [literary]
-      kansei: [literary, structured]
-    action:
-      section_strategy: alternate_parchment_and_near_black
-      reason: chapter_like_environment_changes
-      generous_section_padding: 80-120px
-    why:
-      establish: chapter-rhythm
-      avoid: [single_surface_visual_fatigue, tight_dashboard_section_packing]
-      balance: visual_rhythm ↔ surface_cohesion
-    emerges_from: [claude]
-    provenance: original
-    confidence: 0.55
-
-  - rule_id: claude-voice-thoughtful-companion-010
-    section: voice
-    preconditions:
-      product_type: [ai_assistant, literary_app]
-      tone: [thoughtful, humble, refined]
-      kansei: [thoughtful, calm, intellectual, warm]
-    action:
-      voice_personality: thoughtful_companion_not_powerful_tool
-      avoid_hyperbole: true
-      avoid_specifications_first: true
-      tone_register: respectful_of_intelligence
-    why:
-      establish: trusted-advisor-not-supreme-intelligence
-      avoid: [marketing_superlatives, cold_technical_specs_first]
-      balance: capability_communication ↔ humility
-    emerges_from: [claude]
-    provenance: original
-    confidence: 0.5
-
-  - rule_id: claude-anti-pattern-tech-creep-011
-    section: anti_patterns
-    preconditions:
-      kansei: [warm, refined, literary, thoughtful]
-    action:
-      forbidden:
-        - cool_blue_grays_anywhere
-        - bold_weight_700_on_serif
-        - saturated_chromatic_beyond_terracotta
-        - sharp_corners_below_6px
-        - heavy_drop_shadows
-        - pure_white_page_background
-        - geometric_tech_style_illustrations
-        - body_line_height_below_1_40
-        - mono_typography_for_prose
-        - sans_serif_for_headlines
-        - hyperbole_superlative_marketing_voice
-    why:
-      establish: discipline-of-warm-literary-aesthetic
-      avoid: [drift_into_silicon_valley_tech, drift_into_cold_corporate]
-    emerges_from: [claude]
-    provenance: original
-    confidence: 0.7
+- rule_id: claude-color-parchment-canvas-001
+  section: color
+  preconditions:
+    product_type:
+    - ai_assistant
+    - content_platform
+    - literary_app
+    - thoughtful_tool
+    tone:
+    - warm
+    - refined
+    - literary
+    - thoughtful
+    kansei:
+    - warm
+    - refined
+    - calm
+    - thoughtful
+    - intellectual
+    sd_anchors:
+      warm_to_cold: -0.7
+      ornate_to_minimal: 0.3
+      serious_to_playful: -0.5
+      modern_to_classical: 0.2
+    brand_archetypes:
+    - Sage
+    - Caregiver
+  action:
+    base_canvas: parchment cream
+    reason: evokes_premium_paper_not_screen
+    no_pure_white_canvas: true
+    no_cool_blue_grays_anywhere: true
+  why:
+    establish: literary-salon-not-tech-tool
+    avoid:
+    - cold_sterile_glass
+    - pure_white_too_clinical
+    - blue_undertone_too_tech
+    balance: warmth ↔ professionalism
+  emerges_from:
+  - claude
+  provenance: original
+  confidence: 0.7
+  known_conflicts:
+  - rule: figma-color-binary-chrome-001
+    reason: warm-cream canvas vs binary-chrome — opposite chromatic philosophies
+  - rule: linear-app-color-dark-native-001
+    reason: warm-light canvas vs cool-dark canvas — opposite ambient strategies
+- rule_id: claude-color-terracotta-brand-002
+  section: color
+  preconditions:
+    product_type:
+    - ai_assistant
+    - literary_app
+    - thoughtful_tool
+    tone:
+    - warm
+    - deliberately_un_tech
+    kansei:
+    - warm
+    - refined
+    - intellectual
+    brand_archetypes:
+    - Sage
+    - Caregiver
+  action:
+    brand_chromatic_count: 1
+    brand_hex: '#c96442'
+    brand_hue: ~16
+    brand_saturation: 0.6
+    brand_lightness: 0.53
+    reason: earthy_anti_silicon_valley_anti_tech
+    brand_role: cta + brand_moments + signature_accent (only)
+  why:
+    establish: anti-tech-warmth
+    avoid:
+    - generic_blue_purple_brand
+    - decorative_terracotta_use
+    balance: brand_distinctiveness ↔ warm_palette_cohesion
+  emerges_from:
+  - claude
+  provenance: original
+  confidence: 0.7
+- rule_id: claude-color-warm-near-black-text-003
+  section: color
+  preconditions:
+    product_type:
+    - ai_assistant
+    - content_platform
+    - literary_app
+    tone:
+    - warm
+    - readable
+    kansei:
+    - warm
+    - calm
+    - readable
+    brand_archetypes:
+    - Sage
+    - Caregiver
+  action:
+    primary_text: '#141413'
+    reason: warmest_dark_in_tech_for_palette_cohesion
+    no_pure_black: true
+  why:
+    establish: warm-dark-text
+    avoid:
+    - pure_black_breaking_warm_system
+    balance: contrast ↔ warmth
+  emerges_from:
+  - claude
+  provenance: original
+  confidence: 0.6
+- rule_id: claude-color-focus-blue-only-cool-004
+  section: color
+  preconditions:
+    product_type:
+    - ai_assistant
+    - accessibility_first
+    tone:
+    - accessible
+    kansei:
+    - accessible
+    - warm
+    brand_archetypes:
+    - Sage
+    - Caregiver
+  action:
+    focus_ring_color: '#3898ec'
+    reason: a11y_consensus_overrides_warm_palette_only_for_focus
+    no_other_cool_colors_anywhere: true
+  why:
+    establish: a11y-takes-priority-only-for-focus
+    avoid:
+    - warm_focus_ring_breaking_a11y
+    - cool_colors_elsewhere_breaking_warm_system
+    balance: a11y ↔ chromatic_warmth
+  emerges_from:
+  - claude
+  provenance: original
+  confidence: 0.55
+- rule_id: claude-typography-serif-single-weight-005
+  section: typography
+  preconditions:
+    product_type:
+    - ai_assistant
+    - literary_app
+    - content_platform
+    tone:
+    - literary
+    - refined
+    kansei:
+    - literary
+    - refined
+    - thoughtful
+    brand_archetypes:
+    - Sage
+    - Caregiver
+  action:
+    headline_family_class: serif (Anthropic Serif or Georgia substitute)
+    headline_weight_only: 500
+    body_family_class: humanist_sans (separate)
+    strict_serif_sans_split: true
+  why:
+    establish: literary-headline-authority
+    avoid:
+    - bold_serif_breaking_consistency
+    - sans_for_headline_breaking_literary
+    - mixed_in_serif_for_button
+    balance: literary_voice ↔ functional_clarity
+  emerges_from:
+  - claude
+  provenance: original
+  confidence: 0.7
+- rule_id: claude-typography-relaxed-1.60-body-006
+  section: typography
+  preconditions:
+    product_type:
+    - ai_assistant
+    - content_platform
+    - literary_app
+    tone:
+    - literary
+    - generous
+    kansei:
+    - calm
+    - literary
+    - readable
+    brand_archetypes:
+    - Sage
+    - Caregiver
+  action:
+    body_line_height: 1.6
+    heading_line_height: 1.10-1.30
+    reason: serif_letterforms_need_more_breathing_than_sans
+  why:
+    establish: book-reading-rhythm
+    avoid:
+    - tight_body_below_1_4
+    - claustrophobic_serif_headlines
+    balance: literary_pacing ↔ information_density
+  emerges_from:
+  - claude
+  provenance: original
+  confidence: 0.6
+- rule_id: claude-components-ring-shadow-warm-halo-007
+  section: depth_elevation
+  preconditions:
+    product_type:
+    - ai_assistant
+    - content_platform
+    - literary_app
+    tone:
+    - warm
+    - refined
+    kansei:
+    - warm
+    - refined
+    requires:
+    - claude-color-parchment-canvas-001
+    brand_archetypes:
+    - Sage
+    - Caregiver
+  action:
+    shadow_strategy: ring_shadow_0_0_0_1px (warm-toned)
+    ring_colors: warm_grays only (#d1cfc5,
+    no_cool_drop_shadows: true
+    whisper_drop_shadow_for_lift: rgba(0,0,0,0.05) 0px 4px 24px
+  why:
+    establish: warm-halo-not-cool-shadow
+    avoid:
+    - cool_neutral_drop_shadow
+    - heavy_box_shadow
+    balance: depth_signaling ↔ warm_palette_cohesion
+  emerges_from:
+  - claude
+  provenance: original
+  confidence: 0.6
+- rule_id: claude-components-generous-radius-008
+  section: components
+  preconditions:
+    product_type:
+    - ai_assistant
+    - literary_app
+    tone:
+    - approachable
+    - refined
+    kansei:
+    - approachable
+    - soft
+    - refined
+    brand_archetypes:
+    - Sage
+    - Caregiver
+  action:
+    button_radius_range:
+    - 8
+    - 12
+    card_radius_default: 8-16
+    featured_radius: 32
+    no_corners_below_6px: true
+    no_pill_radius_9999: true
+  why:
+    establish: manuscript-margin-softness
+    avoid:
+    - sharp_4px_tech_default
+    - pill_breaking_anchored_feeling
+    balance: softness ↔ structure
+  emerges_from:
+  - claude
+  provenance: original
+  confidence: 0.55
+- rule_id: claude-layout-light-dark-alternation-009
+  section: layout
+  preconditions:
+    product_type:
+    - ai_assistant
+    - content_platform
+    - literary_app
+    tone:
+    - literary
+    kansei:
+    - literary
+    - structured
+    brand_archetypes:
+    - Sage
+    - Caregiver
+  action:
+    section_strategy: alternate_parchment_and_near_black
+    reason: chapter_like_environment_changes
+    generous_section_padding: 80-120px
+  why:
+    establish: chapter-rhythm
+    avoid:
+    - single_surface_visual_fatigue
+    - tight_dashboard_section_packing
+    balance: visual_rhythm ↔ surface_cohesion
+  emerges_from:
+  - claude
+  provenance: original
+  confidence: 0.55
+- rule_id: claude-voice-thoughtful-companion-010
+  section: voice
+  preconditions:
+    product_type:
+    - ai_assistant
+    - literary_app
+    tone:
+    - thoughtful
+    - humble
+    - refined
+    kansei:
+    - thoughtful
+    - calm
+    - intellectual
+    - warm
+    brand_archetypes:
+    - Sage
+    - Caregiver
+  action:
+    voice_personality: thoughtful_companion_not_powerful_tool
+    avoid_hyperbole: true
+    avoid_specifications_first: true
+    tone_register: respectful_of_intelligence
+  why:
+    establish: trusted-advisor-not-supreme-intelligence
+    avoid:
+    - marketing_superlatives
+    - cold_technical_specs_first
+    balance: capability_communication ↔ humility
+  emerges_from:
+  - claude
+  provenance: original
+  confidence: 0.5
+- rule_id: claude-anti-pattern-tech-creep-011
+  section: anti_patterns
+  preconditions:
+    kansei:
+    - warm
+    - refined
+    - literary
+    - thoughtful
+    brand_archetypes:
+    - Sage
+    - Caregiver
+  action:
+    forbidden:
+    - cool_blue_grays_anywhere
+    - bold_weight_700_on_serif
+    - saturated_chromatic_beyond_terracotta
+    - sharp_corners_below_6px
+    - heavy_drop_shadows
+    - pure_white_page_background
+    - geometric_tech_style_illustrations
+    - body_line_height_below_1_40
+    - mono_typography_for_prose
+    - sans_serif_for_headlines
+    - hyperbole_superlative_marketing_voice
+  why:
+    establish: discipline-of-warm-literary-aesthetic
+    avoid:
+    - drift_into_silicon_valley_tech
+    - drift_into_cold_corporate
+  emerges_from:
+  - claude
+  provenance: original
+  confidence: 0.7

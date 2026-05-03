@@ -98,6 +98,7 @@ python3 tools/extract_tokens.py source-design-systems/<system_name>/DESIGN.md
        product_type: [...]
        tone: [...]
        kansei: [...]                                  # 词表见 references/kansei-theory.md
+       brand_archetypes: [...]                        # v1.5.0 必填 — 词表见 references/brand-archetypes.md
        sd_anchors: { warm_to_cold, ornate_to_minimal, serious_to_playful, modern_to_classical }  # optional
      action:
        <参数化模式 — 不放具体值（具体值在 tokens.json）>
@@ -115,11 +116,16 @@ python3 tools/extract_tokens.py source-design-systems/<system_name>/DESIGN.md
 
 2. **关键参数化**：把具体值（`#5E6AD2`）抽象成参数化模式（`hue: 240°-260°`）；具体值留在 tokens.json
 3. **Kansei 标签**：用 `references/kansei-theory.md` 的词表，给 3-5 个调性词（不要造词）
-4. **Confidence 起步**：单一系统拆解默认 0.5-0.7；后续合并 / 共现会自动调高
-5. 如果你（LLM）观察到这条规则与某已有规则有显然冲突（如 dark canvas vs white canvas），**直接在 rule yaml 加 `known_conflicts`**——A4 阶段会把这些声明吸入图
+4. **Brand archetype 标签（v1.5.0 必填）**：用 `references/brand-archetypes.md` 的 12 原型词表，给 1-2 个最贴切的（primary 必填、secondary 可选）。**判断启发式**：
+   - 看 system 整体 brand 定位（Linear → Sage+Creator；Discord → Everyman+Jester；Apple → Creator+Magician）
+   - 看 rule 的 `why.establish` 字段：知识 / 真相 / 清晰 → Sage；转化 / 神秘 → Magician；归属 / 关怀 → Caregiver；秩序 / 权威 → Ruler；自由 / 反叛 → Outlaw；玩味 / 欢乐 → Jester；造物 / 工艺 → Creator；探索 / 边界 → Explorer；纯净 / 简单 → Innocent；亲和 / 民主 → Everyman；激情 / 美感 → Lover；力量 / 战胜 → Hero
+   - **不要全打 Sage**——Sage 是默认懒标，强迫自己想清楚 secondary
+5. **Confidence 起步**：单一系统拆解默认 0.5-0.7；后续合并 / 共现会自动调高
+6. 如果你（LLM）观察到这条规则与某已有规则有显然冲突（如 dark canvas vs white canvas），**直接在 rule yaml 加 `known_conflicts`**——A4 阶段会把这些声明吸入图
 
 **质量检查**：
-- [ ] 每条规则有完整 preconditions（product_type / kansei 不为空）
+- [ ] 每条规则有完整 preconditions（product_type / kansei / **brand_archetypes** 都不为空）
+- [ ] brand_archetypes 至少 1 个，最多 3 个，全部来自 12 原型词表
 - [ ] action 是参数化的，不是具体值
 - [ ] kansei 词与 `references/kansei-theory.md` 词表对齐
 - [ ] confidence ∈ [0, 1]

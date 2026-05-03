@@ -1,216 +1,342 @@
-# Rules — airbnb
-
 rules:
-
-  - rule_id: airbnb-color-photography-first-canvas-001
-    section: color
-    preconditions:
-      product_type: [marketplace, travel_app, listing_app, ecommerce, lifestyle_app]
-      tone: [warm, approachable, aspirational]
-      kansei: [warm, approachable, inviting, refined]
-      sd_anchors:
-        warm_to_cold: -0.4
-        ornate_to_minimal: 0.5
-        serious_to_playful: 0.0
-        modern_to_classical: -0.2
-    action:
-      base_canvas: pure white #ffffff
-      chrome_chromatic_count: 1   # Rausch coral only
-      photography_role: hero_element (full-bleed primary content)
-      no_decorative_chrome: true
-    why:
-      establish: photography-first-chrome-recedes
-      avoid: [decorative_chrome_competing_with_photos, gray_section_backgrounds]
-      balance: brand_visibility ↔ photo_breathing
-    emerges_from: [airbnb]
-    provenance: original
-    confidence: 0.7
-
-  - rule_id: airbnb-color-rausch-key-actions-only-002
-    section: color
-    preconditions:
-      product_type: [marketplace, ecommerce, listing_app]
-      tone: [warm, decisive]
-      kansei: [warm, inviting, decisive]
-    action:
-      brand_hex: '#ff385c'   # Rausch coral-pink
-      brand_role: reserve_button + search_button + wishlist_heart + active_tab + price_emphasis (only)
-      no_decorative_use: true
-      tier_color_extensions: ['#92174d (plus)', '#460479 (luxe)']
-    why:
-      establish: chromatic-as-commit-action-signal
-      avoid: [decorative_rausch, multi_chromatic_competing, brand_dilution]
-      balance: brand_loudness ↔ usage_discipline
-    emerges_from: [airbnb]
-    provenance: original
-    confidence: 0.65
-
-  - rule_id: airbnb-color-singular-text-token-003
-    section: color
-    preconditions:
-      product_type: [marketplace, ecommerce, photography_first_app]
-      tone: [chrome_minimal]
-      kansei: [structured, minimal]
-    action:
-      primary_text_hex: '#222222'   # Ink Black
-      use_for: 90_percent_of_all_text
-      hierarchy_via: weight_size_not_color
-      max_text_color_tiers: 3
-    why:
-      establish: chrome-text-discipline
-      avoid: [multi_gray_text_tiers_competing_with_photos]
-      balance: hierarchy ↔ photo_priority
-    emerges_from: [airbnb]
-    provenance: original
-    confidence: 0.6
-
-  - rule_id: airbnb-typography-single-family-vf-004
-    section: typography
-    preconditions:
-      product_type: [marketplace, lifestyle_app, ecommerce]
-      tone: [warm, refined]
-      kansei: [warm, refined, structured]
-    action:
-      family_class: variable_weight_humanist_sans (Cereal VF, Circular substitute, Inter fallback)
-      single_family_8_to_28px: true
-      no_display_body_split: true
-      reason: brand_identity_from_typeface_itself
-    why:
-      establish: single-voice-typography
-      avoid: [display_body_family_split, mixed_typeface_breaking_voice]
-      balance: identity ↔ typographic_variety
-    emerges_from: [airbnb]
-    provenance: original
-    confidence: 0.6
-
-  - rule_id: airbnb-typography-500-is-regular-005
-    section: typography
-    preconditions:
-      product_type: [marketplace, lifestyle_app]
-      tone: [confident, deliberate]
-      kansei: [confident, refined]
-    action:
-      body_weight_default: 500   # not 400
-      heading_weight_range: 600-700
-      no_400_in_body: true
-      reason: subtle_extra_density_for_confidence
-    why:
-      establish: weight-500-as-confident-default
-      avoid: [400_regular_too_default, bold_700_in_body_too_loud]
-      balance: confidence ↔ reading_calm
-    emerges_from: [airbnb]
-    provenance: original
-    confidence: 0.55
-
-  - rule_id: airbnb-typography-display-tight-body-relaxed-006
-    section: typography
-    preconditions:
-      product_type: [marketplace, lifestyle_app]
-      tone: [refined]
-      kansei: [refined, readable]
-    action:
-      tracking_at_display_20_28px: -0.18 to -0.44
-      tracking_at_body: 0
-      line_height_at_display: 1.18-1.25
-      line_height_at_body_caption: 1.43
-      no_all_caps_except_8px_superscript: true
-    why:
-      establish: display-chiseled-body-readable
-      avoid: [body_negative_tracking_unreadable, all_caps_button_labels]
-      balance: display_density ↔ body_readability
-    emerges_from: [airbnb]
-    provenance: original
-    confidence: 0.6
-
-  - rule_id: airbnb-components-rounded-photo-cards-007
-    section: components
-    preconditions:
-      product_type: [marketplace, listing_app, photography_first_app]
-      tone: [friendly, approachable]
-      kansei: [warm, approachable, friendly]
-    action:
-      photo_aspect_ratio: 4:3 or 16:9
-      photo_corner_rounding_px: 14-20
-      no_sharp_photo_corners: true
-      reason: rounded_photos_feel_pickable_not_background
-    why:
-      establish: photo-as-card-not-background
-      avoid: [sharp_corners_too_clinical, pill_radius_breaking_proportions]
-      balance: friendliness ↔ photo_integrity
-    emerges_from: [airbnb]
-    provenance: original
-    confidence: 0.55
-
-  - rule_id: airbnb-components-circular-icon-buttons-008
-    section: components
-    preconditions:
-      product_type: [marketplace, photography_first_app, mobile_app]
-      tone: [friendly]
-      kansei: [friendly, floating]
-    action:
-      icon_button_radius: 50%
-      icon_button_strategy: floating_overlay_on_photo
-      no_rectangular_icon_buttons_on_photos: true
-    why:
-      establish: floating-not-anchored
-      avoid: [rectangular_icon_buttons_competing_with_photos]
-      balance: control_visibility ↔ photo_priority
-    emerges_from: [airbnb]
-    provenance: original
-    confidence: 0.5
-
-  - rule_id: airbnb-components-sticky-booking-009
-    section: components
-    preconditions:
-      product_type: [marketplace, listing_app, ecommerce]
-      tone: [decisive]
-      kansei: [structured, decisive]
-    action:
-      booking_panel_position: sticky_right_rail (desktop)
-      mobile_alternative: bottom_anchored_reserve_bar
-      booking_card_overlapping_with_hero: true
-    why:
-      establish: reserve-action-always-1-tap-away
-      avoid: [inline_form_lost_in_scroll, hidden_booking_until_scroll_to_bottom]
-      balance: action_accessibility ↔ scroll_freedom
-    emerges_from: [airbnb]
-    provenance: original
-    confidence: 0.55
-
-  - rule_id: airbnb-layout-hairline-separators-010
-    section: layout
-    preconditions:
-      product_type: [marketplace, listing_app]
-      kansei: [structured, refined]
-    action:
-      separator_thickness_px: 1
-      separator_color: '#dddddd'
-      separator_strategy: subtle_division_not_strong_demarcation
-    why:
-      establish: whisper-list-structure
-      avoid: [thick_dividers_breaking_photo_flow, no_separators_losing_list_structure]
-      balance: structure ↔ photo_visual_weight
-    emerges_from: [airbnb]
-    provenance: original
-    confidence: 0.5
-
-  - rule_id: airbnb-anti-pattern-photography-disrespect-011
-    section: anti_patterns
-    preconditions:
-      kansei: [warm, refined, approachable]
-    action:
-      forbidden:
-        - chrome_chromatic_decoration_competing_with_photos
-        - rausch_decorative_use_diluting_key_actions
-        - full_surface_gradient_breaking_photography_first
-        - body_weight_400_not_500
-        - body_negative_tracking_breaking_readability
-        - all_caps_button_labels_breaking_friendly
-        - sharp_corner_photos_breaking_friendly
-        - rectangular_icon_buttons_overlaid_on_photos
-    why:
-      establish: discipline-of-photography-first-warmth
-      avoid: [drift_into_corporate_chrome, drift_into_loud_marketing]
-    emerges_from: [airbnb]
-    provenance: original
-    confidence: 0.55
+- rule_id: airbnb-color-photography-first-canvas-001
+  section: color
+  preconditions:
+    product_type:
+    - marketplace
+    - travel_app
+    - listing_app
+    - ecommerce
+    - lifestyle_app
+    tone:
+    - warm
+    - approachable
+    - aspirational
+    kansei:
+    - warm
+    - approachable
+    - inviting
+    - refined
+    sd_anchors:
+      warm_to_cold: -0.4
+      ornate_to_minimal: 0.5
+      serious_to_playful: 0.0
+      modern_to_classical: -0.2
+    brand_archetypes:
+    - Caregiver
+    - Lover
+  action:
+    base_canvas: pure white
+    chrome_chromatic_count: 1
+    photography_role: hero_element (full-bleed primary content)
+    no_decorative_chrome: true
+  why:
+    establish: photography-first-chrome-recedes
+    avoid:
+    - decorative_chrome_competing_with_photos
+    - gray_section_backgrounds
+    balance: brand_visibility ↔ photo_breathing
+  emerges_from:
+  - airbnb
+  provenance: original
+  confidence: 0.7
+- rule_id: airbnb-color-rausch-key-actions-only-002
+  section: color
+  preconditions:
+    product_type:
+    - marketplace
+    - ecommerce
+    - listing_app
+    tone:
+    - warm
+    - decisive
+    kansei:
+    - warm
+    - inviting
+    - decisive
+    brand_archetypes:
+    - Caregiver
+    - Lover
+  action:
+    brand_hex: '#ff385c'
+    brand_role: reserve_button + search_button + wishlist_heart + active_tab + price_emphasis (only)
+    no_decorative_use: true
+    tier_color_extensions:
+    - '#92174d (plus)'
+    - '#460479 (luxe)'
+  why:
+    establish: chromatic-as-commit-action-signal
+    avoid:
+    - decorative_rausch
+    - multi_chromatic_competing
+    - brand_dilution
+    balance: brand_loudness ↔ usage_discipline
+  emerges_from:
+  - airbnb
+  provenance: original
+  confidence: 0.65
+- rule_id: airbnb-color-singular-text-token-003
+  section: color
+  preconditions:
+    product_type:
+    - marketplace
+    - ecommerce
+    - photography_first_app
+    tone:
+    - chrome_minimal
+    kansei:
+    - structured
+    - minimal
+    brand_archetypes:
+    - Caregiver
+    - Lover
+  action:
+    primary_text_hex: '#222222'
+    use_for: 90_percent_of_all_text
+    hierarchy_via: weight_size_not_color
+    max_text_color_tiers: 3
+  why:
+    establish: chrome-text-discipline
+    avoid:
+    - multi_gray_text_tiers_competing_with_photos
+    balance: hierarchy ↔ photo_priority
+  emerges_from:
+  - airbnb
+  provenance: original
+  confidence: 0.6
+- rule_id: airbnb-typography-single-family-vf-004
+  section: typography
+  preconditions:
+    product_type:
+    - marketplace
+    - lifestyle_app
+    - ecommerce
+    tone:
+    - warm
+    - refined
+    kansei:
+    - warm
+    - refined
+    - structured
+    brand_archetypes:
+    - Caregiver
+    - Lover
+  action:
+    family_class: variable_weight_humanist_sans (Cereal VF, Circular substitute, Inter fallback)
+    single_family_8_to_28px: true
+    no_display_body_split: true
+    reason: brand_identity_from_typeface_itself
+  why:
+    establish: single-voice-typography
+    avoid:
+    - display_body_family_split
+    - mixed_typeface_breaking_voice
+    balance: identity ↔ typographic_variety
+  emerges_from:
+  - airbnb
+  provenance: original
+  confidence: 0.6
+- rule_id: airbnb-typography-500-is-regular-005
+  section: typography
+  preconditions:
+    product_type:
+    - marketplace
+    - lifestyle_app
+    tone:
+    - confident
+    - deliberate
+    kansei:
+    - confident
+    - refined
+    brand_archetypes:
+    - Caregiver
+    - Lover
+  action:
+    body_weight_default: 500
+    heading_weight_range: 600-700
+    no_400_in_body: true
+    reason: subtle_extra_density_for_confidence
+  why:
+    establish: weight-500-as-confident-default
+    avoid:
+    - 400_regular_too_default
+    - bold_700_in_body_too_loud
+    balance: confidence ↔ reading_calm
+  emerges_from:
+  - airbnb
+  provenance: original
+  confidence: 0.55
+- rule_id: airbnb-typography-display-tight-body-relaxed-006
+  section: typography
+  preconditions:
+    product_type:
+    - marketplace
+    - lifestyle_app
+    tone:
+    - refined
+    kansei:
+    - refined
+    - readable
+    brand_archetypes:
+    - Caregiver
+    - Lover
+  action:
+    tracking_at_display_20_28px: -0.18 to -0.44
+    tracking_at_body: 0
+    line_height_at_display: 1.18-1.25
+    line_height_at_body_caption: 1.43
+    no_all_caps_except_8px_superscript: true
+  why:
+    establish: display-chiseled-body-readable
+    avoid:
+    - body_negative_tracking_unreadable
+    - all_caps_button_labels
+    balance: display_density ↔ body_readability
+  emerges_from:
+  - airbnb
+  provenance: original
+  confidence: 0.6
+- rule_id: airbnb-components-rounded-photo-cards-007
+  section: components
+  preconditions:
+    product_type:
+    - marketplace
+    - listing_app
+    - photography_first_app
+    tone:
+    - friendly
+    - approachable
+    kansei:
+    - warm
+    - approachable
+    - friendly
+    brand_archetypes:
+    - Caregiver
+    - Lover
+  action:
+    photo_aspect_ratio: 4:3 or 16:9
+    photo_corner_rounding_px: 14-20
+    no_sharp_photo_corners: true
+    reason: rounded_photos_feel_pickable_not_background
+  why:
+    establish: photo-as-card-not-background
+    avoid:
+    - sharp_corners_too_clinical
+    - pill_radius_breaking_proportions
+    balance: friendliness ↔ photo_integrity
+  emerges_from:
+  - airbnb
+  provenance: original
+  confidence: 0.55
+- rule_id: airbnb-components-circular-icon-buttons-008
+  section: components
+  preconditions:
+    product_type:
+    - marketplace
+    - photography_first_app
+    - mobile_app
+    tone:
+    - friendly
+    kansei:
+    - friendly
+    - floating
+    brand_archetypes:
+    - Caregiver
+    - Lover
+  action:
+    icon_button_radius: 50%
+    icon_button_strategy: floating_overlay_on_photo
+    no_rectangular_icon_buttons_on_photos: true
+  why:
+    establish: floating-not-anchored
+    avoid:
+    - rectangular_icon_buttons_competing_with_photos
+    balance: control_visibility ↔ photo_priority
+  emerges_from:
+  - airbnb
+  provenance: original
+  confidence: 0.5
+- rule_id: airbnb-components-sticky-booking-009
+  section: components
+  preconditions:
+    product_type:
+    - marketplace
+    - listing_app
+    - ecommerce
+    tone:
+    - decisive
+    kansei:
+    - structured
+    - decisive
+    brand_archetypes:
+    - Caregiver
+    - Lover
+  action:
+    booking_panel_position: sticky_right_rail (desktop)
+    mobile_alternative: bottom_anchored_reserve_bar
+    booking_card_overlapping_with_hero: true
+  why:
+    establish: reserve-action-always-1-tap-away
+    avoid:
+    - inline_form_lost_in_scroll
+    - hidden_booking_until_scroll_to_bottom
+    balance: action_accessibility ↔ scroll_freedom
+  emerges_from:
+  - airbnb
+  provenance: original
+  confidence: 0.55
+- rule_id: airbnb-layout-hairline-separators-010
+  section: layout
+  preconditions:
+    product_type:
+    - marketplace
+    - listing_app
+    kansei:
+    - structured
+    - refined
+    brand_archetypes:
+    - Caregiver
+    - Lover
+  action:
+    separator_thickness_px: 1
+    separator_color: '#dddddd'
+    separator_strategy: subtle_division_not_strong_demarcation
+  why:
+    establish: whisper-list-structure
+    avoid:
+    - thick_dividers_breaking_photo_flow
+    - no_separators_losing_list_structure
+    balance: structure ↔ photo_visual_weight
+  emerges_from:
+  - airbnb
+  provenance: original
+  confidence: 0.5
+- rule_id: airbnb-anti-pattern-photography-disrespect-011
+  section: anti_patterns
+  preconditions:
+    kansei:
+    - warm
+    - refined
+    - approachable
+    brand_archetypes:
+    - Caregiver
+    - Lover
+  action:
+    forbidden:
+    - chrome_chromatic_decoration_competing_with_photos
+    - rausch_decorative_use_diluting_key_actions
+    - full_surface_gradient_breaking_photography_first
+    - body_weight_400_not_500
+    - body_negative_tracking_breaking_readability
+    - all_caps_button_labels_breaking_friendly
+    - sharp_corner_photos_breaking_friendly
+    - rectangular_icon_buttons_overlaid_on_photos
+  why:
+    establish: discipline-of-photography-first-warmth
+    avoid:
+    - drift_into_corporate_chrome
+    - drift_into_loud_marketing
+  emerges_from:
+  - airbnb
+  provenance: original
+  confidence: 0.55

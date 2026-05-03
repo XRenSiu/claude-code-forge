@@ -37,9 +37,22 @@
 2. 如果某个依赖项**不在原候选集**且**不在规则库**（罕见，意味着关系图引用了不存在的规则）→ 记录损坏并提示用户重建关系图
 3. 如果某个依赖项与已留的规则 `conflicts_with` → 这是关系图自身矛盾，保留依赖、剔除冲突方，并记录到日志
 
-## Step 4 — 风格岛聚集
+## Step 4 — 风格岛聚集（**v1.5.0 规模感知**）
 
 构建子图 `G_kept`：节点 = 当前留下的规则，边 = `co_occurs_with` 关系（带频率权重）。
+
+### v1.5.0 Issue 7 修复 — 按规则库尺寸分支
+
+**先看规则库总规模**（grammar/rules/*.yaml 里所有 yaml 解析后的 rule 总数）：
+
+| 规则库尺寸 | 处理方式 |
+|---|---|
+| **< 30 条**（极小） | **完全 skip 风格岛聚类**——co_occurs 数据量不够形成有意义 cluster。直接按 `final_score` 排序保留 top 50%（保 section 覆盖前提下） |
+| **30 – 100 条**（小） | 用宽松阈值（μ - σ 而非 μ）；允许多个小 cluster 共存，不强求收敛到 1-2 个主岛 |
+| **100 – 300 条**（中） | 标准算法（μ 阈值 + 主岛 1-2 个） |
+| **> 300 条**（大） | 标准算法 + 增加 cluster 数量上限（5 个主岛） |
+
+### 标准算法（中规模）
 
 1. 计算每条边的频率均值 `μ` 和标准差 `σ`
 2. 保留权重 ≥ `μ` 的边（高 co-occurrence 是"自洽风格岛"信号）
@@ -48,7 +61,21 @@
 5. 保留 cluster_score 最高的 1–2 个 cluster 作为"主风格岛"
 6. 主岛之外的孤立点：若 final_score > 候选集 median → 保留作为"补充规则"；否则剔除
 
-**为什么这样做**：素材库里高频共现的规则形成了"自洽设计判断的样本"。让候选集围绕这些岛聚集，比让模型自由组合更接近"真有人这么设计过、被市场验证过"。
+### 小规模 fallback
+
+```python
+if len(all_rules_in_library) < 30:
+    # Skip clustering entirely; co_occurs signal is too sparse
+    final_set = sorted(kept_set, key=lambda rid: -score_map[rid])
+    final_set = section_aware_top_n(final_set, target_size=max(15, len(kept_set) // 2))
+    cluster_metadata = {'skipped_reason': 'small_library', 'library_size': len(all_rules_in_library)}
+elif len(all_rules_in_library) < 100:
+    # Loose threshold: keep edges with freq >= μ - σ (instead of >= μ)
+    threshold = max(0.0, mu - sigma)
+    # ... rest as standard
+```
+
+**为什么这样做**：素材库里高频共现的规则形成了"自洽设计判断的样本"。让候选集围绕这些岛聚集，比让模型自由组合更接近"真有人这么设计过、被市场验证过"。**但**当素材库太小时（< 30 条），共现统计本身不够稳定，强行聚类会得到伪 cluster，反而丢质量——此时直接 score 排序更诚实。
 
 ## Step 5 — Section 覆盖最终核查
 

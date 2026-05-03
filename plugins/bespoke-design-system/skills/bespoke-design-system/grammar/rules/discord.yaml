@@ -1,240 +1,378 @@
-# Rules — discord
-
 rules:
-
-  - rule_id: discord-color-dark-first-3-step-depth-001
-    section: color
-    preconditions:
-      product_type: [chat, voice_platform, community_app, real_time_collaboration]
-      tone: [casual, friendly, focused]
-      kansei: [calm, friendly, focused]
-      sd_anchors:
-        warm_to_cold: 0.0
-        ornate_to_minimal: 0.5
-        serious_to_playful: 0.0
-        modern_to_classical: -0.5
-    action:
-      base_canvas: dark (#1e1f22 to #313338 range)
-      depth_strategy: 3-step luminance (rail-deepest, sidebar-mid, chat-lightest)
-      no_pure_black: true
-      light_theme_supported_but_not_default: true
-    why:
-      establish: long-session-eye-comfort
-      avoid: [pure_black_canvas, single_dark_surface_no_hierarchy, light_theme_as_default]
-      balance: visibility_hierarchy ↔ ambient_calm
-    emerges_from: [discord]
-    provenance: original
-    confidence: 0.7
-
-  - rule_id: discord-color-single-saturated-anchor-002
-    section: color
-    preconditions:
-      product_type: [chat, community_app, real_time_collaboration]
-      tone: [focused, friendly]
-      kansei: [focused, friendly, calm]
-    action:
-      brand_chromatic_count: 1
-      brand_hue_range: [225, 250]   # blurple
-      brand_saturation: 0.85+
-      brand_role: brand_mark + primary_cta + mention + you_marker (only)
-      no_decorative_use: true
-    why:
-      establish: chromatic-as-attention-signal
-      avoid: [decorative_brand_use, status_using_brand_color, multi_chromatic_competing]
-      balance: brand_presence ↔ chromatic_restraint
-    emerges_from: [discord]
-    provenance: original
-    confidence: 0.7
-
-  - rule_id: discord-color-traffic-light-status-003
-    section: color
-    preconditions:
-      product_type: [chat, real_time_collaboration]
-      kansei: [focused]
-    action:
-      status_palette: green_yellow_red_gray (universal traffic-light mapping)
-      green_for_online: true
-      red_for_dnd_destructive: true
-      yellow_for_idle: true
-      gray_for_offline: true
-    why:
-      establish: zero-learning-status-recognition
-      avoid: [custom_status_palette, brand_color_as_status]
-      balance: universal_recognition ↔ brand_distinctiveness
-    emerges_from: [discord]
-    provenance: original
-    confidence: 0.65
-
-  - rule_id: discord-typography-friendly-geometric-single-family-004
-    section: typography
-    preconditions:
-      product_type: [chat, real_time_collaboration]
-      tone: [friendly, casual]
-      kansei: [friendly, calm]
-    action:
-      family_class: humanist_sans_with_rounded_terminals (gg-sans-style, Whitney-style)
-      single_family_for_chrome_and_body: true
-      hierarchy_via: weight_steps_400_500_600_700_800
-      no_serif_in_ui: true
-      base_body_size_min_px: 16   # never shrink chat body below 16
-    why:
-      establish: warmth-via-rounded-letterforms
-      avoid: [serif_in_chat_chrome, geometric_sans_too_cold, body_size_below_16]
-      balance: warmth ↔ legibility
-    emerges_from: [discord]
-    provenance: original
-    confidence: 0.7
-
-  - rule_id: discord-typography-weight-not-color-hierarchy-005
-    section: typography
-    preconditions:
-      product_type: [chat, real_time_collaboration, dark_first_app]
-      tone: [focused]
-      kansei: [structured, focused]
-      requires: [discord-color-dark-first-3-step-depth-001]
-    action:
-      hierarchy_strategy: weight_steps_only (400 -> 500 -> 600 -> 700 -> 800)
-      avoid_color_hierarchy_on_dark_surface: true
-      reason: color_variations_too_subtle_on_dark
-    why:
-      establish: dark-surface-weight-driven-hierarchy
-      avoid: [multi_color_text_hierarchy, single_weight_no_hierarchy]
-      balance: clarity ↔ chromatic_restraint
-    emerges_from: [discord]
-    provenance: original
-    confidence: 0.6
-
-  - rule_id: discord-components-morph-avatar-006
-    section: components
-    preconditions:
-      product_type: [chat, community_app, social_app]
-      tone: [friendly, playful]
-      kansei: [friendly, playful]
-    action:
-      avatar_default_radius_px: 16   # rounded-square
-      avatar_hover_radius: 50%   # circle morph
-      morph_duration_ms: 350
-      morph_easing: cubic-bezier(0.215, 0.61, 0.355, 1)   # snappy then settle
-      this_is_brand_signature_motion: true
-    why:
-      establish: signature-hover-morph-as-brand-identity
-      avoid: [static_circle_or_square_only, instant_morph_too_fast, slow_morph_blocks_hover]
-      balance: brand_recognition ↔ functional_clarity
-    emerges_from: [discord]
-    provenance: original
-    confidence: 0.7
-
-  - rule_id: discord-components-status-notch-007
-    section: components
-    preconditions:
-      product_type: [chat, community_app]
-      kansei: [structured]
-      requires: [discord-color-traffic-light-status-003]
-    action:
-      status_dot_size_px: 10
-      status_dot_border_px: 3
-      status_dot_border_color: matches_avatar_background_tertiary
-      status_dot_position: bottom_right_of_avatar
-      effect: notch_into_avatar (visual layering)
-    why:
-      establish: status-as-physical-overlay-on-avatar
-      avoid: [hairline_border_weak_notch, no_border_status_blends_in]
-      balance: visual_layering ↔ avatar_legibility
-    emerges_from: [discord]
-    provenance: original
-    confidence: 0.6
-
-  - rule_id: discord-components-tight-chat-row-008
-    section: components
-    preconditions:
-      product_type: [chat, real_time_collaboration]
-      tone: [dense, scannable]
-      kansei: [structured, focused]
-    action:
-      chat_row_inter_message_spacing_px: 4-8   # within group
-      chat_row_inter_group_spacing_px: 16-24   # between groups
-      no_card_per_message: true
-      mention_row_background: rgba(brand, 0.1)   # soft wash
-    why:
-      establish: group-based-spacing-not-message-based
-      avoid: [card_per_message_breaks_chat_flow, uniform_spacing_no_grouping, high_alpha_mention_breaks_reading]
-      balance: scrollback_scannability ↔ group_distinction
-    emerges_from: [discord]
-    provenance: original
-    confidence: 0.6
-
-  - rule_id: discord-components-embed-left-border-009
-    section: components
-    preconditions:
-      product_type: [chat, social_app]
-      kansei: [structured]
-    action:
-      embed_border_strategy: left_4px_in_accent_color (not full outline)
-      embed_radius_px: 4
-      embed_padding: 8 16
-      reason: left_border_indicates_source_quickly_in_scroll
-    why:
-      establish: scrollable-embed-recognition
-      avoid: [full_outline_visually_heavy, no_border_embed_blends_in]
-      balance: identification_speed ↔ visual_weight
-    emerges_from: [discord]
-    provenance: original
-    confidence: 0.55
-
-  - rule_id: discord-layout-fixed-spatial-anchors-010
-    section: layout
-    preconditions:
-      product_type: [chat, real_time_collaboration]
-      kansei: [structured, focused]
-    action:
-      base_unit: 4
-      scale: [4, 8, 12, 16, 20, 24, 32, 40]
-      fixed_columns: server_rail=72px, channel_sidebar=240px, member_list=240px
-      chat_column: fluid_min_380px
-    why:
-      establish: muscle-memory-anchors
-      avoid: [fully_responsive_no_fixed_widths, narrow_chat_column_below_380]
-      balance: spatial_predictability ↔ responsive_flexibility
-    emerges_from: [discord]
-    provenance: original
-    confidence: 0.6
-
-  - rule_id: discord-motion-functional-fade-011
-    section: motion
-    preconditions:
-      product_type: [chat, real_time_collaboration]
-      tone: [focused]
-      kansei: [focused, calm]
-    action:
-      tooltip_fade_ms: 80   # fast, functional
-      hover_state_ms: 200
-      avatar_morph_ms: 350   # signature exception
-      notification_pulse: 1.4s ease-in-out infinite
-    why:
-      establish: motion-serves-density-not-spectacle
-      avoid: [long_tooltip_fade_blocking_dense_use, slow_hover_response]
-      balance: feedback_speed ↔ visual_smoothness
-    emerges_from: [discord]
-    provenance: original
-    confidence: 0.55
-
-  - rule_id: discord-anti-pattern-chat-clarity-012
-    section: anti_patterns
-    preconditions:
-      kansei: [focused, structured]
-    action:
-      forbidden:
-        - body_text_below_16px_in_chat
-        - blurple_decorative_use
-        - status_using_brand_color
-        - single_dark_surface_no_depth_hierarchy
-        - static_avatar_killing_morph_signature
-        - long_tooltip_fade_above_150ms
-        - card_per_message_breaking_chat_flow
-        - high_alpha_mention_disrupting_scrollback
-    why:
-      establish: discipline-of-chat-tool-clarity
-      avoid: [drift_into_marketing_polish, drift_into_decorative_chrome]
-    emerges_from: [discord]
-    provenance: original
-    confidence: 0.65
+- rule_id: discord-color-dark-first-3-step-depth-001
+  section: color
+  preconditions:
+    product_type:
+    - chat
+    - voice_platform
+    - community_app
+    - real_time_collaboration
+    tone:
+    - casual
+    - friendly
+    - focused
+    kansei:
+    - calm
+    - friendly
+    - focused
+    sd_anchors:
+      warm_to_cold: 0.0
+      ornate_to_minimal: 0.5
+      serious_to_playful: 0.0
+      modern_to_classical: -0.5
+    brand_archetypes:
+    - Everyman
+    - Jester
+  action:
+    base_canvas: dark (#1e1f22 to
+    depth_strategy: 3-step luminance (rail-deepest, sidebar-mid, chat-lightest)
+    no_pure_black: true
+    light_theme_supported_but_not_default: true
+  why:
+    establish: long-session-eye-comfort
+    avoid:
+    - pure_black_canvas
+    - single_dark_surface_no_hierarchy
+    - light_theme_as_default
+    balance: visibility_hierarchy ↔ ambient_calm
+  emerges_from:
+  - discord
+  provenance: original
+  confidence: 0.7
+- rule_id: discord-color-single-saturated-anchor-002
+  section: color
+  preconditions:
+    product_type:
+    - chat
+    - community_app
+    - real_time_collaboration
+    tone:
+    - focused
+    - friendly
+    kansei:
+    - focused
+    - friendly
+    - calm
+    brand_archetypes:
+    - Everyman
+    - Jester
+  action:
+    brand_chromatic_count: 1
+    brand_hue_range:
+    - 225
+    - 250
+    brand_saturation: 0.85+
+    brand_role: brand_mark + primary_cta + mention + you_marker (only)
+    no_decorative_use: true
+  why:
+    establish: chromatic-as-attention-signal
+    avoid:
+    - decorative_brand_use
+    - status_using_brand_color
+    - multi_chromatic_competing
+    balance: brand_presence ↔ chromatic_restraint
+  emerges_from:
+  - discord
+  provenance: original
+  confidence: 0.7
+- rule_id: discord-color-traffic-light-status-003
+  section: color
+  preconditions:
+    product_type:
+    - chat
+    - real_time_collaboration
+    kansei:
+    - focused
+    brand_archetypes:
+    - Everyman
+    - Jester
+  action:
+    status_palette: green_yellow_red_gray (universal traffic-light mapping)
+    green_for_online: true
+    red_for_dnd_destructive: true
+    yellow_for_idle: true
+    gray_for_offline: true
+  why:
+    establish: zero-learning-status-recognition
+    avoid:
+    - custom_status_palette
+    - brand_color_as_status
+    balance: universal_recognition ↔ brand_distinctiveness
+  emerges_from:
+  - discord
+  provenance: original
+  confidence: 0.65
+- rule_id: discord-typography-friendly-geometric-single-family-004
+  section: typography
+  preconditions:
+    product_type:
+    - chat
+    - real_time_collaboration
+    tone:
+    - friendly
+    - casual
+    kansei:
+    - friendly
+    - calm
+    brand_archetypes:
+    - Everyman
+    - Jester
+  action:
+    family_class: humanist_sans_with_rounded_terminals (gg-sans-style, Whitney-style)
+    single_family_for_chrome_and_body: true
+    hierarchy_via: weight_steps_400_500_600_700_800
+    no_serif_in_ui: true
+    base_body_size_min_px: 16
+  why:
+    establish: warmth-via-rounded-letterforms
+    avoid:
+    - serif_in_chat_chrome
+    - geometric_sans_too_cold
+    - body_size_below_16
+    balance: warmth ↔ legibility
+  emerges_from:
+  - discord
+  provenance: original
+  confidence: 0.7
+- rule_id: discord-typography-weight-not-color-hierarchy-005
+  section: typography
+  preconditions:
+    product_type:
+    - chat
+    - real_time_collaboration
+    - dark_first_app
+    tone:
+    - focused
+    kansei:
+    - structured
+    - focused
+    requires:
+    - discord-color-dark-first-3-step-depth-001
+    brand_archetypes:
+    - Everyman
+    - Jester
+  action:
+    hierarchy_strategy: weight_steps_only (400 -> 500 -> 600 -> 700 -> 800)
+    avoid_color_hierarchy_on_dark_surface: true
+    reason: color_variations_too_subtle_on_dark
+  why:
+    establish: dark-surface-weight-driven-hierarchy
+    avoid:
+    - multi_color_text_hierarchy
+    - single_weight_no_hierarchy
+    balance: clarity ↔ chromatic_restraint
+  emerges_from:
+  - discord
+  provenance: original
+  confidence: 0.6
+- rule_id: discord-components-morph-avatar-006
+  section: components
+  preconditions:
+    product_type:
+    - chat
+    - community_app
+    - social_app
+    tone:
+    - friendly
+    - playful
+    kansei:
+    - friendly
+    - playful
+    brand_archetypes:
+    - Everyman
+    - Jester
+  action:
+    avatar_default_radius_px: 16
+    avatar_hover_radius: 50%
+    morph_duration_ms: 350
+    morph_easing: cubic-bezier(0.215, 0.61, 0.355, 1)
+    this_is_brand_signature_motion: true
+  why:
+    establish: signature-hover-morph-as-brand-identity
+    avoid:
+    - static_circle_or_square_only
+    - instant_morph_too_fast
+    - slow_morph_blocks_hover
+    balance: brand_recognition ↔ functional_clarity
+  emerges_from:
+  - discord
+  provenance: original
+  confidence: 0.7
+- rule_id: discord-components-status-notch-007
+  section: components
+  preconditions:
+    product_type:
+    - chat
+    - community_app
+    kansei:
+    - structured
+    requires:
+    - discord-color-traffic-light-status-003
+    brand_archetypes:
+    - Everyman
+    - Jester
+  action:
+    status_dot_size_px: 10
+    status_dot_border_px: 3
+    status_dot_border_color: matches_avatar_background_tertiary
+    status_dot_position: bottom_right_of_avatar
+    effect: notch_into_avatar (visual layering)
+  why:
+    establish: status-as-physical-overlay-on-avatar
+    avoid:
+    - hairline_border_weak_notch
+    - no_border_status_blends_in
+    balance: visual_layering ↔ avatar_legibility
+  emerges_from:
+  - discord
+  provenance: original
+  confidence: 0.6
+- rule_id: discord-components-tight-chat-row-008
+  section: components
+  preconditions:
+    product_type:
+    - chat
+    - real_time_collaboration
+    tone:
+    - dense
+    - scannable
+    kansei:
+    - structured
+    - focused
+    brand_archetypes:
+    - Everyman
+    - Jester
+  action:
+    chat_row_inter_message_spacing_px: 4-8
+    chat_row_inter_group_spacing_px: 16-24
+    no_card_per_message: true
+    mention_row_background: rgba(brand, 0.1)
+  why:
+    establish: group-based-spacing-not-message-based
+    avoid:
+    - card_per_message_breaks_chat_flow
+    - uniform_spacing_no_grouping
+    - high_alpha_mention_breaks_reading
+    balance: scrollback_scannability ↔ group_distinction
+  emerges_from:
+  - discord
+  provenance: original
+  confidence: 0.6
+- rule_id: discord-components-embed-left-border-009
+  section: components
+  preconditions:
+    product_type:
+    - chat
+    - social_app
+    kansei:
+    - structured
+    brand_archetypes:
+    - Everyman
+    - Jester
+  action:
+    embed_border_strategy: left_4px_in_accent_color (not full outline)
+    embed_radius_px: 4
+    embed_padding: 8 16
+    reason: left_border_indicates_source_quickly_in_scroll
+  why:
+    establish: scrollable-embed-recognition
+    avoid:
+    - full_outline_visually_heavy
+    - no_border_embed_blends_in
+    balance: identification_speed ↔ visual_weight
+  emerges_from:
+  - discord
+  provenance: original
+  confidence: 0.55
+- rule_id: discord-layout-fixed-spatial-anchors-010
+  section: layout
+  preconditions:
+    product_type:
+    - chat
+    - real_time_collaboration
+    kansei:
+    - structured
+    - focused
+    brand_archetypes:
+    - Everyman
+    - Jester
+  action:
+    base_unit: 4
+    scale:
+    - 4
+    - 8
+    - 12
+    - 16
+    - 20
+    - 24
+    - 32
+    - 40
+    fixed_columns: server_rail=72px, channel_sidebar=240px, member_list=240px
+    chat_column: fluid_min_380px
+  why:
+    establish: muscle-memory-anchors
+    avoid:
+    - fully_responsive_no_fixed_widths
+    - narrow_chat_column_below_380
+    balance: spatial_predictability ↔ responsive_flexibility
+  emerges_from:
+  - discord
+  provenance: original
+  confidence: 0.6
+- rule_id: discord-motion-functional-fade-011
+  section: motion
+  preconditions:
+    product_type:
+    - chat
+    - real_time_collaboration
+    tone:
+    - focused
+    kansei:
+    - focused
+    - calm
+    brand_archetypes:
+    - Everyman
+    - Jester
+  action:
+    tooltip_fade_ms: 80
+    hover_state_ms: 200
+    avatar_morph_ms: 350
+    notification_pulse: 1.4s ease-in-out infinite
+  why:
+    establish: motion-serves-density-not-spectacle
+    avoid:
+    - long_tooltip_fade_blocking_dense_use
+    - slow_hover_response
+    balance: feedback_speed ↔ visual_smoothness
+  emerges_from:
+  - discord
+  provenance: original
+  confidence: 0.55
+- rule_id: discord-anti-pattern-chat-clarity-012
+  section: anti_patterns
+  preconditions:
+    kansei:
+    - focused
+    - structured
+    brand_archetypes:
+    - Everyman
+    - Jester
+  action:
+    forbidden:
+    - body_text_below_16px_in_chat
+    - blurple_decorative_use
+    - status_using_brand_color
+    - single_dark_surface_no_depth_hierarchy
+    - static_avatar_killing_morph_signature
+    - long_tooltip_fade_above_150ms
+    - card_per_message_breaking_chat_flow
+    - high_alpha_mention_disrupting_scrollback
+  why:
+    establish: discipline-of-chat-tool-clarity
+    avoid:
+    - drift_into_marketing_polish
+    - drift_into_decorative_chrome
+  emerges_from:
+  - discord
+  provenance: original
+  confidence: 0.65

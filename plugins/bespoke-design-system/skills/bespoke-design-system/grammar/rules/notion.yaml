@@ -1,230 +1,378 @@
-# Rules — notion
-
 rules:
-
-  - rule_id: notion-color-warm-neutrals-001
-    section: color
-    preconditions:
-      product_type: [productivity_saas, knowledge_base, docs_platform, workspace_tool]
-      tone: [approachable, calm, refined]
-      kansei: [calm, approachable, warm, structured]
-      sd_anchors:
-        warm_to_cold: -0.3
-        ornate_to_minimal: 0.6
-        serious_to_playful: -0.2
-        modern_to_classical: -0.3
-    action:
-      base_canvas: pure white #ffffff
-      neutral_undertone: warm_yellow_brown (every gray has olive/cream tint)
-      no_cool_blue_grays: true
-      typical_warm_grays: ['#f6f5f4', '#31302e', '#615d59', '#a39e98']
-    why:
-      establish: paper-like-warmth
-      avoid: [cool_blue_grays_clinical_feel, fully_warm_parchment_territory]
-      balance: minimal_modernity ↔ tactile_warmth
-    emerges_from: [notion]
-    provenance: original
-    confidence: 0.7
-    known_conflicts:
-      - rule: linear-app-color-dark-native-001
-        reason: warm-light canvas vs cool-dark canvas — opposite ambient strategies
-
-  - rule_id: notion-color-near-black-text-95-002
-    section: color
-    preconditions:
-      product_type: [productivity_saas, content_platform]
-      tone: [readable, calm]
-      kansei: [calm, readable]
-    action:
-      primary_text: rgba(0,0,0,0.95)   # not pure #000000
-      reason: 5_percent_breathing_for_long_docs
-    why:
-      establish: long-doc-reading-comfort
-      avoid: [pure_black_eye_strain, gray_text_low_contrast]
-      balance: contrast ↔ comfort
-    emerges_from: [notion]
-    provenance: original
-    confidence: 0.6
-
-  - rule_id: notion-color-single-blue-anchor-003
-    section: color
-    preconditions:
-      product_type: [productivity_saas, content_platform]
-      tone: [calm, focused]
-      kansei: [calm, focused]
-    action:
-      brand_chromatic_count: 1
-      brand_hue_range: [200, 220]   # notion blue
-      brand_saturation: 0.8+
-      brand_role: cta + link + interactive_accent (only)
-    why:
-      establish: single-saturated-anchor-in-warm-neutrals
-      avoid: [decorative_blue_use, multi_blue_tones_confusion]
-      balance: brand_signal ↔ neutral_calm
-    emerges_from: [notion]
-    provenance: original
-    confidence: 0.65
-
-  - rule_id: notion-color-content-tagging-palette-004
-    section: color
-    preconditions:
-      product_type: [productivity_saas, knowledge_base, workspace_tool]
-      kansei: [structured, expressive]
-    action:
-      content_accent_palette_count: 6-7   # for user content tagging
-      typical_accents: [teal, green, orange, pink, purple, brown]
-      restriction: content_level_only_not_chrome
-    why:
-      establish: visual-taxonomy-for-user-content
-      avoid: [chrome_using_content_accents, single_tag_color_no_taxonomy]
-      balance: organizational_expressiveness ↔ chrome_minimalism
-    emerges_from: [notion]
-    provenance: original
-    confidence: 0.55
-
-  - rule_id: notion-color-multi-layer-whisper-shadow-005
-    section: depth_elevation
-    preconditions:
-      product_type: [productivity_saas, content_platform]
-      kansei: [calm, refined]
-    action:
-      shadow_strategy: multi_layer_stack (3-5 layers)
-      max_alpha_per_layer: 0.05
-      no_single_heavy_shadow: true
-      use_for: cards (3-layer), modals (5-layer)
-    why:
-      establish: depth-felt-not-seen
-      avoid: [single_visible_shadow, no_layered_depth]
-      balance: elevation_signaling ↔ visual_quietness
-    emerges_from: [notion]
-    provenance: original
-    confidence: 0.6
-
-  - rule_id: notion-typography-modified-inter-with-tight-display-006
-    section: typography
-    preconditions:
-      product_type: [productivity_saas, content_platform]
-      tone: [structured, refined]
-      kansei: [structured, modern, calm]
-    action:
-      family_class: humanist_sans (Inter or modified Inter)
-      letter_spacing_at_64px: -2.125
-      letter_spacing_at_48px: -1.5
-      letter_spacing_at_26px: -0.625
-      letter_spacing_at_16px: normal
-      opentype_features: [lnum, locl]
-    why:
-      establish: tight-display-with-readable-body
-      avoid: [positive_tracking_at_display, oldstyle_numerals_breaking_alignment]
-      balance: heading_density ↔ body_readability
-    emerges_from: [notion]
-    provenance: original
-    confidence: 0.65
-
-  - rule_id: notion-typography-4-weight-system-007
-    section: typography
-    preconditions:
-      product_type: [productivity_saas, content_platform, knowledge_base]
-      kansei: [structured]
-    action:
-      weights_used: [400, 500, 600, 700]
-      role_mapping: 400_body, 500_ui_interactive, 600_emphasis, 700_display_only
-      no_bold_in_body_paragraph: true
-    why:
-      establish: nuanced-hierarchy-for-complex-content
-      avoid: [3_weight_too_coarse_for_docs, bold_breaking_paragraph_flow]
-      balance: hierarchy_richness ↔ reading_calm
-    emerges_from: [notion]
-    provenance: original
-    confidence: 0.6
-
-  - rule_id: notion-typography-12px-positive-tracking-exception-008
-    section: typography
-    preconditions:
-      product_type: [productivity_saas, content_platform]
-      kansei: [structured]
-    action:
-      tracking_at_12px_label: 0.125 (positive, exception)
-      reason: small_size_requires_breathing_for_legibility
-      no_negative_tracking_at_12px_or_below: true
-    why:
-      establish: small-size-readability-overrides-system-tracking
-      avoid: [negative_tracking_at_small_sizes_unreadable]
-      balance: system_consistency ↔ small_size_legibility
-    emerges_from: [notion]
-    provenance: original
-    confidence: 0.5
-
-  - rule_id: notion-components-translucent-secondary-button-009
-    section: components
-    preconditions:
-      product_type: [productivity_saas, content_platform]
-      tone: [calm, restrained]
-      kansei: [calm]
-      requires: [notion-color-warm-neutrals-001]
-    action:
-      primary_button: solid #0075de blue
-      secondary_button: rgba(0,0,0,0.05) translucent gray
-      tertiary: transparent_with_text_only
-      hover_active_animations: scale(1.05) and scale(0.9)
-    why:
-      establish: hierarchy-via-translucency
-      avoid: [solid_secondary_competing_with_primary, no_haptic_feedback]
-      balance: hierarchy_clarity ↔ minimal_aesthetic
-    emerges_from: [notion]
-    provenance: original
-    confidence: 0.55
-
-  - rule_id: notion-components-subtle-card-radius-010
-    section: components
-    preconditions:
-      product_type: [productivity_saas, content_platform]
-      kansei: [calm, structured]
-    action:
-      card_radius_default_px: 4
-      reason: minimal_engineering_softness (not friendly-large not sharp-engineering)
-    why:
-      establish: just-soft-enough
-      avoid: [zero_radius_too_sharp, 12px_plus_too_friendly]
-      balance: minimal_modernity ↔ approachability
-    emerges_from: [notion]
-    provenance: original
-    confidence: 0.5
-
-  - rule_id: notion-spacing-organic-non-rigid-011
-    section: spacing
-    preconditions:
-      product_type: [productivity_saas, content_platform]
-      kansei: [structured, organic]
-    action:
-      base_unit: 8
-      scale: [3, 4, 6, 8, 10, 12, 16, 20, 24, 30]
-      include_mid_step_values: true   # 10, 30 for organic flexibility
-      section_vertical_padding: 80-120
-    why:
-      establish: rigid-grid-with-organic-flexibility
-      avoid: [fully_rigid_8px_only_robotic, fully_arbitrary_no_grid]
-      balance: structure ↔ organic_breathing
-    emerges_from: [notion]
-    provenance: original
-    confidence: 0.55
-
-  - rule_id: notion-anti-pattern-coldness-012
-    section: anti_patterns
-    preconditions:
-      kansei: [calm, approachable, warm]
-    action:
-      forbidden:
-        - cool_blue_grays_breaking_warm_system
-        - pure_black_text_breaking_95_alpha_system
-        - solid_visible_borders_breaking_whisper
-        - single_heavy_shadow_breaking_multi_layer
-        - chrome_using_content_accent_palette
-        - negative_tracking_at_12px_or_below
-        - bold_700_in_body_paragraph
-    why:
-      establish: discipline-of-warm-minimalism
-      avoid: [drift_into_clinical_grays, drift_into_loud_chrome]
-    emerges_from: [notion]
-    provenance: original
-    confidence: 0.6
+- rule_id: notion-color-warm-neutrals-001
+  section: color
+  preconditions:
+    product_type:
+    - productivity_saas
+    - knowledge_base
+    - docs_platform
+    - workspace_tool
+    tone:
+    - approachable
+    - calm
+    - refined
+    kansei:
+    - calm
+    - approachable
+    - warm
+    - structured
+    sd_anchors:
+      warm_to_cold: -0.3
+      ornate_to_minimal: 0.6
+      serious_to_playful: -0.2
+      modern_to_classical: -0.3
+    brand_archetypes:
+    - Sage
+    - Creator
+  action:
+    base_canvas: pure white
+    neutral_undertone: warm_yellow_brown (every gray has olive/cream tint)
+    no_cool_blue_grays: true
+    typical_warm_grays:
+    - '#f6f5f4'
+    - '#31302e'
+    - '#615d59'
+    - '#a39e98'
+  why:
+    establish: paper-like-warmth
+    avoid:
+    - cool_blue_grays_clinical_feel
+    - fully_warm_parchment_territory
+    balance: minimal_modernity ↔ tactile_warmth
+  emerges_from:
+  - notion
+  provenance: original
+  confidence: 0.7
+  known_conflicts:
+  - rule: linear-app-color-dark-native-001
+    reason: warm-light canvas vs cool-dark canvas — opposite ambient strategies
+- rule_id: notion-color-near-black-text-95-002
+  section: color
+  preconditions:
+    product_type:
+    - productivity_saas
+    - content_platform
+    tone:
+    - readable
+    - calm
+    kansei:
+    - calm
+    - readable
+    brand_archetypes:
+    - Sage
+    - Creator
+  action:
+    primary_text: rgba(0,0,0,0.95)
+    reason: 5_percent_breathing_for_long_docs
+  why:
+    establish: long-doc-reading-comfort
+    avoid:
+    - pure_black_eye_strain
+    - gray_text_low_contrast
+    balance: contrast ↔ comfort
+  emerges_from:
+  - notion
+  provenance: original
+  confidence: 0.6
+- rule_id: notion-color-single-blue-anchor-003
+  section: color
+  preconditions:
+    product_type:
+    - productivity_saas
+    - content_platform
+    tone:
+    - calm
+    - focused
+    kansei:
+    - calm
+    - focused
+    brand_archetypes:
+    - Sage
+    - Creator
+  action:
+    brand_chromatic_count: 1
+    brand_hue_range:
+    - 200
+    - 220
+    brand_saturation: 0.8+
+    brand_role: cta + link + interactive_accent (only)
+  why:
+    establish: single-saturated-anchor-in-warm-neutrals
+    avoid:
+    - decorative_blue_use
+    - multi_blue_tones_confusion
+    balance: brand_signal ↔ neutral_calm
+  emerges_from:
+  - notion
+  provenance: original
+  confidence: 0.65
+- rule_id: notion-color-content-tagging-palette-004
+  section: color
+  preconditions:
+    product_type:
+    - productivity_saas
+    - knowledge_base
+    - workspace_tool
+    kansei:
+    - structured
+    - expressive
+    brand_archetypes:
+    - Sage
+    - Creator
+  action:
+    content_accent_palette_count: 6-7
+    typical_accents:
+    - teal
+    - green
+    - orange
+    - pink
+    - purple
+    - brown
+    restriction: content_level_only_not_chrome
+  why:
+    establish: visual-taxonomy-for-user-content
+    avoid:
+    - chrome_using_content_accents
+    - single_tag_color_no_taxonomy
+    balance: organizational_expressiveness ↔ chrome_minimalism
+  emerges_from:
+  - notion
+  provenance: original
+  confidence: 0.55
+- rule_id: notion-color-multi-layer-whisper-shadow-005
+  section: depth_elevation
+  preconditions:
+    product_type:
+    - productivity_saas
+    - content_platform
+    kansei:
+    - calm
+    - refined
+    brand_archetypes:
+    - Sage
+    - Creator
+  action:
+    shadow_strategy: multi_layer_stack (3-5 layers)
+    max_alpha_per_layer: 0.05
+    no_single_heavy_shadow: true
+    use_for: cards (3-layer), modals (5-layer)
+  why:
+    establish: depth-felt-not-seen
+    avoid:
+    - single_visible_shadow
+    - no_layered_depth
+    balance: elevation_signaling ↔ visual_quietness
+  emerges_from:
+  - notion
+  provenance: original
+  confidence: 0.6
+- rule_id: notion-typography-modified-inter-with-tight-display-006
+  section: typography
+  preconditions:
+    product_type:
+    - productivity_saas
+    - content_platform
+    tone:
+    - structured
+    - refined
+    kansei:
+    - structured
+    - modern
+    - calm
+    brand_archetypes:
+    - Sage
+    - Creator
+  action:
+    family_class: humanist_sans (Inter or modified Inter)
+    letter_spacing_at_64px: -2.125
+    letter_spacing_at_48px: -1.5
+    letter_spacing_at_26px: -0.625
+    letter_spacing_at_16px: normal
+    opentype_features:
+    - lnum
+    - locl
+  why:
+    establish: tight-display-with-readable-body
+    avoid:
+    - positive_tracking_at_display
+    - oldstyle_numerals_breaking_alignment
+    balance: heading_density ↔ body_readability
+  emerges_from:
+  - notion
+  provenance: original
+  confidence: 0.65
+- rule_id: notion-typography-4-weight-system-007
+  section: typography
+  preconditions:
+    product_type:
+    - productivity_saas
+    - content_platform
+    - knowledge_base
+    kansei:
+    - structured
+    brand_archetypes:
+    - Sage
+    - Creator
+  action:
+    weights_used:
+    - 400
+    - 500
+    - 600
+    - 700
+    role_mapping: 400_body, 500_ui_interactive, 600_emphasis, 700_display_only
+    no_bold_in_body_paragraph: true
+  why:
+    establish: nuanced-hierarchy-for-complex-content
+    avoid:
+    - 3_weight_too_coarse_for_docs
+    - bold_breaking_paragraph_flow
+    balance: hierarchy_richness ↔ reading_calm
+  emerges_from:
+  - notion
+  provenance: original
+  confidence: 0.6
+- rule_id: notion-typography-12px-positive-tracking-exception-008
+  section: typography
+  preconditions:
+    product_type:
+    - productivity_saas
+    - content_platform
+    kansei:
+    - structured
+    brand_archetypes:
+    - Sage
+    - Creator
+  action:
+    tracking_at_12px_label: 0.125 (positive, exception)
+    reason: small_size_requires_breathing_for_legibility
+    no_negative_tracking_at_12px_or_below: true
+  why:
+    establish: small-size-readability-overrides-system-tracking
+    avoid:
+    - negative_tracking_at_small_sizes_unreadable
+    balance: system_consistency ↔ small_size_legibility
+  emerges_from:
+  - notion
+  provenance: original
+  confidence: 0.5
+- rule_id: notion-components-translucent-secondary-button-009
+  section: components
+  preconditions:
+    product_type:
+    - productivity_saas
+    - content_platform
+    tone:
+    - calm
+    - restrained
+    kansei:
+    - calm
+    requires:
+    - notion-color-warm-neutrals-001
+    brand_archetypes:
+    - Sage
+    - Creator
+  action:
+    primary_button: solid
+    secondary_button: rgba(0,0,0,0.05) translucent gray
+    tertiary: transparent_with_text_only
+    hover_active_animations: scale(1.05) and scale(0.9)
+  why:
+    establish: hierarchy-via-translucency
+    avoid:
+    - solid_secondary_competing_with_primary
+    - no_haptic_feedback
+    balance: hierarchy_clarity ↔ minimal_aesthetic
+  emerges_from:
+  - notion
+  provenance: original
+  confidence: 0.55
+- rule_id: notion-components-subtle-card-radius-010
+  section: components
+  preconditions:
+    product_type:
+    - productivity_saas
+    - content_platform
+    kansei:
+    - calm
+    - structured
+    brand_archetypes:
+    - Sage
+    - Creator
+  action:
+    card_radius_default_px: 4
+    reason: minimal_engineering_softness (not friendly-large not sharp-engineering)
+  why:
+    establish: just-soft-enough
+    avoid:
+    - zero_radius_too_sharp
+    - 12px_plus_too_friendly
+    balance: minimal_modernity ↔ approachability
+  emerges_from:
+  - notion
+  provenance: original
+  confidence: 0.5
+- rule_id: notion-spacing-organic-non-rigid-011
+  section: spacing
+  preconditions:
+    product_type:
+    - productivity_saas
+    - content_platform
+    kansei:
+    - structured
+    - organic
+    brand_archetypes:
+    - Sage
+    - Creator
+  action:
+    base_unit: 8
+    scale:
+    - 3
+    - 4
+    - 6
+    - 8
+    - 10
+    - 12
+    - 16
+    - 20
+    - 24
+    - 30
+    include_mid_step_values: true
+    section_vertical_padding: 80-120
+  why:
+    establish: rigid-grid-with-organic-flexibility
+    avoid:
+    - fully_rigid_8px_only_robotic
+    - fully_arbitrary_no_grid
+    balance: structure ↔ organic_breathing
+  emerges_from:
+  - notion
+  provenance: original
+  confidence: 0.55
+- rule_id: notion-anti-pattern-coldness-012
+  section: anti_patterns
+  preconditions:
+    kansei:
+    - calm
+    - approachable
+    - warm
+    brand_archetypes:
+    - Sage
+    - Creator
+  action:
+    forbidden:
+    - cool_blue_grays_breaking_warm_system
+    - pure_black_text_breaking_95_alpha_system
+    - solid_visible_borders_breaking_whisper
+    - single_heavy_shadow_breaking_multi_layer
+    - chrome_using_content_accent_palette
+    - negative_tracking_at_12px_or_below
+    - bold_700_in_body_paragraph
+  why:
+    establish: discipline-of-warm-minimalism
+    avoid:
+    - drift_into_clinical_grays
+    - drift_into_loud_chrome
+  emerges_from:
+  - notion
+  provenance: original
+  confidence: 0.6

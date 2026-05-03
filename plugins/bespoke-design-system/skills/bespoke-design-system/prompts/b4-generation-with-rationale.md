@@ -14,6 +14,94 @@
 
 ---
 
+## ⚠️ ANTI-PHANTOM 硬约束（v1.5.0 新增 — 必读必行）
+
+**问题历史**：v1.4.0 之前 B4 在缺规则锚点时会编造 plausible-sounding rule_ids（如 `vercel-typography-geist-system-002` 不存在但听起来对）。P0 闸门虽能抓出，但用户首轮拿到的 provenance 含编造引用就破信任。
+
+**v1.5.0 起强制三道闸**：
+
+### 闸 1：写每条 inheritance.source_rules 之前先 echo 验证
+
+**每**写一条 `source_rules: [X]`，**先**在工作内存里：
+
+```
+检查规则 X：
+  - 在 B3 自洽子集里？  □ 是  □ 否（→ STOP，禁止使用）
+  - 实际 rule_id 字符串完全一致（含 system 前缀和数字后缀）？  □ 是  □ 否（→ STOP）
+  - 该规则的 why.establish / why.avoid / why.balance 字段我能逐字引用？  □ 是  □ 否（→ 改写 original_rationale 直到能引用）
+```
+
+**禁止编造启发式**：
+- 不要根据"system X 应该有 Y 类规则"猜 rule_id（即使猜中了也算违规）
+- 不要把范围参数（如 `brand_hue_range: [240, 270]`）压成虚构 scalar 默认值（如 "Linear 默认值 250"）
+- 不要把"我推断 system X 也支持这个原则"写进 source_rules（推断不是继承）
+
+### 闸 2：缺锚点时诚实声明 derived_from_brief
+
+如果某个决策在 B3 子集里**找不到任何支持的规则**：
+
+```yaml
+- decision: <X>
+  inheritance:
+    source_rules: []          # 必须为空数组，不是占位 placeholder
+    source_systems: []        # 必须为空
+    original_rationale: |
+      ⚠️ 此决策无规则库支持（已检查 B3 子集 N 条规则均无相关锚点）。
+      派生自：<brief 中的具体段落 / archetype 默认 / 工业惯例>。
+  adaptation:
+    fully_aligned_kansei: []
+    needs_extension_kansei: [<相关 kansei>]
+    modifications: []
+  justification:
+    design_argument: |
+      <为什么这个决策仍然合理 — 不能省，否则 P0 闸门会扣分>
+  confidence: low             # 无锚点决策必须 low
+  derived_from_brief: true    # 必填字段
+```
+
+**好榜样**：
+
+- ❌ "Vercel 直接用 Geist 体现这一原则" + 编 `vercel-typography-geist-system-002`
+- ✅ "Linear typography rule 要求 geometric/humanist sans + OpenType + 拒绝 Inter；选 Geist 是符合这组约束的现成字体（brief-derived，非规则原文要求）"
+
+### 闸 3：调适越界必须显式标注
+
+source rule 的 `action` 字段是**范围**时（如 `brand_hue_range: [240, 270]`、`brand_saturation: 0.40-0.55`）：
+
+- 落在范围内 → 正常 modifications，无 `out_of_source_range` 字段
+- 落在范围外 → **必须**加 `out_of_source_range: true` + reason 解释为什么故意越界
+
+**禁止**：
+
+- ❌ 把范围中位假装成"system X 默认值" / "system X 中值"（这是 fabrication）
+- ❌ 选择范围外的值但写 "from: 0.45 / to: 0.60" 不标 out_of_source_range（这是隐瞒越界）
+
+正确写法：
+
+```yaml
+- dimension: saturation
+  from: "[0.40, 0.55]"        # 引用规则原文的范围
+  to: 0.60
+  out_of_source_range: true
+  reason: |
+    Magician archetype 要求 saturation ≥ 0.5，与 Sage ≤ 0.7 的交集是
+    [0.50, 0.70]，这是 deliberate excursion，不是 within-range 调整。
+```
+
+### 闸 4：输出前的 self-check 清单
+
+写完整份 provenance 后，**在输出前**逐条过：
+
+- [ ] 每条 `source_rules` 项都能在 B3 子集里找到（grep 验证）
+- [ ] 每条 `source_systems` 项都至少有一条 `source_rules` 来自该 system（不是单纯写"vercel"但没 vercel 规则）
+- [ ] 每个范围参数的 modification 都正确标了 in/out of range
+- [ ] 每条 `confidence: high` 的决策都没有 out_of_source_range（高置信不能含越界）
+- [ ] 每条无锚点决策都有 `derived_from_brief: true` + `confidence: low|medium`
+
+**任何一项不过 → 不许输出，回到该决策修正。**
+
+---
+
 ## DESIGN.md 9-section 标准（OD 方言）
 
 按 `references/design-md-spec.md` 的标准格式输出。**严格 9 个 section、严格顺序、含数字编号**：

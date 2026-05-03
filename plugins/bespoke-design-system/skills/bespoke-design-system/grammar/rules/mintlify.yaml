@@ -1,192 +1,312 @@
-# Rules — mintlify
-
 rules:
-
-  - rule_id: mintlify-color-white-canvas-fresh-accent-001
-    section: color
-    preconditions:
-      product_type: [documentation, developer_tool, content_platform, knowledge_base]
-      tone: [approachable, rigorous, fresh]
-      kansei: [calm, structured, fresh, approachable]
-      sd_anchors:
-        warm_to_cold: 0.0
-        ornate_to_minimal: 0.7
-        serious_to_playful: -0.2
-        modern_to_classical: -0.5
-    action:
-      base_canvas: pure white #ffffff
-      no_section_color_variation: true
-      separation_strategy: borders + whitespace (no gray-section alternation)
-      atmospheric_gradient_in_hero: optional (subtle green-to-white)
-    why:
-      establish: reading-first-canvas-with-fresh-character
-      avoid: [gray_section_backgrounds, decorative_color_blocks, heavy_gradient_overload]
-      balance: reading_focus ↔ brand_freshness
-    emerges_from: [mintlify]
-    provenance: original
-    confidence: 0.65
-
-  - rule_id: mintlify-color-near-black-text-002
-    section: color
-    preconditions:
-      product_type: [documentation, content_platform, developer_tool]
-      tone: [approachable]
-      kansei: [calm, readable]
-    action:
-      primary_text: near_black #0d0d0d (not pure #000000)
-      reason: micro_softness_for_long_reading
-      no_pure_black_for_text: true
-    why:
-      establish: reading-comfort-via-micro-warmth
-      avoid: [pure_black_eye_strain]
-      balance: contrast ↔ reading_comfort
-    emerges_from: [mintlify]
-    provenance: original
-    confidence: 0.6
-
-  - rule_id: mintlify-color-7tier-gray-scale-003
-    section: color
-    preconditions:
-      product_type: [documentation, developer_tool, knowledge_base]
-      tone: [structured]
-      kansei: [structured]
-    action:
-      neutral_scale_tiers: 7 (50/100/200/400/500/700/900)
-      reason: documentation_needs_fine_grained_syntax_annotation_layers
-    why:
-      establish: documentation-fine-grained-hierarchy
-      avoid: [single_gray_no_layering, 4tier_too_coarse_for_docs]
-      balance: structure ↔ simplicity
-    emerges_from: [mintlify]
-    provenance: original
-    confidence: 0.55
-
-  - rule_id: mintlify-typography-inter-tight-display-004
-    section: typography
-    preconditions:
-      product_type: [documentation, developer_tool, content_platform]
-      tone: [approachable, rigorous]
-      kansei: [structured, modern, calm]
-    action:
-      primary_family: humanist_sans (Inter or similar)
-      mono_family_for_code_only: true
-      mono_strict_separation: true   # never used for prose
-      letter_spacing_at_40_64px: -0.8 to -1.28
-      letter_spacing_at_16px: normal
-    why:
-      establish: documentation-heading-compression
-      avoid: [positive_tracking_at_display, mono_for_prose, sharp_serif_in_docs]
-      balance: heading_density ↔ body_readability
-    emerges_from: [mintlify]
-    provenance: original
-    confidence: 0.65
-
-  - rule_id: mintlify-typography-relaxed-body-line-height-005
-    section: typography
-    preconditions:
-      product_type: [documentation, content_platform, knowledge_base]
-      kansei: [calm, readable]
-    action:
-      body_line_height: 1.50
-      body_size_px: 16-18
-      reason: documentation_long_reading_requires_generous_lanes
-    why:
-      establish: long-read-comfort
-      avoid: [tight_line_height_below_1_4, claustrophobic_text]
-      balance: density ↔ comfort
-    emerges_from: [mintlify]
-    provenance: original
-    confidence: 0.6
-
-  - rule_id: mintlify-typography-three-weight-006
-    section: typography
-    preconditions:
-      product_type: [documentation, content_platform]
-      kansei: [structured, calm]
-    action:
-      weights_used: [400, 500, 600]
-      no_weight_700_in_body: true
-      hierarchy_priority: size_and_tracking_first_weight_secondary
-    why:
-      establish: size-driven-hierarchy
-      avoid: [bold_body_breaking_reading_flow, weight_explosion]
-      balance: hierarchy_clarity ↔ reading_calm
-    emerges_from: [mintlify]
-    provenance: original
-    confidence: 0.6
-
-  - rule_id: mintlify-components-ultra-round-corners-007
-    section: components
-    preconditions:
-      product_type: [documentation, content_platform, modern_saas]
-      tone: [approachable, modern]
-      kansei: [approachable, modern, friendly]
-    action:
-      container_radius_px: 16
-      featured_card_radius_px: 24
-      button_radius: 9999 (full pill)
-      no_sharp_corners_below_8px: true
-    why:
-      establish: approachable-rigor (round but not childish)
-      avoid: [sharp_4px_default_saas, fully_squared_academic_feel]
-      balance: friendliness ↔ professional_rigor
-    emerges_from: [mintlify]
-    provenance: original
-    confidence: 0.6
-
-  - rule_id: mintlify-components-whisper-borders-008
-    section: components
-    preconditions:
-      product_type: [documentation, content_platform]
-      tone: [calm]
-      kansei: [calm, structured]
-    action:
-      border_alpha_default: 0.05  # rgba(0,0,0,0.05)
-      border_alpha_emphasized: 0.08
-      shadow_alpha_max: 0.06
-      no_heavy_shadows: true
-    why:
-      establish: barely-there-separation
-      avoid: [solid_border_visual_weight, heavy_box_shadow_distraction]
-      balance: separation_clarity ↔ reading_focus
-    emerges_from: [mintlify]
-    provenance: original
-    confidence: 0.6
-
-  - rule_id: mintlify-spacing-generous-sections-009
-    section: spacing
-    preconditions:
-      product_type: [documentation, content_platform]
-      kansei: [calm, structured]
-    action:
-      base_unit: 8
-      scale: [4, 8, 12, 16, 24, 32, 48, 64, 96]
-      section_padding_min: 48
-      section_padding_max: 96
-    why:
-      establish: chapter-like-section-rhythm
-      avoid: [tight_dashboard_spacing, packed_navigation_style]
-      balance: reading_rhythm ↔ information_density
-    emerges_from: [mintlify]
-    provenance: original
-    confidence: 0.55
-
-  - rule_id: mintlify-anti-pattern-marketing-creep-010
-    section: anti_patterns
-    preconditions:
-      kansei: [calm, structured, readable]
-    action:
-      forbidden:
-        - pure_black_text_for_long_reading
-        - gray_section_alternation_breaking_reading_first
-        - bold_700_in_body_text
-        - decorative_gradient_buttons
-        - heavy_box_shadow_competing_with_reading
-        - mono_typography_for_prose
-        - sharp_corners_under_8px_on_cards
-    why:
-      establish: discipline-of-reading-first-design
-      avoid: [drift_into_marketing_saas_template, drift_into_dashboard_density]
-    emerges_from: [mintlify]
-    provenance: original
-    confidence: 0.6
+- rule_id: mintlify-color-white-canvas-fresh-accent-001
+  section: color
+  preconditions:
+    product_type:
+    - documentation
+    - developer_tool
+    - content_platform
+    - knowledge_base
+    tone:
+    - approachable
+    - rigorous
+    - fresh
+    kansei:
+    - calm
+    - structured
+    - fresh
+    - approachable
+    sd_anchors:
+      warm_to_cold: 0.0
+      ornate_to_minimal: 0.7
+      serious_to_playful: -0.2
+      modern_to_classical: -0.5
+    brand_archetypes:
+    - Sage
+    - Innocent
+  action:
+    base_canvas: pure white
+    no_section_color_variation: true
+    separation_strategy: borders + whitespace (no gray-section alternation)
+    atmospheric_gradient_in_hero: optional (subtle green-to-white)
+  why:
+    establish: reading-first-canvas-with-fresh-character
+    avoid:
+    - gray_section_backgrounds
+    - decorative_color_blocks
+    - heavy_gradient_overload
+    balance: reading_focus ↔ brand_freshness
+  emerges_from:
+  - mintlify
+  provenance: original
+  confidence: 0.65
+- rule_id: mintlify-color-near-black-text-002
+  section: color
+  preconditions:
+    product_type:
+    - documentation
+    - content_platform
+    - developer_tool
+    tone:
+    - approachable
+    kansei:
+    - calm
+    - readable
+    brand_archetypes:
+    - Sage
+    - Innocent
+  action:
+    primary_text: near_black
+    reason: micro_softness_for_long_reading
+    no_pure_black_for_text: true
+  why:
+    establish: reading-comfort-via-micro-warmth
+    avoid:
+    - pure_black_eye_strain
+    balance: contrast ↔ reading_comfort
+  emerges_from:
+  - mintlify
+  provenance: original
+  confidence: 0.6
+- rule_id: mintlify-color-7tier-gray-scale-003
+  section: color
+  preconditions:
+    product_type:
+    - documentation
+    - developer_tool
+    - knowledge_base
+    tone:
+    - structured
+    kansei:
+    - structured
+    brand_archetypes:
+    - Sage
+    - Innocent
+  action:
+    neutral_scale_tiers: 7 (50/100/200/400/500/700/900)
+    reason: documentation_needs_fine_grained_syntax_annotation_layers
+  why:
+    establish: documentation-fine-grained-hierarchy
+    avoid:
+    - single_gray_no_layering
+    - 4tier_too_coarse_for_docs
+    balance: structure ↔ simplicity
+  emerges_from:
+  - mintlify
+  provenance: original
+  confidence: 0.55
+- rule_id: mintlify-typography-inter-tight-display-004
+  section: typography
+  preconditions:
+    product_type:
+    - documentation
+    - developer_tool
+    - content_platform
+    tone:
+    - approachable
+    - rigorous
+    kansei:
+    - structured
+    - modern
+    - calm
+    brand_archetypes:
+    - Sage
+    - Innocent
+  action:
+    primary_family: humanist_sans (Inter or similar)
+    mono_family_for_code_only: true
+    mono_strict_separation: true
+    letter_spacing_at_40_64px: -0.8 to -1.28
+    letter_spacing_at_16px: normal
+  why:
+    establish: documentation-heading-compression
+    avoid:
+    - positive_tracking_at_display
+    - mono_for_prose
+    - sharp_serif_in_docs
+    balance: heading_density ↔ body_readability
+  emerges_from:
+  - mintlify
+  provenance: original
+  confidence: 0.65
+- rule_id: mintlify-typography-relaxed-body-line-height-005
+  section: typography
+  preconditions:
+    product_type:
+    - documentation
+    - content_platform
+    - knowledge_base
+    kansei:
+    - calm
+    - readable
+    brand_archetypes:
+    - Sage
+    - Innocent
+  action:
+    body_line_height: 1.5
+    body_size_px: 16-18
+    reason: documentation_long_reading_requires_generous_lanes
+  why:
+    establish: long-read-comfort
+    avoid:
+    - tight_line_height_below_1_4
+    - claustrophobic_text
+    balance: density ↔ comfort
+  emerges_from:
+  - mintlify
+  provenance: original
+  confidence: 0.6
+- rule_id: mintlify-typography-three-weight-006
+  section: typography
+  preconditions:
+    product_type:
+    - documentation
+    - content_platform
+    kansei:
+    - structured
+    - calm
+    brand_archetypes:
+    - Sage
+    - Innocent
+  action:
+    weights_used:
+    - 400
+    - 500
+    - 600
+    no_weight_700_in_body: true
+    hierarchy_priority: size_and_tracking_first_weight_secondary
+  why:
+    establish: size-driven-hierarchy
+    avoid:
+    - bold_body_breaking_reading_flow
+    - weight_explosion
+    balance: hierarchy_clarity ↔ reading_calm
+  emerges_from:
+  - mintlify
+  provenance: original
+  confidence: 0.6
+- rule_id: mintlify-components-ultra-round-corners-007
+  section: components
+  preconditions:
+    product_type:
+    - documentation
+    - content_platform
+    - modern_saas
+    tone:
+    - approachable
+    - modern
+    kansei:
+    - approachable
+    - modern
+    - friendly
+    brand_archetypes:
+    - Sage
+    - Innocent
+  action:
+    container_radius_px: 16
+    featured_card_radius_px: 24
+    button_radius: 9999 (full pill)
+    no_sharp_corners_below_8px: true
+  why:
+    establish: approachable-rigor (round but not childish)
+    avoid:
+    - sharp_4px_default_saas
+    - fully_squared_academic_feel
+    balance: friendliness ↔ professional_rigor
+  emerges_from:
+  - mintlify
+  provenance: original
+  confidence: 0.6
+- rule_id: mintlify-components-whisper-borders-008
+  section: components
+  preconditions:
+    product_type:
+    - documentation
+    - content_platform
+    tone:
+    - calm
+    kansei:
+    - calm
+    - structured
+    brand_archetypes:
+    - Sage
+    - Innocent
+  action:
+    border_alpha_default: 0.05
+    border_alpha_emphasized: 0.08
+    shadow_alpha_max: 0.06
+    no_heavy_shadows: true
+  why:
+    establish: barely-there-separation
+    avoid:
+    - solid_border_visual_weight
+    - heavy_box_shadow_distraction
+    balance: separation_clarity ↔ reading_focus
+  emerges_from:
+  - mintlify
+  provenance: original
+  confidence: 0.6
+- rule_id: mintlify-spacing-generous-sections-009
+  section: spacing
+  preconditions:
+    product_type:
+    - documentation
+    - content_platform
+    kansei:
+    - calm
+    - structured
+    brand_archetypes:
+    - Sage
+    - Innocent
+  action:
+    base_unit: 8
+    scale:
+    - 4
+    - 8
+    - 12
+    - 16
+    - 24
+    - 32
+    - 48
+    - 64
+    - 96
+    section_padding_min: 48
+    section_padding_max: 96
+  why:
+    establish: chapter-like-section-rhythm
+    avoid:
+    - tight_dashboard_spacing
+    - packed_navigation_style
+    balance: reading_rhythm ↔ information_density
+  emerges_from:
+  - mintlify
+  provenance: original
+  confidence: 0.55
+- rule_id: mintlify-anti-pattern-marketing-creep-010
+  section: anti_patterns
+  preconditions:
+    kansei:
+    - calm
+    - structured
+    - readable
+    brand_archetypes:
+    - Sage
+    - Innocent
+  action:
+    forbidden:
+    - pure_black_text_for_long_reading
+    - gray_section_alternation_breaking_reading_first
+    - bold_700_in_body_text
+    - decorative_gradient_buttons
+    - heavy_box_shadow_competing_with_reading
+    - mono_typography_for_prose
+    - sharp_corners_under_8px_on_cards
+  why:
+    establish: discipline-of-reading-first-design
+    avoid:
+    - drift_into_marketing_saas_template
+    - drift_into_dashboard_density
+  emerges_from:
+  - mintlify
+  provenance: original
+  confidence: 0.6

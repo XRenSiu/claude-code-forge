@@ -142,8 +142,16 @@ def detect_conflicts(rule_a, rule_b):
 
 
 def detect_co_occurrence(rule_a, rule_b, rules_by_system):
-    """Estimate how often A and B emerge from the same source systems.
-       Returns (frequency 0.0-1.0, both_count, either_count) only if non-trivial."""
+    """v1.5.0 Issue 6 fix: Estimate co-occurrence as a weighted blend of system-level
+    Jaccard (emerges_from) and concept-level Kansei overlap. Pre-v1.5.0 the freq was
+    pure Jaccard, which collapsed to binary 0/1 when each rule had a single
+    emerges_from system — defeating B3.4 weighted clustering.
+
+    New formula:
+      freq = 0.4 * jaccard(emerges_from) + 0.4 * kansei_overlap + 0.2 * archetype_overlap
+
+    Returns (frequency 0.0-1.0, both_count, either_count). Frequency is now
+    continuous in [0, 1] with meaningful gradient even in single-system corpora."""
     sa = set(rule_a.get('emerges_from', []) or [])
     sb = set(rule_b.get('emerges_from', []) or [])
     if not sa or not sb:
@@ -152,7 +160,28 @@ def detect_co_occurrence(rule_a, rule_b, rules_by_system):
     either = sa | sb
     if not either:
         return None
-    return len(both) / len(either), len(both), len(either)
+    jaccard_systems = len(both) / len(either)
+
+    # Kansei overlap (semantic similarity)
+    ka = set((rule_a.get('preconditions', {}) or {}).get('kansei', []) or [])
+    kb = set((rule_b.get('preconditions', {}) or {}).get('kansei', []) or [])
+    if ka and kb:
+        kansei_overlap_score = len(ka & kb) / len(ka | kb)
+    else:
+        kansei_overlap_score = 0.0
+
+    # Archetype overlap (v1.5.0 — only meaningful after Issue 5 backfill)
+    aa = set((rule_a.get('preconditions', {}) or {}).get('brand_archetypes', []) or [])
+    ab = set((rule_b.get('preconditions', {}) or {}).get('brand_archetypes', []) or [])
+    if aa and ab:
+        archetype_overlap_score = len(aa & ab) / len(aa | ab)
+    else:
+        archetype_overlap_score = 0.0
+
+    freq = (0.4 * jaccard_systems
+          + 0.4 * kansei_overlap_score
+          + 0.2 * archetype_overlap_score)
+    return freq, len(both), len(either)
 
 
 def detect_semantic_similarity(rule_a, rule_b):

@@ -49,10 +49,54 @@ def _derived_signals(tokens: dict) -> dict:
     chromatics = _all_chromatic_hexes(tokens)
     chromatic_only = [c for c in chromatics if c[2] >= 0.06]
 
+    # v1.5.0 Issue 9 fix: brand chromatic count must distinguish brand-role
+    # colors from functional state / text-tinted colors. The Sage rule
+    # `color.brand.chromatic_count <= 1` is about the brand identity anchor,
+    # not "any chromatic token in the palette". Token authors signal brand
+    # role via either `color.brand.chromatic_count` or `color.brand.identity_hexes`.
+    brand_block = color.get('brand', {}) or {}
+    brand_declared_count = brand_block.get('chromatic_count')
+    brand_identity_hexes = brand_block.get('identity_hexes') or []
+    if isinstance(brand_declared_count, int):
+        brand_chromatic_count = brand_declared_count
+    elif brand_identity_hexes:
+        brand_chromatic_count = len(set(h.lower() for h in brand_identity_hexes
+                                          if isinstance(h, str)))
+    else:
+        # Legacy fallback: count chromatic colors from `all_hex_colors` but
+        # exclude any color that appears under `state.*` or `text.*` keys.
+        excluded = set()
+        for sub_block in ('state', 'text'):
+            block = color.get(sub_block, {}) or {}
+            for v in block.values():
+                if isinstance(v, str) and v.startswith('#'):
+                    excluded.add(v.lower())
+        brand_chromatic_count = sum(1 for hx, L, c, h in chromatic_only
+                                       if hx.lower() not in excluded)
+
     sat_max = max((c[2] for c in chromatic_only), default=0.0)
     sat_avg = (sum(c[2] for c in chromatic_only) / len(chromatic_only)) if chromatic_only else 0.0
     L_min = min((c[1] for c in chromatics), default=1.0)
     L_max = max((c[1] for c in chromatics), default=0.0)
+
+    # Brand-only saturation_max: prefer explicit `brand.saturation_max` token,
+    # else compute from brand identity hexes if declared, else fall back to
+    # palette-wide max (legacy behavior).
+    brand_sat_explicit = brand_block.get('saturation_max')
+    if isinstance(brand_sat_explicit, (int, float)):
+        brand_sat_max = float(brand_sat_explicit)
+    elif brand_identity_hexes:
+        brand_sats = []
+        for hx in brand_identity_hexes:
+            if isinstance(hx, str) and hx.startswith('#'):
+                try:
+                    _, C, _ = hex_to_oklch(hx)
+                    brand_sats.append(C)
+                except Exception:
+                    pass
+        brand_sat_max = max(brand_sats, default=sat_max)
+    else:
+        brand_sat_max = sat_max  # legacy
 
     palette_hues = [c[3] for c in chromatic_only]
     has_warm = any(0 <= h <= 60 or 300 <= h < 360 for h in palette_hues)
@@ -112,9 +156,18 @@ def _derived_signals(tokens: dict) -> dict:
     return {
         'color': {
             'brand': {
-                'saturation_max': round(sat_max, 3),
+                # v1.5.0 Issue 9: brand.saturation_max now reflects brand-role
+                # colors only (not state/text). Falls back to palette max for
+                # tokens that don't declare brand role.
+                'saturation_max': round(brand_sat_max, 3),
                 'saturation_avg': round(sat_avg, 3),
-                'chromatic_count': len(chromatic_only),
+                # v1.5.0 Issue 9: chromatic_count counts brand identity colors,
+                # not all chromatic tokens. State colors and text-tints are
+                # explicitly excluded.
+                'chromatic_count': brand_chromatic_count,
+                # palette-wide chromatic count kept under a different name for
+                # rules that legitimately want palette breadth (rare).
+                'palette_chromatic_count': len(chromatic_only),
                 'is_dark_or_navy': L_min <= 0.20,
                 'is_safe_blue_purple': any(220 <= h <= 280 for h in palette_hues) and 0.4 <= sat_avg <= 0.7,
             },
@@ -138,7 +191,7 @@ def _derived_signals(tokens: dict) -> dict:
             },
         },
         'spacing': {
-            'base': (tokens.get('spacing', {}) or {}).get('base_unit_px'),
+            'base': (tokens.get('spacing', {}) or {}).get('base'),
         },
         'radius': {
             'max': radius_max,

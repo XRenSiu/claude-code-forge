@@ -79,6 +79,11 @@ def main():
     pending_tokens = sorted([s for s, st in state.items() if not st['has_tokens'] and st['has_src']])
     pending_rationale = sorted([s for s, st in state.items() if not st['has_rationale'] and st['has_tokens']])
     pending_rules = sorted([s for s, st in state.items() if not st['has_rules'] and st['has_rationale']])
+    # v1.5.0 Issue 3 fix: A3-blocked count separates "ready for A3 now" from
+    # "blocked behind pending A2"
+    blocked_a3_behind_a2 = sorted([s for s, st in state.items()
+                                    if not st['has_rules'] and not st['has_rationale']
+                                    and st['has_tokens']])
 
     if args.pending_tokens:
         for s in (pending_tokens[:args.limit] if args.limit else pending_tokens):
@@ -124,9 +129,11 @@ def main():
     print(f'  pending A2 (rationale extract — LLM):       {len(pending_rationale)} systems')
     if pending_rationale[:5]:
         print(f'    e.g. {", ".join(pending_rationale[:5])}{"..." if len(pending_rationale) > 5 else ""}')
-    print(f'  pending A3 (rule abstract — LLM):           {len(pending_rules)} systems')
+    print(f'  pending A3 (rule abstract — LLM):           {len(pending_rules)} systems (ready for A3 now)')
     if pending_rules[:5]:
         print(f'    e.g. {", ".join(pending_rules[:5])}{"..." if len(pending_rules) > 5 else ""}')
+    if blocked_a3_behind_a2:
+        print(f'    + {len(blocked_a3_behind_a2)} systems blocked behind pending A2')
 
 
 if __name__ == '__main__':
