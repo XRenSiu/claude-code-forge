@@ -97,7 +97,7 @@ rules:
   action:
     button_radius_px: 56
     button_shape: extreme_pill
-    hover_transition: solid_blue_to_lighter_blue (#0052ff → #578bfa)
+    hover_transition: 'solid_blue_to_lighter_blue (#0052ff → #578bfa)'
     no_sharp_corner_cta: true
   why:
     establish: pill-cta-as-crypto-token-metaphor

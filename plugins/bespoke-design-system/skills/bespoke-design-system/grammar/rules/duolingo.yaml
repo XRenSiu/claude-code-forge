@@ -316,6 +316,7 @@ rules:
     avoid:
     - drift_into_modern_flat_minimalism
     - drift_into_static_brand_logo
+    balance: tactile_game_feel ↔ modern_flat_pressure
   emerges_from:
   - duolingo
   provenance: original

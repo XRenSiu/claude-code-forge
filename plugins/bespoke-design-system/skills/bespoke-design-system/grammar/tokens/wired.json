@@ -1,11 +1,11 @@
 {
   "system_name": "wired",
   "source": "open-design",
-  "extracted_at": "2026-05-03T13:38:57.595665Z",
+  "extracted_at": "2026-05-04T04:27:14.022668Z",
   "dialect": "A",
   "fingerprint_hash": "2c370c20aec5d1a8ccb42e8788cb68b768f0f26f69e0e7f995f468fd96cac57f",
   "extraction_method": "programmatic_a1",
-  "tool_version": "1.0.0",
+  "tool_version": "1.1.0",
   "color": {
     "role_color_pairs": {
       "wired_black": "#000000",
@@ -91,22 +91,9 @@
   "radius": {
     "role_radius_pairs": {},
     "all_px_values": [
-      1.0,
-      4.0,
-      8.0,
-      12.0,
-      14.11,
-      15.0,
-      16.0,
-      24.0,
-      25.46,
-      29.66,
-      32.0,
-      40.0,
-      48.0,
-      64.0
+      1920.0
     ],
-    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_extraction_method": "regex_role_radius (patterns A and B), v1.7.1 subsection-scoped",
     "_confidence": "low"
   },
   "depth_elevation": {

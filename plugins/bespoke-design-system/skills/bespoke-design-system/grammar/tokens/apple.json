@@ -1,11 +1,11 @@
 {
   "system_name": "apple",
   "source": "open-design",
-  "extracted_at": "2026-05-03T13:38:57.514602Z",
+  "extracted_at": "2026-05-04T04:27:09.430353Z",
   "dialect": "A",
   "fingerprint_hash": "001c06b02855b8443b397bfef583be5dedfd96391dcae94d7e3050e64841ed4d",
   "extraction_method": "programmatic_a1",
-  "tool_version": "1.0.0",
+  "tool_version": "1.1.0",
   "color": {
     "role_color_pairs": {
       "absolute_black": "#000000",
@@ -72,7 +72,7 @@
     "_confidence": "medium"
   },
   "spacing": {
-    "base_unit_px": 8.0,
+    "base_unit_px": 5.0,
     "declared_scale": null,
     "all_px_values": [
       5.0,
@@ -102,13 +102,12 @@
       12.0,
       16.0,
       18.0,
-      20.0,
       28.0,
       36.0,
-      56.0,
-      100.0
+      100.0,
+      980.0
     ],
-    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_extraction_method": "regex_role_radius (patterns A and B), v1.7.1 subsection-scoped",
     "_confidence": "low"
   },
   "depth_elevation": {

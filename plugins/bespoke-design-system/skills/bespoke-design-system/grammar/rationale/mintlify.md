@@ -5,6 +5,15 @@
 ## Visual Theme & Atmosphere
 
 ### decision: White canvas + atmospheric green-to-white gradient hero
+
+原 DESIGN.md 段落（auto-backfill）：
+> **Standard Card**
+> - Background: `#ffffff`
+> - Border: `1px solid rgba(0,0,0,0.05)`
+> - Radius: 16px
+> - Padding: 24px
+> - Shadow: `rgba(0,0,0,0.03) 0px 2px 4px`
+> - Hover: subtle border darkening to `rgba(0,0,0,0.08)`
 - **trade_off**: 纯白克制 ↔ atmospheric gradient（让 documentation 不像办公文档，而像"思想之云"）
 - **intent**: 让 documentation 有 ethereal intelligence 感——文档本身飘在噪音之上
 - **avoid**:
@@ -12,6 +21,13 @@
   - 重渐变（破坏 reading-first 调性）
 
 ### decision: Brand Green #18E299 + reading-optimized neutrals
+
+原 DESIGN.md 段落（auto-backfill）：
+> **CTA Footer Section**
+> - Dark or gradient background
+> - Large headline: "Make documentation your winning advantage"
+> - Email input with pill styling
+> - Brand green accent on CTAs
 - **trade_off**: chromatic 主导 ↔ chromatic 锚点（CTA + focus + hover 仅）
 - **intent**: 绿色暗示"清新、智能、可读"——但克制使用让 reading 不被打扰
 - **avoid**:
@@ -21,6 +37,9 @@
 ## Color
 
 ### decision: Inter color binary — #0d0d0d (near-black) text + #18E299 green accent
+
+原 DESIGN.md 段落（auto-backfill）：
+> Mintlify's website is a study in documentation-as-product design — a white, airy, information-rich surface that treats clarity as its highest aesthetic value. The page opens with a luminous white (`#ffffff`) background, near-black (`#0d0d0d`) text, and a signature green brand accent (`#18E299`) that signals freshness and intelligence without dominating the palette. The overall mood is calm, confident, and engineered for legibility — a design system that whispers "we care about your developer experience" in every pixel.
 - **trade_off**: 多色 hierarchy ↔ 二元 + 单 accent
 - **intent**: 让 reader focus on prose，accent 只在交互瞬间出现
 - **avoid**:
@@ -28,6 +47,13 @@
   - 超饱和绿（与 reading-first 冲突）
 
 ### decision: 7-tier gray neutral scale (50/100/200/400/500/700/900)
+
+原 DESIGN.md 段落（auto-backfill）：
+> **Trust Bar / Logo Grid**
+> - "Loved by your favorite companies" section
+> - Company logos in muted grayscale
+> - Grid or horizontal layout with consistent sizing
+> - Subtle border separation between logos
 - **trade_off**: 4-tier 简单 ↔ 7-tier 细分
 - **intent**: documentation 需要 fine-grained type/border/disabled 区分
 - **avoid**:
@@ -36,6 +62,17 @@
 ## Typography
 
 ### decision: Inter primary + Geist Mono for code only
+
+原 DESIGN.md 段落（auto-backfill）：
+> **Secondary / Ghost (Full-round)**
+> - Background: `#ffffff`
+> - Text: `#0d0d0d`
+> - Padding: 4.5px 12px
+> - Radius: 9999px (full pill)
+> - Border: `1px solid rgba(0,0,0,0.08)`
+> - Font: Inter 15px weight 500
+> - Hover: opacity 0.9
+> - Use: Secondary actions ("Request Demo", "View Docs")
 - **trade_off**: 单一 family ↔ display + body + mono 三 family
 - **intent**: 让 prose 用 Inter 优化长读，code 用 mono 严格分隔——reader 视觉上"知道"现在在读什么
 - **avoid**:
@@ -43,6 +80,15 @@
   - mono 用于 prose（密度过高）
 
 ### decision: Display tight tracking (-0.8 to -1.28px at 40-64px)
+
+原 DESIGN.md 段落（auto-backfill）：
+> **Transparent / Nav Button**
+> - Background: transparent
+> - Text: `#0d0d0d`
+> - Padding: 5px 6px
+> - Radius: 8px
+> - Border: none or `1px solid rgba(0,0,0,0.05)`
+> - Use: Navigation items, icon buttons
 - **trade_off**: 普通 tracking ↔ 紧密 negative tracking
 - **intent**: 让 documentation 标题"压缩"——像写好的 doc heading 而非营销 hero
 - **avoid**:
@@ -50,6 +96,16 @@
   - body 也紧密（损害可读性）
 
 ### decision: 1.50 line-height for body (16-18px)
+
+原 DESIGN.md 段落（auto-backfill）：
+> **Email Input**
+> - Background: transparent or `#ffffff`
+> - Text: `#0d0d0d`
+> - Padding: 0px 12px (height controlled by line-height)
+> - Border: `1px solid rgba(0,0,0,0.08)`
+> - Radius: 9999px (full pill, matching buttons)
+> - Focus: `1px solid var(--color-brand)` + `outline: 1px solid var(--color-brand)`
+> - Placeholder: `#888888`
 - **trade_off**: 1.4 紧凑 ↔ 1.5 generous
 - **intent**: documentation 长读必需——line-height = reading comfort
 - **avoid**:
@@ -57,6 +113,10 @@
   - 1.7+（章节式松散，不适合 docs）
 
 ### decision: Three weights only (400/500/600), no bold 700
+
+原 DESIGN.md 段落（auto-backfill）：
+> > Category: Productivity & SaaS
+> > Documentation platform. Clean, green-accented, reading-optimized.
 - **trade_off**: 5+ weight ladder ↔ 3-weight discipline
 - **intent**: hierarchy via size + tracking, weight 仅 secondary 信号
 - **avoid**:
@@ -65,6 +125,14 @@
 ## Components
 
 ### decision: Ultra-round corners (16px containers / 24px featured / 9999px buttons-pills)
+
+原 DESIGN.md 段落（auto-backfill）：
+> **Brand Accent Button**
+> - Background: `#18E299`
+> - Text: `#0d0d0d`
+> - Padding: 8px 24px
+> - Radius: 9999px
+> - Use: Special promotional CTAs
 - **trade_off**: 锐角工程感 ↔ 圆角友好感
 - **intent**: 让 documentation 不像企业 SaaS——approachable 但 still rigorous
 - **avoid**:
@@ -72,6 +140,9 @@
   - 完全方角（学院刻板）
 
 ### decision: 5% opacity borders + barely-there shadows
+
+原 DESIGN.md 段落（auto-backfill）：
+> **Shadow Philosophy**: Mintlify barely uses shadows. The depth system is almost entirely border-driven — ultra-subtle 5% opacity borders create separation without visual weight. When shadows appear, they're atmospheric whispers (`0.03 opacity, 2px blur, 4px spread`) that add the barest sense of lift. This restraint keeps the page feeling flat and paper-like — appropriate for a documentation company whose product is about clarity and readability.
 - **trade_off**: 实色边框（明确） ↔ 5% alpha border + 0.03-0.06 shadow
 - **intent**: 让 separation 极轻——白卡片在白底上的 division 是"暗示"而非"宣告"
 - **avoid**:
@@ -79,6 +150,14 @@
   - 重 box-shadow 夺注意力
 
 ### decision: Buttons green primary + neutral secondary, no decorative gradient
+
+原 DESIGN.md 段落（auto-backfill）：
+> **Atmospheric Hero**
+> - Full-width gradient wash: soft green-to-white cloud-like gradient
+> - Centered headline with tight tracking
+> - Subtitle in muted gray
+> - Dual CTA buttons (dark primary + ghost secondary)
+> - The gradient creates a sense of elevation and intelligence
 - **trade_off**: gradient button（dynamic） ↔ flat solid（calm）
 - **intent**: 让 CTA 突出但不过度——documentation user 不需要被推销
 - **avoid**:
@@ -88,12 +167,26 @@
 ## Layout
 
 ### decision: 8px base + generous section padding 48-96px
+
+原 DESIGN.md 段落（auto-backfill）：
+> **Primary Brand (Full-round)**
+> - Background: `#0d0d0d` (near-black)
+> - Text: `#ffffff`
+> - Padding: 8px 24px
+> - Radius: 9999px (full pill)
+> - Font: Inter 15px weight 500
+> - Shadow: `rgba(0,0,0,0.06) 0px 1px 2px`
+> - Hover: opacity 0.9
+> - Use: Primary CTA ("Get Started", "Start Building")
 - **trade_off**: 紧凑 dashboard ↔ generous reading
 - **intent**: 让 sections 有"章节"感——space between concepts
 - **avoid**:
   - 紧凑 navigation-style spacing（破坏 reading rhythm）
 
 ### decision: White canvas only — no gray sections
+
+原 DESIGN.md 段落（auto-backfill）：
+> What distinguishes Mintlify from other documentation platforms is its atmospheric gradient hero. A soft, cloud-like green-to-white gradient wash behind the hero content creates a sense of ethereal intelligence — documentation that floats above the noise. Below the hero, the page settles into a disciplined alternation of white sections separated by subtle 5% opacity borders. Cards use generous padding (24px+) with large radii (16px–24px) and whisper-thin borders, creating containers that feel open rather than boxed.
 - **trade_off**: 灰底 alternation ↔ pure white throughout
 - **intent**: depth through borders + whitespace, not surface color shifts
 - **avoid**:
@@ -102,6 +195,9 @@
 ## Voice / Brand-implicit
 
 ### decision: Voice = approachable + rigorous + developer-aware [inferred]
+
+原 DESIGN.md 段落（auto-backfill）：
+> The Inter font family carries the entire typographic load. At display sizes (40–64px), it uses tight negative letter-spacing (-0.8px to -1.28px) and semibold weight (600), creating headlines that feel focused and compressed like well-written documentation headers. Body text at 16–18px with 150% line-height provides generous reading comfort. Geist Mono appears exclusively for code and technical labels — uppercase, tracked-out, small — the voice of the terminal inside the marketing page.
 - **trade_off**: 专业冷峻 ↔ 友好但严谨
 - **intent**: documentation user 是 developer——voice 应该 respects intelligence
 - **avoid**:

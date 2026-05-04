@@ -1,11 +1,11 @@
 {
   "system_name": "pinterest",
   "source": "open-design",
-  "extracted_at": "2026-05-03T13:38:57.564737Z",
+  "extracted_at": "2026-05-04T04:27:12.529447Z",
   "dialect": "A",
   "fingerprint_hash": "e6cb634aca8404b43b9eaeaf650bb64b0d26b1240bb3c33da643fded1fe1ecaa",
   "extraction_method": "programmatic_a1",
-  "tool_version": "1.0.0",
+  "tool_version": "1.1.0",
   "color": {
     "role_color_pairs": {
       "pinterest_red": "#e60023",
@@ -118,25 +118,14 @@
       "large": 28.0
     },
     "all_px_values": [
-      4.0,
-      6.0,
-      7.0,
-      8.0,
-      10.0,
-      11.0,
       12.0,
       16.0,
-      18.0,
       20.0,
-      22.0,
-      24.0,
       28.0,
       32.0,
-      40.0,
-      80.0,
-      100.0
+      40.0
     ],
-    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_extraction_method": "regex_role_radius (patterns A and B), v1.7.1 subsection-scoped",
     "_confidence": "high"
   },
   "depth_elevation": {

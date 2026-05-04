@@ -1,11 +1,11 @@
 {
   "system_name": "warm-editorial",
   "source": "open-design",
-  "extracted_at": "2026-05-03T13:38:57.593735Z",
+  "extracted_at": "2026-05-04T04:27:13.916770Z",
   "dialect": "A",
   "fingerprint_hash": "d478c0b23c15f0ef6b8863048d7ac809d0627216aa1efd6c303c242c6c470a5d",
   "extraction_method": "programmatic_a1",
-  "tool_version": "1.0.0",
+  "tool_version": "1.1.0",
   "color": {
     "role_color_pairs": {
       "background": "#FAF7F2",
@@ -38,7 +38,7 @@
     "_confidence": "medium"
   },
   "spacing": {
-    "base_unit_px": 1200.0,
+    "base_unit_px": 24.0,
     "declared_scale": null,
     "all_px_values": [
       24.0,
@@ -60,9 +60,9 @@
       24.0,
       32.0,
       48.0,
-      80.0
+      1200.0
     ],
-    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_extraction_method": "regex_role_radius (patterns A and B), v1.7.1 subsection-scoped",
     "_confidence": "low"
   },
   "depth_elevation": {

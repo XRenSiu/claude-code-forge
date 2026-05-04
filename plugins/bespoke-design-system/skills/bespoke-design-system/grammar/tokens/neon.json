@@ -1,11 +1,11 @@
 {
   "system_name": "neon",
   "source": "open-design",
-  "extracted_at": "2026-05-03T13:38:57.558808Z",
+  "extracted_at": "2026-05-04T04:27:12.135155Z",
   "dialect": "B",
   "fingerprint_hash": "0e118c1a6b97210dac891eb7bd3a5047e0abc247aa8942542131053b89b7dc52",
   "extraction_method": "programmatic_a1",
-  "tool_version": "1.0.0",
+  "tool_version": "1.1.0",
   "color": {
     "role_color_pairs": {
       "primary": "#BBF351",
@@ -81,7 +81,7 @@
   "radius": {
     "role_radius_pairs": {},
     "all_px_values": [],
-    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_extraction_method": "regex_role_radius (patterns A and B), v1.7.1 subsection-scoped",
     "_confidence": "low"
   },
   "motion": {

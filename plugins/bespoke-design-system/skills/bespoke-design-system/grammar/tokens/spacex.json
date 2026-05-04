@@ -1,11 +1,11 @@
 {
   "system_name": "spacex",
   "source": "open-design",
-  "extracted_at": "2026-05-03T13:38:57.579320Z",
+  "extracted_at": "2026-05-04T04:27:13.273213Z",
   "dialect": "A",
   "fingerprint_hash": "ead7689f96a1c44f43cee4831b1525d52757c6aca820b9cf85569651d46ab0b7",
   "extraction_method": "programmatic_a1",
-  "tool_version": "1.0.0",
+  "tool_version": "1.1.0",
   "color": {
     "role_color_pairs": {
       "space_black": "#000000",
@@ -74,19 +74,10 @@
   "radius": {
     "role_radius_pairs": {},
     "all_px_values": [
-      3.0,
       4.0,
-      5.0,
-      8.0,
-      12.0,
-      15.0,
-      18.0,
-      20.0,
-      24.0,
-      30.0,
       32.0
     ],
-    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_extraction_method": "regex_role_radius (patterns A and B), v1.7.1 subsection-scoped",
     "_confidence": "low"
   },
   "depth_elevation": {

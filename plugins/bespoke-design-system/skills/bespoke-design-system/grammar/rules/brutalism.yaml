@@ -143,7 +143,11 @@ rules:
 - rule_id: brutalism-motion-functional-not-dramatic-005
   section: motion
   preconditions:
-    product_type: [editorial, art_portfolio, indie_creative, anti_corporate]
+    product_type:
+    - editorial
+    - art_portfolio
+    - indie_creative
+    - anti_corporate
     kansei:
     - raw
     - decisive
@@ -171,14 +175,17 @@ rules:
 - rule_id: brutalism-voice-imperative-no-marketing-006
   section: voice
   preconditions:
-    product_type: [editorial, art_portfolio, indie_creative, anti_corporate]
+    product_type:
+    - editorial
+    - art_portfolio
+    - indie_creative
+    - anti_corporate
     kansei:
     - raw
     - confident
     - direct
     brand_archetypes:
     - Outlaw
-    - Sage
   action:
     cta_register: imperative_action_verbs
     avoid_marketing_orchestral: true
@@ -204,6 +211,7 @@ rules:
     brand_archetypes:
     - Outlaw
     - Sage
+    - Hero
   action:
     forbidden:
     - off_palette_decorative_colors
@@ -217,6 +225,7 @@ rules:
     avoid:
     - aesthetic_drift_into_polish
     - marketing_template_creep
+    balance: raw_authenticity ↔ aesthetic_polish_pressure
   emerges_from:
   - brutalism
   provenance: original

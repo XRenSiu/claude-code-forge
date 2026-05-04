@@ -1,0 +1,106 @@
+rules:
+- rule_id: elevenlabs-color-warm-white-canvas-001
+  section: color
+  preconditions:
+    product_type: [ai_platform, premium_tool, voice_ai]
+    tone: [refined, warm, premium]
+    kansei: [refined, warm, premium, sophisticated, restrained]
+    sd_anchors:
+      warm_to_cold: -0.3
+      ornate_to_minimal: 0.6
+      serious_to_playful: -0.4
+      modern_to_classical: -0.3
+    brand_archetypes: [Magician, Lover]
+  action:
+    canvas_hex_options: ['#ffffff', '#f5f5f5']
+    warm_undertone_hex: '#f5f2ef'
+    warm_undertone_application: featured_surfaces_and_signature_cta
+    forbid_pure_clinical_white_only: true
+  why:
+    establish: premium-brochure-warmth-without-cozy-amateurism
+    avoid: [pure_white_clinical, beige_cozy_kitchen, cool_gray_medical]
+    balance: minimalist_purity ↔ warm_humanity
+  emerges_from: [elevenlabs]
+  provenance: original
+  confidence: 0.5
+
+- rule_id: elevenlabs-typography-light-weight-display-002
+  section: typography
+  preconditions:
+    product_type: [ai_platform, premium_tool, voice_ai]
+    tone: [refined, premium, restrained]
+    kansei: [refined, premium, sophisticated, soft, calm]
+    brand_archetypes: [Magician, Lover]
+  action:
+    display_weight: 300
+    display_weight_class: light_hairline
+    body_weight: 400
+    forbid_display_bold: true
+    intent_metaphor: thin_strokes_like_audio_waveforms
+  why:
+    establish: lightness-not-boldness-creates-intrigue
+    avoid: [700_bold_display, 500_medium_hero_default, weight_400_neutral_default]
+    balance: visual_weight ↔ ethereal_restraint
+  emerges_from: [elevenlabs]
+  provenance: original
+  confidence: 0.5
+
+- rule_id: elevenlabs-depth_elevation-warm-tinted-shadows-003
+  section: depth_elevation
+  preconditions:
+    product_type: [ai_platform, premium_tool]
+    tone: [warm, refined, premium]
+    kansei: [warm, refined, soft]
+    brand_archetypes: [Lover, Magician]
+  action:
+    shadow_color_strategy: warm_tinted_low_alpha
+    signature_shadow: 'rgba(78,50,23,0.04) 0px 6px 16px'
+    max_shadow_alpha: 0.1
+    multi_layer_required: true
+    layers: [inset_border, outline_ring, soft_elevation]
+  why:
+    establish: shadows-carry-warm-bias-not-just-darkness
+    avoid: [pure_black_shadow, cool_gray_shadow, alpha_above_0.1]
+    balance: depth_signal ↔ ethereal_lightness
+  emerges_from: [elevenlabs]
+  provenance: original
+  confidence: 0.5
+
+- rule_id: elevenlabs-typography-positive-letter-spacing-body-004
+  section: typography
+  preconditions:
+    product_type: [ai_platform, premium_tool]
+    tone: [refined, calm]
+    kansei: [refined, readable, calm]
+    brand_archetypes: [Lover, Sage]
+  action:
+    body_letter_spacing_px_range: [0.14, 0.18]
+    display_letter_spacing_px: '-0.96 (tight contrast)'
+    intent_metaphor: airy_waveform_breathing
+  why:
+    establish: airy-tracking-on-body-contrasts-with-tight-display
+    avoid: [zero_default_tracking_body, negative_body_tracking_compressed]
+    balance: reading_density ↔ reading_air
+  emerges_from: [elevenlabs]
+  provenance: original
+  confidence: 0.5
+
+- rule_id: elevenlabs-components-warm-stone-pill-cta-005
+  section: components
+  preconditions:
+    product_type: [ai_platform, premium_tool]
+    tone: [warm, premium, refined]
+    kansei: [warm, premium, tactile, refined]
+    brand_archetypes: [Lover]
+  action:
+    cta_radius_px: 9999
+    cta_background_token: warm_stone_translucent_alpha_0.8
+    cta_shadow: 'rgba(78,50,23,0.04) 0px 6px 16px'
+    asymmetric_padding_allowed: true
+  why:
+    establish: tactile-stone-physicality-as-hero-cta-signature
+    avoid: [solid_black_pill_default, pure_white_pill_no_warmth, opaque_warm_fill]
+    balance: clarity_of_cta ↔ tactile_physical_presence
+  emerges_from: [elevenlabs]
+  provenance: original
+  confidence: 0.5

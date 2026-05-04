@@ -1,11 +1,11 @@
 {
   "system_name": "paper",
   "source": "open-design",
-  "extracted_at": "2026-05-03T13:38:57.564055Z",
+  "extracted_at": "2026-05-04T04:27:12.457871Z",
   "dialect": "B",
   "fingerprint_hash": "aa4d8b38f35a8264b90d3a8a216857860a32fa4d870f3fa8c6d77bd53955923f",
   "extraction_method": "programmatic_a1",
-  "tool_version": "1.0.0",
+  "tool_version": "1.1.0",
   "color": {
     "role_color_pairs": {
       "primary": "#111111",
@@ -85,7 +85,7 @@
   "radius": {
     "role_radius_pairs": {},
     "all_px_values": [],
-    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_extraction_method": "regex_role_radius (patterns A and B), v1.7.1 subsection-scoped",
     "_confidence": "low"
   },
   "motion": {

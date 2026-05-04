@@ -1,11 +1,11 @@
 {
   "system_name": "cohere",
   "source": "open-design",
-  "extracted_at": "2026-05-03T13:38:57.526183Z",
+  "extracted_at": "2026-05-04T04:27:10.097088Z",
   "dialect": "A",
   "fingerprint_hash": "c0a7270cd888b74a4cebb9621f075f9f2e2bca9712723110e890fe2366032668",
   "extraction_method": "programmatic_a1",
-  "tool_version": "1.0.0",
+  "tool_version": "1.1.0",
   "color": {
     "role_color_pairs": {
       "cohere_black": "#000000",
@@ -112,24 +112,14 @@
       "pill": 9999.0
     },
     "all_px_values": [
-      2.0,
       4.0,
-      6.0,
       8.0,
-      10.0,
-      12.0,
       16.0,
       20.0,
       22.0,
-      24.0,
-      28.0,
-      32.0,
-      36.0,
-      40.0,
-      56.0,
-      60.0
+      9999.0
     ],
-    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_extraction_method": "regex_role_radius (patterns A and B), v1.7.1 subsection-scoped",
     "_confidence": "high"
   },
   "depth_elevation": {

@@ -1,11 +1,11 @@
 {
   "system_name": "levels",
   "source": "open-design",
-  "extracted_at": "2026-05-03T13:38:57.548287Z",
+  "extracted_at": "2026-05-04T04:27:11.530934Z",
   "dialect": "B",
   "fingerprint_hash": "84c9e015136ad981bf1c4c67e9268d489abfac45d31153f6771d7d3549a2fc56",
   "extraction_method": "programmatic_a1",
-  "tool_version": "1.0.0",
+  "tool_version": "1.1.0",
   "color": {
     "role_color_pairs": {
       "primary": "#27272A",
@@ -85,7 +85,7 @@
   "radius": {
     "role_radius_pairs": {},
     "all_px_values": [],
-    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_extraction_method": "regex_role_radius (patterns A and B), v1.7.1 subsection-scoped",
     "_confidence": "low"
   },
   "motion": {

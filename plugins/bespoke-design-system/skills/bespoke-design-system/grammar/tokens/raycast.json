@@ -1,11 +1,11 @@
 {
   "system_name": "raycast",
   "source": "open-design",
-  "extracted_at": "2026-05-03T13:38:57.568847Z",
+  "extracted_at": "2026-05-04T04:27:12.740896Z",
   "dialect": "A",
   "fingerprint_hash": "20e65e05ed2eee597dcdb6c7b056bd70842d786c0888592dda255ef672d8dd60",
   "extraction_method": "programmatic_a1",
-  "tool_version": "1.0.0",
+  "tool_version": "1.1.0",
   "color": {
     "role_color_pairs": {
       "warm_glow": "rgba(215, 201, 175, 0.05)",
@@ -141,11 +141,8 @@
     "_section_size": 1394
   },
   "radius": {
-    "role_radius_pairs": {
-      "card padding": 16.0
-    },
+    "role_radius_pairs": {},
     "all_px_values": [
-      1.0,
       2.0,
       3.0,
       4.0,
@@ -153,20 +150,13 @@
       6.0,
       8.0,
       9.0,
-      10.0,
       11.0,
       12.0,
       16.0,
-      20.0,
-      24.0,
-      32.0,
-      40.0,
-      80.0,
-      86.0,
-      120.0
+      20.0
     ],
-    "_extraction_method": "regex_role_radius (patterns A and B)",
-    "_confidence": "medium"
+    "_extraction_method": "regex_role_radius (patterns A and B), v1.7.1 subsection-scoped",
+    "_confidence": "low"
   },
   "depth_elevation": {
     "rgba_shadows": [
@@ -247,6 +237,7 @@
   ],
   "llm_followup_hints": [
     "layout extraction has low confidence — recommend LLM review",
+    "radius extraction has low confidence — recommend LLM review",
     "responsive extraction has low confidence — recommend LLM review"
   ]
 }

@@ -1,11 +1,11 @@
 {
   "system_name": "kraken",
   "source": "open-design",
-  "extracted_at": "2026-05-03T13:38:57.546904Z",
+  "extracted_at": "2026-05-04T04:27:11.460915Z",
   "dialect": "A",
   "fingerprint_hash": "8b9a1b5eebcce82881debd4ab815e780ba98b091fc9568475ddfb36be94c0c24",
   "extraction_method": "programmatic_a1",
-  "tool_version": "1.0.0",
+  "tool_version": "1.1.0",
   "color": {
     "role_color_pairs": {
       "kraken_purple": "#7132f5",
@@ -62,7 +62,7 @@
     "_confidence": "high"
   },
   "spacing": {
-    "base_unit_px": 3.0,
+    "base_unit_px": 1.0,
     "declared_scale": null,
     "all_px_values": [
       1.0,
@@ -92,23 +92,15 @@
   "radius": {
     "role_radius_pairs": {},
     "all_px_values": [
-      1.0,
-      2.0,
       3.0,
-      4.0,
-      5.0,
       6.0,
       8.0,
       10.0,
       12.0,
-      13.0,
-      15.0,
       16.0,
-      20.0,
-      24.0,
-      25.0
+      9999.0
     ],
-    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_extraction_method": "regex_role_radius (patterns A and B), v1.7.1 subsection-scoped",
     "_confidence": "low"
   },
   "depth_elevation": {

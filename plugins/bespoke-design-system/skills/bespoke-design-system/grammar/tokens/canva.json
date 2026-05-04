@@ -1,11 +1,11 @@
 {
   "system_name": "canva",
   "source": "open-design",
-  "extracted_at": "2026-05-03T13:38:57.522342Z",
+  "extracted_at": "2026-05-04T04:27:09.882526Z",
   "dialect": "C-6section",
   "fingerprint_hash": "0dd369bc89b510773c577d494eb7f4e7c6363444a900198d2e99c2d670c16b56",
   "extraction_method": "programmatic_a1",
-  "tool_version": "1.0.0",
+  "tool_version": "1.1.0",
   "color": {
     "role_color_pairs": {
       "canva_purple": "#7d2ae8",
@@ -101,18 +101,17 @@
     "_section_size": 219
   },
   "radius": {
-    "role_radius_pairs": {
-      "card grid gap": 16.0
-    },
+    "role_radius_pairs": {},
     "all_px_values": [
       4.0,
       16.0,
       24.0,
       32.0,
-      56.0
+      320.0,
+      1320.0
     ],
-    "_extraction_method": "regex_role_radius (patterns A and B)",
-    "_confidence": "medium"
+    "_extraction_method": "regex_role_radius (patterns A and B), v1.7.1 subsection-scoped",
+    "_confidence": "low"
   },
   "motion": {
     "durations_ms": [
@@ -143,6 +142,7 @@
     "agent_guide"
   ],
   "llm_followup_hints": [
-    "layout extraction has low confidence — recommend LLM review"
+    "layout extraction has low confidence — recommend LLM review",
+    "radius extraction has low confidence — recommend LLM review"
   ]
 }

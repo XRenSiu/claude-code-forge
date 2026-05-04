@@ -1,11 +1,11 @@
 {
   "system_name": "airbnb",
   "source": "open-design",
-  "extracted_at": "2026-05-03T13:38:57.511803Z",
+  "extracted_at": "2026-05-04T04:27:09.323160Z",
   "dialect": "A",
   "fingerprint_hash": "4cd7b1972080ebeb2c360b27271e1d898c153c46c9d7f038ed512bb5130577fc",
   "extraction_method": "programmatic_a1",
-  "tool_version": "1.0.0",
+  "tool_version": "1.1.0",
   "color": {
     "role_color_pairs": {
       "rausch": "#ff385c",
@@ -97,21 +97,16 @@
   },
   "radius": {
     "role_radius_pairs": {
-      "card internal padding": 24.0,
       "gutter between listing cards": 24.0
     },
     "all_px_values": [
       4.0,
       8.0,
-      12.0,
       14.0,
-      16.0,
       20.0,
-      24.0,
-      32.0,
-      64.0
+      32.0
     ],
-    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_extraction_method": "regex_role_radius (patterns A and B), v1.7.1 subsection-scoped",
     "_confidence": "medium"
   },
   "depth_elevation": {

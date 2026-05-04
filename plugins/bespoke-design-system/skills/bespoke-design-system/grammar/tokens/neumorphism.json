@@ -1,11 +1,11 @@
 {
   "system_name": "neumorphism",
   "source": "open-design",
-  "extracted_at": "2026-05-03T13:38:57.559117Z",
+  "extracted_at": "2026-05-04T04:27:12.170195Z",
   "dialect": "B",
   "fingerprint_hash": "e0dbc739d3ddedcc43e04462a29cedb4ab97ab4fc4c68c7692fbdbf853334863",
   "extraction_method": "programmatic_a1",
-  "tool_version": "1.0.0",
+  "tool_version": "1.1.0",
   "color": {
     "role_color_pairs": {
       "primary": "#006666",
@@ -78,7 +78,7 @@
   "radius": {
     "role_radius_pairs": {},
     "all_px_values": [],
-    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_extraction_method": "regex_role_radius (patterns A and B), v1.7.1 subsection-scoped",
     "_confidence": "low"
   },
   "motion": {

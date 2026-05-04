@@ -1,11 +1,11 @@
 {
   "system_name": "miro",
   "source": "open-design",
-  "extracted_at": "2026-05-03T13:38:57.555511Z",
+  "extracted_at": "2026-05-04T04:27:11.919658Z",
   "dialect": "A",
   "fingerprint_hash": "51f348feaf10f92873854e49dccb1c03a32bbb573f1de0bc87981d4d540f91d8",
   "extraction_method": "programmatic_a1",
-  "tool_version": "1.0.0",
+  "tool_version": "1.1.0",
   "color": {
     "role_color_pairs": {
       "near_black": "#1c1c1e",
@@ -78,7 +78,7 @@
     "_confidence": "high"
   },
   "spacing": {
-    "base_unit_px": 0.0,
+    "base_unit_px": 24.0,
     "declared_scale": null,
     "all_px_values": [
       1.0,
@@ -91,7 +91,7 @@
       50.0
     ],
     "_extraction_method": "regex_base_unit + scale_enum",
-    "_confidence": "low"
+    "_confidence": "medium"
   },
   "layout": {
     "_extraction_method": "kept_section_text_for_a3",
@@ -101,16 +101,14 @@
   "radius": {
     "role_radius_pairs": {},
     "all_px_values": [
-      1.0,
       8.0,
       10.0,
       12.0,
       20.0,
       24.0,
-      40.0,
-      50.0
+      40.0
     ],
-    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_extraction_method": "regex_role_radius (patterns A and B), v1.7.1 subsection-scoped",
     "_confidence": "low"
   },
   "depth_elevation": {
@@ -157,7 +155,6 @@
     "agent_guide"
   ],
   "llm_followup_hints": [
-    "spacing extraction has low confidence — recommend LLM review",
     "layout extraction has low confidence — recommend LLM review",
     "radius extraction has low confidence — recommend LLM review",
     "responsive extraction has low confidence — recommend LLM review"

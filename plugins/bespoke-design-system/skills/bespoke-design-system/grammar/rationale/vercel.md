@@ -5,6 +5,10 @@
 ## Visual Theme & Atmosphere
 
 ### decision: extreme white minimalism — gallery-like emptiness
+
+原 DESIGN.md 段落（auto-backfill）：
+> > Category: Developer Tools
+> > Frontend deployment. Black and white precision, Geist font.
 - **trade_off**: 信息密度 ↔ 大量留白（每个 token 必须 earn its pixel）
 - **intent**: 让产品看起来"无需证明也无需隐藏"——白色就是设计本身
 - **avoid**:
@@ -12,6 +16,9 @@
   - 白色被解读为"未完成"或"懒"
 
 ### decision: minimalism as engineering principle (not as decoration)
+
+原 DESIGN.md 段落（auto-backfill）：
+> Vercel's website is the visual thesis of developer infrastructure made invisible — a design system so restrained it borders on philosophical. The page is overwhelmingly white (`#ffffff`) with near-black (`#171717`) text, creating a gallery-like emptiness where every element earns its pixel. This isn't minimalism as decoration; it's minimalism as engineering principle. The Geist design system treats the interface like a compiler treats code — every unnecessary token is stripped away until only structure remains.
 - **trade_off**: 极简风格美学（流行） ↔ 极简作为工程原则（每个删减都有理由）
 - **intent**: 让界面像编译器看代码——unnecessary token stripped away
 - **avoid**:
@@ -21,6 +28,12 @@
 ## Color
 
 ### decision: achromatic palette + functional workflow colors only
+
+原 DESIGN.md 段落（auto-backfill）：
+> **Trust Bar / Logo Grid**
+> - Company logos (Perplexity, ChatGPT, Cursor, etc.) in grayscale
+> - Horizontal scroll or grid layout
+> - Subtle `#ebebeb` border separation
 - **trade_off**: 单色系统（识别但单调） ↔ 多色系统（丰富但分散）
 - **intent**: 颜色 = 功能。Workflow 色（Ship Red / Preview Pink / Develop Blue）只在 workflow 上下文使用
 - **avoid**:
@@ -28,6 +41,12 @@
   - 引入暖色（橙黄绿）破坏 black/white 调性
 
 ### decision: #171717 instead of pure #000000 for text
+
+原 DESIGN.md 段落（auto-backfill）：
+> **Large Pill (Navigation)**
+> - Background: transparent or `#171717`
+> - Radius: 64px–100px
+> - Use: Tab navigation, section selectors
 - **trade_off**: 数学黑（精确） ↔ 偏暖近黑（micro-warmth 防止刺眼）
 - **intent**: 微暖的近黑减少视觉硬度，但仍保持权威感
 - **avoid**:
@@ -37,6 +56,13 @@
 ## Typography
 
 ### decision: Geist with extreme negative letter-spacing (-2.4 to -2.88px at 48px)
+
+原 DESIGN.md 段落（auto-backfill）：
+> **Metric Cards**
+> - Large number display (e.g., "10x faster")
+> - Geist 48px weight 600 for the metric
+> - Description below in gray body text
+> - Shadow-bordered card container
 - **trade_off**: 标准字距（易读） ↔ 极致负字距（compressed, urgent, engineered）
 - **intent**: 让 display 文字看起来"minified for production"——像优化过的代码
 - **avoid**:
@@ -44,6 +70,13 @@
   - 字距正向（任何时候都不该出现在 Geist 上）
 
 ### decision: three weights only (400/500/600), no bold body text
+
+原 DESIGN.md 段落（auto-backfill）：
+> **Workflow Pipeline**
+> - Three-step horizontal pipeline: Develop → Preview → Ship
+> - Each step has its own accent color: Blue → Pink → Red
+> - Connected with lines/arrows
+> - The visual metaphor for Vercel's core value proposition
 - **trade_off**: 多 weight 灵活（细分层级） ↔ 三 weight 严格（约束 → 一致性）
 - **intent**: 通过 size + tracking 而非 weight 建立层级——窄 weight 范围强化系统化
 - **avoid**:
@@ -53,6 +86,15 @@
 ## Components / Elevation
 
 ### decision: shadow-as-border (box-shadow 0px 0px 0px 1px) replaces CSS border
+
+原 DESIGN.md 段落（auto-backfill）：
+> **Pill Button / Badge**
+> - Background: `#ebf5ff` (tinted blue)
+> - Text: `#0068d6`
+> - Padding: 0px 10px
+> - Radius: 9999px (full pill)
+> - Font: 12px weight 500
+> - Use: Status badges, tags, feature labels
 - **trade_off**: 传统 CSS border（普适） ↔ shadow-border（圆角不裁剪、过渡更顺、视觉更轻）
 - **intent**: 让 border 存在于 shadow layer——可与 elevation 共栈，更精细的层次
 - **avoid**:
@@ -60,6 +102,9 @@
   - 实色 border 的视觉重量
 
 ### decision: multi-layer shadow stacks (border + soft + ambient + inner #fafafa glow)
+
+原 DESIGN.md 段落（auto-backfill）：
+> **Shadow Philosophy**: Vercel has arguably the most sophisticated shadow system in modern web design. Rather than using shadows for elevation in the traditional Material Design sense, Vercel uses multi-value shadow stacks where each layer has a distinct architectural purpose: one creates the "border" (0px spread, 1px), another adds ambient softness (2px blur), another handles depth at distance (8px blur with negative spread), and an inner ring (`#fafafa`) creates the subtle highlight that makes the card "glow" from within. This layered approach means cards feel built, not floating.
 - **trade_off**: 单层阴影（简单） ↔ 多层堆叠（每层职责单一，整体精致）
 - **intent**: 让卡片"feel built, not floating"——每层 shadow 有具体建筑学职责
 - **avoid**:
@@ -68,6 +113,14 @@
   - 跳过 inner #fafafa ring（"是它让卡片有内发光感"）
 
 ### decision: dark pill CTA reserved for primary actions only
+
+原 DESIGN.md 段落（auto-backfill）：
+> **Primary Dark (Inferred from Geist system)**
+> - Background: `#171717`
+> - Text: `#ffffff`
+> - Padding: 8px 16px
+> - Radius: 6px
+> - Use: Primary CTA ("Start Deploying", "Get Started")
 - **trade_off**: 颜色按钮（明显） ↔ 黑色按钮（克制 + 工程化对比）
 - **intent**: 在白底上用纯黑作为最强对比锚点，引导主操作
 - **avoid**:
@@ -77,6 +130,17 @@
 ## Layout
 
 ### decision: section padding 80px-120px+ with no color variation
+
+原 DESIGN.md 段落（auto-backfill）：
+> **Primary White (Shadow-bordered)**
+> - Background: `#ffffff`
+> - Text: `#171717`
+> - Padding: 0px 6px (minimal — content-driven width)
+> - Radius: 6px (subtly rounded)
+> - Shadow: `rgb(235, 235, 235) 0px 0px 0px 1px` (ring-border)
+> - Hover: background shifts to `var(--ds-gray-1000)` (dark)
+> - Focus: `2px solid var(--ds-focus-color)` outline + `var(--ds-focus-ring)` shadow
+> - Use: Standard secondary button
 - **trade_off**: 显式 section 分隔（结构感） ↔ 纯空间分隔（极简一致）
 - **intent**: 留白本身就是 section 间的语言——不需要色块或线条
 - **avoid**:
@@ -84,6 +148,9 @@
   - 留白不足导致内容拥挤
 
 ### decision: spacing scale jumps from 16 to 32 (no 20/24 in primary scale)
+
+原 DESIGN.md 段落（auto-backfill）：
+> The custom Geist font family is the crown jewel. Geist Sans uses aggressive negative letter-spacing (-2.4px to -2.88px at display sizes), creating headlines that feel compressed, urgent, and engineered — like code that's been minified for production. At body sizes, the tracking relaxes but the geometric precision persists. Geist Mono completes the system as the monospace companion for code, terminal output, and technical labels. Both fonts enable OpenType `"liga"` (ligatures) globally, adding a layer of typographic sophistication that rewards close reading.
 - **trade_off**: 连续梯度（灵活） ↔ 断裂跳跃（强制结构选择） [inferred]
 - **intent**: 强制使用 16 或 32 而非中间值，避免"看心情选 spacing"
 - **avoid**:
@@ -92,6 +159,9 @@
 ## Voice / Brand-implicit
 
 ### decision: signature voice is "infrastructure made invisible" [inferred from extreme minimalism + functional color]
+
+原 DESIGN.md 段落（auto-backfill）：
+> Vercel's website is the visual thesis of developer infrastructure made invisible — a design system so restrained it borders on philosophical. The page is overwhelmingly white (`#ffffff`) with near-black (`#171717`) text, creating a gallery-like emptiness where every element earns its pixel. This isn't minimalism as decoration; it's minimalism as engineering principle. The Geist design system treats the interface like a compiler treats code — every unnecessary token is stripped away until only structure remains.
 - **trade_off**: 显眼的品牌存在 ↔ 让基础设施隐形
 - **intent**: 让用户感受到 Vercel 的存在不是通过装饰，而是通过结构本身
 - **avoid**:

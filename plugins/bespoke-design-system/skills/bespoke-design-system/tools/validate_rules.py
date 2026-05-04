@@ -39,7 +39,43 @@ VALID_SECTIONS = {'color', 'typography', 'components', 'layout',
                   'spacing'}
 VALID_ARCHETYPES = {'Sage', 'Magician', 'Hero', 'Outlaw', 'Explorer', 'Creator',
                     'Innocent', 'Lover', 'Caregiver', 'Ruler', 'Jester', 'Everyman'}
-RULE_ID_RE = re.compile(r'^[a-z0-9-]+-(color|typography|components|layout|depth_elevation|motion|voice|anti_patterns|spacing|elevation|color_palette|color_scale|cta|button|card|section|page|nav|header|footer|chrome|button_treatment|sub_section|meta)-[\w-]+-\d{3}$')
+
+# Known top-level rule fields. Anything else is likely a typo (e.g., `avoke`
+# for `avoid`, `whys` for `why`) — silent acceptance has cost real bugs in
+# prior batches.
+KNOWN_RULE_FIELDS = {'rule_id', 'section', 'preconditions', 'action', 'why',
+                     'emerges_from', 'provenance', 'confidence',
+                     'known_conflicts', 'merged_from', 'merge_history',
+                     'inferred'}
+KNOWN_PRECONDITION_FIELDS = {'product_type', 'tone', 'kansei',
+                              'brand_archetypes', 'sd_anchors', 'requires'}
+KNOWN_WHY_FIELDS = {'establish', 'avoid', 'balance'}
+
+VALID_PROVENANCE = {'original', 'generated', 'merged'}
+VALID_SD_DIMENSIONS = {'warm_to_cold', 'ornate_to_minimal',
+                       'serious_to_playful', 'modern_to_classical'}
+
+# v1.7.1 (#30): canonical antonym pairs from references/kansei-theory.md
+# `## 反义对` section. Used to detect self-conflicting kansei sets within a
+# single rule (e.g., `kansei: [structured, organic]` is contradictory).
+KANSEI_ANTONYMS = {
+    'modern': {'classical', 'ancient'},
+    'classical': {'modern'}, 'ancient': {'modern'},
+    'minimal': {'ornate', 'decorative', 'rich'},
+    'ornate': {'minimal'}, 'decorative': {'minimal'}, 'rich': {'minimal'},
+    'serious': {'playful', 'whimsical'},
+    'playful': {'serious'}, 'whimsical': {'serious'},
+    'cold': {'warm', 'cozy'}, 'clinical': {'warm', 'cozy'},
+    'warm': {'cold', 'clinical'}, 'cozy': {'cold', 'clinical'},
+    'precise': {'organic', 'loose'}, 'structured': {'organic', 'loose'},
+    'organic': {'precise', 'structured'}, 'loose': {'precise', 'structured'},
+    'energetic': {'calm'}, 'calm': {'energetic'},
+    'aggressive': {'gentle', 'nurturing'},
+    'gentle': {'aggressive'}, 'nurturing': {'aggressive'},
+}
+# Note: the rule_id format check uses an inline regex below + the
+# SECTION_TO_ID_SEGMENTS map for system-section consistency. A stricter
+# RULE_ID_RE was once defined here but turned into dead code; removed v1.7.1.
 
 # Map section names to all the rule_id-segment forms they can take. Used by
 # the F3 system-section consistency check. Each segment is expanded to both
@@ -137,6 +173,43 @@ def validate_rule(r: dict, file_basename: str, all_rule_ids: set[str],
         if field not in r or r[field] in (None, '', []):
             blockers.append(f'{rid}: missing or empty `{field}`')
 
+    # 1.5 (v1.7.1): Unknown top-level / preconditions / why field detection.
+    # Catches typos like `avoke:` for `avoid:` that pass YAML parse and
+    # silently disable the intended check. Warning by default — explicit
+    # extension fields can be added to the KNOWN_* sets above.
+    for k in r.keys() if isinstance(r, dict) else []:
+        if k not in KNOWN_RULE_FIELDS:
+            warnings.append(
+                f'{rid}: unknown top-level field `{k}` (likely typo). '
+                f'Known: {sorted(KNOWN_RULE_FIELDS)}'
+            )
+    pre_for_typo = r.get('preconditions') if isinstance(r.get('preconditions'), dict) else {}
+    for k in pre_for_typo.keys():
+        if k not in KNOWN_PRECONDITION_FIELDS:
+            warnings.append(
+                f'{rid}: unknown preconditions field `{k}` (likely typo). '
+                f'Known: {sorted(KNOWN_PRECONDITION_FIELDS)}'
+            )
+    why_for_typo = r.get('why') if isinstance(r.get('why'), dict) else {}
+    for k in why_for_typo.keys():
+        if k not in KNOWN_WHY_FIELDS:
+            warnings.append(
+                f'{rid}: unknown why field `{k}` (likely typo of avoid/establish/balance). '
+                f'Known: {sorted(KNOWN_WHY_FIELDS)}'
+            )
+    # v1.7.1: warn when documented why sub-fields are missing/empty. The
+    # schema in extract-grammar.md A3 step 1 shows all three (establish /
+    # avoid / balance). Keep as warning rather than blocker to avoid breaking
+    # legacy anti_patterns that genuinely don't have a "balance" axis.
+    if isinstance(r.get('why'), dict):
+        for sub in ('establish', 'avoid', 'balance'):
+            if not r['why'].get(sub):
+                warnings.append(
+                    f'{rid}: why.{sub} missing or empty (per A3 schema all three '
+                    f'establish/avoid/balance should be set; anti_patterns may '
+                    f'legitimately omit balance, but flag for review).'
+                )
+
     # 2. preconditions must have kansei + brand_archetypes; product_type required
     # except for anti_patterns (which apply universally — they guard against
     # archetype degeneracies without targeting a specific product type).
@@ -167,6 +240,30 @@ def validate_rule(r: dict, file_basename: str, all_rule_ids: set[str],
                 blockers.append(f'{rid}: confidence `{conf}` out of [0, 1]')
         except (TypeError, ValueError):
             blockers.append(f'{rid}: confidence `{conf}` not numeric')
+
+    # 3.5 (v1.7.1): provenance enum check. Documented in scripts/extract-grammar.md
+    # A3 step 1: provenance ∈ {original, generated, merged}. Silently-accepted
+    # garbage (e.g., a typo) breaks tools that filter by provenance (e.g.,
+    # consolidate-adaptations.md skips merged rules).
+    prov = r.get('provenance')
+    if prov is not None and prov not in VALID_PROVENANCE:
+        blockers.append(
+            f'{rid}: provenance `{prov}` not in {sorted(VALID_PROVENANCE)} '
+            f'(documented in scripts/extract-grammar.md A3 step 1)'
+        )
+
+    # 3.6 (v1.7.1): sd_anchors dimension keys. Schema 3.3.5 + 3.3.3 lists
+    # exactly 4 dimensions. Typos (e.g., `warm_to_hot`) silently disable B2's
+    # SD-distance reranking signal.
+    sd = pre.get('sd_anchors')
+    if isinstance(sd, dict):
+        for k in sd.keys():
+            if k not in VALID_SD_DIMENSIONS:
+                warnings.append(
+                    f'{rid}: sd_anchors key `{k}` not in '
+                    f'{sorted(VALID_SD_DIMENSIONS)} — likely typo. '
+                    f'Off-spec dimensions are silently dropped by B2 retrieval.'
+                )
 
     # 4. rule_id format (warning, not blocker — some legacy rules may not match strictly)
     if rid and rid != '<missing rule_id>':
@@ -200,6 +297,15 @@ def validate_rule(r: dict, file_basename: str, all_rule_ids: set[str],
         target = kc.get('rule') if isinstance(kc, dict) else kc
         if target and target not in all_rule_ids:
             blockers.append(f'{rid}: known_conflicts.rule `{target}` does not exist')
+        # (v1.7.1): each known_conflicts entry should carry a reason string —
+        # extract-grammar.md schema example shows `- rule: <id>, reason: <one
+        # liner>`. Without reason, graph builders cannot surface why the
+        # conflict exists when shown to users in B3.
+        if isinstance(kc, dict) and not kc.get('reason'):
+            warnings.append(
+                f'{rid}: known_conflicts entry for `{target}` has no `reason` — '
+                f'B3 conflict resolution will surface an unannotated edge.'
+            )
 
     # 6. Kansei vocab compliance (warning by default; blocker with --strict-vocab — F2)
     kansei_words = pre.get('kansei', []) or []
@@ -211,6 +317,42 @@ def validate_rule(r: dict, file_basename: str, all_rule_ids: set[str],
                     blockers.append(msg)
                 else:
                     warnings.append(msg)
+
+    # 6.5 (v1.7.1 #30): self-contradictory kansei — antonym pair within the
+    # same rule's kansei list. e.g., `[structured, organic]` is incoherent
+    # because organic is an antonym of structured per kansei-theory.md.
+    # Surfaces as warning (some rules may legitimately straddle a tension).
+    kansei_set = set(w.lower() for w in kansei_words if isinstance(w, str))
+    contradictions = set()
+    for w in kansei_set:
+        for ant in KANSEI_ANTONYMS.get(w, set()):
+            if ant in kansei_set:
+                pair = tuple(sorted([w, ant]))
+                contradictions.add(pair)
+    for a, b in sorted(contradictions):
+        warnings.append(
+            f'{rid}: kansei contains antonym pair `{a}` ↔ `{b}` — self-contradictory. '
+            f'Pick one or document why the rule straddles the tension.'
+        )
+
+    # 6.6 (v1.7.1 #41): truncated action string values. Detect lines whose
+    # value contains an unmatched `(` — observed in 3 yaml files where the
+    # LLM/author appears to have been interrupted mid-thought (e.g.
+    # `base_canvas: dark (#1e1f22 to` — missing closing paren + value).
+    # YAML parses these as strings so they pass schema check, but downstream
+    # tools see semantically incomplete data.
+    action = r.get('action')
+    if isinstance(action, dict):
+        for k, v in action.items():
+            if isinstance(v, str):
+                op_count = v.count('(')
+                cp_count = v.count(')')
+                if op_count != cp_count:
+                    warnings.append(
+                        f'{rid}: action.{k} has unmatched parens '
+                        f'(op={op_count}, cp={cp_count}) — likely truncated value: '
+                        f'`{v[:60]}{"..." if len(v) > 60 else ""}`'
+                    )
 
     # File-name vs rule_id system prefix consistency check (warning)
     expected_prefix = file_basename.replace('.yaml', '') + '-'
@@ -281,6 +423,11 @@ def validate_file(path: str, all_rule_ids: set[str], kansei_vocab: set[str],
     # since they are niche-specific. Trigger only when:
     #   - > 5 rules AND uniformity > 90%, OR
     #   - > 8 rules AND uniformity > 80%
+    # v1.7.1: also exempt files where the non-dominant signatures are
+    # supersets/subsets of the dominant one — that pattern matches the F6
+    # doctrine itself ("anti_patterns span MORE archetypes; voice spans
+    # FEWER"). Without this exemption the validator complained even after
+    # systems were correctly aligned with F6.
     archetype_signatures = []
     for r in rules:
         if not isinstance(r, dict):
@@ -293,7 +440,27 @@ def validate_file(path: str, all_rule_ids: set[str], kansei_vocab: set[str],
         most_common, most_common_n = sig_counts.most_common(1)[0]
         uniformity = most_common_n / len(archetype_signatures)
         threshold_uniformity = 0.9 if len(archetype_signatures) <= 8 else 0.8
-        if uniformity > threshold_uniformity and len(sig_counts) <= 2:
+
+        # v1.7.1: check whether non-dominant signatures are supersets or
+        # subsets of dominant — the F6 doctrine literally says anti_patterns
+        # are broader (superset) and voice is narrower (subset). If every
+        # non-dominant variation is in such a relationship, the file is
+        # actually following F6 correctly, not lazily stamping.
+        dominant_set = set(most_common)
+        all_variations_follow_f6 = True
+        has_variation = False
+        for sig, n in sig_counts.items():
+            if sig == most_common:
+                continue
+            has_variation = True
+            sig_set = set(sig)
+            is_superset = sig_set > dominant_set       # broader (anti_patterns pattern)
+            is_subset = sig_set < dominant_set         # narrower (voice pattern)
+            if not (is_superset or is_subset):
+                all_variations_follow_f6 = False
+                break
+
+        if uniformity > threshold_uniformity and len(sig_counts) <= 2 and not (has_variation and all_variations_follow_f6):
             out['warnings'].append(
                 f'{basename}: {most_common_n}/{len(archetype_signatures)} rules ({uniformity*100:.0f}%) '
                 f'share the same brand_archetypes `{list(most_common)}`. This may indicate lazy '

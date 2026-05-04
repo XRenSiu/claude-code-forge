@@ -1,11 +1,11 @@
 {
   "system_name": "bold",
   "source": "open-design",
-  "extracted_at": "2026-05-03T13:38:57.518966Z",
+  "extracted_at": "2026-05-04T04:27:09.693355Z",
   "dialect": "B",
   "fingerprint_hash": "91ccb39dbfdf2388d28c4dad2a8b88bf4340a98c0e72dd2a829d26507ecc1f8c",
   "extraction_method": "programmatic_a1",
-  "tool_version": "1.0.0",
+  "tool_version": "1.1.0",
   "color": {
     "role_color_pairs": {
       "primary": "#0077BC",
@@ -70,7 +70,7 @@
   "radius": {
     "role_radius_pairs": {},
     "all_px_values": [],
-    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_extraction_method": "regex_role_radius (patterns A and B), v1.7.1 subsection-scoped",
     "_confidence": "low"
   },
   "motion": {

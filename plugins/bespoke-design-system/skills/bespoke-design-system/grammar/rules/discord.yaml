@@ -24,7 +24,7 @@ rules:
     - Everyman
     - Jester
   action:
-    base_canvas: dark (#1e1f22 to
+    base_canvas: 'dark 3-step depth (#1e1f22 / #2b2d31 / #313338)'
     depth_strategy: 3-step luminance (rail-deepest, sidebar-mid, chat-lightest)
     no_pure_black: true
     light_theme_supported_but_not_default: true
@@ -373,6 +373,7 @@ rules:
     avoid:
     - drift_into_marketing_polish
     - drift_into_decorative_chrome
+    balance: chat_clarity ↔ chrome_personality_pressure
   emerges_from:
   - discord
   provenance: original

@@ -1,11 +1,11 @@
 {
   "system_name": "elegant",
   "source": "open-design",
-  "extracted_at": "2026-05-03T13:38:57.534600Z",
+  "extracted_at": "2026-05-04T04:27:10.700766Z",
   "dialect": "B",
   "fingerprint_hash": "aab8a3bce10d8fac8763b7dee99168083963e1a0ec79c18546be75b46dd36cae",
   "extraction_method": "programmatic_a1",
-  "tool_version": "1.0.0",
+  "tool_version": "1.1.0",
   "color": {
     "role_color_pairs": {
       "primary": "#3B82F6",
@@ -78,7 +78,7 @@
   "radius": {
     "role_radius_pairs": {},
     "all_px_values": [],
-    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_extraction_method": "regex_role_radius (patterns A and B), v1.7.1 subsection-scoped",
     "_confidence": "low"
   },
   "motion": {

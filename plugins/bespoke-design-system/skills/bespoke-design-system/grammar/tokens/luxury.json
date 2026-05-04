@@ -1,11 +1,11 @@
 {
   "system_name": "luxury",
   "source": "open-design",
-  "extracted_at": "2026-05-03T13:38:57.550977Z",
+  "extracted_at": "2026-05-04T04:27:11.672795Z",
   "dialect": "B",
   "fingerprint_hash": "e7f76af89a7233b000373b5ca00f23b62ab1450c895f664d7d829647ddcde6f0",
   "extraction_method": "programmatic_a1",
-  "tool_version": "1.0.0",
+  "tool_version": "1.1.0",
   "color": {
     "role_color_pairs": {
       "primary": "#FAFAFA",
@@ -69,7 +69,7 @@
   "radius": {
     "role_radius_pairs": {},
     "all_px_values": [],
-    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_extraction_method": "regex_role_radius (patterns A and B), v1.7.1 subsection-scoped",
     "_confidence": "low"
   },
   "motion": {

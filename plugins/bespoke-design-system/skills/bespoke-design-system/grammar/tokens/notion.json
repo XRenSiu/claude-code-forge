@@ -1,11 +1,11 @@
 {
   "system_name": "notion",
   "source": "open-design",
-  "extracted_at": "2026-05-03T13:38:57.560409Z",
+  "extracted_at": "2026-05-04T04:27:12.242144Z",
   "dialect": "A-variant",
   "fingerprint_hash": "94c550cc035a90aa08b6645e7b3105d2e579453f8415e57b3639319fdb7e5b23",
   "extraction_method": "programmatic_a1",
-  "tool_version": "1.0.0",
+  "tool_version": "1.1.0",
   "color": {
     "role_color_pairs": {
       "notion_black": "rgba(0,0,0,0.95)",
@@ -128,24 +128,14 @@
       "full pill": 9999.0
     },
     "all_px_values": [
-      2.0,
-      3.0,
       4.0,
       5.0,
-      5.6,
-      6.0,
-      6.4,
-      7.0,
       8.0,
-      11.0,
       12.0,
-      14.0,
       16.0,
-      24.0,
-      32.0,
-      120.0
+      9999.0
     ],
-    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_extraction_method": "regex_role_radius (patterns A and B), v1.7.1 subsection-scoped",
     "_confidence": "high"
   },
   "depth_elevation": {

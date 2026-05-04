@@ -1,11 +1,11 @@
 {
   "system_name": "discord",
   "source": "open-design",
-  "extracted_at": "2026-05-03T13:38:57.532049Z",
+  "extracted_at": "2026-05-04T04:27:10.489884Z",
   "dialect": "C-6section",
   "fingerprint_hash": "1379f6462fcf258c3f46df692178a96b77188a11ce53bc7873e88f7705bdde76",
   "extraction_method": "programmatic_a1",
-  "tool_version": "1.0.0",
+  "tool_version": "1.1.0",
   "color": {
     "role_color_pairs": {
       "blurple": "#5865f2",
@@ -83,7 +83,7 @@
     "_confidence": "medium"
   },
   "spacing": {
-    "base_unit_px": 240.0,
+    "base_unit_px": 4.0,
     "declared_scale": null,
     "all_px_values": [
       4.0,
@@ -101,9 +101,10 @@
     "role_radius_pairs": {},
     "all_px_values": [
       4.0,
-      72.0
+      240.0,
+      380.0
     ],
-    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_extraction_method": "regex_role_radius (patterns A and B), v1.7.1 subsection-scoped",
     "_confidence": "low"
   },
   "motion": {

@@ -81,7 +81,7 @@
     },
     {
       "name": "forge-teams",
-      "description": "Agent Teams Product Development Pipeline - 7-phase adversarial collaborative development with multi-agent debate, competition, and cross-validation at every critical decision point, including red team attacks, adversarial debugging, self-healing parallel implementation with Wakeup Guard anti-blocking, independent bug fix loop (/forge-fix), and requirement verification (/forge-verify).",
+      "description": "Agent Teams Product Development Pipeline - 7-phase adversarial collaborative development with multi-agent debate, competition, and cross-validation at every critical decision point, including red team attacks, adversarial debugging, independent bug fix loop, and requirement verification.",
       "version": "1.9.0",
       "author": {
         "name": "XRenSiu",
@@ -107,7 +107,7 @@
     },
     {
       "name": "persona-distill",
-      "description": "Persona Distillation Ecosystem - parameterized schema library + generation/evaluation/scheduling/debate toolkit for distilling personas (people or rule systems) into self-contained Claude Code skills. 5 skills, 9 schemas, 19 components (incl. execution-profile via Klein-RPD/CDM), 9-phase pipeline with v0.4.0 security: consent-attestation gate, untrusted-corpus delimiters, fingerprint verifier, self-containment linter, rubric config range locks, corpus_access_declared cross-check. 6 runnable parsers (iMessage/email/Twitter/generic/Telegram/Slack).",
+      "description": "Persona Distillation Ecosystem — a parameterized schema library + generation/evaluation/scheduling/debate toolkit for distilling personas (people or rule systems) into self-contained Claude Code skills. 5 skills, 9 persona schemas, 19 reusable components (incl. execution-profile via Klein-RPD/CDM 4-sweep), 9-phase pipeline with v0.4.0 security hardening (consent attestation, untrusted-corpus discipline, fingerprint verification, self-containment linter, rubric config lock, corpus access declaration).",
       "version": "0.4.0",
       "author": {
         "name": "XRenSiu",
@@ -135,7 +135,7 @@
     },
     {
       "name": "skill-evolve",
-      "description": "Skill Evolution Engine \u2014 Darwin-style autonomous SKILL.md optimizer. Applies an 8-dimension rubric (60 structural + 40 effectiveness), independent-subagent scoring, and git-backed ratchet hill-climbing (keep-or-revert) to evolve any Claude Code skill from initial draft toward 90+. Inspired by Karpathy's autoresearch and alchaincyf/darwin-skill.",
+      "description": "Skill Evolution Engine — Darwin-style autonomous SKILL.md optimizer. Applies an 8-dimension rubric (60 structural + 40 effectiveness), independent-subagent scoring, and git-backed ratchet hill-climbing (keep-or-revert) to evolve any Claude Code skill from initial draft toward 90+. Inspired by Karpathy's autoresearch and alchaincyf/darwin-skill.",
       "version": "0.1.1",
       "author": {
         "name": "XRenSiu",
@@ -160,7 +160,7 @@
     },
     {
       "name": "ratchet",
-      "description": "Ratchet \u2014 Goal-driven multi-agent persistent optimization system. Combines Goal-Driven master/subagent separation with AutoResearch signal design methodology. Implements an 'independent evaluation + kill-and-restart + ratchet progress' autonomous loop: master only judges, subagent only executes; if a subagent stalls or claims success without meeting acceptance criteria, it is killed and replaced. Suitable for long-running autonomous coding tasks that require verifiable deliverables and explicit termination conditions.",
+      "description": "Ratchet — Goal-driven multi-agent persistent optimization system. Combines Goal-Driven master/subagent separation with AutoResearch signal design methodology. Implements an 'independent evaluation + kill-and-restart + ratchet progress' autonomous loop: master only judges, subagent only executes; if a subagent stalls or claims success without meeting acceptance criteria, it is killed and replaced. Suitable for long-running autonomous coding tasks that require verifiable deliverables and explicit termination conditions.",
       "version": "1.0.0",
       "author": {
         "name": "XRenSiu",
@@ -186,8 +186,8 @@
     },
     {
       "name": "bespoke-design-system",
-      "description": "Generate a bespoke DESIGN.md for any product brief by reverse-engineering a corpus of existing DESIGN.md design systems into a computable design grammar (rules + rationale + relationships), then forward-generating with three-part rationale (inheritance + adaptation + justification). Outputs OD-dialect 9-section DESIGN.md (Visual Theme / Color / Typography / Components / Layout / Depth & Elevation / Do's & Don'ts / Responsive / Agent Prompt Guide) consumable by any DESIGN.md-compatible tool. Two interaction modes: interactive (one-shot question batching, max 7 questions, never interrupts mid-generation) or auto (zero-questions inference). Self-evolving: high-frequency adaptations consolidate into new rules. Material library is decoupled \u2014 works with OD's ~140 systems, awesome-design-md, or any DESIGN.md collection.",
-      "version": "1.7.0",
+      "description": "Generate a bespoke DESIGN.md for any product brief by reverse-engineering a corpus of existing DESIGN.md design systems into a computable design grammar (rules + rationale + relationships), then forward-generating with three-part rationale (inheritance + adaptation + justification). Outputs the v4: 5-check P0 gate (coherence/archetype/kansei/neighbor + rationale-judge) + OD-dialect 9-section DESIGN.md format (Visual Theme & Atmosphere / Color Palette & Roles / Typography Rules / Component Stylings / Layout Principles / Depth & Elevation / Do's and Don'ts / Responsive Behavior / Agent Prompt Guide) consumable by any DESIGN.md-compatible tool (OD, Claude Design, Stitch). Two interaction modes: interactive (one-shot question batching, max 7 questions, never interrupts mid-generation) or auto (zero-questions, default-driven inference). Self-evolving: high-frequency adaptations consolidate into new rules. Material library is decoupled — works with OD's ~140 systems, awesome-design-md, or any DESIGN.md collection.",
+      "version": "1.8.0",
       "author": {
         "name": "XRenSiu",
         "email": "xrensiu@gmail.com"

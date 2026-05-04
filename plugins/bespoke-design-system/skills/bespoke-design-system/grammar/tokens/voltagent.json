@@ -1,11 +1,11 @@
 {
   "system_name": "voltagent",
   "source": "open-design",
-  "extracted_at": "2026-05-03T13:38:57.592772Z",
+  "extracted_at": "2026-05-04T04:27:13.880687Z",
   "dialect": "A",
   "fingerprint_hash": "2f58cadf75642185b09493a7bf00e81461acd67bdd543c021b22e254e3b2a32f",
   "extraction_method": "programmatic_a1",
-  "tool_version": "1.0.0",
+  "tool_version": "1.1.0",
   "color": {
     "role_color_pairs": {
       "warm_ambient_haze": "rgba(92, 88, 85, 0.2)",
@@ -126,24 +126,13 @@
       "comfortably rounded": 8.0
     },
     "all_px_values": [
-      2.0,
       4.0,
-      5.0,
       6.0,
       6.4,
       8.0,
-      12.0,
-      16.0,
-      20.0,
-      24.0,
-      28.0,
-      32.0,
-      40.0,
-      48.0,
-      64.0,
-      96.0
+      9999.0
     ],
-    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_extraction_method": "regex_role_radius (patterns A and B), v1.7.1 subsection-scoped",
     "_confidence": "medium"
   },
   "depth_elevation": {

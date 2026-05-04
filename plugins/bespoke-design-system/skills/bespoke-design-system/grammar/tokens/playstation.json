@@ -1,11 +1,11 @@
 {
   "system_name": "playstation",
   "source": "open-design",
-  "extracted_at": "2026-05-03T13:38:57.565491Z",
+  "extracted_at": "2026-05-04T04:27:12.564890Z",
   "dialect": "A",
   "fingerprint_hash": "aa328bc329428dd69daee224a64d8ad793dbdd340d9bb1cb8df2794dbbafabd6",
   "extraction_method": "programmatic_a1",
-  "tool_version": "1.0.0",
+  "tool_version": "1.1.0",
   "color": {
     "role_color_pairs": {
       "playstation_blue": "#0070cc",
@@ -89,7 +89,7 @@
     "_confidence": "medium"
   },
   "spacing": {
-    "base_unit_px": 12.0,
+    "base_unit_px": 8.0,
     "declared_scale": [
       1.0,
       2.0,
@@ -140,20 +140,16 @@
       2.0,
       3.0,
       6.0,
-      8.0,
       12.0,
       13.0,
-      16.0,
       19.0,
       20.0,
-      21.0,
       24.0,
-      32.0,
       36.0,
       48.0,
-      96.0
+      999.0
     ],
-    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_extraction_method": "regex_role_radius (patterns A and B), v1.7.1 subsection-scoped",
     "_confidence": "low"
   },
   "depth_elevation": {

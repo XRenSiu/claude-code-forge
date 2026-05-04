@@ -1,11 +1,11 @@
 {
   "system_name": "gradient",
   "source": "open-design",
-  "extracted_at": "2026-05-03T13:38:57.542713Z",
+  "extracted_at": "2026-05-04T04:27:11.230466Z",
   "dialect": "B",
   "fingerprint_hash": "7af0a637064eb9b0bd4244e93792adc1948e79cd4939c0dd36610298ce496c54",
   "extraction_method": "programmatic_a1",
-  "tool_version": "1.0.0",
+  "tool_version": "1.1.0",
   "color": {
     "role_color_pairs": {
       "primary": "#990FFA",
@@ -86,7 +86,7 @@
   "radius": {
     "role_radius_pairs": {},
     "all_px_values": [],
-    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_extraction_method": "regex_role_radius (patterns A and B), v1.7.1 subsection-scoped",
     "_confidence": "low"
   },
   "motion": {

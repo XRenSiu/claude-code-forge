@@ -1,11 +1,11 @@
 {
   "system_name": "linear-app",
   "source": "open-design",
-  "extracted_at": "2026-05-03T13:38:57.548895Z",
+  "extracted_at": "2026-05-04T04:27:11.566187Z",
   "dialect": "A",
   "fingerprint_hash": "4c7264d8bc0e26de761c550e9f0445b0e7d92078c1a288f3fdb604b4f6df8fb7",
   "extraction_method": "programmatic_a1",
-  "tool_version": "1.0.0",
+  "tool_version": "1.1.0",
   "color": {
     "role_color_pairs": {
       "marketing_black": "#010102",
@@ -148,27 +148,15 @@
       "full pill": 9999.0
     },
     "all_px_values": [
-      1.0,
-      1.584,
       2.0,
       4.0,
       6.0,
-      7.0,
       8.0,
-      11.0,
       12.0,
-      16.0,
-      19.0,
-      20.0,
       22.0,
-      24.0,
-      28.0,
-      32.0,
-      35.0,
-      72.0,
-      80.0
+      9999.0
     ],
-    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_extraction_method": "regex_role_radius (patterns A and B), v1.7.1 subsection-scoped",
     "_confidence": "high"
   },
   "depth_elevation": {

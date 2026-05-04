@@ -1,0 +1,125 @@
+rules:
+- rule_id: bugatti-color-monochrome-austerity-001
+  section: color
+  preconditions:
+    product_type: [luxury_brand, automotive, hypercar, museum_grade_marketing]
+    tone: [premium, severe, authoritative]
+    kansei: [premium, severe, authoritative, restrained, sophisticated]
+    sd_anchors:
+      warm_to_cold: 0.5
+      ornate_to_minimal: 0.9
+      serious_to_playful: -0.9
+      modern_to_classical: 0.2
+    brand_archetypes: [Ruler, Magician]
+  action:
+    palette_size: 3
+    palette: [pure_black, white, single_mid_gray]
+    accent_hue_count: 0
+    gradient_count: 0
+    use_product_photography_as_color_source: true
+  why:
+    establish: chrome-refuses-to-compete-with-product-photography
+    avoid: [accent_color_brand_blue, commerce_orange_cta, hazard_red, gradient_wash]
+    balance: brand_recognition ↔ product_color_supremacy
+  emerges_from: [bugatti]
+  provenance: original
+  confidence: 0.55
+
+- rule_id: bugatti-color-pure-black-not-near-black-002
+  section: color
+  preconditions:
+    product_type: [luxury_brand, automotive, hypercar]
+    tone: [severe, premium]
+    kansei: [severe, premium, restrained]
+    brand_archetypes: [Ruler]
+  action:
+    canvas_hex: '#000000'
+    forbid_warm_black: true
+    forbid_near_black_offsets: ['#0a0a0a', '#121212', '#1a1a1a']
+  why:
+    establish: museum-vitrine-zero-reflection-canvas
+    avoid: [developer_tool_near_black, cozy_warm_black, off_black_streaming_app]
+    balance: visual_comfort ↔ couture_severity
+  emerges_from: [bugatti]
+  provenance: original
+  confidence: 0.5
+
+- rule_id: bugatti-typography-architectural-display-scale-003
+  section: typography
+  preconditions:
+    product_type: [luxury_brand, automotive, hypercar, museum_grade_marketing]
+    tone: [premium, severe, authoritative]
+    kansei: [premium, sophisticated, authoritative, severe, intense]
+    brand_archetypes: [Ruler, Magician, Hero]
+  action:
+    hero_display_size_px_range: [200, 288]
+    hero_line_height: 1.0
+    hero_text_transform: uppercase
+    weight_range: [400]
+    use_scale_for_hierarchy_not_weight: true
+  why:
+    establish: type-as-architecture-readable-from-showroom-floor
+    avoid: [standard_60_to_80_hero, bold_700_display, multi_line_hero_wrap]
+    balance: architectural_monumentality ↔ readability_at_default_zoom
+  emerges_from: [bugatti]
+  provenance: original
+  confidence: 0.5
+
+- rule_id: bugatti-typography-zero-bold-scale-only-hierarchy-004
+  section: typography
+  preconditions:
+    product_type: [luxury_brand, automotive, hypercar]
+    tone: [restrained, severe]
+    kansei: [restrained, refined, severe]
+    brand_archetypes: [Ruler]
+  action:
+    weights_allowed: [400]
+    weights_forbidden: [500, 600, 700, 800, 900]
+    hierarchy_mechanism: scale_only
+  why:
+    establish: every-emphasis-must-cost-layout-space
+    avoid: [weight_500_medium_body, weight_700_heading, weight_driven_hierarchy]
+    balance: hierarchy_clarity ↔ chrome_silence
+  emerges_from: [bugatti]
+  provenance: original
+  confidence: 0.5
+
+- rule_id: bugatti-components-three-radius-extreme-005
+  section: components
+  preconditions:
+    product_type: [luxury_brand, automotive, hypercar]
+    tone: [severe, premium, restrained]
+    kansei: [severe, refined, restrained]
+    brand_archetypes: [Ruler, Magician]
+  action:
+    allowed_radii_px: [0, 6, 9999]
+    forbid_intermediate_radii: [4, 8, 10, 12, 16, 20, 24, 30]
+    primary_button_radius: 9999
+    media_default_radius: 0
+  why:
+    establish: rectangle-or-pill-no-vulgar-middle-ground
+    avoid: [12px_saas_radius, 16px_material_radius, sub_6_micro_round]
+    balance: geometric_purity ↔ touch_friendliness
+  emerges_from: [bugatti]
+  provenance: original
+  confidence: 0.55
+
+- rule_id: bugatti-anti_patterns-silent-chrome-no-shadows-006
+  section: anti_patterns
+  preconditions:
+    tone: [severe, restrained, premium]
+    kansei: [severe, restrained, refined]
+    brand_archetypes: [Ruler, Magician, Sage]
+  action:
+    forbid_box_shadow: true
+    forbid_glow_focus: true
+    forbid_glassmorphism: true
+    forbid_gradient_decoration: true
+    only_allowed_depth: [hairline_border, vignette_for_legibility]
+  why:
+    establish: chrome-yields-all-light-to-product-photography
+    avoid: [drop_shadow_elevation, glassmorphism_blur, glow_focus_ring, multi_layer_composite]
+    balance: ui_clarity ↔ product_supremacy
+  emerges_from: [bugatti]
+  provenance: original
+  confidence: 0.55

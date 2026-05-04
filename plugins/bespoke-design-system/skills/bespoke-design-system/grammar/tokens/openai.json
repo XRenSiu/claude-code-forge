@@ -1,11 +1,11 @@
 {
   "system_name": "openai",
   "source": "open-design",
-  "extracted_at": "2026-05-03T13:38:57.562649Z",
+  "extracted_at": "2026-05-04T04:27:12.352825Z",
   "dialect": "C-6section",
   "fingerprint_hash": "d9abf17a413c5b07bfd6e3306347a51b41b298470ca1d0fc37af2698250da76f",
   "extraction_method": "programmatic_a1",
-  "tool_version": "1.0.0",
+  "tool_version": "1.1.0",
   "color": {
     "role_color_pairs": {
       "pure_white": "#ffffff",
@@ -85,7 +85,7 @@
     "_confidence": "high"
   },
   "spacing": {
-    "base_unit_px": 24.0,
+    "base_unit_px": 4.0,
     "declared_scale": null,
     "all_px_values": [
       4.0,
@@ -108,10 +108,10 @@
       4.0,
       24.0,
       48.0,
-      64.0,
-      128.0
+      128.0,
+      1200.0
     ],
-    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_extraction_method": "regex_role_radius (patterns A and B), v1.7.1 subsection-scoped",
     "_confidence": "low"
   },
   "motion": {

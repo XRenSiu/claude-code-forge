@@ -1,11 +1,11 @@
 {
   "system_name": "bmw",
   "source": "open-design",
-  "extracted_at": "2026-05-03T13:38:57.518426Z",
+  "extracted_at": "2026-05-04T04:27:09.654313Z",
   "dialect": "A",
   "fingerprint_hash": "f04fb9e29769c567674bfbba43bebaa01760f303d5bd544770dd80bdf7e807fb",
   "extraction_method": "programmatic_a1",
-  "tool_version": "1.0.0",
+  "tool_version": "1.1.0",
   "color": {
     "role_color_pairs": {
       "pure_white": "#ffffff",
@@ -97,11 +97,9 @@
       30.0,
       32.0,
       40.0,
-      45.0,
-      56.0,
-      60.0
+      45.0
     ],
-    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_extraction_method": "regex_role_radius (patterns A and B), v1.7.1 subsection-scoped",
     "_confidence": "low"
   },
   "depth_elevation": {

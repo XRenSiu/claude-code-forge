@@ -1,11 +1,11 @@
 {
   "system_name": "minimax",
   "source": "open-design",
-  "extracted_at": "2026-05-03T13:38:57.553994Z",
+  "extracted_at": "2026-05-04T04:27:11.849624Z",
   "dialect": "A",
   "fingerprint_hash": "2960199d25c4b9a1fd8bc4756d998ee49c6315d7db23ad7ac0e274365f91ac9e",
   "extraction_method": "programmatic_a1",
-  "tool_version": "1.0.0",
+  "tool_version": "1.1.0",
   "color": {
     "role_color_pairs": {
       "brand_blue": "#1456f0",
@@ -139,27 +139,19 @@
       "full": 9999.0
     },
     "all_px_values": [
-      1.0,
-      2.0,
       4.0,
-      6.0,
       8.0,
-      10.0,
       11.0,
       13.0,
-      14.0,
       16.0,
       20.0,
       22.0,
       24.0,
       30.0,
       32.0,
-      40.0,
-      50.0,
-      64.0,
-      80.0
+      9999.0
     ],
-    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_extraction_method": "regex_role_radius (patterns A and B), v1.7.1 subsection-scoped",
     "_confidence": "medium"
   },
   "depth_elevation": {

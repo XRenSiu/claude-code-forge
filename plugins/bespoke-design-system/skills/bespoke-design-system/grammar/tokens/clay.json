@@ -1,11 +1,11 @@
 {
   "system_name": "clay",
   "source": "open-design",
-  "extracted_at": "2026-05-03T13:38:57.523946Z",
+  "extracted_at": "2026-05-04T04:27:09.956071Z",
   "dialect": "A",
   "fingerprint_hash": "885f8be9e2d5c61b4cd024c9d5c308a791a0d4b0d464a2015094b67884890375",
   "extraction_method": "programmatic_a1",
-  "tool_version": "1.0.0",
+  "tool_version": "1.1.0",
   "color": {
     "role_color_pairs": {
       "clay_black": "#000000",
@@ -146,21 +146,15 @@
       "pill": 1584.0
     },
     "all_px_values": [
-      1.0,
-      2.0,
       4.0,
-      6.4,
       8.0,
       11.0,
       12.0,
-      12.8,
-      16.0,
-      18.0,
-      20.0,
       24.0,
-      40.0
+      40.0,
+      1584.0
     ],
-    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_extraction_method": "regex_role_radius (patterns A and B), v1.7.1 subsection-scoped",
     "_confidence": "high"
   },
   "depth_elevation": {

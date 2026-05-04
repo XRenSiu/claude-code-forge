@@ -1,11 +1,11 @@
 {
   "system_name": "github",
   "source": "open-design",
-  "extracted_at": "2026-05-03T13:38:57.541780Z",
+  "extracted_at": "2026-05-04T04:27:11.159334Z",
   "dialect": "C-6section",
   "fingerprint_hash": "80ea326a67e80bc613a68b45c290bad3e3ddd4fd170a75393b6bf793bc5e7cc3",
   "extraction_method": "programmatic_a1",
-  "tool_version": "1.0.0",
+  "tool_version": "1.1.0",
   "color": {
     "role_color_pairs": {
       "canvas_default": "#ffffff",
@@ -99,9 +99,12 @@
     "all_px_values": [
       4.0,
       12.0,
-      16.0
+      16.0,
+      296.0,
+      1012.0,
+      1280.0
     ],
-    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_extraction_method": "regex_role_radius (patterns A and B), v1.7.1 subsection-scoped",
     "_confidence": "low"
   },
   "motion": {

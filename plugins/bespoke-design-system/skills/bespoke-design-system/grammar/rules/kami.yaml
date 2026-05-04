@@ -1,0 +1,132 @@
+rules:
+- rule_id: kami-color-warm-parchment-canvas-001
+  section: color
+  preconditions:
+    product_type: [editorial_tool, document_template, print_first_artifact]
+    tone: [refined, premium, classical]
+    kansei: [refined, premium, classical, sophisticated, calm]
+    sd_anchors:
+      warm_to_cold: -0.5
+      ornate_to_minimal: 0.5
+      serious_to_playful: -0.7
+      modern_to_classical: 0.5
+    brand_archetypes: [Sage, Lover]
+  action:
+    canvas_hex: '#f5f4ed'
+    canvas_class: warm_parchment_print_first
+    forbid_pure_white_canvas: true
+    forbid_pure_black: true
+    intent: page_is_paper_not_ui
+  why:
+    establish: deliverable-feels-printed-not-rendered
+    avoid: [pure_white_web_canvas, pure_black_text, cool_gray_surface]
+    balance: screen_legibility ↔ print_fidelity
+  emerges_from: [kami]
+  provenance: original
+  confidence: 0.55
+
+- rule_id: kami-color-single-ink-blue-accent-5-percent-002
+  section: color
+  preconditions:
+    product_type: [editorial_tool, document_template, print_first_artifact]
+    tone: [restrained, classical, refined]
+    kansei: [restrained, refined, classical]
+    brand_archetypes: [Sage]
+  action:
+    accent_hex: '#1B365D'
+    accent_class: ink_blue
+    accent_max_surface_coverage_percent: 5
+    accent_use_areas: [cta, section_number, link_text, quote_left_rule, switcher_active, metric_value]
+    forbid_second_accent: true
+    forbid_gradient: true
+  why:
+    establish: single-chromatic-accent-as-punctuation-not-ornament
+    avoid: [brand_blue_large_block, second_accent_red_or_orange, gradient_color_wash]
+    balance: chromatic_signal ↔ print_restraint
+  emerges_from: [kami]
+  provenance: original
+  confidence: 0.55
+
+- rule_id: kami-typography-serif-single-weight-500-003
+  section: typography
+  preconditions:
+    product_type: [editorial_tool, document_template, print_first_artifact]
+    tone: [classical, refined, literary]
+    kansei: [classical, refined, literary, intellectual]
+    brand_archetypes: [Sage, Lover]
+  action:
+    primary_family_class: serif (multi_lang_charter_sourcehan_yumincho)
+    weight_max: 500
+    forbid_weights: [600, 700, 800, 900]
+    forbid_italic: true
+    emphasis_via_color_not_weight_or_style: true
+  why:
+    establish: print-serif-discipline-emphasis-via-ink-blue-not-bold
+    avoid: [700_bold_heading, italic_emphasis, synthetic_bold, weight_driven_hierarchy]
+    balance: hierarchy_signal ↔ print_constraint_purity
+  emerges_from: [kami]
+  provenance: original
+  confidence: 0.55
+
+- rule_id: kami-color-tag-fill-solid-hex-not-rgba-004
+  section: color
+  preconditions:
+    product_type: [editorial_tool, document_template, print_first_artifact]
+    tone: [refined, technical]
+    kansei: [refined, technical, restrained]
+    brand_archetypes: [Sage]
+  action:
+    tag_fill_strategy: solid_hex_pre_blended_over_parchment
+    forbid_rgba_alpha_tag_fill: true
+    enumerated_solid_hex: ['#EEF2F7', '#E4ECF5', '#D6E1EE', '#D0DCE9']
+    rationale: weasyprint_double_paint_alpha_visible_seam_on_zoom
+  why:
+    establish: print-rendering-stability-tag-must-be-solid
+    avoid: [rgba_alpha_tag_fill, transparent_tag_fill, multi_layer_alpha_overlay]
+    balance: design_flexibility ↔ print_pipeline_stability
+  emerges_from: [kami]
+  provenance: original
+  confidence: 0.55
+
+- rule_id: kami-color-warm-grays-only-005
+  section: color
+  preconditions:
+    product_type: [editorial_tool, document_template, print_first_artifact]
+    tone: [warm, refined]
+    kansei: [warm, refined, classical]
+    brand_archetypes: [Sage, Lover]
+  action:
+    gray_temperature: warm_yellow_brown_undertone
+    rgb_invariant: 'R approx G greater than B'
+    forbid_cool_blue_gray: true
+    forbid_tailwind_slate_neutral: true
+  why:
+    establish: every-neutral-warm-temperature-locked-as-dna
+    avoid: [slate_500_cool_gray, tailwind_neutral_500_cool, blue_gray_dividers]
+    balance: token_universality ↔ temperature_lock
+  emerges_from: [kami]
+  provenance: original
+  confidence: 0.55
+
+- rule_id: kami-depth_elevation-ring-and-whisper-only-006
+  section: depth_elevation
+  preconditions:
+    product_type: [editorial_tool, document_template, print_first_artifact]
+    tone: [refined, restrained, classical]
+    kansei: [refined, restrained, classical, calm]
+    brand_archetypes: [Sage]
+  action:
+    sanctioned_depth_levels: 3
+    level_0: flat_no_shadow
+    level_1: '1px_solid_border_or_ring_shadow'
+    level_2_whisper: '0 4px 24px rgba(0,0,0,0.05)'
+    forbid_hard_drop_shadow: true
+    forbid_glassmorphism: true
+    forbid_backdrop_filter: true
+  why:
+    establish: paper-depth-three-levels-no-modern-compositing
+    avoid: [strong_drop_shadow, multi_layer_composite, glassmorphism, backdrop_filter_blur]
+    balance: depth_signal ↔ print_paper_authenticity
+  emerges_from: [kami]
+  provenance: original
+  confidence: 0.55

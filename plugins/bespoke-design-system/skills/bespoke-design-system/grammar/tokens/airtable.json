@@ -1,11 +1,11 @@
 {
   "system_name": "airtable",
   "source": "open-design",
-  "extracted_at": "2026-05-03T13:38:57.513643Z",
+  "extracted_at": "2026-05-04T04:27:09.359220Z",
   "dialect": "A-variant",
   "fingerprint_hash": "2bf4a6f853c23c8cf04f890654ad3cebec849a98de1655425b65e3ad25b69476",
   "extraction_method": "programmatic_a1",
-  "tool_version": "1.0.0",
+  "tool_version": "1.1.0",
   "color": {
     "role_color_pairs": {
       "deep_navy": "#181d26",
@@ -74,7 +74,7 @@
     "_confidence": "high"
   },
   "spacing": {
-    "base_unit_px": 48.0,
+    "base_unit_px": 8.0,
     "declared_scale": null,
     "all_px_values": [
       2.0,
@@ -97,14 +97,12 @@
     "role_radius_pairs": {},
     "all_px_values": [
       2.0,
-      8.0,
       12.0,
       16.0,
       24.0,
-      32.0,
-      48.0
+      32.0
     ],
-    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_extraction_method": "regex_role_radius (patterns A and B), v1.7.1 subsection-scoped",
     "_confidence": "low"
   },
   "depth_elevation": {

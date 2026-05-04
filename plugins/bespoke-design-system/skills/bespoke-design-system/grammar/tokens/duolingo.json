@@ -1,11 +1,11 @@
 {
   "system_name": "duolingo",
   "source": "open-design",
-  "extracted_at": "2026-05-03T13:38:57.533698Z",
+  "extracted_at": "2026-05-04T04:27:10.629844Z",
   "dialect": "C-6section",
   "fingerprint_hash": "6a7a3897b89024bae75f0678652748041d5df7581e5ef3783b0bd59c9fd3823b",
   "extraction_method": "programmatic_a1",
-  "tool_version": "1.0.0",
+  "tool_version": "1.1.0",
   "color": {
     "role_color_pairs": {
       "owl_green": "#58cc02",
@@ -95,9 +95,11 @@
     "role_radius_pairs": {},
     "all_px_values": [
       4.0,
-      24.0
+      24.0,
+      320.0,
+      1080.0
     ],
-    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_extraction_method": "regex_role_radius (patterns A and B), v1.7.1 subsection-scoped",
     "_confidence": "low"
   },
   "motion": {

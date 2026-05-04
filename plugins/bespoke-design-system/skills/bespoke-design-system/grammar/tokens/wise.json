@@ -1,11 +1,11 @@
 {
   "system_name": "wise",
   "source": "open-design",
-  "extracted_at": "2026-05-03T13:38:57.596653Z",
+  "extracted_at": "2026-05-04T04:27:14.059246Z",
   "dialect": "A",
   "fingerprint_hash": "71f1c384405e4641784aa0917b3eebb1ccb478fe11ea0cd6098b4979d4aaf59f",
   "extraction_method": "programmatic_a1",
-  "tool_version": "1.0.0",
+  "tool_version": "1.1.0",
   "color": {
     "role_color_pairs": {
       "near_black": "#0e0f0c",
@@ -114,25 +114,16 @@
       "pill": 9999.0
     },
     "all_px_values": [
-      1.0,
       2.0,
-      3.0,
-      4.0,
-      5.0,
-      8.0,
       10.0,
-      11.0,
-      12.0,
       16.0,
-      18.0,
-      19.0,
       20.0,
-      22.0,
-      24.0,
       30.0,
-      40.0
+      40.0,
+      1000.0,
+      9999.0
     ],
-    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_extraction_method": "regex_role_radius (patterns A and B), v1.7.1 subsection-scoped",
     "_confidence": "high"
   },
   "depth_elevation": {

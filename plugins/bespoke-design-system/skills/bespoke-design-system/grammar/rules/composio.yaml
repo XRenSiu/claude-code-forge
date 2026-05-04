@@ -1,0 +1,106 @@
+rules:
+- rule_id: composio-color-pitch-black-canvas-cyan-accent-001
+  section: color
+  preconditions:
+    product_type: [developer_tool, b2b_saas, infrastructure]
+    tone: [technical, confident, authoritative]
+    kansei: [technical, structured, authoritative, intense, focused]
+    sd_anchors:
+      warm_to_cold: 0.6
+      ornate_to_minimal: 0.5
+      serious_to_playful: -0.5
+      modern_to_classical: -0.6
+    brand_archetypes: [Sage, Magician]
+  action:
+    canvas_hex: '#0f0f0f'
+    canvas_class: pitch_black_slight_warm
+    accent_strategy: bioluminescent_cyan_at_low_opacity
+    accent_full_saturation_use: high_signal_moments_only
+    glow_use: cyan_radial_at_0.12_max
+  why:
+    establish: developer-terminal-aesthetic-bridges-marketing-and-docs
+    avoid: [light_marketing_canvas, multi_color_brand, gradient_brand_hero]
+    balance: developer_credibility ↔ marketing_legibility
+  emerges_from: [composio]
+  provenance: original
+  confidence: 0.55
+
+- rule_id: composio-color-border-mist-opacity-ladder-002
+  section: color
+  preconditions:
+    product_type: [developer_tool, b2b_saas, infrastructure]
+    tone: [technical, structured]
+    kansei: [structured, refined, technical]
+    brand_archetypes: [Sage]
+  action:
+    border_strategy: white_opacity_ladder_4_8_10_12_percent
+    forbid_drop_shadow_on_dark: true
+    border_token_count: 5
+    use_border_opacity_for_depth_hierarchy: true
+  why:
+    establish: depth-via-border-opacity-instead-of-shadow-on-dark
+    avoid: [black_box_shadow_on_dark_invisible, 1px_solid_white_too_loud, colored_border]
+    balance: depth_signal ↔ dark_first_self_consistency
+  emerges_from: [composio]
+  provenance: original
+  confidence: 0.55
+
+- rule_id: composio-typography-ultra-tight-line-heights-003
+  section: typography
+  preconditions:
+    product_type: [developer_tool, b2b_saas, infrastructure]
+    tone: [authoritative, intense]
+    kansei: [authoritative, dense, focused, intense]
+    brand_archetypes: [Sage]
+  action:
+    heading_line_height_range: [0.87, 1.0]
+    body_line_height_range: [1.5, 1.63]
+    compression_intent: authority_via_density
+  why:
+    establish: compressed-headings-feel-commanding-not-decorative
+    avoid: [relaxed_marketing_heading, 1.4_plus_heading_floats, decorative_letter_spacing]
+    balance: authority_density ↔ readability
+  emerges_from: [composio]
+  provenance: original
+  confidence: 0.5
+
+- rule_id: composio-typography-dual-font-mono-as-credibility-004
+  section: typography
+  preconditions:
+    product_type: [developer_tool, b2b_saas, infrastructure]
+    tone: [technical, confident]
+    kansei: [technical, professional, structured]
+    brand_archetypes: [Sage, Creator]
+  action:
+    primary_family_class: geometric_sans
+    secondary_family_class: monospace
+    monospace_role: technical_voice_credibility_signal
+    monospace_use_areas: [code, stats_metrics, technical_overlines]
+    forbid_mono_decorative_only: true
+  why:
+    establish: monospace-is-credibility-signal-not-decoration
+    avoid: [mono_decorative, sans_for_code, single_family_marketing_only]
+    balance: marketing_warmth ↔ technical_credibility
+  emerges_from: [composio]
+  provenance: original
+  confidence: 0.55
+
+- rule_id: composio-depth_elevation-brutalist-hard-offset-shadow-005
+  section: depth_elevation
+  preconditions:
+    product_type: [developer_tool, b2b_saas, infrastructure]
+    tone: [raw, technical, confident]
+    kansei: [raw, technical, intense, focused]
+    brand_archetypes: [Sage, Outlaw]
+  action:
+    signature_shadow: 'rgba(0,0,0,0.15) 4px 4px 0px 0px'
+    use_on: select_signature_cards_only
+    forbid_universal_application: true
+    soft_diffuse_shadow_reserved_for: floating_overlays_modals
+  why:
+    establish: hard-offset-shadow-as-rationed-personality-break
+    avoid: [universal_brutalist_shadow, soft_shadow_on_signature_cards, generic_saas_drop]
+    balance: sleek_consistency ↔ retro_computing_personality
+  emerges_from: [composio]
+  provenance: original
+  confidence: 0.5

@@ -1,11 +1,11 @@
 {
   "system_name": "editorial",
   "source": "open-design",
-  "extracted_at": "2026-05-03T13:38:57.534182Z",
+  "extracted_at": "2026-05-04T04:27:10.664905Z",
   "dialect": "B",
   "fingerprint_hash": "fc2b9e3dddf4911796911cd0d11b8a02f039d74a96a361e67fea4fc2b1775e31",
   "extraction_method": "programmatic_a1",
-  "tool_version": "1.0.0",
+  "tool_version": "1.1.0",
   "color": {
     "role_color_pairs": {
       "primary": "#111111",
@@ -77,7 +77,7 @@
   "radius": {
     "role_radius_pairs": {},
     "all_px_values": [],
-    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_extraction_method": "regex_role_radius (patterns A and B), v1.7.1 subsection-scoped",
     "_confidence": "low"
   },
   "motion": {

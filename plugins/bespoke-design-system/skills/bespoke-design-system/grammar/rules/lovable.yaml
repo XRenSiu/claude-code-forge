@@ -1,0 +1,127 @@
+rules:
+- rule_id: lovable-color-parchment-cream-canvas-001
+  section: color
+  preconditions:
+    product_type: [developer_tool, ai_builder, low_code]
+    tone: [warm, approachable, refined]
+    kansei: [warm, approachable, friendly, refined]
+    sd_anchors:
+      warm_to_cold: -0.5
+      ornate_to_minimal: 0.4
+      serious_to_playful: -0.1
+      modern_to_classical: -0.2
+    brand_archetypes: [Caregiver, Creator]
+  action:
+    canvas_hex: '#f7f4ed'
+    canvas_class: parchment_cream_analog_notebook
+    forbid_pure_white_canvas: true
+    forbid_beige_kitchen_tones: true
+  why:
+    establish: warm-cream-separates-from-cold-developer-tool-conventions
+    avoid: [pure_white_dev_tool_default, kitchen_beige_cozy, light_gray_neutral]
+    balance: dev_tool_credibility ↔ analog_humanity
+  emerges_from: [lovable]
+  provenance: original
+  confidence: 0.55
+
+- rule_id: lovable-typography-humanist-rounded-terminals-002
+  section: typography
+  preconditions:
+    product_type: [developer_tool, ai_builder, low_code]
+    tone: [warm, approachable]
+    kansei: [warm, approachable, friendly, organic]
+    brand_archetypes: [Caregiver, Creator]
+  action:
+    primary_family_class: humanist_sans_with_rounded_terminals
+    forbid_geometric_tech_sans_only: true
+    weight_range: [400, 480, 600]
+    display_letter_spacing_at_60px: '-1.5px'
+    display_letter_spacing_at_36px: '-0.9px'
+  why:
+    establish: humanist-warmth-via-typography-not-just-color
+    avoid: [inter_geist_helvetica_geometric, serif_editorial, mono_dev_only]
+    balance: tech_credibility ↔ warm_humanity
+  emerges_from: [lovable]
+  provenance: original
+  confidence: 0.5
+
+- rule_id: lovable-color-opacity-driven-gray-scale-003
+  section: color
+  preconditions:
+    product_type: [developer_tool, ai_builder, low_code]
+    tone: [refined, structured]
+    kansei: [refined, structured]
+    brand_archetypes: [Sage, Creator]
+  action:
+    gray_scale_strategy: opacity_modulation_of_single_hue
+    base_charcoal_hex: '#1c1c1c'
+    opacity_steps: [0.03, 0.04, 0.4, 0.82, 0.83, 1.0]
+    forbid_disjoint_hex_grays: true
+  why:
+    establish: mathematical-coherence-of-grays-via-shared-hue
+    avoid: [tailwind_gray_scale_cool_drift, disjoint_aaa_888_666_hue_drift]
+    balance: scale_flexibility ↔ hue_coherence
+  emerges_from: [lovable]
+  provenance: original
+  confidence: 0.5
+
+- rule_id: lovable-components-inset-shadow-pressed-button-004
+  section: components
+  preconditions:
+    product_type: [developer_tool, ai_builder, low_code]
+    tone: [tactile, refined]
+    kansei: [tactile, refined, soft]
+    brand_archetypes: [Creator]
+  action:
+    button_shadow_strategy: multi_layer_inset_pressed
+    layer_1: 'rgba(255,255,255,0.2) 0px 0.5px 0px 0px inset'
+    layer_2: 'rgba(0,0,0,0.2) 0px 0px 0px 0.5px inset'
+    layer_3: 'rgba(0,0,0,0.05) 0px 1px 2px 0px'
+    forbid_floating_drop_shadow_default: true
+  why:
+    establish: pressed-into-surface-physicality-not-floating
+    avoid: [large_drop_shadow, glassmorphism_floating, single_layer_inset_no_top_highlight]
+    balance: floating_elevation ↔ tactile_press_feedback
+  emerges_from: [lovable]
+  provenance: original
+  confidence: 0.5
+
+- rule_id: lovable-typography-variable-weight-480-005
+  section: typography
+  preconditions:
+    product_type: [developer_tool, ai_builder, low_code]
+    tone: [refined, restrained]
+    kansei: [refined, restrained, soft]
+    brand_archetypes: [Creator]
+  action:
+    use_variable_font: true
+    custom_intermediate_weight: 480
+    semantic_role: between_regular_and_semibold_for_special_display
+    forbid_weight_above_600: true
+  why:
+    establish: hierarchy-via-fine-weight-not-coarse-jumps
+    avoid: [400_600_only_two_step, 700_bold_display, weight_jump_400_to_700]
+    balance: implementation_simplicity ↔ hierarchy_nuance
+  emerges_from: [lovable]
+  provenance: original
+  confidence: 0.45
+
+- rule_id: lovable-components-pill-only-for-toggles-006
+  section: components
+  preconditions:
+    product_type: [developer_tool, ai_builder, low_code]
+    tone: [refined, friendly]
+    kansei: [refined, friendly]
+    brand_archetypes: [Creator]
+  action:
+    full_pill_radius_px: 9999
+    pill_use_areas: [icon_buttons, action_toggles, voice_record, plan_mode]
+    forbid_pill_for_primary_cta_rectangular: true
+    primary_cta_radius_px: 6
+  why:
+    establish: pill-shape-carries-toggle-action-semantics
+    avoid: [9999px_primary_cta_overload, pill_rect_mixed_in_same_context]
+    balance: shape_friendliness ↔ semantic_role_clarity
+  emerges_from: [lovable]
+  provenance: original
+  confidence: 0.5

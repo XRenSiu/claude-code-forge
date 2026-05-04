@@ -403,6 +403,7 @@ rules:
     brand_archetypes:
     - Sage
     - Ruler
+    - Magician
   action:
     forbidden:
     - weight_600_700_for_sohne_headlines
@@ -418,6 +419,7 @@ rules:
     avoid:
     - drift_into_friendly_fintech
     - drift_into_loud_marketing
+    balance: engineering_luxury_restraint ↔ friendly_marketing_drift
   emerges_from:
   - stripe
   provenance: original

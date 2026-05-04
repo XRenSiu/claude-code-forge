@@ -5,6 +5,16 @@
 ## Visual Theme & Atmosphere
 
 ### decision: Dark-first surfaces (3-step depth: #1e1f22 / #2b2d31 / #313338)
+
+原 DESIGN.md 段落（auto-backfill）：
+> **Key Characteristics:**
+> - Dark-first surfaces: `#1e1f22` / `#2b2d31` / `#313338` (3-step depth)
+> - Blurple `#5865f2` as the only saturated accent in the chat surface
+> - gg sans (Whitney-style) for all text — friendly, geometric, neutral
+> - Rounded-square server avatars (16px radius) that snap to circles on hover
+> - Tight chat-row spacing, generous side-panel padding
+> - Status dots: green online, yellow idle, red dnd, gray offline
+> - Pixel-snapped 1px dividers in subtle off-white at low alpha
 - **trade_off**: 双主题平等 ↔ dark 是默认（产品场景是 evenings/raids/voice）
 - **intent**: 让 chat 在长会话中不刺眼——dark 不是 option，是 default home
 - **avoid**:
@@ -12,6 +22,10 @@
   - 单层 dark（无层级区分 channel/sidebar/chat）
 
 ### decision: Blurple #5865f2 reserved for brand mark + primary CTA + mention + "you"
+
+原 DESIGN.md 段落（auto-backfill）：
+> > Category: Productivity & SaaS
+> > Voice / chat platform. Deep blurple, dark-first surfaces, playful accent moments.
 - **trade_off**: 多 chromatic 表达 ↔ 单一 chromatic 锚点
 - **intent**: 让 Blurple 成为"你"的标记——mention/CTA 都关于"用户的注意力"
 - **avoid**:
@@ -21,6 +35,12 @@
 ## Color
 
 ### decision: Three-step background depth (Tertiary < Secondary < Primary)
+
+原 DESIGN.md 段落（auto-backfill）：
+> **Danger**
+> - Background: `#da373c`
+> - Text: `#ffffff`
+> - Hover: `#a12d2f`
 - **trade_off**: 单 dark surface ↔ 3-step ladder
 - **intent**: server-rail 最深、channel sidebar 中间、chat 表面最亮 —— 视觉权重 = 信息流方向
 - **avoid**:
@@ -28,6 +48,16 @@
   - 过密（4+ steps 用户感知不到）
 
 ### decision: Status colors (Online green / Idle yellow / DND red / Offline gray)
+
+原 DESIGN.md 段落（auto-backfill）：
+> **Key Characteristics:**
+> - Dark-first surfaces: `#1e1f22` / `#2b2d31` / `#313338` (3-step depth)
+> - Blurple `#5865f2` as the only saturated accent in the chat surface
+> - gg sans (Whitney-style) for all text — friendly, geometric, neutral
+> - Rounded-square server avatars (16px radius) that snap to circles on hover
+> - Tight chat-row spacing, generous side-panel padding
+> - Status dots: green online, yellow idle, red dnd, gray offline
+> - Pixel-snapped 1px dividers in subtle off-white at low alpha
 - **trade_off**: 自定义 chromatic ↔ 通用 traffic-light（universal recognition）
 - **intent**: 状态识别零学习成本——用户视觉 cognition 自动 mapping
 - **avoid**:
@@ -35,6 +65,9 @@
   - status 与 brand 同色（Blurple 不能做 status）
 
 ### decision: Mention highlight = rgba(88, 101, 242, 0.1) soft blurple wash
+
+原 DESIGN.md 段落（auto-backfill）：
+> Discord's product is engineered for evenings, raids, and group voice — so the entire surface is dark-first. The default canvas is the deep `Background Primary` (`#313338` light theme, `#1e1f22` dark theme), with chat columns layered on slightly lighter or darker shades to denote channels, threads, and side panels. The signature **Blurple** (`#5865f2`) is reserved for the brand mark, primary CTAs, mentions, and the "you" affordance — used sparingly so it pops against the muted neutrals.
 - **trade_off**: 单色实色高亮 ↔ 低 alpha 钝化（不打断阅读流）
 - **intent**: mention 让眼睛"扫到"，不让眼睛"停留过久"
 - **avoid**:
@@ -44,6 +77,12 @@
 ## Typography
 
 ### decision: gg sans (Whitney-style custom) for all text
+
+原 DESIGN.md 段落（auto-backfill）：
+> **Tertiary / Subtle (Link-style)**
+> - Background: transparent
+> - Text: `#dbdee1`
+> - Hover: text underlined, no background change
 - **trade_off**: 单一 family ↔ display + body 双 family
 - **intent**: chat 工具字体 budget 紧——单一 family 节省 load + 保持温度感
 - **avoid**:
@@ -51,6 +90,14 @@
   - 严格 geometric sans（过冷）
 
 ### decision: 16px message body — never shrink below 16
+
+原 DESIGN.md 段落（auto-backfill）：
+> **Secondary**
+> - Background: `#4e5058`
+> - Text: `#ffffff`
+> - Padding: 8px 16px
+> - Radius: 4px
+> - Hover: `#6d6f78`
 - **trade_off**: 紧密信息（更多消息一屏） ↔ 16px 锁定（长会话疲劳防止）
 - **intent**: chat 本质是阅读工具——可读性优先于密度
 - **avoid**:
@@ -58,6 +105,11 @@
   - 字号 increment 制造 hierarchy（用 weight 代替）
 
 ### decision: Weight contrast over color contrast for hierarchy
+
+原 DESIGN.md 段落（auto-backfill）：
+> - **Duration**: 200ms for hover; 350ms for the avatar circle-morph; 80ms for tooltip fade.
+> - **Easing**: `cubic-bezier(0.215, 0.61, 0.355, 1)` for the avatar morph (snappy then settle).
+> - **Notification pulse**: 1.4s ease-in-out infinite on unread mention indicator.
 - **trade_off**: 颜色 hierarchy ↔ weight hierarchy
 - **intent**: dark surface 上颜色变化太隐晦，weight 变化更可读
 - **avoid**:
@@ -67,6 +119,15 @@
 ## Components
 
 ### decision: Server avatars 16px radius rounded-square → 50% circle on hover
+
+原 DESIGN.md 段落（auto-backfill）：
+> **Primary**
+> - Background: `#5865f2`
+> - Text: `#ffffff`
+> - Padding: 8px 16px
+> - Radius: 4px
+> - Hover: `#4752c4`
+> - Use: Primary CTAs, "Continue", "Join Server"
 - **trade_off**: 静态形态 ↔ 形态动效（"focus 时变圆"）
 - **intent**: 让 hover 这个动作有 character——morph 已经成为 brand 标识
 - **avoid**:
@@ -74,6 +135,16 @@
   - 静态方形（失去 friendly geometry）
 
 ### decision: Status dots 10x10px with 3px border (notch effect on avatar)
+
+原 DESIGN.md 段落（auto-backfill）：
+> **Key Characteristics:**
+> - Dark-first surfaces: `#1e1f22` / `#2b2d31` / `#313338` (3-step depth)
+> - Blurple `#5865f2` as the only saturated accent in the chat surface
+> - gg sans (Whitney-style) for all text — friendly, geometric, neutral
+> - Rounded-square server avatars (16px radius) that snap to circles on hover
+> - Tight chat-row spacing, generous side-panel padding
+> - Status dots: green online, yellow idle, red dnd, gray offline
+> - Pixel-snapped 1px dividers in subtle off-white at low alpha
 - **trade_off**: 平面 status indicator ↔ "notched" 立体感
 - **intent**: 状态点感觉是"贴在 avatar 上"——视觉层级清晰
 - **avoid**:
@@ -81,6 +152,9 @@
   - 完全无 border（融入 avatar 背景）
 
 ### decision: Cards/Embeds with 4px left-border in accent color
+
+原 DESIGN.md 段落（auto-backfill）：
+> The shape language is rounded but not balloon-soft: 8px radii on cards, 4px on inputs, full pills on status badges and tags. Servers are rounded-square avatars at 48px that morph to circles on hover — a tiny piece of motion that has become part of the brand's identity.
 - **trade_off**: 全 outline border ↔ left-border-only（embedded link 标识）
 - **intent**: 让 embed 在 chat 流中有"快速识别"——左边框颜色就告诉来源
 - **avoid**:
@@ -88,6 +162,9 @@
   - 无 border（融入 chat）
 
 ### decision: Tight chat-row spacing (4-8px between message groups)
+
+原 DESIGN.md 段落（auto-backfill）：
+> Typography is **gg sans** (Discord's custom Whitney-replacement) for prose and chrome, with rounded geometric shapes that feel approachable but still legible at the small sizes a chat client demands. Headings step up incrementally; chat rows are tight (4–8px between message groups) so hours of scrollback feel scannable.
 - **trade_off**: 每条消息独立空间 ↔ 紧密分组（hours of scrollback 可扫）
 - **intent**: chat 是滚动浏览工具——空间用在 group 之间，不是单条
 - **avoid**:
@@ -96,6 +173,13 @@
 ## Layout
 
 ### decision: 4px base unit + fixed widths (rail 72 / sidebar 240 / member 240)
+
+原 DESIGN.md 段落（auto-backfill）：
+> - **Base unit**: 4px. Scale: 4, 8, 12, 16, 20, 24, 32, 40.
+> - **Server rail**: 72px wide, fixed.
+> - **Channel sidebar**: 240px wide.
+> - **Member list**: 240px wide on desktop.
+> - **Chat column**: fluid, min 380px.
 - **trade_off**: 自适应宽度 ↔ 固定宽度（chat tool 的 spatial vocabulary）
 - **intent**: 让用户的肌肉记忆稳定——sidebar 永远在那个位置那个宽度
 - **avoid**:
@@ -104,6 +188,11 @@
 ## Motion
 
 ### decision: 350ms avatar circle-morph (snappy then settle)
+
+原 DESIGN.md 段落（auto-backfill）：
+> - **Duration**: 200ms for hover; 350ms for the avatar circle-morph; 80ms for tooltip fade.
+> - **Easing**: `cubic-bezier(0.215, 0.61, 0.355, 1)` for the avatar morph (snappy then settle).
+> - **Notification pulse**: 1.4s ease-in-out infinite on unread mention indicator.
 - **trade_off**: 快 transition（无感） ↔ 中等 duration（让 morph 被看见）
 - **intent**: morph 是 brand moment——值得 350ms 让用户感受
 - **avoid**:
@@ -111,6 +200,11 @@
   - 600ms+ 太慢（hover 卡顿）
 
 ### decision: 80ms tooltip fade
+
+原 DESIGN.md 段落（auto-backfill）：
+> - **Duration**: 200ms for hover; 350ms for the avatar circle-morph; 80ms for tooltip fade.
+> - **Easing**: `cubic-bezier(0.215, 0.61, 0.355, 1)` for the avatar morph (snappy then settle).
+> - **Notification pulse**: 1.4s ease-in-out infinite on unread mention indicator.
 - **trade_off**: 长 fade（优雅但慢） ↔ 短 fade（即时反馈）
 - **intent**: tooltip 是 functional——快出现快消失
 - **avoid**:

@@ -1,0 +1,106 @@
+rules:
+- rule_id: airtable-color-white-canvas-blue-accent-001
+  section: color
+  preconditions:
+    product_type: [b2b_saas, productivity, data_tool]
+    tone: [professional, warm, approachable]
+    kansei: [structured, professional, trustworthy, clean, approachable]
+    sd_anchors:
+      warm_to_cold: 0.0
+      ornate_to_minimal: 0.4
+      serious_to_playful: -0.3
+      modern_to_classical: -0.3
+    brand_archetypes: [Sage, Everyman]
+  action:
+    canvas_lightness: white_or_near_white
+    primary_text_lightness: deep_navy_not_pure_black
+    chromatic_accent_count: 1
+    accent_hue_range_deg: 220-240 (saturated_blue)
+    accent_role: cta_and_links_only
+  why:
+    establish: enterprise-friendliness-via-restrained-blue-on-white
+    avoid: [multi_color_dashboard, pure_white_clinical, dark_saas_cold]
+    balance: enterprise_authority ↔ creative_approachability
+  emerges_from: [airtable]
+  provenance: original
+  confidence: 0.55
+
+- rule_id: airtable-depth_elevation-blue-tinted-shadow-002
+  section: depth_elevation
+  preconditions:
+    product_type: [b2b_saas, productivity, data_tool]
+    tone: [warm, professional]
+    kansei: [warm, refined, professional]
+    brand_archetypes: [Sage, Everyman]
+  action:
+    shadow_strategy: multi_layer_with_brand_tinted_layer
+    brand_tinted_layer_alpha: 0.28
+    brand_tint_hue_deg: 220-240
+    layer_count: 3-4
+    inset_layer_required: true
+  why:
+    establish: brand-temperature-extends-to-chrome-elevation
+    avoid: [generic_neutral_drop_shadow, hard_contrast_shadow, no_brand_tint]
+    balance: ambient_softness ↔ brand_throughline
+  emerges_from: [airtable]
+  provenance: original
+  confidence: 0.5
+
+- rule_id: airtable-typography-haas-positive-tracking-003
+  section: typography
+  preconditions:
+    product_type: [b2b_saas, productivity, data_tool]
+    tone: [professional, refined]
+    kansei: [structured, professional, refined, readable]
+    brand_archetypes: [Sage, Everyman]
+  action:
+    primary_family_class: swiss_neogrotesque (e.g., Haas, Helvetica Now, Söhne)
+    display_family_class: same_family_display_variant
+    body_letter_spacing_px: positive_0.08_to_0.28
+    weight_range: [400, 500, 900]
+    primary_weight: 400
+  why:
+    establish: swiss-precision-with-airy-tracking
+    avoid: [inter_generic, negative_tracking_compression, serif_editorial]
+    balance: enterprise_credibility ↔ readable_warmth
+  emerges_from: [airtable]
+  provenance: original
+  confidence: 0.55
+
+- rule_id: airtable-components-medium-radius-buttons-004
+  section: components
+  preconditions:
+    product_type: [b2b_saas, productivity, data_tool]
+    tone: [warm, approachable, professional]
+    kansei: [approachable, friendly, professional]
+    brand_archetypes: [Everyman, Sage]
+  action:
+    button_radius_px: 12
+    card_radius_px_range: [16, 32]
+    sharp_radius_use: cookie_consent_only_2px
+    pill_radius_use: avoid_for_chrome
+  why:
+    establish: comfortable-rounded-not-engineered-not-soft
+    avoid: [angular_chrome, pill_button_friendly_overload, sub_8_sharp]
+    balance: professional_precision ↔ approachable_warmth
+  emerges_from: [airtable]
+  provenance: original
+  confidence: 0.55
+
+- rule_id: airtable-anti_patterns-skip-letter-spacing-and-heavy-shadows-005
+  section: anti_patterns
+  preconditions:
+    tone: [professional, refined]
+    kansei: [refined, readable, restrained]
+    brand_archetypes: [Sage, Everyman, Caregiver]
+  action:
+    forbid_zero_or_negative_body_tracking: true
+    forbid_heavy_drop_shadow: true
+    heavy_shadow_threshold_alpha: 0.15
+  why:
+    establish: airy-readability-and-soft-elevation-as-discipline
+    avoid: [dense_dashboard_compression, material_elevation_drop, no_breathing_room]
+    balance: information_density ↔ reading_breath
+  emerges_from: [airtable]
+  provenance: original
+  confidence: 0.55

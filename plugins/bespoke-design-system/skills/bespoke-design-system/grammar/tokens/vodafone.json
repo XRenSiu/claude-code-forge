@@ -1,11 +1,11 @@
 {
   "system_name": "vodafone",
   "source": "open-design",
-  "extracted_at": "2026-05-03T13:38:57.591589Z",
+  "extracted_at": "2026-05-04T04:27:13.845213Z",
   "dialect": "A",
   "fingerprint_hash": "53a9b5279d5405a16952eaa9477f363519710a80a58db7d87fb6570327ccc860",
   "extraction_method": "programmatic_a1",
-  "tool_version": "1.0.0",
+  "tool_version": "1.1.0",
   "color": {
     "role_color_pairs": {
       "vodafone_red": "#e60000",
@@ -70,7 +70,7 @@
     "_confidence": "medium"
   },
   "spacing": {
-    "base_unit_px": 16.0,
+    "base_unit_px": 8.0,
     "declared_scale": null,
     "all_px_values": [
       1.0,
@@ -100,21 +100,14 @@
       "gutters between cards": 24.0
     },
     "all_px_values": [
+      0.0,
       1.0,
       2.0,
-      4.0,
       6.0,
-      8.0,
-      12.0,
-      16.0,
-      20.0,
       24.0,
-      32.0,
-      38.0,
-      60.0,
-      96.0
+      32.0
     ],
-    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_extraction_method": "regex_role_radius (patterns A and B), v1.7.1 subsection-scoped",
     "_confidence": "medium"
   },
   "depth_elevation": {

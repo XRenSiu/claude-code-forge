@@ -344,9 +344,23 @@ def main():
             'extracted_at': tokens.get('extracted_at'),
         }
 
+    # v1.7.1: idempotent built_at — only bump when systems vectors actually
+    # change. Otherwise consecutive `build_neighbor_corpus` runs produce a
+    # new file even when no input differs.
+    new_now = datetime.datetime.utcnow().isoformat() + 'Z'
+    built_at = new_now
+    try:
+        if os.path.isfile(output_path):
+            with open(output_path) as f:
+                prev = json.load(f)
+            if prev.get('systems') == systems and prev.get('dim_names') == DIM_NAMES and prev.get('weights') == DIM_WEIGHTS:
+                built_at = prev.get('built_at', new_now)
+    except Exception:
+        pass
+
     output = {
         'schema_version': '1.0',
-        'built_at': datetime.datetime.utcnow().isoformat() + 'Z',
+        'built_at': built_at,
         'dim_count': len(DIM_NAMES),
         'dim_names': DIM_NAMES,
         'weights': DIM_WEIGHTS,

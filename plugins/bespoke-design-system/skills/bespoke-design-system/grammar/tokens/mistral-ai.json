@@ -1,11 +1,11 @@
 {
   "system_name": "mistral-ai",
   "source": "open-design",
-  "extracted_at": "2026-05-03T13:38:57.556022Z",
+  "extracted_at": "2026-05-04T04:27:11.955231Z",
   "dialect": "A",
   "fingerprint_hash": "59424032ca98c9d00103a9dc65e3a0a25de1bf44c7e618cdb094376af72b84c1",
   "extraction_method": "programmatic_a1",
-  "tool_version": "1.0.0",
+  "tool_version": "1.1.0",
   "color": {
     "role_color_pairs": {
       "mistral_orange": "#fa520f",
@@ -98,6 +98,7 @@
   "radius": {
     "role_radius_pairs": {},
     "all_px_values": [
+      0.0,
       2.0,
       4.0,
       8.0,
@@ -109,12 +110,10 @@
       32.0,
       40.0,
       48.0,
-      64.0,
-      80.0,
-      98.0,
-      100.0
+      100.0,
+      1280.0
     ],
-    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_extraction_method": "regex_role_radius (patterns A and B), v1.7.1 subsection-scoped",
     "_confidence": "low"
   },
   "depth_elevation": {

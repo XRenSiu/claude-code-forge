@@ -1,11 +1,11 @@
 {
   "system_name": "mastercard",
   "source": "open-design",
-  "extracted_at": "2026-05-03T13:38:57.551430Z",
+  "extracted_at": "2026-05-04T04:27:11.708011Z",
   "dialect": "A",
   "fingerprint_hash": "ba5a4f889cd52286b87cd06ebb9646ed91ea631dc6249491c0d27dde940f05c6",
   "extraction_method": "programmatic_a1",
-  "tool_version": "1.0.0",
+  "tool_version": "1.1.0",
   "color": {
     "role_color_pairs": {
       "mastercard_red": "#EB001B",
@@ -74,7 +74,7 @@
     "_confidence": "medium"
   },
   "spacing": {
-    "base_unit_px": 24.0,
+    "base_unit_px": 8.0,
     "declared_scale": [
       8.0,
       16.0,
@@ -108,16 +108,14 @@
     "role_radius_pairs": {},
     "all_px_values": [
       6.0,
-      8.0,
       20.0,
       24.0,
       40.0,
-      64.0,
       99.0,
-      100.0,
-      128.0
+      999.0,
+      1000.0
     ],
-    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_extraction_method": "regex_role_radius (patterns A and B), v1.7.1 subsection-scoped",
     "_confidence": "low"
   },
   "depth_elevation": {

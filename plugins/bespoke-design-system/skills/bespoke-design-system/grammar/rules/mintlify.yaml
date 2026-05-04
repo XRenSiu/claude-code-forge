@@ -292,6 +292,7 @@ rules:
     brand_archetypes:
     - Sage
     - Innocent
+    - Caregiver
   action:
     forbidden:
     - pure_black_text_for_long_reading
@@ -306,6 +307,7 @@ rules:
     avoid:
     - drift_into_marketing_saas_template
     - drift_into_dashboard_density
+    balance: reading_first_clarity ↔ marketing_saas_appeal
   emerges_from:
   - mintlify
   provenance: original

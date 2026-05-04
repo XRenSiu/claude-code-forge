@@ -5,6 +5,9 @@
 ## Visual Theme & Atmosphere
 
 ### decision: White canvas + Deep Navy `#061b31` headings + Stripe Purple `#533afd` accent
+
+原 DESIGN.md 段落（auto-backfill）：
+> Stripe's website is the gold standard of fintech design -- a system that manages to feel simultaneously technical and luxurious, precise and warm. The page opens on a clean white canvas (`#ffffff`) with deep navy headings (`#061b31`) and a signature purple (`#533afd`) that functions as both brand anchor and interactive accent. This isn't the cold, clinical purple of enterprise software; it's a rich, saturated violet that reads as confident and premium. The overall impression is of a financial institution redesigned by a world-class type foundry.
 - **trade_off**: 蓝紫 fintech 通用 ↔ 独特蓝紫组合 + warm navy（不是 black）
 - **intent**: 让 financial 不冰冷——deep navy + saturated purple 比 black + cold blue 更温暖
 - **avoid**:
@@ -12,6 +15,15 @@
   - cold-blue accent（变成 enterprise software）
 
 ### decision: weight 300 as signature display weight
+
+原 DESIGN.md 段落（auto-backfill）：
+> **Success Badge**
+> - Background: `rgba(21,190,83,0.2)`
+> - Text: `#108c3d`
+> - Padding: 1px 6px
+> - Radius: 4px
+> - Border: `1px solid rgba(21,190,83,0.4)`
+> - Font: 10px weight 300
 - **trade_off**: 标准 600-700 hero（command attention） ↔ weight 300（confident enough not to shout）
 - **intent**: 让 headline whisper 而非 shout——lightness 是 luxury 的 signal
 - **avoid**:
@@ -19,6 +31,9 @@
   - 极轻 weight 100（破坏 readability）
 
 ### decision: Blue-tinted multi-layer shadows `rgba(50,50,93,0.25)` + `rgba(0,0,0,0.1)`
+
+原 DESIGN.md 段落（auto-backfill）：
+> What truly distinguishes Stripe is its shadow system. Rather than the flat or single-layer approach of most sites, Stripe uses multi-layer, blue-tinted shadows: the signature `rgba(50,50,93,0.25)` combined with `rgba(0,0,0,0.1)` creates shadows with a cool, almost atmospheric depth -- like elements are floating in a twilight sky. The blue-gray undertone of the primary shadow color (50,50,93) ties directly to the navy-purple brand palette, making even elevation feel on-brand.
 - **trade_off**: 标准 neutral shadow ↔ 蓝紫调 shadow（atmospheric depth）
 - **intent**: 让 elevation 也带 brand color——shadow 是"twilight sky"而非 generic 灰
 - **avoid**:
@@ -28,6 +43,9 @@
 ## Color
 
 ### decision: Stripe Purple #533afd — saturated blue-violet, not cold purple
+
+原 DESIGN.md 段落（auto-backfill）：
+> Stripe's website is the gold standard of fintech design -- a system that manages to feel simultaneously technical and luxurious, precise and warm. The page opens on a clean white canvas (`#ffffff`) with deep navy headings (`#061b31`) and a signature purple (`#533afd`) that functions as both brand anchor and interactive accent. This isn't the cold, clinical purple of enterprise software; it's a rich, saturated violet that reads as confident and premium. The overall impression is of a financial institution redesigned by a world-class type foundry.
 - **trade_off**: 紫色装饰风险 ↔ saturated brand identity
 - **intent**: 让 fintech 不只是"蓝色信任"——加入 violet 暗示 sophistication
 - **avoid**:
@@ -35,18 +53,37 @@
   - 装饰 purple（破坏 brand discipline）
 
 ### decision: Deep Navy #061b31 for headings (not black)
+
+原 DESIGN.md 段落（auto-backfill）：
+> **Key Characteristics:**
+> - sohne-var with OpenType `"ss01"` on all text -- a custom stylistic set that defines the brand's letterforms
+> - Weight 300 as the signature headline weight -- light, confident, anti-convention
+> - Negative letter-spacing at display sizes (-1.4px at 56px, progressive relaxation downward)
+> - Blue-tinted multi-layer shadows using `rgba(50,50,93,0.25)` -- elevation that feels brand-colored
+> - Deep navy (`#061b31`) headings instead of black -- warm, premium, financial-grade
+> - Conservative border-radius (4px-8px) -- nothing pill-shaped, nothing harsh
+> - Ruby (`#ea2261`) and magenta (`#f96bee`) accents for gradient and decorative elements
+> - `SourceCodePro` as the monospace companion for code and technical labels
 - **trade_off**: pure black heading（极致对比） ↔ deep navy（warm + financial-grade）
 - **intent**: 让 heading 与 brand purple 共生——navy 是 purple 的"沉稳基础"
 - **avoid**:
   - pure black（破坏 navy-purple harmony）
 
 ### decision: 5-shade purple ladder (Hover/Deep/Light/Mid + primary)
+
+原 DESIGN.md 段落（auto-backfill）：
+> What truly distinguishes Stripe is its shadow system. Rather than the flat or single-layer approach of most sites, Stripe uses multi-layer, blue-tinted shadows: the signature `rgba(50,50,93,0.25)` combined with `rgba(0,0,0,0.1)` creates shadows with a cool, almost atmospheric depth -- like elements are floating in a twilight sky. The blue-gray undertone of the primary shadow color (50,50,93) ties directly to the navy-purple brand palette, making even elevation feel on-brand.
 - **trade_off**: 单一 purple ↔ multi-state ladder
 - **intent**: 让 interactive states 都有专属 purple 状态——hover/active/selected/disabled
 - **avoid**:
   - 单 purple + opacity（破坏 ladder discipline）
 
 ### decision: Ruby + Magenta accents — for gradient/decoration only, not interactive
+
+原 DESIGN.md 段落（auto-backfill）：
+> **Gradient Accents**
+> - Ruby-to-magenta gradients (`#ea2261` to `#f96bee`) for hero decorations
+> - Brand dark sections use `#1c1e54` backgrounds with white text
 - **trade_off**: 多 brand 色 interactive ↔ ruby/magenta 仅装饰
 - **intent**: 让 gradient hero 装饰丰富，但 interactive 锚点仍清晰单一（purple）
 - **avoid**:
@@ -55,30 +92,57 @@
 ## Typography
 
 ### decision: sohne-var with `"ss01"` enabled globally
+
+原 DESIGN.md 段落（auto-backfill）：
+> Font Family
+> - **Primary**: `sohne-var`, with fallback: `SF Pro Display`
+> - **Monospace**: `SourceCodePro`, with fallback: `SFMono-Regular`
+> - **OpenType Features**: `"ss01"` enabled globally on all sohne-var text; `"tnum"` for tabular numbers on financial data and captions.
 - **trade_off**: 默认 sohne-var（generic） ↔ `ss01` stylistic set（distinct alternates）
 - **intent**: 让所有 text 都是 Stripe 的——通过 OpenType 而非换字体
 - **avoid**:
   - 跳过 ss01（变 generic sohne）
 
 ### decision: Weight 300 default for headings AND body
+
+原 DESIGN.md 段落（auto-backfill）：
+> > Category: Fintech & Crypto
+> > Payment infrastructure. Signature purple gradients, weight-300 elegance.
 - **trade_off**: 不同 weight for hierarchy ↔ uniform 300 + size hierarchy
 - **intent**: 让 lightness 成为 brand voice——所有文字都 whisper
 - **avoid**:
   - 600-700 任何尺寸（破坏 luxury whisper）
 
 ### decision: Negative letter-spacing aggressive at display (-1.4 at 56px)
+
+原 DESIGN.md 段落（auto-backfill）：
+> The custom `sohne-var` variable font is the defining element of Stripe's visual identity. Every text element enables the OpenType `"ss01"` stylistic set, which modifies character shapes for a distinctly geometric, modern feel. At display sizes (48px-56px), sohne-var runs at weight 300 -- an extraordinarily light weight for headlines that creates an ethereal, almost whispered authority. This is the opposite of the "bold hero headline" convention; Stripe's headlines feel like they don't need to shout. The negative letter-spacing (-1.4px at 56px, -0.96px at 48px) tightens the text into dense, engineered blocks. At smaller sizes, the system also uses weight 300 with proportionally reduced tracking, and tabular numerals via `"tnum"` for financial data display.
 - **trade_off**: open tracking（airy） ↔ tight tracking（compressed engineering）
 - **intent**: 让大字号显得"minified for production"——code-like compression
 - **avoid**:
   - 正字距 display（破坏 engineered 感）
 
 ### decision: `"tnum"` for tabular numbers in financial data
+
+原 DESIGN.md 段落（auto-backfill）：
+> Stripe's website is the gold standard of fintech design -- a system that manages to feel simultaneously technical and luxurious, precise and warm. The page opens on a clean white canvas (`#ffffff`) with deep navy headings (`#061b31`) and a signature purple (`#533afd`) that functions as both brand anchor and interactive accent. This isn't the cold, clinical purple of enterprise software; it's a rich, saturated violet that reads as confident and premium. The overall impression is of a financial institution redesigned by a world-class type foundry.
 - **trade_off**: 默认 numerals（行内一致） ↔ tnum（tabular alignment for data）
 - **intent**: 让 financial display 数字对齐——expected fintech standard
 - **avoid**:
   - oldstyle numerals in tables（破坏对齐）
 
 ### decision: Conservative border radius 4-8px — no pill, no large rounding
+
+原 DESIGN.md 段落（auto-backfill）：
+> **Ghost / Outlined**
+> - Background: transparent
+> - Text: `#533afd`
+> - Padding: 8px 16px
+> - Radius: 4px
+> - Border: `1px solid #b9b9f9`
+> - Font: 16px sohne-var weight 400, `"ss01"`
+> - Hover: background shifts to `rgba(83,58,253,0.05)`
+> - Use: Secondary actions
 - **trade_off**: friendly soft radius ↔ conservative engineering radius
 - **intent**: 让 fintech 看起来"engineering-trustworthy"——soft 但 not playful
 - **avoid**:
@@ -88,6 +152,9 @@
 ## Components
 
 ### decision: Multi-layer card shadow with negative spread
+
+原 DESIGN.md 段落（auto-backfill）：
+> What truly distinguishes Stripe is its shadow system. Rather than the flat or single-layer approach of most sites, Stripe uses multi-layer, blue-tinted shadows: the signature `rgba(50,50,93,0.25)` combined with `rgba(0,0,0,0.1)` creates shadows with a cool, almost atmospheric depth -- like elements are floating in a twilight sky. The blue-gray undertone of the primary shadow color (50,50,93) ties directly to the navy-purple brand palette, making even elevation feel on-brand.
 - **trade_off**: 单层 shadow（简单） ↔ 4-layer stack with negative spread
 - **intent**: 让 card 有 parallax depth——深层蓝紫远 + 浅层黑近，sound dimensional
 - **avoid**:
@@ -95,12 +162,20 @@
   - positive spread（shadow 散开破坏 verticality）
 
 ### decision: Dashed borders for placeholder/drop zones
+
+原 DESIGN.md 段落（auto-backfill）：
+> Border Dashed** (`#362baa`): Dashed borders for drop zones and placeholder elements.
 - **trade_off**: 实线 border default ↔ dashed for "open/incomplete" semantic
 - **intent**: 让 user 视觉知道"这里可放置"——不需要 explanation
 - **avoid**:
   - 实线 placeholder（破坏 affordance）
 
 ### decision: Brand Dark `#1c1e54` sections for immersive moments
+
+原 DESIGN.md 段落（auto-backfill）：
+> **Gradient Accents**
+> - Ruby-to-magenta gradients (`#ea2261` to `#f96bee`) for hero decorations
+> - Brand dark sections use `#1c1e54` backgrounds with white text
 - **trade_off**: 全 white surface ↔ dark brand sections alternation
 - **intent**: 让 narrative 有 immersive 章节——marketing rhythm
 - **avoid**:
@@ -110,12 +185,31 @@
 ## Layout
 
 ### decision: 8px base + dense small-end (4/6/8/10/11/12 - every 2px)
+
+原 DESIGN.md 段落（auto-backfill）：
+> **Primary Purple**
+> - Background: `#533afd`
+> - Text: `#ffffff`
+> - Padding: 8px 16px
+> - Radius: 4px
+> - Font: 16px sohne-var weight 400, `"ss01"`
+> - Hover: `#4434d4` background
+> - Use: Primary CTA ("Start now", "Contact sales")
 - **trade_off**: 严格 8 倍数 ↔ 含 mid-step micro 增量
 - **intent**: financial UI 需要 fine-grained alignment——chart annotations / table cells
 - **avoid**:
   - rigid 8-only（破坏 financial precision）
 
 ### decision: Dense data + generous chrome
+
+原 DESIGN.md 段落（auto-backfill）：
+> **Neutral Ghost**
+> - Background: transparent (`rgba(255,255,255,0)`)
+> - Text: `rgba(16,16,16,0.3)`
+> - Padding: 8px 16px
+> - Radius: 4px
+> - Outline: `1px solid rgb(212,222,233)`
+> - Use: Disabled or muted actions
 - **trade_off**: 全密集（信息超载） ↔ 全松散（信息不足）
 - **intent**: 让 data tables/charts tight，外围 chrome breathing——controlled density
 - **avoid**:
@@ -125,6 +219,15 @@
 ## Voice / Brand-implicit
 
 ### decision: Voice = engineering luxury + financial-grade restraint
+
+原 DESIGN.md 段落（auto-backfill）：
+> **Transparent Info**
+> - Background: transparent
+> - Text: `#2874ad`
+> - Padding: 8px 16px
+> - Radius: 4px
+> - Border: `1px solid rgba(43,145,223,0.2)`
+> - Use: Tertiary/info-level actions
 - **trade_off**: 营销 friendly fintech ↔ engineered restraint
 - **intent**: 让 copy 像"engineering paper but published as luxury magazine"
 - **avoid**:

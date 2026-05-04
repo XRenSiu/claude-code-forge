@@ -319,7 +319,7 @@ rules:
     - content_platform
     kansei:
     - structured
-    - organic
+    - thoughtful
     brand_archetypes:
     - Sage
     - Creator
@@ -358,6 +358,7 @@ rules:
     brand_archetypes:
     - Sage
     - Creator
+    - Lover
   action:
     forbidden:
     - cool_blue_grays_breaking_warm_system
@@ -372,6 +373,7 @@ rules:
     avoid:
     - drift_into_clinical_grays
     - drift_into_loud_chrome
+    balance: warm_approachability ↔ clinical_efficiency
   emerges_from:
   - notion
   provenance: original

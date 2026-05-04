@@ -1,11 +1,11 @@
 {
   "system_name": "spacious",
   "source": "open-design",
-  "extracted_at": "2026-05-03T13:38:57.579881Z",
+  "extracted_at": "2026-05-04T04:27:13.309914Z",
   "dialect": "B",
   "fingerprint_hash": "6dc6e07b5890d214c171cc74c8a7491f3e26ab1294921fac0b089b29229f93a0",
   "extraction_method": "programmatic_a1",
-  "tool_version": "1.0.0",
+  "tool_version": "1.1.0",
   "color": {
     "role_color_pairs": {
       "primary": "#3B82F6",
@@ -86,7 +86,7 @@
   "radius": {
     "role_radius_pairs": {},
     "all_px_values": [],
-    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_extraction_method": "regex_role_radius (patterns A and B), v1.7.1 subsection-scoped",
     "_confidence": "low"
   },
   "motion": {

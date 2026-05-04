@@ -224,7 +224,7 @@ rules:
     - Caregiver
   action:
     shadow_strategy: ring_shadow_0_0_0_1px (warm-toned)
-    ring_colors: warm_grays only (#d1cfc5,
+    ring_colors: 'warm_grays only (#d1cfc5 hover / #c2c0b6 pressed / #dedc01 lighter-surface)'
     no_cool_drop_shadows: true
     whisper_drop_shadow_for_lift: rgba(0,0,0,0.05) 0px 4px 24px
   why:
@@ -316,7 +316,6 @@ rules:
     - intellectual
     - warm
     brand_archetypes:
-    - Sage
     - Caregiver
   action:
     voice_personality: thoughtful_companion_not_powerful_tool
@@ -344,6 +343,7 @@ rules:
     brand_archetypes:
     - Sage
     - Caregiver
+    - Lover
   action:
     forbidden:
     - cool_blue_grays_anywhere
@@ -362,6 +362,7 @@ rules:
     avoid:
     - drift_into_silicon_valley_tech
     - drift_into_cold_corporate
+    balance: literary_warmth ↔ tech_cold_drift
   emerges_from:
   - claude
   provenance: original

@@ -11,7 +11,7 @@ description: >-
   触发词：" 设计系统 " / " 调性 " / " UI 风格 " / " bespoke design " / " DESIGN.md " /
   " 拆解设计系统 " / " 导入 OD " / " 沉淀 adaptation "。
 argument-hint: "[mode=interactive|auto] <product-brief> | maintain <subcommand>"
-version: 1.7.0
+version: 1.8.0
 user-invocable: true
 ---
 
@@ -79,7 +79,7 @@ user-invocable: true
 
 ### 边界情况
 
-- 用户说 " 帮我看看 Linear 的设计 " ≠ 维护流程。这是 " 阅读素材 " 而非 " 加入素材 "，应直接 Read `source-design-systems/linear/DESIGN.md` 并解释。
+- 用户说 " 帮我看看 Linear 的设计 " ≠ 维护流程。这是 " 阅读素材 " 而非 " 加入素材 "，应直接 Read `source-design-systems/linear-app/DESIGN.md` 并解释（实际目录名是 `linear-app`，不是 `linear`）。
 - 用户既要生成又要导入：先确认顺序（多数情况先导入、再生成），按用户回答串行执行。
 
 ---
@@ -262,6 +262,7 @@ Rules library: <N> rules from <M> extracted systems (out of <K> registered).
 | `extract` / 重新拆解某套 | `scripts/extract-grammar.md` | A1-A4 四步流程的标准化操作（被其它脚本调用，也可独立跑） |
 | `rebuild` / 重建关系图 | `scripts/rebuild-graph.md` | 全量重算 `grammar/graph/rules_graph.json` |
 | `consolidate` / 沉淀高频 adaptation | `scripts/consolidate-adaptations.md` | 扫描 adaptation-stats，提议新规则，用户确认后写入 `_generated.yaml` |
+| `build-neighbors` / 重建邻居语料库 | `scripts/build-neighbor-corpus.md` | 把 tokens.json 编码成 37 维向量，供 B5 `neighbor_check.py` 用。新增素材或改 encode() 后必跑。 |
 
 **通用规则**：
 
@@ -408,5 +409,12 @@ clarification_batch:
   - `reflective-practice.md` — Rationale 叙事化
   - `design-md-spec.md` — DESIGN.md 9-section 标准
   - `anti-slop-blacklist.md` — AI slop 黑名单
-- `grammar/meta/` — 规则库元数据（version / source-registry / provenance-index / adaptation-stats / defaults）
-- `source-design-systems/_registry.md` — 素材库登记
+  - `tacit-knowledge-boundary.md` — 品味形式化的边界（B5 闸门 5/5 ≠ 有品味）
+  - `token-schema.md` — tokens.json 字段定义（v1.5.0 起的单一权威）
+  - `archetype-do-dont-table.md` — 12 原型 always/never/tend_to 清单（机器版在 `checks/_shared/archetype_rules.json`，archetype_check 用）
+  - `color-harmony-math.md` — coherence_check 的 WCAG / OKLch / hue 协和理论（实现在 `checks/_shared/color_math.py`）
+  - `modular-scale-rhythm.md` — coherence_check 的字号/间距/grid 判据（实现在 `checks/_shared/scale_math.py`）
+  - `dieter-rams-checklist.md` — Rams 十条倒置成的 anti-pattern 清单（archetype_check + anti-slop-blacklist 引用）
+- `grammar/meta/` — 规则库元数据（version / source-registry / provenance-index / adaptation-stats / defaults / neighbor-corpus）
+- `source-design-systems/_registry.md` — 素材库登记（人类可读的 README；权威登记是 `grammar/meta/source-registry.json`）
+- `checks/_shared/` — checks 共享库：`color_math.py`（OKLch / WCAG）+ `scale_math.py`（modular scale / rhythm）+ `archetype_rules.json`（机器可读 archetype 断言）

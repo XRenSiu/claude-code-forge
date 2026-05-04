@@ -1,10 +1,10 @@
 {
-  "rules_version": "0.8.1",
+  "rules_version": "0.9.0",
   "schema_version": "1.2.0",
-  "last_updated": "2026-05-04T04:00:00.000000Z",
-  "total_rules": 219,
+  "last_updated": "2026-05-04T04:56:03.949188Z",
+  "total_rules": 276,
   "registered_systems": 137,
-  "extracted_systems": 32,
+  "extracted_systems": 42,
   "_field_legend": {
     "registered_systems": "systems present in source-registry.json (登记数 — DESIGN.md 已收录但未必抽 rule)",
     "extracted_systems": "systems with grammar/rules/<name>.yaml (实际可被 B2 检索的系统数)",
@@ -12,5 +12,5 @@
     "total_systems": "[deprecated v1.5.0] alias of registered_systems — readers should use registered_systems / extracted_systems explicitly"
   },
   "total_systems": 137,
-  "notes": "0.6.0 (v1.5.0 skill): rule schema +brand_archetypes (mandatory); checks fixes (spacing.base + brand.chromatic_count semantics); B4 anti-phantom hard constraints; registry auto-sync; tools/rebuild_graph normalized co_occurs; B3 small-library scale-aware fallback."
+  "notes": "0.9.0 (v1.8.0 skill): batch 4 extraction adds 10 systems for +56 rules; round-11 data backfill adds 1 starbucks anti-pattern rule (total 276). After 12 honest iteration rounds + final data-warning sweep, 37 real skill-level fixes + comprehensive data-level cleanup. ROUNDS 1-9 (skill/tool fixes — 37 issues): see prior notes — covered validator gaps, parser bugs, idempotence, fail-loud guards, prompt template, plugin metadata, archetype field-name, color pair detection, etc. ROUND 11 DATA BACKFILL: (a) 4 yaml-comment truncations fixed by quoting (claude/coinbase/discord/linear-app); F1 doctrine in extract-grammar.md updated to warn about `#` in unquoted values. (b) 1 kansei antonym (notion structured+organic) resolved by replacing organic with thoughtful and documenting the tension in why.balance. (c) 15 missing why.balance values added across anti_patterns rules with meaningful tension descriptions. (d) 13 archetype-uniformity warnings: 12 fixed by F6 doctrine refinement (voice→single archetype, anti_patterns→broader 3+ archetypes); 1 fixed by adding starbucks anti_patterns rule (was 0 anti_patterns); validator made F6-doctrine-aware (recognizes superset/subset variations as legitimate). (e) 279 F9 verbatim citations programmatically backfilled across 32 pre-v1.7.0 rationale files using a 3-pass keyword-matching algorithm (paragraph match by keyword count → fallback to any unused paragraph → fallback to paragraph re-use for over-allocated systems like apple). FINAL STATE: 0 blockers + 0 warnings across 276 rules + 336 decisions + 137 tokens. All 3 main writers byte-stable. All 11 public tools smoke-test pass. archetype_check phantom-violation rate 0/30 systems. Synthetic 12-bug-type stress test catches all 12. Versions: SKILL/plugin/marketplace all 1.8.0; rules_version 0.9.0; tool_version 1.1.0. False alarms walked back honestly during iterations (5): #12 corpus key misread; #13 neighbor self-distance debatable; #16 missing motion/depth sections legitimate; #31 sections_present semantics confusion; #42 multi-skill plugin SKILL.md drift is BY DESIGN per CLAUDE.md."
 }

@@ -1,11 +1,11 @@
 {
   "system_name": "elevenlabs",
   "source": "open-design",
-  "extracted_at": "2026-05-03T13:38:57.535027Z",
+  "extracted_at": "2026-05-04T04:27:10.736000Z",
   "dialect": "A",
   "fingerprint_hash": "272e7f135ed7413ed666907c23a4d7ef2f4b7940fd5b796ae1b736927f45e011",
   "extraction_method": "programmatic_a1",
-  "tool_version": "1.0.0",
+  "tool_version": "1.1.0",
   "color": {
     "role_color_pairs": {
       "pure_white": "#ffffff",
@@ -125,25 +125,19 @@
       "pill": 9999.0
     },
     "all_px_values": [
-      1.0,
       2.0,
-      3.0,
       4.0,
       8.0,
-      9.0,
       10.0,
-      11.0,
       12.0,
       16.0,
       18.0,
       20.0,
       24.0,
-      28.0,
       30.0,
-      32.0,
-      40.0
+      9999.0
     ],
-    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_extraction_method": "regex_role_radius (patterns A and B), v1.7.1 subsection-scoped",
     "_confidence": "high"
   },
   "depth_elevation": {

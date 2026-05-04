@@ -355,7 +355,6 @@ rules:
     - premium
     brand_archetypes:
     - Creator
-    - Magician
   action:
     voice_personality: product_first_keynote_register
     avoid_marketing_superlatives: true
@@ -395,6 +394,7 @@ rules:
     avoid:
     - drift_into_loud_marketing
     - drift_into_decorative_chrome
+    balance: chrome_invisibility ↔ visual_polish_pressure
   emerges_from:
   - apple
   provenance: original

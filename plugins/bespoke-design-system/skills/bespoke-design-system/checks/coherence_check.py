@@ -57,15 +57,22 @@ def _gather_color_pairs(tokens):
         target.append((role, hex_val, lum))
 
     # Walk role_color_pairs and classify
+    # v1.7.1 (#37): expanded keyword coverage. Previously missed common role
+    # names like 'white' alone (only matched 'pure_white'), 'navy', 'gray',
+    # 'cream', etc. Most real systems use plain color names as roles, which
+    # left _gather_color_pairs returning 0 candidates → archetype_check
+    # produced phantom 'body_on_bg not derived' warnings on most systems.
     if isinstance(role_pairs, dict):
         for role, hex_val in role_pairs.items():
             role_l = role.lower()
             is_bg = any(k in role_l for k in ('background', 'bg', 'canvas', 'page', 'surface',
                                                'parchment', 'snow', 'panel', 'pure_white',
                                                'vercel_black', 'eel_black', 'marketing_black',
-                                               'level_3', 'secondary_surface', 'pure_black'))
+                                               'level_3', 'secondary_surface', 'pure_black',
+                                               'white', 'cream', 'ivory', 'paper'))
             is_fg = any(k in role_l for k in ('text', 'ink', 'foreground', 'heading', 'body',
-                                               'label', 'header_primary'))
+                                               'label', 'header_primary',
+                                               'navy', 'charcoal'))
             is_brand = any(k in role_l for k in ('brand', 'cta', 'action', 'workflow', 'accent',
                                                   'review_blue', 'rausch', 'owl', 'blurple',
                                                   'terracotta', 'streak', 'gem', 'cardinal',
@@ -325,7 +332,7 @@ def subcheck_vertical_rhythm(tokens):
     typo = tokens.get('typography', {}) or {}
     base = sp.get('base_unit_px') or sp.get('base')
     if base is None:
-        return {'passed': True, 'evaluable': False, 'reason': 'no spacing.base'}
+        return {'passed': True, 'evaluable': False, 'reason': 'no spacing.base_unit_px'}
     # body size = 16 default if not specified
     body_size = 16
     line_height = 1.5
@@ -347,7 +354,7 @@ def subcheck_grid_consistency(tokens):
     radius = tokens.get('radius', {}) or {}
     base = sp.get('base_unit_px') or sp.get('base')
     if base is None:
-        return {'passed': True, 'evaluable': False, 'reason': 'no spacing.base'}
+        return {'passed': True, 'evaluable': False, 'reason': 'no spacing.base_unit_px'}
     # Spacing grid check — only consider values >= base (smaller values are
     # micro-tracking / letter-spacing, not spacing)
     scale_vals = sp.get('declared_scale') or sp.get('scale') or sp.get('all_px_values') or []

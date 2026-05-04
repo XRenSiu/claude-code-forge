@@ -1,11 +1,11 @@
 {
   "system_name": "simple",
   "source": "open-design",
-  "extracted_at": "2026-05-03T13:38:57.578238Z",
+  "extracted_at": "2026-05-04T04:27:13.166207Z",
   "dialect": "B",
   "fingerprint_hash": "20f4214be65d854fb71da9fabcb5256d3bbc8a1a4de8e4a32b7a03e70a450af7",
   "extraction_method": "programmatic_a1",
-  "tool_version": "1.0.0",
+  "tool_version": "1.1.0",
   "color": {
     "role_color_pairs": {
       "primary": "#3B82F6",
@@ -85,7 +85,7 @@
   "radius": {
     "role_radius_pairs": {},
     "all_px_values": [],
-    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_extraction_method": "regex_role_radius (patterns A and B), v1.7.1 subsection-scoped",
     "_confidence": "low"
   },
   "motion": {

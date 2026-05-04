@@ -1,11 +1,11 @@
 {
   "system_name": "kami",
   "source": "open-design",
-  "extracted_at": "2026-05-03T13:38:57.545891Z",
+  "extracted_at": "2026-05-04T04:27:11.425160Z",
   "dialect": "A",
   "fingerprint_hash": "1699afb7a8edaab78f6829a140c273b7556ec730a8dd5a0e797642735ccf8cd5",
   "extraction_method": "programmatic_a1",
-  "tool_version": "1.0.0",
+  "tool_version": "1.1.0",
   "color": {
     "role_color_pairs": {
       "ink_blue": "#1B365D",
@@ -76,7 +76,7 @@
     "_confidence": "medium"
   },
   "spacing": {
-    "base_unit_px": 120.0,
+    "base_unit_px": 64.0,
     "declared_scale": null,
     "all_px_values": [
       64.0,
@@ -96,13 +96,11 @@
   "radius": {
     "role_radius_pairs": {},
     "all_px_values": [
-      64.0,
-      72.0,
-      80.0,
-      88.0,
-      120.0
+      120.0,
+      768.0,
+      1120.0
     ],
-    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_extraction_method": "regex_role_radius (patterns A and B), v1.7.1 subsection-scoped",
     "_confidence": "low"
   },
   "depth_elevation": {

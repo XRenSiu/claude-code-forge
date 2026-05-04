@@ -31,7 +31,12 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 SKILL_ROOT = os.path.normpath(os.path.join(HERE, '..'))
 RATIONALE_DIR = os.path.join(SKILL_ROOT, 'grammar', 'rationale')
 
-DECISION_RE = re.compile(r'^###\s+decision:\s+(.+?)$', re.MULTILINE)
+# v1.7.1: tighten DECISION_RE so an empty `### decision:` line cannot silently
+# absorb the next line as its title via `\s+` spanning newlines. We restrict
+# the post-colon whitespace to spaces/tabs and require the title to start
+# with a non-whitespace character.
+DECISION_RE = re.compile(r'^###[ \t]+decision:[ \t]+(\S.*)$', re.MULTILINE)
+EMPTY_DECISION_RE = re.compile(r'^###[ \t]+decision:[ \t]*$', re.MULTILINE)
 SECTION_RE = re.compile(r'^##\s+(.+?)$', re.MULTILINE)
 
 
@@ -80,14 +85,46 @@ def validate_file(path: str) -> dict:
     if not decisions:
         out['blockers'].append(f'{basename}: no `### decision:` blocks found')
 
+    # 3.5 (v1.7.1): titleless `### decision:` lines are blockers. Previously
+    # the lax `\s+` regex absorbed the next line as a title and silently
+    # produced confusing downstream messages. Catch these explicitly.
+    for m in EMPTY_DECISION_RE.finditer(text):
+        line_no = text[:m.start()].count('\n') + 1
+        out['blockers'].append(
+            f'{basename}: empty `### decision:` header at line {line_no} — '
+            f'every decision needs a non-empty one-line title.'
+        )
+
     for i, (title, body) in enumerate(decisions):
         title_short = title[:60]
         # Required three-part fields (with markdown emphasis)
+        # v1.7.1 (#35): also require non-empty content after the colon.
+        # Previously `- **trade_off**:` (empty value) would pass, leaving
+        # rationale schema-shaped but semantically void.
         for required in ('trade_off', 'intent', 'avoid'):
-            pattern = re.compile(rf'^\s*[-*]\s*\*\*{re.escape(required)}\*\*\s*:', re.MULTILINE)
-            if not pattern.search(body):
+            present_pattern = re.compile(
+                rf'^\s*[-*]\s*\*\*{re.escape(required)}\*\*\s*:', re.MULTILINE
+            )
+            # Content can be either:
+            #   (a) on the same line: `- **avoid**: 多色感 / 干涸感`
+            #   (b) on indented sub-bullets: `- **avoid**:\n  - x\n  - y`
+            # Reject only when neither (a) nor (b) is satisfied.
+            same_line_pattern = re.compile(
+                rf'^\s*[-*]\s*\*\*{re.escape(required)}\*\*\s*:[ \t]*\S',
+                re.MULTILINE,
+            )
+            sub_bullet_pattern = re.compile(
+                rf'^\s*[-*]\s*\*\*{re.escape(required)}\*\*\s*:[ \t]*\n(?:[ \t]+[-*]\s+\S)',
+                re.MULTILINE,
+            )
+            if not present_pattern.search(body):
                 out['blockers'].append(
                     f'{basename}: decision "{title_short}" missing `- **{required}**:` line'
+                )
+            elif not (same_line_pattern.search(body) or sub_bullet_pattern.search(body)):
+                out['blockers'].append(
+                    f'{basename}: decision "{title_short}" has empty `- **{required}**:` '
+                    f'(line is present but no content after the colon and no sub-bullets follow)'
                 )
 
         # 4. (v1.7.0 F9): verbatim DESIGN.md blockquote presence (warning)

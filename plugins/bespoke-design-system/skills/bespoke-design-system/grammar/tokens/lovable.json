@@ -1,11 +1,11 @@
 {
   "system_name": "lovable",
   "source": "open-design",
-  "extracted_at": "2026-05-03T13:38:57.550252Z",
+  "extracted_at": "2026-05-04T04:27:11.637887Z",
   "dialect": "A",
   "fingerprint_hash": "8a568b388dca500e2eeb631eb05c6d10b7f64a6bdbd7401634a86ec4e1fd5191",
   "extraction_method": "programmatic_a1",
-  "tool_version": "1.0.0",
+  "tool_version": "1.1.0",
   "color": {
     "role_color_pairs": {
       "cream": "#f7f4ed",
@@ -103,24 +103,14 @@
       "full pill": 9999.0
     },
     "all_px_values": [
-      1.0,
       4.0,
       6.0,
       8.0,
-      10.0,
       12.0,
       16.0,
-      24.0,
-      32.0,
-      40.0,
-      56.0,
-      80.0,
-      96.0,
-      128.0,
-      176.0,
-      192.0
+      9999.0
     ],
-    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_extraction_method": "regex_role_radius (patterns A and B), v1.7.1 subsection-scoped",
     "_confidence": "high"
   },
   "depth_elevation": {

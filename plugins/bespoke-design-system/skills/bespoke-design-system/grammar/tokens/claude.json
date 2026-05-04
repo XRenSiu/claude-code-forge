@@ -1,11 +1,11 @@
 {
   "system_name": "claude",
   "source": "open-design",
-  "extracted_at": "2026-05-03T13:38:57.522969Z",
+  "extracted_at": "2026-05-04T04:27:09.919550Z",
   "dialect": "A",
   "fingerprint_hash": "79063565b490ace245dbca4d134c5aff849d16b7004c1e8e23cea1ea98fa7eb5",
   "extraction_method": "programmatic_a1",
-  "tool_version": "1.0.0",
+  "tool_version": "1.1.0",
   "color": {
     "role_color_pairs": {
       "anthropic_near_black": "#141413",
@@ -122,22 +122,15 @@
   "radius": {
     "role_radius_pairs": {},
     "all_px_values": [
-      3.0,
       4.0,
-      6.0,
       7.5,
-      8.0,
       8.5,
-      10.0,
       12.0,
       16.0,
-      20.0,
       24.0,
-      30.0,
-      32.0,
-      120.0
+      32.0
     ],
-    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_extraction_method": "regex_role_radius (patterns A and B), v1.7.1 subsection-scoped",
     "_confidence": "low"
   },
   "depth_elevation": {

@@ -1,11 +1,11 @@
 {
   "system_name": "clickhouse",
   "source": "open-design",
-  "extracted_at": "2026-05-03T13:38:57.525450Z",
+  "extracted_at": "2026-05-04T04:27:10.061388Z",
   "dialect": "A",
   "fingerprint_hash": "71b0f6cf864dd276afe3d8d3c93f8b6c969006fc8fd25b667b39ea07f32df496",
   "extraction_method": "programmatic_a1",
-  "tool_version": "1.0.0",
+  "tool_version": "1.1.0",
   "color": {
     "role_color_pairs": {
       "neon_volt": "#faff69",
@@ -103,24 +103,11 @@
       "pill": 9999.0
     },
     "all_px_values": [
-      2.0,
       4.0,
-      6.0,
-      7.0,
       8.0,
-      10.0,
-      12.0,
-      16.0,
-      20.0,
-      24.0,
-      25.0,
-      32.0,
-      40.0,
-      44.0,
-      48.0,
-      64.0
+      9999.0
     ],
-    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_extraction_method": "regex_role_radius (patterns A and B), v1.7.1 subsection-scoped",
     "_confidence": "medium"
   },
   "depth_elevation": {

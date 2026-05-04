@@ -116,9 +116,12 @@ def detect_conflicts(rule_a, rule_b):
     sec_b = rule_b.get('section', '')
 
     # 1. Antonym-based — only fires when SAME SECTION + at least 2 antonym pairs
+    # v1.7.1: iterate ka in sorted order so the resulting reason string is
+    # deterministic across runs (set iteration order varies → produced
+    # different rebuilt_at every invocation, breaking idempotence).
     if sec_a == sec_b and sec_a:
         antonym_hits = []
-        for a in ka:
+        for a in sorted(ka):
             if a in ANTONYM_LOOKUP:
                 common = ANTONYM_LOOKUP[a] & kb
                 if common:
@@ -371,10 +374,27 @@ def main():
         except Exception:
             rules_version = '0.0.0'
 
+    # v1.7.1: idempotent timestamp — only update rebuilt_at when the actual
+    # node content changes. Without this, every consecutive `rebuild_graph`
+    # call produces a new timestamp and the file's sha1 churns even when
+    # rules didn't change. Breaks reproducibility and noisy diffs.
+    new_now = datetime.datetime.utcnow().isoformat() + 'Z'
+    rebuilt_at = new_now
+    try:
+        if os.path.isfile(args.output):
+            with open(args.output) as f:
+                prev = json.load(f)
+            prev_nodes = prev.get('nodes')
+            prev_edges = prev.get('edge_counts')
+            if prev_nodes == nodes and prev_edges == edge_counts:
+                rebuilt_at = prev.get('rebuilt_at', new_now)
+    except Exception:
+        pass
+
     output = {
         '$schema_description': 'Rules relationship graph. Rebuilt by tools/rebuild_graph.py.',
         'version': rules_version,
-        'rebuilt_at': datetime.datetime.utcnow().isoformat() + 'Z',
+        'rebuilt_at': rebuilt_at,
         'node_count': len(nodes),
         'edge_counts': edge_counts,
         'nodes': nodes,
@@ -398,6 +418,113 @@ def main():
 
     print(f'Wrote {args.output}')
     print(json.dumps(summary, indent=2))
+
+    # v1.7.1: also rebuild provenance-index.json. extract-grammar.md step
+    # collection 256 says "更新 grammar/meta/provenance-index.json：登记新规则
+    # 的 rule_ids → system 映射" — but nothing was actually doing it. The file
+    # was stuck at 0 entries even after 275 rules were extracted. B4
+    # generation reads this index for inheritance.source_systems lookup.
+    provenance_index_path = os.path.normpath(
+        os.path.join(here, '..', 'grammar', 'meta', 'provenance-index.json')
+    )
+    try:
+        try:
+            with open(provenance_index_path) as f:
+                pi = json.load(f)
+        except Exception:
+            pi = {}
+        pi.setdefault(
+            '$schema_description',
+            'Reverse index: rule_id -> source system(s). Rebuilt automatically '
+            'by tools/rebuild_graph.py from each rule\'s emerges_from + provenance.'
+        )
+        pi['_template'] = {
+            '<rule_id>': {
+                'system': '<primary source system>',
+                'co_emerges_from': ['<other systems this rule pattern was found in>'],
+                'provenance': 'original | generated | merged',
+                'added_at': '<ISO 8601>'
+            }
+        }
+        # v1.7.1: idempotent — preserve previous added_at for unchanged rules
+        prev_rules = pi.get('rules', {}) if isinstance(pi.get('rules'), dict) else {}
+        rules_index = {}
+        for rid, r in rules.items():
+            ef = r.get('emerges_from') or []
+            primary = ef[0] if ef else None
+            co = ef[1:] if len(ef) > 1 else []
+            entry = {
+                'system': primary,
+                'co_emerges_from': co,
+                'provenance': r.get('provenance', 'original'),
+            }
+            prev = prev_rules.get(rid, {})
+            # If the lookup-relevant fields match the previous record, keep
+            # the original added_at (so the file is byte-stable when nothing
+            # changed). Otherwise stamp with current time.
+            if (prev.get('system') == entry['system']
+                    and prev.get('co_emerges_from') == entry['co_emerges_from']
+                    and prev.get('provenance') == entry['provenance']
+                    and prev.get('added_at')):
+                entry['added_at'] = prev['added_at']
+            else:
+                entry['added_at'] = rebuilt_at
+            rules_index[rid] = entry
+        pi['rules'] = rules_index
+        # Idempotent rebuilt_at — only bump if rules_index actually changed.
+        if prev_rules != rules_index:
+            pi['rebuilt_at'] = rebuilt_at
+        else:
+            pi.setdefault('rebuilt_at', rebuilt_at)
+        pi['rule_count'] = len(rules_index)
+        with open(provenance_index_path, 'w') as f:
+            json.dump(pi, f, indent=2, ensure_ascii=False)
+        print(f'Wrote {provenance_index_path} ({len(rules_index)} rule mappings)')
+    except Exception as e:
+        print(f'[warn] provenance-index update skipped: {e}', file=sys.stderr)
+
+    # v1.7.1: refresh version.json's automatic counters. total_rules,
+    # extracted_systems, last_updated drift any time we add/remove rules
+    # without remembering to bump version.json. rules_version + notes stay
+    # human-maintained (semantic content); the three counters are mechanical.
+    version_json_path = os.path.normpath(
+        os.path.join(here, '..', 'grammar', 'meta', 'version.json')
+    )
+    try:
+        with open(version_json_path) as f:
+            vj = json.load(f)
+        rules_dir = args.rules_dir
+        # Count extracted_systems = non-_generated yaml files
+        extracted_count = sum(
+            1 for fn in os.listdir(rules_dir)
+            if fn.endswith('.yaml') and not fn.startswith('_') and not fn.startswith('.')
+        )
+        # registered_systems comes from source-registry.json
+        registered_count = vj.get('registered_systems')
+        try:
+            with open(os.path.normpath(os.path.join(here, '..', 'grammar', 'meta', 'source-registry.json'))) as f:
+                sr = json.load(f)
+                registered_count = len(sr.get('systems', {}))
+        except Exception:
+            pass
+        before = (vj.get('total_rules'), vj.get('extracted_systems'), vj.get('registered_systems'))
+        vj['total_rules'] = len(rules)
+        vj['extracted_systems'] = extracted_count
+        if registered_count is not None:
+            vj['registered_systems'] = registered_count
+            vj['total_systems'] = registered_count  # legacy alias
+        after = (vj['total_rules'], vj['extracted_systems'], vj.get('registered_systems'))
+        # Idempotent — only bump last_updated when counters actually changed.
+        if before != after:
+            vj['last_updated'] = rebuilt_at
+        with open(version_json_path, 'w') as f:
+            json.dump(vj, f, indent=2, ensure_ascii=False)
+        if before != after:
+            print(f'Refreshed {version_json_path}: counters {before} -> {after}, last_updated={rebuilt_at}')
+        else:
+            print(f'{version_json_path} unchanged (counters and last_updated preserved)')
+    except Exception as e:
+        print(f'[warn] version.json refresh skipped: {e}', file=sys.stderr)
 
 
 if __name__ == '__main__':

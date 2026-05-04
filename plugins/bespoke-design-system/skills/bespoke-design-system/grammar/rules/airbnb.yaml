@@ -337,6 +337,7 @@ rules:
     avoid:
     - drift_into_corporate_chrome
     - drift_into_loud_marketing
+    balance: photography_dignity ↔ marketing_emphasis_pressure
   emerges_from:
   - airbnb
   provenance: original

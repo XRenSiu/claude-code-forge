@@ -1,11 +1,11 @@
 {
   "system_name": "binance",
   "source": "open-design",
-  "extracted_at": "2026-05-03T13:38:57.517563Z",
+  "extracted_at": "2026-05-04T04:27:09.616297Z",
   "dialect": "A",
   "fingerprint_hash": "7e86c5ac3bb21e1a8f210dab37cf6f5fad0252015ce8959afe5ddffca55abde8",
   "extraction_method": "programmatic_a1",
-  "tool_version": "1.0.0",
+  "tool_version": "1.1.0",
   "color": {
     "role_color_pairs": {
       "binance_yellow": "#F0B90B",
@@ -107,21 +107,13 @@
     "all_px_values": [
       1.0,
       2.0,
-      4.0,
       6.0,
       8.0,
       10.0,
       12.0,
-      16.0,
-      20.0,
-      24.0,
-      32.0,
-      48.0,
-      50.0,
-      64.0,
-      80.0
+      24.0
     ],
-    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_extraction_method": "regex_role_radius (patterns A and B), v1.7.1 subsection-scoped",
     "_confidence": "low"
   },
   "depth_elevation": {

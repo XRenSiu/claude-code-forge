@@ -26,7 +26,7 @@ rules:
   action:
     base_canvas: near-black with imperceptible cool undertone (#08-#10 range)
     surface_strategy: luminance stepping (canvas -> panel -> elevated, +0.04 lightness per step)
-    text_on_dark: 4-tier achromatic (gradient from
+    text_on_dark: '4-tier achromatic (gradient from #f7f8f8 primary to #62666d quaternary)'
     max_text_lightness: 0.97 (avoid pure white)
   why:
     establish: dark-mode-as-native-medium quality
@@ -352,6 +352,7 @@ rules:
     brand_archetypes:
     - Sage
     - Creator
+    - Magician
   action:
     forbidden:
     - warm_colors_in_ui_chrome
@@ -367,6 +368,7 @@ rules:
     avoid:
     - aesthetic_drift_into_warm_friendly
     - marketing_decoration_creep
+    balance: cool_engineered_restraint ↔ warm_friendly_drift
   emerges_from:
   - linear-app
   provenance: original

@@ -258,6 +258,7 @@ rules:
     brand_archetypes:
     - Creator
     - Sage
+    - Magician
   action:
     forbidden:
     - chrome_chromatic_decoration
@@ -272,6 +273,7 @@ rules:
     avoid:
     - drift_into_generic_saas
     - drift_into_marketing_chrome
+    balance: tool_neutrality ↔ brand_marketing_expression
   emerges_from:
   - figma
   provenance: original

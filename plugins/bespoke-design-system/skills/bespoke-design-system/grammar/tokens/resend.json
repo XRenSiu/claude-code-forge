@@ -1,11 +1,11 @@
 {
   "system_name": "resend",
   "source": "open-design",
-  "extracted_at": "2026-05-03T13:38:57.571944Z",
+  "extracted_at": "2026-05-04T04:27:12.883438Z",
   "dialect": "A",
   "fingerprint_hash": "c6c22baba6e185d30e8da94dac45ebf5d1ae0f21ec88f5e1b3ceeacc14bfe00e",
   "extraction_method": "programmatic_a1",
-  "tool_version": "1.0.0",
+  "tool_version": "1.1.0",
   "color": {
     "role_color_pairs": {
       "void_black": "#000000",
@@ -134,26 +134,16 @@
       "pill": 9999.0
     },
     "all_px_values": [
-      1.0,
-      2.0,
       4.0,
-      5.0,
       6.0,
-      7.0,
       8.0,
       10.0,
       12.0,
       16.0,
-      20.0,
       24.0,
-      30.0,
-      32.0,
-      40.0,
-      80.0,
-      96.0,
-      120.0
+      9999.0
     ],
-    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_extraction_method": "regex_role_radius (patterns A and B), v1.7.1 subsection-scoped",
     "_confidence": "high"
   },
   "depth_elevation": {

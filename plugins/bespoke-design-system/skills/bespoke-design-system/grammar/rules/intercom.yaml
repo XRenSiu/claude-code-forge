@@ -1,0 +1,126 @@
+rules:
+- rule_id: intercom-color-warm-cream-canvas-001
+  section: color
+  preconditions:
+    product_type: [b2b_saas, helpdesk, ai_assistant, productivity]
+    tone: [warm, professional, refined]
+    kansei: [warm, refined, professional, sophisticated]
+    sd_anchors:
+      warm_to_cold: -0.4
+      ornate_to_minimal: 0.4
+      serious_to_playful: -0.3
+      modern_to_classical: -0.3
+    brand_archetypes: [Caregiver, Sage]
+  action:
+    canvas_hex: '#faf9f6'
+    text_hex: '#111111'
+    canvas_undertone: warm_off_white
+    forbid_pure_white_canvas: true
+    forbid_cool_blue_gray_surface: true
+  why:
+    establish: editorial-magazine-register-for-helpdesk-platform
+    avoid: [pure_white_saas, cool_blue_gray_clinical, brown_cozy_overload]
+    balance: editorial_intimacy ↔ professional_clarity
+  emerges_from: [intercom]
+  provenance: original
+  confidence: 0.55
+
+- rule_id: intercom-typography-saans-billboard-compression-002
+  section: typography
+  preconditions:
+    product_type: [b2b_saas, helpdesk, ai_assistant, productivity]
+    tone: [confident, professional]
+    kansei: [confident, professional, dense, intense]
+    brand_archetypes: [Sage, Hero]
+  action:
+    display_letter_spacing_at_80px: '-2.4px'
+    display_letter_spacing_at_24px: '-0.48px'
+    heading_line_height_consistent: 1.0
+    weight_default: 400
+  why:
+    establish: billboard-compressed-headlines-on-warm-canvas
+    avoid: [zero_letter_spacing_display, 1.2_plus_line_height_heading, serif_editorial_heading]
+    balance: editorial_warmth ↔ engineered_precision
+  emerges_from: [intercom]
+  provenance: original
+  confidence: 0.5
+
+- rule_id: intercom-color-fin-orange-singular-ai-accent-003
+  section: color
+  preconditions:
+    product_type: [b2b_saas, helpdesk, ai_assistant]
+    tone: [confident, energetic]
+    kansei: [confident, energetic, bold]
+    brand_archetypes: [Sage, Magician]
+  action:
+    accent_hex: '#ff5600'
+    accent_semantic_role: ai_features_only
+    forbid_accent_decorative_use: true
+    forbid_accent_text_non_ai_context: true
+  why:
+    establish: brand-color-bound-to-ai-agent-identity
+    avoid: [orange_marketing_decoration, orange_text_unrelated_to_ai, multi_brand_accent]
+    balance: visual_pop ↔ semantic_specificity
+  emerges_from: [intercom]
+  provenance: original
+  confidence: 0.55
+
+- rule_id: intercom-components-sharp-4px-button-radius-004
+  section: components
+  preconditions:
+    product_type: [b2b_saas, helpdesk, ai_assistant]
+    tone: [confident, professional, structured]
+    kansei: [structured, professional, dense]
+    brand_archetypes: [Sage]
+  action:
+    button_radius_px: 4
+    card_radius_px: 8
+    nav_radius_px: 6
+    forbid_button_radius_above_6: true
+    forbid_pill_button: true
+  why:
+    establish: sharp-geometry-against-warm-surface-creates-precision-contrast
+    avoid: [8-12px_friendly_button_radius, 0px_brutalist, 9999px_pill_friendly]
+    balance: warm_canvas_softness ↔ industrial_precision_geometry
+  emerges_from: [intercom]
+  provenance: original
+  confidence: 0.5
+
+- rule_id: intercom-components-scale-hover-physical-interaction-005
+  section: components
+  preconditions:
+    product_type: [b2b_saas, helpdesk, ai_assistant]
+    tone: [confident, energetic]
+    kansei: [tactile, expressive, confident]
+    brand_archetypes: [Sage, Hero]
+  action:
+    hover_transform: 'scale(1.1)'
+    active_transform: 'scale(0.85)'
+    forbid_opacity_only_hover: true
+    duration_ms_range: [150, 250]
+  why:
+    establish: physical-growing-pressing-feedback-instead-of-fade
+    avoid: [opacity_only_hover_no_touch_feedback, scale_above_1.15_cartoon, multi_step_animation_complex]
+    balance: chrome_calm ↔ tactile_response
+  emerges_from: [intercom]
+  provenance: original
+  confidence: 0.5
+
+- rule_id: intercom-color-warm-oat-borders-006
+  section: color
+  preconditions:
+    product_type: [b2b_saas, helpdesk, ai_assistant]
+    tone: [warm, refined]
+    kansei: [warm, refined, soft]
+    brand_archetypes: [Caregiver, Sage]
+  action:
+    border_hex: '#dedbd6'
+    forbid_cool_gray_border: true
+    border_temperature: warm_oat_yellow_brown
+  why:
+    establish: temperature-consistency-across-every-neutral
+    avoid: ['#e5e7eb_cool_gray', 'tailwind_neutral_borders', blue_gray_border_on_warm]
+    balance: token_universality ↔ temperature_coherence
+  emerges_from: [intercom]
+  provenance: original
+  confidence: 0.55

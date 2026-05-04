@@ -191,7 +191,14 @@ def _derived_signals(tokens: dict) -> dict:
             },
         },
         'spacing': {
-            'base': (tokens.get('spacing', {}) or {}).get('base'),
+            # v1.7.1 (#36): tokens schema uses base_unit_px (not legacy 'base').
+            # archetype_rules.json refers to `spacing.base` so we expose the
+            # value under that signals key while reading from the canonical
+            # token field. Without this, every archetype rule referencing
+            # spacing.base produced a false-positive 'field not derived'
+            # warning on every real system.
+            'base': ((tokens.get('spacing', {}) or {}).get('base_unit_px')
+                      or (tokens.get('spacing', {}) or {}).get('base')),
         },
         'radius': {
             'max': radius_max,
@@ -309,6 +316,15 @@ def run(tokens: dict, primary: str, secondary: str | None = None,
         for rule in block:
             holds, diag = evaluate(rule, signals)
             severity = rule.get('severity')
+            # v1.7.1 (#38): "field not derived" means the signal couldn't be
+            # computed for this token set — the rule is unevaluable, NOT
+            # failed. Previously we recorded this as a phantom violation,
+            # producing misleading warnings on every system whose tokens
+            # don't expose certain optional signals (e.g., explicit body
+            # contrast labels). Skip and let the caller see it via
+            # `unevaluable_rules` instead of as a violation.
+            if diag and 'not derived' in diag:
+                continue
             if block_name == 'never' and holds:
                 if severity is None:
                     severity = 'blocker' if role == 'primary' else 'warning'

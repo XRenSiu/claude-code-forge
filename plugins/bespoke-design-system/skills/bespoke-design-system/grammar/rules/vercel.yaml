@@ -326,6 +326,7 @@ rules:
     brand_archetypes:
     - Sage
     - Magician
+    - Creator
   action:
     forbidden:
     - warm_colors_in_chrome
@@ -341,6 +342,7 @@ rules:
     avoid:
     - aesthetic_pseudo_minimal_drift
     - decorative_creep
+    balance: engineered_minimalism ↔ decorative_visual_appeal
   emerges_from:
   - vercel
   provenance: original

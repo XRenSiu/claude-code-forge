@@ -1,12 +1,1673 @@
 {
   "$schema_description": "Reverse index: rule_id -> source system(s). Used by B4 to construct inheritance.source_systems quickly.",
-  "rules": {},
+  "rules": {
+    "airbnb-color-photography-first-canvas-001": {
+      "system": "airbnb",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "airbnb-color-rausch-key-actions-only-002": {
+      "system": "airbnb",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "airbnb-color-singular-text-token-003": {
+      "system": "airbnb",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "airbnb-typography-single-family-vf-004": {
+      "system": "airbnb",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "airbnb-typography-500-is-regular-005": {
+      "system": "airbnb",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "airbnb-typography-display-tight-body-relaxed-006": {
+      "system": "airbnb",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "airbnb-components-rounded-photo-cards-007": {
+      "system": "airbnb",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "airbnb-components-circular-icon-buttons-008": {
+      "system": "airbnb",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "airbnb-components-sticky-booking-009": {
+      "system": "airbnb",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "airbnb-layout-hairline-separators-010": {
+      "system": "airbnb",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "airbnb-anti-pattern-photography-disrespect-011": {
+      "system": "airbnb",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "airtable-color-white-canvas-blue-accent-001": {
+      "system": "airtable",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "airtable-depth_elevation-blue-tinted-shadow-002": {
+      "system": "airtable",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "airtable-typography-haas-positive-tracking-003": {
+      "system": "airtable",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "airtable-components-medium-radius-buttons-004": {
+      "system": "airtable",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "airtable-anti_patterns-skip-letter-spacing-and-heavy-shadows-005": {
+      "system": "airtable",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "ant-color-data-dense-semantic-palette-001": {
+      "system": "ant",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "ant-typography-sans-mono-pair-002": {
+      "system": "ant",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "ant-layout-strict-type-spacing-scale-003": {
+      "system": "ant",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "apple-color-binary-section-rhythm-001": {
+      "system": "apple",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "apple-color-blue-action-only-002": {
+      "system": "apple",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "apple-color-near-black-text-1d1d1f-003": {
+      "system": "apple",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "apple-color-dark-surface-4-step-004": {
+      "system": "apple",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "apple-typography-display-text-dual-005": {
+      "system": "apple",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "apple-typography-billboard-display-tight-tracking-006": {
+      "system": "apple",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "apple-typography-600-dominant-emphasis-007": {
+      "system": "apple",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "apple-components-pill-capsule-family-008": {
+      "system": "apple",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "apple-components-restraint-depth-009": {
+      "system": "apple",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "apple-components-border-led-retail-010": {
+      "system": "apple",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "apple-spacing-8-base-with-microsteps-011": {
+      "system": "apple",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "apple-voice-product-first-restrained-012": {
+      "system": "apple",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "apple-anti-pattern-decoration-creep-013": {
+      "system": "apple",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "arc-color-gradient-as-primary-surface-001": {
+      "system": "arc",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "arc-color-user-driven-theme-002": {
+      "system": "arc",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "arc-components-squircle-soft-radii-003": {
+      "system": "arc",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "arc-depth-elevation-soft-blur-shadow-004": {
+      "system": "arc",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "binance-color-singular-gold-ingot-001": {
+      "system": "binance",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "binance-color-trading-floor-two-tone-002": {
+      "system": "binance",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "binance-typography-proprietary-across-levels-003": {
+      "system": "binance",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "binance-components-50px-pill-cta-token-004": {
+      "system": "binance",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "bmw-typography-light-weight-display-001": {
+      "system": "bmw",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "bmw-typography-extreme-weight-contrast-002": {
+      "system": "bmw",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "bmw-typography-single-family-all-sizes-003": {
+      "system": "bmw",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "bmw-components-zero-radius-rectangular-cta-004": {
+      "system": "bmw",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "bmw-color-signature-blue-interactive-only-005": {
+      "system": "bmw",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "bmw-meta-css-variable-multi-brand-theming-006": {
+      "system": "bmw",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "brutalism-color-warm-functional-binary-001": {
+      "system": "brutalism",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "brutalism-typography-grotesque-broad-weight-002": {
+      "system": "brutalism",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "brutalism-spacing-tight-functional-003": {
+      "system": "brutalism",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "brutalism-components-single-chromatic-anchor-004": {
+      "system": "brutalism",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "brutalism-motion-functional-not-dramatic-005": {
+      "system": "brutalism",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "brutalism-voice-imperative-no-marketing-006": {
+      "system": "brutalism",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "brutalism-anti-pattern-decoration-creep-007": {
+      "system": "brutalism",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "bugatti-color-monochrome-austerity-001": {
+      "system": "bugatti",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "bugatti-color-pure-black-not-near-black-002": {
+      "system": "bugatti",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "bugatti-typography-architectural-display-scale-003": {
+      "system": "bugatti",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "bugatti-typography-zero-bold-scale-only-hierarchy-004": {
+      "system": "bugatti",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "bugatti-components-three-radius-extreme-005": {
+      "system": "bugatti",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "bugatti-anti_patterns-silent-chrome-no-shadows-006": {
+      "system": "bugatti",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "cal-color-pure-grayscale-brand-001": {
+      "system": "cal",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "cal-color-warm-near-black-text-002": {
+      "system": "cal",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "cal-typography-cal-sans-display-extreme-tight-003": {
+      "system": "cal",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "cal-depth-elevation-11-tier-shadow-system-004": {
+      "system": "cal",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "cal-layout-wide-radius-scale-005": {
+      "system": "cal",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "canva-color-purple-blue-gradient-brand-001": {
+      "system": "canva",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "canva-typography-weight-contrast-hierarchy-002": {
+      "system": "canva",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "canva-typography-single-rounded-family-003": {
+      "system": "canva",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "canva-components-friendly-radius-strategy-004": {
+      "system": "canva",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "claude-color-parchment-canvas-001": {
+      "system": "claude",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "claude-color-terracotta-brand-002": {
+      "system": "claude",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "claude-color-warm-near-black-text-003": {
+      "system": "claude",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "claude-color-focus-blue-only-cool-004": {
+      "system": "claude",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "claude-typography-serif-single-weight-005": {
+      "system": "claude",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "claude-typography-relaxed-body-line-height-006": {
+      "system": "claude",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "claude-components-ring-shadow-warm-halo-007": {
+      "system": "claude",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "claude-components-generous-radius-008": {
+      "system": "claude",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "claude-layout-light-dark-alternation-009": {
+      "system": "claude",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "claude-voice-thoughtful-companion-010": {
+      "system": "claude",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "claude-anti-pattern-tech-creep-011": {
+      "system": "claude",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "clickhouse-color-neon-on-pure-black-001": {
+      "system": "clickhouse",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "clickhouse-typography-extreme-display-weight-002": {
+      "system": "clickhouse",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "clickhouse-typography-uppercase-wide-tracking-nav-003": {
+      "system": "clickhouse",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "clickhouse-color-secondary-cta-forest-green-004": {
+      "system": "clickhouse",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "cohere-color-extreme-chromatic-restraint-001": {
+      "system": "cohere",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "cohere-components-22px-signature-radius-002": {
+      "system": "cohere",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "cohere-color-interactive-blue-hover-only-003": {
+      "system": "cohere",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "cohere-typography-serif-display-sans-utility-004": {
+      "system": "cohere",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "cohere-typography-single-body-weight-with-size-hierarchy-005": {
+      "system": "cohere",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "coinbase-color-singular-deep-blue-binary-001": {
+      "system": "coinbase",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "coinbase-color-alternating-light-dark-sections-002": {
+      "system": "coinbase",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "coinbase-typography-four-proprietary-family-003": {
+      "system": "coinbase",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "coinbase-typography-extreme-display-hero-004": {
+      "system": "coinbase",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "coinbase-components-56px-pill-cta-005": {
+      "system": "coinbase",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "composio-color-pitch-black-canvas-cyan-accent-001": {
+      "system": "composio",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "composio-color-border-mist-opacity-ladder-002": {
+      "system": "composio",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "composio-typography-ultra-tight-line-heights-003": {
+      "system": "composio",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "composio-typography-dual-font-mono-as-credibility-004": {
+      "system": "composio",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "composio-depth_elevation-brutalist-hard-offset-shadow-005": {
+      "system": "composio",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "cursor-typography-three-voice-system-001": {
+      "system": "cursor",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "cursor-typography-display-extreme-negative-tracking-002": {
+      "system": "cursor",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "cursor-color-warm-dark-with-orange-accent-003": {
+      "system": "cursor",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "cursor-layout-8base-with-micro-increments-004": {
+      "system": "cursor",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "cursor-components-extreme-pill-radius-005": {
+      "system": "cursor",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "discord-color-dark-first-3-step-depth-001": {
+      "system": "discord",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "discord-color-single-saturated-anchor-002": {
+      "system": "discord",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "discord-color-traffic-light-status-003": {
+      "system": "discord",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "discord-typography-friendly-geometric-single-family-004": {
+      "system": "discord",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "discord-typography-weight-not-color-hierarchy-005": {
+      "system": "discord",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "discord-components-morph-avatar-006": {
+      "system": "discord",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "discord-components-status-notch-007": {
+      "system": "discord",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "discord-components-tight-chat-row-008": {
+      "system": "discord",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "discord-components-embed-left-border-009": {
+      "system": "discord",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "discord-layout-fixed-spatial-anchors-010": {
+      "system": "discord",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "discord-motion-functional-fade-011": {
+      "system": "discord",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "discord-anti-pattern-chat-clarity-012": {
+      "system": "discord",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "duolingo-color-dominant-chromatic-001": {
+      "system": "duolingo",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "duolingo-color-dopamine-mapped-accents-002": {
+      "system": "duolingo",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "duolingo-typography-extra-bold-rounded-display-003": {
+      "system": "duolingo",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "duolingo-components-tactile-press-button-004": {
+      "system": "duolingo",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "duolingo-components-skill-tree-node-005": {
+      "system": "duolingo",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "duolingo-components-borders-chunky-only-006": {
+      "system": "duolingo",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "duolingo-spacing-4px-base-007": {
+      "system": "duolingo",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "duolingo-motion-overshoot-easing-008": {
+      "system": "duolingo",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "duolingo-anti-pattern-flatten-009": {
+      "system": "duolingo",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "elevenlabs-color-warm-white-canvas-001": {
+      "system": "elevenlabs",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "elevenlabs-typography-light-weight-display-002": {
+      "system": "elevenlabs",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "elevenlabs-depth_elevation-warm-tinted-shadows-003": {
+      "system": "elevenlabs",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "elevenlabs-typography-positive-letter-spacing-body-004": {
+      "system": "elevenlabs",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "elevenlabs-components-warm-stone-pill-cta-005": {
+      "system": "elevenlabs",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "figma-color-binary-chrome-001": {
+      "system": "figma",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "figma-color-glass-overlay-002": {
+      "system": "figma",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "figma-typography-variable-microstep-weights-003": {
+      "system": "figma",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "figma-typography-light-base-004": {
+      "system": "figma",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "figma-typography-negative-tracking-everywhere-005": {
+      "system": "figma",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "figma-typography-mono-uppercase-signposts-006": {
+      "system": "figma",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "figma-components-pill-circle-geometry-007": {
+      "system": "figma",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "figma-components-dashed-focus-outline-008": {
+      "system": "figma",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "figma-anti-pattern-chromatic-creep-009": {
+      "system": "figma",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "framer-color-absolute-void-black-001": {
+      "system": "framer",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "framer-typography-extreme-negative-tracking-002": {
+      "system": "framer",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "framer-color-single-accent-blue-throughline-003": {
+      "system": "framer",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "framer-components-pill-buttons-only-004": {
+      "system": "framer",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "framer-components-frosted-translucent-pill-005": {
+      "system": "framer",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "framer-depth_elevation-blue-ring-shadow-as-border-006": {
+      "system": "framer",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "github-typography-14px-body-density-001": {
+      "system": "github",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "github-color-dual-chromatic-anchor-002": {
+      "system": "github",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "github-color-hairline-border-not-shadow-003": {
+      "system": "github",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "github-typography-system-ui-only-004": {
+      "system": "github",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "github-components-pill-status-badge-005": {
+      "system": "github",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "github-anti-pattern-decoration-creep-006": {
+      "system": "github",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "huggingface-color-yellow-as-punctuation-001": {
+      "system": "huggingface",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "huggingface-typography-mono-everywhere-002": {
+      "system": "huggingface",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "huggingface-components-crisp-radius-1px-borders-003": {
+      "system": "huggingface",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "huggingface-components-category-tinted-task-tags-004": {
+      "system": "huggingface",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "huggingface-typography-weight-cap-600-005": {
+      "system": "huggingface",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "intercom-color-warm-cream-canvas-001": {
+      "system": "intercom",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "intercom-typography-saans-billboard-compression-002": {
+      "system": "intercom",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "intercom-color-fin-orange-singular-ai-accent-003": {
+      "system": "intercom",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "intercom-components-sharp-4px-button-radius-004": {
+      "system": "intercom",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "intercom-components-scale-hover-physical-interaction-005": {
+      "system": "intercom",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "intercom-color-warm-oat-borders-006": {
+      "system": "intercom",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "kami-color-warm-parchment-canvas-001": {
+      "system": "kami",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "kami-color-single-ink-blue-accent-5-percent-002": {
+      "system": "kami",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "kami-typography-serif-single-weight-500-003": {
+      "system": "kami",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "kami-color-tag-fill-solid-hex-not-rgba-004": {
+      "system": "kami",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "kami-color-warm-grays-only-005": {
+      "system": "kami",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "kami-depth_elevation-ring-and-whisper-only-006": {
+      "system": "kami",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "linear-app-color-dark-native-001": {
+      "system": "linear-app",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "linear-app-color-single-chromatic-anchor-002": {
+      "system": "linear-app",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "linear-app-color-translucent-borders-003": {
+      "system": "linear-app",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "linear-app-typography-geometric-sans-with-features-004": {
+      "system": "linear-app",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "linear-app-typography-display-compression-005": {
+      "system": "linear-app",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "linear-app-components-button-near-zero-opacity-006": {
+      "system": "linear-app",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "linear-app-elevation-luminance-stepping-007": {
+      "system": "linear-app",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "linear-app-spacing-8px-base-with-optical-008": {
+      "system": "linear-app",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "linear-app-voice-engineered-not-designed-009": {
+      "system": "linear-app",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "linear-app-anti-pattern-warmth-in-chrome-010": {
+      "system": "linear-app",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "lovable-color-parchment-cream-canvas-001": {
+      "system": "lovable",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "lovable-typography-humanist-rounded-terminals-002": {
+      "system": "lovable",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "lovable-color-opacity-driven-gray-scale-003": {
+      "system": "lovable",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "lovable-components-inset-shadow-pressed-button-004": {
+      "system": "lovable",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "lovable-typography-variable-weight-480-005": {
+      "system": "lovable",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "lovable-components-pill-only-for-toggles-006": {
+      "system": "lovable",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "mastercard-color-warm-putty-cream-canvas-001": {
+      "system": "mastercard",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "mastercard-components-circular-portraits-with-orbital-arcs-002": {
+      "system": "mastercard",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "mastercard-typography-weight-450-load-bearing-body-003": {
+      "system": "mastercard",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "mastercard-color-signal-orange-consent-only-004": {
+      "system": "mastercard",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "mastercard-layout-radius-three-tier-gap-rule-005": {
+      "system": "mastercard",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "mastercard-depth_elevation-atmospheric-cushion-shadow-006": {
+      "system": "mastercard",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "mintlify-color-white-canvas-fresh-accent-001": {
+      "system": "mintlify",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "mintlify-color-near-black-text-002": {
+      "system": "mintlify",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "mintlify-color-7tier-gray-scale-003": {
+      "system": "mintlify",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "mintlify-typography-inter-tight-display-004": {
+      "system": "mintlify",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "mintlify-typography-relaxed-body-line-height-005": {
+      "system": "mintlify",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "mintlify-typography-three-weight-006": {
+      "system": "mintlify",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "mintlify-components-ultra-round-corners-007": {
+      "system": "mintlify",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "mintlify-components-whisper-borders-008": {
+      "system": "mintlify",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "mintlify-spacing-generous-sections-009": {
+      "system": "mintlify",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "mintlify-anti-pattern-marketing-creep-010": {
+      "system": "mintlify",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "nike-color-aggressive-monochromatic-ui-001": {
+      "system": "nike",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "nike-color-functional-semantic-only-002": {
+      "system": "nike",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "nike-typography-split-display-body-003": {
+      "system": "nike",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "nike-components-pill-button-fullbleed-imagery-004": {
+      "system": "nike",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "notion-color-warm-neutrals-001": {
+      "system": "notion",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "notion-color-near-black-text-95-002": {
+      "system": "notion",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "notion-color-single-blue-anchor-003": {
+      "system": "notion",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "notion-color-content-tagging-palette-004": {
+      "system": "notion",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "notion-color-multi-layer-whisper-shadow-005": {
+      "system": "notion",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "notion-typography-modified-inter-with-tight-display-006": {
+      "system": "notion",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "notion-typography-4-weight-system-007": {
+      "system": "notion",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "notion-typography-12px-positive-tracking-exception-008": {
+      "system": "notion",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "notion-components-translucent-secondary-button-009": {
+      "system": "notion",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "notion-components-subtle-card-radius-010": {
+      "system": "notion",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "notion-spacing-organic-non-rigid-011": {
+      "system": "notion",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "notion-anti-pattern-coldness-012": {
+      "system": "notion",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "openai-color-clinical-restraint-001": {
+      "system": "openai",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "openai-color-singular-teal-not-blue-002": {
+      "system": "openai",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "openai-typography-restrained-weights-with-serif-editorial-003": {
+      "system": "openai",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "openai-components-uniformly-soft-radii-004": {
+      "system": "openai",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "openai-layout-whitespace-primary-divider-005": {
+      "system": "openai",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "pinterest-color-warm-neutral-scale-001": {
+      "system": "pinterest",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "pinterest-color-confident-singular-red-002": {
+      "system": "pinterest",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "pinterest-color-plum-tinted-near-black-text-003": {
+      "system": "pinterest",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "pinterest-components-generous-radius-scale-004": {
+      "system": "pinterest",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "pinterest-meta-3-tier-design-token-architecture-005": {
+      "system": "pinterest",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "shopify-color-dark-first-with-green-undertone-001": {
+      "system": "shopify",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "shopify-color-neon-green-focus-only-002": {
+      "system": "shopify",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "shopify-typography-ultralight-monumental-display-003": {
+      "system": "shopify",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "shopify-typography-precision-variable-weights-004": {
+      "system": "shopify",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "shopify-components-fullpill-buttons-005": {
+      "system": "shopify",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "spacex-components-photographic-exhibition-001": {
+      "system": "spacex",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "spacex-color-pure-black-with-spectral-white-002": {
+      "system": "spacex",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "spacex-typography-uppercase-wide-tracking-003": {
+      "system": "spacex",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "spacex-typography-two-weight-strict-004": {
+      "system": "spacex",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "spacex-typography-tight-line-height-005": {
+      "system": "spacex",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "spacious-color-minimal-baseline-palette-001": {
+      "system": "spacious",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "spacious-typography-display-body-split-002": {
+      "system": "spacious",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "spacious-layout-8pt-baseline-wide-step-003": {
+      "system": "spacious",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "spotify-color-content-first-darkness-001": {
+      "system": "spotify",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "spotify-color-singular-functional-green-002": {
+      "system": "spotify",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "spotify-components-pill-and-circle-geometry-003": {
+      "system": "spotify",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "spotify-depth-elevation-heavy-shadow-with-inset-004": {
+      "system": "spotify",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "spotify-typography-multi-script-global-fallback-005": {
+      "system": "spotify",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "starbucks-color-warm-cream-canvas-001": {
+      "system": "starbucks",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "starbucks-color-4-tier-green-system-002": {
+      "system": "starbucks",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "starbucks-color-gold-ceremony-only-003": {
+      "system": "starbucks",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "starbucks-components-50px-pill-universal-with-press-004": {
+      "system": "starbucks",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "starbucks-components-floating-frap-cta-005": {
+      "system": "starbucks",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "starbucks-typography-disciplined-multi-family-006": {
+      "system": "starbucks",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "starbucks-anti-pattern-flatten-warm-cafe-007": {
+      "system": "starbucks",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:50:51.945326Z"
+    },
+    "stripe-color-navy-purple-foundation-001": {
+      "system": "stripe",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "stripe-color-purple-ladder-002": {
+      "system": "stripe",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "stripe-color-decorative-only-magenta-ruby-003": {
+      "system": "stripe",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "stripe-color-blue-tinted-shadow-004": {
+      "system": "stripe",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "stripe-typography-sohne-ss01-required-005": {
+      "system": "stripe",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "stripe-typography-light-weight-300-signature-006": {
+      "system": "stripe",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "stripe-typography-progressive-tracking-007": {
+      "system": "stripe",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "stripe-components-conservative-radius-008": {
+      "system": "stripe",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "stripe-components-dashed-affordance-009": {
+      "system": "stripe",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "stripe-spacing-fine-grained-financial-010": {
+      "system": "stripe",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "stripe-layout-dense-data-generous-chrome-011": {
+      "system": "stripe",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "stripe-voice-engineering-luxury-012": {
+      "system": "stripe",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "stripe-anti-pattern-decoration-creep-013": {
+      "system": "stripe",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "vercel-color-extreme-white-minimalism-001": {
+      "system": "vercel",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "vercel-color-near-black-text-002": {
+      "system": "vercel",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "vercel-color-functional-only-accents-003": {
+      "system": "vercel",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "vercel-typography-geometric-sans-extreme-tracking-004": {
+      "system": "vercel",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "vercel-elevation-shadow-as-border-005": {
+      "system": "vercel",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "vercel-elevation-multi-layer-shadow-stack-006": {
+      "system": "vercel",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "vercel-components-dark-pill-cta-007": {
+      "system": "vercel",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "vercel-spacing-jump-scale-008": {
+      "system": "vercel",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "vercel-voice-infrastructure-invisible-009": {
+      "system": "vercel",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "vercel-anti-pattern-decoration-creep-010": {
+      "system": "vercel",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "webflow-color-rich-secondary-palette-001": {
+      "system": "webflow",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "webflow-typography-variable-font-uppercase-labels-002": {
+      "system": "webflow",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    },
+    "webflow-components-conservative-radius-003": {
+      "system": "webflow",
+      "co_emerges_from": [],
+      "provenance": "original",
+      "added_at": "2026-05-04T04:00:07.410798Z"
+    }
+  },
   "_template": {
     "<rule_id>": {
       "system": "<primary source system>",
-      "co_emerges_from": ["<other systems this rule pattern was found in>"],
+      "co_emerges_from": [
+        "<other systems this rule pattern was found in>"
+      ],
       "provenance": "original | generated | merged",
       "added_at": "<ISO 8601>"
     }
-  }
+  },
+  "rebuilt_at": "2026-05-04T04:50:51.945326Z",
+  "rule_count": 276
 }

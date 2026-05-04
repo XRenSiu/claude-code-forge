@@ -193,6 +193,7 @@ rules:
     avoid:
     - consumer_app_drift
     - marketing_decoration
+    balance: information_density ↔ decorative_polish
   emerges_from:
   - github
   provenance: original

@@ -1,11 +1,11 @@
 {
   "system_name": "cafe",
   "source": "open-design",
-  "extracted_at": "2026-05-03T13:38:57.520992Z",
+  "extracted_at": "2026-05-04T04:27:09.807626Z",
   "dialect": "B",
   "fingerprint_hash": "e26e9bf3a43cf547a985d1b879a8b4bb36033cb95185c6f900380a74e5722ddf",
   "extraction_method": "programmatic_a1",
-  "tool_version": "1.0.0",
+  "tool_version": "1.1.0",
   "color": {
     "role_color_pairs": {
       "primary": "#5D4432",
@@ -78,7 +78,7 @@
   "radius": {
     "role_radius_pairs": {},
     "all_px_values": [],
-    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_extraction_method": "regex_role_radius (patterns A and B), v1.7.1 subsection-scoped",
     "_confidence": "low"
   },
   "motion": {

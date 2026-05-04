@@ -1,11 +1,11 @@
 {
   "system_name": "shopify",
   "source": "open-design",
-  "extracted_at": "2026-05-03T13:38:57.577203Z",
+  "extracted_at": "2026-05-04T04:27:13.130697Z",
   "dialect": "A",
   "fingerprint_hash": "ab10135212d6d8a0eaf4003f29cf5072f9390c27fb5e109a7bb8d4e2a28f4931",
   "extraction_method": "programmatic_a1",
-  "tool_version": "1.0.0",
+  "tool_version": "1.1.0",
   "color": {
     "role_color_pairs": {
       "shopify_white": "#FFFFFF",
@@ -114,18 +114,11 @@
       4.0,
       8.0,
       12.0,
-      16.0,
       20.0,
-      24.0,
-      28.0,
-      32.0,
-      36.0,
-      40.0,
-      64.0,
-      80.0,
-      120.0
+      340.0,
+      9999.0
     ],
-    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_extraction_method": "regex_role_radius (patterns A and B), v1.7.1 subsection-scoped",
     "_confidence": "low"
   },
   "depth_elevation": {

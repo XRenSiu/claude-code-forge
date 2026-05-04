@@ -174,9 +174,17 @@ def extract_typography(section_text):
 def extract_spacing(section_text):
     if not section_text:
         return None
-    # Base unit: "Base unit: 8px", "8pt baseline grid", "Spacing scale: 8pt baseline grid"
+    # Base unit: "Base unit: 8px", "**Base unit**: 8px", "8pt baseline grid",
+    # "Spacing scale: 8pt baseline grid". v1.7.1 fix: previous regex required
+    # `[:=]?` immediately after the keyword (with only `\s*` between), which
+    # broke on markdown bold like `**Base unit**: 8px` because `\s*` doesn't
+    # span the closing `**`. Now we allow up to 16 non-digit chars between
+    # the keyword and the captured number to absorb formatting.
     base = None
-    for m in re.finditer(r'(?:base\s*unit|baseline\s*grid|base\s*=)\s*[:=]?\s*(\d+(?:\.\d+)?)\s*(?:px|pt)?', section_text, re.IGNORECASE):
+    for m in re.finditer(
+        r'(?:base\s*unit|baseline\s*grid|base\s*=)[^\d\n]{0,16}(\d+(?:\.\d+)?)\s*(?:px|pt)?',
+        section_text, re.IGNORECASE,
+    ):
         base = float(m.group(1))
         break
     if base is None:
@@ -185,11 +193,38 @@ def extract_spacing(section_text):
         if m:
             base = float(m.group(1))
     if base is None:
-        # Fallback: most common px value
-        pxs = [float(m.group(1)) for m in PX_RE.finditer(section_text)]
-        if pxs:
-            from collections import Counter
-            base = Counter(pxs).most_common(1)[0][0]
+        # v1.7.1: "Npx base" / "Npx baseline" inline form
+        # e.g., airtable: "Spacing: 1–48px (8px base)"
+        m = re.search(r'(\d+(?:\.\d+)?)\s*px\s+base\b', section_text, re.IGNORECASE)
+        if m:
+            base = float(m.group(1))
+    if base is None:
+        # Fallback v1.7.1: pull px values from lines that are clearly about
+        # spacing/scale/gap, NOT lines about radius/border. Layout sections
+        # in DESIGN.md frequently mix radius lists with spacing lists; the
+        # previous fallback couldn't tell them apart and ended up picking
+        # the smallest radius value as the "base unit". Now we score each
+        # line: positive for spacing keywords, negative for radius keywords.
+        candidate_pxs = []
+        for line in section_text.splitlines():
+            ll = line.lower()
+            is_radius = ('radius' in ll) or ('rounded' in ll)
+            is_spacing = (
+                'spacing' in ll or 'scale' in ll or 'gap' in ll
+                or 'padding' in ll or 'baseline' in ll
+            )
+            if is_radius and not is_spacing:
+                continue  # skip lines that are clearly radius-only
+            line_pxs = [float(m.group(1)) for m in PX_RE.finditer(line)]
+            candidate_pxs.extend(p for p in line_pxs if 1 <= p <= 64)
+        if candidate_pxs:
+            base = min(candidate_pxs)
+        else:
+            # Last resort: smallest realistic px anywhere in the section.
+            pxs = [float(m.group(1)) for m in PX_RE.finditer(section_text)]
+            realistic_pxs = [p for p in pxs if 1 <= p <= 64]
+            if realistic_pxs:
+                base = min(realistic_pxs)
 
     # Scale: "[4, 8, 12, 16, ...]" or "8, 16, 24, 32" or "Spacing scale: 4 / 8 / 16 / 24"
     scale = None
@@ -215,13 +250,25 @@ def extract_radius(section_text):
     if not section_text:
         return None
     pairs = {}
+    # v1.7.1: Pattern A/B keyword filter previously matched any label
+    # containing radius-role words (e.g. "card") but didn't reject labels
+    # that ALSO contain non-radius words (e.g. "card padding"). 8 systems had
+    # gap/padding/margin values stored as radius role pairs. Now we reject
+    # any label containing these spacing keywords.
+    NON_RADIUS_LABEL_TOKENS = ('padding', 'gap', 'margin', 'spacing',
+                                'width', 'height', 'inset')
+    radius_role_tokens = ('micro', 'small', 'medium', 'large', 'pill',
+                           'circle', 'card', 'panel', 'comfortable',
+                           'standard', 'full', 'image', 'xl', 'xs', 'tab')
     # Pattern A: '**Label:** Npx' (dialect B style)
     for m in re.finditer(
         r'\*\*([\w\s]+?)\*\*[:\s]*[`"]?(\d+(?:\.\d+)?)\s*px[`"]?',
         section_text
     ):
         label = m.group(1).strip().lower()
-        if 'radius' in label or any(k in label for k in ['micro','small','medium','large','pill','circle','card','panel','comfortable','standard']):
+        if any(t in label for t in NON_RADIUS_LABEL_TOKENS):
+            continue
+        if 'radius' in label or any(k in label for k in radius_role_tokens):
             pairs[label] = float(m.group(2))
     # Pattern B: '- Micro (2px):' or '- Comfortable (6px):' (dialect A prose-list)
     for m in re.finditer(
@@ -229,16 +276,54 @@ def extract_radius(section_text):
         section_text, re.MULTILINE
     ):
         label = m.group(1).strip().lower()
-        if any(k in label for k in ['micro','small','medium','large','pill','circle','card','panel','comfortable','standard','full','image','xl','xs','tab']):
+        if any(t in label for t in NON_RADIUS_LABEL_TOKENS):
+            continue
+        if any(k in label for k in radius_role_tokens):
             if label not in pairs:
                 pairs[label] = float(m.group(2))
-    # Spacing-realistic px values only (radius is typically 0-200)
-    raw_pxs = [float(m.group(1)) for m in PX_RE.finditer(section_text)]
-    pxs = sorted(set(p for p in raw_pxs if 0 < p <= 200))
+    # v1.7.1: previous filter `0 < p <= 200` let padding/gap values leak in
+    # as "radius" (66 of 137 tokens.json had bogus radii like 64/96/120/176px).
+    # First fix went line-based but regressed — bullets without the literal
+    # word "radius" were dropped (framer's `100px: Full pill shape` etc.).
+    # Final fix: scope to the `### Border Radius` (or similar) subsection if
+    # present — then take ALL px values inside it; only fall back to line-
+    # keyword scoping when no such subsection exists.
+    lines = section_text.splitlines()
+    radius_subsection_pxs = []
+    in_radius_subsection = False
+    radius_header_re = re.compile(
+        r'^#+\s*(border\s*[-]?\s*radius|radius\s+scale|corner\s+radius|radius)\b',
+        re.IGNORECASE,
+    )
+    next_subsection_re = re.compile(r'^#+\s+\S+', re.IGNORECASE)
+    for line in lines:
+        if radius_header_re.match(line):
+            in_radius_subsection = True
+            continue
+        if in_radius_subsection and next_subsection_re.match(line) and not radius_header_re.match(line):
+            in_radius_subsection = False
+        if in_radius_subsection:
+            radius_subsection_pxs.extend(float(m.group(1)) for m in PX_RE.finditer(line))
+    if radius_subsection_pxs:
+        pxs = sorted(set(p for p in radius_subsection_pxs if 0 <= p <= 48 or p >= 99))
+    else:
+        # No `### Border Radius` subsection — fall back to lines that mention
+        # radius/rounded/corner. Better than nothing; less precise than above.
+        line_pxs = []
+        for line in lines:
+            ll = line.lower()
+            if 'radius' in ll or 'rounded' in ll or 'corner' in ll:
+                line_pxs.extend(float(m.group(1)) for m in PX_RE.finditer(line))
+        if line_pxs:
+            pxs = sorted(set(p for p in line_pxs if 0 <= p <= 48 or p >= 99))
+        else:
+            # Last resort: plausibility filter on full section text.
+            raw_pxs = [float(m.group(1)) for m in PX_RE.finditer(section_text)]
+            pxs = sorted(set(p for p in raw_pxs if 0 <= p <= 48 or p >= 99))
     return {
         'role_radius_pairs': pairs,
         'all_px_values': pxs,
-        '_extraction_method': 'regex_role_radius (patterns A and B)',
+        '_extraction_method': 'regex_role_radius (patterns A and B), v1.7.1 subsection-scoped',
         '_confidence': 'high' if len(pairs) >= 3 else ('medium' if pairs else 'low'),
     }
 
@@ -309,6 +394,26 @@ def extract_dos_donts(section_text):
     }
 
 
+def _write_tokens_idempotent(out_file, tokens):
+    """Write tokens.json idempotently — preserve `extracted_at` if all other
+    content is unchanged. v1.7.1 fix: previously every extraction stamped a
+    fresh utcnow timestamp even when DESIGN.md hadn't changed, making
+    consecutive extractions diff-noisy and breaking CI hash comparison."""
+    if os.path.isfile(out_file):
+        try:
+            with open(out_file) as f:
+                prev = json.load(f)
+            prev_no_ts = {k: v for k, v in prev.items() if k != 'extracted_at'}
+            new_no_ts = {k: v for k, v in tokens.items() if k != 'extracted_at'}
+            if prev_no_ts == new_no_ts:
+                tokens = dict(tokens)
+                tokens['extracted_at'] = prev.get('extracted_at', tokens.get('extracted_at'))
+        except Exception:
+            pass
+    with open(out_file, 'w') as f:
+        json.dump(tokens, f, indent=2, ensure_ascii=False)
+
+
 def extract_tokens_full(scan_result, system_name=None, source=None):
     """Run all extractors against a scan_dialect result."""
     sections = scan_result.get('sections', {})
@@ -319,7 +424,15 @@ def extract_tokens_full(scan_result, system_name=None, source=None):
         'dialect': scan_result.get('dialect'),
         'fingerprint_hash': scan_result.get('fingerprint_hash'),
         'extraction_method': 'programmatic_a1',
-        'tool_version': '1.0.0',
+        # v1.7.1 (#40): bumped from 1.0.0 — parser now handles markdown-bold
+        # `**Base unit**` for base_unit_px, subsection-scoped radius
+        # extraction (Border Radius header → all px in subsection), Pattern
+        # A label filter rejects 'card padding'/'card grid gap' false
+        # positives, idempotent writes preserve extracted_at when content
+        # unchanged. Re-extracted output is structurally compatible with
+        # 1.0.0 (same schema) but produces materially different values for
+        # spacing.base_unit_px and radius.all_px_values.
+        'tool_version': '1.1.0',
     }
 
     if 'color' in sections:
@@ -469,8 +582,7 @@ def main():
                 continue
             try:
                 tokens = process_one(design_md, system_name=entry, source=args.source)
-                with open(out_file, 'w') as f:
-                    json.dump(tokens, f, indent=2, ensure_ascii=False)
+                _write_tokens_idempotent(out_file, tokens)
                 results[entry] = {'ok': True, 'sections': len(tokens.get('sections_present', []))}
                 # v1.5.0 Issue 1: sync registry extraction_state
                 update_registry_state(entry, derive_extraction_state(entry))
@@ -483,6 +595,16 @@ def main():
             'failures': {k: v for k, v in results.items() if not v.get('ok')},
         }, indent=2))
     else:
+        # v1.7.1 (#39): fail loud with a clean message instead of a raw
+        # FileNotFoundError stack trace from scan_dialect deep in the call
+        # chain when the user passes a typo'd path.
+        if not os.path.isfile(args.path):
+            sys.stderr.write(
+                f'error: input DESIGN.md not found: {args.path}\n'
+                f'       check the path or pass --batch with a directory of '
+                f'source-design-systems/<name>/ entries.\n'
+            )
+            sys.exit(1)
         tokens = process_one(args.path, system_name=args.system_name, source=args.source)
         if args.stdout:
             json.dump(tokens, sys.stdout, indent=2, ensure_ascii=False)
@@ -490,8 +612,7 @@ def main():
         else:
             name = tokens['system_name']
             out_file = os.path.join(out_dir, f'{name}.json')
-            with open(out_file, 'w') as f:
-                json.dump(tokens, f, indent=2, ensure_ascii=False)
+            _write_tokens_idempotent(out_file, tokens)
             print(f'Wrote {out_file}')
             # v1.5.0 Issue 1: sync registry extraction_state
             update_registry_state(name, derive_extraction_state(name))

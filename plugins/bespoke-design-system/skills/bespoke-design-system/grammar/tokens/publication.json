@@ -1,11 +1,11 @@
 {
   "system_name": "publication",
   "source": "open-design",
-  "extracted_at": "2026-05-03T13:38:57.568428Z",
+  "extracted_at": "2026-05-04T04:27:12.705366Z",
   "dialect": "B",
   "fingerprint_hash": "f0aaeed691caeecf624bb510482baee6a5d1fe2593ac72b87e691c3009e37b03",
   "extraction_method": "programmatic_a1",
-  "tool_version": "1.0.0",
+  "tool_version": "1.1.0",
   "color": {
     "role_color_pairs": {
       "primary": "#A855F7",
@@ -73,7 +73,7 @@
   "radius": {
     "role_radius_pairs": {},
     "all_px_values": [],
-    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_extraction_method": "regex_role_radius (patterns A and B), v1.7.1 subsection-scoped",
     "_confidence": "low"
   },
   "motion": {

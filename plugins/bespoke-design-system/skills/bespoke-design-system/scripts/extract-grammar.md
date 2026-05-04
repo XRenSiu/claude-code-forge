@@ -132,6 +132,10 @@ rebuild_graph.py` 会再次跑完整 validate 作为 preflight。
      known_conflicts:                                  # 可选 — 如观察到与已有规则冲突
        - rule: <rule_id>
          reason: <一句话>
+     inferred: true                                    # 可选 — 标记本条规则的 preconditions / action 是
+                                                       # 从 DESIGN.md 推断而非字面提取（仅当原文未直说时设置）。
+                                                       # 与 rationale.md 的 `[inferred]` 文本标注语义一致。
+                                                       # 当前 validator 接受这个字段，下游工具暂未消费，但保留以备未来 B4 inheritance 引用质量降级使用。
    ```
 
 2. **关键参数化**：把具体值（`#5E6AD2`）抽象成参数化模式（`hue: 240°-260°`）；具体值留在 tokens.json
@@ -217,6 +221,7 @@ rebuild_graph.py` 会再次跑完整 validate 作为 preflight。
    - **以特殊字符开头的字符串**：`- "适度透明" 是核心铁律：xxx`——开头双引号让 yaml 期望 quoted scalar，遇到 closing 后跟内容会炸。**改**：用单引号包整个，或转义内层引号
    - **多行字符串无 `|` / `>`**：长 reason 跨多行直接换行会被并入下一字段。**改**：用 `reason: |` 或 `reason: >` 块标量
    - **数字以 0 开头**：`opacity: 0.05` OK，但 `version: 0.5.0` 写成 `version: 0.5` 会被 parse 成 float。**改**：`version: '0.5.0'`
+   - **`#` 在 unquoted 值里被当注释（v1.7.1 #41）**：`base_canvas: dark (#1e1f22 to #2b2d31)` 会被 yaml 解析为 `dark (` —— `#1e1f22 to #2b2d31)` 整段被当成行内注释吃掉。任何 hex 颜色 / `#anchor` / `# section` 都触发这个陷阱。**改**：整体加单引号：`base_canvas: 'dark (#1e1f22 to #2b2d31)'`。validate_rules 的 unmatched-parens 检测会捕获，但 A3 阶段提前避开。
 
 **质量检查**：
 - [ ] 每条规则有完整 preconditions（product_type / kansei / **brand_archetypes** 都不为空）

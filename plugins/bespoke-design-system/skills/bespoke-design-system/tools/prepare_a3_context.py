@@ -61,7 +61,10 @@ def _design_md_sections(system_name: str) -> dict[str, str]:
     design_md_path = os.path.join(SKILL_ROOT, 'source-design-systems', system_name, 'DESIGN.md')
     if not os.path.isfile(design_md_path):
         return {}
-    sys.path.insert(0, HERE)
+    # v1.7.1: only insert tools dir into sys.path once. Repeated calls used to
+    # accumulate duplicate entries.
+    if HERE not in sys.path:
+        sys.path.insert(0, HERE)
     try:
         from scan_dialect import scan as scan_design_md  # type: ignore
         scan = scan_design_md(design_md_path)
@@ -274,13 +277,17 @@ def assemble_context(system_name: str, peer_system: str | None = None) -> str:
         '',
         rationale_existing[:2500] if isinstance(rationale_existing, str) else '(none)',
         '',
-        '## 9. Reminders (anti-laziness, anti-phantom)',
+        '## 9. Reminders (v1.7.0 — read all five; each has cost a real round-trip in prior batches)',
         '',
-        '- **No lazy archetype stamping**: don\'t copy the system-level archetypes to every rule. Anti-patterns and voice rules often span more archetypes than rule-bearing sections.',
+        '- **No lazy archetype stamping (F6)**: don\'t copy system-level archetypes to every rule. anti_patterns rules often span MORE archetypes than rule-bearing sections (they guard boundaries multiple archetypes can cross); voice rules often span FEWER (the imperative voice has a narrow stance). validate_rules.py warns at >90% archetype uniformity.',
         '- **No phantom rule_ids in known_conflicts**: if you cite a conflict, the target rule_id MUST exist. Run `python3 tools/validate_rules.py` after writing.',
-        '- **Stay within kansei vocab**: see §3 above. Off-vocab words become dead fields in B2 retrieval.',
-        '- **Confidence calibration**: 0.5–0.6 first extraction; raise only if multiple peers agree.',
-        '- **Run validator before claiming done**: `python3 tools/validate_rules.py grammar/rules/{0}.yaml`'.format(system_name),
+        '- **Stay within kansei vocab (F2)**: see §3 above. Off-vocab words are warnings by default; CI runs `--strict-vocab` which makes them blockers. Do NOT add new vocab in the same PR — split vocab change from rules change.',
+        '- **Confidence calibration (F8)**: use the 5-tier rubric in `scripts/extract-grammar.md` A3 step 5: 0.4–0.5 = stub/template; 0.5–0.6 = real product single source (THE DEFAULT FOR FIRST-EXTRACTION); 0.6–0.7 = 2 peers; 0.7–0.8 = 3+ peers + co_occurrence ≥0.6; 0.8+ = 5+ peers industry consensus. **First-extraction rules CANNOT exceed 0.7** — validator warns on confidence>0.7 with single emerges_from.',
+        '- **YAML pitfalls (F1)**: when writing the .yaml, watch for: (a) parenthetical after unquoted list `[50,80] (warm)` → wrap whole value in quotes; (b) unquoted colon `5:1 ratio` → wrap in quotes; (c) string starting with `"..."` then continuing → use single quotes or block scalar; (d) multi-line reason without `|` → use `reason: |`; (e) version/numeric strings parsed as float — quote them.',
+        '- **Verbatim DESIGN.md citation (F9)**: every `### decision:` in rationale.md must contain at least one `>` blockquote citing the original DESIGN.md prose. validate_rationale.py warns if missing. This is what lets downstream B4 trace through paraphrase chains.',
+        '- **Run BOTH validators before claiming done**:',
+        '    `python3 tools/validate_rationale.py grammar/rationale/{0}.md`'.format(system_name),
+        '    `python3 tools/validate_rules.py grammar/rules/{0}.yaml`'.format(system_name),
         '',
     ]
     return '\n'.join(parts)
@@ -292,7 +299,46 @@ def main():
     p.add_argument('system_name', help='System to prepare context for (e.g. figma, ant, agentic)')
     p.add_argument('--peer', help='Peer system whose rationale/rules to show as format example. Auto-pick if omitted.')
     p.add_argument('--output', help='Output path (default: ./a3-context-<system>.md)')
+    p.add_argument('--allow-missing', action='store_true',
+                    help='Bypass the DESIGN.md existence check (use only when starting a fresh extraction with files about to be created).')
     args = p.parse_args()
+
+    # v1.7.1 fail-loud guard: refuse to silently fabricate context for a system
+    # that has neither a DESIGN.md nor extracted tokens. A typo'd system_name
+    # used to produce a 23k-char "context" the LLM would dutifully consume.
+    design_md = os.path.join(SKILL_ROOT, 'source-design-systems',
+                              args.system_name, 'DESIGN.md')
+    tokens = os.path.join(SKILL_ROOT, 'grammar', 'tokens',
+                           f'{args.system_name}.json')
+    if not args.allow_missing and not os.path.isfile(design_md) and not os.path.isfile(tokens):
+        sys.stderr.write(
+            f'error: system `{args.system_name}` has neither '
+            f'`source-design-systems/{args.system_name}/DESIGN.md` nor '
+            f'`grammar/tokens/{args.system_name}.json` — refusing to '
+            f'fabricate context. Pass --allow-missing to override (only '
+            f'sensible if files are about to be created), or check the '
+            f'system name for typos via `python3 tools/check_state.py`.\n'
+        )
+        sys.exit(1)
+
+    # v1.7.1 (#34): also fail loud when --peer points to a non-existent
+    # extracted system. Silently emitting "(missing)" peer rationale + rules
+    # leaves the LLM without a usable format example — worse than no peer
+    # at all. Auto-pick (peer=None) is fine because we fall back to a real
+    # peer or alphabetical default.
+    if args.peer:
+        peer_rationale = os.path.join(SKILL_ROOT, 'grammar', 'rationale',
+                                       f'{args.peer}.md')
+        peer_rules = os.path.join(SKILL_ROOT, 'grammar', 'rules',
+                                   f'{args.peer}.yaml')
+        if not os.path.isfile(peer_rationale) and not os.path.isfile(peer_rules):
+            sys.stderr.write(
+                f'error: --peer `{args.peer}` does not have any extracted '
+                f'rationale or rules in grammar/. Drop --peer to auto-pick '
+                f'a semantic peer, or pick from existing extracted systems '
+                f'(see `ls grammar/rules/`).\n'
+            )
+            sys.exit(1)
 
     out = args.output or f'./a3-context-{args.system_name}.md'
     text = assemble_context(args.system_name, peer_system=args.peer)

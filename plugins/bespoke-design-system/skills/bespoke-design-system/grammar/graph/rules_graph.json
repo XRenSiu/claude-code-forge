@@ -1,13 +1,13 @@
 {
   "$schema_description": "Rules relationship graph. Rebuilt by tools/rebuild_graph.py.",
-  "version": "0.8.0",
-  "rebuilt_at": "2026-05-04T02:19:01.648972Z",
-  "node_count": 219,
+  "version": "0.9.0",
+  "rebuilt_at": "2026-05-04T04:50:51.945326Z",
+  "node_count": 276,
   "edge_counts": {
-    "depends_on": 188,
-    "constrains": 188,
-    "co_occurs_with": 262,
-    "conflicts_with": 25
+    "depends_on": 239,
+    "constrains": 239,
+    "co_occurs_with": 343,
+    "conflicts_with": 31
   },
   "nodes": [
     {
@@ -15,7 +15,20 @@
       "relations": {
         "depends_on": [],
         "constrains": [],
-        "co_occurs_with": [],
+        "co_occurs_with": [
+          {
+            "rule": "claude-anti-pattern-tech-creep-011",
+            "frequency": 0.36
+          },
+          {
+            "rule": "notion-anti-pattern-coldness-012",
+            "frequency": 0.3
+          },
+          {
+            "rule": "starbucks-anti-pattern-flatten-warm-cafe-007",
+            "frequency": 0.3
+          }
+        ],
         "conflicts_with": []
       }
     },
@@ -47,6 +60,10 @@
           {
             "rule": "airbnb-color-rausch-key-actions-only-002",
             "frequency": 0.76
+          },
+          {
+            "rule": "lovable-color-parchment-cream-canvas-001",
+            "frequency": 0.31
           },
           {
             "rule": "starbucks-color-warm-cream-canvas-001",
@@ -234,6 +251,10 @@
             "frequency": 0.7
           },
           {
+            "rule": "elevenlabs-typography-positive-letter-spacing-body-004",
+            "frequency": 0.33
+          },
+          {
             "rule": "starbucks-typography-disciplined-multi-family-006",
             "frequency": 0.3
           }
@@ -271,6 +292,97 @@
             "frequency": 0.7
           }
         ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "airtable-anti_patterns-skip-letter-spacing-and-heavy-shadows-005",
+      "relations": {
+        "depends_on": [],
+        "constrains": [],
+        "co_occurs_with": [],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "airtable-color-white-canvas-blue-accent-001",
+      "relations": {
+        "depends_on": [],
+        "constrains": [
+          {
+            "rule": "airtable-depth_elevation-blue-tinted-shadow-002"
+          },
+          {
+            "rule": "airtable-typography-haas-positive-tracking-003"
+          },
+          {
+            "rule": "airtable-components-medium-radius-buttons-004"
+          }
+        ],
+        "co_occurs_with": [],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "airtable-components-medium-radius-buttons-004",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "airtable-color-white-canvas-blue-accent-001",
+            "reason": "components depends on color foundation (same source: airtable)"
+          },
+          {
+            "rule": "airtable-typography-haas-positive-tracking-003",
+            "reason": "components depends on typography foundation (same source: airtable)"
+          },
+          {
+            "rule": "airtable-depth_elevation-blue-tinted-shadow-002",
+            "reason": "components depends on depth_elevation foundation (same source: airtable)"
+          }
+        ],
+        "constrains": [],
+        "co_occurs_with": [],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "airtable-depth_elevation-blue-tinted-shadow-002",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "airtable-color-white-canvas-blue-accent-001",
+            "reason": "depth_elevation depends on color foundation (same source: airtable)"
+          }
+        ],
+        "constrains": [
+          {
+            "rule": "airtable-components-medium-radius-buttons-004"
+          }
+        ],
+        "co_occurs_with": [
+          {
+            "rule": "claude-components-ring-shadow-warm-halo-007",
+            "frequency": 0.33
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "airtable-typography-haas-positive-tracking-003",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "airtable-color-white-canvas-blue-accent-001",
+            "reason": "typography depends on color foundation (same source: airtable)"
+          }
+        ],
+        "constrains": [
+          {
+            "rule": "airtable-components-medium-radius-buttons-004"
+          }
+        ],
+        "co_occurs_with": [],
         "conflicts_with": []
       }
     },
@@ -350,7 +462,16 @@
       "relations": {
         "depends_on": [],
         "constrains": [],
-        "co_occurs_with": [],
+        "co_occurs_with": [
+          {
+            "rule": "bugatti-anti_patterns-silent-chrome-no-shadows-006",
+            "frequency": 0.3
+          },
+          {
+            "rule": "stripe-anti-pattern-decoration-creep-013",
+            "frequency": 0.3
+          }
+        ],
         "conflicts_with": []
       }
     },
@@ -390,6 +511,10 @@
           {
             "rule": "apple-color-near-black-text-1d1d1f-003",
             "frequency": 0.8
+          },
+          {
+            "rule": "framer-color-absolute-void-black-001",
+            "frequency": 0.31
           }
         ],
         "conflicts_with": []
@@ -412,6 +537,10 @@
           {
             "rule": "apple-color-near-black-text-1d1d1f-003",
             "frequency": 0.73
+          },
+          {
+            "rule": "lovable-color-opacity-driven-gray-scale-003",
+            "frequency": 0.47
           },
           {
             "rule": "stripe-color-purple-ladder-002",
@@ -440,6 +569,10 @@
             "frequency": 0.73
           },
           {
+            "rule": "lovable-color-opacity-driven-gray-scale-003",
+            "frequency": 0.47
+          },
+          {
             "rule": "stripe-color-purple-ladder-002",
             "frequency": 0.4
           }
@@ -464,6 +597,10 @@
           {
             "rule": "apple-color-dark-surface-4-step-004",
             "frequency": 0.73
+          },
+          {
+            "rule": "framer-color-absolute-void-black-001",
+            "frequency": 0.36
           },
           {
             "rule": "stripe-color-decorative-only-magenta-ruby-003",
@@ -560,7 +697,12 @@
             "rule": "apple-components-border-led-retail-010"
           }
         ],
-        "co_occurs_with": [],
+        "co_occurs_with": [
+          {
+            "rule": "framer-depth_elevation-blue-ring-shadow-as-border-006",
+            "frequency": 0.3
+          }
+        ],
         "conflicts_with": []
       }
     },
@@ -603,6 +745,10 @@
           {
             "rule": "apple-typography-display-text-dual-005",
             "frequency": 0.7
+          },
+          {
+            "rule": "lovable-typography-variable-weight-480-005",
+            "frequency": 0.37
           }
         ],
         "conflicts_with": []
@@ -850,6 +996,10 @@
         "constrains": [],
         "co_occurs_with": [
           {
+            "rule": "bugatti-components-three-radius-extreme-005",
+            "frequency": 0.3
+          },
+          {
             "rule": "coinbase-components-56px-pill-cta-005",
             "frequency": 0.47
           }
@@ -939,6 +1089,18 @@
           {
             "rule": "cohere-color-interactive-blue-hover-only-003",
             "frequency": 0.3
+          },
+          {
+            "rule": "kami-color-single-ink-blue-accent-5-percent-002",
+            "frequency": 0.3
+          },
+          {
+            "rule": "kami-color-tag-fill-solid-hex-not-rgba-004",
+            "frequency": 0.3
+          },
+          {
+            "rule": "mastercard-color-signal-orange-consent-only-004",
+            "frequency": 0.37
           },
           {
             "rule": "stripe-color-decorative-only-magenta-ruby-003",
@@ -1192,6 +1354,117 @@
       }
     },
     {
+      "rule_id": "bugatti-anti_patterns-silent-chrome-no-shadows-006",
+      "relations": {
+        "depends_on": [],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "apple-anti-pattern-decoration-creep-013",
+            "frequency": 0.3
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "bugatti-color-monochrome-austerity-001",
+      "relations": {
+        "depends_on": [],
+        "constrains": [
+          {
+            "rule": "bugatti-typography-architectural-display-scale-003"
+          },
+          {
+            "rule": "bugatti-typography-zero-bold-scale-only-hierarchy-004"
+          },
+          {
+            "rule": "bugatti-components-three-radius-extreme-005"
+          }
+        ],
+        "co_occurs_with": [
+          {
+            "rule": "bugatti-color-pure-black-not-near-black-002",
+            "frequency": 0.74
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "bugatti-color-pure-black-not-near-black-002",
+      "relations": {
+        "depends_on": [],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "bugatti-color-monochrome-austerity-001",
+            "frequency": 0.74
+          },
+          {
+            "rule": "mastercard-color-signal-orange-consent-only-004",
+            "frequency": 0.3
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "bugatti-components-three-radius-extreme-005",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "bugatti-color-monochrome-austerity-001",
+            "reason": "components depends on color foundation (same source: bugatti)"
+          },
+          {
+            "rule": "bugatti-typography-architectural-display-scale-003",
+            "reason": "components depends on typography foundation (same source: bugatti)"
+          }
+        ],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "binance-components-50px-pill-cta-token-004",
+            "frequency": 0.3
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "bugatti-typography-architectural-display-scale-003",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "bugatti-color-monochrome-austerity-001",
+            "reason": "typography depends on color foundation (same source: bugatti)"
+          }
+        ],
+        "constrains": [
+          {
+            "rule": "bugatti-components-three-radius-extreme-005"
+          }
+        ],
+        "co_occurs_with": [],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "bugatti-typography-zero-bold-scale-only-hierarchy-004",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "bugatti-color-monochrome-austerity-001",
+            "reason": "typography depends on color foundation (same source: bugatti)"
+          }
+        ],
+        "constrains": [],
+        "co_occurs_with": [],
+        "conflicts_with": []
+      }
+    },
+    {
       "rule_id": "cal-color-pure-grayscale-brand-001",
       "relations": {
         "depends_on": [],
@@ -1243,7 +1516,15 @@
             "frequency": 0.9
           },
           {
+            "rule": "composio-color-border-mist-opacity-ladder-002",
+            "frequency": 0.3
+          },
+          {
             "rule": "linear-app-color-translucent-borders-003",
+            "frequency": 0.33
+          },
+          {
+            "rule": "lovable-color-opacity-driven-gray-scale-003",
             "frequency": 0.33
           },
           {
@@ -1411,6 +1692,10 @@
           {
             "rule": "canva-typography-weight-contrast-hierarchy-002",
             "frequency": 0.55
+          },
+          {
+            "rule": "lovable-typography-humanist-rounded-terminals-002",
+            "frequency": 0.36
           }
         ],
         "conflicts_with": []
@@ -1444,7 +1729,12 @@
       "relations": {
         "depends_on": [],
         "constrains": [],
-        "co_occurs_with": [],
+        "co_occurs_with": [
+          {
+            "rule": "airbnb-anti-pattern-photography-disrespect-011",
+            "frequency": 0.36
+          }
+        ],
         "conflicts_with": []
       }
     },
@@ -1461,6 +1751,10 @@
           {
             "rule": "claude-color-warm-near-black-text-003",
             "frequency": 0.7
+          },
+          {
+            "rule": "intercom-color-warm-oat-borders-006",
+            "frequency": 0.3
           }
         ],
         "conflicts_with": []
@@ -1492,6 +1786,14 @@
           {
             "rule": "claude-color-warm-near-black-text-003",
             "frequency": 0.73
+          },
+          {
+            "rule": "intercom-color-warm-cream-canvas-001",
+            "frequency": 0.31
+          },
+          {
+            "rule": "intercom-color-warm-oat-borders-006",
+            "frequency": 0.33
           }
         ],
         "conflicts_with": [
@@ -1523,6 +1825,14 @@
           {
             "rule": "claude-color-warm-near-black-text-003",
             "frequency": 0.68
+          },
+          {
+            "rule": "intercom-color-warm-cream-canvas-001",
+            "frequency": 0.36
+          },
+          {
+            "rule": "intercom-color-warm-oat-borders-006",
+            "frequency": 0.4
           }
         ],
         "conflicts_with": []
@@ -1598,7 +1908,12 @@
             "rule": "claude-components-generous-radius-008"
           }
         ],
-        "co_occurs_with": [],
+        "co_occurs_with": [
+          {
+            "rule": "airtable-depth_elevation-blue-tinted-shadow-002",
+            "frequency": 0.33
+          }
+        ],
         "conflicts_with": []
       }
     },
@@ -1787,6 +2102,10 @@
           {
             "rule": "cohere-color-interactive-blue-hover-only-003",
             "frequency": 0.8
+          },
+          {
+            "rule": "mastercard-color-signal-orange-consent-only-004",
+            "frequency": 0.3
           },
           {
             "rule": "starbucks-color-4-tier-green-system-002",
@@ -2111,6 +2430,131 @@
       }
     },
     {
+      "rule_id": "composio-color-border-mist-opacity-ladder-002",
+      "relations": {
+        "depends_on": [],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "cal-color-warm-near-black-text-002",
+            "frequency": 0.3
+          },
+          {
+            "rule": "composio-color-pitch-black-canvas-cyan-accent-001",
+            "frequency": 0.63
+          },
+          {
+            "rule": "cursor-color-warm-dark-with-orange-accent-003",
+            "frequency": 0.3
+          },
+          {
+            "rule": "github-color-dual-chromatic-anchor-002",
+            "frequency": 0.3
+          },
+          {
+            "rule": "kami-color-tag-fill-solid-hex-not-rgba-004",
+            "frequency": 0.4
+          },
+          {
+            "rule": "lovable-color-opacity-driven-gray-scale-003",
+            "frequency": 0.37
+          },
+          {
+            "rule": "openai-color-singular-teal-not-blue-002",
+            "frequency": 0.3
+          },
+          {
+            "rule": "stripe-color-purple-ladder-002",
+            "frequency": 0.37
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "composio-color-pitch-black-canvas-cyan-accent-001",
+      "relations": {
+        "depends_on": [],
+        "constrains": [
+          {
+            "rule": "composio-typography-ultra-tight-line-heights-003"
+          },
+          {
+            "rule": "composio-typography-dual-font-mono-as-credibility-004"
+          },
+          {
+            "rule": "composio-depth_elevation-brutalist-hard-offset-shadow-005"
+          }
+        ],
+        "co_occurs_with": [
+          {
+            "rule": "composio-color-border-mist-opacity-ladder-002",
+            "frequency": 0.63
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "composio-depth_elevation-brutalist-hard-offset-shadow-005",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "composio-color-pitch-black-canvas-cyan-accent-001",
+            "reason": "depth_elevation depends on color foundation (same source: composio)"
+          }
+        ],
+        "constrains": [],
+        "co_occurs_with": [],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "composio-typography-dual-font-mono-as-credibility-004",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "composio-color-pitch-black-canvas-cyan-accent-001",
+            "reason": "typography depends on color foundation (same source: composio)"
+          }
+        ],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "figma-typography-mono-uppercase-signposts-006",
+            "frequency": 0.3
+          },
+          {
+            "rule": "github-typography-14px-body-density-001",
+            "frequency": 0.36
+          },
+          {
+            "rule": "notion-typography-12px-positive-tracking-exception-008",
+            "frequency": 0.33
+          },
+          {
+            "rule": "notion-typography-4-weight-system-007",
+            "frequency": 0.33
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "composio-typography-ultra-tight-line-heights-003",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "composio-color-pitch-black-canvas-cyan-accent-001",
+            "reason": "typography depends on color foundation (same source: composio)"
+          }
+        ],
+        "constrains": [],
+        "co_occurs_with": [],
+        "conflicts_with": []
+      }
+    },
+    {
       "rule_id": "cursor-color-warm-dark-with-orange-accent-003",
       "relations": {
         "depends_on": [],
@@ -2126,6 +2570,14 @@
           }
         ],
         "co_occurs_with": [
+          {
+            "rule": "composio-color-border-mist-opacity-ladder-002",
+            "frequency": 0.3
+          },
+          {
+            "rule": "kami-color-tag-fill-solid-hex-not-rgba-004",
+            "frequency": 0.3
+          },
           {
             "rule": "openai-color-singular-teal-not-blue-002",
             "frequency": 0.4
@@ -2223,7 +2675,12 @@
             "frequency": 0.37
           }
         ],
-        "conflicts_with": []
+        "conflicts_with": [
+          {
+            "rule": "lovable-typography-humanist-rounded-terminals-002",
+            "reason": "same-section (typography) kansei antonyms: [('precise', ['organic']), ('structured', ['organic'])]"
+          }
+        ]
       }
     },
     {
@@ -2258,7 +2715,12 @@
             "frequency": 0.33
           }
         ],
-        "conflicts_with": []
+        "conflicts_with": [
+          {
+            "rule": "lovable-typography-humanist-rounded-terminals-002",
+            "reason": "same-section (typography) kansei antonyms: [('precise', ['organic']), ('structured', ['organic'])]"
+          }
+        ]
       }
     },
     {
@@ -2529,7 +2991,12 @@
             "rule": "discord-components-embed-left-border-009"
           }
         ],
-        "co_occurs_with": [],
+        "co_occurs_with": [
+          {
+            "rule": "huggingface-typography-weight-cap-600-005",
+            "frequency": 0.3
+          }
+        ],
         "conflicts_with": []
       }
     },
@@ -2762,11 +3229,141 @@
       }
     },
     {
+      "rule_id": "elevenlabs-color-warm-white-canvas-001",
+      "relations": {
+        "depends_on": [],
+        "constrains": [
+          {
+            "rule": "elevenlabs-typography-light-weight-display-002"
+          },
+          {
+            "rule": "elevenlabs-depth_elevation-warm-tinted-shadows-003"
+          },
+          {
+            "rule": "elevenlabs-typography-positive-letter-spacing-body-004"
+          },
+          {
+            "rule": "elevenlabs-components-warm-stone-pill-cta-005"
+          }
+        ],
+        "co_occurs_with": [
+          {
+            "rule": "mastercard-color-warm-putty-cream-canvas-001",
+            "frequency": 0.33
+          },
+          {
+            "rule": "shopify-color-dark-first-with-green-undertone-001",
+            "frequency": 0.39
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "elevenlabs-components-warm-stone-pill-cta-005",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "elevenlabs-color-warm-white-canvas-001",
+            "reason": "components depends on color foundation (same source: elevenlabs)"
+          },
+          {
+            "rule": "elevenlabs-typography-light-weight-display-002",
+            "reason": "components depends on typography foundation (same source: elevenlabs)"
+          },
+          {
+            "rule": "elevenlabs-depth_elevation-warm-tinted-shadows-003",
+            "reason": "components depends on depth_elevation foundation (same source: elevenlabs)"
+          }
+        ],
+        "constrains": [],
+        "co_occurs_with": [],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "elevenlabs-depth_elevation-warm-tinted-shadows-003",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "elevenlabs-color-warm-white-canvas-001",
+            "reason": "depth_elevation depends on color foundation (same source: elevenlabs)"
+          }
+        ],
+        "constrains": [
+          {
+            "rule": "elevenlabs-components-warm-stone-pill-cta-005"
+          }
+        ],
+        "co_occurs_with": [],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "elevenlabs-typography-light-weight-display-002",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "elevenlabs-color-warm-white-canvas-001",
+            "reason": "typography depends on color foundation (same source: elevenlabs)"
+          }
+        ],
+        "constrains": [
+          {
+            "rule": "elevenlabs-components-warm-stone-pill-cta-005"
+          }
+        ],
+        "co_occurs_with": [
+          {
+            "rule": "elevenlabs-typography-positive-letter-spacing-body-004",
+            "frequency": 0.6
+          },
+          {
+            "rule": "mastercard-typography-weight-450-load-bearing-body-003",
+            "frequency": 0.39
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "elevenlabs-typography-positive-letter-spacing-body-004",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "elevenlabs-color-warm-white-canvas-001",
+            "reason": "typography depends on color foundation (same source: elevenlabs)"
+          }
+        ],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "airbnb-typography-display-tight-body-relaxed-006",
+            "frequency": 0.33
+          },
+          {
+            "rule": "elevenlabs-typography-light-weight-display-002",
+            "frequency": 0.6
+          },
+          {
+            "rule": "mintlify-typography-relaxed-body-line-height-005",
+            "frequency": 0.33
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
       "rule_id": "figma-anti-pattern-chromatic-creep-009",
       "relations": {
         "depends_on": [],
         "constrains": [],
-        "co_occurs_with": [],
+        "co_occurs_with": [
+          {
+            "rule": "vercel-anti-pattern-decoration-creep-010",
+            "frequency": 0.3
+          }
+        ],
         "conflicts_with": []
       }
     },
@@ -2918,6 +3515,10 @@
         "constrains": [],
         "co_occurs_with": [
           {
+            "rule": "composio-typography-dual-font-mono-as-credibility-004",
+            "frequency": 0.3
+          },
+          {
             "rule": "figma-typography-light-base-004",
             "frequency": 0.7
           },
@@ -3027,6 +3628,164 @@
       }
     },
     {
+      "rule_id": "framer-color-absolute-void-black-001",
+      "relations": {
+        "depends_on": [],
+        "constrains": [
+          {
+            "rule": "framer-typography-extreme-negative-tracking-002"
+          },
+          {
+            "rule": "framer-components-pill-buttons-only-004"
+          },
+          {
+            "rule": "framer-components-frosted-translucent-pill-005"
+          },
+          {
+            "rule": "framer-depth_elevation-blue-ring-shadow-as-border-006"
+          }
+        ],
+        "co_occurs_with": [
+          {
+            "rule": "apple-color-binary-section-rhythm-001",
+            "frequency": 0.31
+          },
+          {
+            "rule": "apple-color-near-black-text-1d1d1f-003",
+            "frequency": 0.36
+          },
+          {
+            "rule": "framer-color-single-accent-blue-throughline-003",
+            "frequency": 0.63
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "framer-color-single-accent-blue-throughline-003",
+      "relations": {
+        "depends_on": [],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "framer-color-absolute-void-black-001",
+            "frequency": 0.63
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "framer-components-frosted-translucent-pill-005",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "framer-color-absolute-void-black-001",
+            "reason": "components depends on color foundation (same source: framer)"
+          },
+          {
+            "rule": "framer-typography-extreme-negative-tracking-002",
+            "reason": "components depends on typography foundation (same source: framer)"
+          },
+          {
+            "rule": "framer-depth_elevation-blue-ring-shadow-as-border-006",
+            "reason": "components depends on depth_elevation foundation (same source: framer)"
+          }
+        ],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "framer-components-pill-buttons-only-004",
+            "frequency": 0.7
+          },
+          {
+            "rule": "lovable-components-inset-shadow-pressed-button-004",
+            "frequency": 0.3
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "framer-components-pill-buttons-only-004",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "framer-color-absolute-void-black-001",
+            "reason": "components depends on color foundation (same source: framer)"
+          },
+          {
+            "rule": "framer-typography-extreme-negative-tracking-002",
+            "reason": "components depends on typography foundation (same source: framer)"
+          },
+          {
+            "rule": "framer-depth_elevation-blue-ring-shadow-as-border-006",
+            "reason": "components depends on depth_elevation foundation (same source: framer)"
+          }
+        ],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "framer-components-frosted-translucent-pill-005",
+            "frequency": 0.7
+          },
+          {
+            "rule": "lovable-components-pill-only-for-toggles-006",
+            "frequency": 0.47
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "framer-depth_elevation-blue-ring-shadow-as-border-006",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "framer-color-absolute-void-black-001",
+            "reason": "depth_elevation depends on color foundation (same source: framer)"
+          }
+        ],
+        "constrains": [
+          {
+            "rule": "framer-components-pill-buttons-only-004"
+          },
+          {
+            "rule": "framer-components-frosted-translucent-pill-005"
+          }
+        ],
+        "co_occurs_with": [
+          {
+            "rule": "apple-components-restraint-depth-009",
+            "frequency": 0.3
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "framer-typography-extreme-negative-tracking-002",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "framer-color-absolute-void-black-001",
+            "reason": "typography depends on color foundation (same source: framer)"
+          }
+        ],
+        "constrains": [
+          {
+            "rule": "framer-components-pill-buttons-only-004"
+          },
+          {
+            "rule": "framer-components-frosted-translucent-pill-005"
+          }
+        ],
+        "co_occurs_with": [],
+        "conflicts_with": []
+      }
+    },
+    {
       "rule_id": "github-anti-pattern-decoration-creep-006",
       "relations": {
         "depends_on": [],
@@ -3057,6 +3816,10 @@
         ],
         "co_occurs_with": [
           {
+            "rule": "composio-color-border-mist-opacity-ladder-002",
+            "frequency": 0.3
+          },
+          {
             "rule": "figma-color-glass-overlay-002",
             "frequency": 0.3
           },
@@ -3070,6 +3833,10 @@
           },
           {
             "rule": "linear-app-color-translucent-borders-003",
+            "frequency": 0.3
+          },
+          {
+            "rule": "lovable-color-opacity-driven-gray-scale-003",
             "frequency": 0.3
           },
           {
@@ -3113,6 +3880,10 @@
           },
           {
             "rule": "linear-app-color-translucent-borders-003",
+            "frequency": 0.33
+          },
+          {
+            "rule": "lovable-color-opacity-driven-gray-scale-003",
             "frequency": 0.33
           },
           {
@@ -3186,6 +3957,10 @@
             "frequency": 0.37
           },
           {
+            "rule": "composio-typography-dual-font-mono-as-credibility-004",
+            "frequency": 0.36
+          },
+          {
             "rule": "figma-typography-mono-uppercase-signposts-006",
             "frequency": 0.4
           },
@@ -3214,7 +3989,12 @@
             "frequency": 0.31
           }
         ],
-        "conflicts_with": []
+        "conflicts_with": [
+          {
+            "rule": "lovable-typography-humanist-rounded-terminals-002",
+            "reason": "same-section (typography) kansei antonyms: [('precise', ['organic']), ('structured', ['organic'])]"
+          }
+        ]
       }
     },
     {
@@ -3237,8 +4017,422 @@
             "frequency": 0.77
           },
           {
+            "rule": "huggingface-typography-mono-everywhere-002",
+            "frequency": 0.4
+          },
+          {
             "rule": "webflow-typography-variable-font-uppercase-labels-002",
             "frequency": 0.3
+          }
+        ],
+        "conflicts_with": [
+          {
+            "rule": "lovable-typography-humanist-rounded-terminals-002",
+            "reason": "same-section (typography) kansei antonyms: [('precise', ['organic']), ('structured', ['organic'])]"
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "huggingface-color-yellow-as-punctuation-001",
+      "relations": {
+        "depends_on": [],
+        "constrains": [
+          {
+            "rule": "huggingface-typography-mono-everywhere-002"
+          },
+          {
+            "rule": "huggingface-components-crisp-radius-1px-borders-003"
+          },
+          {
+            "rule": "huggingface-components-category-tinted-task-tags-004"
+          },
+          {
+            "rule": "huggingface-typography-weight-cap-600-005"
+          }
+        ],
+        "co_occurs_with": [],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "huggingface-components-category-tinted-task-tags-004",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "huggingface-color-yellow-as-punctuation-001",
+            "reason": "components depends on color foundation (same source: huggingface)"
+          },
+          {
+            "rule": "huggingface-typography-mono-everywhere-002",
+            "reason": "components depends on typography foundation (same source: huggingface)"
+          }
+        ],
+        "constrains": [],
+        "co_occurs_with": [],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "huggingface-components-crisp-radius-1px-borders-003",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "huggingface-color-yellow-as-punctuation-001",
+            "reason": "components depends on color foundation (same source: huggingface)"
+          },
+          {
+            "rule": "huggingface-typography-mono-everywhere-002",
+            "reason": "components depends on typography foundation (same source: huggingface)"
+          }
+        ],
+        "constrains": [],
+        "co_occurs_with": [],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "huggingface-typography-mono-everywhere-002",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "huggingface-color-yellow-as-punctuation-001",
+            "reason": "typography depends on color foundation (same source: huggingface)"
+          }
+        ],
+        "constrains": [
+          {
+            "rule": "huggingface-components-crisp-radius-1px-borders-003"
+          },
+          {
+            "rule": "huggingface-components-category-tinted-task-tags-004"
+          }
+        ],
+        "co_occurs_with": [
+          {
+            "rule": "github-typography-system-ui-only-004",
+            "frequency": 0.4
+          },
+          {
+            "rule": "huggingface-typography-weight-cap-600-005",
+            "frequency": 0.55
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "huggingface-typography-weight-cap-600-005",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "huggingface-color-yellow-as-punctuation-001",
+            "reason": "typography depends on color foundation (same source: huggingface)"
+          }
+        ],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "discord-typography-friendly-geometric-single-family-004",
+            "frequency": 0.3
+          },
+          {
+            "rule": "huggingface-typography-mono-everywhere-002",
+            "frequency": 0.55
+          },
+          {
+            "rule": "lovable-typography-humanist-rounded-terminals-002",
+            "frequency": 0.3
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "intercom-color-fin-orange-singular-ai-accent-003",
+      "relations": {
+        "depends_on": [],
+        "constrains": [],
+        "co_occurs_with": [],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "intercom-color-warm-cream-canvas-001",
+      "relations": {
+        "depends_on": [],
+        "constrains": [
+          {
+            "rule": "intercom-typography-saans-billboard-compression-002"
+          },
+          {
+            "rule": "intercom-components-sharp-4px-button-radius-004"
+          },
+          {
+            "rule": "intercom-components-scale-hover-physical-interaction-005"
+          }
+        ],
+        "co_occurs_with": [
+          {
+            "rule": "claude-color-parchment-canvas-001",
+            "frequency": 0.31
+          },
+          {
+            "rule": "claude-color-terracotta-brand-002",
+            "frequency": 0.36
+          },
+          {
+            "rule": "intercom-color-warm-oat-borders-006",
+            "frequency": 0.76
+          },
+          {
+            "rule": "shopify-color-dark-first-with-green-undertone-001",
+            "frequency": 0.31
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "intercom-color-warm-oat-borders-006",
+      "relations": {
+        "depends_on": [],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "claude-color-focus-blue-only-cool-004",
+            "frequency": 0.3
+          },
+          {
+            "rule": "claude-color-parchment-canvas-001",
+            "frequency": 0.33
+          },
+          {
+            "rule": "claude-color-terracotta-brand-002",
+            "frequency": 0.4
+          },
+          {
+            "rule": "intercom-color-warm-cream-canvas-001",
+            "frequency": 0.76
+          },
+          {
+            "rule": "pinterest-color-plum-tinted-near-black-text-003",
+            "frequency": 0.4
+          },
+          {
+            "rule": "spotify-color-content-first-darkness-001",
+            "frequency": 0.3
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "intercom-components-scale-hover-physical-interaction-005",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "intercom-color-warm-cream-canvas-001",
+            "reason": "components depends on color foundation (same source: intercom)"
+          },
+          {
+            "rule": "intercom-typography-saans-billboard-compression-002",
+            "reason": "components depends on typography foundation (same source: intercom)"
+          }
+        ],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "starbucks-components-floating-frap-cta-005",
+            "frequency": 0.4
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "intercom-components-sharp-4px-button-radius-004",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "intercom-color-warm-cream-canvas-001",
+            "reason": "components depends on color foundation (same source: intercom)"
+          },
+          {
+            "rule": "intercom-typography-saans-billboard-compression-002",
+            "reason": "components depends on typography foundation (same source: intercom)"
+          }
+        ],
+        "constrains": [],
+        "co_occurs_with": [],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "intercom-typography-saans-billboard-compression-002",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "intercom-color-warm-cream-canvas-001",
+            "reason": "typography depends on color foundation (same source: intercom)"
+          }
+        ],
+        "constrains": [
+          {
+            "rule": "intercom-components-sharp-4px-button-radius-004"
+          },
+          {
+            "rule": "intercom-components-scale-hover-physical-interaction-005"
+          }
+        ],
+        "co_occurs_with": [],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "kami-color-single-ink-blue-accent-5-percent-002",
+      "relations": {
+        "depends_on": [],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "bmw-color-signature-blue-interactive-only-005",
+            "frequency": 0.3
+          },
+          {
+            "rule": "kami-color-tag-fill-solid-hex-not-rgba-004",
+            "frequency": 0.8
+          },
+          {
+            "rule": "kami-color-warm-grays-only-005",
+            "frequency": 0.7
+          },
+          {
+            "rule": "kami-color-warm-parchment-canvas-001",
+            "frequency": 0.63
+          },
+          {
+            "rule": "openai-color-singular-teal-not-blue-002",
+            "frequency": 0.3
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "kami-color-tag-fill-solid-hex-not-rgba-004",
+      "relations": {
+        "depends_on": [],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "bmw-color-signature-blue-interactive-only-005",
+            "frequency": 0.3
+          },
+          {
+            "rule": "composio-color-border-mist-opacity-ladder-002",
+            "frequency": 0.4
+          },
+          {
+            "rule": "cursor-color-warm-dark-with-orange-accent-003",
+            "frequency": 0.3
+          },
+          {
+            "rule": "kami-color-single-ink-blue-accent-5-percent-002",
+            "frequency": 0.8
+          },
+          {
+            "rule": "kami-color-warm-grays-only-005",
+            "frequency": 0.58
+          },
+          {
+            "rule": "openai-color-singular-teal-not-blue-002",
+            "frequency": 0.5
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "kami-color-warm-grays-only-005",
+      "relations": {
+        "depends_on": [],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "kami-color-single-ink-blue-accent-5-percent-002",
+            "frequency": 0.7
+          },
+          {
+            "rule": "kami-color-tag-fill-solid-hex-not-rgba-004",
+            "frequency": 0.58
+          },
+          {
+            "rule": "kami-color-warm-parchment-canvas-001",
+            "frequency": 0.73
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "kami-color-warm-parchment-canvas-001",
+      "relations": {
+        "depends_on": [],
+        "constrains": [
+          {
+            "rule": "kami-typography-serif-single-weight-500-003"
+          },
+          {
+            "rule": "kami-depth_elevation-ring-and-whisper-only-006"
+          }
+        ],
+        "co_occurs_with": [
+          {
+            "rule": "kami-color-single-ink-blue-accent-5-percent-002",
+            "frequency": 0.63
+          },
+          {
+            "rule": "kami-color-warm-grays-only-005",
+            "frequency": 0.73
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "kami-depth_elevation-ring-and-whisper-only-006",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "kami-color-warm-parchment-canvas-001",
+            "reason": "depth_elevation depends on color foundation (same source: kami)"
+          }
+        ],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "notion-color-multi-layer-whisper-shadow-005",
+            "frequency": 0.3
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "kami-typography-serif-single-weight-500-003",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "kami-color-warm-parchment-canvas-001",
+            "reason": "typography depends on color foundation (same source: kami)"
+          }
+        ],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "openai-typography-restrained-weights-with-serif-editorial-003",
+            "frequency": 0.31
           }
         ],
         "conflicts_with": []
@@ -3249,12 +4443,7 @@
       "relations": {
         "depends_on": [],
         "constrains": [],
-        "co_occurs_with": [
-          {
-            "rule": "pinterest-meta-3-tier-design-token-architecture-005",
-            "frequency": 0.3
-          }
-        ],
+        "co_occurs_with": [],
         "conflicts_with": []
       }
     },
@@ -3357,6 +4546,10 @@
             "frequency": 0.87
           },
           {
+            "rule": "lovable-color-opacity-driven-gray-scale-003",
+            "frequency": 0.3
+          },
+          {
             "rule": "notion-color-content-tagging-palette-004",
             "frequency": 0.3
           },
@@ -3406,6 +4599,10 @@
           {
             "rule": "linear-app-color-single-chromatic-anchor-002",
             "frequency": 0.87
+          },
+          {
+            "rule": "lovable-color-opacity-driven-gray-scale-003",
+            "frequency": 0.33
           },
           {
             "rule": "notion-color-content-tagging-palette-004",
@@ -3594,6 +4791,10 @@
           {
             "rule": "spacex-typography-uppercase-wide-tracking-003",
             "reason": "positive_tracking_uppercase vs aggressive_negative_tracking — opposite tracking philosophies"
+          },
+          {
+            "rule": "lovable-typography-humanist-rounded-terminals-002",
+            "reason": "same-section (typography) kansei antonyms: [('precise', ['organic']), ('structured', ['organic'])]"
           }
         ]
       }
@@ -3654,6 +4855,10 @@
           {
             "rule": "clickhouse-typography-extreme-display-weight-002",
             "reason": "weight 900 (extreme) vs no_weight_above 590 (restrained) — opposite weight ladders"
+          },
+          {
+            "rule": "lovable-typography-humanist-rounded-terminals-002",
+            "reason": "same-section (typography) kansei antonyms: [('precise', ['organic']), ('structured', ['organic'])]"
           }
         ]
       }
@@ -3667,6 +4872,366 @@
           {
             "rule": "vercel-voice-infrastructure-invisible-009",
             "frequency": 0.5
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "lovable-color-opacity-driven-gray-scale-003",
+      "relations": {
+        "depends_on": [],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "apple-color-blue-action-only-002",
+            "frequency": 0.47
+          },
+          {
+            "rule": "apple-color-dark-surface-4-step-004",
+            "frequency": 0.47
+          },
+          {
+            "rule": "cal-color-warm-near-black-text-002",
+            "frequency": 0.33
+          },
+          {
+            "rule": "composio-color-border-mist-opacity-ladder-002",
+            "frequency": 0.37
+          },
+          {
+            "rule": "github-color-dual-chromatic-anchor-002",
+            "frequency": 0.3
+          },
+          {
+            "rule": "github-color-hairline-border-not-shadow-003",
+            "frequency": 0.33
+          },
+          {
+            "rule": "linear-app-color-single-chromatic-anchor-002",
+            "frequency": 0.3
+          },
+          {
+            "rule": "linear-app-color-translucent-borders-003",
+            "frequency": 0.33
+          },
+          {
+            "rule": "lovable-color-parchment-cream-canvas-001",
+            "frequency": 0.55
+          },
+          {
+            "rule": "notion-color-content-tagging-palette-004",
+            "frequency": 0.33
+          },
+          {
+            "rule": "stripe-color-purple-ladder-002",
+            "frequency": 0.47
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "lovable-color-parchment-cream-canvas-001",
+      "relations": {
+        "depends_on": [],
+        "constrains": [
+          {
+            "rule": "lovable-typography-humanist-rounded-terminals-002"
+          },
+          {
+            "rule": "lovable-components-inset-shadow-pressed-button-004"
+          },
+          {
+            "rule": "lovable-typography-variable-weight-480-005"
+          },
+          {
+            "rule": "lovable-components-pill-only-for-toggles-006"
+          }
+        ],
+        "co_occurs_with": [
+          {
+            "rule": "airbnb-color-photography-first-canvas-001",
+            "frequency": 0.31
+          },
+          {
+            "rule": "lovable-color-opacity-driven-gray-scale-003",
+            "frequency": 0.55
+          },
+          {
+            "rule": "starbucks-color-warm-cream-canvas-001",
+            "frequency": 0.31
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "lovable-components-inset-shadow-pressed-button-004",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "lovable-color-parchment-cream-canvas-001",
+            "reason": "components depends on color foundation (same source: lovable)"
+          },
+          {
+            "rule": "lovable-typography-humanist-rounded-terminals-002",
+            "reason": "components depends on typography foundation (same source: lovable)"
+          }
+        ],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "framer-components-frosted-translucent-pill-005",
+            "frequency": 0.3
+          },
+          {
+            "rule": "lovable-components-pill-only-for-toggles-006",
+            "frequency": 0.7
+          },
+          {
+            "rule": "spotify-components-pill-and-circle-geometry-003",
+            "frequency": 0.4
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "lovable-components-pill-only-for-toggles-006",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "lovable-color-parchment-cream-canvas-001",
+            "reason": "components depends on color foundation (same source: lovable)"
+          },
+          {
+            "rule": "lovable-typography-humanist-rounded-terminals-002",
+            "reason": "components depends on typography foundation (same source: lovable)"
+          }
+        ],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "framer-components-pill-buttons-only-004",
+            "frequency": 0.47
+          },
+          {
+            "rule": "lovable-components-inset-shadow-pressed-button-004",
+            "frequency": 0.7
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "lovable-typography-humanist-rounded-terminals-002",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "lovable-color-parchment-cream-canvas-001",
+            "reason": "typography depends on color foundation (same source: lovable)"
+          }
+        ],
+        "constrains": [
+          {
+            "rule": "lovable-components-inset-shadow-pressed-button-004"
+          },
+          {
+            "rule": "lovable-components-pill-only-for-toggles-006"
+          }
+        ],
+        "co_occurs_with": [
+          {
+            "rule": "canva-typography-single-rounded-family-003",
+            "frequency": 0.36
+          },
+          {
+            "rule": "huggingface-typography-weight-cap-600-005",
+            "frequency": 0.3
+          }
+        ],
+        "conflicts_with": [
+          {
+            "rule": "cursor-typography-display-extreme-negative-tracking-002",
+            "reason": "same-section (typography) kansei antonyms: [('precise', ['organic']), ('structured', ['organic'])]"
+          },
+          {
+            "rule": "cursor-typography-three-voice-system-001",
+            "reason": "same-section (typography) kansei antonyms: [('precise', ['organic']), ('structured', ['organic'])]"
+          },
+          {
+            "rule": "github-typography-14px-body-density-001",
+            "reason": "same-section (typography) kansei antonyms: [('precise', ['organic']), ('structured', ['organic'])]"
+          },
+          {
+            "rule": "github-typography-system-ui-only-004",
+            "reason": "same-section (typography) kansei antonyms: [('precise', ['organic']), ('structured', ['organic'])]"
+          },
+          {
+            "rule": "linear-app-typography-display-compression-005",
+            "reason": "same-section (typography) kansei antonyms: [('precise', ['organic']), ('structured', ['organic'])]"
+          },
+          {
+            "rule": "linear-app-typography-geometric-sans-with-features-004",
+            "reason": "same-section (typography) kansei antonyms: [('precise', ['organic']), ('structured', ['organic'])]"
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "lovable-typography-variable-weight-480-005",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "lovable-color-parchment-cream-canvas-001",
+            "reason": "typography depends on color foundation (same source: lovable)"
+          }
+        ],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "apple-typography-600-dominant-emphasis-007",
+            "frequency": 0.37
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "mastercard-color-signal-orange-consent-only-004",
+      "relations": {
+        "depends_on": [],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "bmw-color-signature-blue-interactive-only-005",
+            "frequency": 0.37
+          },
+          {
+            "rule": "bugatti-color-pure-black-not-near-black-002",
+            "frequency": 0.3
+          },
+          {
+            "rule": "cohere-color-extreme-chromatic-restraint-001",
+            "frequency": 0.3
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "mastercard-color-warm-putty-cream-canvas-001",
+      "relations": {
+        "depends_on": [],
+        "constrains": [
+          {
+            "rule": "mastercard-components-circular-portraits-with-orbital-arcs-002"
+          },
+          {
+            "rule": "mastercard-typography-weight-450-load-bearing-body-003"
+          },
+          {
+            "rule": "mastercard-depth_elevation-atmospheric-cushion-shadow-006"
+          }
+        ],
+        "co_occurs_with": [
+          {
+            "rule": "elevenlabs-color-warm-white-canvas-001",
+            "frequency": 0.33
+          },
+          {
+            "rule": "shopify-color-dark-first-with-green-undertone-001",
+            "frequency": 0.32
+          },
+          {
+            "rule": "starbucks-color-gold-ceremony-only-003",
+            "frequency": 0.31
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "mastercard-components-circular-portraits-with-orbital-arcs-002",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "mastercard-color-warm-putty-cream-canvas-001",
+            "reason": "components depends on color foundation (same source: mastercard)"
+          },
+          {
+            "rule": "mastercard-typography-weight-450-load-bearing-body-003",
+            "reason": "components depends on typography foundation (same source: mastercard)"
+          },
+          {
+            "rule": "mastercard-layout-radius-three-tier-gap-rule-005",
+            "reason": "components depends on layout foundation (same source: mastercard)"
+          },
+          {
+            "rule": "mastercard-depth_elevation-atmospheric-cushion-shadow-006",
+            "reason": "components depends on depth_elevation foundation (same source: mastercard)"
+          }
+        ],
+        "constrains": [],
+        "co_occurs_with": [],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "mastercard-depth_elevation-atmospheric-cushion-shadow-006",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "mastercard-color-warm-putty-cream-canvas-001",
+            "reason": "depth_elevation depends on color foundation (same source: mastercard)"
+          }
+        ],
+        "constrains": [
+          {
+            "rule": "mastercard-components-circular-portraits-with-orbital-arcs-002"
+          }
+        ],
+        "co_occurs_with": [
+          {
+            "rule": "stripe-color-blue-tinted-shadow-004",
+            "frequency": 0.33
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "mastercard-layout-radius-three-tier-gap-rule-005",
+      "relations": {
+        "depends_on": [],
+        "constrains": [
+          {
+            "rule": "mastercard-components-circular-portraits-with-orbital-arcs-002"
+          }
+        ],
+        "co_occurs_with": [],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "mastercard-typography-weight-450-load-bearing-body-003",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "mastercard-color-warm-putty-cream-canvas-001",
+            "reason": "typography depends on color foundation (same source: mastercard)"
+          }
+        ],
+        "constrains": [
+          {
+            "rule": "mastercard-components-circular-portraits-with-orbital-arcs-002"
+          }
+        ],
+        "co_occurs_with": [
+          {
+            "rule": "elevenlabs-typography-light-weight-display-002",
+            "frequency": 0.39
           }
         ],
         "conflicts_with": []
@@ -3894,6 +5459,10 @@
             "frequency": 0.33
           },
           {
+            "rule": "elevenlabs-typography-positive-letter-spacing-body-004",
+            "frequency": 0.33
+          },
+          {
             "rule": "mintlify-typography-inter-tight-display-004",
             "frequency": 0.7
           },
@@ -4012,7 +5581,12 @@
       "relations": {
         "depends_on": [],
         "constrains": [],
-        "co_occurs_with": [],
+        "co_occurs_with": [
+          {
+            "rule": "airbnb-anti-pattern-photography-disrespect-011",
+            "frequency": 0.3
+          }
+        ],
         "conflicts_with": []
       }
     },
@@ -4036,6 +5610,10 @@
           },
           {
             "rule": "linear-app-color-translucent-borders-003",
+            "frequency": 0.33
+          },
+          {
+            "rule": "lovable-color-opacity-driven-gray-scale-003",
             "frequency": 0.33
           },
           {
@@ -4066,6 +5644,10 @@
         "co_occurs_with": [
           {
             "rule": "cal-depth-elevation-11-tier-shadow-system-004",
+            "frequency": 0.3
+          },
+          {
+            "rule": "kami-depth_elevation-ring-and-whisper-only-006",
             "frequency": 0.3
           },
           {
@@ -4308,6 +5890,10 @@
             "frequency": 0.33
           },
           {
+            "rule": "composio-typography-dual-font-mono-as-credibility-004",
+            "frequency": 0.33
+          },
+          {
             "rule": "github-typography-14px-body-density-001",
             "frequency": 0.3
           },
@@ -4344,6 +5930,10 @@
         "co_occurs_with": [
           {
             "rule": "cal-typography-cal-sans-display-extreme-tight-003",
+            "frequency": 0.33
+          },
+          {
+            "rule": "composio-typography-dual-font-mono-as-credibility-004",
             "frequency": 0.33
           },
           {
@@ -4448,8 +6038,20 @@
         "constrains": [],
         "co_occurs_with": [
           {
+            "rule": "composio-color-border-mist-opacity-ladder-002",
+            "frequency": 0.3
+          },
+          {
             "rule": "cursor-color-warm-dark-with-orange-accent-003",
             "frequency": 0.4
+          },
+          {
+            "rule": "kami-color-single-ink-blue-accent-5-percent-002",
+            "frequency": 0.3
+          },
+          {
+            "rule": "kami-color-tag-fill-solid-hex-not-rgba-004",
+            "frequency": 0.5
           },
           {
             "rule": "openai-color-clinical-restraint-001",
@@ -4513,7 +6115,12 @@
             "rule": "openai-components-uniformly-soft-radii-004"
           }
         ],
-        "co_occurs_with": [],
+        "co_occurs_with": [
+          {
+            "rule": "kami-typography-serif-single-weight-500-003",
+            "frequency": 0.31
+          }
+        ],
         "conflicts_with": []
       }
     },
@@ -4537,6 +6144,10 @@
         "depends_on": [],
         "constrains": [],
         "co_occurs_with": [
+          {
+            "rule": "intercom-color-warm-oat-borders-006",
+            "frequency": 0.4
+          },
           {
             "rule": "pinterest-color-warm-neutral-scale-001",
             "frequency": 0.76
@@ -4620,10 +6231,6 @@
           {
             "rule": "github-anti-pattern-decoration-creep-006",
             "frequency": 0.3
-          },
-          {
-            "rule": "linear-app-anti-pattern-warmth-in-chrome-010",
-            "frequency": 0.3
           }
         ],
         "conflicts_with": []
@@ -4648,6 +6255,18 @@
           {
             "rule": "cursor-color-warm-dark-with-orange-accent-003",
             "frequency": 0.36
+          },
+          {
+            "rule": "elevenlabs-color-warm-white-canvas-001",
+            "frequency": 0.39
+          },
+          {
+            "rule": "intercom-color-warm-cream-canvas-001",
+            "frequency": 0.31
+          },
+          {
+            "rule": "mastercard-color-warm-putty-cream-canvas-001",
+            "frequency": 0.32
           },
           {
             "rule": "shopify-color-neon-green-focus-only-002",
@@ -4946,6 +6565,10 @@
         ],
         "co_occurs_with": [
           {
+            "rule": "intercom-color-warm-oat-borders-006",
+            "frequency": 0.3
+          },
+          {
             "rule": "pinterest-color-plum-tinted-near-black-text-003",
             "frequency": 0.37
           }
@@ -4980,7 +6603,12 @@
           }
         ],
         "constrains": [],
-        "co_occurs_with": [],
+        "co_occurs_with": [
+          {
+            "rule": "lovable-components-inset-shadow-pressed-button-004",
+            "frequency": 0.4
+          }
+        ],
         "conflicts_with": []
       }
     },
@@ -5021,6 +6649,20 @@
       }
     },
     {
+      "rule_id": "starbucks-anti-pattern-flatten-warm-cafe-007",
+      "relations": {
+        "depends_on": [],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "airbnb-anti-pattern-photography-disrespect-011",
+            "frequency": 0.3
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
       "rule_id": "starbucks-color-4-tier-green-system-002",
       "relations": {
         "depends_on": [],
@@ -5048,6 +6690,10 @@
         "depends_on": [],
         "constrains": [],
         "co_occurs_with": [
+          {
+            "rule": "mastercard-color-warm-putty-cream-canvas-001",
+            "frequency": 0.31
+          },
           {
             "rule": "starbucks-color-4-tier-green-system-002",
             "frequency": 0.8
@@ -5079,6 +6725,10 @@
           {
             "rule": "airbnb-color-rausch-key-actions-only-002",
             "frequency": 0.36
+          },
+          {
+            "rule": "lovable-color-parchment-cream-canvas-001",
+            "frequency": 0.31
           },
           {
             "rule": "pinterest-color-warm-neutral-scale-001",
@@ -5133,7 +6783,12 @@
           }
         ],
         "constrains": [],
-        "co_occurs_with": [],
+        "co_occurs_with": [
+          {
+            "rule": "intercom-components-scale-hover-physical-interaction-005",
+            "frequency": 0.4
+          }
+        ],
         "conflicts_with": []
       }
     },
@@ -5172,7 +6827,12 @@
       "relations": {
         "depends_on": [],
         "constrains": [],
-        "co_occurs_with": [],
+        "co_occurs_with": [
+          {
+            "rule": "apple-anti-pattern-decoration-creep-013",
+            "frequency": 0.3
+          }
+        ],
         "conflicts_with": []
       }
     },
@@ -5193,7 +6853,12 @@
             "rule": "stripe-components-dashed-affordance-009"
           }
         ],
-        "co_occurs_with": [],
+        "co_occurs_with": [
+          {
+            "rule": "mastercard-depth_elevation-atmospheric-cushion-shadow-006",
+            "frequency": 0.33
+          }
+        ],
         "conflicts_with": []
       }
     },
@@ -5305,6 +6970,14 @@
           {
             "rule": "coinbase-color-alternating-light-dark-sections-002",
             "frequency": 0.3
+          },
+          {
+            "rule": "composio-color-border-mist-opacity-ladder-002",
+            "frequency": 0.37
+          },
+          {
+            "rule": "lovable-color-opacity-driven-gray-scale-003",
+            "frequency": 0.47
           },
           {
             "rule": "stripe-color-decorative-only-magenta-ruby-003",
@@ -5606,7 +7279,12 @@
       "relations": {
         "depends_on": [],
         "constrains": [],
-        "co_occurs_with": [],
+        "co_occurs_with": [
+          {
+            "rule": "figma-anti-pattern-chromatic-creep-009",
+            "frequency": 0.3
+          }
+        ],
         "conflicts_with": [
           {
             "rule": "canva-color-purple-blue-gradient-brand-001",

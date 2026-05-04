@@ -1,11 +1,11 @@
 {
   "system_name": "together-ai",
   "source": "open-design",
-  "extracted_at": "2026-05-03T13:38:57.588205Z",
+  "extracted_at": "2026-05-04T04:27:13.664755Z",
   "dialect": "A",
   "fingerprint_hash": "e1b6715a344774cf315eb011bc67252871531b0d8d8c55f650cb5a92aac52b4b",
   "extraction_method": "programmatic_a1",
-  "tool_version": "1.0.0",
+  "tool_version": "1.1.0",
   "color": {
     "role_color_pairs": {
       "brand_magenta": "#ef2cc1",
@@ -98,23 +98,10 @@
       "comfortable": 8.0
     },
     "all_px_values": [
-      1.0,
-      2.0,
       4.0,
-      8.0,
-      10.0,
-      12.0,
-      16.0,
-      20.0,
-      24.0,
-      32.0,
-      44.0,
-      48.0,
-      80.0,
-      100.0,
-      120.0
+      8.0
     ],
-    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_extraction_method": "regex_role_radius (patterns A and B), v1.7.1 subsection-scoped",
     "_confidence": "medium"
   },
   "depth_elevation": {

@@ -1,11 +1,11 @@
 {
   "system_name": "webflow",
   "source": "open-design",
-  "extracted_at": "2026-05-03T13:38:57.595143Z",
+  "extracted_at": "2026-05-04T04:27:13.987775Z",
   "dialect": "A-variant",
   "fingerprint_hash": "0610a10e26546550ee70e8e1804d1222aaff6b355b68eacf8cab95f395516aba",
   "extraction_method": "programmatic_a1",
-  "tool_version": "1.0.0",
+  "tool_version": "1.1.0",
   "color": {
     "role_color_pairs": {
       "near_black": "#080808",
@@ -77,7 +77,7 @@
     "_confidence": "medium"
   },
   "spacing": {
-    "base_unit_px": 4.0,
+    "base_unit_px": 1.0,
     "declared_scale": null,
     "all_px_values": [
       1.0,
@@ -105,21 +105,11 @@
   "radius": {
     "role_radius_pairs": {},
     "all_px_values": [
-      1.0,
       2.0,
-      2.4,
-      3.2,
       4.0,
-      5.6,
-      6.0,
-      7.2,
-      8.0,
-      9.6,
-      12.0,
-      16.0,
-      24.0
+      8.0
     ],
-    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_extraction_method": "regex_role_radius (patterns A and B), v1.7.1 subsection-scoped",
     "_confidence": "low"
   },
   "depth_elevation": {

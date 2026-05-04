@@ -1,0 +1,131 @@
+rules:
+- rule_id: mastercard-color-warm-putty-cream-canvas-001
+  section: color
+  preconditions:
+    product_type: [enterprise_brand, fintech, payments, institutional]
+    tone: [premium, refined, warm]
+    kansei: [premium, refined, warm, sophisticated, authoritative]
+    sd_anchors:
+      warm_to_cold: -0.4
+      ornate_to_minimal: 0.2
+      serious_to_playful: -0.6
+      modern_to_classical: 0.0
+    brand_archetypes: [Ruler, Lover]
+  action:
+    canvas_hex: '#F3F0EE'
+    canvas_class: warm_putty_cream_annual_report_paper
+    primary_text_hex: '#141413'
+    text_class: warm_near_black_olive_lean
+    forbid_pure_white_canvas: true
+    forbid_pure_black_text: true
+  why:
+    establish: warm-canvas-and-warm-near-black-as-editorial-tone-foundation
+    avoid: [pure_white_saas_canvas, jet_black_on_warm_canvas, cool_gray_surface]
+    balance: institutional_authority ↔ editorial_warmth
+  emerges_from: [mastercard]
+  provenance: original
+  confidence: 0.55
+
+- rule_id: mastercard-components-circular-portraits-with-orbital-arcs-002
+  section: components
+  preconditions:
+    product_type: [enterprise_brand, fintech, payments, institutional]
+    tone: [refined, expressive]
+    kansei: [refined, expressive, sophisticated, premium]
+    brand_archetypes: [Lover, Magician, Creator]
+  action:
+    service_image_mask: perfect_circle
+    satellite_cta_attached: bottom_right_protruding
+    decorative_arc_strategy: thin_orange_curve_between_circles
+    forbid_rectangular_service_imagery: true
+    arc_color_use: light_signal_orange_decorative_only
+  why:
+    establish: constellation-not-list-services-feel-in-motion
+    avoid: [rectangular_service_grid, no_satellite_cta_isolated_arrows, hard_straight_connectors]
+    balance: information_clarity ↔ constellation_motion_metaphor
+  emerges_from: [mastercard]
+  provenance: original
+  confidence: 0.5
+
+- rule_id: mastercard-typography-weight-450-load-bearing-body-003
+  section: typography
+  preconditions:
+    product_type: [enterprise_brand, fintech, payments, institutional]
+    tone: [refined, premium, professional]
+    kansei: [refined, premium, soft, sophisticated]
+    brand_archetypes: [Ruler, Lover]
+  action:
+    body_weight: 450
+    body_weight_class: half_step_softer_than_500
+    use_variable_font_required: true
+    forbid_400_default_body: true
+    forbid_500_body: true
+  why:
+    establish: half-step-450-is-load-bearing-soft-but-firm
+    avoid: [weight_400_default_flat, weight_500_too_firm_body, weight_700_loud_body]
+    balance: brand_softness ↔ reading_firmness
+  emerges_from: [mastercard]
+  provenance: original
+  confidence: 0.45
+
+- rule_id: mastercard-color-signal-orange-consent-only-004
+  section: color
+  preconditions:
+    product_type: [enterprise_brand, fintech, payments, institutional]
+    tone: [authoritative, restrained]
+    kansei: [authoritative, restrained]
+    brand_archetypes: [Ruler]
+  action:
+    signal_orange_hex: '#CF4500'
+    semantic_role: consent_legal_compliance_only
+    forbid_marketing_cta: true
+    forbid_decorative_wash: true
+  why:
+    establish: orange-locked-to-legal-signal-not-diluted-by-marketing
+    avoid: [orange_marketing_cta, orange_decorative_background, orange_text_non_legal]
+    balance: visual_pop ↔ legal_signal_integrity
+  emerges_from: [mastercard]
+  provenance: original
+  confidence: 0.55
+
+- rule_id: mastercard-layout-radius-three-tier-gap-rule-005
+  section: layout
+  preconditions:
+    product_type: [enterprise_brand, fintech, payments, institutional]
+    tone: [refined, premium]
+    kansei: [refined, premium, expressive]
+    brand_archetypes: [Lover, Ruler]
+  action:
+    radius_tier_1_small_px_max: 6
+    radius_tier_2_medium_large_px_range: [20, 40]
+    radius_tier_3_full_pill_px_min: 99
+    forbid_intermediate_radii: [8, 10, 12, 16]
+    semantic_split: utility_vs_editorial
+  why:
+    establish: gap-in-radius-scale-prevents-generic-saas-middle-ground
+    avoid: [8px_radius, 12px_radius, 16px_radius, progressive_radius_scale]
+    balance: utility_precision ↔ editorial_softness
+  emerges_from: [mastercard]
+  provenance: original
+  confidence: 0.5
+
+- rule_id: mastercard-depth_elevation-atmospheric-cushion-shadow-006
+  section: depth_elevation
+  preconditions:
+    product_type: [enterprise_brand, fintech, payments, institutional]
+    tone: [refined, premium, soft]
+    kansei: [refined, soft, premium]
+    brand_archetypes: [Lover, Ruler]
+  action:
+    shadow_strategy: large_spread_low_alpha_atmospheric_cushion
+    spread_min_px: 24
+    spread_max_px: 110
+    alpha_max: 0.1
+    forbid_directional_drop_shadow: true
+  why:
+    establish: cards-breathe-above-canvas-not-cast-directional-shadow
+    avoid: [tight_directional_drop_shadow, alpha_above_0.1, multi_layer_composite_shadow]
+    balance: elevation_signal ↔ paper_breath_atmosphere
+  emerges_from: [mastercard]
+  provenance: original
+  confidence: 0.5

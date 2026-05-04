@@ -1,0 +1,128 @@
+rules:
+- rule_id: framer-color-absolute-void-black-001
+  section: color
+  preconditions:
+    product_type: [design_tool, creative_tool, b2b_saas]
+    tone: [confident, modern, severe]
+    kansei: [intense, focused, modern, refined, premium]
+    sd_anchors:
+      warm_to_cold: 0.7
+      ornate_to_minimal: 0.6
+      serious_to_playful: -0.4
+      modern_to_classical: -0.8
+    brand_archetypes: [Creator, Magician]
+  action:
+    canvas_hex: '#000000'
+    forbid_warm_dark: true
+    forbid_charcoal_dark: true
+    forbid_brownish_blacks: true
+  why:
+    establish: deep-space-canvas-makes-every-element-precious
+    avoid: ['#1a1a1a_warm_dark', '#2d2d2d_mid_gray', 'brown_tinted_black']
+    balance: canvas_neutrality ↔ absolute_void_drama
+  emerges_from: [framer]
+  provenance: original
+  confidence: 0.55
+
+- rule_id: framer-typography-extreme-negative-tracking-002
+  section: typography
+  preconditions:
+    product_type: [design_tool, creative_tool, b2b_saas]
+    tone: [confident, modern, intense]
+    kansei: [intense, confident, modern, dense]
+    brand_archetypes: [Creator, Magician]
+  action:
+    display_letter_spacing_strategy: extreme_negative_proportional_to_size
+    spec_at_110px: '-5.5px'
+    spec_at_85px: '-4.25px'
+    spec_at_62px: '-3.1px'
+    line_height_at_display: 0.85
+    weight: 500
+  why:
+    establish: spring-loaded-compression-as-personality
+    avoid: [zero_letter_spacing_default, positive_tracking_display, mild_negative_-1px]
+    balance: legibility ↔ kinetic_compression
+  emerges_from: [framer]
+  provenance: original
+  confidence: 0.5
+
+- rule_id: framer-color-single-accent-blue-throughline-003
+  section: color
+  preconditions:
+    product_type: [design_tool, creative_tool, b2b_saas]
+    tone: [modern, confident]
+    kansei: [modern, focused, structured]
+    brand_archetypes: [Creator]
+  action:
+    accent_count: 1
+    accent_hex: '#0099ff'
+    accent_use_areas: [links, borders, ring_shadows, focus_states]
+    forbid_decorative_color_use: true
+  why:
+    establish: cold-electric-blue-as-sole-interactive-throughline
+    avoid: [purple_accent, green_accent, gradient_accent, blue_decorative_background]
+    balance: monochromatic_void ↔ interactive_signal
+  emerges_from: [framer]
+  provenance: original
+  confidence: 0.55
+
+- rule_id: framer-components-pill-buttons-only-004
+  section: components
+  preconditions:
+    product_type: [design_tool, creative_tool, b2b_saas]
+    tone: [confident, modern]
+    kansei: [modern, refined, friendly]
+    brand_archetypes: [Creator]
+  action:
+    button_radius_px_range: [40, 100]
+    card_radius_px_range: [10, 15]
+    forbid_button_radius_below_30: true
+    contrast_with_card_radius_required: true
+  why:
+    establish: pill-button-vs-mid-radius-card-creates-visual-rank
+    avoid: [8px_button_squared_rounded, 12-20px_button_overlap_with_card_radius]
+    balance: chrome_consistency ↔ button_distinctiveness
+  emerges_from: [framer]
+  provenance: original
+  confidence: 0.5
+
+- rule_id: framer-components-frosted-translucent-pill-005
+  section: components
+  preconditions:
+    product_type: [design_tool, creative_tool, b2b_saas]
+    tone: [modern, refined]
+    kansei: [modern, soft, refined]
+    brand_archetypes: [Creator, Magician]
+  action:
+    frosted_pill_background: 'rgba(255,255,255,0.1)'
+    used_for: secondary_button_on_dark
+    forbid_heavy_backdrop_filter: true
+    opacity_floor: 0.05
+    opacity_ceiling: 0.15
+  why:
+    establish: half-presence-secondary-button-via-simple-rgba-not-blur
+    avoid: [glassmorphism_heavy_blur, opaque_secondary_button, 30%_plus_opacity_too_loud]
+    balance: visibility ↔ ambient_recession
+  emerges_from: [framer]
+  provenance: original
+  confidence: 0.5
+
+- rule_id: framer-depth_elevation-blue-ring-shadow-as-border-006
+  section: depth_elevation
+  preconditions:
+    product_type: [design_tool, creative_tool, b2b_saas]
+    tone: [modern, refined]
+    kansei: [modern, refined, focused]
+    brand_archetypes: [Creator, Magician]
+  action:
+    ring_shadow: 'rgba(0,153,255,0.15) 0px 0px 0px 1px'
+    replaces: traditional_1px_solid_border
+    use_on: contained_dark_cards
+    max_alpha: 0.3
+  why:
+    establish: every-bordered-element-glows-faintly-with-brand
+    avoid: [neutral_solid_border, black_ring_shadow, high_alpha_too_bright]
+    balance: containment_clarity ↔ brand_throughline
+  emerges_from: [framer]
+  provenance: original
+  confidence: 0.5

@@ -1,11 +1,11 @@
 {
   "system_name": "sanity",
   "source": "open-design",
-  "extracted_at": "2026-05-03T13:38:57.574614Z",
+  "extracted_at": "2026-05-04T04:27:13.024255Z",
   "dialect": "A",
   "fingerprint_hash": "52354c55c1c62dd16aeffc037fad7494a6de918a59bd65843ebcb9e6357928fa",
   "extraction_method": "programmatic_a1",
-  "tool_version": "1.0.0",
+  "tool_version": "1.1.0",
   "color": {
     "role_color_pairs": {
       "sanity_black": "#0b0b0b",
@@ -82,7 +82,7 @@
     "_confidence": "high"
   },
   "spacing": {
-    "base_unit_px": 32.0,
+    "base_unit_px": 8.0,
     "declared_scale": null,
     "all_px_values": [
       1.0,
@@ -111,22 +111,13 @@
   "radius": {
     "role_radius_pairs": {},
     "all_px_values": [
-      1.0,
-      2.0,
       3.0,
-      4.0,
       5.0,
       6.0,
-      8.0,
       12.0,
-      16.0,
-      24.0,
-      32.0,
-      48.0,
-      64.0,
-      120.0
+      99999.0
     ],
-    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_extraction_method": "regex_role_radius (patterns A and B), v1.7.1 subsection-scoped",
     "_confidence": "low"
   },
   "depth_elevation": {

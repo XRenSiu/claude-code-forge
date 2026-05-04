@@ -1,11 +1,11 @@
 {
   "system_name": "warp",
   "source": "open-design",
-  "extracted_at": "2026-05-03T13:38:57.594310Z",
+  "extracted_at": "2026-05-04T04:27:13.952222Z",
   "dialect": "A",
   "fingerprint_hash": "41e2006c2ee0c018673f8eed59de198d8ae08b0a4d3bca2a6bdf90a323e6463c",
   "extraction_method": "programmatic_a1",
-  "tool_version": "1.0.0",
+  "tool_version": "1.1.0",
   "color": {
     "role_color_pairs": {
       "warm_parchment": "#faf9f6",
@@ -116,11 +116,8 @@
     "_section_size": 1404
   },
   "radius": {
-    "role_radius_pairs": {
-      "card padding": 16.0
-    },
+    "role_radius_pairs": {},
     "all_px_values": [
-      1.0,
       4.0,
       5.0,
       6.0,
@@ -128,22 +125,11 @@
       10.0,
       12.0,
       14.0,
-      15.0,
-      16.0,
-      18.0,
-      24.0,
-      26.0,
-      30.0,
-      32.0,
-      36.0,
       40.0,
-      50.0,
-      80.0,
-      120.0,
       200.0
     ],
-    "_extraction_method": "regex_role_radius (patterns A and B)",
-    "_confidence": "medium"
+    "_extraction_method": "regex_role_radius (patterns A and B), v1.7.1 subsection-scoped",
+    "_confidence": "low"
   },
   "depth_elevation": {
     "rgba_shadows": [
@@ -205,6 +191,7 @@
   ],
   "llm_followup_hints": [
     "layout extraction has low confidence — recommend LLM review",
+    "radius extraction has low confidence — recommend LLM review",
     "responsive extraction has low confidence — recommend LLM review"
   ]
 }

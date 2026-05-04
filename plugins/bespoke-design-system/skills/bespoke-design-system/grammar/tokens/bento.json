@@ -1,11 +1,11 @@
 {
   "system_name": "bento",
   "source": "open-design",
-  "extracted_at": "2026-05-03T13:38:57.517084Z",
+  "extracted_at": "2026-05-04T04:27:09.577213Z",
   "dialect": "B",
   "fingerprint_hash": "ee9bf8da9e4f7615e22d4417a39540891b9312ce63b318ce480dfb6441ca8f59",
   "extraction_method": "programmatic_a1",
-  "tool_version": "1.0.0",
+  "tool_version": "1.1.0",
   "color": {
     "role_color_pairs": {
       "primary": "#FAD4C0",
@@ -85,7 +85,7 @@
   "radius": {
     "role_radius_pairs": {},
     "all_px_values": [],
-    "_extraction_method": "regex_role_radius (patterns A and B)",
+    "_extraction_method": "regex_role_radius (patterns A and B), v1.7.1 subsection-scoped",
     "_confidence": "low"
   },
   "motion": {
