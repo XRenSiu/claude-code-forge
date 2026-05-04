@@ -85,11 +85,16 @@ def _gather_color_pairs(tokens):
                 # Ambiguous — skip
                 pass
 
-    # Top-level nested keys (Linear-style: color.background_surfaces.* / color.text.*)
-    for nested_key, target in (('background_surfaces', bg_candidates),
-                               ('primary_neutrals', bg_candidates),
-                               ('text', fg_candidates),
-                               ('brand', fg_candidates)):
+    # Top-level nested keys
+    # v1.8.1 (skill bug 2 fix): also accept the schema-doc-canonical names
+    # `bg` / `state` (token-schema.md uses these), in addition to the
+    # historical `background_surfaces` / `primary_neutrals`. Either is OK.
+    for nested_key, target in (('bg', bg_candidates),                     # schema-doc canonical
+                               ('background_surfaces', bg_candidates),     # legacy alias
+                               ('primary_neutrals', bg_candidates),        # legacy alias
+                               ('text', fg_candidates),                    # both schema and legacy
+                               ('brand', fg_candidates),                   # both schema and legacy
+                               ('state', fg_candidates)):                  # schema-doc canonical
         section = color.get(nested_key)
         if isinstance(section, dict):
             for role, hex_val in section.items():
@@ -229,11 +234,33 @@ def subcheck_oklch_uniformity(tokens):
         if isinstance(v, dict):
             candidates = [hx for hx in v.values() if isinstance(hx, str) and hx.startswith('#')]
             break
+    # v1.8.1 (skill bug 2 fix): if no explicit neutral_scale, derive one
+    # from color.bg.* + color.text.* (the canonical schema fields). Order
+    # by luminance to satisfy monotone check.
+    if not candidates:
+        try:
+            from color_math import relative_luminance, parse_hex
+            derived = []
+            for nested in ('bg', 'background_surfaces', 'primary_neutrals', 'text'):
+                v = color.get(nested)
+                if isinstance(v, dict):
+                    for hx in v.values():
+                        if isinstance(hx, str) and hx.startswith('#'):
+                            try:
+                                lum = relative_luminance(parse_hex(hx))
+                                derived.append((lum, hx))
+                            except Exception:
+                                pass
+            if len(derived) >= 3:
+                derived.sort()
+                candidates = [hx for _, hx in derived]
+        except Exception:
+            pass
     if not candidates:
         return {
             'passed': True,
             'evaluable': False,
-            'reason': 'no neutral_scale found in tokens.color',
+            'reason': 'no neutral_scale found in tokens.color (and could not derive from bg/text)',
         }
     if len(candidates) < 3:
         return {
@@ -304,11 +331,15 @@ def subcheck_hue_harmony(tokens):
 def subcheck_modular_scale(tokens):
     typo = tokens.get('typography', {}) or {}
     scale = typo.get('declared_scale_px') or typo.get('all_px_values') or typo.get('scale')
+    # v1.8.1 (skill bug 2 fix): per token-schema.md, typography.scale is
+    # a dict with .values list — accept either shape.
+    if isinstance(scale, dict):
+        scale = scale.get('values') or scale.get('all_px_values')
     if not isinstance(scale, list):
         return {
             'passed': True,
             'evaluable': False,
-            'reason': 'no typography.scale found',
+            'reason': 'no typography.scale found (looked for typography.scale, .scale.values, .declared_scale_px, .all_px_values)',
         }
     # Filter to plausible font sizes
     scale = sorted({s for s in scale if isinstance(s, (int, float)) and 8 <= s <= 200})

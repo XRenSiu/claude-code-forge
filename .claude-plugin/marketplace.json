@@ -187,7 +187,7 @@
     {
       "name": "bespoke-design-system",
       "description": "Generate a bespoke DESIGN.md for any product brief by reverse-engineering a corpus of existing DESIGN.md design systems into a computable design grammar (rules + rationale + relationships), then forward-generating with three-part rationale (inheritance + adaptation + justification). Outputs the v4: 5-check P0 gate (coherence/archetype/kansei/neighbor + rationale-judge) + OD-dialect 9-section DESIGN.md format (Visual Theme & Atmosphere / Color Palette & Roles / Typography Rules / Component Stylings / Layout Principles / Depth & Elevation / Do's and Don'ts / Responsive Behavior / Agent Prompt Guide) consumable by any DESIGN.md-compatible tool (OD, Claude Design, Stitch). Two interaction modes: interactive (one-shot question batching, max 7 questions, never interrupts mid-generation) or auto (zero-questions, default-driven inference). Self-evolving: high-frequency adaptations consolidate into new rules. Material library is decoupled — works with OD's ~140 systems, awesome-design-md, or any DESIGN.md collection.",
-      "version": "1.8.0",
+      "version": "1.9.0",
       "author": {
         "name": "XRenSiu",
         "email": "xrensiu@gmail.com"

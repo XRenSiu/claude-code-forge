@@ -137,6 +137,17 @@ degraded_sections: [...]
 | Spacing 1.5× base | 神秘感需要呼吸感，比常规 SaaS 的 1.0× 更松 | apple, notion |
 | ... | ... | ... |
 
+## Kansei 覆盖矩阵（v1.9.0 起必含）
+
+> 来自 `provenance.yaml#kansei_primary_addresser`。每个 user kansei.positive 词由**一个** primary 决策负责，避免循环引用。
+
+| Kansei | Primary 决策 | Section | Secondary 协助 |
+|---|---|---|---|
+| structured | 8px base spacing scale | layout | translucent borders, pill status badge |
+| precise | display tracking curve | typography | spacing optical micro-adjustments |
+| ... | ... | ... | ... |
+| composed | (token level 不可表达) | — | 见 kansei_unaddressable.composed |
+
 ## 推断字段（仅 auto 模式）
 
 > 这份设计在 auto 模式下生成。以下字段是基于上下文推断的——如果不准，告诉我具体哪一条，我会重排规则重新生成。

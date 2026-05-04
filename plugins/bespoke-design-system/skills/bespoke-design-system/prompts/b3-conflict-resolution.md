@@ -35,7 +35,25 @@
 
 1. 沿 `depends_on[R]` 反向闭包，把所有传递依赖加入候选
 2. 如果某个依赖项**不在原候选集**且**不在规则库**（罕见，意味着关系图引用了不存在的规则）→ 记录损坏并提示用户重建关系图
-3. 如果某个依赖项与已留的规则 `conflicts_with` → 这是关系图自身矛盾，保留依赖、剔除冲突方，并记录到日志
+3. **依赖再引入冲突的级联剔除（v1.8.1 修复）**：如果某个依赖项 `D` 与 step 2 已留的规则 `K` 在 `conflicts_with` 关系中——说明 `D` 在 step 2 已被剔（`K` score 更高）。此时 **不要再把 `D` 加进来**，反而要**级联剔除**所有 `requires D` 的依赖方规则 `R`，原因：`R` 的 preconditions（包含 `requires`）不被满足，把 `R` 留在 dark canvas 上等于在错误前提下应用规则。
+   - 记录到日志：`cascade_dropped: <R>, reason: requires <D> which conflicts with kept <K>`
+   - **不要**反过来"保留依赖剔除冲突方"——那会让 step 2 的 score 优先选择被推翻
+
+**实现伪代码**：
+
+```python
+for R in kept:
+    for D in depends_on[R]:
+        if D not in kept and D not in to_add:
+            # 检查 D 是否与已留的某条规则冲突
+            blockers = [K for K in kept if D in conflicts_with[K] or K in conflicts_with[D]]
+            if blockers:
+                cascade_drop(R, reason=f"requires {D} which conflicts with kept {blockers[0]}")
+                continue  # 不加 D，也丢 R
+            to_add.add(D)
+```
+
+**为什么这样**：原始 v1.5.0 spec 写"保留依赖剔除冲突方"，但这让 step 2 的 score-based 决定被 step 3 的 dep-closure 反复推翻，造成规则集不稳定。v1.8.1 改为"级联剔除依赖方"——保持 step 2 的决定权威，只是要求依赖方一起退出。
 
 ## Step 4 — 风格岛聚集（**v1.5.0 规模感知**）
 

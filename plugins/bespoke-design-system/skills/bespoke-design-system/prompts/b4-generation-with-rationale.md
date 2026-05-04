@@ -119,19 +119,16 @@ original_rationale: |
 - ❌ "Vercel 直接用 Geist 体现这一原则" + 编 `vercel-typography-geist-system-002`
 - ✅ "Linear typography rule 要求 geometric/humanist sans + OpenType + 拒绝 Inter；选 Geist 是符合这组约束的现成字体（brief-derived，非规则原文要求）"
 
-### 闸 3：调适越界必须显式标注
+### 闸 3：调适越界必须显式标注（v1.9.0 扩展为 4 类）
 
-source rule 的 `action` 字段是**范围**时（如 `brand_hue_range: [240, 270]`、`brand_saturation: 0.40-0.55`）：
+每个 modification 必须把 source field 与 to value 的关系归到下面 4 类之一，**不许混淆或省略**。
 
-- 落在范围内 → 正常 modifications，无 `out_of_source_range` 字段
-- 落在范围外 → **必须**加 `out_of_source_range: true` + reason 解释为什么故意越界
+#### 类 A：source 是范围 / 列表 / 显式枚举值
 
-**禁止**：
+source rule 的 `action` 字段是**范围**或**显式枚举**时（如 `brand_hue_range: [240, 270]`、`weights_used: [400, 500, 600]`、`cta_verbs: [start, get_started, contact_sales]`）：
 
-- ❌ 把范围中位假装成"system X 默认值" / "system X 中值"（这是 fabrication）
-- ❌ 选择范围外的值但写 "from: 0.45 / to: 0.60" 不标 out_of_source_range（这是隐瞒越界）
-
-正确写法：
+- 落在范围/枚举内 → 正常 modifications，**out_of_source_range: false**
+- 落在范围/枚举外 → **必须** `out_of_source_range: true` + reason 解释为什么故意越界
 
 ```yaml
 - dimension: saturation
@@ -139,21 +136,166 @@ source rule 的 `action` 字段是**范围**时（如 `brand_hue_range: [240, 27
   to: 0.60
   out_of_source_range: true
   reason: |
-    Magician archetype 要求 saturation ≥ 0.5，与 Sage ≤ 0.7 的交集是
-    [0.50, 0.70]，这是 deliberate excursion，不是 within-range 调整。
+    deliberate excursion ...
 ```
 
-### 闸 4：输出前的 self-check 清单
+#### 类 B：source 是标量（scalar）
+
+source rule 的 field 是**单一标量值**时（如 `card_radius_default_px: 4`、`border_alpha_default: 0.05`）：
+
+- 完全照搬 → 不该出现在 modifications，应在 `preserved` 列出
+- **任何**值变化都是 out-of-source（标量没有"范围内"的概念）
+
+```yaml
+- dimension: border_alpha_default
+  from: 0.05 (verbatim mintlify scalar — NOT a range)
+  to: 0.06
+  out_of_source_range: true     # 标量任何变化都是 true
+  reason: |
+    标量 0.05 → 0.06 不存在 in-range 一说
+```
+
+**禁止**：把标量的微小变化标 `out_of_source_range: false` 并写"in-band micro-adjustment"——标量没有 band。
+
+#### 类 C：跨规则救援（cross-rule rescue）
+
+当 to value 对**所引用的某条 source rule** 越界，但同时**对该 decision 引用的另一条 source rule** 在范围内时：
+
+- **必须**用分离字段标记：`out_of_source_range_for_<rule_or_system>: true|false`（每条 source rule 一个）
+- **必须**加 `cross_rule_rescue` 字段解释：哪条规则越界、哪条规则提供 in-source 锚点
+- 跨规则救援的 source rule 必须真在 `inheritance.source_rules` 列表里——不能从未列出的规则借范围
+
+```yaml
+- dimension: border_alpha_default
+  from: "0.05 (mintlify scalar) / [0.05, 0.08] (linear range)"
+  to: 0.06
+  out_of_source_range_for_mintlify: true
+  out_of_source_range_for_linear-app: false
+  cross_rule_rescue: |
+    mintlify 的 0.05 是标量，0.06 越界。但 linear 的 [0.05, 0.08]
+    范围内，所以跨规则救援成立。linear 已在本 decision 的 source_rules
+    列表中（不是从外面借的）。
+  reason: ...
+```
+
+**禁止**：从 source_rules 之外的规则借范围"救援"——那是 phantom citation，违反闸 1。
+
+#### 类 D：source 字段未定义具体值（concretization）
+
+当 source field 显式声明**不指定具体值**（如 vercel 的 `chromatic_accent_count: small_set_with_strict_semantic_role` — 字面是"小集合，未定数量"）：
+
+- 选择具体值是**concretization**，**不是** out-of-source（source 没设上下界，怎么界定越界？）
+- **必须**用 `concretization_of_undefined: true` 字段，而不是 `out_of_source_range`
+- reason 必须说明：源字段为什么是 undefined、为何 OPC 选这个具体值
+
+```yaml
+- dimension: accent_set_size
+  from: "small_set_with_strict_semantic_role (vercel — undefined cardinality)"
+  to: 4
+  concretization_of_undefined: true
+  out_of_source_range: false        # 显式 false 防误读
+  reason: |
+    vercel 的 source 字段是文字描述非数字，"small_set" 没有 cardinality
+    上下界。OPC 选 4 是 concretization 不是 excursion。
+```
+
+**confidence 政策（v1.9.0 明确）**：
+- `out_of_source_range: true` → 单独触发 confidence ≤ medium（即使有 cross-rule rescue）
+- `concretization_of_undefined: true` → **不**单独触发降级；但若 decision 同时有 out_of_source_range modification，整体仍降 medium
+- 多个 concretization_of_undefined 也不降级，因为 source 本身就允许多种 concretization
+
+#### 类 E：模式保留 + 字面值替换（pattern_preserved）
+
+当 source field 是**字面例子列表**而非 closed enum（如 vercel 的 `cta_verbs: [start_deploying, get_started, contact_sales]` — 这是产品特定的字面例子，意图是"模式 = imperative short verbs"）：
+
+- 替换字面列表 → `out_of_source_range: true`（字面值不一样了）
+- 但 underlying 模式保留 → 加 `pattern_preserved: <pattern_name>` 字段说明
+- pattern_preserved 不是降级豁免——confidence 仍按 out_of_source_range 政策走 medium
+
+```yaml
+- dimension: cta_verb_set
+  from: "vercel literal: [start_deploying, get_started, contact_sales]"
+  to: "OPC: [Resume, Halt, Replace skill, Approve & continue]"
+  out_of_source_range: true           # 字面替换是越界
+  pattern_preserved: imperative_short_action_verbs
+  reason: |
+    vercel.cta_verbs 是产品特定字面例子，OPC 替换为 OPC 特定动词，但
+    voice_personality 字段（imperative_short_action_verbs 模式）verbatim 保留。
+```
+
+### 闸 4：输出前的 self-check 清单（v1.9.0 扩展）
 
 写完整份 provenance 后，**在输出前**逐条过：
 
 - [ ] 每条 `source_rules` 项都能在 B3 子集里找到（grep 验证）
-- [ ] 每条 `source_systems` 项都至少有一条 `source_rules` 来自该 system（不是单纯写"vercel"但没 vercel 规则）
-- [ ] 每个范围参数的 modification 都正确标了 in/out of range
-- [ ] 每条 `confidence: high` 的决策都没有 out_of_source_range（高置信不能含越界）
+- [ ] 每条 `source_systems` 项都至少有一条 `source_rules` 来自该 system
+- [ ] **每个 modification 必须归到闸 3 的 5 类之一**（A 范围/列表 / B 标量 / C 跨规则救援 / D concretization / E pattern preserved）——不许混类或省略类别字段
+- [ ] **标量字段（类 B）的任何变化都必须 out_of_source_range: true** —— 不许把标量微调标 false 写 "in-band"
+- [ ] **跨规则救援（类 C）所救援的 source rule 必须真在本 decision 的 source_rules 列表里** —— 不能从未列出的规则借范围
+- [ ] **concretization_of_undefined（类 D）和 out_of_source_range 互斥** —— 不能同时为 true
+- [ ] 每条 `confidence: high` 的决策都没有 out_of_source_range（concretization_of_undefined 可以有）
 - [ ] 每条无锚点决策都有 `derived_from_brief: true` + `confidence: low|medium`
+- [ ] **顶层有 `kansei_primary_addresser` 矩阵**（见闸 5）
 
 **任何一项不过 → 不许输出，回到该决策修正。**
+
+### 闸 5：kansei coverage 矩阵（v1.9.0 新增）
+
+per-decision 的 `user_kansei_coverage` 字段（addressed_in_this_decision / addressed_elsewhere）容易出现**双向循环引用**——A 说"sovereign 由 B addressed_elsewhere"，B 又说"sovereign 由 A addressed_elsewhere"，结果谁都没真锚定。
+
+**v1.9.0 起强制**：provenance 顶层必须有 `kansei_primary_addresser` 矩阵，对**每个** user kansei.positive 词指定**唯一**的 primary addresser decision：
+
+```yaml
+kansei_primary_addresser:
+  - kansei: structured
+    primary_decision: "8px base spacing scale with optical micro-increments"
+    primary_section: layout
+    secondary_addressers:
+      - "Translucent borders (color)"
+      - "Pill status badge (components)"
+
+  - kansei: precise
+    primary_decision: "Display tracking curve — aggressive negative"
+    primary_section: typography
+    secondary_addressers: ...
+
+  - kansei: composed
+    primary_decision: null   # 显式 null 表示无 token-level decision
+    note: see kansei_unaddressable.composed
+```
+
+**铁律**：
+- 每个 user kansei.positive 词必须出现在矩阵里
+- `primary_decision` 是**该 kansei 在 token level 最负责的那个 decision**——不许是 null 除非也在 `kansei_unaddressable` 顶层字段
+- `primary_decision` 不允许两个 kansei 互指（A 是 B 的 primary AND B 是 A 的 primary 这种循环）
+- 矩阵建立的关系图必须是 DAG（无环）
+
+**Per-decision claim 与矩阵的协调约定（v1.9.0）**：
+
+矩阵存在后，per-decision 的 `user_kansei_coverage.{addressed_in_this_decision, addressed_elsewhere}` 字段必须遵守：
+
+1. **若该 decision 是某 kansei 的 matrix primary**：把这个 kansei 列在 `addressed_in_this_decision`，可标 `(matrix primary)` 后缀
+2. **若该 decision 是 secondary**：把 kansei 列在 `addressed_elsewhere`，**必须**用反向指针格式 `kansei → 'matrix primary 决策名'`，不允许只写 kansei 名字
+3. **不允许**两个 decision 都把同一个 kansei 列在 `addressed_in_this_decision`——只有 matrix primary 能这么写
+4. 写完 provenance 后跑校验：每个 kansei 应该恰好有一个 decision 把它列在 addressed_in_this_decision，其他出现都是 addressed_elsewhere 形式
+
+正确写法：
+
+```yaml
+# Decision A — 是 structured 的 matrix primary
+user_kansei_coverage:
+  addressed_in_this_decision: [structured (matrix primary)]
+  addressed_elsewhere:
+    - "calm → 'Translucent borders' (matrix primary)"
+
+# Decision B — 是 structured 的 secondary，是 calm 的 matrix primary
+user_kansei_coverage:
+  addressed_in_this_decision: [calm (matrix primary)]
+  addressed_elsewhere:
+    - "structured → 'Decision A' (matrix primary)"
+```
+
+**为什么这样**：把 kansei 覆盖从分布式声明（每个 decision 各说各的）变成集中式权威（一处声明谁负责什么），消除循环引用同时让 reviewer 一眼看完全图。
 
 ---
 

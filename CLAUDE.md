@@ -30,6 +30,22 @@
 
 新增 skill / agent 时，更新第 2、3 项。
 
+### 新建插件（plugin）的额外步骤
+
+新增**整个 plugin**（不是给已存在 plugin 加 skill/agent）时，除上面三处外还要做：
+
+4. **本机启用**：在 `~/.claude/settings.json` 的 `enabledPlugins` 字典加一条：
+   ```json
+   "enabledPlugins": {
+     "<plugin-name>@claude-code-forge": true
+   }
+   ```
+5. **重启 Claude Code 会话**——`Skill` 工具的可用列表在 session 启动时定型，运行中改 `settings.json` 不会热加载。
+
+第 4-5 步是**用户级、不入 git** 的本机配置，但它决定了你能不能调用新 plugin 的 skill。漏了它就会得到 `Unknown skill` 报错，且本会话无法补救（必须新开 session）。
+
+> 历史 bug：`bespoke-design-system` v1.8.0 完整注册到 `marketplace.json` 但漏了 `enabledPlugins`，导致用户调 `/bespoke-design-system` 时 Skill 工具找不到。详见 `~/.claude/projects/.../memory/feedback_plugin_enable_required.md`。
+
 ## Commit 规范
 
 遵循 Conventional Commits：

@@ -11,7 +11,7 @@ description: >-
   触发词：" 设计系统 " / " 调性 " / " UI 风格 " / " bespoke design " / " DESIGN.md " /
   " 拆解设计系统 " / " 导入 OD " / " 沉淀 adaptation "。
 argument-hint: "[mode=interactive|auto] <product-brief> | maintain <subcommand>"
-version: 1.8.0
+version: 1.9.0
 user-invocable: true
 ---
 
@@ -376,6 +376,45 @@ clarification_batch:
 ### 3.3.7 Provenance Report Schema (B4 输出)
 
 每个决策三段式：`inheritance.{source_rules, source_systems, original_rationale}` + `adaptation.{fully_aligned_kansei, needs_extension_kansei, modifications[], preserved[]}` + `justification.{internal_consistency[], user_kansei_coverage, conflict_check}`。
+
+#### modifications[] 项的可选字段（v1.9.0 起，详见 `prompts/b4-generation-with-rationale.md` §闸 3）
+
+| 字段 | 类型 | 何时用 |
+|---|---|---|
+| `out_of_source_range` | bool | 闸 3 类 A/B/E。落在 source 范围/枚举/字面值外时为 true |
+| `out_of_source_range_for_<system>` | bool | 闸 3 类 C 跨规则救援。每条 source rule 一个字段 |
+| `cross_rule_rescue` | string | 闸 3 类 C。解释救援逻辑 + 救援 source 必须真在 source_rules |
+| `concretization_of_undefined` | bool | 闸 3 类 D。source 字段未定数（如 "small_set"），选具体值时用此字段而非 out_of_source_range |
+| `pattern_preserved` | string | 闸 3 类 E。字面值替换但底层模式保留时声明模式名 |
+
+#### 顶层字段（v1.9.0 起新增）
+
+```yaml
+# Per-decision user_kansei_coverage 容易循环引用，v1.9.0 起 provenance
+# 顶层必须有此矩阵作为 kansei 覆盖的权威声明（详见 b4 prompt 闸 5）
+kansei_primary_addresser:
+  - kansei: <user kansei.positive 词>
+    primary_decision: <唯一 primary addresser 决策名 | null>
+    primary_section: <section>
+    secondary_addressers: [...]
+    note: <若 primary_decision: null 则说明为何 — 通常引用 kansei_unaddressable>
+
+# 不可在 token level 表达的 kansei（如 product-level only）
+kansei_unaddressable:
+  - kansei: <词>
+    reason: ...
+    where_it_manifests_in_product: [...]
+
+# 跨品类规则采用的全局披露（B3 接受了 preconditions 不含目标 product_type
+# 的规则时使用，每条采用单独说明 transfer_argument，policy 字段总览）
+cross_category_transfers:
+  - rule: <rule_id>
+    rule_preconditions: [...]
+    target_category: <product_category>
+    transfer_argument: ...
+cross_category_transfer_policy: |
+  Acceptance criteria for cross-category transfer ...
+```
 
 详细字段见 `prompts/b4-generation-with-rationale.md`。
 
