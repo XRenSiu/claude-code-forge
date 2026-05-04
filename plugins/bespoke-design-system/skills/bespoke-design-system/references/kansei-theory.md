@@ -118,6 +118,8 @@
 | `soft` | 大圆角 / 低饱和 / 软阴影 |
 | `fresh` | 高饱和单色 / 现代字体 / 简洁 layout |
 | `self_referential` | 元设计 / 自我引用的 chrome |
+| `spacious` | 8pt 基础 / 大字号跨度 / 大留白 / 宽 line-height |
+| `clean` | 单色调 / 大留白 / 单层结构 |
 
 ---
 

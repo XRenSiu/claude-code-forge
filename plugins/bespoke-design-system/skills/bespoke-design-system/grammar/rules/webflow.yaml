@@ -1,0 +1,71 @@
+rules:
+- rule_id: webflow-color-rich-secondary-palette-001
+  section: color
+  preconditions:
+    product_type: [creator_tool, b2b_saas, design_tool, platform]
+    tone: [confident, expressive, refined]
+    kansei: [expressive, confident, bold, modern]
+    sd_anchors:
+      warm_to_cold: 0.0
+      ornate_to_minimal: 0.4
+      serious_to_playful: -0.2
+      modern_to_classical: -0.5
+    brand_archetypes: [Creator, Magician]
+  action:
+    primary_brand_hue: ~215 (saturated_blue)
+    secondary_palette_count: 6
+    secondary_hues: [purple, pink, green, orange, yellow, red]
+    palette_role: signal_platform_creative_capability
+    no_single_chromatic_only: true
+  why:
+    establish: rich-palette-as-creative-capability-signal
+    avoid: [single_chromatic_limited, multi_chromatic_decoration, palette_no_hierarchy]
+    balance: brand_identity ↔ creative_breadth
+  emerges_from: [webflow]
+  provenance: original
+  confidence: 0.55
+
+- rule_id: webflow-typography-variable-font-uppercase-labels-002
+  section: typography
+  preconditions:
+    product_type: [creator_tool, design_tool, b2b_saas]
+    tone: [confident, technical, precise]
+    kansei: [precise, confident, technical, structured]
+    brand_archetypes: [Creator, Magician]
+  action:
+    primary_family_class: proprietary_variable_geometric_sans (e.g., WF Visual Sans Variable)
+    primary_weights: [500, 600]
+    label_case: uppercase
+    label_letter_spacing_px: 0.6-1.5
+  why:
+    establish: precision-typography-mirrors-design-tool-promise
+    avoid: [generic_system_font, decorative_serif, slack_letter_spacing]
+    balance: brand_distinctiveness ↔ readability
+  emerges_from: [webflow]
+  provenance: original
+  confidence: 0.5
+
+- rule_id: webflow-components-conservative-radius-003
+  section: components
+  preconditions:
+    product_type: [creator_tool, design_tool, b2b_saas]
+    tone: [refined, technical, precise]
+    kansei: [precise, structured, technical, refined]
+    brand_archetypes: [Creator, Magician]
+  action:
+    button_radius_px: [4, 8]
+    chrome_radius_strategy: conservative_sharp_not_rounded
+    no_pill_decorative: true
+    no_large_friendly_radius: true
+  why:
+    establish: design-tool-engineering-precision-via-radius
+    avoid: [large_friendly_radius, pill_decorative, sub_4_too_sharp]
+    balance: tool_authority ↔ chrome_softness
+  emerges_from: [webflow]
+  provenance: original
+  confidence: 0.5
+  known_conflicts:
+  - rule: pinterest-components-generous-radius-scale-004
+    reason: conservative 4-8 vs generous 12-40 — opposite chrome philosophies
+  - rule: cursor-components-extreme-pill-radius-005
+    reason: 4-8 conservative vs 9999 extreme pill — opposite chrome philosophies

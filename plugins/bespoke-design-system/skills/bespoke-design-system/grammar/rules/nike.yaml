@@ -1,0 +1,86 @@
+rules:
+- rule_id: nike-color-aggressive-monochromatic-ui-001
+  section: color
+  preconditions:
+    product_type: [retail, brand_marketing_site, ecommerce, sport_brand]
+    tone: [confident, decisive, severe]
+    kansei: [decisive, confident, intense, severe]
+    sd_anchors:
+      warm_to_cold: 0.0
+      ornate_to_minimal: 0.7
+      serious_to_playful: -0.4
+      modern_to_classical: -0.5
+    brand_archetypes: [Hero, Outlaw]
+  action:
+    ui_color_strategy: monochromatic_black_white_only
+    chromatic_in_chrome: zero
+    chromatic_only_in: product_photography
+    text_color: near_black "#111111"
+  why:
+    establish: product-as-only-color-source
+    avoid: [decorative_brand_color, multi_chromatic_chrome, color_competing_with_product]
+    balance: athletic_intensity ↔ chromatic_economy
+  emerges_from: [nike]
+  provenance: original
+  confidence: 0.65
+
+- rule_id: nike-color-functional-semantic-only-002
+  section: color
+  preconditions:
+    product_type: [retail, ecommerce, brand_marketing_site]
+    tone: [confident, decisive]
+    kansei: [decisive, structured, confident]
+    brand_archetypes: [Hero, Outlaw]
+  action:
+    chromatic_role: semantic_only (red_error_sale, blue_link, green_success, orange_badge)
+    no_decorative_brand_color: true
+    no_color_for_hierarchy: true
+  why:
+    establish: color-as-semantic-only
+    avoid: [decorative_brand_color, color_for_hierarchy, multi_chromatic_brand]
+    balance: semantic_clarity ↔ chromatic_restraint
+  emerges_from: [nike]
+  provenance: original
+  confidence: 0.55
+
+- rule_id: nike-typography-split-display-body-003
+  section: typography
+  preconditions:
+    product_type: [retail, brand_marketing_site, ecommerce, sport_brand]
+    tone: [confident, expressive, decisive]
+    kansei: [confident, decisive, expressive, intense]
+    brand_archetypes: [Hero, Outlaw]
+  action:
+    display_family_class: condensed_geometric_sans (e.g., Nike Futura ND)
+    display_line_height: 0.90 (impossibly_tight)
+    display_case: uppercase
+    body_family_class: swiss_neutral_sans (e.g., Helvetica Now)
+    role_separation: display_inspiration / body_execution
+  why:
+    establish: aspiration-meets-functional-clarity
+    avoid: [single_family_flatness, decorative_display_serif, slack_display_lh]
+    balance: athletic_aspiration ↔ readability
+  emerges_from: [nike]
+  provenance: original
+  confidence: 0.6
+
+- rule_id: nike-components-pill-button-fullbleed-imagery-004
+  section: components
+  preconditions:
+    product_type: [retail, ecommerce, brand_marketing_site]
+    tone: [confident, decisive]
+    kansei: [decisive, confident, intense]
+    brand_archetypes: [Hero, Outlaw]
+  action:
+    button_radius_px: 30
+    button_shape: pill
+    imagery_radius_px: 0
+    imagery_strategy: full_bleed_to_edge
+    duality_softness_button_vs_raw_imagery: required
+  why:
+    establish: friendly-action-meets-raw-energy
+    avoid: [softened_imagery_radius, sharp_button, decorative_frame]
+    balance: friendly_affordance ↔ athletic_intensity
+  emerges_from: [nike]
+  provenance: original
+  confidence: 0.55

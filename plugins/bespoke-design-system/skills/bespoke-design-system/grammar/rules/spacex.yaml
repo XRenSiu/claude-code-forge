@@ -1,0 +1,108 @@
+rules:
+- rule_id: spacex-visual-photographic-exhibition-001
+  section: components
+  preconditions:
+    product_type: [brand_marketing_site, editorial_brand_site, luxury_brand_site]
+    tone: [confident, severe, refined]
+    kansei: [severe, decisive, focused, intense]
+    sd_anchors:
+      warm_to_cold: 0.3
+      ornate_to_minimal: 0.95
+      serious_to_playful: -0.8
+      modern_to_classical: -0.6
+    brand_archetypes: [Hero, Magician]
+  action:
+    container_strategy: no_cards_no_panels_no_grid
+    text_placement: directly_on_full_bleed_photography
+    chrome_count: ghost_button_only
+    no_borders_except: ghost_button_border_alpha_0.35
+    no_shadow_anywhere: true
+  why:
+    establish: exhibition-not-design-system
+    avoid: [cards, containers, panels, decorative_chrome, multi_button_types]
+    balance: immersion ↔ usability
+  emerges_from: [spacex]
+  provenance: original
+  confidence: 0.55
+
+- rule_id: spacex-color-pure-black-with-spectral-white-002
+  section: color
+  preconditions:
+    product_type: [brand_marketing_site, editorial_brand_site, luxury_brand_site]
+    tone: [severe, confident, restrained]
+    kansei: [severe, intense, focused, restrained]
+    brand_archetypes: [Hero, Magician]
+  action:
+    base_canvas: pure_black "#000000"
+    text_color: spectral_near_white "#f0f0fa" (slight_blue_violet_tint)
+    chromatic_count: 0
+    no_pure_white_text: true
+    no_chromatic_brand: true
+  why:
+    establish: photography-as-only-color-source
+    avoid: [chromatic_decoration, pure_white_text_too_bright, multi_color_chrome]
+    balance: cinematic_minimalism ↔ legibility
+  emerges_from: [spacex]
+  provenance: original
+  confidence: 0.6
+
+- rule_id: spacex-typography-uppercase-wide-tracking-003
+  section: typography
+  preconditions:
+    product_type: [brand_marketing_site, editorial_brand_site, luxury_brand_site]
+    tone: [severe, technical, authoritative]
+    kansei: [severe, technical, structured, authoritative]
+    brand_archetypes: [Hero, Magician]
+  action:
+    text_case: universal_uppercase
+    letter_spacing_display_px: 0.96
+    letter_spacing_nav_px: 1.17
+    family_class: industrial_geometric_sans (e.g., D-DIN)
+  why:
+    establish: military-aerospace-mission-briefing-voice
+    avoid: [lowercase_marketing, tight_tracking, decorative_typography]
+    balance: technical_authority ↔ readability
+  emerges_from: [spacex]
+  provenance: original
+  confidence: 0.6
+  known_conflicts:
+  - rule: linear-app-typography-display-compression-005
+    reason: positive_tracking_uppercase vs aggressive_negative_tracking — opposite tracking philosophies
+
+- rule_id: spacex-typography-two-weight-strict-004
+  section: typography
+  preconditions:
+    product_type: [brand_marketing_site, editorial_brand_site]
+    tone: [severe, technical]
+    kansei: [severe, technical, decisive]
+    brand_archetypes: [Hero, Magician]
+  action:
+    weight_count: 2
+    weights_used: [400, 700]
+    no_intermediate_weights: true
+  why:
+    establish: mission-critical-binary-weight
+    avoid: [continuous_weight_ladder, decorative_weight_contrast]
+    balance: hierarchy_simplicity ↔ visual_richness
+  emerges_from: [spacex]
+  provenance: original
+  confidence: 0.55
+
+- rule_id: spacex-typography-tight-line-height-005
+  section: typography
+  preconditions:
+    product_type: [brand_marketing_site, editorial_brand_site]
+    tone: [severe, technical]
+    kansei: [severe, technical, dense]
+    brand_archetypes: [Hero, Magician]
+  action:
+    display_line_height: 0.94-1.00
+    body_line_height: 1.10-1.20
+    strategy: compressed_mission_critical
+  why:
+    establish: instrument-readout-density
+    avoid: [slack_1_5_line_height, decorative_breathing]
+    balance: density ↔ readability
+  emerges_from: [spacex]
+  provenance: original
+  confidence: 0.5

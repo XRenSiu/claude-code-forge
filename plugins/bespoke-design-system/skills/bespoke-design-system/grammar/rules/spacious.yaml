@@ -1,0 +1,65 @@
+rules:
+- rule_id: spacious-color-minimal-baseline-palette-001
+  section: color
+  preconditions:
+    product_type: [b2b_saas, productivity_saas, content_platform, brand_marketing_site]
+    tone: [restrained, professional, refined]
+    kansei: [restrained, refined, minimal, clean]
+    sd_anchors:
+      warm_to_cold: 0.1
+      ornate_to_minimal: 0.8
+      serious_to_playful: -0.3
+      modern_to_classical: -0.4
+    brand_archetypes: [Sage, Innocent]
+  action:
+    primary_brand_hue: ~215 (medium_blue)
+    semantic_color_count: 5
+    palette_strategy: minimal_clean_baseline
+    base_canvas: pure_white
+  why:
+    establish: minimal-clean-baseline-default
+    avoid: [decorative_multi_color, warm_undertone_canvas, cluttered_chromatic]
+    balance: minimalism ↔ semantic_clarity
+  emerges_from: [spacious]
+  provenance: original
+  confidence: 0.4
+
+- rule_id: spacious-typography-display-body-split-002
+  section: typography
+  preconditions:
+    product_type: [b2b_saas, productivity_saas, content_platform]
+    tone: [restrained, refined]
+    kansei: [restrained, clean, minimal, readable]
+    brand_archetypes: [Sage, Innocent]
+  action:
+    body_family_class: humanist_sans (e.g., Open Sans)
+    display_family_class: geometric_sans (e.g., Montserrat)
+    code_family_class: monospace (e.g., IBM Plex Mono)
+    role_separation: display_geometric / body_humanist / code_mono
+  why:
+    establish: display-body-split-for-spacious-archetype
+    avoid: [single_family_flatness, decorative_serif, dense_packing]
+    balance: hierarchy_distinctiveness ↔ readability
+  emerges_from: [spacious]
+  provenance: original
+  confidence: 0.4
+
+- rule_id: spacious-layout-8pt-baseline-wide-step-003
+  section: layout
+  preconditions:
+    product_type: [b2b_saas, content_platform, productivity_saas, brand_marketing_site]
+    tone: [restrained, refined]
+    kansei: [spacious, calm, restrained, soft]
+    brand_archetypes: [Sage, Innocent]
+  action:
+    base_unit: 8
+    type_scale_px: [12, 14, 16, 18, 24, 30, 36]
+    spacing_strategy: 8pt_baseline_grid_with_breathing
+    no_dense_packing: true
+  why:
+    establish: spacious-archetype-via-8pt-baseline-and-wide-type-scale
+    avoid: [dense_4_base, narrow_type_scale, cluttered_packing]
+    balance: spacious_breathing ↔ information_density
+  emerges_from: [spacious]
+  provenance: original
+  confidence: 0.4

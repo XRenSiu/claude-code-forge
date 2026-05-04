@@ -1,0 +1,128 @@
+rules:
+- rule_id: starbucks-color-warm-cream-canvas-001
+  section: color
+  preconditions:
+    product_type: [retail, brand_marketing_site, hospitality, ecommerce]
+    tone: [warm, refined, friendly]
+    kansei: [warm, friendly, inviting, refined]
+    sd_anchors:
+      warm_to_cold: -0.5
+      ornate_to_minimal: 0.3
+      serious_to_playful: -0.2
+      modern_to_classical: -0.1
+    brand_archetypes: [Caregiver, Lover]
+  action:
+    base_canvas_warm_cream_hex: ['#f2f0eb', '#edebe9']
+    no_pure_white_canvas: true
+    canvas_undertone: warm_neutral_referencing_paper_cafe_materials
+  why:
+    establish: canvas-as-cafe-material-reference
+    avoid: [pure_white_clinical, cold_gray_canvas, decorative_cream]
+    balance: warmth ↔ professional_legibility
+  emerges_from: [starbucks]
+  provenance: original
+  confidence: 0.6
+
+- rule_id: starbucks-color-4-tier-green-system-002
+  section: color
+  preconditions:
+    product_type: [retail, brand_marketing_site, hospitality]
+    tone: [refined, authoritative, structured]
+    kansei: [structured, refined, authoritative]
+    brand_archetypes: [Caregiver, Lover]
+  action:
+    brand_green_tier_count: 4
+    tier_role_mapping:
+      tier1_starbucks_green: h1_headings + brand_signal
+      tier2_accent_green: primary_cta_fill + floating_button
+      tier3_house_green: footer + feature_band + dark_surface
+      tier4_uplift_green: decorative_accent_only
+    no_single_green_for_all: true
+  why:
+    establish: chromatic-as-structured-system-not-decoration
+    avoid: [single_green_one_size_fits_all, decorative_chromatic_distribution]
+    balance: brand_unity ↔ surface_role_specificity
+  emerges_from: [starbucks]
+  provenance: original
+  confidence: 0.6
+
+- rule_id: starbucks-color-gold-ceremony-only-003
+  section: color
+  preconditions:
+    product_type: [retail, brand_marketing_site, loyalty_program]
+    tone: [refined, premium, authoritative]
+    kansei: [premium, refined, authoritative]
+    brand_archetypes: [Caregiver, Lover]
+  action:
+    secondary_chromatic: gold (~38° hue)
+    gold_role: rewards_status_ceremony + partnership_badges + premium_accent_only
+    no_general_gold_use: true
+  why:
+    establish: gold-as-ceremony-not-decoration
+    avoid: [decorative_gold, general_gold_accent, gold_as_brand]
+    balance: ceremonial_weight ↔ chromatic_economy
+  emerges_from: [starbucks]
+  provenance: original
+  confidence: 0.55
+
+- rule_id: starbucks-components-50px-pill-universal-with-press-004
+  section: components
+  preconditions:
+    product_type: [retail, hospitality, ecommerce, brand_marketing_site]
+    tone: [warm, friendly, refined]
+    kansei: [warm, inviting, friendly, tactile]
+    brand_archetypes: [Caregiver, Lover]
+  action:
+    button_radius_px: 50
+    button_shape: full_pill_universal
+    active_press: scale_0_95
+    micro_interaction_required: true
+  why:
+    establish: store-signage-friendly-button
+    avoid: [angular_button, sharp_corner, static_button]
+    balance: hospitality_warmth ↔ standard_affordance
+  emerges_from: [starbucks]
+  provenance: original
+  confidence: 0.55
+
+- rule_id: starbucks-components-floating-frap-cta-005
+  section: components
+  preconditions:
+    product_type: [retail, hospitality, ecommerce]
+    tone: [confident, expressive]
+    kansei: [confident, expressive, tactile]
+    brand_archetypes: [Caregiver, Lover]
+  action:
+    floating_cta_size_px: 56
+    floating_cta_shape: circle
+    floating_cta_position: bottom_right
+    floating_cta_color: green_accent_tier2
+    layered_shadow: "0 0 6px rgba(0,0,0,0.24), 0 8px 12px rgba(0,0,0,0.14)"
+    use_only_for: ordering_signature_feature
+  why:
+    establish: signature-iconic-move-visual-memory
+    avoid: [hidden_cta, weak_elevation, multi_floating_competing]
+    balance: brand_distinctiveness ↔ ui_predictability
+  emerges_from: [starbucks]
+  provenance: original
+  confidence: 0.5
+
+- rule_id: starbucks-typography-disciplined-multi-family-006
+  section: typography
+  preconditions:
+    product_type: [retail, hospitality, brand_marketing_site]
+    tone: [refined, expressive]
+    kansei: [refined, friendly, expressive]
+    brand_archetypes: [Caregiver, Lover]
+  action:
+    primary_family: proprietary_geometric_sans (e.g., SoDoSans)
+    secondary_family_class: warm_serif (e.g., Lander Tall) on_rewards_pages
+    tertiary_family_class: handwritten_script (e.g., Kalam) on_careers_pages
+    family_use_discipline: each_family_only_on_specific_page_context
+  why:
+    establish: family-as-context-marker
+    avoid: [random_family_distribution, single_family_flatness, decorative_serif_misuse]
+    balance: surface_diversity ↔ brand_unity
+  emerges_from: [starbucks]
+  provenance: original
+  confidence: 0.5

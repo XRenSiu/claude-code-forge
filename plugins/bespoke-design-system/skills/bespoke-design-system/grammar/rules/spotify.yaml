@@ -1,0 +1,107 @@
+rules:
+- rule_id: spotify-color-content-first-darkness-001
+  section: color
+  preconditions:
+    product_type: [media_consumer, audio_streaming, content_platform, b2c_consumer]
+    tone: [immersive, refined, expressive]
+    kansei: [refined, expressive, soft, warm]
+    sd_anchors:
+      warm_to_cold: -0.1
+      ornate_to_minimal: 0.5
+      serious_to_playful: 0.0
+      modern_to_classical: -0.4
+    brand_archetypes: [Lover, Everyman]
+  action:
+    base_canvas: 4_tier_near_black ['#121212', '#181818', '#1f1f1f', '#252525']
+    chromatic_role: from_album_art_only_in_chrome
+    surface_strategy: lightness_stepping_not_shadow_for_default
+    no_pure_black_canvas: true
+  why:
+    establish: ui-disappears-into-shadow-content-glows
+    avoid: [brand_color_in_chrome, chromatic_decoration, pure_black_monotony]
+    balance: immersion ↔ legibility
+  emerges_from: [spotify]
+  provenance: original
+  confidence: 0.7
+
+- rule_id: spotify-color-singular-functional-green-002
+  section: color
+  preconditions:
+    product_type: [media_consumer, audio_streaming, content_platform]
+    tone: [confident, focused]
+    kansei: [confident, focused, expressive]
+    brand_archetypes: [Lover, Everyman]
+  action:
+    brand_chromatic_count: 1
+    brand_hue: ~145 (vivid_green)
+    brand_saturation: 0.85+
+    brand_lightness: 0.55-0.65
+    brand_role: play + active + cta + brand_mark (only)
+    no_decorative_green: true
+  why:
+    establish: green-as-play-active-cta-trinity
+    avoid: [decorative_green, multi_chromatic_brand, brand_in_non_functional]
+    balance: brand_signal ↔ chromatic_economy
+  emerges_from: [spotify]
+  provenance: original
+  confidence: 0.7
+
+- rule_id: spotify-components-pill-and-circle-geometry-003
+  section: components
+  preconditions:
+    product_type: [media_consumer, audio_streaming, b2c_consumer]
+    tone: [refined, tactile, expressive]
+    kansei: [tactile, refined, soft]
+    brand_archetypes: [Lover, Everyman]
+  action:
+    button_radius_px: 9999
+    play_button_radius: 50%_circle
+    search_input_radius_px: 500
+    geometry_family: pill_and_circle_only
+    no_sharp_corner_buttons: true
+  why:
+    establish: hardware-control-tactile-touch-feel
+    avoid: [angular_buttons, medium_radius_indecision, decorative_corner]
+    balance: tactile_premium ↔ standard_affordance
+  emerges_from: [spotify]
+  provenance: original
+  confidence: 0.6
+
+- rule_id: spotify-depth-elevation-heavy-shadow-with-inset-004
+  section: depth_elevation
+  preconditions:
+    product_type: [media_consumer, audio_streaming]
+    tone: [refined, tactile]
+    kansei: [tactile, sophisticated, refined]
+    brand_archetypes: [Lover, Everyman]
+  action:
+    elevation_strategy: heavy_shadow_plus_inset_border_combo
+    shadow_pattern: "rgba(0,0,0,0.5) 0px 8px 24px"
+    inset_pattern: "1px solid rgba(255,255,255,0.05) inset"
+    use_for: [dialogs, menus, elevated_panels]
+  why:
+    establish: physical-layer-depth-on-dark-canvas
+    avoid: [flat_no_depth, single_layer_shadow, no_inset_combo]
+    balance: depth_indication ↔ visual_calm
+  emerges_from: [spotify]
+  provenance: original
+  confidence: 0.55
+
+- rule_id: spotify-typography-multi-script-global-fallback-005
+  section: typography
+  preconditions:
+    product_type: [media_consumer, content_platform, b2c_consumer]
+    tone: [refined, professional]
+    kansei: [refined, accessible]
+    brand_archetypes: [Lover, Everyman]
+  action:
+    family_strategy: proprietary_with_multi_script_fallback
+    fallback_scripts: [latin, cjk, arabic, hebrew, cyrillic, greek, devanagari]
+    primary_family_class: humanist_geometric_sans (e.g., CircularSp)
+  why:
+    establish: global-reach-via-multi-script-stack
+    avoid: [latin_only_locality, generic_system_font_no_brand]
+    balance: brand_distinctiveness ↔ global_legibility
+  emerges_from: [spotify]
+  provenance: original
+  confidence: 0.55

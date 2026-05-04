@@ -1,0 +1,64 @@
+rules:
+- rule_id: ant-color-data-dense-semantic-palette-001
+  section: color
+  preconditions:
+    product_type: [enterprise_saas, b2b_saas, dashboard, productivity_saas]
+    tone: [professional, structured, technical]
+    kansei: [structured, technical, dense, professional]
+    sd_anchors:
+      warm_to_cold: 0.2
+      ornate_to_minimal: 0.5
+      serious_to_playful: -0.5
+      modern_to_classical: -0.3
+    brand_archetypes: [Sage, Ruler]
+  action:
+    primary_brand_hue: ~215 (saturated_blue)
+    semantic_color_count: 5 (primary + success + warning + danger + secondary)
+    semantic_role_strict: each_color_has_specific_state_meaning
+    no_decorative_chromatic: true
+  why:
+    establish: data-dense-enterprise-semantic-clarity
+    avoid: [monochromatic_dashboard, decorative_multi_color, non_semantic_chromatic]
+    balance: state_clarity ↔ visual_calm
+  emerges_from: [ant]
+  provenance: original
+  confidence: 0.5
+
+- rule_id: ant-typography-sans-mono-pair-002
+  section: typography
+  preconditions:
+    product_type: [enterprise_saas, b2b_saas, dashboard, developer_tool]
+    tone: [professional, technical]
+    kansei: [structured, technical, dense]
+    brand_archetypes: [Sage, Ruler]
+  action:
+    primary_family_class: geometric_humanist_sans (e.g., Plus Jakarta Sans)
+    code_family_class: monospace (e.g., JetBrains Mono)
+    family_role: sans_for_ui_mono_for_data_code_log
+    weight_range: [400, 500, 600, 700]
+  why:
+    establish: data-alignment-via-mono
+    avoid: [sans_only_for_data_misalignment, decorative_serif_in_dashboard]
+    balance: data_readability ↔ ui_consistency
+  emerges_from: [ant]
+  provenance: original
+  confidence: 0.45
+
+- rule_id: ant-layout-strict-type-spacing-scale-003
+  section: layout
+  preconditions:
+    product_type: [enterprise_saas, b2b_saas, dashboard]
+    tone: [professional, structured]
+    kansei: [structured, dense, precise]
+    brand_archetypes: [Sage, Ruler]
+  action:
+    type_scale_px: [12, 14, 16, 20, 24, 32]
+    spacing_scale_px: [4, 8, 12, 16, 24, 32]
+    scale_strategy: strict_step_no_intermediate
+  why:
+    establish: strict-rhythm-for-100-element-density
+    avoid: [free_step, decorative_size, inconsistent_spacing]
+    balance: visual_rhythm ↔ flexibility
+  emerges_from: [ant]
+  provenance: original
+  confidence: 0.45

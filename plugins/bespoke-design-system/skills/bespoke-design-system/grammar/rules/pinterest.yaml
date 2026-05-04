@@ -1,0 +1,107 @@
+rules:
+- rule_id: pinterest-color-warm-neutral-scale-001
+  section: color
+  preconditions:
+    product_type: [content_platform, creator_tool, social_platform, b2c_consumer]
+    tone: [warm, friendly, refined]
+    kansei: [warm, friendly, inviting, soft]
+    sd_anchors:
+      warm_to_cold: -0.5
+      ornate_to_minimal: 0.3
+      serious_to_playful: -0.1
+      modern_to_classical: -0.2
+    brand_archetypes: [Creator, Lover]
+  action:
+    canvas_undertone: warm_white_with_olive_sand_grays
+    neutral_hue_range: '[50, 80] (olive_sand_warmth)'
+    no_cool_blue_grays: true
+  why:
+    establish: lifestyle-magazine-craft-warmth
+    avoid: [cool_blue_gray, clinical_white, decorative_multi_color]
+    balance: warmth ↔ legibility
+  emerges_from: [pinterest]
+  provenance: original
+  confidence: 0.6
+
+- rule_id: pinterest-color-confident-singular-red-002
+  section: color
+  preconditions:
+    product_type: [content_platform, creator_tool, social_platform]
+    tone: [confident, expressive, warm]
+    kansei: [confident, expressive, bold, warm]
+    brand_archetypes: [Creator, Lover]
+  action:
+    brand_chromatic_count: 1
+    brand_hue: ~355 (saturated_warm_red)
+    brand_saturation: 0.95+
+    brand_role: cta + brand_mark + accent (statement_not_subtle)
+    no_decorative_red_use: true
+  why:
+    establish: red-as-brand-statement-never-subtle
+    avoid: [weakened_red, decorative_red, multi_chromatic_brand]
+    balance: brand_confidence ↔ chromatic_economy
+  emerges_from: [pinterest]
+  provenance: original
+  confidence: 0.55
+
+- rule_id: pinterest-color-plum-tinted-near-black-text-003
+  section: color
+  preconditions:
+    product_type: [content_platform, creator_tool, social_platform]
+    tone: [warm, refined]
+    kansei: [warm, refined, soft]
+    brand_archetypes: [Creator, Lover]
+  action:
+    primary_text_hex: ~"#211922"
+    primary_text_undertone: warm_with_plum_hint
+    no_pure_black_text: true
+    no_cool_undertone: true
+  why:
+    establish: warm-text-not-cold
+    avoid: [pure_black_plastic, cool_blue_undertone, cold_gray]
+    balance: warmth ↔ contrast
+  emerges_from: [pinterest]
+  provenance: original
+  confidence: 0.5
+
+- rule_id: pinterest-components-generous-radius-scale-004
+  section: components
+  preconditions:
+    product_type: [content_platform, creator_tool, social_platform]
+    tone: [warm, friendly, refined]
+    kansei: [warm, friendly, soft, inviting]
+    brand_archetypes: [Creator, Lover]
+  action:
+    radius_scale_px: [12, 16, 24, 32, 40]
+    primary_button_radius_px: 16
+    large_container_radius_px: 40
+    circle_radius: 50%
+    no_sub_8_radius: true
+  why:
+    establish: handcrafted-soft-chrome
+    avoid: [angular_chrome, sub_8_sharp, medium_8_12_indecision]
+    balance: warmth ↔ structural_clarity
+  emerges_from: [pinterest]
+  provenance: original
+  confidence: 0.5
+
+- rule_id: pinterest-meta-3-tier-design-token-architecture-005
+  section: anti_patterns
+  preconditions:
+    kansei: [scalable, structured]
+    brand_archetypes: [Creator, Sage]
+  action:
+    forbidden:
+    - hardcoded_color_values_in_components
+    - single_tier_token_system
+    - inline_color_overrides_outside_token_layer
+    required:
+    - component_level_tokens (--comp-*)
+    - semantic_level_tokens (--sema-*)
+    - base_level_tokens (--base-*)
+  why:
+    establish: scalable-multi-product-token-architecture
+    avoid: [hardcoded_values, single_tier_token, inline_overrides]
+  emerges_from: [pinterest]
+  provenance: original
+  confidence: 0.45

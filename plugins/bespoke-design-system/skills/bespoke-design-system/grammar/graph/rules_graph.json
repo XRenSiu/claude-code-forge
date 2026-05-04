@@ -1,13 +1,13 @@
 {
   "$schema_description": "Rules relationship graph. Rebuilt by tools/rebuild_graph.py.",
-  "version": "0.7.0",
-  "rebuilt_at": "2026-05-04T01:22:50.416112Z",
-  "node_count": 175,
+  "version": "0.7.1",
+  "rebuilt_at": "2026-05-04T02:04:46.923911Z",
+  "node_count": 219,
   "edge_counts": {
-    "depends_on": 159,
-    "constrains": 159,
-    "co_occurs_with": 209,
-    "conflicts_with": 20
+    "depends_on": 191,
+    "constrains": 191,
+    "co_occurs_with": 264,
+    "conflicts_with": 25
   },
   "nodes": [
     {
@@ -47,6 +47,10 @@
           {
             "rule": "airbnb-color-rausch-key-actions-only-002",
             "frequency": 0.76
+          },
+          {
+            "rule": "starbucks-color-warm-cream-canvas-001",
+            "frequency": 0.44
           }
         ],
         "conflicts_with": []
@@ -61,6 +65,10 @@
           {
             "rule": "airbnb-color-photography-first-canvas-001",
             "frequency": 0.76
+          },
+          {
+            "rule": "starbucks-color-warm-cream-canvas-001",
+            "frequency": 0.36
           }
         ],
         "conflicts_with": []
@@ -71,7 +79,12 @@
       "relations": {
         "depends_on": [],
         "constrains": [],
-        "co_occurs_with": [],
+        "co_occurs_with": [
+          {
+            "rule": "starbucks-color-4-tier-green-system-002",
+            "frequency": 0.3
+          }
+        ],
         "conflicts_with": []
       }
     },
@@ -124,6 +137,10 @@
           {
             "rule": "airbnb-components-circular-icon-buttons-008",
             "frequency": 0.7
+          },
+          {
+            "rule": "starbucks-components-50px-pill-universal-with-press-004",
+            "frequency": 0.36
           }
         ],
         "conflicts_with": []
@@ -188,6 +205,10 @@
           {
             "rule": "airbnb-typography-single-family-vf-004",
             "frequency": 0.7
+          },
+          {
+            "rule": "starbucks-typography-disciplined-multi-family-006",
+            "frequency": 0.3
           }
         ],
         "conflicts_with": []
@@ -211,6 +232,10 @@
           {
             "rule": "airbnb-typography-single-family-vf-004",
             "frequency": 0.7
+          },
+          {
+            "rule": "starbucks-typography-disciplined-multi-family-006",
+            "frequency": 0.3
           }
         ],
         "conflicts_with": []
@@ -244,6 +269,77 @@
           {
             "rule": "airbnb-typography-display-tight-body-relaxed-006",
             "frequency": 0.7
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "ant-color-data-dense-semantic-palette-001",
+      "relations": {
+        "depends_on": [],
+        "constrains": [
+          {
+            "rule": "ant-typography-sans-mono-pair-002"
+          }
+        ],
+        "co_occurs_with": [
+          {
+            "rule": "coinbase-color-alternating-light-dark-sections-002",
+            "frequency": 0.36
+          },
+          {
+            "rule": "coinbase-color-singular-deep-blue-binary-001",
+            "frequency": 0.33
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "ant-layout-strict-type-spacing-scale-003",
+      "relations": {
+        "depends_on": [],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "cursor-layout-8base-with-micro-increments-004",
+            "frequency": 0.33
+          },
+          {
+            "rule": "linear-app-spacing-8px-base-with-optical-008",
+            "frequency": 0.33
+          },
+          {
+            "rule": "stripe-layout-dense-data-generous-chrome-011",
+            "frequency": 0.47
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "ant-typography-sans-mono-pair-002",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "ant-color-data-dense-semantic-palette-001",
+            "reason": "typography depends on color foundation (same source: ant)"
+          }
+        ],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "cohere-typography-single-body-weight-with-size-hierarchy-005",
+            "frequency": 0.3
+          },
+          {
+            "rule": "github-typography-14px-body-density-001",
+            "frequency": 0.37
+          },
+          {
+            "rule": "stripe-typography-progressive-tracking-007",
+            "frequency": 0.3
           }
         ],
         "conflicts_with": []
@@ -403,6 +499,10 @@
           {
             "rule": "apple-components-pill-capsule-family-008",
             "frequency": 0.8
+          },
+          {
+            "rule": "webflow-components-conservative-radius-003",
+            "frequency": 0.36
           }
         ],
         "conflicts_with": []
@@ -434,6 +534,10 @@
           {
             "rule": "apple-components-border-led-retail-010",
             "frequency": 0.8
+          },
+          {
+            "rule": "webflow-components-conservative-radius-003",
+            "frequency": 0.36
           }
         ],
         "conflicts_with": []
@@ -590,6 +694,10 @@
           {
             "rule": "canva-color-purple-blue-gradient-brand-001",
             "frequency": 0.31
+          },
+          {
+            "rule": "pinterest-color-warm-neutral-scale-001",
+            "frequency": 0.31
           }
         ],
         "conflicts_with": [
@@ -640,6 +748,10 @@
           {
             "rule": "canva-components-friendly-radius-strategy-004",
             "frequency": 0.36
+          },
+          {
+            "rule": "pinterest-components-generous-radius-scale-004",
+            "frequency": 0.31
           }
         ],
         "conflicts_with": []
@@ -872,7 +984,12 @@
       "relations": {
         "depends_on": [],
         "constrains": [],
-        "co_occurs_with": [],
+        "co_occurs_with": [
+          {
+            "rule": "pinterest-meta-3-tier-design-token-architecture-005",
+            "frequency": 0.47
+          }
+        ],
         "conflicts_with": []
       }
     },
@@ -1102,6 +1219,14 @@
           {
             "rule": "mintlify-color-white-canvas-fresh-accent-001",
             "frequency": 0.33
+          },
+          {
+            "rule": "openai-color-clinical-restraint-001",
+            "frequency": 0.31
+          },
+          {
+            "rule": "spacious-color-minimal-baseline-palette-001",
+            "frequency": 0.33
           }
         ],
         "conflicts_with": []
@@ -1259,6 +1384,14 @@
           {
             "rule": "arc-components-squircle-soft-radii-003",
             "frequency": 0.36
+          },
+          {
+            "rule": "pinterest-components-generous-radius-scale-004",
+            "frequency": 0.37
+          },
+          {
+            "rule": "starbucks-components-50px-pill-universal-with-press-004",
+            "frequency": 0.37
           }
         ],
         "conflicts_with": []
@@ -1572,6 +1705,10 @@
           {
             "rule": "clickhouse-color-neon-on-pure-black-001",
             "frequency": 0.68
+          },
+          {
+            "rule": "nike-color-functional-semantic-only-002",
+            "frequency": 0.33
           }
         ],
         "conflicts_with": []
@@ -1592,6 +1729,10 @@
           {
             "rule": "linear-app-typography-geometric-sans-with-features-004",
             "reason": "weight 900 (extreme) vs no_weight_above 590 (restrained) — opposite weight ladders"
+          },
+          {
+            "rule": "shopify-typography-ultralight-monumental-display-003",
+            "reason": "ultralight (330) vs extreme heavy (900) — opposite weight ladders"
           }
         ]
       }
@@ -1606,7 +1747,12 @@
           }
         ],
         "constrains": [],
-        "co_occurs_with": [],
+        "co_occurs_with": [
+          {
+            "rule": "spacex-typography-uppercase-wide-tracking-003",
+            "frequency": 0.37
+          }
+        ],
         "conflicts_with": []
       }
     },
@@ -1641,6 +1787,10 @@
           {
             "rule": "cohere-color-interactive-blue-hover-only-003",
             "frequency": 0.8
+          },
+          {
+            "rule": "starbucks-color-4-tier-green-system-002",
+            "frequency": 0.3
           },
           {
             "rule": "stripe-color-navy-purple-foundation-001",
@@ -1774,6 +1924,10 @@
         "constrains": [],
         "co_occurs_with": [
           {
+            "rule": "ant-typography-sans-mono-pair-002",
+            "frequency": 0.3
+          },
+          {
             "rule": "cohere-typography-serif-display-sans-utility-004",
             "frequency": 0.7
           },
@@ -1799,6 +1953,10 @@
         "depends_on": [],
         "constrains": [],
         "co_occurs_with": [
+          {
+            "rule": "ant-color-data-dense-semantic-palette-001",
+            "frequency": 0.36
+          },
           {
             "rule": "binance-color-trading-floor-two-tone-002",
             "frequency": 0.3
@@ -1835,6 +1993,10 @@
           }
         ],
         "co_occurs_with": [
+          {
+            "rule": "ant-color-data-dense-semantic-palette-001",
+            "frequency": 0.33
+          },
           {
             "rule": "binance-color-singular-gold-ingot-001",
             "frequency": 0.33
@@ -1963,7 +2125,16 @@
             "rule": "cursor-components-extreme-pill-radius-005"
           }
         ],
-        "co_occurs_with": [],
+        "co_occurs_with": [
+          {
+            "rule": "openai-color-singular-teal-not-blue-002",
+            "frequency": 0.4
+          },
+          {
+            "rule": "shopify-color-dark-first-with-green-undertone-001",
+            "frequency": 0.36
+          }
+        ],
         "conflicts_with": []
       }
     },
@@ -1990,6 +2161,10 @@
           {
             "rule": "bmw-components-zero-radius-rectangular-cta-004",
             "reason": "zero radius vs extreme pill — opposite chrome philosophies"
+          },
+          {
+            "rule": "webflow-components-conservative-radius-003",
+            "reason": "4-8 conservative vs 9999 extreme pill — opposite chrome philosophies"
           }
         ]
       }
@@ -2004,6 +2179,10 @@
           }
         ],
         "co_occurs_with": [
+          {
+            "rule": "ant-layout-strict-type-spacing-scale-003",
+            "frequency": 0.33
+          },
           {
             "rule": "linear-app-spacing-8px-base-with-optical-008",
             "frequency": 0.6
@@ -2038,6 +2217,10 @@
           {
             "rule": "vercel-typography-geometric-sans-extreme-tracking-004",
             "frequency": 0.5
+          },
+          {
+            "rule": "webflow-typography-variable-font-uppercase-labels-002",
+            "frequency": 0.37
           }
         ],
         "conflicts_with": []
@@ -2061,6 +2244,14 @@
           {
             "rule": "cursor-typography-display-extreme-negative-tracking-002",
             "frequency": 0.76
+          },
+          {
+            "rule": "shopify-typography-precision-variable-weights-004",
+            "frequency": 0.36
+          },
+          {
+            "rule": "shopify-typography-ultralight-monumental-display-003",
+            "frequency": 0.33
           },
           {
             "rule": "vercel-typography-geometric-sans-extreme-tracking-004",
@@ -2788,6 +2979,10 @@
           {
             "rule": "linear-app-typography-geometric-sans-with-features-004",
             "frequency": 0.3
+          },
+          {
+            "rule": "shopify-typography-precision-variable-weights-004",
+            "frequency": 0.33
           }
         ],
         "conflicts_with": []
@@ -2822,6 +3017,10 @@
           {
             "rule": "figma-typography-negative-tracking-everywhere-005",
             "frequency": 0.87
+          },
+          {
+            "rule": "shopify-typography-precision-variable-weights-004",
+            "frequency": 0.47
           }
         ],
         "conflicts_with": []
@@ -2832,7 +3031,12 @@
       "relations": {
         "depends_on": [],
         "constrains": [],
-        "co_occurs_with": [],
+        "co_occurs_with": [
+          {
+            "rule": "pinterest-meta-3-tier-design-token-architecture-005",
+            "frequency": 0.3
+          }
+        ],
         "conflicts_with": []
       }
     },
@@ -2953,6 +3157,10 @@
           {
             "rule": "notion-components-subtle-card-radius-010",
             "frequency": 0.3
+          },
+          {
+            "rule": "webflow-components-conservative-radius-003",
+            "frequency": 0.37
           }
         ],
         "conflicts_with": []
@@ -2973,6 +3181,10 @@
           }
         ],
         "co_occurs_with": [
+          {
+            "rule": "ant-typography-sans-mono-pair-002",
+            "frequency": 0.37
+          },
           {
             "rule": "figma-typography-mono-uppercase-signposts-006",
             "frequency": 0.4
@@ -2996,6 +3208,10 @@
           {
             "rule": "notion-typography-4-weight-system-007",
             "frequency": 0.3
+          },
+          {
+            "rule": "webflow-typography-variable-font-uppercase-labels-002",
+            "frequency": 0.31
           }
         ],
         "conflicts_with": []
@@ -3019,6 +3235,10 @@
           {
             "rule": "github-typography-14px-body-density-001",
             "frequency": 0.77
+          },
+          {
+            "rule": "webflow-typography-variable-font-uppercase-labels-002",
+            "frequency": 0.3
           }
         ],
         "conflicts_with": []
@@ -3029,7 +3249,12 @@
       "relations": {
         "depends_on": [],
         "constrains": [],
-        "co_occurs_with": [],
+        "co_occurs_with": [
+          {
+            "rule": "pinterest-meta-3-tier-design-token-architecture-005",
+            "frequency": 0.3
+          }
+        ],
         "conflicts_with": []
       }
     },
@@ -3298,6 +3523,10 @@
         ],
         "co_occurs_with": [
           {
+            "rule": "ant-layout-strict-type-spacing-scale-003",
+            "frequency": 0.33
+          },
+          {
             "rule": "cursor-layout-8base-with-micro-increments-004",
             "frequency": 0.6
           },
@@ -3355,9 +3584,18 @@
           {
             "rule": "vercel-typography-geometric-sans-extreme-tracking-004",
             "frequency": 0.37
+          },
+          {
+            "rule": "webflow-typography-variable-font-uppercase-labels-002",
+            "frequency": 0.37
           }
         ],
-        "conflicts_with": []
+        "conflicts_with": [
+          {
+            "rule": "spacex-typography-uppercase-wide-tracking-003",
+            "reason": "positive_tracking_uppercase vs aggressive_negative_tracking — opposite tracking philosophies"
+          }
+        ]
       }
     },
     {
@@ -3691,6 +3929,81 @@
             "frequency": 0.33
           }
         ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "nike-color-aggressive-monochromatic-ui-001",
+      "relations": {
+        "depends_on": [],
+        "constrains": [
+          {
+            "rule": "nike-typography-split-display-body-003"
+          },
+          {
+            "rule": "nike-components-pill-button-fullbleed-imagery-004"
+          }
+        ],
+        "co_occurs_with": [
+          {
+            "rule": "nike-color-functional-semantic-only-002",
+            "frequency": 0.76
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "nike-color-functional-semantic-only-002",
+      "relations": {
+        "depends_on": [],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "clickhouse-color-secondary-cta-forest-green-004",
+            "frequency": 0.33
+          },
+          {
+            "rule": "nike-color-aggressive-monochromatic-ui-001",
+            "frequency": 0.76
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "nike-components-pill-button-fullbleed-imagery-004",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "nike-color-aggressive-monochromatic-ui-001",
+            "reason": "components depends on color foundation (same source: nike)"
+          },
+          {
+            "rule": "nike-typography-split-display-body-003",
+            "reason": "components depends on typography foundation (same source: nike)"
+          }
+        ],
+        "constrains": [],
+        "co_occurs_with": [],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "nike-typography-split-display-body-003",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "nike-color-aggressive-monochromatic-ui-001",
+            "reason": "typography depends on color foundation (same source: nike)"
+          }
+        ],
+        "constrains": [
+          {
+            "rule": "nike-components-pill-button-fullbleed-imagery-004"
+          }
+        ],
+        "co_occurs_with": [],
         "conflicts_with": []
       }
     },
@@ -4104,6 +4417,757 @@
       }
     },
     {
+      "rule_id": "openai-color-clinical-restraint-001",
+      "relations": {
+        "depends_on": [],
+        "constrains": [
+          {
+            "rule": "openai-typography-restrained-weights-with-serif-editorial-003"
+          },
+          {
+            "rule": "openai-components-uniformly-soft-radii-004"
+          }
+        ],
+        "co_occurs_with": [
+          {
+            "rule": "cal-color-pure-grayscale-brand-001",
+            "frequency": 0.31
+          },
+          {
+            "rule": "openai-color-singular-teal-not-blue-002",
+            "frequency": 0.76
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "openai-color-singular-teal-not-blue-002",
+      "relations": {
+        "depends_on": [],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "cursor-color-warm-dark-with-orange-accent-003",
+            "frequency": 0.4
+          },
+          {
+            "rule": "openai-color-clinical-restraint-001",
+            "frequency": 0.76
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "openai-components-uniformly-soft-radii-004",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "openai-color-clinical-restraint-001",
+            "reason": "components depends on color foundation (same source: openai)"
+          },
+          {
+            "rule": "openai-typography-restrained-weights-with-serif-editorial-003",
+            "reason": "components depends on typography foundation (same source: openai)"
+          },
+          {
+            "rule": "openai-layout-whitespace-primary-divider-005",
+            "reason": "components depends on layout foundation (same source: openai)"
+          }
+        ],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "shopify-components-fullpill-buttons-005",
+            "frequency": 0.36
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "openai-layout-whitespace-primary-divider-005",
+      "relations": {
+        "depends_on": [],
+        "constrains": [
+          {
+            "rule": "openai-components-uniformly-soft-radii-004"
+          }
+        ],
+        "co_occurs_with": [],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "openai-typography-restrained-weights-with-serif-editorial-003",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "openai-color-clinical-restraint-001",
+            "reason": "typography depends on color foundation (same source: openai)"
+          }
+        ],
+        "constrains": [
+          {
+            "rule": "openai-components-uniformly-soft-radii-004"
+          }
+        ],
+        "co_occurs_with": [],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "pinterest-color-confident-singular-red-002",
+      "relations": {
+        "depends_on": [],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "webflow-color-rich-secondary-palette-001",
+            "frequency": 0.31
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "pinterest-color-plum-tinted-near-black-text-003",
+      "relations": {
+        "depends_on": [],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "pinterest-color-warm-neutral-scale-001",
+            "frequency": 0.76
+          },
+          {
+            "rule": "spotify-color-content-first-darkness-001",
+            "frequency": 0.37
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "pinterest-color-warm-neutral-scale-001",
+      "relations": {
+        "depends_on": [],
+        "constrains": [
+          {
+            "rule": "pinterest-components-generous-radius-scale-004"
+          }
+        ],
+        "co_occurs_with": [
+          {
+            "rule": "arc-color-gradient-as-primary-surface-001",
+            "frequency": 0.31
+          },
+          {
+            "rule": "pinterest-color-plum-tinted-near-black-text-003",
+            "frequency": 0.76
+          },
+          {
+            "rule": "starbucks-color-warm-cream-canvas-001",
+            "frequency": 0.31
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "pinterest-components-generous-radius-scale-004",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "pinterest-color-warm-neutral-scale-001",
+            "reason": "components depends on color foundation (same source: pinterest)"
+          }
+        ],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "arc-components-squircle-soft-radii-003",
+            "frequency": 0.31
+          },
+          {
+            "rule": "canva-components-friendly-radius-strategy-004",
+            "frequency": 0.37
+          },
+          {
+            "rule": "starbucks-components-50px-pill-universal-with-press-004",
+            "frequency": 0.31
+          }
+        ],
+        "conflicts_with": [
+          {
+            "rule": "webflow-components-conservative-radius-003",
+            "reason": "conservative 4-8 vs generous 12-40 — opposite chrome philosophies"
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "pinterest-meta-3-tier-design-token-architecture-005",
+      "relations": {
+        "depends_on": [],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "bmw-meta-css-variable-multi-brand-theming-006",
+            "frequency": 0.47
+          },
+          {
+            "rule": "github-anti-pattern-decoration-creep-006",
+            "frequency": 0.3
+          },
+          {
+            "rule": "linear-app-anti-pattern-warmth-in-chrome-010",
+            "frequency": 0.3
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "shopify-color-dark-first-with-green-undertone-001",
+      "relations": {
+        "depends_on": [],
+        "constrains": [
+          {
+            "rule": "shopify-typography-ultralight-monumental-display-003"
+          },
+          {
+            "rule": "shopify-typography-precision-variable-weights-004"
+          },
+          {
+            "rule": "shopify-components-fullpill-buttons-005"
+          }
+        ],
+        "co_occurs_with": [
+          {
+            "rule": "cursor-color-warm-dark-with-orange-accent-003",
+            "frequency": 0.36
+          },
+          {
+            "rule": "shopify-color-neon-green-focus-only-002",
+            "frequency": 0.73
+          },
+          {
+            "rule": "stripe-color-navy-purple-foundation-001",
+            "frequency": 0.31
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "shopify-color-neon-green-focus-only-002",
+      "relations": {
+        "depends_on": [],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "shopify-color-dark-first-with-green-undertone-001",
+            "frequency": 0.73
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "shopify-components-fullpill-buttons-005",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "shopify-color-dark-first-with-green-undertone-001",
+            "reason": "components depends on color foundation (same source: shopify)"
+          },
+          {
+            "rule": "shopify-typography-ultralight-monumental-display-003",
+            "reason": "components depends on typography foundation (same source: shopify)"
+          }
+        ],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "openai-components-uniformly-soft-radii-004",
+            "frequency": 0.36
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "shopify-typography-precision-variable-weights-004",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "shopify-color-dark-first-with-green-undertone-001",
+            "reason": "typography depends on color foundation (same source: shopify)"
+          }
+        ],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "cursor-typography-three-voice-system-001",
+            "frequency": 0.36
+          },
+          {
+            "rule": "figma-typography-negative-tracking-everywhere-005",
+            "frequency": 0.33
+          },
+          {
+            "rule": "figma-typography-variable-microstep-weights-003",
+            "frequency": 0.47
+          },
+          {
+            "rule": "shopify-typography-ultralight-monumental-display-003",
+            "frequency": 0.76
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "shopify-typography-ultralight-monumental-display-003",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "shopify-color-dark-first-with-green-undertone-001",
+            "reason": "typography depends on color foundation (same source: shopify)"
+          }
+        ],
+        "constrains": [
+          {
+            "rule": "shopify-components-fullpill-buttons-005"
+          }
+        ],
+        "co_occurs_with": [
+          {
+            "rule": "cursor-typography-three-voice-system-001",
+            "frequency": 0.33
+          },
+          {
+            "rule": "shopify-typography-precision-variable-weights-004",
+            "frequency": 0.76
+          }
+        ],
+        "conflicts_with": [
+          {
+            "rule": "clickhouse-typography-extreme-display-weight-002",
+            "reason": "ultralight (330) vs extreme heavy (900) — opposite weight ladders"
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "spacex-color-pure-black-with-spectral-white-002",
+      "relations": {
+        "depends_on": [],
+        "constrains": [
+          {
+            "rule": "spacex-visual-photographic-exhibition-001"
+          },
+          {
+            "rule": "spacex-typography-uppercase-wide-tracking-003"
+          },
+          {
+            "rule": "spacex-typography-two-weight-strict-004"
+          },
+          {
+            "rule": "spacex-typography-tight-line-height-005"
+          }
+        ],
+        "co_occurs_with": [],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "spacex-typography-tight-line-height-005",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "spacex-color-pure-black-with-spectral-white-002",
+            "reason": "typography depends on color foundation (same source: spacex)"
+          }
+        ],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "spacex-typography-two-weight-strict-004",
+            "frequency": 0.8
+          },
+          {
+            "rule": "spacex-typography-uppercase-wide-tracking-003",
+            "frequency": 0.76
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "spacex-typography-two-weight-strict-004",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "spacex-color-pure-black-with-spectral-white-002",
+            "reason": "typography depends on color foundation (same source: spacex)"
+          }
+        ],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "spacex-typography-tight-line-height-005",
+            "frequency": 0.8
+          },
+          {
+            "rule": "spacex-typography-uppercase-wide-tracking-003",
+            "frequency": 0.76
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "spacex-typography-uppercase-wide-tracking-003",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "spacex-color-pure-black-with-spectral-white-002",
+            "reason": "typography depends on color foundation (same source: spacex)"
+          }
+        ],
+        "constrains": [
+          {
+            "rule": "spacex-visual-photographic-exhibition-001"
+          }
+        ],
+        "co_occurs_with": [
+          {
+            "rule": "clickhouse-typography-uppercase-wide-tracking-nav-003",
+            "frequency": 0.37
+          },
+          {
+            "rule": "spacex-typography-tight-line-height-005",
+            "frequency": 0.76
+          },
+          {
+            "rule": "spacex-typography-two-weight-strict-004",
+            "frequency": 0.76
+          }
+        ],
+        "conflicts_with": [
+          {
+            "rule": "linear-app-typography-display-compression-005",
+            "reason": "positive_tracking_uppercase vs aggressive_negative_tracking — opposite tracking philosophies"
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "spacex-visual-photographic-exhibition-001",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "spacex-color-pure-black-with-spectral-white-002",
+            "reason": "components depends on color foundation (same source: spacex)"
+          },
+          {
+            "rule": "spacex-typography-uppercase-wide-tracking-003",
+            "reason": "components depends on typography foundation (same source: spacex)"
+          }
+        ],
+        "constrains": [],
+        "co_occurs_with": [],
+        "conflicts_with": [
+          {
+            "rule": "vercel-elevation-multi-layer-shadow-stack-006",
+            "reason": "A.why.avoid mentions B's establish (cards-feel-built-not-floating)"
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "spacious-color-minimal-baseline-palette-001",
+      "relations": {
+        "depends_on": [],
+        "constrains": [
+          {
+            "rule": "spacious-typography-display-body-split-002"
+          }
+        ],
+        "co_occurs_with": [
+          {
+            "rule": "cal-color-pure-grayscale-brand-001",
+            "frequency": 0.33
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "spacious-layout-8pt-baseline-wide-step-003",
+      "relations": {
+        "depends_on": [],
+        "constrains": [],
+        "co_occurs_with": [],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "spacious-typography-display-body-split-002",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "spacious-color-minimal-baseline-palette-001",
+            "reason": "typography depends on color foundation (same source: spacious)"
+          }
+        ],
+        "constrains": [],
+        "co_occurs_with": [],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "spotify-color-content-first-darkness-001",
+      "relations": {
+        "depends_on": [],
+        "constrains": [
+          {
+            "rule": "spotify-components-pill-and-circle-geometry-003"
+          },
+          {
+            "rule": "spotify-depth-elevation-heavy-shadow-with-inset-004"
+          },
+          {
+            "rule": "spotify-typography-multi-script-global-fallback-005"
+          }
+        ],
+        "co_occurs_with": [
+          {
+            "rule": "pinterest-color-plum-tinted-near-black-text-003",
+            "frequency": 0.37
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "spotify-color-singular-functional-green-002",
+      "relations": {
+        "depends_on": [],
+        "constrains": [],
+        "co_occurs_with": [],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "spotify-components-pill-and-circle-geometry-003",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "spotify-color-content-first-darkness-001",
+            "reason": "components depends on color foundation (same source: spotify)"
+          },
+          {
+            "rule": "spotify-typography-multi-script-global-fallback-005",
+            "reason": "components depends on typography foundation (same source: spotify)"
+          },
+          {
+            "rule": "spotify-depth-elevation-heavy-shadow-with-inset-004",
+            "reason": "components depends on depth_elevation foundation (same source: spotify)"
+          }
+        ],
+        "constrains": [],
+        "co_occurs_with": [],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "spotify-depth-elevation-heavy-shadow-with-inset-004",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "spotify-color-content-first-darkness-001",
+            "reason": "depth_elevation depends on color foundation (same source: spotify)"
+          }
+        ],
+        "constrains": [
+          {
+            "rule": "spotify-components-pill-and-circle-geometry-003"
+          }
+        ],
+        "co_occurs_with": [],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "spotify-typography-multi-script-global-fallback-005",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "spotify-color-content-first-darkness-001",
+            "reason": "typography depends on color foundation (same source: spotify)"
+          }
+        ],
+        "constrains": [
+          {
+            "rule": "spotify-components-pill-and-circle-geometry-003"
+          }
+        ],
+        "co_occurs_with": [],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "starbucks-color-4-tier-green-system-002",
+      "relations": {
+        "depends_on": [],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "airbnb-color-singular-text-token-003",
+            "frequency": 0.3
+          },
+          {
+            "rule": "cohere-color-extreme-chromatic-restraint-001",
+            "frequency": 0.3
+          },
+          {
+            "rule": "starbucks-color-gold-ceremony-only-003",
+            "frequency": 0.8
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "starbucks-color-gold-ceremony-only-003",
+      "relations": {
+        "depends_on": [],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "starbucks-color-4-tier-green-system-002",
+            "frequency": 0.8
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "starbucks-color-warm-cream-canvas-001",
+      "relations": {
+        "depends_on": [],
+        "constrains": [
+          {
+            "rule": "starbucks-components-50px-pill-universal-with-press-004"
+          },
+          {
+            "rule": "starbucks-components-floating-frap-cta-005"
+          },
+          {
+            "rule": "starbucks-typography-disciplined-multi-family-006"
+          }
+        ],
+        "co_occurs_with": [
+          {
+            "rule": "airbnb-color-photography-first-canvas-001",
+            "frequency": 0.44
+          },
+          {
+            "rule": "airbnb-color-rausch-key-actions-only-002",
+            "frequency": 0.36
+          },
+          {
+            "rule": "pinterest-color-warm-neutral-scale-001",
+            "frequency": 0.31
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "starbucks-components-50px-pill-universal-with-press-004",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "starbucks-color-warm-cream-canvas-001",
+            "reason": "components depends on color foundation (same source: starbucks)"
+          },
+          {
+            "rule": "starbucks-typography-disciplined-multi-family-006",
+            "reason": "components depends on typography foundation (same source: starbucks)"
+          }
+        ],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "airbnb-components-rounded-photo-cards-007",
+            "frequency": 0.36
+          },
+          {
+            "rule": "canva-components-friendly-radius-strategy-004",
+            "frequency": 0.37
+          },
+          {
+            "rule": "pinterest-components-generous-radius-scale-004",
+            "frequency": 0.31
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "starbucks-components-floating-frap-cta-005",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "starbucks-color-warm-cream-canvas-001",
+            "reason": "components depends on color foundation (same source: starbucks)"
+          },
+          {
+            "rule": "starbucks-typography-disciplined-multi-family-006",
+            "reason": "components depends on typography foundation (same source: starbucks)"
+          }
+        ],
+        "constrains": [],
+        "co_occurs_with": [],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "starbucks-typography-disciplined-multi-family-006",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "starbucks-color-warm-cream-canvas-001",
+            "reason": "typography depends on color foundation (same source: starbucks)"
+          }
+        ],
+        "constrains": [
+          {
+            "rule": "starbucks-components-50px-pill-universal-with-press-004"
+          },
+          {
+            "rule": "starbucks-components-floating-frap-cta-005"
+          }
+        ],
+        "co_occurs_with": [
+          {
+            "rule": "airbnb-typography-500-is-regular-005",
+            "frequency": 0.3
+          },
+          {
+            "rule": "airbnb-typography-display-tight-body-relaxed-006",
+            "frequency": 0.3
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
       "rule_id": "stripe-anti-pattern-decoration-creep-013",
       "relations": {
         "depends_on": [],
@@ -4187,6 +5251,10 @@
           {
             "rule": "cohere-color-extreme-chromatic-restraint-001",
             "frequency": 0.33
+          },
+          {
+            "rule": "shopify-color-dark-first-with-green-undertone-001",
+            "frequency": 0.31
           },
           {
             "rule": "stripe-color-decorative-only-magenta-ruby-003",
@@ -4362,7 +5430,12 @@
             "rule": "stripe-components-dashed-affordance-009"
           }
         ],
-        "co_occurs_with": [],
+        "co_occurs_with": [
+          {
+            "rule": "ant-layout-strict-type-spacing-scale-003",
+            "frequency": 0.47
+          }
+        ],
         "conflicts_with": []
       }
     },
@@ -4433,6 +5506,10 @@
         ],
         "constrains": [],
         "co_occurs_with": [
+          {
+            "rule": "ant-typography-sans-mono-pair-002",
+            "frequency": 0.3
+          },
           {
             "rule": "binance-typography-proprietary-across-levels-003",
             "frequency": 0.33
@@ -4703,6 +5780,10 @@
           {
             "rule": "linear-app-elevation-luminance-stepping-007",
             "reason": "no-shadow-on-dark vs multi-layer-shadow — incompatible philosophies"
+          },
+          {
+            "rule": "spacex-visual-photographic-exhibition-001",
+            "reason": "A.why.avoid mentions B's establish (cards-feel-built-not-floating)"
           }
         ]
       }
@@ -4815,6 +5896,10 @@
           {
             "rule": "linear-app-typography-geometric-sans-with-features-004",
             "frequency": 0.37
+          },
+          {
+            "rule": "webflow-typography-variable-font-uppercase-labels-002",
+            "frequency": 0.31
           }
         ],
         "conflicts_with": []
@@ -4829,6 +5914,106 @@
           {
             "rule": "linear-app-voice-engineered-not-designed-009",
             "frequency": 0.37
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "webflow-color-rich-secondary-palette-001",
+      "relations": {
+        "depends_on": [],
+        "constrains": [
+          {
+            "rule": "webflow-typography-variable-font-uppercase-labels-002"
+          },
+          {
+            "rule": "webflow-components-conservative-radius-003"
+          }
+        ],
+        "co_occurs_with": [
+          {
+            "rule": "pinterest-color-confident-singular-red-002",
+            "frequency": 0.31
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "webflow-components-conservative-radius-003",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "webflow-color-rich-secondary-palette-001",
+            "reason": "components depends on color foundation (same source: webflow)"
+          },
+          {
+            "rule": "webflow-typography-variable-font-uppercase-labels-002",
+            "reason": "components depends on typography foundation (same source: webflow)"
+          }
+        ],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "apple-components-border-led-retail-010",
+            "frequency": 0.36
+          },
+          {
+            "rule": "apple-components-pill-capsule-family-008",
+            "frequency": 0.36
+          },
+          {
+            "rule": "github-components-pill-status-badge-005",
+            "frequency": 0.37
+          }
+        ],
+        "conflicts_with": [
+          {
+            "rule": "pinterest-components-generous-radius-scale-004",
+            "reason": "conservative 4-8 vs generous 12-40 — opposite chrome philosophies"
+          },
+          {
+            "rule": "cursor-components-extreme-pill-radius-005",
+            "reason": "4-8 conservative vs 9999 extreme pill — opposite chrome philosophies"
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "webflow-typography-variable-font-uppercase-labels-002",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "webflow-color-rich-secondary-palette-001",
+            "reason": "typography depends on color foundation (same source: webflow)"
+          }
+        ],
+        "constrains": [
+          {
+            "rule": "webflow-components-conservative-radius-003"
+          }
+        ],
+        "co_occurs_with": [
+          {
+            "rule": "cursor-typography-display-extreme-negative-tracking-002",
+            "frequency": 0.37
+          },
+          {
+            "rule": "github-typography-14px-body-density-001",
+            "frequency": 0.31
+          },
+          {
+            "rule": "github-typography-system-ui-only-004",
+            "frequency": 0.3
+          },
+          {
+            "rule": "linear-app-typography-display-compression-005",
+            "frequency": 0.37
+          },
+          {
+            "rule": "vercel-typography-geometric-sans-extreme-tracking-004",
+            "frequency": 0.31
           }
         ],
         "conflicts_with": []

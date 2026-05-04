@@ -52,14 +52,14 @@
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/ant/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
-      "last_extracted_at": "2026-05-03T16:22:56.670014+00:00",
+      "last_extracted_at": "2026-05-04T02:04:22.455123+00:00",
       "rule_count": 0,
       "fingerprint_hash": "c41abccc721cf0eb6f2a0bf2e9282be3bcbdaf649adc1320b86f8df9721a0aa0",
       "also_found_in": [],
       "dialect": "B",
       "section_count": 9,
       "size_bytes": 3082,
-      "extraction_state": "tokens_only"
+      "extraction_state": "full"
     },
     "apple": {
       "added_at": "2026-05-03T13:28:20.478050Z",
@@ -1222,14 +1222,14 @@
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/nike/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
-      "last_extracted_at": "2026-05-03T16:22:56.670014+00:00",
+      "last_extracted_at": "2026-05-04T02:04:22.455123+00:00",
       "rule_count": 0,
       "fingerprint_hash": "44b623b34e5b6cabd50f2fe391578f05dbd2fe91ee517f1e38c2c1e4ed9f647a",
       "also_found_in": [],
       "dialect": "A",
       "section_count": 9,
       "size_bytes": 19944,
-      "extraction_state": "tokens_only"
+      "extraction_state": "full"
     },
     "notion": {
       "added_at": "2026-05-03T13:28:20.478050Z",
@@ -1282,14 +1282,14 @@
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/openai/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
-      "last_extracted_at": "2026-05-03T16:22:56.670014+00:00",
+      "last_extracted_at": "2026-05-04T02:04:22.455123+00:00",
       "rule_count": 0,
       "fingerprint_hash": "d9abf17a413c5b07bfd6e3306347a51b41b298470ca1d0fc37af2698250da76f",
       "also_found_in": [],
       "dialect": "C-6section",
       "section_count": 6,
       "size_bytes": 6427,
-      "extraction_state": "tokens_only"
+      "extraction_state": "full"
     },
     "opencode-ai": {
       "added_at": "2026-05-03T13:28:20.478050Z",
@@ -1357,14 +1357,14 @@
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/pinterest/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
-      "last_extracted_at": "2026-05-03T16:22:56.670014+00:00",
+      "last_extracted_at": "2026-05-04T02:04:22.455123+00:00",
       "rule_count": 0,
       "fingerprint_hash": "e6cb634aca8404b43b9eaeaf650bb64b0d26b1240bb3c33da643fded1fe1ecaa",
       "also_found_in": [],
       "dialect": "A",
       "section_count": 9,
       "size_bytes": 11855,
-      "extraction_state": "tokens_only"
+      "extraction_state": "full"
     },
     "playstation": {
       "added_at": "2026-05-03T13:28:20.478050Z",
@@ -1612,14 +1612,14 @@
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/shopify/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
-      "last_extracted_at": "2026-05-03T16:22:56.670014+00:00",
+      "last_extracted_at": "2026-05-04T02:04:22.455123+00:00",
       "rule_count": 0,
       "fingerprint_hash": "ab10135212d6d8a0eaf4003f29cf5072f9390c27fb5e109a7bb8d4e2a28f4931",
       "also_found_in": [],
       "dialect": "A",
       "section_count": 9,
       "size_bytes": 19956,
-      "extraction_state": "tokens_only"
+      "extraction_state": "full"
     },
     "simple": {
       "added_at": "2026-05-03T13:28:20.478050Z",
@@ -1672,14 +1672,14 @@
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/spacex/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
-      "last_extracted_at": "2026-05-03T16:22:56.670014+00:00",
+      "last_extracted_at": "2026-05-04T02:04:22.455123+00:00",
       "rule_count": 0,
       "fingerprint_hash": "ead7689f96a1c44f43cee4831b1525d52757c6aca820b9cf85569651d46ab0b7",
       "also_found_in": [],
       "dialect": "A",
       "section_count": 9,
       "size_bytes": 11313,
-      "extraction_state": "tokens_only"
+      "extraction_state": "full"
     },
     "spacious": {
       "added_at": "2026-05-03T13:28:20.478050Z",
@@ -1687,14 +1687,14 @@
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/spacious/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
-      "last_extracted_at": "2026-05-03T16:22:56.670014+00:00",
+      "last_extracted_at": "2026-05-04T02:04:22.455123+00:00",
       "rule_count": 0,
       "fingerprint_hash": "6dc6e07b5890d214c171cc74c8a7491f3e26ab1294921fac0b089b29229f93a0",
       "also_found_in": [],
       "dialect": "B",
       "section_count": 9,
       "size_bytes": 3030,
-      "extraction_state": "tokens_only"
+      "extraction_state": "full"
     },
     "spotify": {
       "added_at": "2026-05-03T13:28:20.478050Z",
@@ -1702,14 +1702,14 @@
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/spotify/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
-      "last_extracted_at": "2026-05-03T16:22:56.670014+00:00",
+      "last_extracted_at": "2026-05-04T02:04:22.455123+00:00",
       "rule_count": 0,
       "fingerprint_hash": "d7f3bc8413a01de9ef15cac8807990be3561f1897c37d1db9ccf23d84b5b1386",
       "also_found_in": [],
       "dialect": "A",
       "section_count": 9,
       "size_bytes": 12946,
-      "extraction_state": "tokens_only"
+      "extraction_state": "full"
     },
     "starbucks": {
       "added_at": "2026-05-03T13:28:20.478050Z",
@@ -1717,14 +1717,14 @@
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/starbucks/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
-      "last_extracted_at": "2026-05-03T16:22:56.670014+00:00",
+      "last_extracted_at": "2026-05-04T02:04:22.455123+00:00",
       "rule_count": 0,
       "fingerprint_hash": "25b116f858b197796ed4962457d07c9f0484e2d3c8e9a7604928358957bd61a3",
       "also_found_in": [],
       "dialect": "A",
       "section_count": 9,
       "size_bytes": 37176,
-      "extraction_state": "tokens_only"
+      "extraction_state": "full"
     },
     "storytelling": {
       "added_at": "2026-05-03T13:28:20.478050Z",
@@ -1972,14 +1972,14 @@
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/webflow/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
-      "last_extracted_at": "2026-05-03T16:22:56.670014+00:00",
+      "last_extracted_at": "2026-05-04T02:04:22.455123+00:00",
       "rule_count": 0,
       "fingerprint_hash": "0610a10e26546550ee70e8e1804d1222aaff6b355b68eacf8cab95f395516aba",
       "also_found_in": [],
       "dialect": "A-variant",
       "section_count": 9,
       "size_bytes": 4188,
-      "extraction_state": "tokens_only"
+      "extraction_state": "full"
     },
     "wired": {
       "added_at": "2026-05-03T13:28:20.478050Z",

@@ -1,0 +1,110 @@
+rules:
+- rule_id: shopify-color-dark-first-with-green-undertone-001
+  section: color
+  preconditions:
+    product_type: [b2b_saas, ecommerce_platform, commerce_platform, brand_marketing_site]
+    tone: [refined, premium, sophisticated]
+    kansei: [refined, premium, sophisticated, warm]
+    sd_anchors:
+      warm_to_cold: -0.1
+      ornate_to_minimal: 0.6
+      serious_to_playful: -0.3
+      modern_to_classical: -0.4
+    brand_archetypes: [Magician, Sage]
+  action:
+    base_canvas_4_tier: ['#000000', '#02090A', '#061A1C', '#102620']
+    canvas_undertone: green_forest_warm
+    surface_strategy: lightness_stepping_with_chromatic_undertone
+    no_pure_blue_dark: true
+    no_pure_black_only: true
+  why:
+    establish: nocturnal-forest-luxury-auditorium
+    avoid: [cold_blue_dark, clinical_pure_black, generic_saas_dark]
+    balance: warm_enveloping ↔ professional_depth
+  emerges_from: [shopify]
+  provenance: original
+  confidence: 0.65
+
+- rule_id: shopify-color-neon-green-focus-only-002
+  section: color
+  preconditions:
+    product_type: [b2b_saas, ecommerce_platform, commerce_platform]
+    tone: [refined, premium]
+    kansei: [refined, premium, expressive, bold]
+    brand_archetypes: [Magician, Sage]
+  action:
+    accent_hue: ~155 (electric_mint_green)
+    accent_saturation: 0.85+
+    accent_lightness: 0.75+
+    accent_role: focus_rings + interactive_highlights + active_state_only
+    no_static_neon_link: true
+    no_decorative_neon: true
+  why:
+    establish: bioluminescent-signal-only-on-interaction
+    avoid: [static_neon_link, decorative_neon, multi_chromatic_brand]
+    balance: brand_distinctiveness ↔ chromatic_economy
+  emerges_from: [shopify]
+  provenance: original
+  confidence: 0.6
+
+- rule_id: shopify-typography-ultralight-monumental-display-003
+  section: typography
+  preconditions:
+    product_type: [b2b_saas, brand_marketing_site, commerce_platform]
+    tone: [refined, premium, sophisticated]
+    kansei: [refined, premium, sophisticated, expressive]
+    brand_archetypes: [Magician, Sage]
+  action:
+    display_weight: 330-400 (impossibly_light)
+    display_size_px: 80-96 (monumental)
+    body_family_class: humanist_geometric_sans (e.g., Inter)
+    weight_strategy: ultralight_display_with_normal_body
+  why:
+    establish: headlines-etched-in-light-not-printed
+    avoid: [standard_weight_400_display, decorative_serif, heavy_weight_default]
+    balance: ethereal_presence ↔ readability
+  emerges_from: [shopify]
+  provenance: original
+  confidence: 0.6
+  known_conflicts:
+  - rule: clickhouse-typography-extreme-display-weight-002
+    reason: ultralight (330) vs extreme heavy (900) — opposite weight ladders
+
+- rule_id: shopify-typography-precision-variable-weights-004
+  section: typography
+  preconditions:
+    product_type: [b2b_saas, brand_marketing_site, commerce_platform]
+    tone: [refined, technical, premium]
+    kansei: [precise, refined, sophisticated]
+    brand_archetypes: [Magician, Sage]
+  action:
+    body_weight_values: [420, 450, 550]
+    weight_strategy: between_traditional_stops
+    opentype_feature: ss03_required
+  why:
+    establish: precision-as-detail-signal
+    avoid: [standard_400_500_600_stops, decorative_weight_jumps]
+    balance: typographic_distinctiveness ↔ implementation_simplicity
+  emerges_from: [shopify]
+  provenance: original
+  confidence: 0.5
+
+- rule_id: shopify-components-fullpill-buttons-005
+  section: components
+  preconditions:
+    product_type: [b2b_saas, ecommerce_platform, commerce_platform]
+    tone: [refined, premium]
+    kansei: [refined, premium, soft, expressive]
+    brand_archetypes: [Magician, Sage]
+  action:
+    button_radius_px: 9999
+    button_shape: full_pill
+    button_color_strategy: white_fill_or_neon_outline
+    no_sharp_corner_button: true
+  why:
+    establish: organic-bioluminescent-shape-language
+    avoid: [angular_button, medium_radius_indecision, decorative_corner]
+    balance: brand_distinctiveness ↔ standard_affordance
+  emerges_from: [shopify]
+  provenance: original
+  confidence: 0.55

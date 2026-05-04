@@ -1,0 +1,111 @@
+rules:
+- rule_id: openai-color-clinical-restraint-001
+  section: color
+  preconditions:
+    product_type: [ai_tool, b2b_saas, brand_marketing_site, infrastructure_saas]
+    tone: [restrained, refined, professional]
+    kansei: [restrained, refined, intellectual, calm]
+    sd_anchors:
+      warm_to_cold: 0.1
+      ornate_to_minimal: 0.85
+      serious_to_playful: -0.5
+      modern_to_classical: -0.2
+    brand_archetypes: [Sage, Magician]
+  action:
+    base_canvas: pure_white "#ffffff"
+    primary_text_color: deep_teal_black "#0d0d0d"
+    text_undertone: slight_teal_cool
+    chromatic_in_chrome: zero_except_brand
+    no_warm_undertone: true
+  why:
+    establish: research-lab-dressed-for-public
+    avoid: [futuristic_decoration, multi_chromatic_chrome, consumer_ai_vibe]
+    balance: literary_authority ↔ approachability
+  emerges_from: [openai]
+  provenance: original
+  confidence: 0.6
+
+- rule_id: openai-color-singular-teal-not-blue-002
+  section: color
+  preconditions:
+    product_type: [ai_tool, b2b_saas, infrastructure_saas]
+    tone: [restrained, refined]
+    kansei: [restrained, refined, technical]
+    brand_archetypes: [Sage, Magician]
+  action:
+    brand_chromatic_count: 1
+    brand_hue: ~165 (teal_green)
+    brand_saturation: 0.65-0.80
+    brand_lightness: 0.30-0.45
+    brand_role: link + highlight + cta_only
+    avoid_purple: true
+    avoid_pure_blue: true
+  why:
+    establish: teal-as-anti-medical-blue-and-anti-gaming-purple
+    avoid: [medical_pure_blue, ai_gaming_purple, multi_chromatic_brand]
+    balance: brand_distinctiveness ↔ neutrality
+  emerges_from: [openai]
+  provenance: original
+  confidence: 0.6
+
+- rule_id: openai-typography-restrained-weights-with-serif-editorial-003
+  section: typography
+  preconditions:
+    product_type: [ai_tool, b2b_saas, content_platform]
+    tone: [restrained, refined, intellectual]
+    kansei: [restrained, refined, intellectual, literary]
+    brand_archetypes: [Sage, Magician]
+  action:
+    primary_family_class: humanist_geometric_sans (e.g., Söhne or Inter)
+    primary_weights: [400, 500, 600]
+    editorial_family_class: contemporary_serif (e.g., Signifier)
+    editorial_use_only_for: announcement_display + essay_headline
+    no_weight_above_600: true
+  why:
+    establish: announcement-as-essay-via-serif
+    avoid: [single_family_flatness, decorative_serif_misuse, heavy_700_weight]
+    balance: literary_authority ↔ ui_neutrality
+  emerges_from: [openai]
+  provenance: original
+  confidence: 0.55
+
+- rule_id: openai-components-uniformly-soft-radii-004
+  section: components
+  preconditions:
+    product_type: [ai_tool, b2b_saas, content_platform]
+    tone: [restrained, refined, soft]
+    kansei: [refined, soft, calm]
+    brand_archetypes: [Sage, Magician]
+  action:
+    standard_radius_px: [8, 12]
+    pill_radius_px: 9999
+    radius_use: tags_chips_pill_else_8_to_12
+    no_sharp_corner_chrome: true
+    no_harsh_corner_anywhere: true
+  why:
+    establish: uniformly-soft-quiet-chrome
+    avoid: [angular_chrome, sub_8_too_sharp, large_friendly_radius]
+    balance: softness ↔ structural_clarity
+  emerges_from: [openai]
+  provenance: original
+  confidence: 0.55
+
+- rule_id: openai-layout-whitespace-primary-divider-005
+  section: layout
+  preconditions:
+    product_type: [ai_tool, b2b_saas, content_platform]
+    tone: [restrained, refined]
+    kansei: [restrained, refined, calm]
+    brand_archetypes: [Sage, Magician]
+  action:
+    section_separator: whitespace_primary
+    border_color: hairline "#e5e5e5"
+    border_use: sparingly_only_when_needed
+    no_solid_section_borders: true
+  why:
+    establish: quiet-literary-section-separation
+    avoid: [solid_color_borders, decorative_dividers, multi_section_borders]
+    balance: visual_rhythm ↔ chromatic_restraint
+  emerges_from: [openai]
+  provenance: original
+  confidence: 0.55

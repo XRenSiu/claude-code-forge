@@ -1,10 +1,10 @@
 {
-  "rules_version": "0.7.1",
+  "rules_version": "0.8.0",
   "schema_version": "1.1.0",
-  "last_updated": "2026-05-04T02:00:00.000000Z",
-  "total_rules": 175,
+  "last_updated": "2026-05-04T03:00:00.000000Z",
+  "total_rules": 219,
   "registered_systems": 137,
-  "extracted_systems": 22,
+  "extracted_systems": 32,
   "_field_legend": {
     "registered_systems": "systems present in source-registry.json (登记数 — DESIGN.md 已收录但未必抽 rule)",
     "extracted_systems": "systems with grammar/rules/<name>.yaml (实际可被 B2 检索的系统数)",
