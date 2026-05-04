@@ -75,6 +75,49 @@
 | `nurturing` | 暖中性色 / 衬线或 humanist sans |
 | `daring` | 高饱和强对比 / 极端字号 / 不对称 |
 | `rebellious` | 黑/红/荧光 / 直角 / 字号大 |
+| `friendly` | 圆角 / 暖色 / humanist sans / 软边框 |
+| `approachable` | 中等饱和 / 圆角 / 系统字体 |
+| `inviting` | 暖色 + 中等饱和 + 圆角 |
+| `optimistic` | 暖橙/黄 / 渐变 / 鼓励性 microcopy |
+| `encouraging` | 暖色 / 强动效 / 大字号 |
+| `severe` | 直角 / 黑白对比 / 硬边 / 工业字体 |
+
+### 质感 / 工艺
+
+| 词 | 关联 |
+|---|---|
+| `refined` | 细 stroke / 大量留白 / 细圆角 / 单字体 |
+| `sophisticated` | 多层阴影 / 衬线 + 几何 sans 混排 / 暗调 |
+| `premium` | 暗金 / 大留白 / 细衬线 / 微动效 |
+| `restrained` | 单 chromatic / 窄 weight ladder / 极简装饰 |
+| `tactile` | 强阴影 / 立体 button / 强 hover transform |
+| `raw` | 直角 / 单 stroke / 系统字体 / 高对比 |
+| `floating` | 大 blur shadow / 透明 surface / 软边 |
+| `dense` | 14px 字号 / 8px 行距 / 多列 layout |
+| `intense` | 高饱和 / 强字重 / 大字号 / 高对比 |
+| `bold` | 700+ weight / 大字号 / 高饱和 |
+| `expressive` | 多色 / 大字号 / 戏剧动效 |
+| `thoughtful` | 多层 hierarchy / 衬线 / 慢动效 |
+
+### 实用 / 功能
+
+| 词 | 关联 |
+|---|---|
+| `readable` | 高对比 / 16-18px body / 1.5+ line-height |
+| `focused` | 单一品牌色 / 极简 chrome / 大字号 |
+| `technical` | 等宽字体 / 直角 / 单 chromatic / 工程精度 |
+| `direct` | 系统字体 / 短句 / 强 CTA / 无装饰 |
+| `decisive` | 极端 weight / 黑白 / 大字号 / 不犹豫 chrome |
+| `accessible` | WCAG AA+ 对比 / 大触靶 / 清晰焦点环 |
+| `scalable` | token 化 / multi-theme / CSS variables |
+| `conservative` | 中性色 / 标准间距 / 8 base scale |
+| `intellectual` | 衬线 / 多层 hierarchy / 引用样式 |
+| `literary` | 衬线 body / 长 line-height / 大留白 |
+| `exploratory` | 多 surface 切换 / 强动效 / 多 panel |
+| `organic` | 不规则圆角 / 自然色 / 手写感 |
+| `soft` | 大圆角 / 低饱和 / 软阴影 |
+| `fresh` | 高饱和单色 / 现代字体 / 简洁 layout |
+| `self_referential` | 元设计 / 自我引用的 chrome |
 
 ---
 

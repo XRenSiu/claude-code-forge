@@ -1,0 +1,108 @@
+rules:
+- rule_id: coinbase-color-singular-deep-blue-binary-001
+  section: color
+  preconditions:
+    product_type: [fintech, crypto, b2b_saas]
+    tone: [professional, trustworthy, authoritative]
+    kansei: [trustworthy, professional, structured, confident]
+    sd_anchors:
+      warm_to_cold: 0.4
+      ornate_to_minimal: 0.6
+      serious_to_playful: -0.7
+      modern_to_classical: -0.2
+    brand_archetypes: [Sage, Ruler]
+  action:
+    base_palette: binary_blue_white
+    brand_chromatic_count: 1
+    brand_hue: 220-235 (deep_saturated_blue)
+    brand_saturation: 0.85-1.0 (#0052ff territory)
+    no_decorative_warm_color: true
+  why:
+    establish: financial-reliability-via-blue-white-binary
+    avoid: [multi_color_fintech, purple_crypto_vibe, warm_decoration]
+    balance: trust_signal ↔ chromatic_distinctiveness
+  emerges_from: [coinbase]
+  provenance: original
+  confidence: 0.7
+
+- rule_id: coinbase-color-alternating-light-dark-sections-002
+  section: color
+  preconditions:
+    product_type: [fintech, b2b_saas, content_platform]
+    tone: [professional, refined]
+    kansei: [structured, professional, modern]
+    brand_archetypes: [Sage, Ruler]
+  action:
+    section_pattern: alternating_white_and_near_black
+    near_black_hex_range: ["#0a0b0d", "#282b31"]
+    use_dark_for: [feature_highlight, mobile_screenshot_showcase]
+    use_light_for: [information_density, primary_content]
+  why:
+    establish: visual-rhythm-via-section-tone-alternation
+    avoid: [monolithic_dark, monolithic_light, more_than_2_section_tones]
+    balance: rhythm ↔ predictability
+  emerges_from: [coinbase]
+  provenance: original
+  confidence: 0.55
+
+- rule_id: coinbase-typography-four-proprietary-family-003
+  section: typography
+  preconditions:
+    product_type: [fintech, brand_marketing_site, b2b_saas]
+    tone: [authoritative, refined]
+    kansei: [authoritative, refined, professional]
+    brand_archetypes: [Sage, Ruler]
+  action:
+    family_count: 4
+    display_family: proprietary_display (e.g., CoinbaseDisplay)
+    ui_family: proprietary_sans (e.g., CoinbaseSans)
+    body_family: proprietary_text (e.g., CoinbaseText)
+    icon_family: proprietary_icon (e.g., CoinbaseIcons)
+    role_separation: hero_display / ui_chrome / body_reading / iconography
+  why:
+    establish: typography-as-fintech-trust-marker
+    avoid: [generic_system_font_chrome, single_family_flatness]
+    balance: brand_authority ↔ implementation_complexity
+  emerges_from: [coinbase]
+  provenance: original
+  confidence: 0.55
+
+- rule_id: coinbase-typography-extreme-display-hero-004
+  section: typography
+  preconditions:
+    product_type: [fintech, brand_marketing_site]
+    tone: [authoritative, confident]
+    kansei: [confident, authoritative, structured]
+    brand_archetypes: [Sage, Ruler]
+  action:
+    display_hero_size_px: 64-80
+    display_line_height: 1.00 (tight)
+    display_weight: 400
+    hierarchy_via_size_not_weight: true
+  why:
+    establish: hero-as-brand-statement-via-size
+    avoid: [conservative_display_size, slack_line_height_at_display]
+    balance: visual_impact ↔ readability
+  emerges_from: [coinbase]
+  provenance: original
+  confidence: 0.5
+
+- rule_id: coinbase-components-56px-pill-cta-005
+  section: components
+  preconditions:
+    product_type: [fintech, crypto, brand_marketing_site]
+    tone: [confident, professional]
+    kansei: [confident, refined]
+    brand_archetypes: [Sage, Ruler]
+  action:
+    button_radius_px: 56
+    button_shape: extreme_pill
+    hover_transition: solid_blue_to_lighter_blue (#0052ff → #578bfa)
+    no_sharp_corner_cta: true
+  why:
+    establish: pill-cta-as-crypto-token-metaphor
+    avoid: [sharp_corner_button, medium_8_12_radius_indecision]
+    balance: brand_distinctiveness ↔ standard_affordance
+  emerges_from: [coinbase]
+  provenance: original
+  confidence: 0.5

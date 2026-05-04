@@ -1,0 +1,91 @@
+rules:
+- rule_id: binance-color-singular-gold-ingot-001
+  section: color
+  preconditions:
+    product_type: [fintech, crypto, b2b_saas]
+    tone: [authoritative, confident, warm]
+    kansei: [warm, authoritative, confident, trustworthy]
+    sd_anchors:
+      warm_to_cold: -0.4
+      ornate_to_minimal: 0.4
+      serious_to_playful: -0.5
+      modern_to_classical: -0.1
+    brand_archetypes: [Ruler, Sage]
+  action:
+    brand_chromatic_count: 1
+    brand_hue: ~46 (golden_yellow)
+    brand_saturation: 0.92-1.0
+    brand_lightness: 0.50-0.55
+    brand_role: cta + active_state + brand_mark + value_indicator
+    no_decorative_gold: true
+  why:
+    establish: gold-as-value-and-authority-signal
+    avoid: [decorative_gold, multi_color_fintech, low_saturation_gold]
+    balance: warmth ↔ professional_authority
+  emerges_from: [binance]
+  provenance: original
+  confidence: 0.6
+
+- rule_id: binance-color-trading-floor-two-tone-002
+  section: color
+  preconditions:
+    product_type: [fintech, crypto, b2b_saas]
+    tone: [authoritative, professional]
+    kansei: [structured, authoritative]
+    brand_archetypes: [Ruler, Sage]
+  action:
+    section_pattern: alternating_white_and_deep_near_black
+    near_black_hex: ~"#222126"
+    white_for: [trading_surface, primary_content, dashboard]
+    near_black_for: [feature_section, brand_moment, dark_mode_hero]
+    surface_tone_count: 2
+  why:
+    establish: trading-floor-rhythm-via-section-alternation
+    avoid: [monolithic_surface, more_than_2_surface_tones]
+    balance: visual_rhythm ↔ predictability
+  emerges_from: [binance]
+  provenance: original
+  confidence: 0.55
+
+- rule_id: binance-typography-proprietary-across-levels-003
+  section: typography
+  preconditions:
+    product_type: [fintech, crypto, brand_marketing_site]
+    tone: [authoritative, professional]
+    kansei: [authoritative, refined]
+    brand_archetypes: [Ruler, Sage]
+  action:
+    family_strategy: proprietary_single_family_all_levels (e.g., BinancePlex)
+    role_unification: display_chrome_body_same_family
+    weight_range: [400, 500, 600, 700]
+    no_generic_system_font: true
+  why:
+    establish: typography-as-fintech-trust-marker
+    avoid: [generic_system_font_chrome, decorative_serif, multi_family_complexity]
+    balance: brand_authority ↔ implementation_complexity
+  emerges_from: [binance]
+  provenance: original
+  confidence: 0.55
+
+- rule_id: binance-components-50px-pill-cta-token-004
+  section: components
+  preconditions:
+    product_type: [fintech, crypto, brand_marketing_site]
+    tone: [confident, authoritative]
+    kansei: [confident, refined]
+    brand_archetypes: [Ruler, Magician]
+  action:
+    button_radius_px: 50
+    button_shape: extreme_pill
+    button_role: cta_must_demand_attention
+    no_sharp_corner_cta: true
+  why:
+    establish: pill-cta-as-crypto-token-metaphor
+    avoid: [sharp_corner_button, medium_radius_indecision]
+    balance: brand_distinctiveness ↔ standard_affordance
+  emerges_from: [binance]
+  provenance: original
+  confidence: 0.5
+  known_conflicts:
+  - rule: bmw-components-zero-radius-rectangular-cta-004
+    reason: extreme pill (50) vs zero radius — opposite chrome philosophies

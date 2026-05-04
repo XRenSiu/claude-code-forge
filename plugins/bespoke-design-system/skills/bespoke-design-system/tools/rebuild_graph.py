@@ -289,11 +289,50 @@ def main():
     p.add_argument('--output', default=os.path.normpath(os.path.join(here, '..', 'grammar', 'graph', 'rules_graph.json')))
     p.add_argument('--rules-version', default=None, help='Stamp version field on output (default: read from version.json)')
     p.add_argument('--dry-run', action='store_true', help='Print summary only, do not write')
+    p.add_argument('--skip-validate', action='store_true', help='Skip validate_rules.py preflight (v1.6.0+ runs it by default)')
+    p.add_argument('--skip-sync', action='store_true', help='Skip sync_registry preflight (v1.6.0+ runs it by default)')
     args = p.parse_args()
 
     if not os.path.isdir(args.rules_dir):
         print(f'ERROR: rules dir not found: {args.rules_dir}', file=sys.stderr)
         sys.exit(2)
+
+    # v1.6.0: preflight — sync registry + validate rules before rebuilding
+    if not args.skip_sync:
+        try:
+            sys.path.insert(0, here)
+            from sync_registry import sync as _sync_registry  # type: ignore
+            r = _sync_registry(dry_run=False)
+            changed = len(r.get('changes', []))
+            if changed:
+                print(f'[preflight] sync_registry: updated {changed} entries')
+        except Exception as e:
+            print(f'[preflight] sync_registry skipped: {e}')
+
+    if not args.skip_validate:
+        try:
+            sys.path.insert(0, here)
+            from validate_rules import validate_file as _validate_file, _collect_all_rule_ids, _load_kansei_vocab  # type: ignore
+            import glob as _glob
+            all_ids = _collect_all_rule_ids()
+            vocab = _load_kansei_vocab()
+            files = sorted(_glob.glob(os.path.join(args.rules_dir, '*.yaml')))
+            blockers = 0
+            warnings = 0
+            for fp in files:
+                if os.path.basename(fp).startswith('.'):
+                    continue
+                r = _validate_file(fp, all_ids, vocab)
+                blockers += len(r['blockers'])
+                warnings += len(r['warnings'])
+            if blockers:
+                print(f'[preflight] validate_rules: {blockers} BLOCKER(s) found — run `python3 tools/validate_rules.py --all` for details. Aborting rebuild.', file=sys.stderr)
+                sys.exit(3)
+            print(f'[preflight] validate_rules: 0 blockers, {warnings} warnings ({len(files)} files)')
+        except SystemExit:
+            raise
+        except Exception as e:
+            print(f'[preflight] validate_rules skipped: {e}')
 
     rules = load_rules(args.rules_dir)
     if not rules:

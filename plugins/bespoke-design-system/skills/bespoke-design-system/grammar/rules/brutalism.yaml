@@ -143,6 +143,7 @@ rules:
 - rule_id: brutalism-motion-functional-not-dramatic-005
   section: motion
   preconditions:
+    product_type: [editorial, art_portfolio, indie_creative, anti_corporate]
     kansei:
     - raw
     - decisive
@@ -170,6 +171,7 @@ rules:
 - rule_id: brutalism-voice-imperative-no-marketing-006
   section: voice
   preconditions:
+    product_type: [editorial, art_portfolio, indie_creative, anti_corporate]
     kansei:
     - raw
     - confident

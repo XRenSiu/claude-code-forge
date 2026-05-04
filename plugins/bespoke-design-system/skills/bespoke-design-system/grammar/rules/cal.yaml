@@ -1,0 +1,106 @@
+rules:
+- rule_id: cal-color-pure-grayscale-brand-001
+  section: color
+  preconditions:
+    product_type: [productivity_saas, b2b_saas, content_platform]
+    tone: [restrained, professional, refined]
+    kansei: [restrained, structured, refined, calm]
+    sd_anchors:
+      warm_to_cold: 0.0
+      ornate_to_minimal: 0.9
+      serious_to_playful: -0.6
+      modern_to_classical: -0.4
+    brand_archetypes: [Sage, Innocent]
+  action:
+    chromatic_count: 0
+    palette: grayscale_only
+    boldness_via: monochrome_contrast + typography_weight
+    color_as_foreign_substance: true
+  why:
+    establish: boldness-without-chromatic-distraction
+    avoid: [decorative_brand_color, multi_chromatic_chrome, color_for_decoration]
+    balance: brand_distinctiveness ↔ chromatic_economy
+  emerges_from: [cal]
+  provenance: original
+  confidence: 0.7
+
+- rule_id: cal-color-warm-near-black-text-002
+  section: color
+  preconditions:
+    product_type: [productivity_saas, b2b_saas, content_platform]
+    tone: [refined, professional]
+    kansei: [refined, calm, structured]
+    brand_archetypes: [Sage, Innocent]
+  action:
+    primary_text_hex: "#242424"
+    primary_text_lightness: 0.14
+    primary_text_undertone: warm_neutral_not_pure_black
+    no_pure_black_text: true
+  why:
+    establish: warm-near-black-balances-authority-and-approachability
+    avoid: [pure_black_plastic, cool_blue_undertone_clinical]
+    balance: authority ↔ warmth
+  emerges_from: [cal]
+  provenance: original
+  confidence: 0.6
+
+- rule_id: cal-typography-cal-sans-display-extreme-tight-003
+  section: typography
+  preconditions:
+    product_type: [productivity_saas, brand_marketing_site, b2b_saas]
+    tone: [confident, refined]
+    kansei: [confident, structured, modern]
+    brand_archetypes: [Sage, Creator]
+  action:
+    display_family: custom_geometric_sans (e.g., Cal Sans)
+    display_letter_spacing: extremely_tight (-0.02em or tighter at display)
+    display_weight: 600
+    display_line_height: 1.10
+    body_family: humanist_sans_workhorse (e.g., Inter)
+    role_separation: display_speaks / body_explains
+  why:
+    establish: display-carved-into-page
+    avoid: [single_family_flatness, slack_display_tracking, decorative_display_serif]
+    balance: visual_distinctiveness ↔ implementation_simplicity
+  emerges_from: [cal]
+  provenance: original
+  confidence: 0.6
+
+- rule_id: cal-depth-elevation-11-tier-shadow-system-004
+  section: depth_elevation
+  preconditions:
+    product_type: [productivity_saas, brand_marketing_site, content_platform]
+    tone: [refined, sophisticated]
+    kansei: [refined, modern, sophisticated]
+    brand_archetypes: [Sage, Creator]
+  action:
+    elevation_strategy: multi_layered_shadow_stack
+    shadow_tier_count: 8-11
+    shadow_composition: ring_border_1px + soft_diffused + optional_inset_highlight
+    border_strategy: shadow_based_not_css_border
+  why:
+    establish: depth-as-monochrome-substitute-for-color
+    avoid: [single_layer_drop_shadow, css_border_for_panel, sharp_3d]
+    balance: visual_sophistication ↔ implementation_complexity
+  emerges_from: [cal]
+  provenance: original
+  confidence: 0.55
+
+- rule_id: cal-layout-wide-radius-scale-005
+  section: layout
+  preconditions:
+    product_type: [productivity_saas, brand_marketing_site]
+    tone: [refined, modern]
+    kansei: [modern, refined]
+    brand_archetypes: [Sage, Creator]
+  action:
+    radius_scale_px: [2, 4, 6, 8, 12, 16, 24, 9999]
+    radius_role_diversity: chrome_role_specific
+    pill_radius_px: 9999
+  why:
+    establish: chrome-role-differentiation-via-radius
+    avoid: [single_radius_uniformity, sharp_only, pill_only]
+    balance: chrome_diversity ↔ visual_consistency
+  emerges_from: [cal]
+  provenance: original
+  confidence: 0.5

@@ -1,0 +1,82 @@
+rules:
+- rule_id: arc-color-gradient-as-primary-surface-001
+  section: color
+  preconditions:
+    product_type: [browser, productivity_saas, content_platform]
+    tone: [warm, expressive, refined]
+    kansei: [warm, expressive, soft, inviting]
+    brand_archetypes: [Magician, Creator]
+  action:
+    base_canvas: saturated_gradient (peach_coral OR violet_fuchsia OR mint_cyan)
+    overlay_strategy: frosted_glass_translucent_white_over_gradient
+    no_solid_panel_color: true
+  why:
+    establish: chrome-as-scenery-not-container
+    avoid: [solid_chrome, fixed_brand_color, hard_edge_chrome]
+    balance: mood_expression ↔ ui_clarity
+  emerges_from: [arc]
+  provenance: original
+  confidence: 0.65
+  known_conflicts:
+  - rule: linear-app-color-dark-native-001
+    reason: gradient-canvas vs dark-native — opposite atmosphere strategies
+  - rule: vercel-color-extreme-white-minimalism-001
+    reason: gradient vs pure white — opposite chromatic philosophies
+
+- rule_id: arc-color-user-driven-theme-002
+  section: color
+  preconditions:
+    product_type: [browser, creator_tool, productivity_saas]
+    tone: [expressive, personalizable]
+    kansei: [warm, expressive, playful, inviting]
+    brand_archetypes: [Magician, Creator]
+  action:
+    theme_color_source: user_selectable_preset
+    preset_examples: [sunset_peach_coral, twilight_violet_fuchsia, aurora_mint_cyan]
+    no_fixed_brand_color: true
+  why:
+    establish: brand-as-user-mood-not-company-marker
+    avoid: [imposed_single_brand_color, restricted_user_expression]
+    balance: brand_consistency ↔ user_expression
+  emerges_from: [arc]
+  provenance: original
+  confidence: 0.6
+
+- rule_id: arc-components-squircle-soft-radii-003
+  section: components
+  preconditions:
+    product_type: [browser, productivity_saas, creator_tool]
+    tone: [warm, refined, soft]
+    kansei: [warm, soft, inviting, modern]
+    brand_archetypes: [Creator, Caregiver]
+  action:
+    card_radius_px: [12, 16]
+    tab_radius_px: 8
+    pill_radius_px: 9999
+    chrome_radius_min_px: 8
+  why:
+    establish: alive-but-not-sharp-chrome
+    avoid: [angular_chrome, sub_8px_radius_too_sharp]
+    balance: softness ↔ precision
+  emerges_from: [arc]
+  provenance: original
+  confidence: 0.65
+
+- rule_id: arc-depth-elevation-soft-blur-shadow-004
+  section: depth_elevation
+  preconditions:
+    product_type: [browser, productivity_saas]
+    tone: [refined, soft]
+    kansei: [warm, soft, modern]
+    brand_archetypes: [Magician, Creator]
+  action:
+    shadow_strategy: large_blur_low_alpha_over_gradient
+    shadow_pattern: "0 8px 32px rgba(0,0,0,0.08)"
+    no_hard_edge_shadow: true
+  why:
+    establish: panel-floats-on-gradient-mood
+    avoid: [hard_edge_shadow, high_alpha_shadow, sharp_panel_separation]
+    balance: depth_indication ↔ mood_continuity
+  emerges_from: [arc]
+  provenance: original
+  confidence: 0.6

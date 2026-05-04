@@ -88,6 +88,26 @@ python3 tools/extract_tokens.py source-design-systems/<system_name>/DESIGN.md
 
 **输出**：`grammar/rules/<system_name>.yaml`
 
+### v1.6.0 工作流加强
+
+**第 0 步（必做）**：跑 `tools/prepare_a3_context.py <system_name>` 把所有相关
+context（tokens.json 切片 / DESIGN.md sections / kansei 词表 / 12 archetype 表 /
+peer 系统格式示例）汇总到一份 markdown，再开始写 A3。**这是 input prep 不
+做 judgment**——所有 trade_off / kansei / archetype 选择仍由 LLM 完成。
+
+**第 1.5 步（幂等保护）**：A3 入口先检查 `grammar/rules/<system_name>.yaml`
+是否已存在：
+
+- 存在 + 用户没说 `--force` / `--merge` → **停下并询问**："已检测到
+  grammar/rules/<X>.yaml（N 条规则）。要 (a) 覆盖、(b) 合并新规则、(c) 跳过？"
+- 存在 + `--force` → 备份到 `grammar/rules/.archive/<system>-<timestamp>.yaml`
+  后覆盖
+- 不存在 → 正常写
+
+**第 N 步（必做）**：写完后立刻跑 `python3 tools/validate_rules.py
+grammar/rules/<system_name>.yaml`。0 blocker 才能算 A3 完成。`tools/
+rebuild_graph.py` 会再次跑完整 validate 作为 preflight。
+
 **LLM 操作步骤**：
 
 1. 对每个 rationale decision 输出一条 rule，按 schema（详见 `references/design-md-spec.md` 的 8 个 rule-bearing slug）：
@@ -116,10 +136,31 @@ python3 tools/extract_tokens.py source-design-systems/<system_name>/DESIGN.md
 
 2. **关键参数化**：把具体值（`#5E6AD2`）抽象成参数化模式（`hue: 240°-260°`）；具体值留在 tokens.json
 3. **Kansei 标签**：用 `references/kansei-theory.md` 的词表，给 3-5 个调性词（不要造词）
-4. **Brand archetype 标签（v1.5.0 必填）**：用 `references/brand-archetypes.md` 的 12 原型词表，给 1-2 个最贴切的（primary 必填、secondary 可选）。**判断启发式**：
+4. **Brand archetype 标签（v1.5.0 必填，v1.6.0 加强非懒标）**：用 `references/brand-archetypes.md` 的 12 原型词表，给 1-2 个最贴切的（primary 必填、secondary 可选）。**判断启发式**：
    - 看 system 整体 brand 定位（Linear → Sage+Creator；Discord → Everyman+Jester；Apple → Creator+Magician）
    - 看 rule 的 `why.establish` 字段：知识 / 真相 / 清晰 → Sage；转化 / 神秘 → Magician；归属 / 关怀 → Caregiver；秩序 / 权威 → Ruler；自由 / 反叛 → Outlaw；玩味 / 欢乐 → Jester；造物 / 工艺 → Creator；探索 / 边界 → Explorer；纯净 / 简单 → Innocent；亲和 / 民主 → Everyman；激情 / 美感 → Lover；力量 / 战胜 → Hero
    - **不要全打 Sage**——Sage 是默认懒标，强迫自己想清楚 secondary
+
+   **v1.6.0 反懒标硬约束**：
+
+   不要把 system-level archetype 简单复制到所有规则。**特别检查这几类规则**：
+
+   - **anti_patterns 类**：往往**比 system 默认覆盖更广** archetype 集合
+     （anti-pattern 守的是边界，多个 archetype 都可能踩坑）。例如 Linear 整体
+     是 Sage+Creator，但 anti-pattern-warmth-in-chrome 同样适用 Magician 系产品
+     （它们也容易 chromatic creep）。Anti-pattern 规则可以列 3+ archetype。
+   - **voice 类**：往往**比 system 整体 archetype 更窄**。Discord 整体是
+     Everyman+Jester，但 voice-imperative-no-marketing 实际更贴 Sage / Outlaw
+     立场（克制 / 反市场化）。Voice 通常 1 个 archetype。
+   - **rule-bearing 类**（color/typography/components/layout/depth_elevation）：
+     默认 = system-level archetypes 通常合适，但若该规则的 why.establish 与
+     system 默认 archetype 矛盾，**必须**调整。例如 vercel 的 voice-
+     infrastructure-invisible-009 实际更贴 Sage 单原型，而非 system 默认的
+     Sage+Magician。
+
+   写完每条 rule 的 brand_archetypes 后，**回过头自问**："如果这条 rule
+   只剩 system 默认 archetype 之一，是否削弱了它？"如果答案是"差不多"，那
+   你就在懒标——重新决定。
 5. **Confidence 起步**：单一系统拆解默认 0.5-0.7；后续合并 / 共现会自动调高
 6. 如果你（LLM）观察到这条规则与某已有规则有显然冲突（如 dark canvas vs white canvas），**直接在 rule yaml 加 `known_conflicts`**——A4 阶段会把这些声明吸入图
 

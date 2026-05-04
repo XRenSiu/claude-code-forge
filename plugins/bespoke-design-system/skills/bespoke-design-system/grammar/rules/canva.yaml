@@ -1,0 +1,90 @@
+rules:
+- rule_id: canva-color-purple-blue-gradient-brand-001
+  section: color
+  preconditions:
+    product_type: [creator_tool, content_platform, b2b_saas]
+    tone: [warm, expressive, inviting]
+    kansei: [warm, expressive, inviting, modern]
+    sd_anchors:
+      warm_to_cold: -0.1
+      ornate_to_minimal: -0.2
+      serious_to_playful: 0.2
+      modern_to_classical: -0.3
+    brand_archetypes: [Creator, Jester]
+  action:
+    brand_gradient_origin_hue: ~280 (purple)
+    brand_gradient_terminus_hue: ~190 (cyan)
+    gradient_use_only_in: [brand_mark, hero_button, pro_magic_moment]
+    no_dynamic_gradient: true
+    gradient_count: 1
+  why:
+    establish: gradient-as-magic-transformation-signal
+    avoid: [decorative_gradient, multi_gradient_competing, animated_gradient]
+    balance: brand_distinctiveness ↔ chromatic_restraint
+  emerges_from: [canva]
+  provenance: original
+  confidence: 0.6
+  known_conflicts:
+  - rule: vercel-anti-pattern-decoration-creep-010
+    reason: gradient brand vs no-gradient minimalism — opposite philosophies
+
+- rule_id: canva-typography-weight-contrast-hierarchy-002
+  section: typography
+  preconditions:
+    product_type: [creator_tool, content_platform, b2b_saas]
+    tone: [confident, friendly]
+    kansei: [confident, expressive, inviting]
+    brand_archetypes: [Creator, Jester]
+  action:
+    hero_weight: 800
+    section_heading_weight: 700
+    body_weight: 400
+    hierarchy_strategy: weight_contrast_dominant
+    color_for_hierarchy: false
+  why:
+    establish: weight-not-color-drives-hierarchy
+    avoid: [color_plus_weight_double_emphasis, weight_300_to_900_extreme]
+    balance: hierarchy_clarity ↔ visual_calm
+  emerges_from: [canva]
+  provenance: original
+  confidence: 0.55
+
+- rule_id: canva-typography-single-rounded-family-003
+  section: typography
+  preconditions:
+    product_type: [creator_tool, b2b_saas, content_platform]
+    tone: [warm, friendly]
+    kansei: [warm, inviting, friendly]
+    brand_archetypes: [Creator, Caregiver]
+  action:
+    family_count: 1
+    family_class: rounded_geometric_sans (e.g., Canva Sans, Cereal-like)
+    weight_range: [400, 700, 800]
+    role_unification: chrome_and_body_same_family
+  why:
+    establish: friendly-via-single-rounded-family
+    avoid: [serif_in_friendly_context, multi_family_complexity]
+    balance: warmth ↔ implementation_simplicity
+  emerges_from: [canva]
+  provenance: original
+  confidence: 0.55
+
+- rule_id: canva-components-friendly-radius-strategy-004
+  section: components
+  preconditions:
+    product_type: [creator_tool, content_platform, b2b_saas]
+    tone: [warm, friendly, refined]
+    kansei: [warm, inviting, friendly]
+    brand_archetypes: [Creator, Caregiver]
+  action:
+    card_radius_px_range: [12, 20]
+    pill_radius_px: 9999
+    no_sub_8_radius: true
+    chrome_radius_min_px: 12
+  why:
+    establish: friendly-not-engineered-chrome
+    avoid: [angular_chrome, sub_8_sharp, sub_12_indecision]
+    balance: warmth ↔ structural_clarity
+  emerges_from: [canva]
+  provenance: original
+  confidence: 0.55

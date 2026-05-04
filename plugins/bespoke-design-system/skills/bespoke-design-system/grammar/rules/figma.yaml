@@ -41,8 +41,8 @@ rules:
   provenance: original
   confidence: 0.7
   known_conflicts:
-  - rule: stripe-typography-and-purple-chromatic-anchor
-    reason: chromatic-free chrome vs persistent purple chromatic — opposite chrome strategies
+  - rule: stripe-color-purple-ladder-002
+    reason: chromatic-free chrome vs persistent purple chromatic ladder — opposite chrome strategies
 - rule_id: figma-color-glass-overlay-002
   section: color
   preconditions:

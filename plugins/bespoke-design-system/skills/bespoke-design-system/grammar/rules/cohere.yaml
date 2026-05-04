@@ -1,0 +1,103 @@
+rules:
+- rule_id: cohere-color-extreme-chromatic-restraint-001
+  section: color
+  preconditions:
+    product_type: [enterprise_saas, ai_tool, infrastructure_saas, b2b_saas]
+    tone: [professional, refined, restrained, authoritative]
+    kansei: [structured, refined, authoritative, restrained]
+    sd_anchors:
+      warm_to_cold: 0.1
+      ornate_to_minimal: 0.8
+      serious_to_playful: -0.6
+      modern_to_classical: -0.2
+    brand_archetypes: [Sage, Ruler]
+  action:
+    base_canvas: pure_white
+    chromatic_in_chrome: zero
+    chromatic_only_in: [photography_hero_bands, gradient_section_dividers]
+    border_color_role: cool_gray_only
+  why:
+    establish: ai-as-serious-infrastructure
+    avoid: [consumer_palette, decorative_color_distribution, multi_chromatic_chrome]
+    balance: enterprise_authority ↔ approachability
+  emerges_from: [cohere]
+  provenance: original
+  confidence: 0.7
+
+- rule_id: cohere-components-22px-signature-radius-002
+  section: components
+  preconditions:
+    product_type: [enterprise_saas, ai_tool, b2b_saas]
+    tone: [refined, professional, distinctive]
+    kansei: [refined, structured, modern]
+    brand_archetypes: [Sage, Ruler]
+  action:
+    card_radius_signature_px: 22
+    radius_use_pattern: cloud_like_containment
+    avoid_standard_radii: [8, 12, 16]
+  why:
+    establish: signature-radius-as-brand-identifier
+    avoid: [generic_radius_indecision, sharp_engineering_corner, friendly_large_radius]
+    balance: distinctiveness ↔ professionalism
+  emerges_from: [cohere]
+  provenance: original
+  confidence: 0.55
+
+- rule_id: cohere-color-interactive-blue-hover-only-003
+  section: color
+  preconditions:
+    product_type: [enterprise_saas, b2b_saas, ai_tool]
+    tone: [restrained, professional]
+    kansei: [restrained, structured]
+    brand_archetypes: [Sage, Ruler]
+  action:
+    interactive_color_role: hover_focus_only
+    interactive_hue_range: [200, 240]
+    interactive_saturation: 0.6-0.8
+    no_static_blue_link: true
+  why:
+    establish: blue-as-awakening-signal-not-static
+    avoid: [static_blue_link, decorative_blue, multi_chromatic_interactive]
+    balance: chromatic_economy ↔ interaction_clarity
+  emerges_from: [cohere]
+  provenance: original
+  confidence: 0.55
+
+- rule_id: cohere-typography-serif-display-sans-utility-004
+  section: typography
+  preconditions:
+    product_type: [enterprise_saas, content_platform, b2b_saas]
+    tone: [refined, professional, authoritative]
+    kansei: [refined, structured, authoritative]
+    brand_archetypes: [Sage, Ruler]
+  action:
+    display_family_class: serif (e.g., CohereText)
+    body_family_class: swiss_geometric_sans (e.g., Unica77)
+    role_separation: serif_declarative / sans_functional
+  why:
+    establish: published-research-authority-via-serif
+    avoid: [single_family_flatness, decorative_serif_misuse, generic_sans_default]
+    balance: declarative_authority ↔ functional_neutrality
+  emerges_from: [cohere]
+  provenance: original
+  confidence: 0.55
+
+- rule_id: cohere-typography-single-body-weight-with-size-hierarchy-005
+  section: typography
+  preconditions:
+    product_type: [enterprise_saas, b2b_saas, content_platform]
+    tone: [restrained, refined]
+    kansei: [restrained, structured]
+    brand_archetypes: [Sage, Ruler]
+  action:
+    body_weight_only: 400
+    size_hierarchy_drives_emphasis: true
+    no_700_bold_in_body: true
+    weight_500_only_for_small_button_emphasis: true
+  why:
+    establish: hierarchy-via-size-not-weight
+    avoid: [700_body_overstatement, multi_weight_noise]
+    balance: hierarchy_clarity ↔ visual_calm
+  emerges_from: [cohere]
+  provenance: original
+  confidence: 0.6

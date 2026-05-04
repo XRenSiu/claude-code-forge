@@ -1,13 +1,13 @@
 {
   "$schema_description": "Rules relationship graph. Rebuilt by tools/rebuild_graph.py.",
-  "version": "0.6.0",
-  "rebuilt_at": "2026-05-03T16:23:41.926073Z",
-  "node_count": 127,
+  "version": "0.7.0",
+  "rebuilt_at": "2026-05-04T01:22:50.416112Z",
+  "node_count": 175,
   "edge_counts": {
-    "depends_on": 123,
-    "constrains": 123,
-    "co_occurs_with": 110,
-    "conflicts_with": 11
+    "depends_on": 159,
+    "constrains": 159,
+    "co_occurs_with": 209,
+    "conflicts_with": 20
   },
   "nodes": [
     {
@@ -552,6 +552,10 @@
           {
             "rule": "apple-typography-billboard-display-tight-tracking-006",
             "frequency": 0.87
+          },
+          {
+            "rule": "bmw-typography-single-family-all-sizes-003",
+            "frequency": 0.33
           }
         ],
         "conflicts_with": []
@@ -563,6 +567,405 @@
         "depends_on": [],
         "constrains": [],
         "co_occurs_with": [],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "arc-color-gradient-as-primary-surface-001",
+      "relations": {
+        "depends_on": [],
+        "constrains": [
+          {
+            "rule": "arc-components-squircle-soft-radii-003"
+          },
+          {
+            "rule": "arc-depth-elevation-soft-blur-shadow-004"
+          }
+        ],
+        "co_occurs_with": [
+          {
+            "rule": "arc-color-user-driven-theme-002",
+            "frequency": 0.84
+          },
+          {
+            "rule": "canva-color-purple-blue-gradient-brand-001",
+            "frequency": 0.31
+          }
+        ],
+        "conflicts_with": [
+          {
+            "rule": "linear-app-color-dark-native-001",
+            "reason": "gradient-canvas vs dark-native — opposite atmosphere strategies"
+          },
+          {
+            "rule": "vercel-color-extreme-white-minimalism-001",
+            "reason": "gradient vs pure white — opposite chromatic philosophies"
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "arc-color-user-driven-theme-002",
+      "relations": {
+        "depends_on": [],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "arc-color-gradient-as-primary-surface-001",
+            "frequency": 0.84
+          },
+          {
+            "rule": "canva-color-purple-blue-gradient-brand-001",
+            "frequency": 0.31
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "arc-components-squircle-soft-radii-003",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "arc-color-gradient-as-primary-surface-001",
+            "reason": "components depends on color foundation (same source: arc)"
+          },
+          {
+            "rule": "arc-depth-elevation-soft-blur-shadow-004",
+            "reason": "components depends on depth_elevation foundation (same source: arc)"
+          }
+        ],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "canva-components-friendly-radius-strategy-004",
+            "frequency": 0.36
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "arc-depth-elevation-soft-blur-shadow-004",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "arc-color-gradient-as-primary-surface-001",
+            "reason": "depth_elevation depends on color foundation (same source: arc)"
+          }
+        ],
+        "constrains": [
+          {
+            "rule": "arc-components-squircle-soft-radii-003"
+          }
+        ],
+        "co_occurs_with": [],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "binance-color-singular-gold-ingot-001",
+      "relations": {
+        "depends_on": [],
+        "constrains": [
+          {
+            "rule": "binance-typography-proprietary-across-levels-003"
+          },
+          {
+            "rule": "binance-components-50px-pill-cta-token-004"
+          }
+        ],
+        "co_occurs_with": [
+          {
+            "rule": "binance-color-trading-floor-two-tone-002",
+            "frequency": 0.68
+          },
+          {
+            "rule": "coinbase-color-singular-deep-blue-binary-001",
+            "frequency": 0.33
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "binance-color-trading-floor-two-tone-002",
+      "relations": {
+        "depends_on": [],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "binance-color-singular-gold-ingot-001",
+            "frequency": 0.68
+          },
+          {
+            "rule": "bmw-color-signature-blue-interactive-only-005",
+            "frequency": 0.3
+          },
+          {
+            "rule": "cohere-color-extreme-chromatic-restraint-001",
+            "frequency": 0.4
+          },
+          {
+            "rule": "cohere-color-interactive-blue-hover-only-003",
+            "frequency": 0.33
+          },
+          {
+            "rule": "coinbase-color-alternating-light-dark-sections-002",
+            "frequency": 0.3
+          },
+          {
+            "rule": "stripe-color-purple-ladder-002",
+            "frequency": 0.33
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "binance-components-50px-pill-cta-token-004",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "binance-color-singular-gold-ingot-001",
+            "reason": "components depends on color foundation (same source: binance)"
+          },
+          {
+            "rule": "binance-typography-proprietary-across-levels-003",
+            "reason": "components depends on typography foundation (same source: binance)"
+          }
+        ],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "coinbase-components-56px-pill-cta-005",
+            "frequency": 0.47
+          }
+        ],
+        "conflicts_with": [
+          {
+            "rule": "bmw-components-zero-radius-rectangular-cta-004",
+            "reason": "extreme pill (50) vs zero radius — opposite chrome philosophies"
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "binance-typography-proprietary-across-levels-003",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "binance-color-singular-gold-ingot-001",
+            "reason": "typography depends on color foundation (same source: binance)"
+          }
+        ],
+        "constrains": [
+          {
+            "rule": "binance-components-50px-pill-cta-token-004"
+          }
+        ],
+        "co_occurs_with": [
+          {
+            "rule": "bmw-typography-extreme-weight-contrast-002",
+            "frequency": 0.33
+          },
+          {
+            "rule": "cohere-typography-serif-display-sans-utility-004",
+            "frequency": 0.47
+          },
+          {
+            "rule": "coinbase-typography-extreme-display-hero-004",
+            "frequency": 0.3
+          },
+          {
+            "rule": "coinbase-typography-four-proprietary-family-003",
+            "frequency": 0.47
+          },
+          {
+            "rule": "stripe-typography-light-weight-300-signature-006",
+            "frequency": 0.3
+          },
+          {
+            "rule": "stripe-typography-progressive-tracking-007",
+            "frequency": 0.33
+          },
+          {
+            "rule": "stripe-typography-sohne-ss01-required-005",
+            "frequency": 0.3
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "bmw-color-signature-blue-interactive-only-005",
+      "relations": {
+        "depends_on": [],
+        "constrains": [
+          {
+            "rule": "bmw-typography-light-weight-display-001"
+          },
+          {
+            "rule": "bmw-typography-extreme-weight-contrast-002"
+          },
+          {
+            "rule": "bmw-typography-single-family-all-sizes-003"
+          },
+          {
+            "rule": "bmw-components-zero-radius-rectangular-cta-004"
+          }
+        ],
+        "co_occurs_with": [
+          {
+            "rule": "binance-color-trading-floor-two-tone-002",
+            "frequency": 0.3
+          },
+          {
+            "rule": "cohere-color-extreme-chromatic-restraint-001",
+            "frequency": 0.5
+          },
+          {
+            "rule": "cohere-color-interactive-blue-hover-only-003",
+            "frequency": 0.3
+          },
+          {
+            "rule": "stripe-color-decorative-only-magenta-ruby-003",
+            "frequency": 0.3
+          },
+          {
+            "rule": "stripe-color-purple-ladder-002",
+            "frequency": 0.3
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "bmw-components-zero-radius-rectangular-cta-004",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "bmw-color-signature-blue-interactive-only-005",
+            "reason": "components depends on color foundation (same source: bmw)"
+          },
+          {
+            "rule": "bmw-typography-light-weight-display-001",
+            "reason": "components depends on typography foundation (same source: bmw)"
+          }
+        ],
+        "constrains": [],
+        "co_occurs_with": [],
+        "conflicts_with": [
+          {
+            "rule": "binance-components-50px-pill-cta-token-004",
+            "reason": "extreme pill (50) vs zero radius — opposite chrome philosophies"
+          },
+          {
+            "rule": "cursor-components-extreme-pill-radius-005",
+            "reason": "zero radius vs extreme pill — opposite chrome philosophies"
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "bmw-meta-css-variable-multi-brand-theming-006",
+      "relations": {
+        "depends_on": [],
+        "constrains": [],
+        "co_occurs_with": [],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "bmw-typography-extreme-weight-contrast-002",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "bmw-color-signature-blue-interactive-only-005",
+            "reason": "typography depends on color foundation (same source: bmw)"
+          }
+        ],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "binance-typography-proprietary-across-levels-003",
+            "frequency": 0.33
+          },
+          {
+            "rule": "bmw-typography-light-weight-display-001",
+            "frequency": 0.9
+          },
+          {
+            "rule": "bmw-typography-single-family-all-sizes-003",
+            "frequency": 0.7
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "bmw-typography-light-weight-display-001",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "bmw-color-signature-blue-interactive-only-005",
+            "reason": "typography depends on color foundation (same source: bmw)"
+          }
+        ],
+        "constrains": [
+          {
+            "rule": "bmw-components-zero-radius-rectangular-cta-004"
+          }
+        ],
+        "co_occurs_with": [
+          {
+            "rule": "bmw-typography-extreme-weight-contrast-002",
+            "frequency": 0.9
+          },
+          {
+            "rule": "bmw-typography-single-family-all-sizes-003",
+            "frequency": 0.68
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "bmw-typography-single-family-all-sizes-003",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "bmw-color-signature-blue-interactive-only-005",
+            "reason": "typography depends on color foundation (same source: bmw)"
+          }
+        ],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "apple-typography-display-text-dual-005",
+            "frequency": 0.33
+          },
+          {
+            "rule": "bmw-typography-extreme-weight-contrast-002",
+            "frequency": 0.7
+          },
+          {
+            "rule": "bmw-typography-light-weight-display-001",
+            "frequency": 0.68
+          },
+          {
+            "rule": "cohere-typography-serif-display-sans-utility-004",
+            "frequency": 0.33
+          },
+          {
+            "rule": "stripe-typography-progressive-tracking-007",
+            "frequency": 0.47
+          },
+          {
+            "rule": "stripe-typography-sohne-ss01-required-005",
+            "frequency": 0.33
+          }
+        ],
         "conflicts_with": []
       }
     },
@@ -672,6 +1075,238 @@
       }
     },
     {
+      "rule_id": "cal-color-pure-grayscale-brand-001",
+      "relations": {
+        "depends_on": [],
+        "constrains": [
+          {
+            "rule": "cal-typography-cal-sans-display-extreme-tight-003"
+          },
+          {
+            "rule": "cal-depth-elevation-11-tier-shadow-system-004"
+          }
+        ],
+        "co_occurs_with": [
+          {
+            "rule": "cal-color-warm-near-black-text-002",
+            "frequency": 0.9
+          },
+          {
+            "rule": "cohere-color-extreme-chromatic-restraint-001",
+            "frequency": 0.31
+          },
+          {
+            "rule": "mintlify-color-7tier-gray-scale-003",
+            "frequency": 0.3
+          },
+          {
+            "rule": "mintlify-color-white-canvas-fresh-accent-001",
+            "frequency": 0.33
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "cal-color-warm-near-black-text-002",
+      "relations": {
+        "depends_on": [],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "cal-color-pure-grayscale-brand-001",
+            "frequency": 0.9
+          },
+          {
+            "rule": "linear-app-color-translucent-borders-003",
+            "frequency": 0.33
+          },
+          {
+            "rule": "mintlify-color-7tier-gray-scale-003",
+            "frequency": 0.33
+          },
+          {
+            "rule": "mintlify-color-near-black-text-002",
+            "frequency": 0.3
+          },
+          {
+            "rule": "mintlify-color-white-canvas-fresh-accent-001",
+            "frequency": 0.36
+          },
+          {
+            "rule": "stripe-color-purple-ladder-002",
+            "frequency": 0.33
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "cal-depth-elevation-11-tier-shadow-system-004",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "cal-color-pure-grayscale-brand-001",
+            "reason": "depth_elevation depends on color foundation (same source: cal)"
+          }
+        ],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "notion-color-multi-layer-whisper-shadow-005",
+            "frequency": 0.3
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "cal-layout-wide-radius-scale-005",
+      "relations": {
+        "depends_on": [],
+        "constrains": [],
+        "co_occurs_with": [],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "cal-typography-cal-sans-display-extreme-tight-003",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "cal-color-pure-grayscale-brand-001",
+            "reason": "typography depends on color foundation (same source: cal)"
+          }
+        ],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "linear-app-typography-display-compression-005",
+            "frequency": 0.4
+          },
+          {
+            "rule": "linear-app-typography-geometric-sans-with-features-004",
+            "frequency": 0.4
+          },
+          {
+            "rule": "notion-typography-12px-positive-tracking-exception-008",
+            "frequency": 0.33
+          },
+          {
+            "rule": "notion-typography-4-weight-system-007",
+            "frequency": 0.33
+          },
+          {
+            "rule": "notion-typography-modified-inter-with-tight-display-006",
+            "frequency": 0.4
+          },
+          {
+            "rule": "vercel-typography-geometric-sans-extreme-tracking-004",
+            "frequency": 0.37
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "canva-color-purple-blue-gradient-brand-001",
+      "relations": {
+        "depends_on": [],
+        "constrains": [
+          {
+            "rule": "canva-typography-weight-contrast-hierarchy-002"
+          },
+          {
+            "rule": "canva-typography-single-rounded-family-003"
+          },
+          {
+            "rule": "canva-components-friendly-radius-strategy-004"
+          }
+        ],
+        "co_occurs_with": [
+          {
+            "rule": "arc-color-gradient-as-primary-surface-001",
+            "frequency": 0.31
+          },
+          {
+            "rule": "arc-color-user-driven-theme-002",
+            "frequency": 0.31
+          }
+        ],
+        "conflicts_with": [
+          {
+            "rule": "vercel-anti-pattern-decoration-creep-010",
+            "reason": "gradient brand vs no-gradient minimalism — opposite philosophies"
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "canva-components-friendly-radius-strategy-004",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "canva-color-purple-blue-gradient-brand-001",
+            "reason": "components depends on color foundation (same source: canva)"
+          },
+          {
+            "rule": "canva-typography-weight-contrast-hierarchy-002",
+            "reason": "components depends on typography foundation (same source: canva)"
+          }
+        ],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "arc-components-squircle-soft-radii-003",
+            "frequency": 0.36
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "canva-typography-single-rounded-family-003",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "canva-color-purple-blue-gradient-brand-001",
+            "reason": "typography depends on color foundation (same source: canva)"
+          }
+        ],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "canva-typography-weight-contrast-hierarchy-002",
+            "frequency": 0.55
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "canva-typography-weight-contrast-hierarchy-002",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "canva-color-purple-blue-gradient-brand-001",
+            "reason": "typography depends on color foundation (same source: canva)"
+          }
+        ],
+        "constrains": [
+          {
+            "rule": "canva-components-friendly-radius-strategy-004"
+          }
+        ],
+        "co_occurs_with": [
+          {
+            "rule": "canva-typography-single-rounded-family-003",
+            "frequency": 0.55
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
       "rule_id": "claude-anti-pattern-tech-creep-011",
       "relations": {
         "depends_on": [],
@@ -707,7 +1342,7 @@
             "rule": "claude-typography-serif-single-weight-005"
           },
           {
-            "rule": "claude-typography-relaxed-1.60-body-006"
+            "rule": "claude-typography-relaxed-body-line-height-006"
           },
           {
             "rule": "claude-components-ring-shadow-warm-halo-007"
@@ -848,7 +1483,7 @@
       }
     },
     {
-      "rule_id": "claude-typography-relaxed-1.60-body-006",
+      "rule_id": "claude-typography-relaxed-body-line-height-006",
       "relations": {
         "depends_on": [
           {
@@ -886,7 +1521,7 @@
         ],
         "co_occurs_with": [
           {
-            "rule": "claude-typography-relaxed-1.60-body-006",
+            "rule": "claude-typography-relaxed-body-line-height-006",
             "frequency": 0.68
           }
         ],
@@ -899,6 +1534,539 @@
         "depends_on": [],
         "constrains": [],
         "co_occurs_with": [],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "clickhouse-color-neon-on-pure-black-001",
+      "relations": {
+        "depends_on": [],
+        "constrains": [
+          {
+            "rule": "clickhouse-typography-extreme-display-weight-002"
+          },
+          {
+            "rule": "clickhouse-typography-uppercase-wide-tracking-nav-003"
+          }
+        ],
+        "co_occurs_with": [
+          {
+            "rule": "clickhouse-color-secondary-cta-forest-green-004",
+            "frequency": 0.68
+          }
+        ],
+        "conflicts_with": [
+          {
+            "rule": "linear-app-color-dark-native-001",
+            "reason": "pure-black + neon vs near-black with cool undertone — opposite dark canvas philosophies"
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "clickhouse-color-secondary-cta-forest-green-004",
+      "relations": {
+        "depends_on": [],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "clickhouse-color-neon-on-pure-black-001",
+            "frequency": 0.68
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "clickhouse-typography-extreme-display-weight-002",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "clickhouse-color-neon-on-pure-black-001",
+            "reason": "typography depends on color foundation (same source: clickhouse)"
+          }
+        ],
+        "constrains": [],
+        "co_occurs_with": [],
+        "conflicts_with": [
+          {
+            "rule": "linear-app-typography-geometric-sans-with-features-004",
+            "reason": "weight 900 (extreme) vs no_weight_above 590 (restrained) — opposite weight ladders"
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "clickhouse-typography-uppercase-wide-tracking-nav-003",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "clickhouse-color-neon-on-pure-black-001",
+            "reason": "typography depends on color foundation (same source: clickhouse)"
+          }
+        ],
+        "constrains": [],
+        "co_occurs_with": [],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "cohere-color-extreme-chromatic-restraint-001",
+      "relations": {
+        "depends_on": [],
+        "constrains": [
+          {
+            "rule": "cohere-components-22px-signature-radius-002"
+          },
+          {
+            "rule": "cohere-typography-serif-display-sans-utility-004"
+          },
+          {
+            "rule": "cohere-typography-single-body-weight-with-size-hierarchy-005"
+          }
+        ],
+        "co_occurs_with": [
+          {
+            "rule": "binance-color-trading-floor-two-tone-002",
+            "frequency": 0.4
+          },
+          {
+            "rule": "bmw-color-signature-blue-interactive-only-005",
+            "frequency": 0.5
+          },
+          {
+            "rule": "cal-color-pure-grayscale-brand-001",
+            "frequency": 0.31
+          },
+          {
+            "rule": "cohere-color-interactive-blue-hover-only-003",
+            "frequency": 0.8
+          },
+          {
+            "rule": "stripe-color-navy-purple-foundation-001",
+            "frequency": 0.33
+          },
+          {
+            "rule": "stripe-color-purple-ladder-002",
+            "frequency": 0.4
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "cohere-color-interactive-blue-hover-only-003",
+      "relations": {
+        "depends_on": [],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "binance-color-trading-floor-two-tone-002",
+            "frequency": 0.33
+          },
+          {
+            "rule": "bmw-color-signature-blue-interactive-only-005",
+            "frequency": 0.3
+          },
+          {
+            "rule": "cohere-color-extreme-chromatic-restraint-001",
+            "frequency": 0.8
+          },
+          {
+            "rule": "coinbase-color-alternating-light-dark-sections-002",
+            "frequency": 0.3
+          },
+          {
+            "rule": "stripe-color-purple-ladder-002",
+            "frequency": 0.33
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "cohere-components-22px-signature-radius-002",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "cohere-color-extreme-chromatic-restraint-001",
+            "reason": "components depends on color foundation (same source: cohere)"
+          },
+          {
+            "rule": "cohere-typography-serif-display-sans-utility-004",
+            "reason": "components depends on typography foundation (same source: cohere)"
+          }
+        ],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "coinbase-components-56px-pill-cta-005",
+            "frequency": 0.3
+          },
+          {
+            "rule": "stripe-components-conservative-radius-008",
+            "frequency": 0.4
+          },
+          {
+            "rule": "stripe-components-dashed-affordance-009",
+            "frequency": 0.33
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "cohere-typography-serif-display-sans-utility-004",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "cohere-color-extreme-chromatic-restraint-001",
+            "reason": "typography depends on color foundation (same source: cohere)"
+          }
+        ],
+        "constrains": [
+          {
+            "rule": "cohere-components-22px-signature-radius-002"
+          }
+        ],
+        "co_occurs_with": [
+          {
+            "rule": "binance-typography-proprietary-across-levels-003",
+            "frequency": 0.47
+          },
+          {
+            "rule": "bmw-typography-single-family-all-sizes-003",
+            "frequency": 0.33
+          },
+          {
+            "rule": "cohere-typography-single-body-weight-with-size-hierarchy-005",
+            "frequency": 0.7
+          },
+          {
+            "rule": "coinbase-typography-extreme-display-hero-004",
+            "frequency": 0.4
+          },
+          {
+            "rule": "coinbase-typography-four-proprietary-family-003",
+            "frequency": 0.4
+          },
+          {
+            "rule": "stripe-typography-progressive-tracking-007",
+            "frequency": 0.47
+          },
+          {
+            "rule": "stripe-typography-sohne-ss01-required-005",
+            "frequency": 0.4
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "cohere-typography-single-body-weight-with-size-hierarchy-005",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "cohere-color-extreme-chromatic-restraint-001",
+            "reason": "typography depends on color foundation (same source: cohere)"
+          }
+        ],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "cohere-typography-serif-display-sans-utility-004",
+            "frequency": 0.7
+          },
+          {
+            "rule": "coinbase-typography-extreme-display-hero-004",
+            "frequency": 0.3
+          },
+          {
+            "rule": "stripe-typography-progressive-tracking-007",
+            "frequency": 0.33
+          },
+          {
+            "rule": "stripe-typography-sohne-ss01-required-005",
+            "frequency": 0.3
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "coinbase-color-alternating-light-dark-sections-002",
+      "relations": {
+        "depends_on": [],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "binance-color-trading-floor-two-tone-002",
+            "frequency": 0.3
+          },
+          {
+            "rule": "cohere-color-interactive-blue-hover-only-003",
+            "frequency": 0.3
+          },
+          {
+            "rule": "coinbase-color-singular-deep-blue-binary-001",
+            "frequency": 0.76
+          },
+          {
+            "rule": "stripe-color-purple-ladder-002",
+            "frequency": 0.3
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "coinbase-color-singular-deep-blue-binary-001",
+      "relations": {
+        "depends_on": [],
+        "constrains": [
+          {
+            "rule": "coinbase-typography-four-proprietary-family-003"
+          },
+          {
+            "rule": "coinbase-typography-extreme-display-hero-004"
+          },
+          {
+            "rule": "coinbase-components-56px-pill-cta-005"
+          }
+        ],
+        "co_occurs_with": [
+          {
+            "rule": "binance-color-singular-gold-ingot-001",
+            "frequency": 0.33
+          },
+          {
+            "rule": "coinbase-color-alternating-light-dark-sections-002",
+            "frequency": 0.76
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "coinbase-components-56px-pill-cta-005",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "coinbase-color-singular-deep-blue-binary-001",
+            "reason": "components depends on color foundation (same source: coinbase)"
+          },
+          {
+            "rule": "coinbase-typography-four-proprietary-family-003",
+            "reason": "components depends on typography foundation (same source: coinbase)"
+          }
+        ],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "binance-components-50px-pill-cta-token-004",
+            "frequency": 0.47
+          },
+          {
+            "rule": "cohere-components-22px-signature-radius-002",
+            "frequency": 0.3
+          },
+          {
+            "rule": "stripe-components-conservative-radius-008",
+            "frequency": 0.3
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "coinbase-typography-extreme-display-hero-004",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "coinbase-color-singular-deep-blue-binary-001",
+            "reason": "typography depends on color foundation (same source: coinbase)"
+          }
+        ],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "binance-typography-proprietary-across-levels-003",
+            "frequency": 0.3
+          },
+          {
+            "rule": "cohere-typography-serif-display-sans-utility-004",
+            "frequency": 0.4
+          },
+          {
+            "rule": "cohere-typography-single-body-weight-with-size-hierarchy-005",
+            "frequency": 0.3
+          },
+          {
+            "rule": "coinbase-typography-four-proprietary-family-003",
+            "frequency": 0.68
+          },
+          {
+            "rule": "stripe-typography-progressive-tracking-007",
+            "frequency": 0.3
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "coinbase-typography-four-proprietary-family-003",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "coinbase-color-singular-deep-blue-binary-001",
+            "reason": "typography depends on color foundation (same source: coinbase)"
+          }
+        ],
+        "constrains": [
+          {
+            "rule": "coinbase-components-56px-pill-cta-005"
+          }
+        ],
+        "co_occurs_with": [
+          {
+            "rule": "binance-typography-proprietary-across-levels-003",
+            "frequency": 0.47
+          },
+          {
+            "rule": "cohere-typography-serif-display-sans-utility-004",
+            "frequency": 0.4
+          },
+          {
+            "rule": "coinbase-typography-extreme-display-hero-004",
+            "frequency": 0.68
+          },
+          {
+            "rule": "stripe-typography-progressive-tracking-007",
+            "frequency": 0.3
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "cursor-color-warm-dark-with-orange-accent-003",
+      "relations": {
+        "depends_on": [],
+        "constrains": [
+          {
+            "rule": "cursor-typography-three-voice-system-001"
+          },
+          {
+            "rule": "cursor-typography-display-extreme-negative-tracking-002"
+          },
+          {
+            "rule": "cursor-components-extreme-pill-radius-005"
+          }
+        ],
+        "co_occurs_with": [],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "cursor-components-extreme-pill-radius-005",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "cursor-color-warm-dark-with-orange-accent-003",
+            "reason": "components depends on color foundation (same source: cursor)"
+          },
+          {
+            "rule": "cursor-typography-three-voice-system-001",
+            "reason": "components depends on typography foundation (same source: cursor)"
+          },
+          {
+            "rule": "cursor-layout-8base-with-micro-increments-004",
+            "reason": "components depends on layout foundation (same source: cursor)"
+          }
+        ],
+        "constrains": [],
+        "co_occurs_with": [],
+        "conflicts_with": [
+          {
+            "rule": "bmw-components-zero-radius-rectangular-cta-004",
+            "reason": "zero radius vs extreme pill — opposite chrome philosophies"
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "cursor-layout-8base-with-micro-increments-004",
+      "relations": {
+        "depends_on": [],
+        "constrains": [
+          {
+            "rule": "cursor-components-extreme-pill-radius-005"
+          }
+        ],
+        "co_occurs_with": [
+          {
+            "rule": "linear-app-spacing-8px-base-with-optical-008",
+            "frequency": 0.6
+          },
+          {
+            "rule": "vercel-spacing-jump-scale-008",
+            "frequency": 0.33
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "cursor-typography-display-extreme-negative-tracking-002",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "cursor-color-warm-dark-with-orange-accent-003",
+            "reason": "typography depends on color foundation (same source: cursor)"
+          }
+        ],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "cursor-typography-three-voice-system-001",
+            "frequency": 0.76
+          },
+          {
+            "rule": "linear-app-typography-display-compression-005",
+            "frequency": 0.47
+          },
+          {
+            "rule": "vercel-typography-geometric-sans-extreme-tracking-004",
+            "frequency": 0.5
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "cursor-typography-three-voice-system-001",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "cursor-color-warm-dark-with-orange-accent-003",
+            "reason": "typography depends on color foundation (same source: cursor)"
+          }
+        ],
+        "constrains": [
+          {
+            "rule": "cursor-components-extreme-pill-radius-005"
+          }
+        ],
+        "co_occurs_with": [
+          {
+            "rule": "cursor-typography-display-extreme-negative-tracking-002",
+            "frequency": 0.76
+          },
+          {
+            "rule": "vercel-typography-geometric-sans-extreme-tracking-004",
+            "frequency": 0.33
+          }
+        ],
         "conflicts_with": []
       }
     },
@@ -1397,7 +2565,7 @@
         "conflicts_with": [
           {
             "rule": "stripe-typography-light-weight-300-signature-006",
-            "reason": "weight 300 luxury whisper vs weight 800 confident shout — opposite typographic stances"
+            "reason": "extra-bold-default vs whisper-weight-300 — opposite typographic stances"
           }
         ]
       }
@@ -1449,6 +2617,10 @@
           {
             "rule": "claude-color-parchment-canvas-001",
             "reason": "warm-cream canvas vs binary-chrome — opposite chromatic philosophies"
+          },
+          {
+            "rule": "stripe-color-purple-ladder-002",
+            "reason": "chromatic-free chrome vs persistent purple chromatic ladder — opposite chrome strategies"
           }
         ]
       }
@@ -1462,6 +2634,14 @@
           {
             "rule": "figma-color-binary-chrome-001",
             "frequency": 0.8
+          },
+          {
+            "rule": "github-color-dual-chromatic-anchor-002",
+            "frequency": 0.3
+          },
+          {
+            "rule": "github-color-hairline-border-not-shadow-003",
+            "frequency": 0.33
           }
         ],
         "conflicts_with": []
@@ -1481,7 +2661,12 @@
           }
         ],
         "constrains": [],
-        "co_occurs_with": [],
+        "co_occurs_with": [
+          {
+            "rule": "github-components-pill-status-badge-005",
+            "frequency": 0.3
+          }
+        ],
         "conflicts_with": []
       }
     },
@@ -1552,6 +2737,14 @@
           {
             "rule": "figma-typography-variable-microstep-weights-003",
             "frequency": 0.7
+          },
+          {
+            "rule": "github-typography-14px-body-density-001",
+            "frequency": 0.4
+          },
+          {
+            "rule": "github-typography-system-ui-only-004",
+            "frequency": 0.33
           },
           {
             "rule": "linear-app-typography-display-compression-005",
@@ -1635,6 +2828,203 @@
       }
     },
     {
+      "rule_id": "github-anti-pattern-decoration-creep-006",
+      "relations": {
+        "depends_on": [],
+        "constrains": [],
+        "co_occurs_with": [],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "github-color-dual-chromatic-anchor-002",
+      "relations": {
+        "depends_on": [],
+        "constrains": [
+          {
+            "rule": "github-typography-14px-body-density-001"
+          },
+          {
+            "rule": "github-typography-system-ui-only-004"
+          },
+          {
+            "rule": "github-components-pill-status-badge-005"
+          }
+        ],
+        "co_occurs_with": [
+          {
+            "rule": "figma-color-glass-overlay-002",
+            "frequency": 0.3
+          },
+          {
+            "rule": "github-color-hairline-border-not-shadow-003",
+            "frequency": 0.87
+          },
+          {
+            "rule": "linear-app-color-dark-native-001",
+            "frequency": 0.36
+          },
+          {
+            "rule": "linear-app-color-translucent-borders-003",
+            "frequency": 0.3
+          },
+          {
+            "rule": "notion-color-content-tagging-palette-004",
+            "frequency": 0.3
+          },
+          {
+            "rule": "vercel-color-near-black-text-002",
+            "frequency": 0.33
+          }
+        ],
+        "conflicts_with": [
+          {
+            "rule": "linear-app-color-single-chromatic-anchor-002",
+            "reason": "1 vs 2 chromatic anchors — different chromatic budget philosophies"
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "github-color-hairline-border-not-shadow-003",
+      "relations": {
+        "depends_on": [],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "figma-color-glass-overlay-002",
+            "frequency": 0.33
+          },
+          {
+            "rule": "github-color-dual-chromatic-anchor-002",
+            "frequency": 0.87
+          },
+          {
+            "rule": "linear-app-color-dark-native-001",
+            "frequency": 0.4
+          },
+          {
+            "rule": "linear-app-color-single-chromatic-anchor-002",
+            "frequency": 0.3
+          },
+          {
+            "rule": "linear-app-color-translucent-borders-003",
+            "frequency": 0.33
+          },
+          {
+            "rule": "notion-color-content-tagging-palette-004",
+            "frequency": 0.33
+          },
+          {
+            "rule": "vercel-color-functional-only-accents-003",
+            "frequency": 0.33
+          },
+          {
+            "rule": "vercel-color-near-black-text-002",
+            "frequency": 0.47
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "github-components-pill-status-badge-005",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "github-color-dual-chromatic-anchor-002",
+            "reason": "components depends on color foundation (same source: github)"
+          },
+          {
+            "rule": "github-typography-14px-body-density-001",
+            "reason": "components depends on typography foundation (same source: github)"
+          }
+        ],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "figma-components-dashed-focus-outline-008",
+            "frequency": 0.3
+          },
+          {
+            "rule": "linear-app-components-button-near-zero-opacity-006",
+            "frequency": 0.3
+          },
+          {
+            "rule": "notion-components-subtle-card-radius-010",
+            "frequency": 0.3
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "github-typography-14px-body-density-001",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "github-color-dual-chromatic-anchor-002",
+            "reason": "typography depends on color foundation (same source: github)"
+          }
+        ],
+        "constrains": [
+          {
+            "rule": "github-components-pill-status-badge-005"
+          }
+        ],
+        "co_occurs_with": [
+          {
+            "rule": "figma-typography-mono-uppercase-signposts-006",
+            "frequency": 0.4
+          },
+          {
+            "rule": "github-typography-system-ui-only-004",
+            "frequency": 0.77
+          },
+          {
+            "rule": "linear-app-typography-display-compression-005",
+            "frequency": 0.36
+          },
+          {
+            "rule": "linear-app-typography-geometric-sans-with-features-004",
+            "frequency": 0.36
+          },
+          {
+            "rule": "notion-typography-12px-positive-tracking-exception-008",
+            "frequency": 0.3
+          },
+          {
+            "rule": "notion-typography-4-weight-system-007",
+            "frequency": 0.3
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "github-typography-system-ui-only-004",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "github-color-dual-chromatic-anchor-002",
+            "reason": "typography depends on color foundation (same source: github)"
+          }
+        ],
+        "constrains": [],
+        "co_occurs_with": [
+          {
+            "rule": "figma-typography-mono-uppercase-signposts-006",
+            "frequency": 0.33
+          },
+          {
+            "rule": "github-typography-14px-body-density-001",
+            "frequency": 0.77
+          }
+        ],
+        "conflicts_with": []
+      }
+    },
+    {
       "rule_id": "linear-app-anti-pattern-warmth-in-chrome-010",
       "relations": {
         "depends_on": [],
@@ -1667,6 +3057,14 @@
             "frequency": 0.33
           },
           {
+            "rule": "github-color-dual-chromatic-anchor-002",
+            "frequency": 0.36
+          },
+          {
+            "rule": "github-color-hairline-border-not-shadow-003",
+            "frequency": 0.4
+          },
+          {
             "rule": "linear-app-color-single-chromatic-anchor-002",
             "frequency": 0.9
           },
@@ -1685,8 +3083,16 @@
         ],
         "conflicts_with": [
           {
+            "rule": "arc-color-gradient-as-primary-surface-001",
+            "reason": "gradient-canvas vs dark-native — opposite atmosphere strategies"
+          },
+          {
             "rule": "claude-color-parchment-canvas-001",
             "reason": "warm-light canvas vs cool-dark canvas — opposite ambient strategies"
+          },
+          {
+            "rule": "clickhouse-color-neon-on-pure-black-001",
+            "reason": "pure-black + neon vs near-black with cool undertone — opposite dark canvas philosophies"
           },
           {
             "rule": "duolingo-color-dominant-chromatic-001",
@@ -1714,6 +3120,10 @@
         "constrains": [],
         "co_occurs_with": [
           {
+            "rule": "github-color-hairline-border-not-shadow-003",
+            "frequency": 0.3
+          },
+          {
             "rule": "linear-app-color-dark-native-001",
             "frequency": 0.9
           },
@@ -1738,7 +3148,12 @@
             "frequency": 0.36
           }
         ],
-        "conflicts_with": []
+        "conflicts_with": [
+          {
+            "rule": "github-color-dual-chromatic-anchor-002",
+            "reason": "1 vs 2 chromatic anchors — different chromatic budget philosophies"
+          }
+        ]
       }
     },
     {
@@ -1747,6 +3162,18 @@
         "depends_on": [],
         "constrains": [],
         "co_occurs_with": [
+          {
+            "rule": "cal-color-warm-near-black-text-002",
+            "frequency": 0.33
+          },
+          {
+            "rule": "github-color-dual-chromatic-anchor-002",
+            "frequency": 0.3
+          },
+          {
+            "rule": "github-color-hairline-border-not-shadow-003",
+            "frequency": 0.33
+          },
           {
             "rule": "linear-app-color-dark-native-001",
             "frequency": 0.8
@@ -1803,6 +3230,10 @@
         ],
         "constrains": [],
         "co_occurs_with": [
+          {
+            "rule": "github-components-pill-status-badge-005",
+            "frequency": 0.3
+          },
           {
             "rule": "mintlify-components-whisper-borders-008",
             "frequency": 0.47
@@ -1867,6 +3298,10 @@
         ],
         "co_occurs_with": [
           {
+            "rule": "cursor-layout-8base-with-micro-increments-004",
+            "frequency": 0.6
+          },
+          {
             "rule": "vercel-spacing-jump-scale-008",
             "frequency": 0.33
           }
@@ -1886,12 +3321,24 @@
         "constrains": [],
         "co_occurs_with": [
           {
+            "rule": "cal-typography-cal-sans-display-extreme-tight-003",
+            "frequency": 0.4
+          },
+          {
+            "rule": "cursor-typography-display-extreme-negative-tracking-002",
+            "frequency": 0.47
+          },
+          {
             "rule": "figma-typography-mono-uppercase-signposts-006",
             "frequency": 0.3
           },
           {
             "rule": "figma-typography-negative-tracking-everywhere-005",
             "frequency": 0.3
+          },
+          {
+            "rule": "github-typography-14px-body-density-001",
+            "frequency": 0.36
           },
           {
             "rule": "linear-app-typography-geometric-sans-with-features-004",
@@ -1929,12 +3376,20 @@
         ],
         "co_occurs_with": [
           {
+            "rule": "cal-typography-cal-sans-display-extreme-tight-003",
+            "frequency": 0.4
+          },
+          {
             "rule": "figma-typography-mono-uppercase-signposts-006",
             "frequency": 0.3
           },
           {
             "rule": "figma-typography-negative-tracking-everywhere-005",
             "frequency": 0.3
+          },
+          {
+            "rule": "github-typography-14px-body-density-001",
+            "frequency": 0.36
           },
           {
             "rule": "linear-app-typography-display-compression-005",
@@ -1957,7 +3412,12 @@
             "frequency": 0.37
           }
         ],
-        "conflicts_with": []
+        "conflicts_with": [
+          {
+            "rule": "clickhouse-typography-extreme-display-weight-002",
+            "reason": "weight 900 (extreme) vs no_weight_above 590 (restrained) — opposite weight ladders"
+          }
+        ]
       }
     },
     {
@@ -1990,6 +3450,14 @@
         "constrains": [],
         "co_occurs_with": [
           {
+            "rule": "cal-color-pure-grayscale-brand-001",
+            "frequency": 0.3
+          },
+          {
+            "rule": "cal-color-warm-near-black-text-002",
+            "frequency": 0.33
+          },
+          {
             "rule": "mintlify-color-white-canvas-fresh-accent-001",
             "frequency": 0.7
           }
@@ -2003,6 +3471,10 @@
         "depends_on": [],
         "constrains": [],
         "co_occurs_with": [
+          {
+            "rule": "cal-color-warm-near-black-text-002",
+            "frequency": 0.3
+          },
           {
             "rule": "claude-color-warm-near-black-text-003",
             "frequency": 0.33
@@ -2041,6 +3513,14 @@
           }
         ],
         "co_occurs_with": [
+          {
+            "rule": "cal-color-pure-grayscale-brand-001",
+            "frequency": 0.33
+          },
+          {
+            "rule": "cal-color-warm-near-black-text-002",
+            "frequency": 0.36
+          },
           {
             "rule": "mintlify-color-7tier-gray-scale-003",
             "frequency": 0.7
@@ -2172,7 +3652,7 @@
         "constrains": [],
         "co_occurs_with": [
           {
-            "rule": "claude-typography-relaxed-1.60-body-006",
+            "rule": "claude-typography-relaxed-body-line-height-006",
             "frequency": 0.33
           },
           {
@@ -2230,6 +3710,14 @@
         "constrains": [],
         "co_occurs_with": [
           {
+            "rule": "github-color-dual-chromatic-anchor-002",
+            "frequency": 0.3
+          },
+          {
+            "rule": "github-color-hairline-border-not-shadow-003",
+            "frequency": 0.33
+          },
+          {
             "rule": "linear-app-color-single-chromatic-anchor-002",
             "frequency": 0.3
           },
@@ -2263,6 +3751,10 @@
           }
         ],
         "co_occurs_with": [
+          {
+            "rule": "cal-depth-elevation-11-tier-shadow-system-004",
+            "frequency": 0.3
+          },
           {
             "rule": "linear-app-elevation-luminance-stepping-007",
             "frequency": 0.33
@@ -2417,6 +3909,10 @@
         "constrains": [],
         "co_occurs_with": [
           {
+            "rule": "github-components-pill-status-badge-005",
+            "frequency": 0.3
+          },
+          {
             "rule": "linear-app-components-button-near-zero-opacity-006",
             "frequency": 0.6
           },
@@ -2495,6 +3991,14 @@
         "constrains": [],
         "co_occurs_with": [
           {
+            "rule": "cal-typography-cal-sans-display-extreme-tight-003",
+            "frequency": 0.33
+          },
+          {
+            "rule": "github-typography-14px-body-density-001",
+            "frequency": 0.3
+          },
+          {
             "rule": "linear-app-typography-display-compression-005",
             "frequency": 0.33
           },
@@ -2525,6 +4029,14 @@
         ],
         "constrains": [],
         "co_occurs_with": [
+          {
+            "rule": "cal-typography-cal-sans-display-extreme-tight-003",
+            "frequency": 0.33
+          },
+          {
+            "rule": "github-typography-14px-body-density-001",
+            "frequency": 0.3
+          },
           {
             "rule": "linear-app-typography-display-compression-005",
             "frequency": 0.33
@@ -2563,6 +4075,10 @@
           }
         ],
         "co_occurs_with": [
+          {
+            "rule": "cal-typography-cal-sans-display-extreme-tight-003",
+            "frequency": 0.4
+          },
           {
             "rule": "linear-app-typography-geometric-sans-with-features-004",
             "frequency": 0.4
@@ -2628,6 +4144,10 @@
             "frequency": 0.4
           },
           {
+            "rule": "bmw-color-signature-blue-interactive-only-005",
+            "frequency": 0.3
+          },
+          {
             "rule": "stripe-color-navy-purple-foundation-001",
             "frequency": 0.8
           },
@@ -2665,6 +4185,10 @@
         ],
         "co_occurs_with": [
           {
+            "rule": "cohere-color-extreme-chromatic-restraint-001",
+            "frequency": 0.33
+          },
+          {
             "rule": "stripe-color-decorative-only-magenta-ruby-003",
             "frequency": 0.8
           },
@@ -2691,6 +4215,30 @@
             "frequency": 0.4
           },
           {
+            "rule": "binance-color-trading-floor-two-tone-002",
+            "frequency": 0.33
+          },
+          {
+            "rule": "bmw-color-signature-blue-interactive-only-005",
+            "frequency": 0.3
+          },
+          {
+            "rule": "cal-color-warm-near-black-text-002",
+            "frequency": 0.33
+          },
+          {
+            "rule": "cohere-color-extreme-chromatic-restraint-001",
+            "frequency": 0.4
+          },
+          {
+            "rule": "cohere-color-interactive-blue-hover-only-003",
+            "frequency": 0.33
+          },
+          {
+            "rule": "coinbase-color-alternating-light-dark-sections-002",
+            "frequency": 0.3
+          },
+          {
             "rule": "stripe-color-decorative-only-magenta-ruby-003",
             "frequency": 0.73
           },
@@ -2699,7 +4247,12 @@
             "frequency": 0.8
           }
         ],
-        "conflicts_with": []
+        "conflicts_with": [
+          {
+            "rule": "figma-color-binary-chrome-001",
+            "reason": "chromatic-free chrome vs persistent purple chromatic ladder — opposite chrome strategies"
+          }
+        ]
       }
     },
     {
@@ -2729,6 +4282,14 @@
         ],
         "constrains": [],
         "co_occurs_with": [
+          {
+            "rule": "cohere-components-22px-signature-radius-002",
+            "frequency": 0.4
+          },
+          {
+            "rule": "coinbase-components-56px-pill-cta-005",
+            "frequency": 0.3
+          },
           {
             "rule": "stripe-components-dashed-affordance-009",
             "frequency": 0.73
@@ -2764,6 +4325,10 @@
         ],
         "constrains": [],
         "co_occurs_with": [
+          {
+            "rule": "cohere-components-22px-signature-radius-002",
+            "frequency": 0.33
+          },
           {
             "rule": "discord-components-embed-left-border-009",
             "frequency": 0.4
@@ -2837,6 +4402,10 @@
         "constrains": [],
         "co_occurs_with": [
           {
+            "rule": "binance-typography-proprietary-across-levels-003",
+            "frequency": 0.3
+          },
+          {
             "rule": "stripe-typography-progressive-tracking-007",
             "frequency": 0.7
           },
@@ -2848,7 +4417,7 @@
         "conflicts_with": [
           {
             "rule": "duolingo-typography-extra-bold-rounded-display-003",
-            "reason": "weight 300 luxury whisper vs weight 800 confident shout — opposite typographic stances"
+            "reason": "extra-bold-default vs whisper-weight-300 — opposite typographic stances"
           }
         ]
       }
@@ -2864,6 +4433,30 @@
         ],
         "constrains": [],
         "co_occurs_with": [
+          {
+            "rule": "binance-typography-proprietary-across-levels-003",
+            "frequency": 0.33
+          },
+          {
+            "rule": "bmw-typography-single-family-all-sizes-003",
+            "frequency": 0.47
+          },
+          {
+            "rule": "cohere-typography-serif-display-sans-utility-004",
+            "frequency": 0.47
+          },
+          {
+            "rule": "cohere-typography-single-body-weight-with-size-hierarchy-005",
+            "frequency": 0.33
+          },
+          {
+            "rule": "coinbase-typography-extreme-display-hero-004",
+            "frequency": 0.3
+          },
+          {
+            "rule": "coinbase-typography-four-proprietary-family-003",
+            "frequency": 0.3
+          },
           {
             "rule": "stripe-typography-light-weight-300-signature-006",
             "frequency": 0.7
@@ -2895,6 +4488,22 @@
         ],
         "co_occurs_with": [
           {
+            "rule": "binance-typography-proprietary-across-levels-003",
+            "frequency": 0.3
+          },
+          {
+            "rule": "bmw-typography-single-family-all-sizes-003",
+            "frequency": 0.33
+          },
+          {
+            "rule": "cohere-typography-serif-display-sans-utility-004",
+            "frequency": 0.4
+          },
+          {
+            "rule": "cohere-typography-single-body-weight-with-size-hierarchy-005",
+            "frequency": 0.3
+          },
+          {
             "rule": "stripe-typography-light-weight-300-signature-006",
             "frequency": 0.68
           },
@@ -2921,7 +4530,12 @@
         "depends_on": [],
         "constrains": [],
         "co_occurs_with": [],
-        "conflicts_with": []
+        "conflicts_with": [
+          {
+            "rule": "canva-color-purple-blue-gradient-brand-001",
+            "reason": "gradient brand vs no-gradient minimalism — opposite philosophies"
+          }
+        ]
       }
     },
     {
@@ -2958,6 +4572,10 @@
         ],
         "conflicts_with": [
           {
+            "rule": "arc-color-gradient-as-primary-surface-001",
+            "reason": "gradient vs pure white — opposite chromatic philosophies"
+          },
+          {
             "rule": "linear-app-color-dark-native-001",
             "reason": "dark-native canvas vs pure-white canvas — opposite base assumptions"
           }
@@ -2970,6 +4588,10 @@
         "depends_on": [],
         "constrains": [],
         "co_occurs_with": [
+          {
+            "rule": "github-color-hairline-border-not-shadow-003",
+            "frequency": 0.33
+          },
           {
             "rule": "vercel-color-extreme-white-minimalism-001",
             "frequency": 0.9
@@ -2988,6 +4610,14 @@
         "depends_on": [],
         "constrains": [],
         "co_occurs_with": [
+          {
+            "rule": "github-color-dual-chromatic-anchor-002",
+            "frequency": 0.33
+          },
+          {
+            "rule": "github-color-hairline-border-not-shadow-003",
+            "frequency": 0.47
+          },
           {
             "rule": "vercel-color-extreme-white-minimalism-001",
             "frequency": 0.8
@@ -3134,6 +4764,10 @@
         ],
         "co_occurs_with": [
           {
+            "rule": "cursor-layout-8base-with-micro-increments-004",
+            "frequency": 0.33
+          },
+          {
             "rule": "linear-app-spacing-8px-base-with-optical-008",
             "frequency": 0.33
           }
@@ -3162,6 +4796,18 @@
           }
         ],
         "co_occurs_with": [
+          {
+            "rule": "cal-typography-cal-sans-display-extreme-tight-003",
+            "frequency": 0.37
+          },
+          {
+            "rule": "cursor-typography-display-extreme-negative-tracking-002",
+            "frequency": 0.5
+          },
+          {
+            "rule": "cursor-typography-three-voice-system-001",
+            "frequency": 0.33
+          },
           {
             "rule": "linear-app-typography-display-compression-005",
             "frequency": 0.37

@@ -1,0 +1,92 @@
+rules:
+- rule_id: clickhouse-color-neon-on-pure-black-001
+  section: color
+  preconditions:
+    product_type: [developer_tool, infrastructure_saas, ai_tool, b2b_saas]
+    tone: [bold, technical, urgent]
+    kansei: [bold, technical, intense, confident]
+    sd_anchors:
+      warm_to_cold: 0.0
+      ornate_to_minimal: 0.7
+      serious_to_playful: -0.3
+      modern_to_classical: -0.5
+    brand_archetypes: [Magician, Hero]
+  action:
+    base_canvas: pure_black (#000000)
+    accent_role: neon_yellow_green (~70-90° hue, very high saturation, lightness 0.85+)
+    chromatic_count: 1
+    contrast_strategy: extreme_neon_on_black
+    no_warm_dark_undertone: true
+  why:
+    establish: speed-as-visual-intensity
+    avoid: [warm_near_black, cold_blue_dev_tool, decorative_chromatic, low_contrast_neon]
+    balance: visual_intensity ↔ readability
+  emerges_from: [clickhouse]
+  provenance: original
+  confidence: 0.6
+  known_conflicts:
+  - rule: linear-app-color-dark-native-001
+    reason: pure-black + neon vs near-black with cool undertone — opposite dark canvas philosophies
+
+- rule_id: clickhouse-typography-extreme-display-weight-002
+  section: typography
+  preconditions:
+    product_type: [developer_tool, infrastructure_saas, b2b_saas]
+    tone: [bold, technical]
+    kansei: [bold, confident, intense]
+    brand_archetypes: [Magician, Hero]
+  action:
+    display_weight: 900 (Black)
+    display_size_px: 80-96
+    body_weight: 400
+    weight_extremes: [400, 900]
+    no_decorative_serif: true
+  why:
+    establish: typography-as-physical-architectural-presence
+    avoid: [moderate_600_700_weight, decorative_serif, soft_typeface]
+    balance: visual_mass ↔ legibility
+  emerges_from: [clickhouse]
+  provenance: original
+  confidence: 0.55
+  known_conflicts:
+  - rule: linear-app-typography-geometric-sans-with-features-004
+    reason: weight 900 (extreme) vs no_weight_above 590 (restrained) — opposite weight ladders
+
+- rule_id: clickhouse-typography-uppercase-wide-tracking-nav-003
+  section: typography
+  preconditions:
+    product_type: [developer_tool, infrastructure_saas]
+    tone: [technical, authoritative]
+    kansei: [technical, structured, authoritative]
+    brand_archetypes: [Sage, Magician]
+  action:
+    nav_label_case: uppercase
+    nav_letter_spacing_px: 1.0-1.6
+    nav_size_px: 12-13
+    nav_weight: 500-600
+  why:
+    establish: nav-as-system-flag-not-marketing-link
+    avoid: [lowercase_nav, tight_tracking_nav, decorative_nav_style]
+    balance: technical_authority ↔ readability
+  emerges_from: [clickhouse]
+  provenance: original
+  confidence: 0.55
+
+- rule_id: clickhouse-color-secondary-cta-forest-green-004
+  section: color
+  preconditions:
+    product_type: [developer_tool, infrastructure_saas, b2b_saas]
+    tone: [confident, technical]
+    kansei: [structured, confident]
+    brand_archetypes: [Magician, Hero]
+  action:
+    secondary_cta_hue: ~140 (forest_green)
+    secondary_cta_lightness: 0.20-0.30
+    role: action_hierarchy_depth_without_competing_with_neon
+  why:
+    establish: action-hierarchy-without-chromatic-competition
+    avoid: [single_cta_indecision, multiple_competing_chromatics]
+    balance: action_clarity ↔ chromatic_economy
+  emerges_from: [clickhouse]
+  provenance: original
+  confidence: 0.5

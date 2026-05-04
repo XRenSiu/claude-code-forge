@@ -121,7 +121,7 @@ rules:
   provenance: original
   confidence: 0.7
   known_conflicts:
-  - rule: stripe-typography-light-weight-300-signature
+  - rule: stripe-typography-light-weight-300-signature-006
     reason: extra-bold-default vs whisper-weight-300 — opposite typographic stances
 - rule_id: duolingo-components-tactile-press-button-004
   section: components

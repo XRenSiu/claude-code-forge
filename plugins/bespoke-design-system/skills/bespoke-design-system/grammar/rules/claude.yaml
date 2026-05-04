@@ -173,7 +173,7 @@ rules:
   - claude
   provenance: original
   confidence: 0.7
-- rule_id: claude-typography-relaxed-1.60-body-006
+- rule_id: claude-typography-relaxed-body-line-height-006
   section: typography
   preconditions:
     product_type:

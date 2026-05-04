@@ -1,0 +1,107 @@
+rules:
+- rule_id: cursor-typography-three-voice-system-001
+  section: typography
+  preconditions:
+    product_type: [developer_tool, ai_tool, creator_tool]
+    tone: [refined, expressive, technical]
+    kansei: [structured, precise, expressive, refined]
+    brand_archetypes: [Sage, Magician]
+  action:
+    family_count: 3
+    display_family: gothic_geometric_sans (e.g., CursorGothic)
+    body_family: serif_with_swash_alternates (e.g., jjannon)
+    code_family: refined_monospace (e.g., berkeleyMono)
+    role_separation: display_engineering / body_literary / code_editing
+  why:
+    establish: typography-as-product-philosophy-visualization
+    avoid: [generic_inter_default, single_family_flatness, decorative_serif_misuse]
+    balance: typographic_richness ↔ legibility_unity
+  emerges_from: [cursor]
+  provenance: original
+  confidence: 0.65
+
+- rule_id: cursor-typography-display-extreme-negative-tracking-002
+  section: typography
+  preconditions:
+    product_type: [developer_tool, ai_tool]
+    tone: [refined, technical, urgent]
+    kansei: [precise, structured, confident]
+    sd_anchors:
+      ornate_to_minimal: 0.7
+      modern_to_classical: -0.3
+    brand_archetypes: [Sage, Magician]
+  action:
+    tracking_at_72px: -2.16px (or -0.030em)
+    tracking_at_36px: -0.72px (or -0.020em)
+    tracking_curve: progressively_relaxing_to_normal_at_body
+  why:
+    establish: minified-engineered-display-quality
+    avoid: [advertising_loose_tracking, uniform_tracking_at_body]
+    balance: density ↔ legibility_at_small_sizes
+  emerges_from: [cursor]
+  provenance: original
+  confidence: 0.6
+
+- rule_id: cursor-color-warm-dark-with-orange-accent-003
+  section: color
+  preconditions:
+    product_type: [developer_tool, ai_tool, creator_tool]
+    tone: [refined, warm, technical]
+    kansei: [warm, refined, technical]
+    sd_anchors:
+      warm_to_cold: -0.3
+      ornate_to_minimal: 0.5
+    brand_archetypes: [Sage, Magician]
+  action:
+    primary_text_color_hue: warm_yellow_undertone (~30-50°)
+    primary_text_lightness: 0.10-0.15
+    accent_color_role: CTA + link + brand_moment_only
+    accent_hue: warm_orange_red (~10-25°)
+    accent_saturation: 0.7-0.9
+    no_chromatic_decoration: true
+  why:
+    establish: editor-as-parchment-not-screen
+    avoid: [pure_black_plastic, cold_blue_undertone, decorative_orange]
+    balance: warmth ↔ technical_clarity
+  emerges_from: [cursor]
+  provenance: original
+  confidence: 0.65
+
+- rule_id: cursor-layout-8base-with-micro-increments-004
+  section: layout
+  preconditions:
+    product_type: [developer_tool, ai_tool]
+    tone: [refined, technical]
+    kansei: [precise, structured]
+    brand_archetypes: [Sage, Creator]
+  action:
+    base_unit: 8
+    micro_scale: [1.5, 2, 2.5, 3, 4, 5, 6]
+    macro_scale: [8, 12, 16, 24, 32, 48, 64]
+    micro_use: optical_refinement_only
+  why:
+    establish: pixel-precision-within-8-rhythm
+    avoid: [rigid_pure_8_multiples, decorative_micro_spacing]
+    balance: rhythmic_consistency ↔ optical_finesse
+  emerges_from: [cursor]
+  provenance: original
+  confidence: 0.6
+
+- rule_id: cursor-components-extreme-pill-radius-005
+  section: components
+  preconditions:
+    product_type: [developer_tool, ai_tool, creator_tool]
+    tone: [confident, refined]
+    kansei: [confident, modern, expressive]
+    brand_archetypes: [Magician, Creator]
+  action:
+    pill_radius_strategy: extreme_full_pill (effectively infinite)
+    pill_radius_px: 9999_or_higher
+    use_for: [tags, pills, chips, cta_buttons]
+  why:
+    establish: pill-as-brand-signature
+    avoid: [medium_radius_indecision, sub_8px_too_sharp]
+    balance: visual_confidence ↔ chrome_consistency
+  emerges_from: [cursor]
+  provenance: original
+  confidence: 0.55

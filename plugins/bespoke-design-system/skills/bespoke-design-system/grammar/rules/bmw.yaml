@@ -1,0 +1,133 @@
+rules:
+- rule_id: bmw-typography-light-weight-display-001
+  section: typography
+  preconditions:
+    product_type: [luxury_brand_site, automotive, brand_marketing_site]
+    tone: [refined, authoritative, restrained]
+    kansei: [refined, authoritative, restrained, sophisticated]
+    sd_anchors:
+      warm_to_cold: 0.2
+      ornate_to_minimal: 0.5
+      serious_to_playful: -0.7
+      modern_to_classical: 0.0
+    brand_archetypes: [Ruler, Creator]
+  action:
+    display_weight: 300 (Light)
+    display_size_px: 48-72
+    display_case: uppercase
+    display_letter_spacing: tight_negative_at_large_sizes
+  why:
+    establish: whispered-authority-via-light-weight-display
+    avoid: [bold_700_display, decorative_serif, moderate_500_600_weight]
+    balance: authority ↔ visual_restraint
+  emerges_from: [bmw]
+  provenance: original
+  confidence: 0.55
+
+- rule_id: bmw-typography-extreme-weight-contrast-002
+  section: typography
+  preconditions:
+    product_type: [luxury_brand_site, brand_marketing_site, automotive]
+    tone: [refined, authoritative]
+    kansei: [refined, authoritative, sophisticated]
+    brand_archetypes: [Ruler, Creator]
+  action:
+    weight_extremes: [300, 900]
+    display_weight: 300
+    nav_weight: 900
+    weight_ladder_strategy: extreme_contrast_not_continuous_ladder
+  why:
+    establish: typographic-tension-via-weight-extremes
+    avoid: [continuous_400_500_600_700_ladder, single_weight_flatness]
+    balance: hierarchy_drama ↔ brand_consistency
+  emerges_from: [bmw]
+  provenance: original
+  confidence: 0.5
+
+- rule_id: bmw-typography-single-family-all-sizes-003
+  section: typography
+  preconditions:
+    product_type: [luxury_brand_site, brand_marketing_site, automotive]
+    tone: [refined, restrained]
+    kansei: [refined, structured]
+    brand_archetypes: [Ruler, Creator]
+  action:
+    family_count: 1
+    family_class: proprietary_geometric_sans (e.g., BMWTypeNextLatin)
+    size_range_px: [16, 72]
+    role_unification: display_chrome_body_all_one_family
+  why:
+    establish: unity-through-one-typeface
+    avoid: [multi_family_complexity, decorative_serif_mixin]
+    balance: brand_unity ↔ voice_diversity
+  emerges_from: [bmw]
+  provenance: original
+  confidence: 0.55
+
+- rule_id: bmw-components-zero-radius-rectangular-cta-004
+  section: components
+  preconditions:
+    product_type: [luxury_brand_site, automotive, brand_marketing_site]
+    tone: [refined, authoritative, severe]
+    kansei: [refined, structured, authoritative, severe]
+    brand_archetypes: [Ruler, Creator]
+  action:
+    button_radius_px: 0
+    card_radius_px: 0
+    chrome_radius_strategy: zero_industrial_geometry
+    no_pill_no_curve: true
+  why:
+    establish: industrial-precision-via-angular-geometry
+    avoid: [pill_buttons, friendly_radius_above_8, sub_8_indecision]
+    balance: brand_distinctiveness ↔ standard_affordance
+  emerges_from: [bmw]
+  provenance: original
+  confidence: 0.65
+  known_conflicts:
+  - rule: cursor-components-extreme-pill-radius-005
+    reason: zero radius vs extreme pill — opposite chrome philosophies
+  - rule: binance-components-50px-pill-cta-token-004
+    reason: zero radius vs 50px pill — opposite chrome philosophies
+
+- rule_id: bmw-color-signature-blue-interactive-only-005
+  section: color
+  preconditions:
+    product_type: [luxury_brand_site, automotive, brand_marketing_site]
+    tone: [refined, restrained, authoritative]
+    kansei: [refined, restrained, authoritative]
+    brand_archetypes: [Ruler, Sage]
+  action:
+    brand_chromatic_count: 1
+    brand_hue: ~210 (signature_blue)
+    brand_saturation: 0.65-0.80
+    brand_role: interactive_state_only (focus + active + hover_highlight)
+    no_decorative_blue_use: true
+  why:
+    establish: blue-as-instrument-cluster-highlight
+    avoid: [decorative_blue, multi_color_brand, low_saturation_pastel_blue]
+    balance: brand_signal ↔ chromatic_restraint
+  emerges_from: [bmw]
+  provenance: original
+  confidence: 0.55
+
+- rule_id: bmw-meta-css-variable-multi-brand-theming-006
+  section: anti_patterns
+  preconditions:
+    product_type: [luxury_brand_site, multi_brand_platform]
+    tone: [refined, scalable]
+    kansei: [structured, scalable]
+    brand_archetypes: [Ruler, Creator]
+  action:
+    forbidden:
+    - hardcoded_brand_color_in_components
+    - per_brand_separate_design_system
+    - inline_color_overrides_outside_theme_layer
+    required:
+    - css_variable_driven_theming
+    - context_aware_token_layer
+  why:
+    establish: multi-brand-deployment-via-token-substitution
+    avoid: [hardcoded_brand, fragmented_design_systems]
+  emerges_from: [bmw]
+  provenance: original
+  confidence: 0.5
