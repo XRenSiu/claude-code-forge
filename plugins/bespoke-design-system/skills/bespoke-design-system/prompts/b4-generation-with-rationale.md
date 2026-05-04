@@ -28,13 +28,68 @@
 检查规则 X：
   - 在 B3 自洽子集里？  □ 是  □ 否（→ STOP，禁止使用）
   - 实际 rule_id 字符串完全一致（含 system 前缀和数字后缀）？  □ 是  □ 否（→ STOP）
-  - 该规则的 why.establish / why.avoid / why.balance 字段我能逐字引用？  □ 是  □ 否（→ 改写 original_rationale 直到能引用）
+  - 该规则的 why.establish / why.avoid / why.balance / action 字段我能逐字引用？  □ 是  □ 否（→ 改写 original_rationale 直到能引用）
 ```
 
 **禁止编造启发式**：
 - 不要根据"system X 应该有 Y 类规则"猜 rule_id（即使猜中了也算违规）
 - 不要把范围参数（如 `brand_hue_range: [240, 270]`）压成虚构 scalar 默认值（如 "Linear 默认值 250"）
 - 不要把"我推断 system X 也支持这个原则"写进 source_rules（推断不是继承）
+
+### 闸 1.5（v1.5.1 新增）：original_rationale 必须 verbatim quote 不许 paraphrase
+
+v1.5.0 之后发现的失误：B4 写 `original_rationale` 时把 rule.action 字段 paraphrase
+得太自由，结果偏离了原文意思——例如：
+
+- `notion-components-subtle-card-radius-010.action` 实际是 `card_radius_default_px: 4`（**单值**）
+  → 我把它 paraphrase 成"radius 在 4-8 区间"（**伪造的 range**）
+- `notion-typography-4-weight-system-007.action` 实际是 `weights_used: [400, 500, 600, 700]`（**允许 700**）
+  → 我把它 paraphrase 成"窄 weight ladder, 不靠 700"（**完全相反**）
+
+这都不是 phantom rule_id（rule 真存在），而是 **rule 内容 paraphrase 误读**，
+危害几乎一样大。
+
+**v1.5.1 起强制**：
+
+- `original_rationale` 字段必须包含至少一段 **verbatim quotation** 来自该 rule 的
+  `action` / `why.establish` / `why.avoid` / `why.balance` 字段，格式如下：
+
+  ```yaml
+  original_rationale: |
+    <rule_id>.action 字段（verbatim）：
+      <key1>: <value1>
+      <key2>: <value2>
+    why.establish: <一字不差>
+    why.avoid: <一字不差>
+  ```
+
+- 然后才能用自己话总结这条规则的"意图"——但**总结必须紧贴 verbatim 内容，不许扩张**。
+
+**好榜样**：
+
+```yaml
+original_rationale: |
+  linear-app-color-translucent-borders-003.action 字段（verbatim）：
+    border_strategy: semi-transparent white on dark surfaces
+    border_alpha_range: [0.05, 0.08]
+    avoid_solid_dark_borders_on_dark_bg: true
+  why.avoid: [hard_edge_visual_walls, opaque_borders_on_dark]
+```
+
+**坏榜样**（v1.5.0 真实发生）：
+
+```yaml
+# 错 1：把 single value 4 说成 range 4-8
+original_rationale: |
+  notion-components-subtle-card-radius-010：卡片 radius 在 4-8 区间。
+
+# 错 2：忽略 rule 实际允许 700，把它当成"反对 700"的证据
+original_rationale: |
+  notion-typography-4-weight-system-007 同支持"窄 weight ladder"，不靠 700 砸读者。
+```
+
+如果 verbatim quotation 显示规则**实际不支持**当前决策（如 notion-007 实际允许
+700 for display），**必须从 source_rules 删掉这条引用**——不可硬撑解释。
 
 ### 闸 2：缺锚点时诚实声明 derived_from_brief
 
