@@ -1,5 +1,5 @@
 rules:
-- rule_id: spacex-visual-photographic-exhibition-001
+- rule_id: spacex-components-photographic-exhibition-001
   section: components
   preconditions:
     product_type: [brand_marketing_site, editorial_brand_site, luxury_brand_site]

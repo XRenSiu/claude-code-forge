@@ -3,7 +3,7 @@
   "systems": {
     "agentic": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "archetype_template_stub",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/agentic/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -18,7 +18,7 @@
     },
     "airbnb": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "real_product",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/airbnb/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -33,7 +33,7 @@
     },
     "airtable": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "real_product",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/airtable/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -48,7 +48,7 @@
     },
     "ant": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "archetype_template_stub",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/ant/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -63,7 +63,7 @@
     },
     "apple": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "real_product",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/apple/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -78,7 +78,7 @@
     },
     "application": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "archetype_template_stub",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/application/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -93,7 +93,7 @@
     },
     "arc": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "real_product",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/arc/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -108,7 +108,7 @@
     },
     "artistic": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "archetype_template_stub",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/artistic/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -123,7 +123,7 @@
     },
     "bento": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "archetype_template_stub",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/bento/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -138,7 +138,7 @@
     },
     "binance": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "real_product",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/binance/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -153,7 +153,7 @@
     },
     "bmw": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "real_product",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/bmw/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -168,7 +168,7 @@
     },
     "bold": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "archetype_template_stub",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/bold/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -183,7 +183,7 @@
     },
     "brutalism": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "archetype_template_stub",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/brutalism/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -198,7 +198,7 @@
     },
     "bugatti": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "real_product",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/bugatti/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -213,7 +213,7 @@
     },
     "cafe": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "archetype_template_stub",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/cafe/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -228,7 +228,7 @@
     },
     "cal": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "real_product",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/cal/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -243,7 +243,7 @@
     },
     "canva": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "real_product",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/canva/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -258,7 +258,7 @@
     },
     "claude": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "real_product",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/claude/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -273,7 +273,7 @@
     },
     "clay": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "real_product",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/clay/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -288,7 +288,7 @@
     },
     "claymorphism": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "archetype_template_stub",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/claymorphism/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -303,7 +303,7 @@
     },
     "clean": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "archetype_template_stub",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/clean/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -318,7 +318,7 @@
     },
     "clickhouse": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "real_product",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/clickhouse/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -333,7 +333,7 @@
     },
     "cohere": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "real_product",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/cohere/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -348,7 +348,7 @@
     },
     "coinbase": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "real_product",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/coinbase/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -363,7 +363,7 @@
     },
     "colorful": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "archetype_template_stub",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/colorful/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -378,7 +378,7 @@
     },
     "composio": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "real_product",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/composio/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -393,7 +393,7 @@
     },
     "contemporary": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "archetype_template_stub",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/contemporary/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -408,7 +408,7 @@
     },
     "corporate": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "archetype_template_stub",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/corporate/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -423,7 +423,7 @@
     },
     "cosmic": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "archetype_template_stub",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/cosmic/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -438,7 +438,7 @@
     },
     "creative": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "archetype_template_stub",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/creative/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -453,7 +453,7 @@
     },
     "cursor": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "real_product",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/cursor/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -468,7 +468,7 @@
     },
     "dashboard": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "archetype_template_stub",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/dashboard/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -483,7 +483,7 @@
     },
     "default": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "real_product",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/default/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -498,7 +498,7 @@
     },
     "discord": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "real_product",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/discord/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -513,7 +513,7 @@
     },
     "dithered": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "archetype_template_stub",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/dithered/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -528,7 +528,7 @@
     },
     "doodle": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "archetype_template_stub",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/doodle/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -543,7 +543,7 @@
     },
     "dramatic": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "archetype_template_stub",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/dramatic/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -558,7 +558,7 @@
     },
     "duolingo": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "real_product",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/duolingo/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -573,7 +573,7 @@
     },
     "editorial": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "archetype_template_stub",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/editorial/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -588,7 +588,7 @@
     },
     "elegant": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "archetype_template_stub",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/elegant/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -603,7 +603,7 @@
     },
     "elevenlabs": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "real_product",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/elevenlabs/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -618,7 +618,7 @@
     },
     "energetic": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "archetype_template_stub",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/energetic/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -633,7 +633,7 @@
     },
     "enterprise": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "archetype_template_stub",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/enterprise/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -648,7 +648,7 @@
     },
     "expo": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "real_product",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/expo/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -663,7 +663,7 @@
     },
     "expressive": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "archetype_template_stub",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/expressive/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -678,7 +678,7 @@
     },
     "fantasy": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "archetype_template_stub",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/fantasy/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -693,7 +693,7 @@
     },
     "ferrari": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "real_product",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/ferrari/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -708,7 +708,7 @@
     },
     "figma": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "real_product",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/figma/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -723,7 +723,7 @@
     },
     "flat": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "archetype_template_stub",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/flat/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -738,7 +738,7 @@
     },
     "framer": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "real_product",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/framer/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -753,7 +753,7 @@
     },
     "friendly": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "archetype_template_stub",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/friendly/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -768,7 +768,7 @@
     },
     "futuristic": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "archetype_template_stub",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/futuristic/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -783,7 +783,7 @@
     },
     "github": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "real_product",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/github/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -798,7 +798,7 @@
     },
     "glassmorphism": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "archetype_template_stub",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/glassmorphism/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -813,7 +813,7 @@
     },
     "gradient": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "archetype_template_stub",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/gradient/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -828,7 +828,7 @@
     },
     "hashicorp": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "real_product",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/hashicorp/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -843,7 +843,7 @@
     },
     "huggingface": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "real_product",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/huggingface/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -858,7 +858,7 @@
     },
     "ibm": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "real_product",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/ibm/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -873,7 +873,7 @@
     },
     "intercom": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "real_product",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/intercom/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -888,7 +888,7 @@
     },
     "kami": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "real_product",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/kami/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -903,7 +903,7 @@
     },
     "kraken": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "real_product",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/kraken/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -918,7 +918,7 @@
     },
     "lamborghini": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "real_product",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/lamborghini/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -933,7 +933,7 @@
     },
     "levels": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "archetype_template_stub",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/levels/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -948,7 +948,7 @@
     },
     "linear-app": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "real_product",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/linear-app/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -963,7 +963,7 @@
     },
     "lingo": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "archetype_template_stub",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/lingo/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -978,7 +978,7 @@
     },
     "lovable": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "real_product",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/lovable/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -993,7 +993,7 @@
     },
     "luxury": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "archetype_template_stub",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/luxury/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -1008,7 +1008,7 @@
     },
     "mastercard": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "real_product",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/mastercard/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -1023,7 +1023,7 @@
     },
     "material": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "archetype_template_stub",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/material/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -1038,7 +1038,7 @@
     },
     "meta": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "real_product",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/meta/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -1053,7 +1053,7 @@
     },
     "minimal": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "archetype_template_stub",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/minimal/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -1068,7 +1068,7 @@
     },
     "minimax": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "real_product",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/minimax/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -1083,7 +1083,7 @@
     },
     "mintlify": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "real_product",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/mintlify/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -1098,7 +1098,7 @@
     },
     "miro": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "real_product",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/miro/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -1113,7 +1113,7 @@
     },
     "mistral-ai": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "real_product",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/mistral-ai/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -1128,7 +1128,7 @@
     },
     "modern": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "archetype_template_stub",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/modern/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -1143,7 +1143,7 @@
     },
     "mongodb": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "real_product",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/mongodb/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -1158,7 +1158,7 @@
     },
     "mono": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "archetype_template_stub",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/mono/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -1173,7 +1173,7 @@
     },
     "neobrutalism": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "archetype_template_stub",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/neobrutalism/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -1188,7 +1188,7 @@
     },
     "neon": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "archetype_template_stub",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/neon/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -1203,7 +1203,7 @@
     },
     "neumorphism": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "archetype_template_stub",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/neumorphism/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -1218,7 +1218,7 @@
     },
     "nike": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "real_product",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/nike/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -1233,7 +1233,7 @@
     },
     "notion": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "real_product",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/notion/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -1248,7 +1248,7 @@
     },
     "nvidia": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "real_product",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/nvidia/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -1263,7 +1263,7 @@
     },
     "ollama": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "real_product",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/ollama/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -1278,7 +1278,7 @@
     },
     "openai": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "real_product",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/openai/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -1293,7 +1293,7 @@
     },
     "opencode-ai": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "real_product",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/opencode-ai/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -1308,7 +1308,7 @@
     },
     "pacman": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "archetype_template_stub",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/pacman/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -1323,7 +1323,7 @@
     },
     "paper": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "archetype_template_stub",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/paper/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -1338,7 +1338,7 @@
     },
     "perspective": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "archetype_template_stub",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/perspective/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -1353,7 +1353,7 @@
     },
     "pinterest": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "real_product",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/pinterest/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -1368,7 +1368,7 @@
     },
     "playstation": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "real_product",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/playstation/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -1383,7 +1383,7 @@
     },
     "posthog": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "real_product",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/posthog/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -1398,7 +1398,7 @@
     },
     "premium": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "archetype_template_stub",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/premium/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -1413,7 +1413,7 @@
     },
     "professional": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "archetype_template_stub",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/professional/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -1428,7 +1428,7 @@
     },
     "publication": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "archetype_template_stub",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/publication/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -1443,7 +1443,7 @@
     },
     "raycast": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "real_product",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/raycast/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -1458,7 +1458,7 @@
     },
     "refined": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "archetype_template_stub",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/refined/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -1473,7 +1473,7 @@
     },
     "renault": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "real_product",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/renault/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -1488,7 +1488,7 @@
     },
     "replicate": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "real_product",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/replicate/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -1503,7 +1503,7 @@
     },
     "resend": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "real_product",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/resend/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -1518,7 +1518,7 @@
     },
     "retro": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "archetype_template_stub",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/retro/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -1533,7 +1533,7 @@
     },
     "revolut": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "real_product",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/revolut/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -1548,7 +1548,7 @@
     },
     "runwayml": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "real_product",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/runwayml/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -1563,7 +1563,7 @@
     },
     "sanity": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "real_product",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/sanity/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -1578,7 +1578,7 @@
     },
     "sentry": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "real_product",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/sentry/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -1593,7 +1593,7 @@
     },
     "shadcn": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "archetype_template_stub",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/shadcn/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -1608,7 +1608,7 @@
     },
     "shopify": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "real_product",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/shopify/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -1623,7 +1623,7 @@
     },
     "simple": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "archetype_template_stub",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/simple/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -1638,7 +1638,7 @@
     },
     "skeumorphism": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "archetype_template_stub",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/skeumorphism/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -1653,7 +1653,7 @@
     },
     "sleek": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "archetype_template_stub",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/sleek/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -1668,7 +1668,7 @@
     },
     "spacex": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "real_product",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/spacex/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -1683,7 +1683,7 @@
     },
     "spacious": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "archetype_template_stub",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/spacious/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -1698,7 +1698,7 @@
     },
     "spotify": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "real_product",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/spotify/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -1713,7 +1713,7 @@
     },
     "starbucks": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "real_product",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/starbucks/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -1728,7 +1728,7 @@
     },
     "storytelling": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "archetype_template_stub",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/storytelling/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -1743,7 +1743,7 @@
     },
     "stripe": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "real_product",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/stripe/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -1758,7 +1758,7 @@
     },
     "supabase": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "real_product",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/supabase/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -1773,7 +1773,7 @@
     },
     "superhuman": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "real_product",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/superhuman/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -1788,7 +1788,7 @@
     },
     "tesla": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "real_product",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/tesla/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -1803,7 +1803,7 @@
     },
     "tetris": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "archetype_template_stub",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/tetris/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -1818,7 +1818,7 @@
     },
     "theverge": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "real_product",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/theverge/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -1833,7 +1833,7 @@
     },
     "together-ai": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "real_product",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/together-ai/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -1848,7 +1848,7 @@
     },
     "uber": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "real_product",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/uber/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -1863,7 +1863,7 @@
     },
     "vercel": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "real_product",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/vercel/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -1878,7 +1878,7 @@
     },
     "vibrant": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "archetype_template_stub",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/vibrant/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -1893,7 +1893,7 @@
     },
     "vintage": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "archetype_template_stub",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/vintage/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -1908,7 +1908,7 @@
     },
     "vodafone": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "real_product",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/vodafone/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -1923,7 +1923,7 @@
     },
     "voltagent": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "real_product",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/voltagent/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -1938,7 +1938,7 @@
     },
     "warm-editorial": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "real_product",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/warm-editorial/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -1953,7 +1953,7 @@
     },
     "warp": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "real_product",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/warp/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -1968,7 +1968,7 @@
     },
     "webflow": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "real_product",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/webflow/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -1983,7 +1983,7 @@
     },
     "wired": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "real_product",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/wired/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -1998,7 +1998,7 @@
     },
     "wise": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "real_product",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/wise/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -2013,7 +2013,7 @@
     },
     "x-ai": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "real_product",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/x-ai/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -2028,7 +2028,7 @@
     },
     "xiaohongshu": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "real_product",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/xiaohongshu/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",
@@ -2043,7 +2043,7 @@
     },
     "zapier": {
       "added_at": "2026-05-03T13:28:20.478050Z",
-      "source_type": "open_source",
+      "source_type": "real_product",
       "source_url": "https://github.com/nexu-io/open-design/blob/main/design-systems/zapier/DESIGN.md",
       "license": "see open-design repo",
       "commercial_use": "permitted",

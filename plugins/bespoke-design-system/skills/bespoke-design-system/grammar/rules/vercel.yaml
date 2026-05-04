@@ -141,7 +141,7 @@ rules:
   provenance: original
   confidence: 0.7
 - rule_id: vercel-elevation-shadow-as-border-005
-  section: components
+  section: depth_elevation
   preconditions:
     product_type:
     - developer_tool
@@ -173,7 +173,7 @@ rules:
   provenance: original
   confidence: 0.65
 - rule_id: vercel-elevation-multi-layer-shadow-stack-006
-  section: components
+  section: depth_elevation
   preconditions:
     product_type:
     - developer_tool
@@ -297,7 +297,6 @@ rules:
     - confident
     brand_archetypes:
     - Sage
-    - Magician
   action:
     voice_personality: infrastructure_made_invisible
     cta_verbs:
@@ -345,4 +344,4 @@ rules:
   emerges_from:
   - vercel
   provenance: original
-  confidence: 0.8
+  confidence: 0.65

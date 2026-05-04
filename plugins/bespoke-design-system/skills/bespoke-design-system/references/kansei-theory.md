@@ -149,6 +149,46 @@ B3 的 conflicts_with 关系图判断时使用此表。
 
 ---
 
+## Vocab 扩充流程（v1.7.0 — F2 治理）
+
+> 历史 issue：v1.6.0 batch 3 期间，作者直接在写规则的同时把没在 vocab 的词加进了
+> kansei-theory.md（如 `spacious`, `clean`），无审批。这让 controlled vocabulary
+> 失去 controlled 含义——任何人想用什么词都能现场加。本节定治理流程。
+
+### 何时可以加词
+
+满足**全部**才能加：
+
+1. **至少 3 个独立 system 的 rule 想用此词**——单 system 的需求改用既有词的组合
+2. **既有词都不够准**——先尝试既有词组合（`refined + restrained`、`structured + dense`）；只有当组合也表达不准时才扩 vocab
+3. **加入后能描述一个 SD 维度位置或一个反义对**——纯装饰性的"漂亮词"不收
+4. **不与既有词同义**——`approachable` ≈ `friendly + inviting`，不该单独入 vocab
+
+### 加词必走的步骤
+
+1. 在本文档 PR 里加该词到表格，**同时**列出：
+   - 关联设计倾向（必填，至少一句具体参数描述）
+   - 关联的 SD 维度（如已知）
+   - 反义词（用于冲突检测）
+   - 至少 2 个使用该词的现有 rule_id
+2. 跑 `python3 tools/validate_rules.py --strict-vocab` 确认没破坏既有 rules
+3. 在 commit message 标 `vocab(+<word>)`
+
+### 在 A3/B1 阶段不要现场扩 vocab
+
+写 `grammar/rules/<system>.yaml` 时碰到 validator 警告"kansei 词不在 vocab"：
+
+- ✅ **改用既有词**——这是 v1.7.0 起的默认路径
+- ❌ **不要直接在同一 PR 里加词到 kansei-theory.md** 然后让 validator pass——
+  validator 会通过但 vocab 治理失守了
+
+强制 governance：
+
+- `python3 tools/validate_rules.py --strict-vocab` 把 off-vocab kansei 升级为 blocker
+- CI / pre-commit hook 跑 `--strict-vocab` 模式，同 PR 改 vocab + 用新词会被分开看（vocab change 单独审，rules change 单独审）
+
+---
+
 ## SD 维度（4 个核心轴）
 
 每个轴 [-1, +1] 连续：

@@ -81,7 +81,7 @@ rules:
   emerges_from:
   - linear-app
   provenance: original
-  confidence: 0.75
+  confidence: 0.65
 - rule_id: linear-app-color-translucent-borders-003
   section: color
   preconditions:
@@ -326,7 +326,6 @@ rules:
     - confident
     brand_archetypes:
     - Sage
-    - Creator
   action:
     voice_personality: engineered_not_painted
     cta_style: imperative_short_action_verbs
@@ -371,4 +370,4 @@ rules:
   emerges_from:
   - linear-app
   provenance: original
-  confidence: 0.8
+  confidence: 0.65

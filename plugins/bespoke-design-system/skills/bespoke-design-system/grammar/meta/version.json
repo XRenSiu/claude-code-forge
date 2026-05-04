@@ -1,7 +1,7 @@
 {
-  "rules_version": "0.8.0",
-  "schema_version": "1.1.0",
-  "last_updated": "2026-05-04T03:00:00.000000Z",
+  "rules_version": "0.8.1",
+  "schema_version": "1.2.0",
+  "last_updated": "2026-05-04T04:00:00.000000Z",
   "total_rules": 219,
   "registered_systems": 137,
   "extracted_systems": 32,

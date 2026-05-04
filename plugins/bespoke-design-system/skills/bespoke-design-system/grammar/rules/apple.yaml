@@ -380,6 +380,7 @@ rules:
     brand_archetypes:
     - Creator
     - Magician
+    - Sage
   action:
     forbidden:
     - broad_secondary_accents_competing_with_apple_blue

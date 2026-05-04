@@ -299,8 +299,9 @@ rules:
     - encouraging
     - tactile
     brand_archetypes:
-    - Jester
     - Hero
+    - Jester
+    - Sage
   action:
     forbidden:
     - hairline_borders_below_2px

@@ -357,6 +357,7 @@ rules:
     brand_archetypes:
     - Everyman
     - Jester
+    - Sage
   action:
     forbidden:
     - body_text_below_16px_in_chat

@@ -161,8 +161,62 @@ rebuild_graph.py` 会再次跑完整 validate 作为 preflight。
    写完每条 rule 的 brand_archetypes 后，**回过头自问**："如果这条 rule
    只剩 system 默认 archetype 之一，是否削弱了它？"如果答案是"差不多"，那
    你就在懒标——重新决定。
-5. **Confidence 起步**：单一系统拆解默认 0.5-0.7；后续合并 / 共现会自动调高
-6. 如果你（LLM）观察到这条规则与某已有规则有显然冲突（如 dark canvas vs white canvas），**直接在 rule yaml 加 `known_conflicts`**——A4 阶段会把这些声明吸入图
+5. **Confidence 校准（v1.7.0 具体 rubric — F8）**：
+
+   不要凭手感标 confidence，按下表分档：
+
+   | confidence | 信号 |
+   |---|---|
+   | **0.4-0.5** | DESIGN.md 是 stub / archetype template（< 5KB 且无具体产品引用）；首次抽取 |
+   | **0.5-0.6** | 真实产品 DESIGN.md，但本规则只 emerges_from 单一系统 |
+   | **0.6-0.7** | 同 product_type 的 2 个系统呈现同模式（merge 调高） |
+   | **0.7-0.8** | 3+ 系统证实模式 + co_occurrence 频率 ≥ 0.6（A4 自动检测） |
+   | **0.8+** | 5+ 系统 + 跨 product_type 通用模式（行业共识级） |
+
+   **首次抽取的 rule 不能 ≥ 0.7**——因为还没机会证实多系统。validator
+   `--strict` 会把 confidence > 0.7 但 emerges_from 只有 1 项的当 warning。
+
+6. **Verbatim DESIGN.md 引用（v1.7.0 — F9）**：
+
+   每条 rationale.md 里的 decision 段落**必须**包含至少一处对原 DESIGN.md
+   的 verbatim 引用（用 markdown blockquote `>` 或代码块），让下游 B4
+   inheritance.original_rationale 能 trace 回真实的设计师论述。
+
+   **对的**：
+   ```markdown
+   ### decision: 4-tier near-black canvas
+
+   原 DESIGN.md 段落（verbatim）：
+   > Spotify's web interface is a dark, immersive music player that wraps
+   > listeners in a near-black cocoon (`#121212`, `#181818`, `#1f1f1f`)
+   > where album art and content become the primary source of color.
+
+   - **trade_off**: ...
+   - **intent**: ...
+   - **avoid**: ...
+   ```
+
+   **不对**：
+   ```markdown
+   ### decision: 4-tier near-black canvas
+   - **trade_off**: 单一深色 canvas 一致 ↔ 多层细微 lightness 深度信号
+   ...
+   ```
+   （没有 DESIGN.md verbatim 引用 → B4 引用时只能 paraphrase 的 paraphrase，
+   v1.5.1 闸 1.5 的对称问题在 A2 已经发生）
+
+7. 如果你（LLM）观察到这条规则与某已有规则有显然冲突（如 dark canvas vs white canvas），**直接在 rule yaml 加 `known_conflicts`**——A4 阶段会把这些声明吸入图
+
+8. **YAML pitfalls 预警（v1.7.0 — F1）**：
+
+   LLM 写 yaml 时容易踩这几类语法陷阱，写完跑 `python3 tools/validate_rules.py`
+   一定能抓出，但 **A3 阶段提前避开**省去 round-trip：
+
+   - **括号在 unquoted scalar 后**：`neutral_hue_range: [50, 80] (olive_warmth)` 会炸——括号让 yaml 期望 mapping 而不是 scalar。**改**：整体加单引号：`'[50, 80] (olive_warmth)'`
+   - **冒号在 unquoted 字符串里**：`reason: 5:1 contrast ratio` 会让 yaml 把 `5` 当 key、`1 contrast ratio` 当 value。**改**：`reason: '5:1 contrast ratio'`
+   - **以特殊字符开头的字符串**：`- "适度透明" 是核心铁律：xxx`——开头双引号让 yaml 期望 quoted scalar，遇到 closing 后跟内容会炸。**改**：用单引号包整个，或转义内层引号
+   - **多行字符串无 `|` / `>`**：长 reason 跨多行直接换行会被并入下一字段。**改**：用 `reason: |` 或 `reason: >` 块标量
+   - **数字以 0 开头**：`opacity: 0.05` OK，但 `version: 0.5.0` 写成 `version: 0.5` 会被 parse 成 float。**改**：`version: '0.5.0'`
 
 **质量检查**：
 - [ ] 每条规则有完整 preconditions（product_type / kansei / **brand_archetypes** 都不为空）

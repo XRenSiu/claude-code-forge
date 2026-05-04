@@ -92,21 +92,81 @@ def _archetype_list() -> str:
     return text[:5000] if text else '(brand-archetypes.md not found)'
 
 
-def _peer_examples(peer_system: str | None, this_system: str) -> tuple[str, str]:
-    """Find a peer system's rationale + rules to use as format examples (NOT content templates)."""
+def _detect_category(system_name: str) -> str | None:
+    """Read DESIGN.md `> Category: <X>` line for the system, return normalized category."""
+    design_md = os.path.join(SKILL_ROOT, 'source-design-systems', system_name, 'DESIGN.md')
+    if not os.path.isfile(design_md):
+        return None
+    try:
+        with open(design_md) as f:
+            text = f.read(2000)
+    except Exception:
+        return None
+    m = re.search(r'^>\s*Category:\s*([^\n]+)', text, re.MULTILINE)
+    if m:
+        return m.group(1).strip().lower()
+    return None
+
+
+def _detect_archetypes_for_system(system_name: str) -> set[str]:
+    """If the system already has rules.yaml, harvest the most common
+    brand_archetypes. Else infer from category. Used to find semantic peer."""
+    rules_path = os.path.join(SKILL_ROOT, 'grammar', 'rules', f'{system_name}.yaml')
+    if os.path.isfile(rules_path):
+        try:
+            import yaml
+            d = yaml.safe_load(open(rules_path))
+            if d and 'rules' in d:
+                from collections import Counter
+                archs = Counter()
+                for r in d['rules']:
+                    for a in (r.get('preconditions',{}) or {}).get('brand_archetypes',[]) or []:
+                        archs[a] += 1
+                return set(a for a,_ in archs.most_common(3))
+        except Exception:
+            pass
+    return set()
+
+
+def _peer_examples(peer_system: str | None, this_system: str) -> tuple[str, str, str]:
+    """Find a peer system's rationale + rules to use as format examples (NOT content templates).
+
+    v1.7.0 F4 fix: peer selection is now semantic (same category + closest archetype overlap),
+    not alphabetical. Falls back to alphabetical only when no semantic match exists."""
+    selection_reason = ''
     if peer_system is None:
-        # Pick a peer with rules already extracted
+        # Discover candidates with extracted rules
         rules_dir = os.path.join(SKILL_ROOT, 'grammar', 'rules')
         candidates = [f.replace('.yaml', '') for f in sorted(os.listdir(rules_dir))
-                      if f.endswith('.yaml') and not f.startswith('_')]
+                      if f.endswith('.yaml') and not f.startswith('_') and not f.startswith('.')]
         candidates = [c for c in candidates if c != this_system]
-        peer_system = candidates[0] if candidates else None
+        if candidates:
+            # Try semantic match: same DESIGN.md Category
+            this_category = _detect_category(this_system)
+            same_cat = [c for c in candidates if _detect_category(c) == this_category] if this_category else []
+            if same_cat:
+                # Among same-category, prefer the one with closest archetype overlap if known
+                this_archs = _detect_archetypes_for_system(this_system)
+                if this_archs:
+                    scored = sorted(same_cat,
+                                     key=lambda c: -len(this_archs & _detect_archetypes_for_system(c)))
+                    peer_system = scored[0]
+                    selection_reason = f'auto-selected by category=`{this_category}` + archetype overlap'
+                else:
+                    peer_system = same_cat[0]
+                    selection_reason = f'auto-selected by category=`{this_category}`'
+            else:
+                peer_system = candidates[0]
+                selection_reason = '(fallback: alphabetical — no category/archetype match found)'
+    else:
+        selection_reason = '(user-specified via --peer)'
     if not peer_system:
-        return '(no peer found — start from blank)', '(no peer found — start from blank)'
+        return '(no peer found — start from blank)', '(no peer found — start from blank)', '(none)'
     rationale_path = os.path.join(SKILL_ROOT, 'grammar', 'rationale', f'{peer_system}.md')
     rules_path = os.path.join(SKILL_ROOT, 'grammar', 'rules', f'{peer_system}.yaml')
     return (_read_text(rationale_path) or '(missing)',
-            _read_text(rules_path) or '(missing)')
+            _read_text(rules_path) or '(missing)',
+            f'{peer_system} ({selection_reason})')
 
 
 def _summarize_tokens(tokens: dict) -> str:
@@ -146,7 +206,7 @@ def assemble_context(system_name: str, peer_system: str | None = None) -> str:
     tokens = _load_json(tokens_path)
     rationale_existing = _read_text(rationale_path) or '(rationale.md not yet written — write A2 first or in tandem with A3)'
     sections = _design_md_sections(system_name)
-    peer_rationale, peer_rules = _peer_examples(peer_system, system_name)
+    peer_rationale, peer_rules, peer_label = _peer_examples(peer_system, system_name)
     kansei = _kansei_vocab()
     archetypes = _archetype_list()
     rule_id_hint = _existing_rule_id_prefix(system_name)
@@ -196,7 +256,7 @@ def assemble_context(system_name: str, peer_system: str | None = None) -> str:
         '',
         rule_id_hint,
         '',
-        '## 6. Format example — peer system rationale',
+        f'## 6. Format example — peer system rationale ({peer_label})',
         '',
         '> Use the **structure** as your template. Do NOT copy content.',
         '',

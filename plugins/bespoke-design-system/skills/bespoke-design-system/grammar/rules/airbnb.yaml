@@ -321,6 +321,7 @@ rules:
     brand_archetypes:
     - Caregiver
     - Lover
+    - Sage
   action:
     forbidden:
     - chrome_chromatic_decoration_competing_with_photos

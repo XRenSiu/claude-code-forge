@@ -1,12 +1,12 @@
 {
   "$schema_description": "Rules relationship graph. Rebuilt by tools/rebuild_graph.py.",
-  "version": "0.7.1",
-  "rebuilt_at": "2026-05-04T02:04:46.923911Z",
+  "version": "0.8.0",
+  "rebuilt_at": "2026-05-04T02:19:01.648972Z",
   "node_count": 219,
   "edge_counts": {
-    "depends_on": 191,
-    "constrains": 191,
-    "co_occurs_with": 264,
+    "depends_on": 188,
+    "constrains": 188,
+    "co_occurs_with": 262,
     "conflicts_with": 25
   },
   "nodes": [
@@ -3666,7 +3666,7 @@
         "co_occurs_with": [
           {
             "rule": "vercel-voice-infrastructure-invisible-009",
-            "frequency": 0.37
+            "frequency": 0.5
           }
         ],
         "conflicts_with": []
@@ -4767,7 +4767,7 @@
         "depends_on": [],
         "constrains": [
           {
-            "rule": "spacex-visual-photographic-exhibition-001"
+            "rule": "spacex-components-photographic-exhibition-001"
           },
           {
             "rule": "spacex-typography-uppercase-wide-tracking-003"
@@ -4781,6 +4781,29 @@
         ],
         "co_occurs_with": [],
         "conflicts_with": []
+      }
+    },
+    {
+      "rule_id": "spacex-components-photographic-exhibition-001",
+      "relations": {
+        "depends_on": [
+          {
+            "rule": "spacex-color-pure-black-with-spectral-white-002",
+            "reason": "components depends on color foundation (same source: spacex)"
+          },
+          {
+            "rule": "spacex-typography-uppercase-wide-tracking-003",
+            "reason": "components depends on typography foundation (same source: spacex)"
+          }
+        ],
+        "constrains": [],
+        "co_occurs_with": [],
+        "conflicts_with": [
+          {
+            "rule": "vercel-elevation-multi-layer-shadow-stack-006",
+            "reason": "A.why.avoid mentions B's establish (cards-feel-built-not-floating)"
+          }
+        ]
       }
     },
     {
@@ -4840,7 +4863,7 @@
         ],
         "constrains": [
           {
-            "rule": "spacex-visual-photographic-exhibition-001"
+            "rule": "spacex-components-photographic-exhibition-001"
           }
         ],
         "co_occurs_with": [
@@ -4861,29 +4884,6 @@
           {
             "rule": "linear-app-typography-display-compression-005",
             "reason": "positive_tracking_uppercase vs aggressive_negative_tracking — opposite tracking philosophies"
-          }
-        ]
-      }
-    },
-    {
-      "rule_id": "spacex-visual-photographic-exhibition-001",
-      "relations": {
-        "depends_on": [
-          {
-            "rule": "spacex-color-pure-black-with-spectral-white-002",
-            "reason": "components depends on color foundation (same source: spacex)"
-          },
-          {
-            "rule": "spacex-typography-uppercase-wide-tracking-003",
-            "reason": "components depends on typography foundation (same source: spacex)"
-          }
-        ],
-        "constrains": [],
-        "co_occurs_with": [],
-        "conflicts_with": [
-          {
-            "rule": "vercel-elevation-multi-layer-shadow-stack-006",
-            "reason": "A.why.avoid mentions B's establish (cards-feel-built-not-floating)"
           }
         ]
       }
@@ -5727,19 +5727,14 @@
           {
             "rule": "vercel-spacing-jump-scale-008",
             "reason": "components depends on layout foundation (same source: vercel)"
-          }
-        ],
-        "constrains": [],
-        "co_occurs_with": [
-          {
-            "rule": "vercel-elevation-multi-layer-shadow-stack-006",
-            "frequency": 0.7
           },
           {
             "rule": "vercel-elevation-shadow-as-border-005",
-            "frequency": 0.7
+            "reason": "components depends on depth_elevation foundation (same source: vercel)"
           }
         ],
+        "constrains": [],
+        "co_occurs_with": [],
         "conflicts_with": [
           {
             "rule": "linear-app-components-button-near-zero-opacity-006",
@@ -5754,23 +5749,11 @@
         "depends_on": [
           {
             "rule": "vercel-color-extreme-white-minimalism-001",
-            "reason": "components depends on color foundation (same source: vercel)"
-          },
-          {
-            "rule": "vercel-typography-geometric-sans-extreme-tracking-004",
-            "reason": "components depends on typography foundation (same source: vercel)"
-          },
-          {
-            "rule": "vercel-spacing-jump-scale-008",
-            "reason": "components depends on layout foundation (same source: vercel)"
+            "reason": "depth_elevation depends on color foundation (same source: vercel)"
           }
         ],
         "constrains": [],
         "co_occurs_with": [
-          {
-            "rule": "vercel-components-dark-pill-cta-007",
-            "frequency": 0.7
-          },
           {
             "rule": "vercel-elevation-shadow-as-border-005",
             "frequency": 1.0
@@ -5782,7 +5765,7 @@
             "reason": "no-shadow-on-dark vs multi-layer-shadow — incompatible philosophies"
           },
           {
-            "rule": "spacex-visual-photographic-exhibition-001",
+            "rule": "spacex-components-photographic-exhibition-001",
             "reason": "A.why.avoid mentions B's establish (cards-feel-built-not-floating)"
           }
         ]
@@ -5794,23 +5777,15 @@
         "depends_on": [
           {
             "rule": "vercel-color-extreme-white-minimalism-001",
-            "reason": "components depends on color foundation (same source: vercel)"
-          },
-          {
-            "rule": "vercel-typography-geometric-sans-extreme-tracking-004",
-            "reason": "components depends on typography foundation (same source: vercel)"
-          },
-          {
-            "rule": "vercel-spacing-jump-scale-008",
-            "reason": "components depends on layout foundation (same source: vercel)"
+            "reason": "depth_elevation depends on color foundation (same source: vercel)"
           }
         ],
-        "constrains": [],
-        "co_occurs_with": [
+        "constrains": [
           {
-            "rule": "vercel-components-dark-pill-cta-007",
-            "frequency": 0.7
-          },
+            "rule": "vercel-components-dark-pill-cta-007"
+          }
+        ],
+        "co_occurs_with": [
           {
             "rule": "vercel-elevation-multi-layer-shadow-stack-006",
             "frequency": 1.0
@@ -5833,12 +5808,6 @@
       "relations": {
         "depends_on": [],
         "constrains": [
-          {
-            "rule": "vercel-elevation-shadow-as-border-005"
-          },
-          {
-            "rule": "vercel-elevation-multi-layer-shadow-stack-006"
-          },
           {
             "rule": "vercel-components-dark-pill-cta-007"
           }
@@ -5866,12 +5835,6 @@
           }
         ],
         "constrains": [
-          {
-            "rule": "vercel-elevation-shadow-as-border-005"
-          },
-          {
-            "rule": "vercel-elevation-multi-layer-shadow-stack-006"
-          },
           {
             "rule": "vercel-components-dark-pill-cta-007"
           }
@@ -5913,7 +5876,7 @@
         "co_occurs_with": [
           {
             "rule": "linear-app-voice-engineered-not-designed-009",
-            "frequency": 0.37
+            "frequency": 0.5
           }
         ],
         "conflicts_with": []

@@ -379,7 +379,6 @@ rules:
     - sophisticated
     brand_archetypes:
     - Sage
-    - Ruler
   action:
     voice_personality: engineering_luxury (engineering paper as luxury magazine)
     avoid_marketing_bro_tone: true

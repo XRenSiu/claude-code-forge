@@ -2,10 +2,22 @@ rules:
 - rule_id: github-typography-14px-body-density-001
   section: typography
   preconditions:
-    product_type: [developer_tool, b2b_saas, productivity_saas]
-    tone: [professional, technical, dense]
-    kansei: [structured, precise, technical, dense]
-    brand_archetypes: [Sage, Creator]
+    product_type:
+    - developer_tool
+    - b2b_saas
+    - productivity_saas
+    tone:
+    - professional
+    - technical
+    - dense
+    kansei:
+    - structured
+    - precise
+    - technical
+    - dense
+    brand_archetypes:
+    - Sage
+    - Creator
   action:
     body_size_px: 14
     line_height_body: 1.5
@@ -13,19 +25,31 @@ rules:
     list_row_padding_min_px: 8
   why:
     establish: information-density-as-brand
-    avoid: [16px_default, large_whitespace, decorative_padding]
+    avoid:
+    - 16px_default
+    - large_whitespace
+    - decorative_padding
     balance: density ↔ readability
-  emerges_from: [github]
+  emerges_from:
+  - github
   provenance: original
   confidence: 0.7
-
 - rule_id: github-color-dual-chromatic-anchor-002
   section: color
   preconditions:
-    product_type: [developer_tool, b2b_saas]
-    tone: [professional, restrained]
-    kansei: [structured, precise, technical]
-    brand_archetypes: [Sage, Creator]
+    product_type:
+    - developer_tool
+    - b2b_saas
+    tone:
+    - professional
+    - restrained
+    kansei:
+    - structured
+    - precise
+    - technical
+    brand_archetypes:
+    - Sage
+    - Creator
   action:
     chromatic_count: 2
     primary_role: brand_blue (#0969da-ish, link/CTA/focus)
@@ -33,80 +57,128 @@ rules:
     no_chromatic_in_decoration: true
   why:
     establish: blue-as-interaction-green-as-success
-    avoid: [multi_chromatic_competing, decorative_brand_color, consumer_saturation]
+    avoid:
+    - multi_chromatic_competing
+    - decorative_brand_color
+    - consumer_saturation
     balance: chromatic_division_of_labor ↔ visual_calm
-  emerges_from: [github]
+  emerges_from:
+  - github
   provenance: original
   confidence: 0.65
   known_conflicts:
   - rule: linear-app-color-single-chromatic-anchor-002
     reason: 1 vs 2 chromatic anchors — different chromatic budget philosophies
-
 - rule_id: github-color-hairline-border-not-shadow-003
   section: color
   preconditions:
-    product_type: [developer_tool, b2b_saas]
-    tone: [professional, technical]
-    kansei: [structured, precise]
-    brand_archetypes: [Sage, Creator]
+    product_type:
+    - developer_tool
+    - b2b_saas
+    tone:
+    - professional
+    - technical
+    kansei:
+    - structured
+    - precise
+    brand_archetypes:
+    - Sage
+    - Creator
   action:
     border_strategy: 1px solid hairline gray
-    border_color_default: "#d0d7de or oklch equivalent"
+    border_color_default: '#d0d7de or oklch equivalent'
     no_drop_shadow_for_panel_separation: true
     panel_separation_via: border_only
   why:
     establish: engineering-precision-via-borders
-    avoid: [soft_shadow_elevation, rounded_floating_cards, visual_softening]
+    avoid:
+    - soft_shadow_elevation
+    - rounded_floating_cards
+    - visual_softening
     balance: definition ↔ visual_calm
-  emerges_from: [github]
+  emerges_from:
+  - github
   provenance: original
   confidence: 0.7
-
 - rule_id: github-typography-system-ui-only-004
   section: typography
   preconditions:
-    product_type: [developer_tool, b2b_saas, productivity_saas]
-    tone: [professional, technical, restrained]
-    kansei: [structured, technical, precise]
-    brand_archetypes: [Sage, Everyman]
+    product_type:
+    - developer_tool
+    - b2b_saas
+    - productivity_saas
+    tone:
+    - professional
+    - technical
+    - restrained
+    kansei:
+    - structured
+    - technical
+    - precise
+    brand_archetypes:
+    - Sage
+    - Everyman
   action:
     family_strategy: system_ui_stack_across_all_chrome
     no_custom_webfont: true
     code_family: ui_monospace_with_sf_mono_fallback
   why:
     establish: voice-of-the-system-youre-already-on
-    avoid: [webfont_load_delay, cross_os_render_inconsistency, decorative_typeface]
+    avoid:
+    - webfont_load_delay
+    - cross_os_render_inconsistency
+    - decorative_typeface
     balance: cross_platform_consistency ↔ brand_distinctiveness
-  emerges_from: [github]
+  emerges_from:
+  - github
   provenance: original
-  confidence: 0.75
-
+  confidence: 0.65
 - rule_id: github-components-pill-status-badge-005
   section: components
   preconditions:
-    product_type: [developer_tool, b2b_saas]
-    tone: [professional, technical]
-    kansei: [structured, precise, technical]
-    brand_archetypes: [Sage, Creator]
+    product_type:
+    - developer_tool
+    - b2b_saas
+    tone:
+    - professional
+    - technical
+    kansei:
+    - structured
+    - precise
+    - technical
+    brand_archetypes:
+    - Sage
+    - Creator
   action:
     badge_shape: pill
     badge_radius_px: 9999
     color_semantics_strong: true
-    use_for: [status, state, role, tier]
+    use_for:
+    - status
+    - state
+    - role
+    - tier
     no_decorative_use: true
   why:
     establish: color-equals-meaning-instant-scan
-    avoid: [decorative_chip, generic_tag_use]
+    avoid:
+    - decorative_chip
+    - generic_tag_use
     balance: semantic_clarity ↔ visual_restraint
-  emerges_from: [github]
+  emerges_from:
+  - github
   provenance: original
   confidence: 0.65
-
 - rule_id: github-anti-pattern-decoration-creep-006
   section: anti_patterns
   preconditions:
-    kansei: [structured, technical, restrained]
-    brand_archetypes: [Sage, Creator]
+    kansei:
+    - structured
+    - technical
+    - restrained
+    brand_archetypes:
+    - Sage
+    - Creator
   action:
     forbidden:
     - 16px_default_body_size
@@ -118,7 +190,10 @@ rules:
     - section_padding_above_64px
   why:
     establish: discipline-of-engineered-density
-    avoid: [consumer_app_drift, marketing_decoration]
-  emerges_from: [github]
+    avoid:
+    - consumer_app_drift
+    - marketing_decoration
+  emerges_from:
+  - github
   provenance: original
   confidence: 0.7

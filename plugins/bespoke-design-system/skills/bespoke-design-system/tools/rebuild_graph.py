@@ -329,6 +329,28 @@ def main():
                 print(f'[preflight] validate_rules: {blockers} BLOCKER(s) found — run `python3 tools/validate_rules.py --all` for details. Aborting rebuild.', file=sys.stderr)
                 sys.exit(3)
             print(f'[preflight] validate_rules: 0 blockers, {warnings} warnings ({len(files)} files)')
+
+            # v1.7.0 F7: also validate rationale.md schema
+            try:
+                from validate_rationale import validate_file as _validate_rationale  # type: ignore
+                rdir = os.path.normpath(os.path.join(here, '..', 'grammar', 'rationale'))
+                rfiles = sorted(_glob.glob(os.path.join(rdir, '*.md')))
+                rblockers = 0
+                rwarnings = 0
+                for fp in rfiles:
+                    if os.path.basename(fp).startswith('.'):
+                        continue
+                    r = _validate_rationale(fp)
+                    rblockers += len(r['blockers'])
+                    rwarnings += len(r['warnings'])
+                if rblockers:
+                    print(f'[preflight] validate_rationale: {rblockers} BLOCKER(s) found — run `python3 tools/validate_rationale.py --all` for details. Aborting rebuild.', file=sys.stderr)
+                    sys.exit(3)
+                print(f'[preflight] validate_rationale: 0 blockers, {rwarnings} warnings ({len(rfiles)} files)')
+            except SystemExit:
+                raise
+            except Exception as e:
+                print(f'[preflight] validate_rationale skipped: {e}')
         except SystemExit:
             raise
         except Exception as e:

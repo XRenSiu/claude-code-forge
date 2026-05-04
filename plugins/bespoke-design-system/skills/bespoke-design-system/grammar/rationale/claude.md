@@ -111,6 +111,9 @@
 ### decision: Section vertical 80-120px (estimated)
 - **trade_off**: dashboard density ↔ magazine spread breathing
 - **intent**: 让每个 section 像 magazine spread——generous chapter pacing
+- **avoid**:
+  - 紧凑 dashboard 节奏（破坏 magazine spread 调性）
+  - section padding < 64px（视觉密度过高）
 
 ## Voice / Brand-implicit
 
