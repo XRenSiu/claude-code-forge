@@ -1,0 +1,1783 @@
+{
+  "self_consistent_subset": {
+    "rules": [
+      {
+        "rule_id": "vercel-voice-infrastructure-invisible-009",
+        "section": "voice",
+        "final_score": 0.6214,
+        "kept_reason": "cluster_main",
+        "system": "vercel",
+        "archetypes": [
+          "Sage"
+        ],
+        "kansei": [
+          "calm",
+          "confident",
+          "precise",
+          "structured"
+        ],
+        "why": {
+          "establish": "presence-through-structure-not-decoration",
+          "avoid": [
+            "marketing_orchestral",
+            "exclamation_heavy_copy"
+          ],
+          "balance": "voice_personality ↔ structural_silence"
+        },
+        "action": {
+          "voice_personality": "infrastructure_made_invisible",
+          "cta_verbs": [
+            "start_deploying",
+            "get_started",
+            "contact_sales"
+          ],
+          "avoid_orchestral": true,
+          "avoid_emoji_in_voice": true
+        },
+        "emerges_from": [
+          "vercel"
+        ]
+      },
+      {
+        "rule_id": "linear-app-color-dark-native-001",
+        "section": "color",
+        "final_score": 0.5214,
+        "kept_reason": "cluster_main",
+        "system": "linear-app",
+        "archetypes": [
+          "Creator",
+          "Sage"
+        ],
+        "kansei": [
+          "calm",
+          "confident",
+          "precise",
+          "structured"
+        ],
+        "why": {
+          "establish": "dark-mode-as-native-medium quality",
+          "avoid": [
+            "generic_dark_theme",
+            "light_theme_inverted",
+            "eye_strain_from_pure_white"
+          ],
+          "balance": "precision ↔ readability"
+        },
+        "action": {
+          "base_canvas": "near-black with imperceptible cool undertone (#08-#10 range)",
+          "surface_strategy": "luminance stepping (canvas -> panel -> elevated, +0.04 lightness per step)",
+          "text_on_dark": "4-tier achromatic (gradient from #f7f8f8 primary to #62666d quaternary)",
+          "max_text_lightness": "0.97 (avoid pure white)"
+        },
+        "emerges_from": [
+          "linear-app"
+        ]
+      },
+      {
+        "rule_id": "linear-app-typography-display-compression-005",
+        "section": "typography",
+        "final_score": 0.4936,
+        "kept_reason": "supplementary",
+        "system": "linear-app",
+        "archetypes": [
+          "Creator",
+          "Sage"
+        ],
+        "kansei": [
+          "confident",
+          "precise",
+          "structured"
+        ],
+        "why": {
+          "establish": "minified-engineered-headline-quality",
+          "avoid": [
+            "loose_advertising_tracking",
+            "uniformly_tight_tracking_at_body_sizes"
+          ],
+          "balance": "density ↔ readability_at_small_sizes"
+        },
+        "action": {
+          "letter_spacing_at_display": "aggressive_negative",
+          "tracking_curve": "scales_with_size_progressively_relaxing",
+          "tracking_at_72px": "-0.022em",
+          "tracking_at_48px": "-0.022em",
+          "tracking_at_32px": "-0.022em",
+          "tracking_at_body": "normal_to_slightly_negative"
+        },
+        "emerges_from": [
+          "linear-app"
+        ]
+      },
+      {
+        "rule_id": "linear-app-color-single-chromatic-anchor-002",
+        "section": "color",
+        "final_score": 0.4936,
+        "kept_reason": "cluster_main",
+        "system": "linear-app",
+        "archetypes": [
+          "Creator",
+          "Sage"
+        ],
+        "kansei": [
+          "calm",
+          "confident",
+          "structured"
+        ],
+        "why": {
+          "establish": "brand-as-attention-anchor",
+          "avoid": [
+            "decorative_brand_color_use",
+            "multiple_chromatic_competing",
+            "medical_pure_blue",
+            "gaming_pure_purple"
+          ],
+          "balance": "brand presence ↔ chromatic restraint"
+        },
+        "action": {
+          "brand_chromatic_count": 1,
+          "brand_hue_range": [
+            240,
+            270
+          ],
+          "brand_saturation": "0.40-0.55",
+          "brand_lightness": "0.55-0.65",
+          "usage_constraint": "only on primary CTA, brand mark, key interactive accents"
+        },
+        "emerges_from": [
+          "linear-app"
+        ]
+      },
+      {
+        "rule_id": "linear-app-voice-engineered-not-designed-009",
+        "section": "voice",
+        "final_score": 0.4786,
+        "kept_reason": "cluster_main",
+        "system": "linear-app",
+        "archetypes": [
+          "Sage"
+        ],
+        "kansei": [
+          "confident",
+          "precise",
+          "structured"
+        ],
+        "why": {
+          "establish": "every-decoration-has-functional-justification",
+          "avoid": [
+            "marketing_orchestral_tone",
+            "designed-by-committee",
+            "decorative_motifs"
+          ],
+          "balance": "clarity ↔ identity"
+        },
+        "action": {
+          "voice_personality": "engineered_not_painted",
+          "cta_style": "imperative_short_action_verbs",
+          "avoid_marketing_orchestral": true
+        },
+        "emerges_from": [
+          "linear-app"
+        ]
+      },
+      {
+        "rule_id": "cursor-typography-display-extreme-negative-tracking-002",
+        "section": "typography",
+        "final_score": 0.4286,
+        "kept_reason": "supplementary",
+        "system": "cursor",
+        "archetypes": [
+          "Magician",
+          "Sage"
+        ],
+        "kansei": [
+          "confident",
+          "precise",
+          "structured"
+        ],
+        "why": {
+          "establish": "minified-engineered-display-quality",
+          "avoid": [
+            "advertising_loose_tracking",
+            "uniform_tracking_at_body"
+          ],
+          "balance": "density ↔ legibility_at_small_sizes"
+        },
+        "action": {
+          "tracking_at_72px": "-2.16px (or -0.030em)",
+          "tracking_at_36px": "-0.72px (or -0.020em)",
+          "tracking_curve": "progressively_relaxing_to_normal_at_body"
+        },
+        "emerges_from": [
+          "cursor"
+        ]
+      },
+      {
+        "rule_id": "linear-app-elevation-luminance-stepping-007",
+        "section": "depth_elevation",
+        "final_score": 0.3557,
+        "kept_reason": "supplementary",
+        "system": "linear-app",
+        "archetypes": [
+          "Creator",
+          "Sage"
+        ],
+        "kansei": [
+          "calm",
+          "structured"
+        ],
+        "why": {
+          "establish": "depth-system-native-to-dark-medium",
+          "avoid": [
+            "invisible_dark_shadows_on_dark",
+            "plastic_floating_cards"
+          ],
+          "balance": "clear_layering ↔ visual_quietness"
+        },
+        "action": {
+          "depth_strategy": "background_luminance_stepping",
+          "no_drop_shadow_on_dark": true,
+          "level_increments_via": "bg_alpha_white +0.02 per step",
+          "use_inset_shadow_for_recessed": "rgba(0,0,0,0.2) 0px 0px 12px 0px inset"
+        },
+        "emerges_from": [
+          "linear-app"
+        ]
+      },
+      {
+        "rule_id": "linear-app-color-translucent-borders-003",
+        "section": "color",
+        "final_score": 0.3557,
+        "kept_reason": "cluster_main",
+        "system": "linear-app",
+        "archetypes": [
+          "Creator",
+          "Sage"
+        ],
+        "kansei": [
+          "calm",
+          "structured"
+        ],
+        "why": {
+          "establish": "structure-without-visual-noise",
+          "avoid": [
+            "hard_edge_visual_walls",
+            "opaque_borders_on_dark"
+          ],
+          "balance": "definition ↔ visual_softness"
+        },
+        "action": {
+          "border_strategy": "semi-transparent white on dark surfaces",
+          "border_alpha_range": [
+            0.05,
+            0.08
+          ],
+          "avoid_solid_dark_borders_on_dark_bg": true
+        },
+        "emerges_from": [
+          "linear-app"
+        ]
+      },
+      {
+        "rule_id": "github-color-hairline-border-not-shadow-003",
+        "section": "color",
+        "final_score": 0.3557,
+        "kept_reason": "supplementary",
+        "system": "github",
+        "archetypes": [
+          "Creator",
+          "Sage"
+        ],
+        "kansei": [
+          "precise",
+          "structured"
+        ],
+        "why": {
+          "establish": "engineering-precision-via-borders",
+          "avoid": [
+            "soft_shadow_elevation",
+            "rounded_floating_cards",
+            "visual_softening"
+          ],
+          "balance": "definition ↔ visual_calm"
+        },
+        "action": {
+          "border_strategy": "1px solid hairline gray",
+          "border_color_default": "#d0d7de or oklch equivalent",
+          "no_drop_shadow_for_panel_separation": true,
+          "panel_separation_via": "border_only"
+        },
+        "emerges_from": [
+          "github"
+        ]
+      },
+      {
+        "rule_id": "linear-app-spacing-8px-base-with-optical-008",
+        "section": "layout",
+        "final_score": 0.3507,
+        "kept_reason": "supplementary",
+        "system": "linear-app",
+        "archetypes": [
+          "Creator",
+          "Sage"
+        ],
+        "kansei": [
+          "precise",
+          "structured"
+        ],
+        "why": {
+          "establish": "mathematical-precision-with-optical-correction",
+          "avoid": [
+            "pure_grid_with_no_optical_correction",
+            "dense_section_packing"
+          ],
+          "balance": "structure ↔ readability"
+        },
+        "action": {
+          "base_unit": 8,
+          "scale": [
+            1,
+            4,
+            7,
+            8,
+            11,
+            12,
+            16,
+            19,
+            20,
+            22,
+            24,
+            28,
+            32,
+            35
+          ],
+          "includes_optical_micro_adjustments": true,
+          "section_vertical_padding_min": 80,
+          "no_explicit_section_dividers": true
+        },
+        "emerges_from": [
+          "linear-app"
+        ]
+      },
+      {
+        "rule_id": "mintlify-typography-three-weight-006",
+        "section": "typography",
+        "final_score": 0.3457,
+        "kept_reason": "supplementary",
+        "system": "mintlify",
+        "archetypes": [
+          "Innocent",
+          "Sage"
+        ],
+        "kansei": [
+          "calm",
+          "structured"
+        ],
+        "why": {
+          "establish": "size-driven-hierarchy",
+          "avoid": [
+            "bold_body_breaking_reading_flow",
+            "weight_explosion"
+          ],
+          "balance": "hierarchy_clarity ↔ reading_calm"
+        },
+        "action": {
+          "weights_used": [
+            400,
+            500,
+            600
+          ],
+          "no_weight_700_in_body": true,
+          "hierarchy_priority": "size_and_tracking_first_weight_secondary"
+        },
+        "emerges_from": [
+          "mintlify"
+        ]
+      },
+      {
+        "rule_id": "mintlify-components-whisper-borders-008",
+        "section": "components",
+        "final_score": 0.3457,
+        "kept_reason": "supplementary",
+        "system": "mintlify",
+        "archetypes": [
+          "Innocent",
+          "Sage"
+        ],
+        "kansei": [
+          "calm",
+          "structured"
+        ],
+        "why": {
+          "establish": "barely-there-separation",
+          "avoid": [
+            "solid_border_visual_weight",
+            "heavy_box_shadow_distraction"
+          ],
+          "balance": "separation_clarity ↔ reading_focus"
+        },
+        "action": {
+          "border_alpha_default": 0.05,
+          "border_alpha_emphasized": 0.08,
+          "shadow_alpha_max": 0.06,
+          "no_heavy_shadows": true
+        },
+        "emerges_from": [
+          "mintlify"
+        ]
+      },
+      {
+        "rule_id": "cursor-layout-8base-with-micro-increments-004",
+        "section": "layout",
+        "final_score": 0.3457,
+        "kept_reason": "supplementary",
+        "system": "cursor",
+        "archetypes": [
+          "Creator",
+          "Sage"
+        ],
+        "kansei": [
+          "precise",
+          "structured"
+        ],
+        "why": {
+          "establish": "pixel-precision-within-8-rhythm",
+          "avoid": [
+            "rigid_pure_8_multiples",
+            "decorative_micro_spacing"
+          ],
+          "balance": "rhythmic_consistency ↔ optical_finesse"
+        },
+        "action": {
+          "base_unit": 8,
+          "micro_scale": [
+            1.5,
+            2,
+            2.5,
+            3,
+            4,
+            5,
+            6
+          ],
+          "macro_scale": [
+            8,
+            12,
+            16,
+            24,
+            32,
+            48,
+            64
+          ],
+          "micro_use": "optical_refinement_only"
+        },
+        "emerges_from": [
+          "cursor"
+        ]
+      },
+      {
+        "rule_id": "mintlify-spacing-generous-sections-009",
+        "section": "spacing",
+        "final_score": 0.3407,
+        "kept_reason": "supplementary",
+        "system": "mintlify",
+        "archetypes": [
+          "Innocent",
+          "Sage"
+        ],
+        "kansei": [
+          "calm",
+          "structured"
+        ],
+        "why": {
+          "establish": "chapter-like-section-rhythm",
+          "avoid": [
+            "tight_dashboard_spacing",
+            "packed_navigation_style"
+          ],
+          "balance": "reading_rhythm ↔ information_density"
+        },
+        "action": {
+          "base_unit": 8,
+          "scale": [
+            4,
+            8,
+            12,
+            16,
+            24,
+            32,
+            48,
+            64,
+            96
+          ],
+          "section_padding_min": 48,
+          "section_padding_max": 96
+        },
+        "emerges_from": [
+          "mintlify"
+        ]
+      },
+      {
+        "rule_id": "linear-app-typography-geometric-sans-with-features-004",
+        "section": "typography",
+        "final_score": 0.32,
+        "kept_reason": "supplementary",
+        "system": "linear-app",
+        "archetypes": [
+          "Creator",
+          "Sage"
+        ],
+        "kansei": [
+          "modern",
+          "precise",
+          "structured"
+        ],
+        "why": {
+          "establish": "typeface-as-engineered-identity",
+          "avoid": [
+            "generic_inter_default",
+            "weight_700_bold_overstatement",
+            "decorative_typefaces"
+          ],
+          "balance": "identity ↔ readability"
+        },
+        "action": {
+          "family_class": "geometric_humanist_sans",
+          "requires_opentype_features": true,
+          "narrow_weight_range": true,
+          "base_weight": 400,
+          "signature_emphasis_weight": 510,
+          "strong_emphasis_weight": 590,
+          "no_weight_above": 590
+        },
+        "emerges_from": [
+          "linear-app"
+        ]
+      },
+      {
+        "rule_id": "vercel-color-functional-only-accents-003",
+        "section": "color",
+        "final_score": 0.32,
+        "kept_reason": "supplementary",
+        "system": "vercel",
+        "archetypes": [
+          "Magician",
+          "Sage"
+        ],
+        "kansei": [
+          "minimal",
+          "precise",
+          "structured"
+        ],
+        "why": {
+          "establish": "color-equals-function",
+          "avoid": [
+            "decorative_color_use",
+            "brand-color-everywhere"
+          ],
+          "balance": "visual_interest ↔ semantic_clarity"
+        },
+        "action": {
+          "chromatic_accent_count": "small_set_with_strict_semantic_role",
+          "accent_usage_rule": "only_in_workflow_or_state_context",
+          "no_decorative_chromatic_use": true
+        },
+        "emerges_from": [
+          "vercel"
+        ]
+      },
+      {
+        "rule_id": "linear-app-anti-pattern-warmth-in-chrome-010",
+        "section": "anti_patterns",
+        "final_score": 0.315,
+        "kept_reason": "supplementary",
+        "system": "linear-app",
+        "archetypes": [
+          "Creator",
+          "Magician",
+          "Sage"
+        ],
+        "kansei": [
+          "calm",
+          "modern",
+          "structured"
+        ],
+        "why": {
+          "establish": "discipline-of-cool-restraint",
+          "avoid": [
+            "aesthetic_drift_into_warm_friendly",
+            "marketing_decoration_creep"
+          ],
+          "balance": "cool_engineered_restraint ↔ warm_friendly_drift"
+        },
+        "action": {
+          "forbidden": [
+            "warm_colors_in_ui_chrome",
+            "decorative_use_of_brand_color",
+            "solid_colored_button_backgrounds",
+            "drop_shadow_for_depth_on_dark",
+            "pure_white_text",
+            "weight_700_bold",
+            "positive_letter_spacing_at_display",
+            "opaque_borders_on_dark_background"
+          ]
+        },
+        "emerges_from": [
+          "linear-app"
+        ]
+      },
+      {
+        "rule_id": "mintlify-typography-inter-tight-display-004",
+        "section": "typography",
+        "final_score": 0.315,
+        "kept_reason": "supplementary",
+        "system": "mintlify",
+        "archetypes": [
+          "Innocent",
+          "Sage"
+        ],
+        "kansei": [
+          "calm",
+          "modern",
+          "structured"
+        ],
+        "why": {
+          "establish": "documentation-heading-compression",
+          "avoid": [
+            "positive_tracking_at_display",
+            "mono_for_prose",
+            "sharp_serif_in_docs"
+          ],
+          "balance": "heading_density ↔ body_readability"
+        },
+        "action": {
+          "primary_family": "humanist_sans (Inter or similar)",
+          "mono_family_for_code_only": true,
+          "mono_strict_separation": true,
+          "letter_spacing_at_40_64px": "-0.8 to -1.28",
+          "letter_spacing_at_16px": "normal"
+        },
+        "emerges_from": [
+          "mintlify"
+        ]
+      },
+      {
+        "rule_id": "vercel-anti-pattern-decoration-creep-010",
+        "section": "anti_patterns",
+        "final_score": 0.315,
+        "kept_reason": "supplementary",
+        "system": "vercel",
+        "archetypes": [
+          "Creator",
+          "Magician",
+          "Sage"
+        ],
+        "kansei": [
+          "minimal",
+          "precise",
+          "structured"
+        ],
+        "why": {
+          "establish": "discipline-of-engineered-minimalism",
+          "avoid": [
+            "aesthetic_pseudo_minimal_drift",
+            "decorative_creep"
+          ],
+          "balance": "engineered_minimalism ↔ decorative_visual_appeal"
+        },
+        "action": {
+          "forbidden": [
+            "warm_colors_in_chrome",
+            "heavy_shadows_above_alpha_0_1",
+            "css_border_on_cards",
+            "positive_letter_spacing_on_geist",
+            "weight_700_in_body",
+            "decorative_use_of_workflow_accents",
+            "pill_radius_on_primary_action",
+            "skipping_inner_fafafa_glow"
+          ]
+        },
+        "emerges_from": [
+          "vercel"
+        ]
+      },
+      {
+        "rule_id": "mintlify-anti-pattern-marketing-creep-010",
+        "section": "anti_patterns",
+        "final_score": 0.31,
+        "kept_reason": "supplementary",
+        "system": "mintlify",
+        "archetypes": [
+          "Caregiver",
+          "Innocent",
+          "Sage"
+        ],
+        "kansei": [
+          "calm",
+          "readable",
+          "structured"
+        ],
+        "why": {
+          "establish": "discipline-of-reading-first-design",
+          "avoid": [
+            "drift_into_marketing_saas_template",
+            "drift_into_dashboard_density"
+          ],
+          "balance": "reading_first_clarity ↔ marketing_saas_appeal"
+        },
+        "action": {
+          "forbidden": [
+            "pure_black_text_for_long_reading",
+            "gray_section_alternation_breaking_reading_first",
+            "bold_700_in_body_text",
+            "decorative_gradient_buttons",
+            "heavy_box_shadow_competing_with_reading",
+            "mono_typography_for_prose",
+            "sharp_corners_under_8px_on_cards"
+          ]
+        },
+        "emerges_from": [
+          "mintlify"
+        ]
+      },
+      {
+        "rule_id": "cal-color-warm-near-black-text-002",
+        "section": "color",
+        "final_score": 0.31,
+        "kept_reason": "supplementary",
+        "system": "cal",
+        "archetypes": [
+          "Innocent",
+          "Sage"
+        ],
+        "kansei": [
+          "calm",
+          "refined",
+          "structured"
+        ],
+        "why": {
+          "establish": "warm-near-black-balances-authority-and-approachability",
+          "avoid": [
+            "pure_black_plastic",
+            "cool_blue_undertone_clinical"
+          ],
+          "balance": "authority ↔ warmth"
+        },
+        "action": {
+          "primary_text_hex": "#242424",
+          "primary_text_lightness": 0.14,
+          "primary_text_undertone": "warm_neutral_not_pure_black",
+          "no_pure_black_text": true
+        },
+        "emerges_from": [
+          "cal"
+        ]
+      },
+      {
+        "rule_id": "cal-typography-cal-sans-display-extreme-tight-003",
+        "section": "typography",
+        "final_score": 0.31,
+        "kept_reason": "supplementary",
+        "system": "cal",
+        "archetypes": [
+          "Creator",
+          "Sage"
+        ],
+        "kansei": [
+          "confident",
+          "modern",
+          "structured"
+        ],
+        "why": {
+          "establish": "display-carved-into-page",
+          "avoid": [
+            "single_family_flatness",
+            "slack_display_tracking",
+            "decorative_display_serif"
+          ],
+          "balance": "visual_distinctiveness ↔ implementation_simplicity"
+        },
+        "action": {
+          "display_family": "custom_geometric_sans (e.g., Cal Sans)",
+          "display_letter_spacing": "extremely_tight (-0.02em or tighter at display)",
+          "display_weight": 600,
+          "display_line_height": 1.1,
+          "body_family": "humanist_sans_workhorse (e.g., Inter)",
+          "role_separation": "display_speaks / body_explains"
+        },
+        "emerges_from": [
+          "cal"
+        ]
+      },
+      {
+        "rule_id": "vercel-spacing-jump-scale-008",
+        "section": "layout",
+        "final_score": 0.305,
+        "kept_reason": "supplementary",
+        "system": "vercel",
+        "archetypes": [
+          "Magician",
+          "Sage"
+        ],
+        "kansei": [
+          "minimal",
+          "precise",
+          "structured"
+        ],
+        "why": {
+          "establish": "forced-structural-choice-at-section-level",
+          "avoid": [
+            "continuous_spacing_inconsistency",
+            "mood_based_spacing"
+          ],
+          "balance": "flexibility ↔ enforced_rhythm"
+        },
+        "action": {
+          "base_unit": 8,
+          "primary_rhythm": [
+            8,
+            16,
+            32
+          ],
+          "mid_range_gap": true,
+          "section_vertical_padding_min": 80,
+          "section_vertical_padding_max": 120
+        },
+        "emerges_from": [
+          "vercel"
+        ]
+      },
+      {
+        "rule_id": "figma-typography-light-base-004",
+        "section": "typography",
+        "final_score": 0.305,
+        "kept_reason": "supplementary",
+        "system": "figma",
+        "archetypes": [
+          "Creator",
+          "Sage"
+        ],
+        "kansei": [
+          "calm",
+          "precise",
+          "sophisticated"
+        ],
+        "why": {
+          "establish": "light-weight-as-craft-aesthetic",
+          "avoid": [
+            "standard_regular_weight_no_character",
+            "ultra_light_below_300_unreadable"
+          ],
+          "balance": "airiness ↔ readability"
+        },
+        "action": {
+          "body_weight_default": "320-340",
+          "reason": "ethereal_airy_design_tool_aesthetic"
+        },
+        "emerges_from": [
+          "figma"
+        ]
+      },
+      {
+        "rule_id": "coinbase-typography-extreme-display-hero-004",
+        "section": "typography",
+        "final_score": 0.3,
+        "kept_reason": "supplementary",
+        "system": "coinbase",
+        "archetypes": [
+          "Ruler",
+          "Sage"
+        ],
+        "kansei": [
+          "authoritative",
+          "confident",
+          "structured"
+        ],
+        "why": {
+          "establish": "hero-as-brand-statement-via-size",
+          "avoid": [
+            "conservative_display_size",
+            "slack_line_height_at_display"
+          ],
+          "balance": "visual_impact ↔ readability"
+        },
+        "action": {
+          "display_hero_size_px": "64-80",
+          "display_line_height": "1.00 (tight)",
+          "display_weight": 400,
+          "hierarchy_via_size_not_weight": true
+        },
+        "emerges_from": [
+          "coinbase"
+        ]
+      },
+      {
+        "rule_id": "ant-layout-strict-type-spacing-scale-003",
+        "section": "layout",
+        "final_score": 0.295,
+        "kept_reason": "supplementary",
+        "system": "ant",
+        "archetypes": [
+          "Ruler",
+          "Sage"
+        ],
+        "kansei": [
+          "dense",
+          "precise",
+          "structured"
+        ],
+        "why": {
+          "establish": "strict-rhythm-for-100-element-density",
+          "avoid": [
+            "free_step",
+            "decorative_size",
+            "inconsistent_spacing"
+          ],
+          "balance": "visual_rhythm ↔ flexibility"
+        },
+        "action": {
+          "type_scale_px": [
+            12,
+            14,
+            16,
+            20,
+            24,
+            32
+          ],
+          "spacing_scale_px": [
+            4,
+            8,
+            12,
+            16,
+            24,
+            32
+          ],
+          "scale_strategy": "strict_step_no_intermediate"
+        },
+        "emerges_from": [
+          "ant"
+        ]
+      },
+      {
+        "rule_id": "cursor-typography-three-voice-system-001",
+        "section": "typography",
+        "final_score": 0.2872,
+        "kept_reason": "supplementary",
+        "system": "cursor",
+        "archetypes": [
+          "Magician",
+          "Sage"
+        ],
+        "kansei": [
+          "expressive",
+          "precise",
+          "refined",
+          "structured"
+        ],
+        "why": {
+          "establish": "typography-as-product-philosophy-visualization",
+          "avoid": [
+            "generic_inter_default",
+            "single_family_flatness",
+            "decorative_serif_misuse"
+          ],
+          "balance": "typographic_richness ↔ legibility_unity"
+        },
+        "action": {
+          "family_count": 3,
+          "display_family": "gothic_geometric_sans (e.g., CursorGothic)",
+          "body_family": "serif_with_swash_alternates (e.g., jjannon)",
+          "code_family": "refined_monospace (e.g., berkeleyMono)",
+          "role_separation": "display_engineering / body_literary / code_editing"
+        },
+        "emerges_from": [
+          "cursor"
+        ]
+      },
+      {
+        "rule_id": "cal-color-pure-grayscale-brand-001",
+        "section": "color",
+        "final_score": 0.2128,
+        "kept_reason": "supplementary",
+        "system": "cal",
+        "archetypes": [
+          "Innocent",
+          "Sage"
+        ],
+        "kansei": [
+          "calm",
+          "refined",
+          "restrained",
+          "structured"
+        ],
+        "why": {
+          "establish": "boldness-without-chromatic-distraction",
+          "avoid": [
+            "decorative_brand_color",
+            "multi_chromatic_chrome",
+            "color_for_decoration"
+          ],
+          "balance": "brand_distinctiveness ↔ chromatic_economy"
+        },
+        "action": {
+          "chromatic_count": 0,
+          "palette": "grayscale_only",
+          "boldness_via": "monochrome_contrast + typography_weight",
+          "color_as_foreign_substance": true
+        },
+        "emerges_from": [
+          "cal"
+        ]
+      },
+      {
+        "rule_id": "mintlify-color-7tier-gray-scale-003",
+        "section": "color",
+        "final_score": 0.1979,
+        "kept_reason": "supplementary",
+        "system": "mintlify",
+        "archetypes": [
+          "Innocent",
+          "Sage"
+        ],
+        "kansei": [
+          "structured"
+        ],
+        "why": {
+          "establish": "documentation-fine-grained-hierarchy",
+          "avoid": [
+            "single_gray_no_layering",
+            "4tier_too_coarse_for_docs"
+          ],
+          "balance": "structure ↔ simplicity"
+        },
+        "action": {
+          "neutral_scale_tiers": "7 (50/100/200/400/500/700/900)",
+          "reason": "documentation_needs_fine_grained_syntax_annotation_layers"
+        },
+        "emerges_from": [
+          "mintlify"
+        ]
+      },
+      {
+        "rule_id": "figma-color-binary-chrome-001",
+        "section": "color",
+        "final_score": 0.1974,
+        "kept_reason": "supplementary",
+        "system": "figma",
+        "archetypes": [
+          "Creator",
+          "Sage"
+        ],
+        "kansei": [
+          "calm",
+          "precise",
+          "refined",
+          "sophisticated"
+        ],
+        "why": {
+          "establish": "gallery-wall-chrome (let product be the art)",
+          "avoid": [
+            "chrome_chromatic_decoration",
+            "gray_ladder_breaking_binary",
+            "brand_color_in_chrome"
+          ],
+          "balance": "chromatic_discipline ↔ product_visibility"
+        },
+        "action": {
+          "base_canvas": "pure white",
+          "chrome_chromatic_count": 0,
+          "gray_via_alpha_only": true,
+          "product_content_can_be_multicolor": true
+        },
+        "emerges_from": [
+          "figma"
+        ]
+      },
+      {
+        "rule_id": "stripe-components-dashed-affordance-009",
+        "section": "components",
+        "final_score": 0.1929,
+        "kept_reason": "supplementary",
+        "system": "stripe",
+        "archetypes": [
+          "Ruler",
+          "Sage"
+        ],
+        "kansei": [
+          "structured"
+        ],
+        "why": {
+          "establish": "dashed-as-incomplete-affordance",
+          "avoid": [
+            "solid_border_for_drop_zone_breaks_affordance"
+          ],
+          "balance": "visual_clarity ↔ interaction_signaling"
+        },
+        "action": {
+          "dashed_border_use": "placeholder_drop_zones (purple) + decorative_accents (magenta)",
+          "solid_border_for_committed_state": true
+        },
+        "emerges_from": [
+          "stripe"
+        ]
+      },
+      {
+        "rule_id": "mintlify-color-white-canvas-fresh-accent-001",
+        "section": "color",
+        "final_score": 0.1924,
+        "kept_reason": "supplementary",
+        "system": "mintlify",
+        "archetypes": [
+          "Innocent",
+          "Sage"
+        ],
+        "kansei": [
+          "approachable",
+          "calm",
+          "fresh",
+          "structured"
+        ],
+        "why": {
+          "establish": "reading-first-canvas-with-fresh-character",
+          "avoid": [
+            "gray_section_backgrounds",
+            "decorative_color_blocks",
+            "heavy_gradient_overload"
+          ],
+          "balance": "reading_focus ↔ brand_freshness"
+        },
+        "action": {
+          "base_canvas": "pure white",
+          "no_section_color_variation": true,
+          "separation_strategy": "borders + whitespace (no gray-section alternation)",
+          "atmospheric_gradient_in_hero": "optional (subtle green-to-white)"
+        },
+        "emerges_from": [
+          "mintlify"
+        ]
+      },
+      {
+        "rule_id": "binance-color-singular-gold-ingot-001",
+        "section": "unknown",
+        "final_score": 0,
+        "kept_reason": "dependency",
+        "system": "unknown",
+        "archetypes": [],
+        "kansei": [],
+        "why": {},
+        "action": {},
+        "emerges_from": []
+      },
+      {
+        "rule_id": "coinbase-typography-four-proprietary-family-003",
+        "section": "unknown",
+        "final_score": 0,
+        "kept_reason": "dependency",
+        "system": "unknown",
+        "archetypes": [],
+        "kansei": [],
+        "why": {},
+        "action": {},
+        "emerges_from": []
+      },
+      {
+        "rule_id": "stripe-color-navy-purple-foundation-001",
+        "section": "unknown",
+        "final_score": 0,
+        "kept_reason": "dependency",
+        "system": "unknown",
+        "archetypes": [],
+        "kansei": [],
+        "why": {},
+        "action": {},
+        "emerges_from": []
+      },
+      {
+        "rule_id": "huggingface-color-yellow-as-punctuation-001",
+        "section": "unknown",
+        "final_score": 0,
+        "kept_reason": "dependency",
+        "system": "unknown",
+        "archetypes": [],
+        "kansei": [],
+        "why": {},
+        "action": {},
+        "emerges_from": []
+      },
+      {
+        "rule_id": "elevenlabs-color-warm-white-canvas-001",
+        "section": "unknown",
+        "final_score": 0,
+        "kept_reason": "dependency",
+        "system": "unknown",
+        "archetypes": [],
+        "kansei": [],
+        "why": {},
+        "action": {},
+        "emerges_from": []
+      },
+      {
+        "rule_id": "shopify-color-dark-first-with-green-undertone-001",
+        "section": "unknown",
+        "final_score": 0,
+        "kept_reason": "dependency",
+        "system": "unknown",
+        "archetypes": [],
+        "kansei": [],
+        "why": {},
+        "action": {},
+        "emerges_from": []
+      },
+      {
+        "rule_id": "openai-typography-restrained-weights-with-serif-editorial-003",
+        "section": "unknown",
+        "final_score": 0,
+        "kept_reason": "dependency",
+        "system": "unknown",
+        "archetypes": [],
+        "kansei": [],
+        "why": {},
+        "action": {},
+        "emerges_from": []
+      },
+      {
+        "rule_id": "coinbase-color-singular-deep-blue-binary-001",
+        "section": "unknown",
+        "final_score": 0,
+        "kept_reason": "dependency",
+        "system": "unknown",
+        "archetypes": [],
+        "kansei": [],
+        "why": {},
+        "action": {},
+        "emerges_from": []
+      },
+      {
+        "rule_id": "bmw-color-signature-blue-interactive-only-005",
+        "section": "unknown",
+        "final_score": 0,
+        "kept_reason": "dependency",
+        "system": "unknown",
+        "archetypes": [],
+        "kansei": [],
+        "why": {},
+        "action": {},
+        "emerges_from": []
+      },
+      {
+        "rule_id": "intercom-typography-saans-billboard-compression-002",
+        "section": "unknown",
+        "final_score": 0,
+        "kept_reason": "dependency",
+        "system": "unknown",
+        "archetypes": [],
+        "kansei": [],
+        "why": {},
+        "action": {},
+        "emerges_from": []
+      },
+      {
+        "rule_id": "composio-color-pitch-black-canvas-cyan-accent-001",
+        "section": "unknown",
+        "final_score": 0,
+        "kept_reason": "dependency",
+        "system": "unknown",
+        "archetypes": [],
+        "kansei": [],
+        "why": {},
+        "action": {},
+        "emerges_from": []
+      },
+      {
+        "rule_id": "binance-typography-proprietary-across-levels-003",
+        "section": "unknown",
+        "final_score": 0,
+        "kept_reason": "dependency",
+        "system": "unknown",
+        "archetypes": [],
+        "kansei": [],
+        "why": {},
+        "action": {},
+        "emerges_from": []
+      },
+      {
+        "rule_id": "ant-color-data-dense-semantic-palette-001",
+        "section": "unknown",
+        "final_score": 0,
+        "kept_reason": "dependency",
+        "system": "unknown",
+        "archetypes": [],
+        "kansei": [],
+        "why": {},
+        "action": {},
+        "emerges_from": []
+      },
+      {
+        "rule_id": "cohere-color-extreme-chromatic-restraint-001",
+        "section": "unknown",
+        "final_score": 0,
+        "kept_reason": "dependency",
+        "system": "unknown",
+        "archetypes": [],
+        "kansei": [],
+        "why": {},
+        "action": {},
+        "emerges_from": []
+      },
+      {
+        "rule_id": "openai-color-clinical-restraint-001",
+        "section": "unknown",
+        "final_score": 0,
+        "kept_reason": "dependency",
+        "system": "unknown",
+        "archetypes": [],
+        "kansei": [],
+        "why": {},
+        "action": {},
+        "emerges_from": []
+      },
+      {
+        "rule_id": "stripe-color-blue-tinted-shadow-004",
+        "section": "unknown",
+        "final_score": 0,
+        "kept_reason": "dependency",
+        "system": "unknown",
+        "archetypes": [],
+        "kansei": [],
+        "why": {},
+        "action": {},
+        "emerges_from": []
+      },
+      {
+        "rule_id": "cursor-color-warm-dark-with-orange-accent-003",
+        "section": "unknown",
+        "final_score": 0,
+        "kept_reason": "dependency",
+        "system": "unknown",
+        "archetypes": [],
+        "kansei": [],
+        "why": {},
+        "action": {},
+        "emerges_from": []
+      },
+      {
+        "rule_id": "intercom-color-warm-cream-canvas-001",
+        "section": "unknown",
+        "final_score": 0,
+        "kept_reason": "dependency",
+        "system": "unknown",
+        "archetypes": [],
+        "kansei": [],
+        "why": {},
+        "action": {},
+        "emerges_from": []
+      }
+    ],
+    "clusters": [
+      {
+        "id": "main_cluster_1",
+        "mean_score": 0.55,
+        "member_count": 2,
+        "members": [
+          "linear-app-voice-engineered-not-designed-009",
+          "vercel-voice-infrastructure-invisible-009"
+        ],
+        "dominant_systems": [
+          "linear-app",
+          "vercel"
+        ]
+      },
+      {
+        "id": "main_cluster_2",
+        "mean_score": 0.4569,
+        "member_count": 3,
+        "members": [
+          "linear-app-color-dark-native-001",
+          "linear-app-color-single-chromatic-anchor-002",
+          "linear-app-color-translucent-borders-003"
+        ],
+        "dominant_systems": [
+          "linear-app"
+        ]
+      }
+    ],
+    "cluster_metadata": {},
+    "dropped": [
+      {
+        "rule_id": "bmw-components-zero-radius-rectangular-cta-004",
+        "reason": "conflicts_with binance-components-50px-pill-cta-token-004 (extreme pill (50) vs zero radius — opposite chrome philosophies)",
+        "phase": "step2_score_resolution"
+      },
+      {
+        "rule_id": "stripe-color-purple-ladder-002",
+        "reason": "conflicts_with figma-color-binary-chrome-001 (chromatic-free chrome vs persistent purple chromatic ladder — opposite chrome strategies)",
+        "phase": "step2_score_resolution"
+      },
+      {
+        "rule_id": "github-color-dual-chromatic-anchor-002",
+        "reason": "conflicts_with linear-app-color-single-chromatic-anchor-002 (1 vs 2 chromatic anchors — different chromatic budget philosophies)",
+        "phase": "step2_score_resolution"
+      },
+      {
+        "rule_id": "notion-color-warm-neutrals-001",
+        "reason": "conflicts_with linear-app-color-dark-native-001 (warm-light canvas vs cool-dark canvas — opposite ambient strategies)",
+        "phase": "step2_score_resolution"
+      },
+      {
+        "rule_id": "vercel-color-extreme-white-minimalism-001",
+        "reason": "conflicts_with linear-app-color-dark-native-001 (dark-native canvas vs pure-white canvas — opposite base assumptions)",
+        "phase": "step2_score_resolution"
+      },
+      {
+        "rule_id": "vercel-color-near-black-text-002",
+        "reason": "conflicts_with linear-app-color-dark-native-001 (text rules apply to opposite background contexts)",
+        "phase": "step2_score_resolution"
+      },
+      {
+        "rule_id": "vercel-elevation-shadow-as-border-005",
+        "reason": "conflicts_with linear-app-color-translucent-borders-003 (translucent-white-border vs shadow-as-border — different border philosophies for different canvases)",
+        "phase": "step2_score_resolution"
+      },
+      {
+        "rule_id": "linear-app-components-button-near-zero-opacity-006",
+        "reason": "conflicts_with vercel-components-dark-pill-cta-007 (transparent ghost button vs solid dark CTA — opposite primary-button strategies)",
+        "phase": "step2_score_resolution"
+      },
+      {
+        "rule_id": "vercel-elevation-multi-layer-shadow-stack-006",
+        "reason": "conflicts_with linear-app-elevation-luminance-stepping-007 (no-shadow-on-dark vs multi-layer-shadow — incompatible philosophies)",
+        "phase": "step2_score_resolution"
+      },
+      {
+        "rule_id": "clickhouse-typography-uppercase-wide-tracking-nav-003",
+        "reason": "cascade-drop: requires clickhouse-color-neon-on-pure-black-001 which conflicts with already-kept linear-app-color-dark-native-001",
+        "phase": "step3_cascade_drop"
+      },
+      {
+        "rule_id": "claude-typography-relaxed-body-line-height-006",
+        "reason": "cascade-drop: requires claude-color-parchment-canvas-001 which conflicts with already-kept figma-color-binary-chrome-001",
+        "phase": "step3_cascade_drop"
+      },
+      {
+        "rule_id": "notion-color-multi-layer-whisper-shadow-005",
+        "reason": "cascade-drop: requires notion-color-warm-neutrals-001 which conflicts with already-kept linear-app-color-dark-native-001",
+        "phase": "step3_cascade_drop"
+      },
+      {
+        "rule_id": "notion-typography-12px-positive-tracking-exception-008",
+        "reason": "cascade-drop: requires notion-color-warm-neutrals-001 which conflicts with already-kept linear-app-color-dark-native-001",
+        "phase": "step3_cascade_drop"
+      },
+      {
+        "rule_id": "notion-components-translucent-secondary-button-009",
+        "reason": "cascade-drop: requires notion-color-warm-neutrals-001 which conflicts with already-kept linear-app-color-dark-native-001",
+        "phase": "step3_cascade_drop"
+      },
+      {
+        "rule_id": "notion-typography-4-weight-system-007",
+        "reason": "cascade-drop: requires notion-color-warm-neutrals-001 which conflicts with already-kept linear-app-color-dark-native-001",
+        "phase": "step3_cascade_drop"
+      },
+      {
+        "rule_id": "github-typography-14px-body-density-001",
+        "reason": "cascade-drop: requires github-color-dual-chromatic-anchor-002 which conflicts with already-kept linear-app-color-single-chromatic-anchor-002",
+        "phase": "step3_cascade_drop"
+      },
+      {
+        "rule_id": "github-typography-system-ui-only-004",
+        "reason": "cascade-drop: requires github-color-dual-chromatic-anchor-002 which conflicts with already-kept linear-app-color-single-chromatic-anchor-002",
+        "phase": "step3_cascade_drop"
+      },
+      {
+        "rule_id": "notion-typography-modified-inter-with-tight-display-006",
+        "reason": "cascade-drop: requires notion-color-warm-neutrals-001 which conflicts with already-kept linear-app-color-dark-native-001",
+        "phase": "step3_cascade_drop"
+      },
+      {
+        "rule_id": "github-components-pill-status-badge-005",
+        "reason": "cascade-drop: requires github-color-dual-chromatic-anchor-002 which conflicts with already-kept linear-app-color-single-chromatic-anchor-002",
+        "phase": "step3_cascade_drop"
+      },
+      {
+        "rule_id": "notion-components-subtle-card-radius-010",
+        "reason": "cascade-drop: requires notion-color-warm-neutrals-001 which conflicts with already-kept linear-app-color-dark-native-001",
+        "phase": "step3_cascade_drop"
+      },
+      {
+        "rule_id": "vercel-components-dark-pill-cta-007",
+        "reason": "cascade-drop: requires vercel-color-extreme-white-minimalism-001 which conflicts with already-kept linear-app-color-dark-native-001",
+        "phase": "step3_cascade_drop"
+      },
+      {
+        "rule_id": "vercel-typography-geometric-sans-extreme-tracking-004",
+        "reason": "cascade-drop: requires vercel-color-extreme-white-minimalism-001 which conflicts with already-kept linear-app-color-dark-native-001",
+        "phase": "step3_cascade_drop"
+      },
+      {
+        "rule_id": "claude-color-warm-near-black-text-003",
+        "reason": "low_score_isolated_after_clustering",
+        "phase": "step4_clustering"
+      },
+      {
+        "rule_id": "coinbase-color-alternating-light-dark-sections-002",
+        "reason": "low_score_isolated_after_clustering",
+        "phase": "step4_clustering"
+      },
+      {
+        "rule_id": "notion-color-near-black-text-95-002",
+        "reason": "low_score_isolated_after_clustering",
+        "phase": "step4_clustering"
+      },
+      {
+        "rule_id": "ant-typography-sans-mono-pair-002",
+        "reason": "low_score_isolated_after_clustering",
+        "phase": "step4_clustering"
+      },
+      {
+        "rule_id": "stripe-typography-sohne-ss01-required-005",
+        "reason": "low_score_isolated_after_clustering",
+        "phase": "step4_clustering"
+      },
+      {
+        "rule_id": "figma-anti-pattern-chromatic-creep-009",
+        "reason": "low_score_isolated_after_clustering",
+        "phase": "step4_clustering"
+      },
+      {
+        "rule_id": "stripe-spacing-fine-grained-financial-010",
+        "reason": "low_score_isolated_after_clustering",
+        "phase": "step4_clustering"
+      },
+      {
+        "rule_id": "stripe-components-conservative-radius-008",
+        "reason": "low_score_isolated_after_clustering",
+        "phase": "step4_clustering"
+      },
+      {
+        "rule_id": "claude-layout-light-dark-alternation-009",
+        "reason": "low_score_isolated_after_clustering",
+        "phase": "step4_clustering"
+      },
+      {
+        "rule_id": "cohere-typography-single-body-weight-with-size-hierarchy-005",
+        "reason": "low_score_isolated_after_clustering",
+        "phase": "step4_clustering"
+      },
+      {
+        "rule_id": "figma-typography-variable-microstep-weights-003",
+        "reason": "low_score_isolated_after_clustering",
+        "phase": "step4_clustering"
+      },
+      {
+        "rule_id": "composio-typography-dual-font-mono-as-credibility-004",
+        "reason": "low_score_isolated_after_clustering",
+        "phase": "step4_clustering"
+      },
+      {
+        "rule_id": "discord-anti-pattern-chat-clarity-012",
+        "reason": "low_score_isolated_after_clustering",
+        "phase": "step4_clustering"
+      },
+      {
+        "rule_id": "notion-spacing-organic-non-rigid-011",
+        "reason": "low_score_isolated_after_clustering",
+        "phase": "step4_clustering"
+      },
+      {
+        "rule_id": "binance-color-trading-floor-two-tone-002",
+        "reason": "low_score_isolated_after_clustering",
+        "phase": "step4_clustering"
+      },
+      {
+        "rule_id": "binance-components-50px-pill-cta-token-004",
+        "reason": "low_score_isolated_after_clustering",
+        "phase": "step4_clustering"
+      },
+      {
+        "rule_id": "bmw-meta-css-variable-multi-brand-theming-006",
+        "reason": "low_score_isolated_after_clustering",
+        "phase": "step4_clustering"
+      },
+      {
+        "rule_id": "github-anti-pattern-decoration-creep-006",
+        "reason": "low_score_isolated_after_clustering",
+        "phase": "step4_clustering"
+      },
+      {
+        "rule_id": "cohere-components-22px-signature-radius-002",
+        "reason": "low_score_isolated_after_clustering",
+        "phase": "step4_clustering"
+      },
+      {
+        "rule_id": "cohere-typography-serif-display-sans-utility-004",
+        "reason": "low_score_isolated_after_clustering",
+        "phase": "step4_clustering"
+      },
+      {
+        "rule_id": "figma-typography-negative-tracking-everywhere-005",
+        "reason": "low_score_isolated_after_clustering",
+        "phase": "step4_clustering"
+      },
+      {
+        "rule_id": "stripe-layout-dense-data-generous-chrome-011",
+        "reason": "low_score_isolated_after_clustering",
+        "phase": "step4_clustering"
+      },
+      {
+        "rule_id": "notion-anti-pattern-coldness-012",
+        "reason": "low_score_isolated_after_clustering",
+        "phase": "step4_clustering"
+      },
+      {
+        "rule_id": "figma-components-dashed-focus-outline-008",
+        "reason": "low_score_isolated_after_clustering",
+        "phase": "step4_clustering"
+      },
+      {
+        "rule_id": "composio-color-border-mist-opacity-ladder-002",
+        "reason": "low_score_isolated_after_clustering",
+        "phase": "step4_clustering"
+      },
+      {
+        "rule_id": "intercom-color-fin-orange-singular-ai-accent-003",
+        "reason": "low_score_isolated_after_clustering",
+        "phase": "step4_clustering"
+      },
+      {
+        "rule_id": "openai-components-uniformly-soft-radii-004",
+        "reason": "low_score_isolated_after_clustering",
+        "phase": "step4_clustering"
+      },
+      {
+        "rule_id": "notion-color-single-blue-anchor-003",
+        "reason": "low_score_isolated_after_clustering",
+        "phase": "step4_clustering"
+      },
+      {
+        "rule_id": "stripe-typography-progressive-tracking-007",
+        "reason": "low_score_isolated_after_clustering",
+        "phase": "step4_clustering"
+      },
+      {
+        "rule_id": "cohere-color-interactive-blue-hover-only-003",
+        "reason": "low_score_isolated_after_clustering",
+        "phase": "step4_clustering"
+      },
+      {
+        "rule_id": "huggingface-typography-mono-everywhere-002",
+        "reason": "low_score_isolated_after_clustering",
+        "phase": "step4_clustering"
+      },
+      {
+        "rule_id": "openai-layout-whitespace-primary-divider-005",
+        "reason": "low_score_isolated_after_clustering",
+        "phase": "step4_clustering"
+      },
+      {
+        "rule_id": "lovable-color-opacity-driven-gray-scale-003",
+        "reason": "low_score_isolated_after_clustering",
+        "phase": "step4_clustering"
+      },
+      {
+        "rule_id": "stripe-typography-light-weight-300-signature-006",
+        "reason": "low_score_isolated_after_clustering",
+        "phase": "step4_clustering"
+      },
+      {
+        "rule_id": "notion-color-content-tagging-palette-004",
+        "reason": "low_score_isolated_after_clustering",
+        "phase": "step4_clustering"
+      },
+      {
+        "rule_id": "intercom-components-scale-hover-physical-interaction-005",
+        "reason": "low_score_isolated_after_clustering",
+        "phase": "step4_clustering"
+      },
+      {
+        "rule_id": "elevenlabs-typography-positive-letter-spacing-body-004",
+        "reason": "low_score_isolated_after_clustering",
+        "phase": "step4_clustering"
+      },
+      {
+        "rule_id": "mintlify-color-near-black-text-002",
+        "reason": "low_score_isolated_after_clustering",
+        "phase": "step4_clustering"
+      },
+      {
+        "rule_id": "figma-typography-mono-uppercase-signposts-006",
+        "reason": "low_score_isolated_after_clustering",
+        "phase": "step4_clustering"
+      },
+      {
+        "rule_id": "shopify-typography-precision-variable-weights-004",
+        "reason": "low_score_isolated_after_clustering",
+        "phase": "step4_clustering"
+      },
+      {
+        "rule_id": "coinbase-components-56px-pill-cta-005",
+        "reason": "low_score_isolated_after_clustering",
+        "phase": "step4_clustering"
+      },
+      {
+        "rule_id": "figma-color-glass-overlay-002",
+        "reason": "low_score_isolated_after_clustering",
+        "phase": "step4_clustering"
+      },
+      {
+        "rule_id": "mintlify-typography-relaxed-body-line-height-005",
+        "reason": "low_score_isolated_after_clustering",
+        "phase": "step4_clustering"
+      },
+      {
+        "rule_id": "intercom-components-sharp-4px-button-radius-004",
+        "reason": "low_score_isolated_after_clustering",
+        "phase": "step4_clustering"
+      },
+      {
+        "rule_id": "bmw-typography-single-family-all-sizes-003",
+        "reason": "low_score_isolated_after_clustering",
+        "phase": "step4_clustering"
+      },
+      {
+        "rule_id": "pinterest-meta-3-tier-design-token-architecture-005",
+        "reason": "low_score_isolated_after_clustering",
+        "phase": "step4_clustering"
+      }
+    ],
+    "cascade_dropped": [
+      "claude-typography-relaxed-body-line-height-006",
+      "clickhouse-typography-uppercase-wide-tracking-nav-003",
+      "github-components-pill-status-badge-005",
+      "github-typography-14px-body-density-001",
+      "github-typography-system-ui-only-004",
+      "notion-color-multi-layer-whisper-shadow-005",
+      "notion-components-subtle-card-radius-010",
+      "notion-components-translucent-secondary-button-009",
+      "notion-typography-12px-positive-tracking-exception-008",
+      "notion-typography-4-weight-system-007",
+      "notion-typography-modified-inter-with-tight-display-006",
+      "vercel-components-dark-pill-cta-007",
+      "vercel-typography-geometric-sans-extreme-tracking-004"
+    ],
+    "recovered_for_coverage": [],
+    "section_coverage": {
+      "unknown": 18,
+      "typography": 9,
+      "color": 10,
+      "components": 2,
+      "depth_elevation": 1,
+      "anti_patterns": 3,
+      "layout": 4,
+      "voice": 2,
+      "spacing": 1
+    },
+    "degraded_sections": [],
+    "broken_dependencies": []
+  },
+  "stats": {
+    "b2_input": 100,
+    "after_step2_conflict_resolution": 32,
+    "step3_dep_added": 18,
+    "step3_cascade_dropped": 13,
+    "final_subset_size": 50,
+    "main_clusters": 2
+  }
+}

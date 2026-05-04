@@ -1,0 +1,165 @@
+mode: auto
+
+# ─────────────────────────────────────────────────────────────────
+# Auto 模式：所有字段都是从 PRD + defaults.yaml 推断而来
+# 用户可针对任何字段在 negotiation-summary.md 末尾按指引反馈
+# ─────────────────────────────────────────────────────────────────
+
+inferred_fields:
+  - field: product_context.category
+    value: developer_tool
+    source: |
+      PRD §3.1 用户能力："能用命令行，懂基本编程概念"；
+      §3.3 反用户："零代码用户" + "企业 IT/安全部门"；
+      §8.1 技术栈：Node.js / Bun / SQLite / spawn 子进程；
+      symptoms: CLI / JSON / agent-skill 词汇贯穿全文。
+      虽然形态是 "control center"，但目标用户技术轮廓 = developer-adjacent
+      prosumer，故主品类 developer_tool 而非 b2b_saas / creator_tool。
+    confidence: high
+
+  - field: product_context.audience
+    value: solo_operator_28_45
+    source: PRD §3.1 Alex 画像：独立开发者 / 自媒体作者 / 独立咨询师 / 小工作室主理人
+    confidence: high
+
+  - field: product_context.unique_constraints
+    value:
+      - local_first_subscription_oauth   # PRD §5.2 决策 1 + §9.3
+      - multi_lane_subscription_pool      # PRD M4 模块（独家差异化）
+      - hitl_checkpoint_first             # PRD §1.3 边界 + M5
+      - realtime_event_stream             # PRD §5.2 决策 4
+      - tiered_disclosure_three_layers    # PRD §6.2 反馈层次设计原则
+      - desktop_web_first_no_mobile       # PRD §3.3 反用户
+      - dark_mode_friendly                # 推断：开发者深夜批处理场景 §3.1
+      - long_running_task_observability   # PRD §6.2 + §9.4
+    source: PRD §1.3 / §3 / §5 / §6 / §9 综合提取
+    confidence: high
+
+  - field: brand_archetypes.primary
+    value: Sage
+    source: |
+      category default = [Sage, Creator]；
+      但 PRD 核心叙事高度 Sage：
+      §1.1 "看到所有思考过程"；
+      §1.2 "在关键节点介入...否决决策"；
+      §2.1 痛点 E "适度的透明...足够多的信息让他相信 AI 的判断"；
+      §6.2 反馈层次设计——这是典型 Sage（知识、洞察、判断）的产品语言。
+    confidence: high
+
+  - field: brand_archetypes.secondary
+    value: Ruler
+    source: |
+      product 名称 "Control Center" + PRD 多处使用"控制台 / 调度 / 编排 / 拦截"；
+      §6.5 HITL "动作护栏 / 终止 / 否决"——这些是 Ruler 词汇（秩序、权威、掌控）。
+      覆盖 default secondary (Creator)，因为 Creator 在本产品中是产物（artifact），
+      不是产品自身的定位语气。
+    confidence: medium
+
+  - field: kansei_words.positive
+    value:
+      - structured       # category default
+      - precise          # category default
+      - calm             # category default
+      - confident        # category default
+      - transparent      # 覆盖：PRD 反复出现"思考过程透明""适度透明"
+      - composed         # 覆盖：多 lane 协同的从容（不慌不乱地调度多个订阅）
+      - sovereign        # 覆盖：本地优先 + 自托管 + 单兵主权（"OPC" 字面）
+    source: |
+      base = developer_tool default likely_kansei；
+      移除 modern（替换为更精准的 sovereign / composed / transparent）；
+      增加的三个词都来自 PRD 核心叙事（§1.1 / §5.2 决策 1 / §6.4）
+    confidence: high
+
+  - field: kansei_words.reverse_constraint
+    value:
+      - decorative           # category default
+      - playful              # category default（PRD §1.3：不是玩具）
+      - ornate               # category default
+      - ai_slop              # 通用兜底（B1b Step 5）
+      - generic_corporate    # 通用兜底
+      - enterprisey          # PRD §3.3 反用户："企业 IT / 安全部门"
+      - hypey                # 推断：避免 SaaS 营销页风格（PRD 通篇克制语气）
+      - infantilizing        # 推断：用户是 28-45 经营者，不是新手
+    source: B1b Step 5 兜底 + PRD §3.3 反用户清单 + §1.3 边界声明
+    confidence: high
+
+  - field: semantic_differentials.warm_to_cold
+    value: -0.1
+    source: |
+      default developer_tool = +0.2（略冷）；
+      覆盖到 -0.1 因为 PRD §1.1 强调"一个人 + AI 团队"的情感陪伴叙事，
+      纯冷感会让本地单兵工具显得疏离。略偏暖更合"陪伴的副驾"语境。
+    confidence: medium
+
+  - field: semantic_differentials.ornate_to_minimal
+    value: 0.7
+    source: |
+      default = 0.6；推到 0.7 因为 PRD §6.2 "反馈层次"明确"足够少的噪音让他不被淹没"
+      + §9.5 "不出现满屏 stack trace"——这是比 default 更强的极简诉求。
+    confidence: high
+
+  - field: semantic_differentials.serious_to_playful
+    value: -0.5
+    source: |
+      default = -0.3；推到 -0.5 因为 PRD §3.1 用户白天处理客户事务、晚上批处理，
+      工具语气需要 "不打扰" 而非 "陪玩"。但保留 -0.5 而非更负值，
+      避免 enterprisey 反向词冲突。
+    confidence: medium
+
+  - field: semantic_differentials.modern_to_classical
+    value: -0.5
+    source: |
+      default = -0.4；微推到 -0.5 因为产品形态是"实时事件流 + 看板视图 + dark mode"——
+      这些都是 modern web app 的标志。但不到 -0.7 因为 local-first / SQLite / 自托管
+      又带一丝 "回归本质" 的复古工艺感。
+    confidence: medium
+
+# ─────────────────────────────────────────────────────────────────
+# 合成画像（B1 输出，按 SKILL.md §六 3.3.5 schema）
+# ─────────────────────────────────────────────────────────────────
+
+product_context:
+  category: developer_tool
+  audience: |
+    Solo operator (28-45)；身份混合：独立开发者 / 自媒体作者 / 独立咨询师 / 小工作室主理人。
+    具备命令行能力、理解 JSON / agent / skill 概念，但不是纯生产级程序员。
+    同时订阅 Claude Pro/Max + ChatGPT Plus/Pro + Gemini Pro，月 AI 花费 $200-600。
+    白天客户事务 / 晚上批处理任务（写作、研究、营销）。
+  unique_constraints:
+    - local_first_subscription_oauth
+    - multi_lane_subscription_pool
+    - hitl_checkpoint_first
+    - realtime_event_stream
+    - tiered_disclosure_three_layers
+    - desktop_web_first_no_mobile
+    - dark_mode_friendly
+    - long_running_task_observability
+
+brand_archetypes:
+  primary: Sage
+  secondary: Ruler
+
+kansei_words:
+  positive:
+    - structured
+    - precise
+    - calm
+    - confident
+    - transparent
+    - composed
+    - sovereign
+  reverse_constraint:
+    - decorative
+    - playful
+    - ornate
+    - ai_slop
+    - generic_corporate
+    - enterprisey
+    - hypey
+    - infantilizing
+
+semantic_differentials:
+  warm_to_cold: -0.1
+  ornate_to_minimal: 0.7
+  serious_to_playful: -0.5
+  modern_to_classical: -0.5

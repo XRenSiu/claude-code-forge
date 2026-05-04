@@ -1,0 +1,281 @@
+{
+  "_meta": {
+    "system_name": "opc-control-center",
+    "source": "bespoke-generated-v3",
+    "extracted_at": "2026-05-04T12:00:00Z",
+    "extraction_method": "b4_synthesized",
+    "tool_version": "1.8.0",
+    "schema_version": "1.0.0"
+  },
+
+  "color": {
+    "bg": {
+      "canvas":   "#0B0D10",
+      "panel":    "#13161A",
+      "elevated": "#1B1E23",
+      "overlay":  "#23272D"
+    },
+    "text": {
+      "primary":      "#F2F4F7",
+      "secondary":    "#B8BCC2",
+      "tertiary":     "#83878E",
+      "quaternary":   "#62666D",
+      "max_lightness": 0.95,
+      "is_pure_white": false
+    },
+    "brand": {
+      "primary":           "#7B7AD9",
+      "primary_hsl":       [248, 0.47, 0.60],
+      "hover":             "#8C8BE0",
+      "active":            "#6968CC",
+      "on_text":           "#FFFFFF",
+      "chromatic_count":   1,
+      "saturation_max":    0.47,
+      "saturation_min":    0.47,
+      "lightness_at_brand": 0.60,
+      "hue":               248,
+      "identity_hexes":    ["#7B7AD9"]
+    },
+    "state": {
+      "running":         "#7B7AD9",
+      "awaiting_review": "#E5A04F",
+      "success":         "#5DBA85",
+      "warning":         "#E5A04F",
+      "failed":          "#E0716A",
+      "info":            "#7AB1CB",
+      "idle":            "#62666D"
+    },
+    "border": {
+      "subtle":      "rgba(255,255,255,0.05)",
+      "default":     "rgba(255,255,255,0.06)",
+      "strong":      "rgba(255,255,255,0.08)",
+      "alpha_range": [0.05, 0.08]
+    },
+    "contrast": {
+      "body_on_bg":      15.8,
+      "secondary_on_bg": 9.2,
+      "tertiary_on_bg":  4.6,
+      "quaternary_on_bg": 3.1,
+      "brand_on_canvas": 5.1,
+      "brand_on_text":   4.5
+    },
+    "dark_surface": {
+      "lightness_min":     0.05,
+      "lightness_steps":   [0.05, 0.09, 0.13, 0.17],
+      "stepping_strategy": "luminance"
+    },
+    "gradient_count":         0,
+    "is_pure_monochromatic":  false,
+    "all_hex_colors": [
+      "#0B0D10", "#13161A", "#1B1E23", "#23272D",
+      "#F2F4F7", "#B8BCC2", "#83878E", "#62666D",
+      "#7B7AD9", "#5DBA85", "#E5A04F", "#E0716A", "#7AB1CB",
+      "#0F1115", "#C9CCD2", "#242424"
+    ],
+    "background_surfaces": {
+      "canvas":   "#0B0D10",
+      "surface_1": "#13161A",
+      "surface_2": "#1B1E23",
+      "surface_3": "#23272D"
+    },
+    "neutral_scale": ["#0B0D10", "#13161A", "#1B1E23", "#23272D", "#62666D", "#83878E", "#B8BCC2", "#F2F4F7"],
+    "role_color_pairs": {
+      "canvas":          "#0B0D10",
+      "panel":           "#13161A",
+      "elevated":        "#1B1E23",
+      "overlay":         "#23272D",
+      "text_primary":    "#F2F4F7",
+      "text_secondary":  "#B8BCC2",
+      "text_tertiary":   "#83878E",
+      "text_quaternary": "#62666D",
+      "brand":           "#7B7AD9",
+      "success":         "#5DBA85",
+      "warning":         "#E5A04F",
+      "error":           "#E0716A"
+    }
+  },
+
+  "typography": {
+    "display": {
+      "family":       "Inter Variable",
+      "fallback":     ["SF Pro Text", "system-ui", "-apple-system", "BlinkMacSystemFont", "sans-serif"],
+      "weight_range": [400, 600]
+    },
+    "body": {
+      "family":       "Inter Variable",
+      "fallback":     ["SF Pro Text", "system-ui", "-apple-system", "BlinkMacSystemFont", "sans-serif"],
+      "weight_range": [400, 600]
+    },
+    "mono": {
+      "family":   "ui-monospace",
+      "fallback": ["SF Mono", "JetBrains Mono", "Menlo", "monospace"]
+    },
+    "scale": {
+      "base":             14,
+      "values":           [11, 12, 14, 16, 18, 24, 32, 48],
+      "ratio_consistent": true,
+      "ratio":            1.25,
+      "ratio_max":        1.5
+    },
+    "declared_scale_px": [11, 12, 14, 16, 18, 24, 32, 48],
+    "all_px_values": [11, 12, 14, 16, 18, 24, 32, 48],
+    "weight": {
+      "regular":     400,
+      "emphasis":    500,
+      "strong":      600,
+      "max":         600,
+      "no_700_bold": true
+    },
+    "letter_spacing": {
+      "display_48px": "-0.022em",
+      "display_32px": "-0.022em",
+      "heading_24px": "-0.012em",
+      "heading_18px": "-0.008em",
+      "body_14px":    "0",
+      "small_12px":   "0",
+      "strategy":     "tighter_at_display_relaxes_at_body"
+    },
+    "line_height": {
+      "display":       1.05,
+      "heading":       1.2,
+      "body":          1.5,
+      "compact_label": 1.3
+    },
+    "opentype_features": ["liga", "lnum", "locl"]
+  },
+
+  "spacing": {
+    "base":  8,
+    "scale": [1, 4, 7, 8, 11, 12, 16, 19, 20, 22, 24, 28, 32, 35, 48, 64, 80, 120],
+    "panel_padding":         [16, 20],
+    "section_min_vertical":  80,
+    "section_max_vertical":  120,
+    "no_explicit_section_dividers": true
+  },
+
+  "radius": {
+    "none":  0,
+    "sm":    4,
+    "md":    6,
+    "lg":    8,
+    "pill":  9999,
+    "max":   9999,
+    "role_radius_pairs": {
+      "card":   4,
+      "button": 6,
+      "input":  6,
+      "modal":  8,
+      "badge":  9999
+    }
+  },
+
+  "components": {
+    "button": {
+      "primary": {
+        "bg": "#7B7AD9",
+        "text": "#FFFFFF",
+        "radius_px": 6,
+        "height_px": 32,
+        "no_gradient": true,
+        "no_pill_radius": true
+      },
+      "secondary": {
+        "bg": "rgba(255,255,255,0.05)",
+        "text": "#F2F4F7",
+        "radius_px": 6,
+        "hover_alpha": 0.08
+      },
+      "tertiary": {
+        "type": "text-only",
+        "underline_on_hover": true
+      }
+    },
+    "card": {
+      "bg": "#1B1E23",
+      "radius_px": 4,
+      "border": "rgba(255,255,255,0.06)",
+      "padding": [16, 20]
+    },
+    "badge": {
+      "shape": "pill",
+      "radius_px": 9999,
+      "use_for": ["status", "state", "role", "tier"],
+      "no_decorative_use": true
+    },
+    "input": {
+      "bg": "#13161A",
+      "border": "rgba(255,255,255,0.06)",
+      "border_focused": "rgba(255,255,255,0.08)",
+      "ring_focused": "rgba(123,122,217,0.20)",
+      "radius_px": 6,
+      "height_px_compact": 32,
+      "height_px_default": 40
+    },
+    "drop_zone": {
+      "border_style": "dashed",
+      "border_width_px": 1.5,
+      "border_color": "rgba(255,255,255,0.08)",
+      "hover_overlay": "rgba(123,122,217,0.04)",
+      "transitions_to_solid_when_committed": true
+    }
+  },
+
+  "depth_elevation": {
+    "strategy": "luminance_stepping",
+    "no_drop_shadow_on_dark": true,
+    "lightness_step_per_level": 0.04,
+    "levels": {
+      "recessed": "inset 0 0 12px rgba(0,0,0,0.20)",
+      "canvas":    {"bg": "#0B0D10", "shadow": "none"},
+      "surface_1": {"bg": "#13161A", "shadow": "none"},
+      "surface_2": {"bg": "#1B1E23", "shadow": "none"},
+      "surface_3": {"bg": "#23272D", "shadow": "none"}
+    },
+    "rare_light_overlay_shadow": {
+      "technique": "box_shadow_zero_offset_zero_blur_1px_spread",
+      "value": "0 0 0 1px rgba(0,0,0,0.08)",
+      "alpha": 0.08
+    },
+    "max_shadow_alpha_anywhere": 0.20
+  },
+
+  "motion": {
+    "has_bounce_easing": false,
+    "easing_default": "ease-out",
+    "duration_default_ms": 150,
+    "transitions": {
+      "surface_step": "150ms ease-out",
+      "modal_entrance": "200ms ease-out (scale 0.98 -> 1.0 + fade)",
+      "hover_surface": "100ms"
+    }
+  },
+
+  "responsive": {
+    "breakpoints": {
+      "compact": [1024, 1439],
+      "default": [1440, 1919],
+      "wide":    [1920, 9999]
+    },
+    "below_compact_strategy": "single-column-stacked",
+    "touch_target_min_px": 44,
+    "mobile_first": false
+  },
+
+  "design": {
+    "flat_only": true,
+    "dark_first": true,
+    "high_contrast_text": true,
+    "gradient_used": false,
+    "blur_used": false
+  },
+
+  "sections_present": ["color", "typography", "spacing", "radius", "components", "depth_elevation", "motion", "responsive", "design"],
+  "sections_unhandled": [],
+  "sections_meta_for_llm": ["visual_theme", "do_donts", "agent_guide"],
+  "llm_followup_hints": [
+    "Brand color is reserved for primary CTA + live-agent indicator + brand mark only",
+    "No drop-shadow on dark surfaces; depth via luminance stepping +0.04 per level",
+    "Pill radius is reserved for status badges only",
+    "Weight 700 forbidden everywhere"
+  ]
+}
