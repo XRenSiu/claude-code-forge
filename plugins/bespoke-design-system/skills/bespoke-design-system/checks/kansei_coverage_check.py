@@ -40,12 +40,23 @@ def collect_addressed_kansei(provenance: dict | list) -> set[str]:
         for k in (adaptation.get('needs_extension_kansei') or []):
             if isinstance(k, str):
                 addressed.add(k.lower().strip())
-        # Also check user_kansei_coverage.addressed_in_this_decision (B4 schema variant)
+        # Also check user_kansei_coverage.addressed_in_this_decision (B4 schema variant).
+        # Schema-tolerant: per SKILL.md §六 3.3.7, user_kansei_coverage SHOULD be a dict
+        # with `addressed_in_this_decision: [<word>, ...]`. Older drafts sometimes wrote
+        # it as a free-form string ("precise + confident"). Accept both gracefully.
         just = (d or {}).get('justification', {}) or {}
-        cov = just.get('user_kansei_coverage', {}) or {}
-        for k in (cov.get('addressed_in_this_decision') or []):
-            if isinstance(k, str):
-                addressed.add(k.lower().strip())
+        cov = just.get('user_kansei_coverage')
+        if isinstance(cov, dict):
+            for k in (cov.get('addressed_in_this_decision') or []):
+                if isinstance(k, str):
+                    addressed.add(k.lower().strip())
+        elif isinstance(cov, str):
+            # Legacy free-form string form: extract any tokens that look like kansei
+            # words (lowercase identifiers). This is best-effort, not authoritative.
+            import re as _re
+            for tok in _re.findall(r'[a-z_]+', cov.lower()):
+                addressed.add(tok)
+        # else: cov is None or unsupported type — skip silently
     return addressed
 
 

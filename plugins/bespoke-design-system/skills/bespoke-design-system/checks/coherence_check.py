@@ -13,10 +13,14 @@ Six subchecks (all math, no taste):
 Output: {passed, score (0-1), subchecks: {...}, issues: [...]}.
 
 Usage:
-  python3 coherence_check.py <path/to/tokens.json> [--design-md <path>]
+  python3 coherence_check.py <path/to/tokens.json>
     -> prints JSON report to stdout
 
   Or import: from coherence_check import run as coherence_check_run
+
+Note: prior versions of this docstring listed an `--design-md <path>` flag.
+That flag was never wired up. If you want DESIGN.md ↔ tokens.json consistency
+checking, add it as a separate tool — coherence_check operates only on tokens.
 """
 from __future__ import annotations
 import json

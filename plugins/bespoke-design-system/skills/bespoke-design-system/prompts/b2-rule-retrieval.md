@@ -73,6 +73,9 @@ confidence 来自规则 yaml 的 `confidence` 字段（emerges_from 数量与一
 
 ## Step 5 — 输出候选集
 
+**落盘文件名**：`<output_dir>/_b2-candidates.json`（JSON 文件，不是 YAML 文件——`tools/b3_resolve.py` 用 `json.load` 读取）。
+**顶层字段名**：必须是 `candidate_rules`（不是 `candidates`、`rules` 等其他名称）。`tools/b3_resolve.py` v1.9.1 起对 `candidates` 做了 best-effort 兼容，但 canonical 字段名始终是 `candidate_rules`。
+
 输出结构：
 
 ```yaml

@@ -4,11 +4,15 @@ b3_resolve.py — Deterministic B3 conflict-resolution + dependency-closure +
 style-island clustering for bespoke-design-system.
 
 Reads:
-  - <output_dir>/_b2-candidates.json (B2 output)
+  - <b2_path>:        a JSON file (B2 output). The file must contain either
+                      `candidate_rules` (preferred) or `candidates` as the
+                      candidate list field.
   - grammar/graph/rules_graph.json   (relationship graph)
 
 Writes:
-  - <output_dir>/_b3-self-consistent.json
+  - <output_path>:    a JSON file path (NOT a directory). Conventionally named
+                      `<output_dir>/_b3-self-consistent.json` but the script
+                      treats `--output` as the literal file to write.
 
 Algorithm (deterministic, no LLM):
   Step 1 — Load graph
@@ -24,7 +28,12 @@ Algorithm (deterministic, no LLM):
   Step 6 — Emit _b3-self-consistent.json
 
 Usage:
-  python3 b3_resolve.py --b2 <path> --output <path> [--graph <path>]
+  python3 b3_resolve.py --b2 <b2_file_path> --output <output_file_path> [--graph <path>]
+
+Example:
+  python3 b3_resolve.py \\
+    --b2    ./bespoke-design/<slug>/_b2-candidates.json \\
+    --output ./bespoke-design/<slug>/_b3-self-consistent.json
 """
 import os, sys, json, argparse
 from collections import defaultdict, Counter
@@ -88,7 +97,16 @@ def conflict_reason(a, b, conflicts):
 
 def resolve(b2_path, graph_path, output_path):
     b2 = json.load(open(b2_path))
-    candidates = b2['candidate_rules']
+    # Schema-tolerant: accept either 'candidate_rules' (canonical) or 'candidates' (legacy)
+    if 'candidate_rules' in b2:
+        candidates = b2['candidate_rules']
+    elif 'candidates' in b2:
+        candidates = b2['candidates']
+    else:
+        raise KeyError(
+            "b2 input must contain either 'candidate_rules' (preferred) or 'candidates'. "
+            f"Found keys: {list(b2.keys())}"
+        )
     cand_ids = {r['rule_id'] for r in candidates}
     score_map = {r['rule_id']: r['final_score'] for r in candidates}
     rule_lookup = {r['rule_id']: r for r in candidates}
@@ -318,6 +336,14 @@ def resolve(b2_path, graph_path, output_path):
             'main_clusters': len(main_clusters),
         }
     }
+
+    if os.path.isdir(output_path):
+        # Friendly error: docstring used to suggest --output is a directory.
+        # Now make the failure explicit instead of IsADirectoryError mid-write.
+        raise IsADirectoryError(
+            f"--output expects a file path, got a directory: {output_path!r}. "
+            f"Suggested: pass {os.path.join(output_path, '_b3-self-consistent.json')!r}"
+        )
 
     with open(output_path, 'w') as f:
         json.dump(output, f, indent=2, ensure_ascii=False)

@@ -11,7 +11,7 @@ description: >-
   触发词：" 设计系统 " / " 调性 " / " UI 风格 " / " bespoke design " / " DESIGN.md " /
   " 拆解设计系统 " / " 导入 OD " / " 沉淀 adaptation "。
 argument-hint: "[mode=interactive|auto] <product-brief> | maintain <subcommand>"
-version: 1.9.0
+version: 1.9.1
 user-invocable: true
 ---
 
@@ -194,6 +194,7 @@ Rules library: <N> rules from <M> extracted systems (out of <K> registered).
 
 - 每个决策**必须**产 `inheritance` + `adaptation` + `justification` 三段。
 - 模型工作严格限定为 " 把规则集翻译成 DESIGN.md 的语言并产 rationale"，**不创造新规则**。任何看起来像新规则的判断都必须能追溯到 B3 子集里的某条；否则视为越权。
+- **B3 子集是上限，不是下限**（v1.9.1 起明确）：B4 可以**拒绝采用** B3 自洽集中某条规则，前提是把拒绝写进 provenance `justification.conflict_check.rejected_alternative_<rule_id>`，并给出基于 archetype-do-dont-table / kansei-theory / brand-archetypes 的具体证据。例如 B3 自洽集留下了一条 `cohere-22px-radius` 但其 `brand_archetypes: [Sage, Ruler]` 与画像 `[Sage, Creator]` 的 secondary 不匹配，B4 可以拒绝采用。**拒绝 ≠ 创造**。无论引用证据缺失，则视为越权。
 - **不向用户追问任何信息**。
 
 **adaptation 必须记录**：
@@ -376,6 +377,24 @@ clarification_batch:
 ### 3.3.7 Provenance Report Schema (B4 输出)
 
 每个决策三段式：`inheritance.{source_rules, source_systems, original_rationale}` + `adaptation.{fully_aligned_kansei, needs_extension_kansei, modifications[], preserved[]}` + `justification.{internal_consistency[], user_kansei_coverage, conflict_check}`。
+
+**`user_kansei_coverage` 字段类型必须是 dict**（v1.9.1 起明确）：
+
+```yaml
+user_kansei_coverage:
+  addressed_in_this_decision:    # required, list of kansei words this decision primarily addresses
+    - <kansei_word>
+    - ...
+  addressed_elsewhere:            # optional, list of kansei words covered in other decisions
+    - <kansei_word>
+  uncovered:                      # optional, list of user kansei words this decision does NOT cover
+    - <kansei_word>
+  note: <free-form string>        # optional, narrative explanation
+```
+
+不要写成 free-form string（如 `user_kansei_coverage: "precise + confident"`）——
+`checks/kansei_coverage_check.py` v1.9.1 起有 best-effort 兼容，但 string 形式无法
+被精确解析，可能导致 coverage_rate 误算。canonical 形式始终是 dict。
 
 #### modifications[] 项的可选字段（v1.9.0 起，详见 `prompts/b4-generation-with-rationale.md` §闸 3）
 
