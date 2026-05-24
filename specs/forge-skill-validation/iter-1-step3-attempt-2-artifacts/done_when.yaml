@@ -1,0 +1,128 @@
+feature: channel-mention-notifications
+based_on: [REQ-001, REQ-002, REQ-003, REQ-004, REQ-005, REQ-006, REQ-007]
+created_at: 2026-05-24T00:00:00Z
+created_by: acceptance-spec
+
+# ============================================================================
+# LAYER 1 — EXISTENCE
+# v1 strict: each entry is a single key-value pair (no sub-fields).
+# Allowed kinds: file | function | route | db_field | frontend_component.
+# Traceability is preserved by top-level based_on: + spec.md source: lines.
+# ============================================================================
+existence:
+  - function: ResolveMentionRecipients
+  - function: FilterIneligibleRecipients
+  - function: DispatchMentionNotification
+  - function: OnMessageEdited
+  - function: OnMessageDeleted
+  - function: OnDNDDeactivated
+  - function: PushSurface
+  - function: InAppBannerSurface
+  - function: SoundSurface
+  - function: UnreadBadgeSurface
+  - route: POST /api/messages
+  - route: PATCH /api/messages/:id
+  - route: DELETE /api/messages/:id
+  - route: PUT /api/members/:id/dnd
+  - db_field: dnd_state.manual_on
+  - db_field: dnd_state.schedule_window
+  - db_field: dnd_state.muted_channels
+  - db_field: thread_participation.has_posted
+  - db_field: member_counters.unread_badge_count
+  - db_field: member_counters.unread_mention_count
+
+# ============================================================================
+# LAYER 2 — BEHAVIOR
+# v1 strict: every test entry is a BARE STRING (the test name).
+# No name:/based_on:/property_type:/dependencies:/tool: sub-fields.
+# property_based test names encode the property archetype
+# (invariant / idempotent / reversible / boundary / monotonic / state_machine)
+# so test-suite-generator 4-B can route by name.
+# ============================================================================
+behavior:
+  unit_tests:
+    example_based:
+      - test_individual_mention_in_top_level_channel_fires_all_four_surfaces
+      - test_mention_event_is_delivered_when_only_one_surface_succeeds
+      - test_broadcast_at_here_resolves_to_active_channel_members
+      - test_broadcast_at_channel_resolves_to_all_channel_members
+      - test_broadcast_at_everyone_resolves_to_all_workspace_members_in_channel
+      - test_role_group_mention_resolves_to_role_members
+      - test_in_thread_mention_to_non_participant_is_silently_skipped
+      - test_in_thread_mention_to_prior_participant_is_delivered
+      - test_mention_under_dnd_suppresses_push_banner_sound
+      - test_mention_under_dnd_still_increments_unread_badge_and_unread_count
+      - test_dnd_active_when_manual_toggle_is_on
+      - test_dnd_active_when_current_time_is_inside_scheduled_window
+      - test_dnd_active_when_channel_is_muted_for_member
+      - test_broadcast_mention_under_dnd_obeys_same_silence_rule_as_individual
+      - test_mention_to_non_member_of_channel_emits_no_notification
+      - test_mention_to_non_member_of_channel_does_not_error_to_mentioner
+      - test_self_mention_emits_no_notification
+      - test_edit_adding_new_mention_triggers_fresh_mention_pipeline
+      - test_edit_not_changing_mention_set_does_not_retrigger
+      - test_edit_added_mention_to_non_member_is_silently_skipped
+      - test_delete_retracts_in_app_banner_for_unopened_notification
+      - test_delete_leaves_push_unchanged
+      - test_delete_leaves_unread_badge_and_count_unchanged
+      - test_delete_after_target_opened_notification_is_a_noop
+      - test_dnd_deactivation_does_not_fire_retroactive_push
+      - test_dnd_deactivation_does_not_fire_retroactive_banner_or_sound
+      - test_dnd_deactivation_preserves_existing_unread_badge_and_count
+    property_based:
+      - test_mention_pipeline_is_idempotent_on_repeated_dispatch_for_same_event
+      - test_unread_badge_count_is_monotonic_under_dnd
+      - test_dnd_silence_invariant_no_push_banner_sound_while_dnd_active
+      - test_non_member_mention_invariant_zero_surfaces_fire
+      - test_self_mention_invariant_zero_surfaces_fire
+      - test_edit_then_revert_mention_set_is_reversible_with_no_duplicate_notifications
+      - test_delete_retraction_in_app_banner_invariant_no_un_retract
+      - test_in_thread_participation_boundary_only_prior_posters_receive_mentions
+      - test_dnd_lifecycle_state_machine_is_well_formed
+
+  integration_tests:
+    example_based:
+      - test_send_message_with_mention_dispatches_all_four_surfaces_end_to_end
+      - test_mention_under_dnd_increments_badge_but_no_external_dispatch_observed
+      - test_edit_adding_mention_dispatches_new_recipient_only
+      - test_delete_message_retracts_in_app_banner_via_realtime_channel
+      - test_dnd_window_expiry_does_not_trigger_resurfacing_dispatch
+      - test_broadcast_at_channel_under_dnd_does_not_dispatch_push
+    property_based:
+      - test_mention_dispatch_atomicity_across_surfaces_and_counters_invariant
+      - test_per_channel_mute_consistently_silences_across_restart_invariant
+
+  e2e_tests:
+    - test_mentioned_member_sees_in_app_banner_in_active_channel
+    - test_member_in_dnd_sees_only_badge_increment_no_banner_no_sound
+    - test_deleted_mention_message_retracts_visible_banner
+
+  thresholds:
+    unit_coverage: ">= 0.80"
+    integration_coverage: ">= 0.60"
+    mutation_kill_rate: ">= 0.70"
+    pbt_runs_per_property: ">= 500"
+
+# ============================================================================
+# LAYER 3 — FITNESS (soft; max 3 entries)
+# v1 strict: entries have exactly 3 keys: criterion / judge / score_threshold
+# (omit score_threshold only when judge: programmatic).
+# judge ∈ {persona-judge | programmatic | manual} — NOT llm-rubric.
+# No rubric_file: — that is a downstream artifact emitted by test-suite-generator 4-F.
+# ============================================================================
+fitness:
+  - criterion: an independent on-call engineer can read spec.md alone and correctly predict, for ten hand-crafted edge-case mention scenarios (non-member, self, edit-add, delete-before-open, in-thread non-participant, DND active, DND end with backlog, broadcast under DND, role mention, custom keyword), whether a notification fires and on which surfaces — without asking clarifying questions
+    judge: persona-judge
+    score_threshold: ">= 8/10"
+  - criterion: the glossary in spec.md defines `@`-mention, team chat channel, deliver, DND, silence, and thread participation precisely enough that two independent reviewers produce the same partition of "in scope" vs "out of scope" mention scenarios from a shared list of 20 cases
+    judge: persona-judge
+    score_threshold: ">= 8/10"
+
+# ============================================================================
+# SPEC-DRIFT THRESHOLD
+# v1 strict: exactly one sub-field, `max_fix_loops_before_escalation: <int>`.
+# Guidance only — ratchet does not auto-read this; see INTEGRATION.md to
+# translate into ratchet's `convergence` value when chaining.
+# ============================================================================
+spec_drift_threshold:
+  max_fix_loops_before_escalation: 3

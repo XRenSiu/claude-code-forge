@@ -1,0 +1,200 @@
+feature: channel-mention-notifications
+based_on: [REQ-001, REQ-002, REQ-003, REQ-004, REQ-005, REQ-006, REQ-007]
+created_at: 2026-05-24T00:00:00Z
+created_by: acceptance-spec/0.1.0
+
+# ============================================================================
+# LAYER 1 — EXISTENCE
+# ============================================================================
+existence:
+  - function: ResolveMentionRecipients
+    based_on: [REQ-001]
+  - function: FilterIneligibleRecipients
+    based_on: [REQ-003, REQ-004]
+  - function: DispatchMentionNotification
+    based_on: [REQ-001, REQ-002]
+  - function: OnMessageEdited
+    based_on: [REQ-005]
+  - function: OnMessageDeleted
+    based_on: [REQ-006]
+  - function: OnDNDDeactivated
+    based_on: [REQ-007]
+  - function: PushSurface
+    based_on: [REQ-001]
+  - function: InAppBannerSurface
+    based_on: [REQ-001, REQ-006]
+  - function: SoundSurface
+    based_on: [REQ-001]
+  - function: UnreadBadgeSurface
+    based_on: [REQ-001, REQ-002]
+  - db_field: dnd_state.manual_on
+    based_on: [REQ-002]
+  - db_field: dnd_state.schedule_window
+    based_on: [REQ-002]
+  - db_field: dnd_state.muted_channels
+    based_on: [REQ-002]
+  - db_field: thread_participation.has_posted
+    based_on: [REQ-001]
+  - db_field: member_counters.unread_badge_count
+    based_on: [REQ-001, REQ-002]
+  - db_field: member_counters.unread_mention_count
+    based_on: [REQ-001, REQ-002]
+
+# ============================================================================
+# LAYER 2 — BEHAVIOR
+# ============================================================================
+behavior:
+  unit_tests:
+    example_based:
+      - name: test_individual_mention_in_top_level_channel_fires_all_four_surfaces
+        based_on: [REQ-001]
+      - name: test_mention_event_is_delivered_when_only_one_surface_succeeds
+        based_on: [REQ-001]
+      - name: test_broadcast_at_here_resolves_to_active_channel_members
+        based_on: [REQ-001]
+      - name: test_broadcast_at_channel_resolves_to_all_channel_members
+        based_on: [REQ-001]
+      - name: test_broadcast_at_everyone_resolves_to_all_workspace_members_in_channel
+        based_on: [REQ-001]
+      - name: test_role_group_mention_resolves_to_role_members
+        based_on: [REQ-001]
+      - name: test_in_thread_mention_to_non_participant_is_silently_skipped
+        based_on: [REQ-001]
+      - name: test_in_thread_mention_to_prior_participant_is_delivered
+        based_on: [REQ-001]
+      - name: test_mention_under_dnd_suppresses_push_banner_sound
+        based_on: [REQ-002]
+      - name: test_mention_under_dnd_still_increments_unread_badge_and_unread_count
+        based_on: [REQ-002]
+      - name: test_dnd_active_when_manual_toggle_is_on
+        based_on: [REQ-002]
+      - name: test_dnd_active_when_current_time_is_inside_scheduled_window
+        based_on: [REQ-002]
+      - name: test_dnd_active_when_channel_is_muted_for_member
+        based_on: [REQ-002]
+      - name: test_broadcast_mention_under_dnd_obeys_same_silence_rule_as_individual
+        based_on: [REQ-002]
+      - name: test_mention_to_non_member_of_channel_emits_no_notification
+        based_on: [REQ-003]
+      - name: test_mention_to_non_member_of_channel_does_not_error_to_mentioner
+        based_on: [REQ-003]
+      - name: test_self_mention_emits_no_notification
+        based_on: [REQ-004]
+      - name: test_edit_adding_new_mention_triggers_fresh_mention_pipeline
+        based_on: [REQ-005]
+      - name: test_edit_not_changing_mention_set_does_not_retrigger
+        based_on: [REQ-005]
+      - name: test_edit_added_mention_to_non_member_is_silently_skipped
+        based_on: [REQ-005, REQ-003]
+      - name: test_delete_retracts_in_app_banner_for_unopened_notification
+        based_on: [REQ-006]
+      - name: test_delete_leaves_push_unchanged
+        based_on: [REQ-006]
+      - name: test_delete_leaves_unread_badge_and_count_unchanged
+        based_on: [REQ-006]
+      - name: test_delete_after_target_opened_notification_is_a_noop
+        based_on: [REQ-006]
+      - name: test_dnd_deactivation_does_not_fire_retroactive_push
+        based_on: [REQ-007]
+      - name: test_dnd_deactivation_does_not_fire_retroactive_banner_or_sound
+        based_on: [REQ-007]
+      - name: test_dnd_deactivation_preserves_existing_unread_badge_and_count
+        based_on: [REQ-007]
+
+    property_based:
+      - name: test_mention_pipeline_is_idempotent_on_repeated_dispatch_for_same_event
+        property_type: idempotent
+        based_on: [REQ-001]
+      - name: test_unread_badge_count_is_monotonic_under_dnd
+        property_type: monotonic
+        based_on: [REQ-002]
+      - name: test_dnd_silence_invariant_no_push_banner_sound_while_dnd_active
+        property_type: invariant
+        based_on: [REQ-002]
+      - name: test_non_member_mention_invariant_zero_surfaces_fire
+        property_type: invariant
+        based_on: [REQ-003]
+      - name: test_self_mention_invariant_zero_surfaces_fire
+        property_type: invariant
+        based_on: [REQ-004]
+      - name: test_edit_then_unedit_mention_set_yields_no_duplicate_notifications
+        property_type: reversible
+        based_on: [REQ-005]
+      - name: test_delete_then_reopen_retraction_does_not_un_retract_in_app_banner
+        property_type: invariant
+        based_on: [REQ-006]
+      - name: test_thread_participation_boundary_only_prior_posters_receive_in_thread_mentions
+        property_type: boundary
+        based_on: [REQ-001]
+      - name: test_dnd_lifecycle_state_machine_is_well_formed
+        property_type: state_machine
+        based_on: [REQ-002, REQ-007]
+
+  integration_tests:
+    example_based:
+      - name: test_send_message_with_mention_dispatches_all_four_surfaces_end_to_end
+        based_on: [REQ-001]
+        dependencies: [postgres, redis, push_gateway_mock]
+      - name: test_mention_under_dnd_increments_badge_but_no_external_dispatch_observed
+        based_on: [REQ-002]
+        dependencies: [postgres, redis, push_gateway_mock]
+      - name: test_edit_adding_mention_dispatches_new_recipient_only
+        based_on: [REQ-005]
+        dependencies: [postgres, redis, push_gateway_mock]
+      - name: test_delete_message_retracts_in_app_banner_via_realtime_channel
+        based_on: [REQ-006]
+        dependencies: [postgres, redis, realtime_socket]
+      - name: test_dnd_window_expiry_does_not_trigger_resurfacing_dispatch
+        based_on: [REQ-007]
+        dependencies: [postgres, redis, push_gateway_mock]
+      - name: test_broadcast_at_channel_under_dnd_does_not_dispatch_push
+        based_on: [REQ-002]
+        dependencies: [postgres, redis, push_gateway_mock]
+
+    property_based:
+      - name: test_mention_dispatch_atomicity_across_surfaces_and_counters
+        property_type: invariant
+        based_on: [REQ-001, REQ-002]
+        dependencies: [postgres, redis]
+      - name: test_per_channel_mute_consistently_silences_across_restart
+        property_type: invariant
+        based_on: [REQ-002]
+        dependencies: [postgres, redis]
+
+  e2e_tests:
+    - name: test_mentioned_member_sees_in_app_banner_in_active_channel
+      based_on: [REQ-001]
+      tool: playwright
+    - name: test_member_in_dnd_sees_only_badge_increment_no_banner_no_sound
+      based_on: [REQ-002]
+      tool: playwright
+    - name: test_deleted_mention_message_retracts_visible_banner
+      based_on: [REQ-006]
+      tool: playwright
+
+  thresholds:
+    unit_coverage: ">= 0.80"
+    integration_coverage: ">= 0.60"
+    mutation_kill_rate: ">= 0.70"
+    pbt_runs_per_property: ">= 500"
+
+# ============================================================================
+# LAYER 3 — FITNESS (soft, kept short on purpose)
+# ============================================================================
+# judge ∈ {programmatic, llm-rubric, manual}; see ../done-when-schema.yaml.
+fitness:
+  - criterion: an independent on-call engineer can read spec.md alone and correctly predict, for ten hand-crafted edge-case mention scenarios (non-member, self, edit-add, delete-before-open, in-thread non-participant, DND active, DND end with backlog, broadcast under DND, role mention, custom keyword), whether a notification fires and on which surfaces — without asking clarifying questions
+    judge: llm-rubric
+    rubric_file: tests/channel-mention-notifications/fitness/spec_is_self_contained_for_oncall.rubric.md
+    score_threshold: ">= 8/10"
+  - criterion: the glossary in spec.md defines `@`-mention, team chat channel, deliver, DND, silence, and thread participation precisely enough that two independent reviewers produce the same partition of "in scope" vs "out of scope" mention scenarios from a shared list of 20 cases
+    judge: llm-rubric
+    rubric_file: tests/channel-mention-notifications/fitness/glossary_drives_consistent_scope_partitioning.rubric.md
+    score_threshold: ">= 8/10"
+
+spec_drift_threshold:
+  # Guidance only — when chaining to /ratchet, translate into ratchet's `convergence`.
+  max_fix_loops_before_escalation: 3
+  applies_to:
+    - mutation_kill_rate
+    - property_based_failure
