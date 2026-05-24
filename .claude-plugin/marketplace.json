@@ -185,6 +185,34 @@
       ]
     },
     {
+      "name": "done-when-pipeline",
+      "description": "Done_When Pipeline — turn fuzzy natural-language requirements into machine-verifiable completion contracts. Two skills compose Steps 1-4: `acceptance-spec` (NL → EARS spec + done_when.yaml via strict 3-question-type clarify loop, max 2-3 rounds, 4-file output: proposal/spec/tasks/done_when) and `test-suite-generator` (EARS → full test pyramid: existence checks via ripgrep/tree-sitter, unit/integration/e2e tests in both example-based and property-based styles, mutation-testing config as anti-reward-hacking, llm-rubric fitness files for manual fresh-Claude-session scoring). Step 5/6 hand off MANUALLY — user invokes /ratchet with translated Goal/Criteria/Scope; ratchet does not auto-parse done_when.yaml. No packaged fitness-judge skill yet — rubric files are scored by a fresh Claude session per their how-to-run block. spec_drift_threshold is guidance for the human composer, not an auto-honored field.",
+      "version": "0.1.0",
+      "author": {
+        "name": "XRenSiu",
+        "email": "xrensiu@gmail.com"
+      },
+      "source": "./plugins/done-when-pipeline",
+      "category": "development",
+      "homepage": "https://github.com/XRenSiu/claude-code-forge/tree/main/plugins/done-when-pipeline",
+      "repository": "https://github.com/XRenSiu/claude-code-forge",
+      "license": "MIT",
+      "tags": [
+        "done-when",
+        "acceptance-criteria",
+        "ears-syntax",
+        "spec-generation",
+        "test-suite-generator",
+        "property-based-testing",
+        "mutation-testing",
+        "testcontainers",
+        "fitness-rubric",
+        "verifiable-completion",
+        "ratchet-integration",
+        "anti-reward-hacking"
+      ]
+    },
+    {
       "name": "bespoke-design-system",
       "description": "Generate a bespoke DESIGN.md for any product brief by reverse-engineering a corpus of existing DESIGN.md design systems into a computable design grammar (rules + rationale + relationships), then forward-generating with three-part rationale (inheritance + adaptation + justification). Outputs the v4: 5-check P0 gate (coherence/archetype/kansei/neighbor + rationale-judge) + OD-dialect 9-section DESIGN.md format (Visual Theme & Atmosphere / Color Palette & Roles / Typography Rules / Component Stylings / Layout Principles / Depth & Elevation / Do's and Don'ts / Responsive Behavior / Agent Prompt Guide) consumable by any DESIGN.md-compatible tool (OD, Claude Design, Stitch). Two interaction modes: interactive (one-shot question batching, max 7 questions, never interrupts mid-generation) or auto (zero-questions, default-driven inference). Self-evolving: high-frequency adaptations consolidate into new rules. Material library is decoupled — works with OD's ~140 systems, awesome-design-md, or any DESIGN.md collection.",
       "version": "1.9.1",

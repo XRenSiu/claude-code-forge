@@ -1,0 +1,26 @@
+{
+  "name": "done-when-pipeline",
+  "description": "Done_When Pipeline — turn fuzzy natural-language requirements into machine-verifiable completion contracts that an independent agent can mechanically check. Two skills compose Steps 1-4 of the pipeline: `acceptance-spec` (NL → EARS spec + done_when.yaml contract via a strict 3-question-type clarify loop, max 2-3 rounds) and `test-suite-generator` (EARS → full test pyramid: existence checks via ripgrep/tree-sitter, unit/integration/e2e tests in both example-based and property-based styles, mutation-testing config as anti-reward-hacking layer, and llm-rubric fitness files for the manual fresh-Claude-session workflow). Step 5 execution and Step 6 ratchet feedback loop hand off MANUALLY — the user invokes /ratchet with translated Goal/Criteria/Scope; ratchet does not parse done_when.yaml directly. Fitness rubrics are scored manually by a fresh Claude session per each rubric's how-to-run block; no packaged fitness-judge skill exists yet. Borrows file-format ideas from OpenSpec and clarify protocol from GitHub Spec Kit without integrating their CLIs. Design philosophy: verifiable beats judgeable; human time spent only on the irreplaceable step of ambiguity removal; PBT closes the reward-hacking loop because the agent cannot predict Hypothesis/fast-check inputs at write time.",
+  "version": "0.1.0",
+  "author": {
+    "name": "XRenSiu",
+    "email": "xrensiu@gmail.com"
+  },
+  "homepage": "https://github.com/XRenSiu/claude-code-forge/tree/main/plugins/done-when-pipeline",
+  "repository": "https://github.com/XRenSiu/claude-code-forge",
+  "license": "MIT",
+  "keywords": [
+    "done-when",
+    "acceptance-criteria",
+    "ears-syntax",
+    "spec-generation",
+    "test-suite-generator",
+    "property-based-testing",
+    "mutation-testing",
+    "testcontainers",
+    "fitness-rubric",
+    "verifiable-completion",
+    "ratchet-integration",
+    "anti-reward-hacking"
+  ]
+}

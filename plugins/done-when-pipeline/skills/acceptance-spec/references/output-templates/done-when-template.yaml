@@ -1,0 +1,62 @@
+# done_when.yaml — fill-in template.
+# See ../done-when-schema.yaml for the authoritative schema and field semantics.
+
+feature: <feature-slug>
+based_on: [REQ-001, REQ-002, ...]
+created_at: <ISO-8601>
+created_by: acceptance-spec/0.1.0
+
+existence:
+  - file: <path>
+    based_on: [REQ-NNN]
+  - function: <name>
+    based_on: [REQ-NNN]
+  # ...
+
+behavior:
+  unit_tests:
+    example_based:
+      - name: <test_name>
+        based_on: [REQ-NNN]
+    property_based:
+      - name: <test_name>
+        property_type: <invariant|idempotent|reversible|boundary|monotonic|state_machine>
+        based_on: [REQ-NNN]
+
+  integration_tests:
+    example_based:
+      - name: <test_name>
+        based_on: [REQ-NNN]
+        dependencies: []
+    property_based:
+      - name: <test_name>
+        property_type: <...>
+        based_on: [REQ-NNN]
+        dependencies: []
+
+  e2e_tests:
+    - name: <test_name>
+      based_on: [REQ-NNN]
+      tool: playwright
+
+  thresholds:
+    unit_coverage: ">= 0.80"
+    integration_coverage: ">= 0.60"
+    mutation_kill_rate: ">= 0.70"
+    pbt_runs_per_property: ">= 500"
+
+fitness:
+  # KEEP SHORT. Only things genuinely outside mechanical reach.
+  # judge ∈ {programmatic, llm-rubric, manual}. See ../done-when-schema.yaml.
+  - criterion: <one-line>
+    judge: llm-rubric
+    rubric_file: tests/<feature>/fitness/<slug>.rubric.md
+    score_threshold: ">= 8/10"
+
+spec_drift_threshold:
+  # GUIDANCE FIELD — ratchet does not auto-read this. See INTEGRATION.md
+  # for how to translate into ratchet's `convergence` value when chaining.
+  max_fix_loops_before_escalation: 3
+  applies_to:
+    - mutation_kill_rate
+    - property_based_failure

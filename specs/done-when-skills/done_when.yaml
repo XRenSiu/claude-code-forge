@@ -1,0 +1,188 @@
+feature: done-when-skills
+based_on: [REQ-001, REQ-002, REQ-003, REQ-004, REQ-005, REQ-006, REQ-007, REQ-008, REQ-009, REQ-010, REQ-011, REQ-012, REQ-013, REQ-014, REQ-015, REQ-016]
+created_at: 2026-05-24T00:00:00Z
+created_by: acceptance-spec/0.1.0 (dogfooding pass)
+
+# ============================================================================
+# LAYER 1 — EXISTENCE
+# ============================================================================
+existence:
+  - file: plugins/done-when-pipeline/.claude-plugin/plugin.json
+    based_on: [REQ-014]
+  - file: plugins/done-when-pipeline/README.md
+    based_on: [REQ-014]
+  - file: plugins/done-when-pipeline/INTEGRATION.md
+    based_on: [REQ-012, REQ-013]
+  - file: plugins/done-when-pipeline/skills/acceptance-spec/SKILL.md
+    based_on: [REQ-001]
+  - file: plugins/done-when-pipeline/skills/acceptance-spec/references/ears-syntax.md
+    based_on: [REQ-015]
+  - file: plugins/done-when-pipeline/skills/acceptance-spec/references/clarify-protocol.md
+    based_on: [REQ-003, REQ-015]
+  - file: plugins/done-when-pipeline/skills/acceptance-spec/references/done-when-schema.yaml
+    based_on: [REQ-004]
+  - file: plugins/done-when-pipeline/skills/acceptance-spec/references/output-templates/proposal-template.md
+    based_on: [REQ-002]
+  - file: plugins/done-when-pipeline/skills/acceptance-spec/references/output-templates/spec-template.md
+    based_on: [REQ-002]
+  - file: plugins/done-when-pipeline/skills/acceptance-spec/references/output-templates/tasks-template.md
+    based_on: [REQ-002]
+  - file: plugins/done-when-pipeline/skills/acceptance-spec/references/output-templates/done-when-template.yaml
+    based_on: [REQ-002]
+  - file: plugins/done-when-pipeline/skills/test-suite-generator/SKILL.md
+    based_on: [REQ-005]
+  - file: plugins/done-when-pipeline/skills/test-suite-generator/references/ears-to-test-matrix.md
+    based_on: [REQ-015]
+  - file: plugins/done-when-pipeline/skills/test-suite-generator/references/pbt-property-types.md
+    based_on: [REQ-008]
+  - file: plugins/done-when-pipeline/skills/test-suite-generator/references/tooling-by-language.md
+    based_on: [REQ-009]
+  - file: plugins/done-when-pipeline/skills/test-suite-generator/references/anti-cheating-mutation.md
+    based_on: [REQ-010]
+  - file: plugins/done-when-pipeline/skills/test-suite-generator/references/fitness-rubric-guide.md
+    based_on: [REQ-011]
+  - file: plugins/done-when-pipeline/skills/test-suite-generator/references/done-when-schema-validator.md
+    based_on: [REQ-015]
+  - file: plugins/done-when-pipeline/skills/test-suite-generator/references/sub-modules/existence-extractor.md
+    based_on: [REQ-007]
+  - file: plugins/done-when-pipeline/skills/test-suite-generator/references/sub-modules/unit-test-generator.md
+    based_on: [REQ-007]
+  - file: plugins/done-when-pipeline/skills/test-suite-generator/references/sub-modules/integration-generator.md
+    based_on: [REQ-007]
+  - file: plugins/done-when-pipeline/skills/test-suite-generator/references/sub-modules/e2e-generator.md
+    based_on: [REQ-007]
+  - file: plugins/done-when-pipeline/skills/test-suite-generator/references/sub-modules/mutation-config.md
+    based_on: [REQ-007]
+  - file: plugins/done-when-pipeline/skills/test-suite-generator/references/sub-modules/fitness-rubric.md
+    based_on: [REQ-007]
+
+# ============================================================================
+# LAYER 2 — BEHAVIOR (structural lints since plugin is markdown not code)
+# ============================================================================
+behavior:
+  unit_tests:
+    example_based:
+      # SKILL.md frontmatter shape
+      - name: test_acceptance_spec_skillmd_frontmatter_has_correct_name_and_version
+        based_on: [REQ-001]
+      - name: test_test_suite_generator_skillmd_frontmatter_has_correct_name_and_version
+        based_on: [REQ-005]
+      - name: test_both_skills_declare_user_invocable_true
+        based_on: [REQ-001, REQ-005]
+
+      # Strict-clarify-protocol claims in acceptance-spec SKILL.md text
+      - name: test_acceptance_spec_skillmd_states_three_question_types
+        based_on: [REQ-003]
+      - name: test_acceptance_spec_skillmd_states_5_round_hard_cap
+        based_on: [REQ-003]
+      - name: test_acceptance_spec_skillmd_states_3_to_5_question_budget_per_round
+        based_on: [REQ-003]
+      - name: test_acceptance_spec_skillmd_states_split_bailout_at_round_5
+        based_on: [REQ-003]
+
+      # done-when-schema.yaml has the required top-level keys
+      - name: test_done_when_schema_has_top_level_keys_feature_existence_behavior_fitness_drift
+        based_on: [REQ-004]
+
+      # 6 pyramid layers covered
+      - name: test_test_suite_generator_has_all_six_sub_module_files
+        based_on: [REQ-007]
+
+      # 6 PBT property archetypes documented
+      - name: test_pbt_property_types_doc_lists_all_six_archetypes
+        based_on: [REQ-008]
+
+      # Tooling-by-language covers required languages
+      - name: test_tooling_doc_covers_python_typescript_swift_kotlin_and_cross_language
+        based_on: [REQ-009]
+
+      # Mandatory mutation kill rate is asserted, not optional
+      - name: test_anti_cheating_doc_asserts_70_percent_kill_rate_as_mandatory
+        based_on: [REQ-010]
+      - name: test_test_suite_generator_skillmd_iron_rules_call_mutation_mandatory
+        based_on: [REQ-010]
+
+      # Fitness rubric warns about bad-rubric harm with specific numbers
+      - name: test_fitness_rubric_guide_cites_judgebench_numbers_556_to_429
+        based_on: [REQ-011]
+
+      # Integration documentation (honest claims, Round 2)
+      - name: test_integration_md_says_ratchet_does_not_auto_parse_done_when_yaml
+        based_on: [REQ-012]
+      - name: test_integration_md_says_spec_drift_threshold_is_guidance_not_auto_honored
+        based_on: [REQ-012]
+      - name: test_no_file_in_plugin_claims_persona_judge_consumes_fitness_rubrics
+        based_on: [REQ-013]
+      - name: test_no_invented_personas_referenced_anywhere_in_plugin
+        based_on: [REQ-013]
+      - name: test_fitness_rubric_guide_documents_manual_claude_session_workflow
+        based_on: [REQ-013]
+
+      # Marketplace registration consistency
+      - name: test_plugin_registered_in_marketplace_json
+        based_on: [REQ-014]
+      - name: test_plugin_enabled_in_user_settings
+        based_on: [REQ-014]
+      - name: test_version_consistent_across_marketplace_pluginjson_and_both_skillmd
+        based_on: [REQ-014]
+
+      # Every reference file the SKILL.md mentions actually exists
+      - name: test_every_acceptance_spec_reference_path_in_skillmd_exists_on_disk
+        based_on: [REQ-015]
+      - name: test_every_test_suite_generator_reference_path_in_skillmd_exists_on_disk
+        based_on: [REQ-015]
+
+      # Worked example internal consistency
+      - name: test_subscription_cancellation_example_done_when_based_on_matches_spec
+        based_on: [REQ-016]
+      - name: test_subscription_cancellation_example_glossary_terms_used_in_spec
+        based_on: [REQ-016]
+
+    property_based: []   # NA — skill source is markdown, no PBT applicable
+
+  integration_tests:
+    example_based:
+      # Real cross-plugin checks (Round 2 reframed for honesty)
+      - name: test_ratchet_skill_exists_in_marketplace_at_referenced_path
+        based_on: [REQ-012]
+        dependencies: []
+      - name: test_ratchet_skillmd_does_not_mention_done_when_yaml_consumption
+        based_on: [REQ-012]   # confirms our honest claim that integration is manual
+        dependencies: []
+      - name: test_persona_distill_plugin_exists_in_marketplace
+        based_on: [REQ-013]
+        dependencies: []
+      - name: test_persona_judge_skill_exists_inside_persona_distill
+        based_on: [REQ-013]   # the skill exists, but for a different purpose
+        dependencies: []
+    property_based: []
+
+  e2e_tests:
+    # Deferred — requires Claude Code session restart to load /acceptance-spec and /test-suite-generator
+    - name: test_acceptance_spec_slash_command_invokable_in_fresh_session
+      based_on: [REQ-001]
+      tool: playwright
+    - name: test_test_suite_generator_slash_command_invokable_in_fresh_session
+      based_on: [REQ-005]
+      tool: playwright
+
+  thresholds:
+    unit_coverage: ">= 0.80"           # of REQs that have at least one passing check
+    integration_coverage: ">= 0.60"
+    mutation_kill_rate: "N/A"          # plugin source is markdown, no mutation testing applicable
+    pbt_runs_per_property: "N/A"
+
+# ============================================================================
+# LAYER 3 — FITNESS (deferred; reserved for round 2 if needed)
+# ============================================================================
+fitness:
+  - criterion: a Claude Code session that has never seen the source design doc can run /acceptance-spec on a fresh brief and produce a useful four-file spec
+    judge: manual
+    note: deferred to live e2e round; requires fresh session
+
+spec_drift_threshold:
+  max_fix_loops_before_escalation: 3
+  applies_to:
+    - existence_check_failure
+    - structure_lint_failure
+    - integration_check_failure
