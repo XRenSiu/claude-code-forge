@@ -115,6 +115,1030 @@
         }
       ],
       "last_seen": "2026-05-03T00:00:00Z"
+    },
+    "kami-color-warm-parchment-canvas-001:hex_shift_to_yellower_for_xuanzhi_chinese": {
+      "adaptation_id": "kami-color-warm-parchment-canvas-001:hex_shift_to_yellower_for_xuanzhi_chinese",
+      "occurrences": 1,
+      "contexts": [
+        {
+          "user_kansei": [
+            "structured",
+            "calm",
+            "intellectual",
+            "trustworthy",
+            "classical",
+            "precise",
+            "restrained",
+            "measured"
+          ],
+          "user_kansei_reverse": [
+            "mystical_decorative",
+            "playful",
+            "aggressive",
+            "casual",
+            "decorative",
+            "cluttered",
+            "generic_corporate",
+            "ai_slop",
+            "gaming",
+            "neon",
+            "cyberpunk"
+          ],
+          "generated_at": "2026-05-24T00:00:00Z",
+          "product": "命理决策辅助引擎 (Mingli Decision Engine)",
+          "from": "#f5f4ed (kami scalar)",
+          "to": "#f4ede0"
+        }
+      ],
+      "last_seen": "2026-05-24T00:00:00Z"
+    },
+    "kami-color-single-ink-blue-accent-5-percent-002:literal_swap_ink_blue_to_vermilion": {
+      "adaptation_id": "kami-color-single-ink-blue-accent-5-percent-002:literal_swap_ink_blue_to_vermilion",
+      "occurrences": 1,
+      "contexts": [
+        {
+          "user_kansei": [
+            "structured",
+            "calm",
+            "intellectual",
+            "trustworthy",
+            "classical",
+            "precise",
+            "restrained",
+            "measured"
+          ],
+          "user_kansei_reverse": [
+            "mystical_decorative",
+            "playful",
+            "aggressive",
+            "casual",
+            "decorative",
+            "cluttered",
+            "generic_corporate",
+            "ai_slop",
+            "gaming",
+            "neon",
+            "cyberpunk"
+          ],
+          "generated_at": "2026-05-24T00:00:00Z",
+          "product": "命理决策辅助引擎 (Mingli Decision Engine)",
+          "from": "#1B365D (kami ink blue)",
+          "to": "#a83232 (vermilion)"
+        }
+      ],
+      "last_seen": "2026-05-24T00:00:00Z"
+    },
+    "vercel-color-near-black-text-002:scalar_to_darker_warmer_for_chinese_ink": {
+      "adaptation_id": "vercel-color-near-black-text-002:scalar_to_darker_warmer_for_chinese_ink",
+      "occurrences": 1,
+      "contexts": [
+        {
+          "user_kansei": [
+            "structured",
+            "calm",
+            "intellectual",
+            "trustworthy",
+            "classical",
+            "precise",
+            "restrained",
+            "measured"
+          ],
+          "user_kansei_reverse": [
+            "mystical_decorative",
+            "playful",
+            "aggressive",
+            "casual",
+            "decorative",
+            "cluttered",
+            "generic_corporate",
+            "ai_slop",
+            "gaming",
+            "neon",
+            "cyberpunk"
+          ],
+          "generated_at": "2026-05-24T00:00:00Z",
+          "product": "命理决策辅助引擎 (Mingli Decision Engine)",
+          "from": "#171717 (vercel scalar)",
+          "to": "#1a1612"
+        }
+      ],
+      "last_seen": "2026-05-24T00:00:00Z"
+    },
+    "cal-color-warm-near-black-text-002:scalar_to_darker_warmer_for_chinese_ink": {
+      "adaptation_id": "cal-color-warm-near-black-text-002:scalar_to_darker_warmer_for_chinese_ink",
+      "occurrences": 1,
+      "contexts": [
+        {
+          "user_kansei": [
+            "structured",
+            "calm",
+            "intellectual",
+            "trustworthy",
+            "classical",
+            "precise",
+            "restrained",
+            "measured"
+          ],
+          "user_kansei_reverse": [
+            "mystical_decorative",
+            "playful",
+            "aggressive",
+            "casual",
+            "decorative",
+            "cluttered",
+            "generic_corporate",
+            "ai_slop",
+            "gaming",
+            "neon",
+            "cyberpunk"
+          ],
+          "generated_at": "2026-05-24T00:00:00Z",
+          "product": "命理决策辅助引擎 (Mingli Decision Engine)",
+          "from": "#242424 (cal scalar)",
+          "to": "#1a1612"
+        }
+      ],
+      "last_seen": "2026-05-24T00:00:00Z"
+    },
+    "github-color-hairline-border-not-shadow-003:cool_gray_to_ink_alpha_on_warm_canvas": {
+      "adaptation_id": "github-color-hairline-border-not-shadow-003:cool_gray_to_ink_alpha_on_warm_canvas",
+      "occurrences": 1,
+      "contexts": [
+        {
+          "user_kansei": [
+            "structured",
+            "calm",
+            "intellectual",
+            "trustworthy",
+            "classical",
+            "precise",
+            "restrained",
+            "measured"
+          ],
+          "user_kansei_reverse": [
+            "mystical_decorative",
+            "playful",
+            "aggressive",
+            "casual",
+            "decorative",
+            "cluttered",
+            "generic_corporate",
+            "ai_slop",
+            "gaming",
+            "neon",
+            "cyberpunk"
+          ],
+          "generated_at": "2026-05-24T00:00:00Z",
+          "product": "命理决策辅助引擎 (Mingli Decision Engine)",
+          "from": "#d0d7de (github cool gray scalar)",
+          "to": "rgba(26,22,18,*)"
+        }
+      ],
+      "last_seen": "2026-05-24T00:00:00Z"
+    },
+    "linear-app-color-translucent-borders-003:alpha_range_inverted_for_warm_light_canvas": {
+      "adaptation_id": "linear-app-color-translucent-borders-003:alpha_range_inverted_for_warm_light_canvas",
+      "occurrences": 1,
+      "contexts": [
+        {
+          "user_kansei": [
+            "structured",
+            "calm",
+            "intellectual",
+            "trustworthy",
+            "classical",
+            "precise",
+            "restrained",
+            "measured"
+          ],
+          "user_kansei_reverse": [
+            "mystical_decorative",
+            "playful",
+            "aggressive",
+            "casual",
+            "decorative",
+            "cluttered",
+            "generic_corporate",
+            "ai_slop",
+            "gaming",
+            "neon",
+            "cyberpunk"
+          ],
+          "generated_at": "2026-05-24T00:00:00Z",
+          "product": "命理决策辅助引擎 (Mingli Decision Engine)",
+          "from": "[0.05, 0.08] (linear white-on-dark)",
+          "to": "[0.08, 0.25] (ink-on-warm-canvas equivalent)"
+        }
+      ],
+      "last_seen": "2026-05-24T00:00:00Z"
+    },
+    "notion-components-subtle-card-radius-010:scalar_4_to_6_for_optical_softness_on_warm_canvas": {
+      "adaptation_id": "notion-components-subtle-card-radius-010:scalar_4_to_6_for_optical_softness_on_warm_canvas",
+      "occurrences": 1,
+      "contexts": [
+        {
+          "user_kansei": [
+            "structured",
+            "calm",
+            "intellectual",
+            "trustworthy",
+            "classical",
+            "precise",
+            "restrained",
+            "measured"
+          ],
+          "user_kansei_reverse": [
+            "mystical_decorative",
+            "playful",
+            "aggressive",
+            "casual",
+            "decorative",
+            "cluttered",
+            "generic_corporate",
+            "ai_slop",
+            "gaming",
+            "neon",
+            "cyberpunk"
+          ],
+          "generated_at": "2026-05-24T00:00:00Z",
+          "product": "命理决策辅助引擎 (Mingli Decision Engine)",
+          "from": "4 (notion scalar)",
+          "to": "6 (daily card on warm canvas)"
+        }
+      ],
+      "last_seen": "2026-05-24T00:00:00Z"
+    },
+    "github-typography-14px-body-density-001:line_height_micro_increase_for_warm_canvas": {
+      "adaptation_id": "github-typography-14px-body-density-001:line_height_micro_increase_for_warm_canvas",
+      "occurrences": 1,
+      "contexts": [
+        {
+          "user_kansei": [
+            "structured",
+            "calm",
+            "intellectual",
+            "trustworthy",
+            "classical",
+            "precise",
+            "restrained",
+            "measured"
+          ],
+          "user_kansei_reverse": [
+            "mystical_decorative",
+            "playful",
+            "aggressive",
+            "casual",
+            "decorative",
+            "cluttered",
+            "generic_corporate",
+            "ai_slop",
+            "gaming",
+            "neon",
+            "cyberpunk"
+          ],
+          "generated_at": "2026-05-24T00:00:00Z",
+          "product": "命理决策辅助引擎 (Mingli Decision Engine)",
+          "from": "1.5 (github scalar)",
+          "to": "1.55"
+        }
+      ],
+      "last_seen": "2026-05-24T00:00:00Z"
+    },
+    "kami-depth_elevation-ring-and-whisper-only-006:shadow_color_neutral_to_ink_alpha_micro_increase": {
+      "adaptation_id": "kami-depth_elevation-ring-and-whisper-only-006:shadow_color_neutral_to_ink_alpha_micro_increase",
+      "occurrences": 1,
+      "contexts": [
+        {
+          "user_kansei": [
+            "structured",
+            "calm",
+            "intellectual",
+            "trustworthy",
+            "classical",
+            "precise",
+            "restrained",
+            "measured"
+          ],
+          "user_kansei_reverse": [
+            "mystical_decorative",
+            "playful",
+            "aggressive",
+            "casual",
+            "decorative",
+            "cluttered",
+            "generic_corporate",
+            "ai_slop",
+            "gaming",
+            "neon",
+            "cyberpunk"
+          ],
+          "generated_at": "2026-05-24T00:00:00Z",
+          "product": "命理决策辅助引擎 (Mingli Decision Engine)",
+          "from": "rgba(0,0,0,0.05) (kami scalar)",
+          "to": "rgba(26,22,18,0.06)"
+        }
+      ],
+      "last_seen": "2026-05-24T00:00:00Z"
+    },
+    "openai-layout-whitespace-primary-divider-005:hairline_color_cool_to_ink_alpha": {
+      "adaptation_id": "openai-layout-whitespace-primary-divider-005:hairline_color_cool_to_ink_alpha",
+      "occurrences": 1,
+      "contexts": [
+        {
+          "user_kansei": [
+            "structured",
+            "calm",
+            "intellectual",
+            "trustworthy",
+            "classical",
+            "precise",
+            "restrained",
+            "measured"
+          ],
+          "user_kansei_reverse": [
+            "mystical_decorative",
+            "playful",
+            "aggressive",
+            "casual",
+            "decorative",
+            "cluttered",
+            "generic_corporate",
+            "ai_slop",
+            "gaming",
+            "neon",
+            "cyberpunk"
+          ],
+          "generated_at": "2026-05-24T00:00:00Z",
+          "product": "命理决策辅助引擎 (Mingli Decision Engine)",
+          "from": "#e5e5e5 (openai cool gray scalar)",
+          "to": "rgba(26,22,18,0.15)"
+        }
+      ],
+      "last_seen": "2026-05-24T00:00:00Z"
+    },
+    "kami-color-single-ink-blue-accent-5-percent-002:cross_category_transfer_editorial_to_spiritual_saas": {
+      "adaptation_id": "kami-color-single-ink-blue-accent-5-percent-002:cross_category_transfer_editorial_to_spiritual_saas",
+      "occurrences": 1,
+      "contexts": [
+        {
+          "user_kansei": [
+            "structured",
+            "calm",
+            "intellectual",
+            "trustworthy",
+            "classical",
+            "precise",
+            "restrained",
+            "measured"
+          ],
+          "user_kansei_reverse": [
+            "mystical_decorative",
+            "playful",
+            "aggressive",
+            "casual",
+            "decorative",
+            "cluttered",
+            "generic_corporate",
+            "ai_slop",
+            "gaming",
+            "neon",
+            "cyberpunk"
+          ],
+          "generated_at": "2026-05-24T00:00:00Z",
+          "product": "命理决策辅助引擎 (Mingli Decision Engine)",
+          "from": "editorial_tool / document_template / print_first_artifact (kami preconditions)",
+          "to": "spiritual_saas with editorial overlay"
+        }
+      ],
+      "last_seen": "2026-05-24T00:00:00Z"
+    },
+    "vercel-color-functional-only-accents-003:concretize_small_set_to_4_tide_states": {
+      "adaptation_id": "vercel-color-functional-only-accents-003:concretize_small_set_to_4_tide_states",
+      "occurrences": 1,
+      "contexts": [
+        {
+          "user_kansei": [
+            "structured",
+            "calm",
+            "intellectual",
+            "trustworthy",
+            "classical",
+            "precise",
+            "restrained",
+            "measured"
+          ],
+          "user_kansei_reverse": [
+            "mystical_decorative",
+            "playful",
+            "aggressive",
+            "casual",
+            "decorative",
+            "cluttered",
+            "generic_corporate",
+            "ai_slop",
+            "gaming",
+            "neon",
+            "cyberpunk"
+          ],
+          "generated_at": "2026-05-24T00:00:00Z",
+          "product": "命理决策辅助引擎 (Mingli Decision Engine)",
+          "from": "small_set_with_strict_semantic_role (vercel undefined)",
+          "to": "4-state tide palette (favorable/caution/adverse/neutral)"
+        }
+      ],
+      "last_seen": "2026-05-24T00:00:00Z"
+    },
+    "vercel-color-functional-only-accents-003:concretize_small_set_to_5_category_palette": {
+      "adaptation_id": "vercel-color-functional-only-accents-003:concretize_small_set_to_5_category_palette",
+      "occurrences": 1,
+      "contexts": [
+        {
+          "user_kansei": [
+            "structured",
+            "calm",
+            "intellectual",
+            "trustworthy",
+            "classical",
+            "precise",
+            "restrained",
+            "measured"
+          ],
+          "user_kansei_reverse": [
+            "mystical_decorative",
+            "playful",
+            "aggressive",
+            "casual",
+            "decorative",
+            "cluttered",
+            "generic_corporate",
+            "ai_slop",
+            "gaming",
+            "neon",
+            "cyberpunk"
+          ],
+          "generated_at": "2026-05-24T00:00:00Z",
+          "product": "命理决策辅助引擎 (Mingli Decision Engine)",
+          "from": "small_set_with_strict_semantic_role (vercel undefined)",
+          "to": "5-category 5-element palette (career/wealth/health/relations/self)"
+        }
+      ],
+      "last_seen": "2026-05-24T00:00:00Z"
+    },
+    "vercel-voice-infrastructure-invisible-009:cta_verb_set_mingli_specific": {
+      "adaptation_id": "vercel-voice-infrastructure-invisible-009:cta_verb_set_mingli_specific",
+      "occurrences": 1,
+      "contexts": [
+        {
+          "user_kansei": [
+            "structured",
+            "calm",
+            "intellectual",
+            "trustworthy",
+            "classical",
+            "precise",
+            "restrained",
+            "measured"
+          ],
+          "user_kansei_reverse": [
+            "mystical_decorative",
+            "playful",
+            "aggressive",
+            "casual",
+            "decorative",
+            "cluttered",
+            "generic_corporate",
+            "ai_slop",
+            "gaming",
+            "neon",
+            "cyberpunk"
+          ],
+          "generated_at": "2026-05-24T00:00:00Z",
+          "product": "命理决策辅助引擎 (Mingli Decision Engine)",
+          "from": "[start_deploying, get_started, contact_sales] (vercel literal)",
+          "to": "[Begin reading, Mark event, Record decision, Open scroll, Schedule follow-up, Replay this tide]"
+        }
+      ],
+      "last_seen": "2026-05-24T00:00:00Z"
+    },
+    "github-components-pill-status-badge-005:add_confidence_disclosure_to_authorized_roles": {
+      "adaptation_id": "github-components-pill-status-badge-005:add_confidence_disclosure_to_authorized_roles",
+      "occurrences": 1,
+      "contexts": [
+        {
+          "user_kansei": [
+            "structured",
+            "calm",
+            "intellectual",
+            "trustworthy",
+            "classical",
+            "precise",
+            "restrained",
+            "measured"
+          ],
+          "user_kansei_reverse": [
+            "mystical_decorative",
+            "playful",
+            "aggressive",
+            "casual",
+            "decorative",
+            "cluttered",
+            "generic_corporate",
+            "ai_slop",
+            "gaming",
+            "neon",
+            "cyberpunk"
+          ],
+          "generated_at": "2026-05-24T00:00:00Z",
+          "product": "命理决策辅助引擎 (Mingli Decision Engine)",
+          "from": "[status, state, role, tier] (github verbatim)",
+          "to": "[tide_state, decision_state, evidence_strength, confidence_disclosure]"
+        }
+      ],
+      "last_seen": "2026-05-24T00:00:00Z"
+    },
+    "vercel-color-extreme-white-minimalism-001:scalar_shift_FAFAFA_micro_warm_for_eye_fatigue": {
+      "adaptation_id": "vercel-color-extreme-white-minimalism-001:scalar_shift_FAFAFA_micro_warm_for_eye_fatigue",
+      "occurrences": 1,
+      "contexts": [
+        {
+          "user_kansei": [
+            "structured",
+            "calm",
+            "intellectual",
+            "trustworthy",
+            "precise",
+            "restrained",
+            "measured",
+            "modern",
+            "clear"
+          ],
+          "user_kansei_reverse": [
+            "mystical_decorative",
+            "playful",
+            "aggressive",
+            "casual",
+            "decorative",
+            "cluttered",
+            "generic_corporate",
+            "ai_slop",
+            "gaming",
+            "neon",
+            "cyberpunk",
+            "ancient",
+            "classical",
+            "parchment_chrome",
+            "mystical_chinese_culture",
+            "traditional_calligraphy",
+            "editorial_as_dashboard"
+          ],
+          "generated_at": "2026-05-24T12:00:00Z",
+          "product": "命理决策辅助引擎 (Mingli Decision Engine) v2 redo",
+          "v2_correction_context": "v1→v2 redo after fundamental visual-vs-content mistargeting was identified by user",
+          "from": "#ffffff (vercel pure white scalar)",
+          "to": "#FAFAFA"
+        }
+      ],
+      "last_seen": "2026-05-24T12:00:00Z"
+    },
+    "vercel-color-near-black-text-002:scalar_to_darker_0A0A0A_for_dashboard_density": {
+      "adaptation_id": "vercel-color-near-black-text-002:scalar_to_darker_0A0A0A_for_dashboard_density",
+      "occurrences": 1,
+      "contexts": [
+        {
+          "user_kansei": [
+            "structured",
+            "calm",
+            "intellectual",
+            "trustworthy",
+            "precise",
+            "restrained",
+            "measured",
+            "modern",
+            "clear"
+          ],
+          "user_kansei_reverse": [
+            "mystical_decorative",
+            "playful",
+            "aggressive",
+            "casual",
+            "decorative",
+            "cluttered",
+            "generic_corporate",
+            "ai_slop",
+            "gaming",
+            "neon",
+            "cyberpunk",
+            "ancient",
+            "classical",
+            "parchment_chrome",
+            "mystical_chinese_culture",
+            "traditional_calligraphy",
+            "editorial_as_dashboard"
+          ],
+          "generated_at": "2026-05-24T12:00:00Z",
+          "product": "命理决策辅助引擎 (Mingli Decision Engine) v2 redo",
+          "v2_correction_context": "v1→v2 redo after fundamental visual-vs-content mistargeting was identified by user",
+          "from": "#171717 (vercel scalar)",
+          "to": "#0A0A0A"
+        }
+      ],
+      "last_seen": "2026-05-24T12:00:00Z"
+    },
+    "cohere-color-interactive-blue-hover-only-003:saturation_drop_to_0_33_modern_restraint_intellectual_accent": {
+      "adaptation_id": "cohere-color-interactive-blue-hover-only-003:saturation_drop_to_0_33_modern_restraint_intellectual_accent",
+      "occurrences": 1,
+      "contexts": [
+        {
+          "user_kansei": [
+            "structured",
+            "calm",
+            "intellectual",
+            "trustworthy",
+            "precise",
+            "restrained",
+            "measured",
+            "modern",
+            "clear"
+          ],
+          "user_kansei_reverse": [
+            "mystical_decorative",
+            "playful",
+            "aggressive",
+            "casual",
+            "decorative",
+            "cluttered",
+            "generic_corporate",
+            "ai_slop",
+            "gaming",
+            "neon",
+            "cyberpunk",
+            "ancient",
+            "classical",
+            "parchment_chrome",
+            "mystical_chinese_culture",
+            "traditional_calligraphy",
+            "editorial_as_dashboard"
+          ],
+          "generated_at": "2026-05-24T12:00:00Z",
+          "product": "命理决策辅助引擎 (Mingli Decision Engine) v2 redo",
+          "v2_correction_context": "v1→v2 redo after fundamental visual-vs-content mistargeting was identified by user",
+          "from": "[0.6, 0.8] (cohere interactive saturation range)",
+          "to": "0.33 (deep desaturated)"
+        }
+      ],
+      "last_seen": "2026-05-24T12:00:00Z"
+    },
+    "github-color-dual-chromatic-anchor-002:chromatic_count_2_to_1_with_state_palette_replacement": {
+      "adaptation_id": "github-color-dual-chromatic-anchor-002:chromatic_count_2_to_1_with_state_palette_replacement",
+      "occurrences": 1,
+      "contexts": [
+        {
+          "user_kansei": [
+            "structured",
+            "calm",
+            "intellectual",
+            "trustworthy",
+            "precise",
+            "restrained",
+            "measured",
+            "modern",
+            "clear"
+          ],
+          "user_kansei_reverse": [
+            "mystical_decorative",
+            "playful",
+            "aggressive",
+            "casual",
+            "decorative",
+            "cluttered",
+            "generic_corporate",
+            "ai_slop",
+            "gaming",
+            "neon",
+            "cyberpunk",
+            "ancient",
+            "classical",
+            "parchment_chrome",
+            "mystical_chinese_culture",
+            "traditional_calligraphy",
+            "editorial_as_dashboard"
+          ],
+          "generated_at": "2026-05-24T12:00:00Z",
+          "product": "命理决策辅助引擎 (Mingli Decision Engine) v2 redo",
+          "v2_correction_context": "v1→v2 redo after fundamental visual-vs-content mistargeting was identified by user",
+          "from": "chromatic_count: 2 (github brand_blue + status_green)",
+          "to": "1 (single chromatic) + separate state palette"
+        }
+      ],
+      "last_seen": "2026-05-24T12:00:00Z"
+    },
+    "vercel-elevation-shadow-as-border-005:manual_backstop_when_kami_classical_excluded_from_b3": {
+      "adaptation_id": "vercel-elevation-shadow-as-border-005:manual_backstop_when_kami_classical_excluded_from_b3",
+      "occurrences": 1,
+      "contexts": [
+        {
+          "user_kansei": [
+            "structured",
+            "calm",
+            "intellectual",
+            "trustworthy",
+            "precise",
+            "restrained",
+            "measured",
+            "modern",
+            "clear"
+          ],
+          "user_kansei_reverse": [
+            "mystical_decorative",
+            "playful",
+            "aggressive",
+            "casual",
+            "decorative",
+            "cluttered",
+            "generic_corporate",
+            "ai_slop",
+            "gaming",
+            "neon",
+            "cyberpunk",
+            "ancient",
+            "classical",
+            "parchment_chrome",
+            "mystical_chinese_culture",
+            "traditional_calligraphy",
+            "editorial_as_dashboard"
+          ],
+          "generated_at": "2026-05-24T12:00:00Z",
+          "product": "命理决策辅助引擎 (Mingli Decision Engine) v2 redo",
+          "v2_correction_context": "v1→v2 redo after fundamental visual-vs-content mistargeting was identified by user",
+          "from": "(kami-depth_elevation excluded by reverse_constraint 'classical')",
+          "to": "vercel shadow-as-border as backstop for modern restraint SaaS"
+        }
+      ],
+      "last_seen": "2026-05-24T12:00:00Z"
+    },
+    "vercel-color-functional-only-accents-003:concretize_5_element_category_palette_desaturated": {
+      "adaptation_id": "vercel-color-functional-only-accents-003:concretize_5_element_category_palette_desaturated",
+      "occurrences": 1,
+      "contexts": [
+        {
+          "user_kansei": [
+            "structured",
+            "calm",
+            "intellectual",
+            "trustworthy",
+            "precise",
+            "restrained",
+            "measured",
+            "modern",
+            "clear"
+          ],
+          "user_kansei_reverse": [
+            "mystical_decorative",
+            "playful",
+            "aggressive",
+            "casual",
+            "decorative",
+            "cluttered",
+            "generic_corporate",
+            "ai_slop",
+            "gaming",
+            "neon",
+            "cyberpunk",
+            "ancient",
+            "classical",
+            "parchment_chrome",
+            "mystical_chinese_culture",
+            "traditional_calligraphy",
+            "editorial_as_dashboard"
+          ],
+          "generated_at": "2026-05-24T12:00:00Z",
+          "product": "命理决策辅助引擎 (Mingli Decision Engine) v2 redo",
+          "v2_correction_context": "v1→v2 redo after fundamental visual-vs-content mistargeting was identified by user",
+          "from": "small_set_with_strict_semantic_role (vercel undefined)",
+          "to": "5-category 5-element palette, all saturation < 0.45"
+        }
+      ],
+      "last_seen": "2026-05-24T12:00:00Z"
+    },
+    "none:domain_marker_form_distinction_not_color_for_dual_domain_products": {
+      "adaptation_id": "none:domain_marker_form_distinction_not_color_for_dual_domain_products",
+      "occurrences": 1,
+      "contexts": [
+        {
+          "user_kansei": [
+            "structured",
+            "calm",
+            "intellectual",
+            "trustworthy",
+            "precise",
+            "restrained",
+            "measured",
+            "modern",
+            "clear"
+          ],
+          "user_kansei_reverse": [
+            "mystical_decorative",
+            "playful",
+            "aggressive",
+            "casual",
+            "decorative",
+            "cluttered",
+            "generic_corporate",
+            "ai_slop",
+            "gaming",
+            "neon",
+            "cyberpunk",
+            "ancient",
+            "classical",
+            "parchment_chrome",
+            "mystical_chinese_culture",
+            "traditional_calligraphy",
+            "editorial_as_dashboard"
+          ],
+          "generated_at": "2026-05-24T12:00:00Z",
+          "product": "命理决策辅助引擎 (Mingli Decision Engine) v2 redo",
+          "v2_correction_context": "v1→v2 redo after fundamental visual-vs-content mistargeting was identified by user",
+          "from": "(no rule)",
+          "to": "dashed vs solid border distinguishes dual-domain (命理推断 vs 现实因素)"
+        }
+      ],
+      "last_seen": "2026-05-24T12:00:00Z"
+    },
+    "none:wordmark_replaces_seal_motif_anti_traditional_culture_stereotype": {
+      "adaptation_id": "none:wordmark_replaces_seal_motif_anti_traditional_culture_stereotype",
+      "occurrences": 1,
+      "contexts": [
+        {
+          "user_kansei": [
+            "structured",
+            "calm",
+            "intellectual",
+            "trustworthy",
+            "precise",
+            "restrained",
+            "measured",
+            "modern",
+            "clear"
+          ],
+          "user_kansei_reverse": [
+            "mystical_decorative",
+            "playful",
+            "aggressive",
+            "casual",
+            "decorative",
+            "cluttered",
+            "generic_corporate",
+            "ai_slop",
+            "gaming",
+            "neon",
+            "cyberpunk",
+            "ancient",
+            "classical",
+            "parchment_chrome",
+            "mystical_chinese_culture",
+            "traditional_calligraphy",
+            "editorial_as_dashboard"
+          ],
+          "generated_at": "2026-05-24T12:00:00Z",
+          "product": "命理决策辅助引擎 (Mingli Decision Engine) v2 redo",
+          "v2_correction_context": "v1→v2 redo after fundamental visual-vs-content mistargeting was identified by user",
+          "from": "(no brand-mark/seal rule in corpus)",
+          "to": "Text wordmark `Mingli` + small CJK subtitle (no Chinese seal)"
+        }
+      ],
+      "last_seen": "2026-05-24T12:00:00Z"
+    },
+    "kami-color-warm-parchment-canvas-001:subdomain_bound_to_scroll_mode_artifact_only_v2": {
+      "adaptation_id": "kami-color-warm-parchment-canvas-001:subdomain_bound_to_scroll_mode_artifact_only_v2",
+      "occurrences": 1,
+      "contexts": [
+        {
+          "user_kansei": [
+            "structured",
+            "calm",
+            "intellectual",
+            "trustworthy",
+            "precise",
+            "restrained",
+            "measured",
+            "modern",
+            "clear"
+          ],
+          "user_kansei_reverse": [
+            "mystical_decorative",
+            "playful",
+            "aggressive",
+            "casual",
+            "decorative",
+            "cluttered",
+            "generic_corporate",
+            "ai_slop",
+            "gaming",
+            "neon",
+            "cyberpunk",
+            "ancient",
+            "classical",
+            "parchment_chrome",
+            "mystical_chinese_culture",
+            "traditional_calligraphy",
+            "editorial_as_dashboard"
+          ],
+          "generated_at": "2026-05-24T12:00:00Z",
+          "product": "命理决策辅助引擎 (Mingli Decision Engine) v2 redo",
+          "v2_correction_context": "v1→v2 redo after fundamental visual-vs-content mistargeting was identified by user",
+          "from": "kami canvas as Daily UI (v1)",
+          "to": "kami canvas STRICTLY scroll_mode_print_theme only (v2 correction)"
+        }
+      ],
+      "last_seen": "2026-05-24T12:00:00Z"
+    },
+    "kami-color-single-ink-blue-accent-5-percent-002:scope_to_scroll_mode_with_vermilion_literal_substitution": {
+      "adaptation_id": "kami-color-single-ink-blue-accent-5-percent-002:scope_to_scroll_mode_with_vermilion_literal_substitution",
+      "occurrences": 1,
+      "contexts": [
+        {
+          "user_kansei": [
+            "structured",
+            "calm",
+            "intellectual",
+            "trustworthy",
+            "precise",
+            "restrained",
+            "measured",
+            "modern",
+            "clear"
+          ],
+          "user_kansei_reverse": [
+            "mystical_decorative",
+            "playful",
+            "aggressive",
+            "casual",
+            "decorative",
+            "cluttered",
+            "generic_corporate",
+            "ai_slop",
+            "gaming",
+            "neon",
+            "cyberpunk",
+            "ancient",
+            "classical",
+            "parchment_chrome",
+            "mystical_chinese_culture",
+            "traditional_calligraphy",
+            "editorial_as_dashboard"
+          ],
+          "generated_at": "2026-05-24T12:00:00Z",
+          "product": "命理决策辅助引擎 (Mingli Decision Engine) v2 redo",
+          "v2_correction_context": "v1→v2 redo after fundamental visual-vs-content mistargeting was identified by user",
+          "from": "kami #1B365D ink blue as Daily accent (v1)",
+          "to": "kami pattern + #a83232 vermilion literal, STRICTLY scroll_mode (v2)"
+        }
+      ],
+      "last_seen": "2026-05-24T12:00:00Z"
+    },
+    "spiritual_saas:dual_mode_strict_token_isolation_daily_modern_scroll_editorial": {
+      "adaptation_id": "spiritual_saas:dual_mode_strict_token_isolation_daily_modern_scroll_editorial",
+      "occurrences": 1,
+      "contexts": [
+        {
+          "user_kansei": [
+            "structured",
+            "calm",
+            "intellectual",
+            "trustworthy",
+            "precise",
+            "restrained",
+            "measured",
+            "modern",
+            "clear"
+          ],
+          "user_kansei_reverse": [
+            "mystical_decorative",
+            "playful",
+            "aggressive",
+            "casual",
+            "decorative",
+            "cluttered",
+            "generic_corporate",
+            "ai_slop",
+            "gaming",
+            "neon",
+            "cyberpunk",
+            "ancient",
+            "classical",
+            "parchment_chrome",
+            "mystical_chinese_culture",
+            "traditional_calligraphy",
+            "editorial_as_dashboard"
+          ],
+          "generated_at": "2026-05-24T12:00:00Z",
+          "product": "命理决策辅助引擎 (Mingli Decision Engine) v2 redo",
+          "v2_correction_context": "v1→v2 redo after fundamental visual-vs-content mistargeting was identified by user",
+          "from": "(no rule — v2 architectural pattern)",
+          "to": "Daily mode and Scroll mode share only spacing/radius/weight discipline; color/typography tokens strictly isolated"
+        }
+      ],
+      "last_seen": "2026-05-24T12:00:00Z"
     }
   },
   "_template": {
