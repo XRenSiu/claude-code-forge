@@ -10,11 +10,22 @@
 
 For every entry in `behavior.unit_tests.example_based[]` and `behavior.unit_tests.property_based[]`:
 
-1. Find the source REQ(s) from `based_on:` in the YAML.
+1. Find the source REQ(s) by name-anchor: each YAML entry is a bare string under v1 (no per-entry `based_on:`), so re-derive the REQ link from the test name + the spec.md REQs. The union top-level `based_on:` is the formal trace; the test name encodes the semantic anchor.
 2. Read those REQs from `spec.md`.
 3. Apply the template for that REQ's EARS type (see `../ears-to-test-matrix.md`).
-4. For PBT entries: read `property_type:`, apply the matching pattern from `../pbt-property-types.md`.
+4. For PBT entries: **infer the property archetype from the test name suffix** (`_invariant` / `_idempotent` / `_reversible` / `_boundary` / `_monotonic` / `_state_machine`) — under v1 schema there is no per-entry `property_type:` field. Apply the matching pattern from `../pbt-property-types.md`.
 5. Emit the test, with the file header below.
+
+### Hard rule: verbatim test name
+
+The function/string the framework treats as the test identifier must equal the YAML entry **character-for-character** (full `test_` prefix, all underscores, suffix).
+
+- **Python (pytest)** — `def test_xxx_yyy():` is naturally verbatim. Just paste the YAML entry as the function name.
+- **TypeScript (vitest / jest)** — `test('<name>', …)` accepts arbitrary strings; that's the trap. The first arg MUST be the verbatim YAML name. Do NOT humanize into `test('cancel is idempotent', …)`.
+- **Swift (XCTest)** — `func test_xxx_yyy()` — verbatim.
+- **Kotlin (JUnit5)** — prefer `fun test_xxx_yyy()` over backtick string identifiers when the YAML name uses snake_case, so the identifier is verbatim.
+
+Human-readable descriptions belong in docstrings/comments/`describe()` groups, never in the test identifier.
 
 ---
 
@@ -56,11 +67,11 @@ Rules:
 
 ---
 
-## PBT template (per property type)
+## PBT template (per property archetype)
 
-Read `../pbt-property-types.md` for full patterns. Quick reference:
+Read `../pbt-property-types.md` for full patterns. The archetype is inferred from the test-name suffix (v1 schema has no per-entry `property_type:` field). Quick reference:
 
-| `property_type:` | Python (Hypothesis) skeleton |
+| Archetype (= name suffix) | Python (Hypothesis) skeleton |
 |---|---|
 | `invariant` | `@given(operations_strategy()) def test_X_invariant(ops): ...` |
 | `idempotent` | `@given(input_strategy()) def test_op_idempotent(x): op(x); s1=snap(); op(x); s2=snap(); assert s1==s2` |
@@ -122,7 +133,10 @@ const activeSub = (): fc.Arbitrary<Subscription> => fc.record({
   endDate: fc.date({ min: new Date(), max: new Date('2030-01-01') }),
 });
 
-test('cancel is idempotent (REQ-001)', () => {
+// First arg to test() is the VERBATIM done_when.yaml name. REQ tag goes in a comment.
+// Maps to: test_cancel_is_idempotent
+test('test_cancel_is_idempotent', () => {
+  // Property: idempotent (REQ-001). cancel(cancel(x)) ≡ cancel(x).
   fc.assert(fc.property(activeSub(), (sub) => {
     cancel(sub);
     const s1 = JSON.stringify(sub);
@@ -191,9 +205,151 @@ class CancelSubscriptionTest {
 ## Quality checklist before writing to disk
 
 - [ ] Every test has a docstring/comment with the REQ ID it verifies
-- [ ] Every PBT has `property_type` named in the docstring
+- [ ] Every PBT has its archetype named in the docstring (matches the test-name suffix)
 - [ ] Every PBT has `max_examples` / `numRuns` matching `pbt_runs_per_property` threshold
 - [ ] No `assert True`, no `assert 1 == 1`, no skipped tests
 - [ ] No `@pytest.skip` without a TODO comment explaining why and pointing at an issue
 - [ ] No `time.sleep()` (unit tests must not be timing-dependent)
 - [ ] No I/O (filesystem, network, DB) — those belong in 4-C
+- [ ] **PBT model bookkeeping is not the assertion target** (see "PBT must reach the impl" below)
+- [ ] **Return-type contract for any tested function is internally consistent** within the file (see "Return-type consistency" below)
+- [ ] **Test name's archetype suffix matches the assertion's actual semantics** (`_idempotent` actually asserts `op(op(x)) == op(x)`, `_atomicity` actually asserts all-or-nothing rollback, etc. — see `integration-generator.md` and below)
+
+---
+
+## PBT must reach the impl (do not assert your own model's bookkeeping)
+
+When emitting a `RuleBasedStateMachine` / fast-check `model` PBT, the `@rule` bodies and `@invariant` assertions MUST reach into the real implementation under test — not into the state machine class's own private fields.
+
+**Anti-pattern (avoid):**
+
+```python
+class SubscriptionStateMachine(RuleBasedStateMachine):
+    def __init__(self):
+        self.fired_history = []          # bookkeeping the test class owns
+        self.unread_badge = 0            # ditto
+
+    @rule()
+    def deliver_mention(self):
+        # Hand-written branching that simulates impl behavior:
+        if not self.in_dnd:
+            self.fired_history.append({'push': True, 'banner': True})
+            self.unread_badge += 1
+        else:
+            self.fired_history.append({'push': False, 'banner': False})
+            self.unread_badge += 1
+        # ⚠ impl was never called.
+
+    @invariant()
+    def push_never_fires_under_dnd(self):
+        # ⚠ This asserts on `self.fired_history`, which `deliver_mention`
+        # just populated according to a hand-written if/else. The assertion
+        # is tautologically true given the model — it does not exercise impl.
+        if self.in_dnd:
+            assert not self.fired_history[-1]['push']
+
+    @invariant()
+    def badge_is_non_negative(self):
+        assert self.unread_badge >= 0   # ⚠ trivially true; just asserting an integer never went below 0.
+```
+
+**Required pattern:**
+
+```python
+class SubscriptionStateMachine(RuleBasedStateMachine):
+    def __init__(self):
+        self.sub = make_subscription()
+        # Optionally a *separate* model for comparison, but invariants assert
+        # on values returned by the impl, not on this private state.
+
+    @rule()
+    def deliver_mention(self):
+        # Call the real impl.
+        self.last_dispatch = DispatchMentionNotification(
+            recipient=self.sub.member,
+            in_dnd=self.in_dnd,
+        )
+
+    @invariant()
+    def push_never_fires_under_dnd(self):
+        if self.in_dnd and self.last_dispatch is not None:
+            # ✓ assertion observes the IMPL's return value
+            assert self.last_dispatch['push_fired'] is False
+
+    @invariant()
+    def badge_is_non_negative(self):
+        # ✓ Read the badge from the impl, not from an internal counter
+        assert UnreadBadgeSurface.read(self.sub.member) >= 0
+```
+
+**Why it matters:** mutation testing (4-E) will mutate impl code, not your state machine's `if/else`. If your invariants only observe model bookkeeping, the mutant survives (the assertion is structurally tautological), kill-rate collapses, and the §6.6 anti-reward-hacking gate is defeated. An "invariant" that the impl is never even consulted about is not an invariant — it's a self-statement of the model.
+
+Document the impl-reaching trail in the invariant's docstring: name the impl symbol(s) the invariant assertion observes. If you cannot name one, the invariant belongs in a comment as "intentional bookkeeping check" — not as a `@invariant()`.
+
+---
+
+## Test name's archetype suffix must match the assertion semantics
+
+Schema v1 encodes the PBT archetype in the test name suffix (`_invariant`, `_idempotent`, `_reversible`, `_boundary`, `_monotonic`, `_state_machine`). The downstream emit-pattern uses that suffix; the suffix becomes a contract.
+
+Therefore: **the assertion's semantic shape MUST match the suffix.**
+
+| Suffix | Assertion the body MUST contain |
+|---|---|
+| `_invariant` | A condition that holds across all reachable states / inputs (no operation can violate it). |
+| `_idempotent` | `s1 = snap(after(op))` then `op` again then `s2 = snap(after(op))` then `assert s1 == s2`. |
+| `_reversible` | `before = snap`; `do(x)`; `undo(x)`; `assert snap == before` (within the legal inverse window). |
+| `_boundary` | Probes `boundary - 1`, `boundary`, `boundary + 1` and asserts behavior changes correctly. |
+| `_monotonic` | A traversal where `f(x_i) >= f(x_{i-1})` (or `<=`) holds across the generated sequence. |
+| `_state_machine` | `RuleBasedStateMachine` / fast-check `model` with explicit `@rule` + `@invariant` definitions. |
+| `_atomicity` | A failure-injection scenario where partial application is forced, and the body asserts the system snapshot before == snapshot after. **Just asserting cross-surface "delivery consistency" is not atomicity** — that's an invariant. Rename the test if you cannot inject failure. |
+
+If you name a test `_atomicity` but the body asserts `body["delivered"] == any(outcomes)` (i.e. "delivered iff at least one surface succeeded"), the test is **misnamed**. Rename it to `_..._delivered_iff_any_succeeded_invariant` (or similar) and let it route through the invariant pattern. Never let suffix and assertion drift apart — the suffix is what test-suite-generator and downstream tools use to reason about the property type.
+
+---
+
+## Return-type consistency for the function under test
+
+If multiple tests in the same file call the same impl function (e.g. `DispatchMentionNotification(...)`), they MUST treat its return value as one consistent shape. Do NOT have one test treat it as `list[str]` (for `in` membership), another as `dict[str, Any]` (for `result["delivered"]`), and a third as `None` (classmethod with side effects).
+
+When emitting tests, fix the assumed return shape once at the top of the test file (in a comment or fixture), and structure every assertion to match it.
+
+**Anti-pattern (avoid — these were both in the same file in iter-1):**
+
+```python
+def test_individual_mention_fires_all_surfaces():
+    surfaces_fired = DispatchMentionNotification(...)
+    assert "PushSurface" in surfaces_fired           # treating return as list/set/dict-keys
+
+def test_dispatch_returns_delivered_flag():
+    result = DispatchMentionNotification(..., surface_outcomes=...)
+    assert result["delivered"] is True                # treating return as dict
+
+def test_state_machine_rule_calls_dispatch():
+    DispatchMentionNotification.apply(event, state=state)  # classmethod, no return
+```
+
+These three tests bake **three incompatible contracts** into the same symbol. An implementer reading this cannot tell what `DispatchMentionNotification` is supposed to return.
+
+**Required pattern — fix the shape once:**
+
+```python
+# Contract for this file (matches REQ-001 dispatch behavior):
+#   DispatchMentionNotification(...) -> dict with shape:
+#     {
+#       "delivered": bool,
+#       "surfaces_fired": list[str],     # subset of {"push", "in_app_banner", "sound", "unread_badge"}
+#       "counters_after": {"unread_badge_count": int, ...},
+#     }
+# Every test in this file uses these three top-level keys; nothing else.
+
+def test_individual_mention_fires_all_surfaces():
+    result = DispatchMentionNotification(...)
+    assert set(result["surfaces_fired"]) == {"push", "in_app_banner", "sound", "unread_badge"}
+
+def test_dispatch_returns_delivered_flag():
+    result = DispatchMentionNotification(..., surface_outcomes={...})
+    assert result["delivered"] is True
+```
+
+If the function has *legitimately different* return shapes for different call sites (e.g. with vs without an optional kwarg), split into **two** named symbols (`dispatch_mention` returning the full dict, `apply_mention_event` returning `None` with side effects). The test file then makes the difference explicit, instead of overloading one name with conflicting contracts.

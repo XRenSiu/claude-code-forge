@@ -35,8 +35,11 @@ test-suite-generator ──►  tests/<feature>/
                              fitness.rubric    (4-F: manual fresh-Claude-session workflow)
    │
    ▼
-ratchet  ─── consumes done_when.yaml as the kill/restart/done oracle (Step 5-6)
-   spec-drift bailout: PBT failing >=3 rounds escalates back to clarify
+ratchet  ─── user hands done_when.yaml to /ratchet as the acceptance contract (Step 5-6)
+   spec-drift bailout: after `max_fix_loops_before_escalation` (default 3) rounds
+   with no improvement, ratchet's `convergence` stops the loop; the user then
+   decides manually whether to re-run /ratchet or go back to /acceptance-spec.
+   No auto-escalation in v0.1.
 ```
 
 ## Two skills
@@ -60,7 +63,7 @@ Each skill enters its first phase by reading the requirement / spec, then walks 
 
 | Existing | Role here |
 |---|---|
-| `ratchet` | Step 5-6 main controller. Consumes `done_when.yaml` as its acceptance contract; runs the master/subagent kill-and-restart loop; receives the spec-drift escalation signal from PBT. |
+| `ratchet` | Step 5-6 main controller. The user **manually** translates our `done_when.yaml` into a `/ratchet` invocation (Goal / Criteria / Scope / done_when block) — ratchet does not parse our YAML directly. Ratchet then runs its master/subagent kill-and-restart loop. There is **no auto-escalation** of "PBT failures look like spec bugs" in v0.1; after ratchet's `convergence` stops the loop, the user decides whether to re-invoke `/ratchet` or go back to `/acceptance-spec`. See `INTEGRATION.md` for the handoff recipe. |
 | `forge-teams` | Optional implementation team during Step 5 if the work is large enough to warrant adversarial review. |
 | (no packaged fitness-judge skill exists yet) | Step 4-F rubric files are consumed manually by a fresh Claude session — see `INTEGRATION.md` and `skills/test-suite-generator/references/fitness-rubric-guide.md` for the workflow. The `persona-judge` skill from `persona-distill` was originally listed here in error; it evaluates persona-skill quality, not arbitrary artifacts. |
 

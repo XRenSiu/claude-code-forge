@@ -1,8 +1,10 @@
 # Sub-step 4-F: Fitness rubric generator
 
-**Goal:** turn each `fitness:` entry in `done_when.yaml` into a runnable artifact: a script (for `judge: programmatic`), a rubric markdown file (for `judge: llm-rubric`), or a checklist (for `judge: manual`).
+**Goal:** turn each `fitness:` entry in `done_when.yaml` into a runnable artifact: a script (for `judge: programmatic`), a rubric markdown file (for `judge: persona-judge`), or a checklist (for `judge: manual`).
 
-**Background:** see `../fitness-rubric-guide.md` — bad rubrics actively hurt judge accuracy; follow the structured anchors approach. Also note the honest scope: there is no packaged "fitness judge" skill in this marketplace; `llm-rubric` is consumed manually by a fresh Claude session.
+**Schema:** the v1 enum for `judge:` is **`persona-judge | programmatic | manual`** (Appendix C of `done-when-pipeline.md`). The legacy value `llm-rubric` is **not** part of v1 — reject and ask the user to regenerate the contract via `/acceptance-spec` if you see it.
+
+**Background:** see `../fitness-rubric-guide.md` — bad rubrics actively hurt judge accuracy; follow the structured anchors approach. Also note the honest scope: while Appendix C designates `persona-judge` as the LLM-as-judge entry point, the current `persona-judge` skill in the `persona-distill` plugin was built for evaluating distilled persona skills, not arbitrary artifacts. Until a generalised persona-judge runner ships, the rubric file is consumed by a fresh Claude session driven manually. The `judge:` value in `done_when.yaml` stays `persona-judge` regardless (that is the contract token); the rubric file calls out the manual workflow.
 
 ---
 
@@ -43,11 +45,11 @@ schemathesis run --base-url=http://localhost:3000 openapi.yaml
 
 Programmatic fitness checks are strongly preferred whenever possible — they are deterministic, fast, and cheap. Push every criterion you can into this category.
 
-### `judge: llm-rubric`
+### `judge: persona-judge`
 
 Emit a markdown rubric file. Path: `tests/<feature>/fitness/<criterion>.rubric.md`.
 
-**How it gets consumed (today):** manually. The user opens a fresh Claude session, pastes the rubric, points at the artifacts, asks for a score. No automation. The rubric file itself must call out this workflow at the top so a human dropping in cold knows what to do.
+**How it gets consumed (today):** manually. The user opens a fresh Claude session, pastes the rubric, points at the artifacts, asks for a score. No automation runner is packaged for arbitrary-artifact persona judging in this marketplace yet (the existing `persona-judge` skill in `persona-distill` is scoped to distilled-persona quality gates). The rubric file itself must call out this workflow at the top so a human dropping in cold knows what to do.
 
 Use this template (mirrors `../fitness-rubric-guide.md` and is fully self-contained — no external persona library required):
 
@@ -55,7 +57,7 @@ Use this template (mirrors `../fitness-rubric-guide.md` and is fully self-contai
 # Fitness criterion: <criterion text verbatim from done_when.yaml>
 
 **Source REQ(s):** <REQ-IDs>
-**Judge:** llm-rubric (manual workflow — see "How to run" below)
+**Judge:** persona-judge (manual workflow — see "How to run" below)
 **Threshold:** <verbatim from `score_threshold:`>
 
 > WARNING TO THE JUDGING AGENT:
@@ -72,7 +74,7 @@ Use this template (mirrors `../fitness-rubric-guide.md` and is fully self-contai
 4. Ask Claude to score per the sub-dimensions, citing evidence.
 5. Compare the aggregated score to the threshold. Record pass/fail in your dev log.
 
-(A `fitness-judge` skill that automates this is potential future work in this plugin.)
+(A general-purpose `fitness-judge` runner that automates this is potential future work in this plugin. The contract token `persona-judge` is from Appendix C v1 — keep using it even though the auto-runner does not yet exist.)
 
 ## Inputs
 
@@ -223,4 +225,8 @@ The `README.md` in the fitness directory must explain:
 - `fitness:` has > 3 entries → "consider moving some to `behavior:` as programmatic checks; LLM-judge is the layer of last resort".
 - A criterion in `fitness:` looks like it should be programmatic (e.g. "all endpoints return JSON" → JSON Schema validator) → suggest moving it to `behavior:`.
 - The criterion is genuinely unmeasurable as worded ("the system feels fast") → reject and ask the user to re-state with a measurable surrogate (p95 latency ≤ 200ms).
-- The criterion specifies `judge: persona-judge` → reject; that skill is for evaluating distilled persona skills, not arbitrary artifacts. Suggest `judge: llm-rubric` instead.
+- The criterion specifies `judge: llm-rubric` → reject as malformed against schema v1. The v1 enum is `persona-judge | programmatic | manual`. Tell the user to regenerate the contract via `/acceptance-spec`.
+
+## Note on `persona-judge` semantics
+
+Appendix C of `done-when-pipeline.md` names `persona-judge` as the LLM-as-judge entry point. The `persona-judge` skill that exists today in the `persona-distill` plugin was built to evaluate **distilled persona skills**, not arbitrary artifacts (READMEs, API references, generated code). Using `judge: persona-judge` in a `done_when.yaml` for a non-persona-skill feature is therefore semantically aspirational — the contract token is correct per the design doc, but until a general-purpose runner ships, the rubric file is consumed by the manual fresh-Claude-session workflow described above, not by the existing `persona-judge` skill. Flag this clearly in the generated rubric file's "How to run" block so the human running the check is not surprised.

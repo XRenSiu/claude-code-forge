@@ -11,7 +11,7 @@ description: >-
   Triggers: "spec this requirement" / "draft EARS" / "done_when for X" /
   "clarify this feature" / "acceptance criteria" / "write the contract" / "/acceptance-spec".
 argument-hint: "<natural-language requirement or path to brief>"
-version: 0.1.0
+version: 0.2.0
 user-invocable: true
 ---
 
@@ -40,6 +40,9 @@ Do not narrate further — just walk the phases.
 5. **Borrow OpenSpec's file format, not its CLI.** Output the four files as documented below; do not shell out to `openspec`, do not depend on it.
 6. **You do not write tests.** Tests are Step 4 (`test-suite-generator`). Your job ends at `done_when.yaml`.
 7. **Verifiable beats judgeable.** In `done_when.yaml`, prefer programmatic checks; only fall back to LLM-judge (`fitness:`) for things genuinely outside mechanical reach (doc clarity, agent usability, intent alignment).
+8. **REQs must be independently testable — no cross-REQ causal indirection.** Each REQ is the unit a Step 4 test must derive from. **Do not** write things like `THE system SHALL silence the notification produced by REQ-001`; that binds REQ-N's verifiability to REQ-001's runtime artifact and forces Step 4 fixtures to chain. Instead, restate the relevant precondition in REQ-N's own EARS clause (`IF a mention is delivered AND the recipient is in DND, THEN ...`). REQs may *reference* each other for narrative context (e.g. "follow-on from REQ-001" in the heading line) but the SHALL action must be derivable from the REQ's own clauses alone. See `references/ears-syntax.md` "Cross-REQ causal indirection" row.
+9. **Worker output ≠ internal decision process.** Each phase's user-visible output is **only the deliverable** for that phase (S1: draft + open questions; S2: a single round's question batch; S3: the four files). Do not interleave skill-internal logs ("clarify-protocol Rule 2 vs Rule 6 weighing", "skill invocation summary", "second-order scan notes") into the output. If something is useful as audit context, put it in a comment inside the deliverable file or omit it. Process narration belongs in your reasoning, not in what the user reads.
+10. **Output is single-language per primary surface.** EARS sentence bodies, REQ headings, `[?]` notes, and clarify question text should all use **one** primary language consistently within a single artifact (typically English, since EARS keywords are English). Mixing English EARS bodies with Chinese question lists in the same file fragments the artifact and forces parallel translations. Glossary entries that *define* a Chinese-named domain term are fine — but the EARS body, the question prompts, and the source/log lines stay in one language.
 
 If you catch yourself asking a question that is not in {ambiguity, missing edge, undefined term}, **delete it before sending**. Asking the wrong type is the most common failure of this skill.
 
@@ -84,10 +87,10 @@ For each distinct requirement you can extract from the brief:
 3. Mark every fuzzy spot with `[?]` followed by the question type tag and a short note about what's unclear. Cast a wide net — when in doubt, flag it. If you cannot tag a `[?]` as `[ambiguity]` / `[missing edge]` / `[undefined term]`, drop it.
 4. Assign a stable `REQ-NNN` ID.
 
-Output exactly this shape to the user:
+Output exactly this shape to the user (note the `Feature:` prefix in the header — it is mandatory; downstream artifacts use it as the spec's title):
 
 ````markdown
-# <feature-slug> (draft)
+# Feature: <feature-slug> (draft)
 
 ## REQ-001 (<EARS type>)
 <EARS sentence with [?] [<tag>] markers inline>
@@ -96,9 +99,14 @@ Output exactly this shape to the user:
 ...
 
 ## Open questions
-- [?] [<tag>] <one-line question, tagged with which REQ it affects>
+- [?] [<tag>] "<noun-or-clause-the-question-targets>": <option-a> or <option-b>? (affects REQ-XXX)
+- [?] [<tag>] "<noun>": <option-a>, <option-b>, or <option-c>? (affects REQ-YYY)
 - ...
 ````
+
+**Strict rule — exactly two ambiguity surfaces, not three.** The draft has (a) inline `[?]` markers in the EARS bodies and (b) the single `## Open questions` section above. Do **not** add a third "歧义清单" / "ambiguity list" / per-tag grouped table — it is redundant and visually heavier than helpful. The `[?]` tag taxonomy is enough structure; grouping by tag belongs (if anywhere) in S2 round planning, not in the S1 deliverable.
+
+**Question-line format under `## Open questions`** — each line is `[?] [<tag>] "<noun>": <option-a> or <option-b>?`. The double-quoted noun pins what the question is *about*; the colon introduces the candidate readings; the question mark ends it. Avoid free-form parenthetical asides. See `references/clarify-protocol.md` "Format for a clarify-round message" for the parallel example used at S2.
 
 Then immediately proceed to S2 round 1 in the same response — do not stop and wait for the user to scroll, just send the first batch of 3-5 clarify questions right after.
 
@@ -134,6 +142,10 @@ Read `references/clarify-protocol.md` once before the first round.
 - Do not ask the user to confirm something you already inferred safely — only ask about real uncertainty.
 - Do not batch more than 5 questions per round (users disengage).
 - Do not skip the tagging step. If a question is hard to tag, the question is bad — rewrite or drop it.
+- **Do not include a `## Glossary` section in any S2 output.** Glossary is a S3 artifact (it lives in `spec.md`). If a clarification produces a precisely-defined term, hold it in your reasoning until S3; do not preview it in S2 output, even labeled "(working)".
+- **Do not include a "skill invocation log" / "decision-trace table" / "process narration" section in S2 output.** S2 round output is just the round's question batch (per `references/clarify-protocol.md` "Format for a clarify-round message"). The final S3 `spec.md` carries `source:` lines for per-REQ traceability; that is the single authoritative trace. Do not emit a parallel "decision trace" table whose granularity differs from the `source:` lines — picking the right one becomes ambiguous downstream.
+
+**S2 output is exactly two artifacts, nothing more:** (i) the next round's question batch (per `clarify-protocol.md`), and (ii) the updated in-progress EARS body with answered `[?]` markers replaced by `source:`-tagged clauses. No Glossary, no process log, no parallel decision table.
 
 ---
 
@@ -153,7 +165,29 @@ Sections:
 
 Same shape as the S1 draft, but with every `[?]` resolved. Each REQ block ends with a `source:` line citing the clarify round/question(s) that fixed it.
 
-Append a final `## Glossary` section if any clarification produced a new domain term — record it precisely.
+**Keep REQ bodies tight (target ≤ 25 words per SHALL clause).** When a clarify answer introduces a precisely-defined term, **define it in `## Glossary`** rather than inlining a definition clause inside the REQ body. Long mid-REQ parentheticals (e.g. `WHEN a member is @mentioned (where "@mention" means individual mentions, broadcast mentions @here/@channel/@everyone, and role-or-group mentions) ...`) make the EARS sentence a mini-glossary and lose the rigid template's clarity. Pull such definitions out:
+
+- REQ body: `WHEN a member is @mentioned in a team chat channel, THE system SHALL ...`
+- Glossary: `**@mention** — any of: individual mentions, broadcast (@here/@channel/@everyone), or role-or-group mentions. (source: S2 round 1 Q1)`
+
+Append a `## Glossary` section if any clarification produced a new domain term — record it precisely. **Glossary appears only in `spec.md` (S3 output)**, never in S2 round output. Each Glossary entry has its own `source:` reference; you do not need to duplicate the term definition into REQ bodies that use it.
+
+**REQ-block sub-clauses (Extension / Constraint).** It is allowed — but not required — to split a long REQ into a primary EARS sentence plus a sub-clause block under the same REQ heading. Use the precise sub-labels listed below so downstream tools can route them:
+
+```markdown
+## REQ-001 (Event-driven)
+WHEN <trigger>, THE system SHALL <action>.
+
+### Constraint:
+<additional always-applies condition on the SHALL clause — narrows the scope>
+
+### Extension:
+<additional case the same REQ also covers — broadens the scope>
+
+source: S2 round 1 Q3 (...)
+```
+
+Sub-clause labels `### Constraint:` and `### Extension:` are the only two sanctioned ones. `### Constraint:` narrows (e.g. "applies only to messages with `kind=mention`"); `### Extension:` broadens (e.g. "this REQ also fires on edit-with-new-mention"). Anything else (`### Note:`, `### Example:`, etc.) is not part of the contract and risks being read as a new EARS sentence — do not invent labels.
 
 ### 3. `tasks.md` — decomposed work
 
@@ -166,34 +200,51 @@ Group by layer if natural (data / business / API / UI), otherwise flat.
 
 ### 4. `done_when.yaml` — the contract
 
-Read `references/done-when-schema.yaml` once before writing — that's the schema this file must match.
+Read `references/done-when-schema.yaml` once before writing — that's the schema this file must match. That schema is a faithful reproduction of **Appendix C of `done-when-pipeline.md` (schema v1)**, which is the authoritative source. **Emit strict v1 字面 schema — do not invent sub-fields.**
 
-Three top-level blocks:
-- `existence:` — every concrete noun the spec promised exists (file path, function, route, DB field, frontend component, env var). These are grep/AST-level checks; downstream `test-suite-generator` will turn them into a script.
-- `behavior:` — names of tests that must exist and pass, partitioned by `unit_tests` / `integration_tests` / `e2e_tests` and within each by `example_based` / `property_based`. Plus `thresholds:` (coverage, mutation kill rate, PBT runs per property).
-- `fitness:` — anything genuinely outside mechanical reach (max 3 items; if you have more, you are over-using LLM-judge — push it back into `behavior:`).
+Hard rules for v1 字面:
 
-Add a `spec_drift_threshold:` block:
+- `existence:` — every entry is **a single key-value pair, no sub-fields**. Allowed kinds are exactly the five from Appendix C: `file:` / `function:` / `route:` / `db_field:` / `frontend_component:`. Do NOT add `based_on:` / `kind:` / any other key on an existence entry. If you find yourself wanting `based_on:` per entry — push the traceability into the test name and rely on the top-level `based_on:` list + `spec.md` `source:` lines.
+- `behavior:` — every test entry under `unit_tests.example_based` / `unit_tests.property_based` / `integration_tests.example_based` / `integration_tests.property_based` / `e2e_tests` is **a bare string** (the test name), not a mapping. No `name:` / `based_on:` / `property_type:` / `dependencies:` / `tool:` sub-fields. Encode the property archetype (invariant / idempotent / reversible / boundary / monotonic / state_machine) in the test name itself so downstream (4-B in test-suite-generator) can route the PBT pattern by name.
+- `behavior.thresholds:` — the four keys are fixed: `unit_coverage`, `integration_coverage`, `mutation_kill_rate`, `pbt_runs_per_property`.
+- `fitness:` — entries have exactly three keys: `criterion:`, `judge:`, `score_threshold:` (omit `score_threshold:` only when `judge: programmatic`). `judge:` is a three-value enum: **`persona-judge | programmatic | manual`**. Do NOT use `llm-rubric` (it is not in v1; the LLM-judge path is `persona-judge`, per Appendix C and §4.7 of the design doc). Do NOT add `rubric_file:` — the rubric file is a downstream artifact emitted by test-suite-generator 4-F, not a contract field. Max 3 fitness entries; if you have more, push them back into `behavior:` as programmatic checks.
+- `spec_drift_threshold:` — exactly one sub-field, `max_fix_loops_before_escalation: <integer>`. Do NOT add `applies_to:` or any other key.
+- Top-level `based_on:` — the union of every REQ-ID referenced anywhere in the spec. This is the primary traceability anchor under v1 (combined with `spec.md` `source:` lines).
+
 ```yaml
 spec_drift_threshold:
   max_fix_loops_before_escalation: 3
-  applies_to:
-    - mutation_kill_rate
-    - property_based_failure
 ```
 This is **guidance for the human chaining to `/ratchet`**, not a contract field anything auto-reads today. When chaining, translate `max_fix_loops_before_escalation` into ratchet's own `convergence` value (see `done-when-pipeline/INTEGRATION.md` for the recipe). Auto-escalation is future work; do not promise the user it happens automatically.
 
 Every entry under `existence:` and `behavior:` is fine to be *aspirational* — they are names of things the implementer will create. They do not have to exist yet. They become the rubric.
 
+> **Why so strict?** Earlier drafts of this skill let the writer scatter `based_on:` and `property_type:` onto leaf entries to make traceability "explicit per row". That looks helpful but violates v1 schema literally; downstream strict parsers will reject it, lenient parsers will drop the extra keys silently — either way the per-row traceability is lost. Until Appendix C grows a v2, keep traceability at the union top-level `based_on:` plus the test-name semantics.
+
 ### After writing the four files
 
-Tell the user, in three short bullets:
+Tell the user, in four short bullets:
 
 1. The output directory and the four filenames.
 2. A one-line count: `N REQs, M existence checks, K test names, J fitness criteria.`
-3. Suggested next step: `/test-suite-generator <output_dir>/` (which will turn the contract into the actual test files).
+3. Immediate next step: `/test-suite-generator <output_dir>/` — turns the contract into the actual test files (Step 4).
+4. Subsequent step (Step 5-6): the user **manually** translates the resulting `done_when.yaml` into a `/ratchet` invocation. Ratchet is the Step 5-6 master controller; it does **not** auto-parse `done_when.yaml`. See `done-when-pipeline/INTEGRATION.md` for the Goal/Criteria/Scope translation recipe and `spec_drift_threshold:` mapping.
 
 That's the end of this skill. **Do not** generate tests, do not start implementing, do not run anything — those are downstream steps.
+
+---
+
+## Step 5-6 hand-off — what this skill's outputs feed into
+
+This skill ends at `done_when.yaml`. The four files are consumed downstream by two manual hand-offs:
+
+1. **Step 4 (test-suite-generator)** consumes `spec.md` + `done_when.yaml` automatically — that's the immediate next slash command.
+
+2. **Step 5-6 (ratchet)** consumes `done_when.yaml` indirectly: a human translates it into ratchet's own Goal / Criteria / Scope / `done_when` block. The two relevant translation facts:
+   - `spec_drift_threshold.max_fix_loops_before_escalation` ≈ ratchet's `convergence` (rounds with no improvement before stopping). The two are *not* strictly equivalent — ours says "escalate to the user after N fix loops", ratchet's says "stop the loop after N stalled rounds". Both end in a manual decision; see `INTEGRATION.md` "Spec drift guidance" for the recipe.
+   - If PBT keeps finding counterexamples across multiple fix loops, the **spec** is probably the bug, not the code (cf. design doc §12.1.IV). The user — not ratchet — decides whether to come back here (re-invoke `/acceptance-spec` to narrow REQs) or stay in `/ratchet` with more budget. **A practical judgment rule**: if a PBT shrunk counterexample is *consistent* with the literal text of the REQ that produced the test (i.e. the REQ as written would also produce a misbehaving impl), the spec is wrong — return here. If the counterexample contradicts the REQ's text (the REQ says X, the impl does not-X), the code is wrong — stay in ratchet.
+
+There is no automated Step 5-6 wrapper in v0.1; both translation and the "spec vs code" verdict are user actions. See `INTEGRATION.md` for the complete hand-off recipe.
 
 ---
 

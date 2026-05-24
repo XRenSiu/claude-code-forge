@@ -13,9 +13,13 @@ When you do have to write one, follow the rules below.
 
 ## Honest scope note (please read first)
 
-Earlier drafts of this skill claimed Step 4-F's `judge: llm-rubric` criteria would be consumed by the `persona-judge` skill from the `persona-distill` plugin. **That was wrong.** `persona-judge` is a quality gate for *distilled persona skills* (e.g. `steve-jobs-mirror`), not a general-purpose LLM-as-judge. Its input contract is "a persona skill root directory"; its output is a 12-dimension validation report for that skill. It cannot score arbitrary artifacts (README, code, API reference) against a custom rubric.
+Schema v1 (Appendix C of `done-when-pipeline.md`) sets the `judge:` enum to `persona-judge | programmatic | manual`. The token `persona-judge` is the LLM-as-judge path in the contract.
 
-So the rubric files this skill produces are **not auto-consumed by anything in this marketplace today**. They are designed for the "Claude-with-rubric inline" pattern documented below. A dedicated `fitness-judge` skill that automates this is a natural follow-up, but it does not exist yet — do not let your generated output imply otherwise.
+There is an important real-world caveat here: the `persona-judge` skill that exists today in the `persona-distill` plugin was built to evaluate **distilled persona skills** (e.g. `steve-jobs-mirror`) — it expects a persona-skill root directory as input and emits a 12-dimension validation report on that skill. It **cannot** be pointed at arbitrary artifacts (README, code, API reference) and asked to score them against a custom rubric.
+
+So the rubric files this skill produces are **not auto-consumed by the existing `persona-judge` skill today**. They are designed for the "Claude-with-rubric inline" pattern documented below — a fresh Claude session driven manually by the developer. A dedicated `fitness-judge` runner (or a generalised mode of `persona-judge`) that automates this is a natural follow-up, but it does not exist yet — do not let your generated output imply otherwise.
+
+The `judge:` value in `done_when.yaml` still stays `persona-judge` (that is the v1 contract token); only the **runner** is currently manual.
 
 ---
 
@@ -129,7 +133,7 @@ A future `fitness-judge` skill could automate steps 1-4. None exists yet.
 # Fitness criterion: <one-line description>
 
 **Source REQ(s):** <REQ-IDs from done_when.yaml>
-**Judge:** llm-rubric (see ../README.md for the manual workflow)
+**Judge:** persona-judge (see ../README.md for the manual workflow; v1 contract token, runner is currently manual)
 **Threshold:** <e.g. ">= 8.0/10">
 
 > **WARNING TO THE JUDGING AGENT:**

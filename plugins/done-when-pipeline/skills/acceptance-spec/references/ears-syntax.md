@@ -100,6 +100,24 @@ Ask yourself, in order:
 
 If two apply, the requirement is probably two REQs — split it.
 
+### Tie-breaker: State-driven vs Unwanted (the most common confusion)
+
+Both can use a precondition. The decisive question is **what kind of action follows**:
+
+- **State-driven** = the action is a *continuous / repeated behavior* that holds for the whole time the system is in the state. ("WHILE offline, queue all writes locally." — every write that occurs is queued, for as long as offline lasts.)
+- **Unwanted** = the action is a *one-shot conditional branch* fired by the precondition meeting some incoming event. ("IF the API call times out, retry up to 3 times." — one branch per timeout, not a persistent behavior.)
+
+**Rule of thumb**: if you can rewrite the SHALL as "any operation that happens during the state is treated this way", it's State-driven. If you can rewrite it as "when X occurs and condition Y holds, do Z (once)", it's Unwanted (`IF Y AND-triggered-by X, THEN Z`).
+
+Example side-by-side:
+
+| Candidate sentence | Right type | Why |
+|---|---|---|
+| `WHILE user is offline, queue all writes locally and replay on reconnect.` | State-driven | Every write during the offline window is queued. Continuous behavior. |
+| `IF the user is in DND when a mention arrives, suppress the push notification for that message.` | Unwanted | Single message → single suppression decision. One-shot, not persistent. State-driven `WHILE in DND, suppress notifications` reads grammatical but the SHALL action is per-event, not "continuous suppression of an ongoing thing". |
+
+When in doubt, prefer **Unwanted** for per-event conditional handling — it routes to the reverse-PBT pattern that test-suite-generator already supports, and avoids accidentally implying "persistent behavior" that no test will exercise.
+
 ---
 
 ## Multi-type composition
@@ -137,3 +155,4 @@ This composition pattern (Event + State + Unwanted around one feature) is extrem
 | Implementation in the SHALL | "SHALL write to Postgres" | Storage choice is implementation, not requirement. Write "SHALL persist". Implementation comes later in design. |
 | Missing measurement | "SHALL respond quickly" | Quickly = how many ms? Either get a number or write a `[?]`. |
 | Verb that is its own assumption | "SHALL synchronize" | Sync to what? In which direction? With what conflict resolution? All `[?]`. |
+| Cross-REQ causal indirection | "SHALL silence the notification produced by REQ-001" | Each REQ must be independently testable. Restate the precondition in REQ-002's own WHILE/IF clause (e.g. `IF a mention is delivered while the recipient is in DND, THEN ...`) — do not point at another REQ's runtime artifact. See Iron rule 8 in SKILL.md. |

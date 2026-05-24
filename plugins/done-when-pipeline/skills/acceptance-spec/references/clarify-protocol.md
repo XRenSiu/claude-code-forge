@@ -38,6 +38,15 @@ If you tagged a question and it feels like a stretch ("hmm, is this really an am
 
 Under no circumstance ask more than 5 questions in one round — even if the user said "ask away". Users underestimate how tired they will get answering them, and the answers degrade in quality after the third or fourth.
 
+### What if the round has fewer than 3 questions left?
+
+The upper bound (5) is hard. The lower bound (3) is a target. When you reach a round and the remaining open `[?]` list is < 3, apply this decision in order:
+
+1. **If any *previous* round's second-order question could legitimately be deferred to this round** — pull it forward so this round has 3+ questions. (Example: a thread-scope follow-up exposed by a round-1 answer that you put in round 2 could instead live in round 3 if it pairs naturally with this round's other items. Rule 5 — group related topics — gets a small tax; it's worth it.) Plan this *at round 2*, not retroactively in round 3.
+2. **Otherwise, stop normally per Rule 6** with as few as 1-2 final questions, finish the round, and proceed to S3. Do **not** invent a third question to pad — under Rule 1, any question you cannot honestly tag is a bad question, and Rule 6's "Bail-out stop" is strictly for `[?]` *remaining* at round 5, not for under-3-per-round.
+
+Document the choice in your reasoning, not in the user-visible output. Never tell the user "I would have asked 3 but only have 2 left, so picking option (1) vs option (2)" — that is the kind of skill-internal log that does not belong in the deliverable.
+
 ---
 
 ## Rule 3: Closed > open
@@ -115,25 +124,28 @@ The user will answer one of the three and forget the others. Split into three qu
 
 ## Format for a clarify-round message
 
+Each numbered question is `[<tag>] [REQ-anchor]: "<noun-being-clarified>" <reading-options>?` — the double-quoted noun is what binds the question to a specific clause; options follow on indented lines. Both the S1 `## Open questions` list and S2 round messages use this same shape, so the user reads one consistent format throughout.
+
 ```
 Round <N> of clarification — <X> questions:
 
-[ambiguity] REQ-001: ...
-  (a) ...
-  (b) ...
-  (c) ...
+[ambiguity] REQ-001: "current billing period end" means
+  (a) user's local timezone midnight on end_date
+  (b) UTC 23:59:59 on end_date
+  (c) exactly 30 days from cancellation timestamp
 
-[missing edge] REQ-002: ...
-  (a) ...
-  (b) ...
+[missing edge] REQ-002: what happens if the user cancels mid-checkout?
+  (a) refuse cancel until checkout resolves
+  (b) atomically cancel both
+  (c) cancel sub, let checkout continue
 
 [undefined term] REQ-003: by "premium" do you mean
-  (a) ...
-  (b) ...
-  (c) ...
+  (a) all paid features
+  (b) top tier only
+  (c) named feature set X / Y / Z
 ```
 
-Nothing else in the message. No preamble, no apology, no "thanks for clarifying earlier". The user is here to answer questions; respect their time.
+Nothing else in the message. No preamble, no apology, no "thanks for clarifying earlier", no notes about "this round only has 2 questions because…". The user is here to answer questions; respect their time.
 
 ---
 

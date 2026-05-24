@@ -224,6 +224,24 @@ State-machine PBT is the single highest-ROI test you can write for any feature w
 - **Generators must be in the test file or a `generators/` sibling**, not buried in the source code. The source should know nothing about Hypothesis or fast-check.
 - **Shrinking matters.** Use library-native combinators (`st.builds`, `fc.record`) so the framework can shrink. Hand-rolled `st.lists(my_random_thing())` will shrink poorly.
 - **Bound size.** Always pass `max_size` / `maxLength`. An unbounded list strategy will eventually generate a 10k-element input and timeout.
+- **Document narrow alphabets and label sets.** Any time a generator constrains the input space beyond "all values of this type" (e.g. `st.text(alphabet="abcdef0123456789", min_size=4, max_size=8)` for a hex msg-id, or `st.sampled_from(["push", "banner", "sound", "badge"])` for a fixed surface-label set), the PBT's **docstring** must state the narrowing and why it matches the contract. A future maintainer reading the test cannot otherwise tell whether the narrowing is intentional (matches the REQ's input domain) or incidental (the author's convenience). Example:
+
+  ```python
+  @given(mention_events())
+  def test_mention_dispatch_invariant(events):
+      """Property: invariant (REQ-001).
+
+      Generator narrowing:
+        - msg_id alphabet: hex chars only (matches the impl's id format)
+        - surface labels: fixed set {push, in_app_banner, sound, unread_badge}
+
+      Widening these would test unrelated input-parsing or label-validation
+      code that is not in the REQ's scope.
+      """
+      ...
+  ```
+
+  Without this note, mutation testing and Step 6 maintenance review cannot distinguish "this narrow alphabet is the contract" from "this narrow alphabet is a bug in the test".
 
 ---
 

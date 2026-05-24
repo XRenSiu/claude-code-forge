@@ -29,8 +29,8 @@ tests/subscription-cancellation/
 ├── mutation.sh                            # 4-E — runs mutmut, enforces ≥70%
 └── fitness/
     ├── README.md
-    ├── api_callable_by_independent_engineer.rubric.md          # 4-F llm-rubric (manual run)
-    └── help_center_article_reads_clearly.rubric.md             # 4-F llm-rubric (manual run)
+    ├── api_callable_by_independent_engineer.rubric.md          # 4-F persona-judge (manual run, v1)
+    └── help_center_article_reads_clearly.rubric.md             # 4-F persona-judge (manual run, v1)
 ```
 
 This is what a successful run looks like. Use it as a calibration target when

@@ -1,13 +1,17 @@
-# done_when.yaml validator checklist
+# done_when.yaml validator checklist (schema v1)
 
 Run this before sub-step 4-A. If any check fails, **bail out** and tell the user the contract is malformed. Do not try to generate tests against a broken contract.
+
+**Authoritative schema:** Appendix C of `done-when-pipeline.md` (schema v1). This checklist mirrors it literally — entries on `existence:` are single-key mappings with **no sub-fields**, and entries under `behavior.*` are **bare strings** (not mappings). Any extra sub-fields = malformed.
 
 ---
 
 ## Mandatory keys
 
 - [ ] `feature:` is present and is kebab-case
-- [ ] `based_on:` is a non-empty list of REQ IDs
+- [ ] `based_on:` is a non-empty list of REQ IDs (the union across the contract — this is the v1 traceability anchor)
+- [ ] `created_at:` is present (ISO-8601)
+- [ ] `created_by:` is present (skill name; e.g. `acceptance-spec`)
 - [ ] `existence:` is present (may be empty list for feature with no concrete existence claims, but the key must exist)
 - [ ] `behavior:` is present and contains at least one of `unit_tests`, `integration_tests`, `e2e_tests`
 - [ ] `behavior.thresholds:` is present and includes `mutation_kill_rate:` (this is mandatory per the iron rules)
@@ -18,32 +22,49 @@ Run this before sub-step 4-A. If any check fails, **bail out** and tell the user
 
 ## Cross-reference checks
 
-- [ ] Every `based_on:` REQ ID referenced anywhere in the file exists in the sibling `spec.md`. If `spec.md` has REQ-001 through REQ-006, no test or existence entry may reference REQ-007.
-- [ ] The top-level `based_on:` list is a *superset* of every REQ referenced anywhere in `existence:` / `behavior:` / `fitness:`.
-- [ ] Every REQ in the top-level `based_on:` is referenced by at least one entry in `existence:` *or* `behavior:`. Unreferenced REQs are a smell: either the REQ has no testable claim (should have been flagged upstream) or it was forgotten when writing the contract.
+- [ ] Every REQ ID in the top-level `based_on:` exists in the sibling `spec.md`. Reverse direction is also a smell — if `spec.md` has a REQ that doesn't appear in `based_on:`, either the REQ has no testable claim (should have been flagged upstream) or it was forgotten when writing the contract.
+- [ ] No test name in `behavior.*` references an entity / verb / domain term that isn't grounded somewhere in `spec.md`.
 
 ---
 
-## Type checks
+## Existence — type & shape checks (v1 strict)
 
 For each `existence:` entry:
-- [ ] Has exactly one of: `file`, `function`, `route`, `db_field`, `frontend_component`, `env_var`, `cli_command`
-- [ ] Has `based_on:` (non-empty list)
+- [ ] Has **exactly one** of the five v1 kinds: `file`, `function`, `route`, `db_field`, `frontend_component`.
+- [ ] Has **no other keys**. If you see `based_on:` / `kind:` / `class:` / `description:` etc. on an existence entry → the contract was written against a non-v1 schema. Reject and tell the user to regenerate via `/acceptance-spec` (which now emits strict v1).
 
-For each test entry under `behavior:`:
-- [ ] Has `name:` (snake_case typical)
-- [ ] Has `based_on:` (non-empty list)
-- [ ] If under `property_based:` — has `property_type:` ∈ {invariant, idempotent, reversible, boundary, monotonic, state_machine}
-- [ ] If under `integration_tests:` — has `dependencies:` (may be empty list)
-- [ ] If under `e2e_tests:` — has `tool:` ∈ {playwright, cypress, appium, maestro}
+---
+
+## Behavior — type & shape checks (v1 strict)
+
+For each entry under `behavior.unit_tests.example_based` / `behavior.unit_tests.property_based` / `behavior.integration_tests.example_based` / `behavior.integration_tests.property_based` / `behavior.e2e_tests`:
+
+- [ ] The entry is **a bare string** (the test name), not a mapping.
+- [ ] If it is a mapping (with `name:` / `based_on:` / `property_type:` / `dependencies:` / `tool:` sub-fields), the contract is non-v1 — reject and tell the user to regenerate.
+- [ ] Test names are descriptive snake_case (or the project-canonical convention).
+- [ ] For entries under `property_based:` — the name should end in (or contain) one of the six archetype tokens: `_invariant`, `_idempotent`, `_reversible`, `_boundary`, `_monotonic`, `_state_machine`. If the archetype cannot be inferred from the name, raise a warning and ask the user to rename — the PBT pattern dispatcher in 4-B keys off the name.
+
+`behavior.thresholds:` is expected to contain four keys: `unit_coverage`, `integration_coverage`, `mutation_kill_rate`, `pbt_runs_per_property`. Any extra threshold key is a soft warning, not a hard failure.
+
+---
+
+## Fitness — type & shape checks (v1 strict)
 
 For each `fitness:` entry:
 - [ ] Has `criterion:` (one-line description)
-- [ ] Has `judge:` ∈ {programmatic, llm-rubric, manual}
-- [ ] If `judge: llm-rubric` → has `rubric_file:` and `score_threshold:`
-- [ ] If `judge: persona-judge` → **reject as malformed.** This was a category error in earlier drafts; the `persona-judge` skill evaluates persona-skill quality, not arbitrary artifacts. Caller should use `judge: llm-rubric`.
-- [ ] If `judge: programmatic` → no score_threshold required (pass/fail)
-- [ ] If `judge: manual` → has a clear pass/fail checklist or pointer to one
+- [ ] Has `judge:` ∈ **{persona-judge, programmatic, manual}**  ← this is the v1 enum from Appendix C
+- [ ] If `judge: persona-judge` → has `score_threshold:`. The rubric markdown file is an artifact this skill produces (4-F) — it is **not** a contract field. If the contract has a `rubric_file:` key, treat it as malformed (it was a non-v1 extension).
+- [ ] If `judge: programmatic` → no `score_threshold:` required (pass/fail).
+- [ ] If `judge: manual` → has `score_threshold:` (a human still needs a bar).
+- [ ] If `judge: llm-rubric` → **reject as malformed.** This was a legacy value from earlier drafts. The v1 enum from Appendix C does not include `llm-rubric`; the LLM-as-judge path is `persona-judge`. Tell the user to regenerate via `/acceptance-spec`.
+- [ ] No other keys on the fitness entry.
+
+---
+
+## spec_drift_threshold — type & shape checks (v1 strict)
+
+- [ ] Has exactly one sub-field: `max_fix_loops_before_escalation: <integer>`.
+- [ ] If the contract has `applies_to:` (or any other sub-field) on `spec_drift_threshold:`, treat it as malformed — v1 defines only the one field.
 
 ---
 
@@ -59,10 +80,11 @@ For each `fitness:` entry:
 
 ## How to report failures to the user
 
-If any **mandatory** check fails:
+If any **mandatory** check or **v1 strict type** check fails:
 
 ```
-The done_when.yaml contract is malformed. I can't safely generate tests from it.
+The done_when.yaml contract is malformed against schema v1 (Appendix C of done-when-pipeline.md).
+I can't safely generate tests from it.
 
 Failures:
 - <specific check that failed>

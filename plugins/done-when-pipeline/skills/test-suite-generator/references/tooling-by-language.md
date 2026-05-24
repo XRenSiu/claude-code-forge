@@ -14,7 +14,7 @@ Concrete tool stack per target language, with the canonical install + import idi
 | Real-dependency containers | testcontainers | `pip install testcontainers` | Has modules for postgres, redis, kafka, mongodb, mysql, elasticsearch, rabbitmq, etc. |
 | Mutation testing | **mutmut** | `pip install mutmut` | Fast, sensible defaults. |
 | Coverage | coverage.py | `pip install coverage` | Built into pytest with `pytest-cov`. |
-| LLM-judge (4-F automation, optional) | DeepEval | `pip install deepeval` | Integrates with pytest. Useful if you want to automate `judge: llm-rubric` scoring inside CI instead of running the manual fresh-Claude-session workflow. Adapt your rubric file into DeepEval's `GEval` metric form. |
+| LLM-judge (4-F automation, optional) | DeepEval | `pip install deepeval` | Integrates with pytest. Useful if you want to automate `judge: persona-judge` scoring inside CI instead of running the manual fresh-Claude-session workflow. Adapt your rubric file into DeepEval's `GEval` metric form. |
 
 **Canonical test file imports:**
 ```python
@@ -46,7 +46,7 @@ runner = "pytest -x"
 | Real-dependency containers | testcontainers | `npm i -D testcontainers` | Same model as the Python version. |
 | Mutation testing | **Stryker** | `npm i -D @stryker-mutator/core @stryker-mutator/vitest-runner` | Switch runner package if not using vitest. |
 | E2E | **Playwright** | `npm i -D @playwright/test` | First choice. Cypress only if the project already uses it. |
-| LLM-judge | manual fresh-Claude-session workflow (default) or OpenAI Evals / Promptfoo / homegrown wrapper around Claude API if you want CI automation | – | No packaged `fitness-judge` skill exists in this marketplace yet; the `llm-rubric` rubric files are written for the manual workflow by default. |
+| LLM-judge | manual fresh-Claude-session workflow (default) or OpenAI Evals / Promptfoo / homegrown wrapper around Claude API if you want CI automation | – | No packaged generalised `fitness-judge` runner exists in this marketplace yet; rubric files emitted for `judge: persona-judge` entries are written for the manual workflow by default. |
 
 **Canonical test file imports:**
 ```typescript

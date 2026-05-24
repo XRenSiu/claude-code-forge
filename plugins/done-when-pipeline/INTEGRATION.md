@@ -47,8 +47,19 @@ Recommended invocation:
   done_when:
     success:     all P0 criteria pass
     convergence: 3 consecutive rounds with no new test passing
-    budget:      max 15 rounds
+    budget:      max 15 rounds        # default heuristic, see "Translation
+                                      # parameters" below — tune per feature
 ```
+
+### Translation parameters — where the numbers come from
+
+The values in the `done_when:` block above are not magic constants; each is derivable from `done_when.yaml` or a documented default:
+
+| Ratchet field | Value | Source |
+|---|---|---|
+| `success` | "all P0 criteria pass" | The criteria list above is the **mechanical reading** of `done_when.yaml`: 1 line per existence script + 1 line per behavior layer + 1 line per mutation threshold. fitness criteria are *not* in this list — they're consumed manually per their how-to-run block (see §"Handoff to fitness-judge" below). |
+| `convergence` | "3 consecutive rounds with no new test passing" | Numerically equals `spec_drift_threshold.max_fix_loops_before_escalation` (default `3`). **Semantic caveat**: `max_fix_loops_before_escalation` literally means "after this many fix loops without progress, escalate to the user to judge spec-vs-code"; ratchet's `convergence` means "after this many stalled rounds, stop the loop". The numbers map cleanly, but `escalate` is a user-prompt action and `convergence` is just a stop action — *they are not strictly equivalent*, and after ratchet stops you (not ratchet) decide whether to come back to `/acceptance-spec` (spec is wrong) or re-invoke `/ratchet` with more budget (code is wrong). See "How to decide: spec wrong vs code wrong" below. |
+| `budget` | 15 | **A practical heuristic, not a contract field.** Comes from: typical small-feature implementations converge in 5-8 rounds; a 2x headroom plus a single bailout buffer = ~15. Tune up for large features (multi-module / many integration paths) or down for trivial single-function changes. Setting `budget == convergence` (e.g. both 3) makes the loop stop the first time the convergence guard trips, which is usually too aggressive. There is no design-doc number for `budget`; pick a value that lets `convergence` trigger normally before `budget` does. |
 
 What happens then:
 1. Ratchet's own Step 1-3 runs: it reads the goal/criteria/scope above, writes `<experiment-dir>/ratchet.md` + `<experiment-dir>/evaluate.sh` (which is effectively a wrapper around our test commands).
@@ -64,17 +75,16 @@ What ratchet does NOT do (despite earlier wording in this file):
 
 ## "Spec drift" guidance (not auto-honored)
 
-Our `done_when.yaml` carries a `spec_drift_threshold:` block:
+Our `done_when.yaml` carries a `spec_drift_threshold:` block. Per the v1 schema, it has **exactly one** sub-field (see `skills/acceptance-spec/SKILL.md` § "Hard rules for v1 字面" and `references/done-when-schema.yaml`):
 
 ```yaml
 spec_drift_threshold:
   max_fix_loops_before_escalation: 3
-  applies_to:
-    - mutation_kill_rate
-    - property_based_failure
 ```
 
-**This is guidance for the human composing the `/ratchet` invocation**, not a contract field anything reads automatically. Concretely, when chaining to ratchet, translate it as:
+Do not add `applies_to:` or any other key — strict v1 parsers will reject it. The threshold applies uniformly to *any* test failure category that keeps repeating across fix loops (PBT, mutation, e2e); v1 does not let you scope it per-category.
+
+**This block is guidance for the human composing the `/ratchet` invocation**, not a contract field anything reads automatically. Concretely, when chaining to ratchet, translate it as:
 
 - Set ratchet's `convergence` to `max_fix_loops_before_escalation` (here: 3 rounds with no improvement → stop).
 - After ratchet stops, the user (not the loop) decides whether the failure means "spec is wrong, go back to /acceptance-spec" or "code is wrong, re-invoke /ratchet with more budget".
@@ -82,6 +92,20 @@ spec_drift_threshold:
 If you want auto-escalation, that needs to be built either (a) as a wrapper skill around ratchet that reads our `spec_drift_threshold:` and post-processes ratchet's exit, or (b) as a modification inside ratchet itself. Neither exists yet; do not promise the user this behavior.
 
 (The source design doc §8.4 describes auto-escalation as a desirable property; we explicitly mark it as future work.)
+
+### How to decide: spec wrong vs code wrong
+
+After ratchet's `convergence` triggers a stop with PBTs still failing, the user (not the loop) decides which side of the contract is broken. Use this rule:
+
+- **If the PBT's shrunk counterexample is *consistent* with the literal text of the REQ that produced the test** — i.e. the REQ as written, taken at face value, would also produce a misbehaving implementation — then the **spec is wrong**. Return to `/acceptance-spec`, re-open the relevant REQ, and run a focused clarify pass to narrow it. Once `done_when.yaml` is updated, re-run `/test-suite-generator` (the existing tests for that REQ get regenerated), then re-invoke `/ratchet`.
+- **If the counterexample contradicts the REQ's text** — i.e. the REQ says X, the shrunk input demonstrates the impl does not-X — then the **code is wrong**. Re-invoke `/ratchet` with more budget (e.g. `budget: max 25 rounds`) and possibly a stronger implementer (`--implementer-team forge-teams` if not already used). Do not change the spec.
+
+Edge cases:
+- **PBT fails with no shrunk counterexample available** (e.g. `RuleBasedStateMachine` failed in a `@rule` not an `@invariant`): treat as code-wrong by default — the impl raised under a legal operation sequence the REQ permits.
+- **mutation_kill_rate failing** but example/PBT tests passing: this is **code-wrong** (the test suite is fine but the impl is too loose). Re-invoke `/ratchet` with a focused goal "raise mutation kill rate to ≥ 70% without changing test names or thresholds".
+- **e2e tests failing** while integration tests pass: usually **code-wrong** at the UI/wiring layer. Re-invoke `/ratchet`. Spec is rarely wrong if the integration layer agrees with it.
+
+This rule is a *judgment heuristic*, not a contract field. Apply it once per stop event; do not loop on it.
 
 ---
 

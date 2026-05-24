@@ -4,6 +4,8 @@
 
 **Output:** `tests/<feature>/integration/test_<flow>.<ext>` plus optionally a `conftest.py` (Python) / `setup.ts` (TS) that defines the container fixtures.
 
+> **Verbatim test names** — same hard rule as 4-B/4-D. The test identifier (Python `def test_xxx`, TS `test('<xxx>', …)`) must equal the `done_when.yaml` entry character-for-character. Human-readable description goes in docstring/comment/`describe()`. See `unit-test-generator.md` "Hard rule: verbatim test name" for the full statement.
+
 ---
 
 ## Why no mocks (re-read before each integration test you generate)
@@ -96,7 +98,7 @@ This single test crosses 3 modules. If any one is wired wrong, this catches it.
 
 ## Cross-module PBT (atomicity, state-machine)
 
-For `property_type: invariant` or `state_machine` entries in `integration_tests.property_based`:
+For entries in `integration_tests.property_based` whose name-suffix archetype is `invariant` or `state_machine`:
 
 ```python
 from hypothesis import given, strategies as st, settings
@@ -161,7 +163,9 @@ beforeAll(async () => {
 
 afterAll(async () => { await pg.stop(); });
 
-test('cancel API returns 200 and correct payload (REQ-001)', async () => {
+// First arg to test() is VERBATIM from done_when.yaml — REQ tag goes in a comment.
+// Maps to: test_cancel_api_returns_200_and_correct_payload (REQ-001)
+test('test_cancel_api_returns_200_and_correct_payload', async () => {
   const create = await request(app).post('/api/subscription').send(/*...*/);
   const cancel = await request(app).post('/api/subscription/cancel').send({ id: create.body.id });
   expect(cancel.status).toBe(200);
@@ -190,3 +194,44 @@ test('cancel API returns 200 and correct payload (REQ-001)', async () => {
 - REQ is purely a UI rendering concern → 4-D
 - REQ has no external dependencies (pure logic) → 4-B was sufficient; do not duplicate
 - testcontainers cannot run in the target environment (e.g. nested-Docker in some CI providers) — document the gap, propose a docker-compose fallback in a README note, do not silently switch to mocks
+
+---
+
+## Hard rule: archetype suffix must match the assertion semantics
+
+The suffix on a PBT test name (`_invariant`, `_atomicity`, `_idempotent`, `_reversible`, `_boundary`, `_monotonic`, `_state_machine`) is read by test-suite-generator's 4-B/4-C pattern dispatch and by Step 5 evaluators. Therefore the body MUST actually check the named property.
+
+For integration PBTs the most common name↔body drift is `_atomicity`:
+
+- **Atomicity means all-or-nothing under partial failure.** Body MUST contain: (i) a failure-injection step that forces at least one sub-step to fail, and (ii) an assertion that the system snapshot **before** the operation equals the snapshot **after** the failed operation (no observable side effect leaked).
+- **What is NOT atomicity:** "if any surface fires, the `delivered` flag is True" — that is a delivery-semantics **invariant**, not atomicity. Rename to `_..._delivered_iff_any_surface_fires_invariant`.
+- **Also not atomicity:** "the badge counter reflects the number of successful surface calls" — that's also an invariant (counter consistency).
+
+If the body cannot perform failure injection (no test hook to fail a downstream surface), then atomicity is not testable for this REQ at this layer — push back upstream and either (a) ask for a contract change that adds the hook, or (b) reclassify the test as an invariant and rename. Do **not** ship a test whose name promises atomicity while the body checks something weaker.
+
+See `unit-test-generator.md` "Test name's archetype suffix must match the assertion semantics" for the full per-suffix contract table.
+
+---
+
+## Hard rule: PBT alphabet / labels must be documented
+
+If a PBT generator narrows the input alphabet (e.g. `st.text(alphabet="abcdef0123456789", min_size=4, max_size=8)` for a hex msg-id, or `st.sampled_from(["push", "banner", "sound", "badge"])` for surface labels), the docstring of the PBT MUST name the narrowing.
+
+```python
+@given(mention_events())
+@settings(max_examples=500, deadline=None)
+def test_per_channel_mute_consistently_silences_across_restart_invariant(mention_events):
+    """Property: invariant (REQ-002).
+
+    Generator narrowing (documented for the human maintainer):
+      - msg_id alphabet: hex chars only (matches the impl's id format)
+      - surface labels: fixed set {push, in_app_banner, sound, unread_badge}
+      - channel: drawn from a pre-seeded set of 3 channels in `seed_member` fixture
+
+    This narrowing is intentional and matches the contract; widening it
+    (e.g. arbitrary unicode msg_ids) would test unrelated input-parsing code.
+    """
+    ...
+```
+
+Without that note, a Step 6 maintainer reading the test cannot tell whether the narrowing reflects the contract (intentional) or the original author's convenience (incidental). The doc-string is the contract for the generator's scope.

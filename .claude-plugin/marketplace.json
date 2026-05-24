@@ -187,7 +187,7 @@
     {
       "name": "done-when-pipeline",
       "description": "Done_When Pipeline — turn fuzzy natural-language requirements into machine-verifiable completion contracts. Two skills compose Steps 1-4: `acceptance-spec` (NL → EARS spec + done_when.yaml via strict 3-question-type clarify loop, max 2-3 rounds, 4-file output: proposal/spec/tasks/done_when) and `test-suite-generator` (EARS → full test pyramid: existence checks via ripgrep/tree-sitter, unit/integration/e2e tests in both example-based and property-based styles, mutation-testing config as anti-reward-hacking, llm-rubric fitness files for manual fresh-Claude-session scoring). Step 5/6 hand off MANUALLY — user invokes /ratchet with translated Goal/Criteria/Scope; ratchet does not auto-parse done_when.yaml. No packaged fitness-judge skill yet — rubric files are scored by a fresh Claude session per their how-to-run block. spec_drift_threshold is guidance for the human composer, not an auto-honored field.",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "author": {
         "name": "XRenSiu",
         "email": "xrensiu@gmail.com"
