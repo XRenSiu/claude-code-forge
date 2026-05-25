@@ -1,6 +1,6 @@
 # Step 5 audit checklist — for reviewers, not for this skill to execute
 
-This skill (test-suite-generator) **ends at Step 4**. It does not run tests, does not aggregate evaluation results, and does not judge "done". Those are Step 5 actions executed by `/ratchet` and its `evaluate.sh`.
+This skill (test-suite-generator) **ends at Step 4**. It does not run tests, does not aggregate evaluation results, and does not judge "done". Those are Step 5-6 actions executed by `/acceptance-fleet` (dispatches `/qa-reviewer` to run the tests, then the rest of the 6 review skills, then `/meta-judge` for synthesis).
 
 This file exists for the human (or auditor agent) doing a Step 5 review of artifacts emitted by Steps 1-4 to use as a checklist. It is **not** a runtime contract — nothing here changes what this skill outputs. It exists because the Step 5 audit in iter-1 surfaced multiple "Worker did not cross-check against §7.4 schema" findings; codifying the checklist here lets the next reviewer not re-derive it from the design doc.
 

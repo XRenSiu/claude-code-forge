@@ -107,7 +107,6 @@ If you used the `0.3.x` line:
 
 | Existing | Role here |
 |---|---|
-| `/ratchet` | Legacy alternative to `/acceptance-fleet`. No gaming detection, no four-state ratchet. Acceptable for small features or environments without the v1.0 skill set installed. See `INTEGRATION.md`. |
 | `forge-teams` | Optional implementation team during the impl phase. Runs orthogonally to `/acceptance-fleet`'s review skills. |
 | Codex CLI / Gemini CLI | Cross-vendor evaluators consumed by `/acceptance-fleet` for adversarial code review and gaming detection. If neither is available, falls back to medium isolation (mixed Claude sizes) with a logged warning. |
 
@@ -130,6 +129,6 @@ If you used the `0.3.x` line:
 History:
 - 0.3.x — three-role validation pass; landed `/acceptance-fleet` v0.1 as monolithic 7-role fleet.
 - 0.2.0 — three-role validation pass; surfaced 17 P0 issues and hardened the skill source.
-- 0.1.0 — initial release, covered Steps 1-4 only; Step 5-6 was manual hand-off to `/ratchet`.
+- 0.1.0 — initial release, covered Steps 1-4 only; Step 5-6 was a manual hand-off to an external impl-loop driver.
 
 See `INTEGRATION.md` for hand-off recipes and `docs/pipeline-flow.md` for the full reference.

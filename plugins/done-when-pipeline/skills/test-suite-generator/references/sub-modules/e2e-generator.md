@@ -13,7 +13,7 @@
 3. **`data-test=` (or `data-testid=`) selectors only.** Selecting by text breaks on i18n; selecting by CSS class breaks on refactor. The doc convention is `data-test="cancel-subscription"`.
 4. **No fixed sleeps.** Use the framework's wait primitives (`page.waitForSelector`, `expect(...).toBeVisible()`). `await sleep(3000)` is a smell — replace with a wait on an observable condition.
 5. **Per-test data isolation.** Each test creates its own user / subscription / data — never share state between tests. Use the same fixture pattern as integration.
-6. **Verbatim test name (CRITICAL).** The first argument to `test(...)` / `it(...)` MUST equal the `behavior.e2e_tests` entry in `done_when.yaml` **character-for-character** — same `test_` prefix, same underscores, same suffix. Do NOT humanize the name into a sentence-cased English title. Downstream tooling (`/ratchet`, Step 5 evaluators) `grep`s the YAML name against test files; any paraphrase breaks traceability. See the "Verbatim test name" section below for the full rule + examples.
+6. **Verbatim test name (CRITICAL).** The first argument to `test(...)` / `it(...)` MUST equal the `behavior.e2e_tests` entry in `done_when.yaml` **character-for-character** — same `test_` prefix, same underscores, same suffix. Do NOT humanize the name into a sentence-cased English title. Downstream Step 5-6 review skills (`/qa-reviewer`, `/pm-reviewer`) `grep` the YAML name against test files; any paraphrase breaks traceability. See the "Verbatim test name" section below for the full rule + examples.
 
 ---
 

@@ -1,6 +1,6 @@
 # Integration with adjacent skills & tools (v1.0.0)
 
-`done-when-pipeline` v1.0.0 covers Steps 1-6 of the source design doc internally — the nine skills in this plugin form a complete topology, and no hand-off to an external skill is required to run the pipeline end-to-end. This file documents the *optional* integrations: legacy fall-backs, implementation-side helpers, cross-vendor evaluators, and what deliberately stays separate.
+`done-when-pipeline` v1.0.0 covers Steps 1-6 of the source design doc internally — the nine skills in this plugin form a complete topology, and no hand-off to an external skill is required to run the pipeline end-to-end. This file documents the *optional* integrations: implementation-side helpers, cross-vendor evaluators, and what deliberately stays separate.
 
 Rewritten on 2026-05-25 alongside the v1.0.0 release (which extracted the 6 standalone review skills and retired the fitness layer). The previous v0.3.x version of this file documented hand-offs that no longer exist as separate steps — those sections have been removed.
 
@@ -54,73 +54,6 @@ The two-session boundary is the critical anti-gaming guarantee. Most features do
 
 ---
 
-## Optional integration 3 — Legacy `/ratchet` (alternative to `/acceptance-fleet`)
-
-`/ratchet` is the pre-v0.3 hand-off path. It's lighter (single-stream subagent loop, no parallel fleet), and acceptable when:
-
-- the feature is small enough that the multi-agent overhead isn't worth it
-- the environment cannot install Codex / Gemini *and* cannot host parallel sub-agents
-- you explicitly want a two-state (continue / stop) loop instead of the four-state ratchet
-
-What you lose vs. `/acceptance-fleet`:
-
-| Capability | `/acceptance-fleet` (v1.0.0) | `/ratchet` |
-|---|---|---|
-| `done_when.yaml` direct consumption | yes | no — you translate manually |
-| Parallel review fleet | yes (6 skills) | no (single subagent) |
-| Per-iteration gaming detection | yes | no |
-| Per-iteration drift detection | yes | no |
-| Four-state ratchet (`SPEC_DRIFT` / `GAMING_RISK` escapes) | yes | no — only continue / stop |
-| `ratchet-log/iteration-NNN/` audit trail | yes | partial (own format) |
-| Cross-vendor adversarial review | yes | no |
-
-### How to translate `done_when.yaml` into a `/ratchet` invocation
-
-`/ratchet` builds its own contract from a natural-language goal — it does not parse `done_when.yaml`. The mechanical translation:
-
-```
-/ratchet
-  Goal: Implement the feature in specs/<feature>/spec.md.
-
-  Criteria (P0, all must pass):
-    - bash tests/<feature>/existence.sh exits 0
-    - pytest tests/<feature>/unit/ -x passes all tests
-    - pytest tests/<feature>/integration/ passes all tests
-    - playwright test tests/<feature>/e2e/ passes
-    - bash tests/<feature>/mutation.sh exits 0   # mutation_kill_rate ≥ threshold
-
-  Scope:
-    CAN modify:    src/
-    CANNOT modify: specs/, tests/    # frozen — these are the contract
-
-  done_when:
-    success:     all P0 criteria pass
-    convergence: 3 consecutive rounds with no new test passing
-    budget:      max 15 rounds        # heuristic; tune per feature
-```
-
-| `/ratchet` field | Value | Source from `done_when.yaml` |
-|---|---|---|
-| `success` | "all P0 criteria pass" | One line per existence script + behavior layer + mutation threshold. |
-| `convergence` | "3 rounds with no improvement" | Numerically equals `spec_drift_threshold.max_fix_loops_before_escalation` (default `3`). Semantically not identical — `escalate` is a user-prompt action; `convergence` just stops the loop. After ratchet stops, you (not ratchet) decide whether to return to `/acceptance-spec` (spec is wrong) or re-invoke `/ratchet` with more budget (code is wrong). |
-| `budget` | 15 (heuristic) | Not a contract field. Typical small features converge in 5-8 rounds; 2× headroom + buffer ≈ 15. Tune up for large features. Setting `budget == convergence` makes the loop stop the first time the convergence guard trips — usually too aggressive. |
-
-### After `/ratchet` stops with failing tests — decide which side is wrong
-
-Apply this rule once per stop event (not in a loop):
-
-- **If the failing test's evidence is consistent with the literal REQ text** — i.e. the REQ as written, taken at face value, would produce a misbehaving impl — then the **spec is wrong**. Return to `/acceptance-spec`, narrow the offending REQ, re-run `/test-suite-generator`, then `/ratchet` again.
-- **If the evidence contradicts the REQ text** — the REQ says X, the impl does not-X — then the **code is wrong**. Re-invoke `/ratchet` with more budget, optionally a stronger implementer.
-
-Edge cases:
-- **PBT failure with no shrunk counterexample** (e.g. `RuleBasedStateMachine` failed inside an `@rule`): treat as code-wrong by default — the impl raised under a legal operation sequence the REQ permits.
-- **`mutation_kill_rate` failing but example/PBT tests passing**: code-wrong (the impl is too loose). Re-invoke `/ratchet` with the focused goal "raise mutation kill rate to ≥ threshold without changing test names or thresholds".
-- **e2e failing while integration passes**: usually code-wrong at the UI/wiring layer.
-
-This is the manual analogue of what `/acceptance-fleet` does automatically via the `SPEC_DRIFT` / `FIX` state decoding.
-
----
-
 ## What does NOT integrate (kept separate on purpose)
 
 - **`bespoke-design-system`** — visual / aesthetic design system. Behavioral requirements (`done_when` contracts) and visual taste are different problems. If the feature has visual requirements, generate a separate `bespoke-design-system` artifact and reference it from `proposal.md`. Do not encode visual taste in `done_when.yaml`.
@@ -167,16 +100,3 @@ This is the manual analogue of what `/acceptance-fleet` does automatically via t
 ```
 
 Per-iteration cost with prompt caching: ~$0.84. Typical feature converges in 2-4 iterations: ~$2-4 per feature acceptance. See `skills/acceptance-fleet/SKILL.md` § "Cost expectation (per iteration)" for the per-skill breakdown.
-
-## Legacy lifecycle (pre-v0.3.0, `/ratchet` path)
-
-```
-1.  /acceptance-spec  "..."
-2.  /test-suite-generator  specs/<feature>/
-3.  /ratchet  <paste Goal + Criteria + Scope + done_when block per
-              "How to translate done_when.yaml into a /ratchet invocation" §>
-4.  After /ratchet stops, apply the "spec wrong vs code wrong" rule
-    in the same § to decide whether to re-invoke /ratchet or return to /acceptance-spec.
-```
-
-Acceptable for small features or environments without the v1.0 stack installed. For anything non-trivial, the v1.0 path catches more bugs per dollar (more parallelism + per-iteration drift/gaming detection + four-state escape from FIX-loop thrashing).

@@ -68,5 +68,5 @@ rules:
   - "all critical REQs must reach fully_compliant or explicit-human-OK"
 
 spec_drift_threshold:
-  # Guidance only — when chaining to /ratchet, translate into ratchet's `convergence`.
+  # Read by /acceptance-fleet as the SPEC_DRIFT_TRIGGER threshold.
   max_fix_loops_before_escalation: 3

@@ -128,10 +128,9 @@ rules:
 #
 # Do NOT add `applies_to:` or any other sub-field — those are not in v1.
 #
-# IMPORTANT: ratchet does NOT read this field automatically. When chaining to
-# /ratchet, you (the human) translate it into ratchet's own `convergence`
-# field. See done-when-pipeline/INTEGRATION.md for the translation recipe.
-# A wrapper skill that automates this is future work.
+# IMPORTANT: /acceptance-fleet reads this field directly as its SPEC_DRIFT_TRIGGER —
+# after this many fix loops without progress on the same REQ, the orchestrator escalates
+# to SPEC_DRIFT state and hands control back to /acceptance-spec for REQ narrowing.
 
 spec_drift_threshold:
   max_fix_loops_before_escalation: 3       # PBT 失败 N 次后退回 Step 2 (Appendix C default)

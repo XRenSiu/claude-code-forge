@@ -13,7 +13,7 @@ description: >-
   Triggers: "spec this requirement" / "draft EARS" / "done_when for X" /
   "clarify this feature" / "acceptance criteria" / "write the contract" / "/acceptance-spec".
 argument-hint: "<natural-language requirement or path to brief>"
-version: 1.0.3
+version: 1.0.4
 user-invocable: true
 ---
 
@@ -255,7 +255,7 @@ Hard rules for v1 字面:
 spec_drift_threshold:
   max_fix_loops_before_escalation: 3
 ```
-This is read directly by `/acceptance-fleet` as the four-state ratchet's `PBT-repeat → SPEC_DRIFT` trigger threshold: after N fix loops without progress on the same REQ, the orchestrator escalates to SPEC_DRIFT state and hands control back here (re-invoke `/acceptance-spec` to narrow the REQ — do NOT patch code). For the legacy `/ratchet` alternative path, where the human translates this value into ratchet's `convergence`, see `done-when-pipeline/INTEGRATION.md`.
+This is read directly by `/acceptance-fleet` as the four-state ratchet's `PBT-repeat → SPEC_DRIFT` trigger threshold: after N fix loops without progress on the same REQ, the orchestrator escalates to SPEC_DRIFT state and hands control back here (re-invoke `/acceptance-spec` to narrow the REQ — do NOT patch code).
 
 Every entry under `existence:` and `behavior:` is fine to be *aspirational* — they are names of things the implementer will create. They do not have to exist yet. They become the rubric.
 
@@ -331,7 +331,7 @@ Tell the user, in four short bullets:
 1. The output directory and the five filenames.
 2. A one-line count: `N REQs, M existence checks, K test names, R rules entries, V surfaced gaming vectors.`
 3. Immediate next step: `/test-suite-generator <output_dir>/` — turns the contract into the actual test files (Step 4).
-4. Subsequent step (Step 5-6): `/acceptance-fleet` consumes `done_when.yaml` + `spec-robustness.md` + the generated tests directly, dispatches the 6 standalone review skills, and runs the 4-state ratchet (DONE / FIX / SPEC_DRIFT / GAMING_RISK). For the legacy `/ratchet` alternative, see `done-when-pipeline/INTEGRATION.md`.
+4. Subsequent step (Step 5-6): `/acceptance-fleet` consumes `done_when.yaml` + `spec-robustness.md` + the generated tests directly, dispatches the 6 standalone review skills, and runs the 4-state ratchet (DONE / FIX / SPEC_DRIFT / GAMING_RISK).
 
 That's the end of this skill. **Do not** generate tests, do not start implementing, do not run anything — those are downstream steps.
 
@@ -347,16 +347,15 @@ This skill ends at the five files. Downstream:
 
 If PBT keeps finding counterexamples across multiple fix loops, the **spec** is probably the bug, not the code (cf. design doc §12.1.IV). `/acceptance-fleet` decodes this automatically as SPEC_DRIFT after N stalled iterations on the same REQ (N from `spec_drift_threshold.max_fix_loops_before_escalation`, default 3). If you want to second-guess the auto-decode, the practical rule: a shrunk counterexample *consistent* with the literal REQ text (the REQ as written would also produce a misbehaving impl) = spec wrong, return here; a counterexample that *contradicts* the REQ text (REQ says X, impl does not-X) = code wrong, feed `/acceptance-fleet`'s fix-prompt to a fresh impl session.
 
-For the legacy `/ratchet` alternative (lighter, no gaming detection, manual contract translation), see `done-when-pipeline/INTEGRATION.md`.
 
 ---
 
 ## When to refuse / redirect
 
-- **"Just give me code"** → tell the user this skill produces specs, not code. Point at the actual code-writing paths: chain `/test-suite-generator` → implement in a fresh session → `/acceptance-fleet` to verify; or use `/ratchet` for a lighter all-in-one impl loop. Do not skip the spec phase under pressure; that is the failure mode this whole pipeline exists to prevent.
+- **"Just give me code"** → tell the user this skill produces specs, not code. Point at the actual code-writing path: chain `/test-suite-generator` → implement in a fresh session → `/acceptance-fleet` to verify. Do not skip the spec phase under pressure; that is the failure mode this whole pipeline exists to prevent.
 - **Brief is one line, no real domain content** ("build me a SaaS") → ask once for a 2-3 paragraph elaboration, including: what the user does, what changes for the user, what the success scene looks like. If still vague, refuse and explain why — clarify questions need *something* to push against.
 - **Brief is actually a design system request** (UI tone, color palette, typography) → suggest `/bespoke-design-system` instead. This skill is for behavioral requirements, not visual design.
-- **Brief is a single bug fix** → this is heavyweight overkill. Suggest writing a 1-line failing test instead, and using `/ratchet` directly with that as the criterion.
+- **Brief is a single bug fix** → this is heavyweight overkill. Suggest writing a 1-line failing test instead and fixing the code against that, without going through the full spec → tests → fleet pipeline.
 
 ---
 

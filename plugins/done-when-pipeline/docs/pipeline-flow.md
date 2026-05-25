@@ -6,7 +6,7 @@
 
 辅助文档：
 - `README.md` — 快速上手 + 设计哲学
-- `INTEGRATION.md` — 跟 `/ratchet` 等外部 skill 的 hand-off 细节
+- `INTEGRATION.md` — 跨厂商 evaluator (Codex/Gemini)、forge-teams impl 团队等可选集成细节
 - `skills/<skill>/SKILL.md` — 单个 skill 的完整规格
 - `skills/acceptance-fleet/references/skill-dispatch-matrix.md` — 编排层怎么把 v0.x 角色映射到 v1.0+ skill 调用
 
