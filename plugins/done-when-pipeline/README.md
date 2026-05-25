@@ -13,6 +13,8 @@ Making an AI agent autonomously finish a task is not bottlenecked by "making it 
 
 This plugin gives you the three skills that produce, exercise, and verify that contract.
 
+> **Want the full end-to-end flow with all 8 evaluator roles + four-state ratchet diagram?** See [`docs/pipeline-flow.md`](docs/pipeline-flow.md). This README is the quickstart; pipeline-flow.md is the reference.
+
 ## Pipeline
 
 ```
