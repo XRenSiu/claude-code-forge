@@ -51,13 +51,15 @@ Emit a markdown rubric file. Path: `tests/<feature>/fitness/<criterion>.rubric.m
 
 **How it gets consumed (today):** manually. The user opens a fresh Claude session, pastes the rubric, points at the artifacts, asks for a score. No automation runner is packaged for arbitrary-artifact persona judging in this marketplace yet (the existing `persona-judge` skill in `persona-distill` is scoped to distilled-persona quality gates). The rubric file itself must call out this workflow at the top so a human dropping in cold knows what to do.
 
+**How-to-run lives in one place.** The detailed manual workflow ("open fresh Claude session, paste rubric, …") is documented **once** in `tests/<feature>/fitness/README.md` (see the "Where the generated files live" section below for the README spec). Each individual rubric file MUST NOT repeat the 5-step procedure inline — instead it links back with a single line: `See fitness/README.md "How to run a persona-judge rubric" for the manual workflow.` This avoids 100-line near-duplicates between rubrics that diverge only by criterion-specific wording.
+
 Use this template (mirrors `../fitness-rubric-guide.md` and is fully self-contained — no external persona library required):
 
 ```markdown
 # Fitness criterion: <criterion text verbatim from done_when.yaml>
 
 **Source REQ(s):** <REQ-IDs>
-**Judge:** persona-judge (manual workflow — see "How to run" below)
+**Judge:** persona-judge (manual workflow — see `fitness/README.md` "How to run a persona-judge rubric")
 **Threshold:** <verbatim from `score_threshold:`>
 
 > WARNING TO THE JUDGING AGENT:
@@ -66,13 +68,9 @@ Use this template (mirrors `../fitness-rubric-guide.md` and is fully self-contai
 > below verbatim. Do not collapse into "overall impression". Cite passages
 > for every score.
 
-## How to run this rubric (no packaged automation today)
+## How to run
 
-1. Open a fresh Claude session (separate from the implementer).
-2. Paste this rubric file.
-3. Provide paths or contents of the inputs listed below.
-4. Ask Claude to score per the sub-dimensions, citing evidence.
-5. Compare the aggregated score to the threshold. Record pass/fail in your dev log.
+See `fitness/README.md` "How to run a persona-judge rubric" for the manual workflow (fresh Claude session, paste rubric, score with citations).
 
 (A general-purpose `fitness-judge` runner that automates this is potential future work in this plugin. The contract token `persona-judge` is from Appendix C v1 — keep using it even though the auto-runner does not yet exist.)
 
@@ -215,8 +213,26 @@ tests/<feature>/fitness/
 
 The `README.md` in the fitness directory must explain:
 - programmatic files: run them like any shell/python script.
-- rubric files: manual workflow (fresh Claude session) — there is no packaged auto-runner.
+- rubric files: manual workflow (fresh Claude session) — there is no packaged auto-runner. **The README is the single canonical location for the 5-step "How to run a persona-judge rubric" procedure.** Each individual `*.rubric.md` only links back to it; do NOT duplicate the steps inside every rubric file (that creates a P2 maintenance hazard — see iter-2 step2 P2-3).
 - manual files: human runs the checklist; no automation possible.
+
+### Required section in `fitness/README.md`: "How to run a persona-judge rubric"
+
+The `fitness/README.md` MUST contain a top-level section titled exactly `## How to run a persona-judge rubric` with the five-step procedure below. This is the *only* place this procedure should appear; rubric files link here.
+
+```markdown
+## How to run a persona-judge rubric
+
+The `*.rubric.md` files in this directory are consumed by a **fresh Claude session driven manually**. There is no packaged auto-runner today (the `persona-judge` skill in `persona-distill` is scoped to evaluating distilled persona skills, not arbitrary product artifacts).
+
+1. Open a fresh Claude session, isolated from the implementer's context.
+2. Paste the rubric markdown into the session.
+3. Provide paths (or contents) of the inputs the rubric lists.
+4. Ask Claude: "Score per the rubric. Cite at least one passage from the inputs supporting each sub-dimension's score. Compute the weighted final score. Report pass/fail per the threshold."
+5. Compare the aggregated score against the threshold; record pass/fail in your dev log.
+
+The contract token `persona-judge` is from done-when-pipeline schema v1 Appendix C. Only the *runner* is currently manual; the contract token stays `persona-judge`.
+```
 
 ---
 

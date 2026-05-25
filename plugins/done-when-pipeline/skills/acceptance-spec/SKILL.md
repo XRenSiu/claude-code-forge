@@ -11,7 +11,7 @@ description: >-
   Triggers: "spec this requirement" / "draft EARS" / "done_when for X" /
   "clarify this feature" / "acceptance criteria" / "write the contract" / "/acceptance-spec".
 argument-hint: "<natural-language requirement or path to brief>"
-version: 0.3.0
+version: 0.3.1
 user-invocable: true
 ---
 
@@ -43,7 +43,11 @@ Do not narrate further — just walk the phases.
 8. **REQs must be independently testable — no cross-REQ causal indirection.** Each REQ is the unit a Step 4 test must derive from. **Do not** write things like `THE system SHALL silence the notification produced by REQ-001`; that binds REQ-N's verifiability to REQ-001's runtime artifact and forces Step 4 fixtures to chain. Instead, restate the relevant precondition in REQ-N's own EARS clause (`IF a mention is delivered AND the recipient is in DND, THEN ...`). REQs may *reference* each other for narrative context (e.g. "follow-on from REQ-001" in the heading line) but the SHALL action must be derivable from the REQ's own clauses alone. See `references/ears-syntax.md` "Cross-REQ causal indirection" row.
 9. **Worker output ≠ internal decision process.** Each phase's user-visible output is **only the deliverable** for that phase (S1: draft + open questions; S2: a single round's question batch; S3: the four files). Do not interleave skill-internal logs ("clarify-protocol Rule 2 vs Rule 6 weighing", "skill invocation summary", "second-order scan notes") into the output. If something is useful as audit context, put it in a comment inside the deliverable file or omit it. Process narration belongs in your reasoning, not in what the user reads.
 10. **Output is single-language per primary surface.** EARS sentence bodies, REQ headings, `[?]` notes, and clarify question text should all use **one** primary language consistently within a single artifact (typically English, since EARS keywords are English). Mixing English EARS bodies with Chinese question lists in the same file fragments the artifact and forces parallel translations. Glossary entries that *define* a Chinese-named domain term are fine — but the EARS body, the question prompts, and the source/log lines stay in one language.
-11. **Anti-gaming is part of the contract, not the verifier's afterthought.** Specification-gaming research (Komorebi AI 2025) shows 50-70% of LLM implementations game a vulnerable contract — even when the spec looks unambiguous to a human. The S2.5 self-adversarial pass (see below) is mandatory: before solidifying, ask "if I were the implementer trying to satisfy this contract while doing as little as possible, where are the cracks?" Identified gaming vectors become `spec-robustness.md` entries — either closed by adding a `behavior.thresholds:` value (when v1 schema admits one), or surfaced explicitly so the downstream `/acceptance-fleet` verifier knows to watch for them. **Do not skip S2.5 because "this brief looked clean."** Clean-looking briefs are the most game-able. **Do NOT introduce sub-fields outside Appendix C v1 schema** — the schema is rigid for a reason (downstream strict parsers); v1.5 augmentations live in `spec-robustness.md`, not in `done_when.yaml`.
+11. **One SHALL clause = one independently-derivable action.** A single EARS REQ's SHALL must commit to exactly **one** observable action. Do NOT bind two distinct actions together with an `AND` compound (e.g. `THE system SHALL transition the subscription to status expired AND deny premium feature access on the next request`). Even when the two actions are causally linked, packing them into the same SHALL fuses two independently-testable behaviors into one REQ — and when the second action overlaps the SHALL of another REQ (e.g. the same denial appears in another `IF ... THEN ...` clause), the contract develops cross-REQ duplication that confuses Step 4 test derivation and breaks one-to-one REQ ↔ test traceability. Split AND-compound SHALLs into separate REQs (each with its own ID, EARS type, and `source:`). Acceptable use of `AND` inside a SHALL is **only** when the two clauses describe *one indivisible atomic effect* of the same trigger (e.g. `SHALL atomically (a) set status to cancelled AND (b) stop next-billing-cycle charge`) and you also state atomicity is the testable contract. If you can derive a test for one half without the other half being involved, they are **two REQs**, not one. See `references/ears-syntax.md` "Common drafting mistakes" → AND-compound SHALL row.
+
+12. **Existence completeness vs tasks.md.** Every distinctly-named function / route / db_field / frontend_component that appears in `tasks.md` (the decomposed work list) AND is referenced by any REQ's SHALL clause MUST also appear as an entry in `done_when.yaml.existence:`. The existence layer is the fast-fail surface; if `tasks.md` promises a `RenewalPrompt` UI component or a `checkPremiumAccess` middleware function (because some REQ promises that behavior), the implementer should be told upfront — via existence — that those named artifacts will be checked. Leaving them implicit means the only signal the implementer gets is the test name, which is later in the cycle and slower to fail. **Before solidifying `done_when.yaml`**: walk every named noun in `tasks.md` once and confirm it has a matching `existence:` entry, OR document the deliberate exclusion (e.g. "renamed during decomposition, the canonical name is X which IS listed") inside `proposal.md` "Decisions made during clarify". Silently dropping a tasks-named artifact from existence is a P1 quality bug.
+
+13. **Anti-gaming is part of the contract, not the verifier's afterthought.** Specification-gaming research (Komorebi AI 2025) shows 50-70% of LLM implementations game a vulnerable contract — even when the spec looks unambiguous to a human. The S2.5 self-adversarial pass (see below) is mandatory: before solidifying, ask "if I were the implementer trying to satisfy this contract while doing as little as possible, where are the cracks?" Identified gaming vectors become `spec-robustness.md` entries — either closed by adding a `behavior.thresholds:` value (when v1 schema admits one), or surfaced explicitly so the downstream `/acceptance-fleet` verifier knows to watch for them. **Do not skip S2.5 because "this brief looked clean."** Clean-looking briefs are the most game-able. **Do NOT introduce sub-fields outside Appendix C v1 schema** — the schema is rigid for a reason (downstream strict parsers); v1.5 augmentations live in `spec-robustness.md`, not in `done_when.yaml`.
 
 If you catch yourself asking a question that is not in {ambiguity, missing edge, undefined term}, **delete it before sending**. Asking the wrong type is the most common failure of this skill.
 
@@ -272,7 +276,7 @@ Gaming vectors that were identified during S2.5 and closed by adjusting spec.md 
 done_when.yaml (within v1 schema). Listed for audit — these should NOT need re-checking
 by the verifier; they are already structurally prevented.
 
-- pattern: assertion_weakening
+- rhd_pattern: test_modification        # canonical enum from the six RHD patterns
   rewrote: REQ-003 SHALL clause tightened from "completes successfully" to "returns
            HTTP 200 with body matching CancelResponse schema"
   source: S2.5 (S2 round 1 Q3 surfaced underlying ambiguity)
@@ -283,7 +287,7 @@ Gaming vectors that COULD NOT be closed inside the v1 schema. /acceptance-fleet'
 spec-gaming-detector role MUST watch for these specifically. Each entry tells the
 verifier what to grep for / what mutation to inject / what counter-test to derive.
 
-- pattern: coverage_gaming
+- rhd_pattern: coverage_gaming
   spec_robustness_gap: done_when.yaml requires mutation_kill_rate >= 0.70 but does
                        not require branch coverage; a happy-path-only impl that skips
                        error branches could pass.
@@ -292,11 +296,16 @@ verifier what to grep for / what mutation to inject / what counter-test to deriv
   affects: REQ-001, REQ-004
 - ...
 
+(Use `rhd_pattern:` whenever the entry maps to one of the six RHD patterns; use
+`pattern:` only for free-form local sub-classification (e.g. `pattern: branch_coverage_gap`
+under `rhd_pattern: coverage_gaming`). NEVER emit both as parallel synonyms — see
+`references/spec-robustness-template.md` "Output discipline" for the canonical rule.)
+
 ## accepted_risks
 Gaming vectors that were considered and consciously NOT defended against. Each
 entry is a one-line rationale; absence of a rationale is a S2.5 bug.
 
-- pattern: style_manipulation on README fitness criterion
+- rhd_pattern: style_manipulation        # on README fitness criterion
   rationale: gaming this = writing bad docs, which is itself the failure the rubric
              catches. No reinforcement needed.
 - ...

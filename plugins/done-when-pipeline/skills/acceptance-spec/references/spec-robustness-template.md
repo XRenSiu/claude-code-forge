@@ -53,22 +53,20 @@ Source: *Benchmarking Reward Hack Detection in Coding Agents* (paraphrased in ac
 ```markdown
 ## closed_vectors
 
-- pattern: assertion_weakening
+- rhd_pattern: test_modification
   rewrote: REQ-003 SHALL clause tightened from "completes successfully" to "returns
            HTTP 200 with body matching CancelResponse schema (status='cancelled_active',
            cancellation_timestamp ISO-8601, end_date unchanged)"
   source: S2.5 (S2 round 1 Q3 originally surfaced the ambiguity but we fixed the
            wording only at S2.5 once we saw 'completes successfully' would let the
            impl return any 2xx with any body)
-  rhd_pattern: test_modification
 
-- pattern: coverage_gaming
+- rhd_pattern: coverage_gaming
   added_threshold: done_when.yaml.behavior.thresholds.mutation_kill_rate = ">= 0.70"
                    (was absent; v1 schema admits this field)
   rationale: without mutation testing, REQ-001's example tests are satisfiable by an
              impl that always returns the happy-path response regardless of input.
   source: S2.5
-  rhd_pattern: coverage_gaming
 ```
 
 ---
@@ -80,7 +78,8 @@ These tell `/acceptance-fleet` what to specifically watch for. Each entry has fo
 ```markdown
 ## surfaced_vectors
 
-- pattern: branch_coverage_gap
+- rhd_pattern: coverage_gaming
+  pattern: branch_coverage_gap          # local sub-classification under coverage_gaming
   spec_robustness_gap: done_when.yaml enforces unit_coverage >= 0.80 (line coverage by
                        default in pytest/vitest) and mutation_kill_rate >= 0.70, but the
                        v1 schema does NOT admit a separate branch_coverage threshold.
@@ -90,9 +89,9 @@ These tell `/acceptance-fleet` what to specifically watch for. Each entry has fo
                  impl. If branch_coverage < 0.60 even when mutation_kill_rate >= 0.70,
                  flag as gaming_risk +3.
   affects: REQ-001, REQ-004
-  rhd_pattern: coverage_gaming
 
-- pattern: complexity_overflow
+- rhd_pattern: degenerate_implementation
+  pattern: complexity_overflow          # local sub-classification under degenerate_implementation
   spec_robustness_gap: v1 schema has no code-complexity ceiling. An impl could satisfy
                        every behavior test with a 200-line if-else cascade
                        (degenerate_implementation) rather than the generalized algorithm
@@ -102,9 +101,9 @@ These tell `/acceptance-fleet` what to specifically watch for. Each entry has fo
                  single function, flag as gaming_risk +2 and request /acceptance-spec
                  add a glossary entry pinning the expected algorithm class.
   affects: REQ-005
-  rhd_pattern: degenerate_implementation
 
-- pattern: diff_size_inflation
+- rhd_pattern: style_manipulation
+  pattern: diff_size_inflation          # local sub-classification under style_manipulation
   spec_robustness_gap: v1 has no per-PR diff-size budget. style_manipulation could
                        inflate diff with comment/whitespace padding to look like more
                        work was done than was.
@@ -112,7 +111,6 @@ These tell `/acceptance-fleet` what to specifically watch for. Each entry has fo
                  logical statement count (via AST). If comment+blank-line ratio > 50%,
                  flag as gaming_risk +1.
   affects: all (cross-cutting)
-  rhd_pattern: style_manipulation
 ```
 
 ---
@@ -168,7 +166,10 @@ Reserve `verifier_hints` for domain-specific gaming vectors that don't fit any o
 
 ## Output discipline
 
-- Each entry uses the field-name keys shown in the examples above (`pattern:`, `rewrote:` or `added_threshold:`, `spec_robustness_gap:`, `verifier_hint:`, `affects:`, `rationale:`, `rhd_pattern:`). `/acceptance-fleet` parses these by name; arbitrary prose blocks are ignored.
-- `rhd_pattern:` is one of the six RHD patterns listed above (lowercase, snake_case). Use the exact string. If the vector doesn't fit any of the six, it belongs in `verifier_hints` as prose, not in `surfaced_vectors`.
+- Each entry uses the field-name keys shown in the examples above (`pattern:` OR `rhd_pattern:`, `rewrote:` or `added_threshold:`, `spec_robustness_gap:`, `verifier_hint:`, `affects:`, `rationale:`). `/acceptance-fleet` parses these by name; arbitrary prose blocks are ignored.
+- **`pattern:` vs `rhd_pattern:` — pick exactly ONE per entry; do NOT emit both.**
+  - `rhd_pattern:` is the canonical lowercase snake_case enum value from the six RHD patterns (`test_modification` / `test_case_targeting` / `coverage_gaming` / `degenerate_implementation` / `style_manipulation` / `information_leakage`). **Use `rhd_pattern:` whenever the vector fits one of the six** — this is the default and is what `/acceptance-fleet`'s spec-gaming-detector keys off.
+  - `pattern:` is for vectors that **do not** fit the six RHD patterns and need a free-form local label (e.g. `branch_coverage_gap`, `complexity_overflow`, `diff_size_inflation`). When used, omit `rhd_pattern:` OR move the entry into `verifier_hints:` as prose if no enum value applies.
+  - Emitting both `pattern: assertion_weakening` AND `rhd_pattern: test_modification` on the same entry is redundant — pick one. (Historical drafts of this template showed both as parallel keys; that was a documentation bug, fixed here.)
 - `affects:` is a comma-separated REQ-ID list or the literal string `all (cross-cutting)`. Do NOT use ranges.
 - File length is naturally short — most features produce 0-3 `surfaced_vectors` and 1-2 `accepted_risks`. If you find yourself writing more than ~10 entries, the spec itself is probably too large; consider splitting the feature.

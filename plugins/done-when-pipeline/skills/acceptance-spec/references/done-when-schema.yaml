@@ -23,7 +23,11 @@
 # ============================================================================
 feature: <kebab-case-slug>          # MUST match the directory name (e.g. subscription-cancellation)
 based_on: [<REQ-ID>, ...]           # union of all REQ IDs from spec.md this contract derives from
-created_at: <ISO-8601 timestamp>
+created_at: <ISO-8601 timestamp>    # ISO-8601 with second-level precision (e.g. 2026-05-25T10:02:33Z).
+                                    # MUST reflect the actual generation moment, NOT a midnight-rounded placeholder.
+                                    # Downstream auditors use this to correlate file mtime with contract identity.
+                                    # Acceptable forms: `2026-05-25T10:02:33Z` / `2026-05-25T10:02:33+00:00`.
+                                    # FORBIDDEN: `2026-05-25T00:00:00Z` when the actual generation time was not midnight UTC.
 created_by: <skill-name>            # plain skill name; do not append version. e.g. acceptance-spec
 
 # ============================================================================
