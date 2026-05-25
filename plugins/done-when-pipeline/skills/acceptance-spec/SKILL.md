@@ -13,7 +13,7 @@ description: >-
   Triggers: "spec this requirement" / "draft EARS" / "done_when for X" /
   "clarify this feature" / "acceptance criteria" / "write the contract" / "/acceptance-spec".
 argument-hint: "<natural-language requirement or path to brief>"
-version: 1.0.2
+version: 1.0.3
 user-invocable: true
 ---
 
@@ -353,7 +353,7 @@ For the legacy `/ratchet` alternative (lighter, no gaming detection, manual cont
 
 ## When to refuse / redirect
 
-- **"Just give me code"** → tell the user this skill produces specs, and offer to hand the resulting `done_when.yaml` off to `/test-suite-generator` followed by `/acceptance-fleet` (which will run the impl + verification loop). Do not skip the spec phase under pressure; that is the failure mode this whole pipeline exists to prevent.
+- **"Just give me code"** → tell the user this skill produces specs, not code. Point at the actual code-writing paths: chain `/test-suite-generator` → implement in a fresh session → `/acceptance-fleet` to verify; or use `/ratchet` for a lighter all-in-one impl loop. Do not skip the spec phase under pressure; that is the failure mode this whole pipeline exists to prevent.
 - **Brief is one line, no real domain content** ("build me a SaaS") → ask once for a 2-3 paragraph elaboration, including: what the user does, what changes for the user, what the success scene looks like. If still vague, refuse and explain why — clarify questions need *something* to push against.
 - **Brief is actually a design system request** (UI tone, color palette, typography) → suggest `/bespoke-design-system` instead. This skill is for behavioral requirements, not visual design.
 - **Brief is a single bug fix** → this is heavyweight overkill. Suggest writing a 1-line failing test instead, and using `/ratchet` directly with that as the criterion.
