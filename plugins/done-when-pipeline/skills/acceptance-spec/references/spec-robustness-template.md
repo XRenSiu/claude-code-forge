@@ -43,7 +43,7 @@ Source: *Benchmarking Reward Hack Detection in Coding Agents* (paraphrased in ac
 | `test_case_targeting` | A REQ that names specific concrete inputs (`user 42`, `tier 'gold'`). The impl can hardcode for those exact values. |
 | `coverage_gaming` | Spec has `unit_coverage >= 0.80` but no `mutation_kill_rate` (or `pbt_runs_per_property` is absent). Line coverage alone is gameable with `assert True`. |
 | `degenerate_implementation` | A REQ whose example space is small enough that a 5-row lookup table satisfies all behaviors. Needs a PBT property to force generalization. |
-| `style_manipulation` | A fitness criterion that proxies a real quality with a surface metric (`README must be > 500 words`, `code must have >= 30% comments`). Gameable; convert to programmatic check or drop. |
+| `style_manipulation` | A threshold or rule that proxies real quality with a surface metric (`README must be > 500 words`, `code must have >= 30% comments`). Gameable; convert to a programmatic check of the underlying behavior or drop. |
 | `information_leakage` | `spec.md` includes concrete (input, expected output) tables that the impl can copy-paste. Move examples to glossary or remove. |
 
 ---
@@ -122,9 +122,10 @@ Each requires a one-line `rationale`. The rationale is the audit trail — "we s
 ```markdown
 ## accepted_risks
 
-- pattern: style_manipulation on README fitness criterion
-  rationale: gaming this = writing bad docs, which is itself the failure that the
-             persona-judge rubric catches. No reinforcement needed.
+- pattern: style_manipulation on README/doc quality rule
+  rationale: gaming this = writing bad docs, which is itself the failure that
+             /pm-reviewer's `requires_human_verification` verdict catches. No
+             reinforcement needed in the contract layer.
 
 - pattern: information_leakage in proposal.md "Why" section
   rationale: the example incident description is necessary context for reviewers and
@@ -158,7 +159,7 @@ Reserve `verifier_hints` for domain-specific gaming vectors that don't fit any o
 ## What NOT to put here
 
 - **Implementation details.** "Use Postgres with serializable isolation" is a design choice, not a robustness concern. Push to `proposal.md` "Decisions made during clarify" or to a separate ADR.
-- **Performance budgets.** "Must respond in < 100ms" is a behavior REQ; add it to `spec.md` and `done_when.yaml.fitness`.
+- **Performance budgets.** "Must respond in < 100ms" is a behavior REQ; add it to `spec.md` and to `done_when.yaml.behavior.thresholds:` (a measurable threshold). If genuinely non-measurable, route via `/pm-reviewer`'s `requires_human_verification` — do NOT bring back a fitness rubric layer.
 - **Re-statements of REQs.** This file is *about* the spec, not a copy of it.
 - **TODOs.** If S2.5 identified something but didn't decide — go back and decide. `accepted_risks` requires an explicit `rationale`; `surfaced_vectors` requires an explicit `verifier_hint`. A TODO here is a S2.5 failure.
 

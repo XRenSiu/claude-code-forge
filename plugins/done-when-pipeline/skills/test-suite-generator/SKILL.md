@@ -3,17 +3,21 @@ name: test-suite-generator
 description: >-
   Turn an EARS spec + done_when.yaml contract into the full test pyramid: existence
   checks (ripgrep/tree-sitter), unit tests (example-based + property-based), integration
-  tests (with testcontainers, no mocks), e2e (Playwright/Cypress/Appium/Maestro),
-  mutation-testing configuration as an anti-reward-hacking layer (mutmut/Stryker/PIT),
-  and a fitness-rubric file for the "Claude-with-rubric inline" manual workflow. Walks six sub-steps
-  (4-A existence / 4-B unit / 4-C integration / 4-D e2e / 4-E mutation / 4-F fitness)
-  ONE BATCH AT A TIME — a known failure mode is "generate all tests at once → quality
-  collapse"; this skill explicitly serializes the batches. Each generated test is
-  tagged with `based_on: [REQ-IDs]` so the trace from requirement → test is mechanical.
-  Triggers: "generate tests for spec X" / "derive test suite" / "build verification battery"
-  / "/test-suite-generator" / pointing at any specs/<feature>/ directory.
+  tests (with testcontainers, no mocks), e2e (Playwright/Cypress/Appium/Maestro), and
+  mutation-testing configuration as an anti-reward-hacking layer (mutmut/Stryker/PIT).
+  Walks five sub-steps (4-A existence / 4-B unit / 4-C integration / 4-D e2e / 4-E
+  mutation) ONE BATCH AT A TIME — a known failure mode is "generate all tests at
+  once → quality collapse"; this skill explicitly serializes the batches. Each
+  generated test is tagged with `based_on: [REQ-IDs]` so the trace from requirement
+  → test is mechanical. The former 4-F "fitness rubric" sub-step was retired in
+  v1.0.0 per the HTML v2 §3.5 corollary (fitness-check dissolution) — most of its
+  content re-routes to programmatic verification in other layers; the genuinely-
+  unautomatable ~10% is handled by /pm-reviewer's `requires_human_verification`
+  verdict, not an LLM rubric. Triggers: "generate tests for spec X" / "derive
+  test suite" / "build verification battery" / "/test-suite-generator" /
+  pointing at any specs/<feature>/ directory.
 argument-hint: "<path to specs/<feature>/ or path to done_when.yaml>"
-version: 0.3.1
+version: 1.0.0
 user-invocable: true
 ---
 
@@ -22,7 +26,7 @@ user-invocable: true
 You are invoked to turn an upstream acceptance-spec output (a `specs/<feature>/` directory containing `spec.md` and `done_when.yaml`) into the actual test files that an independent agent can execute to verify implementation.
 
 **Say once at the start, then start working:**
-> "I'm using the test-suite-generator skill. I'll walk six sub-steps (existence → unit → integration → e2e → mutation → fitness), one batch at a time. Each generated test traces back to a REQ-ID via `based_on:`."
+> "I'm using the test-suite-generator skill. I'll walk five sub-steps (existence → unit → integration → e2e → mutation), one batch at a time. Each generated test traces back to a REQ-ID via `based_on:`."
 
 Do not narrate further — just walk the sub-steps.
 
@@ -30,7 +34,7 @@ Do not narrate further — just walk the sub-steps.
 
 ## Iron rules (re-read before every sub-step)
 
-1. **Verifiable beats judgeable.** Programmatic checks (assertion-based tests, AST inspection, mutation kill rate) beat LLM-as-judge on speed, cost, consistency. Reach for the fitness rubric (4-F) **only** when there is no programmatic alternative.
+1. **Verifiable beats judgeable.** Programmatic checks (assertion-based tests, AST inspection, mutation kill rate) beat LLM-as-judge on speed, cost, consistency. Per HTML v2 §3 principle I (and §3.5 corollary): most claims that *feel* like they need an LLM judge can be re-designed as programmatic checks — "README quickstart works" → really run it; "agent can call API from docs alone" → spin a clean session; "types are correct" → run `tsc`/`mypy`. The ~10% genuinely-unautomatable cases are routed to `/pm-reviewer`'s `requires_human_verification` verdict, not to a fake LLM rubric here. This skill does NOT emit fitness rubrics in v1.0.0 (former 4-F was retired).
 2. **One batch at a time.** Generate → write to disk → run → iterate. Then proceed. **Never generate all six batches in one pass** — empirically, LLM test generation quality collapses past a few dozen tests in a single prompt. The doc that motivates this skill names this as Pitfall #2; do not be the next person to step on it.
 3. **PBT property type is recovered from the test name.** Under schema v1 (Appendix C of `done-when-pipeline.md`), every leaf entry under `behavior.*.property_based` / `behavior.*.example_based` / `e2e_tests` is a **bare string** — there is no `property_type:` sub-field on the entry. Parse the test name suffix to infer the property archetype (one of: `invariant` / `idempotent` / `reversible` / `boundary` / `monotonic` / `state_machine`). E.g. `test_cancel_is_idempotent` → idempotent pattern. Read `references/pbt-property-types.md` to know which pattern to emit. If a property-based name does not encode a recognisable archetype, **the requirement is not a good PBT candidate** — emit an example-based test instead and tell the user the name should be revised upstream.
 4. **No mocks for integration tests.** Use testcontainers (or equivalent) to spin up real Postgres / Redis / Kafka / etc. Mocks hide interface drift, which is exactly the failure mode that catches AI-generated code most often. If the language lacks testcontainers, fall back to docker-compose; do not fall back to mocks.
@@ -61,8 +65,9 @@ Do not narrate further — just walk the sub-steps.
 4-C   Integration       multi-module; uses testcontainers; example + cross-module PBT
 4-D   E2E               Playwright/Cypress/Appium/Maestro; few but real user journeys
 4-E   Mutation          mutmut/Stryker/PIT config + invocation script
-4-F   Fitness rubric    rubric file consumed manually by a fresh Claude session (no packaged auto-runner)
 ```
+
+> **Removed in v1.0.0:** the former 4-F "Fitness rubric" sub-step is gone. Per HTML v2 §3.5 (fitness-check dissolution): the schema only keeps `existence + behavior + rules`. If you encounter a legacy `done_when.yaml` with a `fitness:` block, the schema validator (`references/done-when-schema-validator.md`) rejects it and asks the user to regenerate via `/acceptance-spec` v1.0+.
 
 After each sub-step, write the files, run them (existence/unit immediately runnable; integration if testcontainers usable; e2e is fine to leave runnable-but-not-run), and proceed. Only on a hard failure do you stop and report.
 
@@ -166,7 +171,7 @@ Test file header:
 # based_on: <comma-separated REQ IDs covered in this file>
 ```
 
-**Version-string substitution rule.** Every "Generated by …" header (in every file you emit — `existence.sh`, unit/integration/e2e tests, `mutation.sh`, `stryker.conf.json`, `playwright.config.ts`, every `.rubric.md`, every `fitness/README.md`, the top-level test README) MUST substitute `<skill-version>` with the version value read from this `SKILL.md`'s YAML frontmatter at the time of generation. **Do NOT hardcode** a version literal (e.g. `0.1.0`, `0.2.0`) — that decouples the artifact's self-report from the actual skill version and creates the dogfooding bug of "skill claims 0.3.x but produces files self-reporting 0.2.0". Read the frontmatter `version:` value once at S0/Bootstrap and use it consistently in every emitted header.
+**Version-string substitution rule.** Every "Generated by …" header (in every file you emit — `existence.sh`, unit/integration/e2e tests, `mutation.sh`, `stryker.conf.json`, `playwright.config.ts`, the top-level test README) MUST substitute `<skill-version>` with the version value read from this `SKILL.md`'s YAML frontmatter at the time of generation. **Do NOT hardcode** a version literal (e.g. `0.1.0`, `0.2.0`) — that decouples the artifact's self-report from the actual skill version and creates the dogfooding bug of "skill claims 0.3.x but produces files self-reporting 0.2.0". Read the frontmatter `version:` value once at S0/Bootstrap and use it consistently in every emitted header.
 
 **Batch boundary:** generate the unit-test file(s), write to disk, run them (they will mostly fail — code does not exist yet — that is fine). Move on.
 
@@ -262,32 +267,31 @@ Do NOT run the mutation suite right now — it takes minutes-to-hours. Just emit
 
 ---
 
-## 4-F — Fitness rubric
+## 4-F — Removed in v1.0.0
 
-Read `references/sub-modules/fitness-rubric.md` AND `references/fitness-rubric-guide.md`.
+The former 4-F "Fitness rubric" sub-step is retired. See HTML v2 §3.5 (fitness-check dissolution) and the v1.0.0 frontmatter note for the reasoning. If you encounter a legacy `done_when.yaml` with a `fitness:` block, **bail out at sub-step 0** and tell the user to regenerate via `/acceptance-spec` v1.0+, which no longer emits `fitness:`.
 
-For each entry in `done_when.yaml` `fitness:`:
+Re-routing reference (for users migrating from v0.x contracts):
 
-- If `judge: programmatic` → emit a small script (`fitness_<criterion>.sh` or `.py`) that returns pass/fail. Example: "README quickstart runs zero-modification" → a script that copies README code blocks into a sandbox dir and runs them.
-- If `judge: persona-judge` → emit a `fitness/<criterion>.rubric.md` file with:
-  - **Audience archetype** — 3-5 lines describing exactly who the judge should simulate, written inline (self-contained — does not depend on a pre-existing entry in any external persona library)
-  - **Inputs** — paths to artifacts the judge will examine (README, API reference, generated code)
-  - **Rubric** — a structured rubric with 3-7 sub-dimensions, each scored 1-10 with concrete anchors, summing/averaging to a final score
-  - **Threshold** — the `score_threshold:` from the YAML, restated
-  - **How-to-run block** — explicit instruction that this rubric file is the input to the LLM-as-judge path. Per the design doc §4.7, the `persona-judge` skill is the designated "主力" entry point. Until packaged automation for arbitrary-artifact persona judging lands, the rubric is consumed by a fresh Claude session driven manually (paste the rubric + artifact paths into a new session and ask for the score). See `references/fitness-rubric-guide.md` for the workflow and the known caveat about `persona-judge`'s current scope.
-- If `judge: manual` → emit a `fitness/<criterion>.manual-checklist.md` with a clear pass/fail checklist. A human must run this.
-- If `judge: llm-rubric` → **reject the entry.** This was a legacy value from earlier drafts of this skill. The schema v1 enum (Appendix C of `done-when-pipeline.md`) is `persona-judge | programmatic | manual`. Tell the user to rewrite as `judge: persona-judge` (the LLM-as-judge path) or push the criterion to programmatic if possible.
-
-**Hard warning embedded in every rubric file:** "A naively-written rubric *hurts* judge accuracy (research: JudgeBench, GPT-4o accuracy 55.6% → 42.9% with bad rubric). If you are tempted to write a generic 'rate this 1-10', stop and design concrete anchors first." See `references/fitness-rubric-guide.md` for the full caution.
+| Legacy fitness entry | New home |
+|---|---|
+| "README quickstart works zero-modification" | `/qa-reviewer` actually runs it (programmatic) |
+| "Agent can call API from docs only" | `/qa-reviewer` e2e against a fresh-session caller (programmatic) |
+| "API documentation complete" | `/code-reviewer` greps every export vs docs (static) |
+| "Type signatures correct" | `/qa-reviewer` runs `tsc`/`mypy` (programmatic) |
+| "Code satisfies spec intent" | `/pm-reviewer` Agent-as-Judge (already covers) |
+| "Naming is idiomatic" | `/code-reviewer --focus=style` (already covers) |
+| **"Documentation clarity"** | **`/pm-reviewer` → `requires_human_verification`** (genuinely needs human) |
+| **"Tutorial flow"** | **`/pm-reviewer` → `requires_human_verification`** (genuinely needs human) |
 
 ---
 
-## After all six sub-steps
+## After all five sub-steps
 
 Tell the user, in short bullets:
 
 1. Output directory + the file tree (≤15 lines).
-2. Counts: `<N> existence checks · <M> unit tests (<E> example / <P> PBT) · <I> integration tests · <K> e2e tests · <F> fitness criteria`.
+2. Counts: `<N> existence checks · <M> unit tests (<E> example / <P> PBT) · <I> integration tests · <K> e2e tests`.
 3. Three runnable commands (existence, unit, mutation) the user can invoke immediately.
 4. Step 5-6 next step: the user **manually translates** the upstream `done_when.yaml` (not the test files themselves) into a `/ratchet` invocation — Goal / Criteria / Scope / `done_when` block. Ratchet is the Step 5-6 master controller; it does **not** auto-parse `done_when.yaml`. Point them at `done-when-pipeline/INTEGRATION.md` for the verbatim translation recipe and the `spec_drift_threshold` ↔ `convergence` mapping.
 
@@ -299,7 +303,6 @@ When emitting the counts line above AND when populating the same counts in the g
 - `<M>` unit tests = `len(behavior.unit_tests.example_based) + len(behavior.unit_tests.property_based)`; `<E>` = `len(.example_based)`; `<P>` = `len(.property_based)`. The relationship `M = E + P` is mathematical, not narrative — do NOT add helper or synthesized tests into the count.
 - `<I>` integration tests = `len(integration_tests.example_based) + len(integration_tests.property_based)`.
 - `<K>` e2e tests = `len(e2e_tests)`.
-- `<F>` fitness criteria = `len(fitness)`.
 
 If your prose explanation diverges from those mathematical counts (e.g. "16 unit tests but actually the YAML lists 14"), the prose is wrong — re-count. **Never emit two contradicting numbers in the same artifact** (e.g. "16 unit tests" in the headline and "14 unit entries" in the footnote — exactly the iter-2 step2 P2-4 bug). If the test files end up containing more or fewer tests than the YAML promised, that is itself a skill bug that must be surfaced upstream (push back per iron rule 7 "No inventing requirements" / iron rule 9 "Verbatim test names") — not papered over by inflating the count in the README.
 
@@ -315,16 +318,14 @@ The test files this skill emits become the **acceptance contract** that Step 5 (
 
 2. **Continuous PBT failure ≈ spec bug (design doc §12.1.IV).** If the implementer's `/ratchet` loop keeps failing the same PBT after multiple fix attempts, that is a signal the **spec** is wrong, not the code. The recommended response is **not** more code patches; it is to return to `/acceptance-spec` and narrow the REQ. Concretely: if the PBT's shrunk counterexample is *consistent with the literal text of the REQ that produced the test* (the REQ as written would also produce a misbehaving impl), the spec is wrong. If the counterexample contradicts the REQ's text, the code is wrong — stay in ratchet with more budget. There is no automated escalation in v0.1 — the user judges which side is broken after ratchet's `convergence` triggers stop. See `INTEGRATION.md` "Spec drift guidance" for the full decision.
 
-For the per-criterion path of each fitness rubric (programmatic vs persona-judge vs manual), see `references/fitness-rubric-guide.md`.
-
 ---
 
 ## When to push back instead of generating
 
-- **The spec has REQs with no testable claim** (e.g. "the system SHALL be intuitive") → tell the user "REQ-NNN is not testable as written; this is a `[?]` that should have been resolved upstream. Suggest re-running /acceptance-spec for that REQ." Do not paper over it with a fitness rubric — that's lazy.
+- **The spec has REQs with no testable claim** (e.g. "the system SHALL be intuitive") → tell the user "REQ-NNN is not testable as written; this is a `[?]` that should have been resolved upstream. Suggest re-running /acceptance-spec for that REQ." Pre-v1.0 the lazy way out was a fitness rubric — in v1.0+ this is rerouted to `/pm-reviewer`'s `requires_human_verification` verdict, but only after honest effort to make the REQ verifiable.
 - **`done_when.yaml` lists a `property_type:` you cannot map to a pattern** → tell the user which entry, and ask whether to (a) reclassify as example-based, (b) drop it, (c) split the REQ to expose a different property. Do not invent a PBT pattern you don't actually know.
 - **The target language has no PBT library** (Swift, mostly) → emit only example tests, document the gap in a README note. Do not try to fake a Hypothesis-style API in Swift.
-- **`done_when.yaml` `fitness:` has more than 3 entries** → tell the user "fitness rubrics are last-resort; you have N>3 here, several of these probably belong in `behavior:` as programmatic checks. Want me to suggest which?" If they keep all of them, proceed.
+- **Legacy contract has `fitness:` block** → bail out at sub-step 0 with a clear migration message: "this contract was generated under v0.x schema; v1.0+ has retired `fitness:` per HTML v2 §3.5. Regenerate via `/acceptance-spec` v1.0+."
 
 ---
 
@@ -334,8 +335,7 @@ For the per-criterion path of each fitness rubric (programmatic vs persona-judge
 - `references/pbt-property-types.md` — six property archetypes (invariant / idempotent / reversible / boundary / monotonic / state_machine) with generator snippets per language; also documents alphabet-narrowing requirements
 - `references/tooling-by-language.md` — concrete install + import per language (Python / TS / Swift / Kotlin / Java)
 - `references/anti-cheating-mutation.md` — why mutation testing is mandatory + how to read kill-rate output
-- `references/fitness-rubric-guide.md` — how to write a rubric that does not hurt judge accuracy
-- `references/done-when-schema-validator.md` — checklist for sanity-checking the input contract
-- `references/step-5-audit-checklist.md` — checklist for Step 5 reviewers auditing artifacts emitted by this skill (10-field §7.4 schema walk, 做判分离 verification, anti-reward-hacking checks)
-- `references/sub-modules/` — one file per sub-step (existence / unit / integration / e2e / mutation / fitness) with full output recipes
+- `references/done-when-schema-validator.md` — checklist for sanity-checking the input contract (v1.0+ schema: `existence + behavior + rules` only)
+- `references/step-5-audit-checklist.md` — checklist for Step 5 reviewers auditing artifacts emitted by this skill
+- `references/sub-modules/` — one file per sub-step (existence / unit / integration / e2e / mutation) with full output recipes
 - `references/examples/` — generated test trees for the subscription-cancellation worked example

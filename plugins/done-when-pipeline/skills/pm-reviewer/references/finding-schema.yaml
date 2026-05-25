@@ -1,0 +1,254 @@
+# finding-schema.yaml — pm-reviewer output contract
+#
+# Top-level key: pm_review:
+# Strict schema. Every normalized REQ MUST have a per_req_compliance entry.
+
+pm_review:
+  # ====== META BLOCK ======
+  agent_role: pm-reviewer
+  model: <model-id>                                 # main: typically claude-opus-4-7
+  normalizer_model: <model-id>                      # P1 phase: typically claude-haiku-4-5
+  vendor: <claude | openai | google>
+  requirements_source: <path-or-url>
+  requirements_format: <ears | jira | linear | prd | github_issue | pr_description | user_yaml>
+  code_source: <path-or-ref>
+  repo_root: <path>
+  severity_marks_applied: [<req_id>, ...]           # from --severity-marks flag
+  prev_review_source: <path | null>
+  duration_seconds: <int>
+  tool_calls_total: <int>
+
+  # ====== NORMALIZED REQUIREMENTS (from P1) ======
+  normalized_requirements:
+    - req_id: <text>                                # from source if available, else minted PRD-NNN / etc
+      original_text: <text>                         # verbatim from source
+      bulleted: <text>                              # restated as one testable claim
+      bulleted_source: <direct_quote | llm_extracted_from_prose | user_yaml>
+      criticality: <critical | normal>
+      category: <functional | non_functional>
+
+  # ====== PER-REQ COMPLIANCE (from P2) ======
+  per_req_compliance:
+    - req_id: <text>
+      verdict: <fully_compliant | partially_compliant | not_compliant | requires_human_verification>
+      # NOTE (per HTML v2 §3.5 fitness-check dissolution): requires_human_verification is the
+      # FORMAL home for content that genuinely cannot be programmatically evaluated. The earlier
+      # "fitness check / LLM-judge rubric" layer was retired because most subjective-looking
+      # claims can be re-designed as verifiable checks (run the quickstart, grep the exports,
+      # exercise the API from a clean session). The ~10% of claims that truly cannot be
+      # automated (doc clarity, tutorial flow, design taste) are honestly handed to humans
+      # here — not faked away as an LLM judge score.
+      confidence: <high | medium | low>
+      evidence:
+        code_location:
+          file: <path>
+          line_range: [<start>, <end>]
+          function: <text | null>                   # if applicable
+        test_location:
+          file: <path | null>
+          line_range: [<start>, <end>] | null
+          test_name: <text | null>
+        tool_traces:                                # MANDATORY per agent-as-judge-protocol.md
+          - { tool: LOCATE, query: <text>, matched_files: [<path>, ...], matched_count: <int> }
+          - { tool: READ, file: <path>, lines: [<start>, <end>], observation: <text> }
+          - { tool: RETRIEVE, query: <text>, matched_files: [<path>, ...], observation: <text> }
+        observed_behavior: <text>                   # one sentence: what the impl actually does
+        expected_per_req: <text>                    # one sentence: what the REQ wants
+      # one of these MUST be present per verdict:
+      missing: <text | null>                        # required when verdict: partially_compliant
+      violation: <text | null>                      # required when verdict: not_compliant
+      reason: <text | null>                         # required when verdict: requires_human_verification
+      regression_from_baseline: <bool>              # only if --prev-review provided
+      tool_budget_exhausted: <bool>                 # OPTIONAL — true if 20-call budget hit before converging
+      tags: [<string>, ...]                         # OPTIONAL — e.g. ["degenerate_impl_suspected", "no_test_coverage"]
+
+  # ====== AGGREGATE (from P3) ======
+  aggregate:
+    total_reqs: <int>
+    by_verdict:
+      fully_compliant: <int>
+      partially_compliant: <int>
+      not_compliant: <int>
+      requires_human_verification: <int>
+    by_criticality:
+      critical:
+        total: <int>
+        fully_compliant: <int>
+        partially_compliant: <int>
+        not_compliant: <int>
+        requires_human_verification: <int>
+      normal: { ... same shape ... }
+
+  overall_label: <fully_compliant | partially_compliant | not_compliant>
+  block_merge: <bool>                               # true if any not_compliant OR critical partial OR unresolved critical needs_human
+  block_merge_reasons:
+    - <text>                                        # e.g. "REQ-002 not_compliant on critical REQ"
+
+  # ====== OUT-OF-SCOPE OBSERVATIONS ======
+  # NOT findings. Free-form notes for the user / downstream consumers.
+  out_of_scope_observations:                        # things noticed during READ that aren't REQ compliance
+    - location: <file>:<line>
+      observation: <text>
+      category: <security | perf | style | bug-likely | other>
+      route_to: <text>                              # suggested skill, e.g. "/code-reviewer --focus=security"
+
+  # ====== CAVEATS ======
+  caveats:
+    scope_mismatch: <bool>                          # diff spans unrelated changes
+    non_functional_heavy: <bool>                    # >50% of REQs are non_functional
+    incomplete_normalization: <bool>                # at least one bulleted_source: llm_extracted_from_prose
+    requirements_source_open_questions: [<text>, ...]   # e.g. EARS [?] markers still present (skill should have refused; if it didn't, name them)
+    cross_vendor_unavailable: <bool>
+
+# ====== EXAMPLE OUTPUT ======
+
+pm_review:
+  agent_role: pm-reviewer
+  model: claude-opus-4-7
+  normalizer_model: claude-haiku-4-5
+  vendor: claude
+  requirements_source: specs/subscription-cancellation/spec.md
+  requirements_format: ears
+  code_source: src/billing/
+  repo_root: /Users/me/projects/billing-api
+  severity_marks_applied: []
+  prev_review_source: null
+  duration_seconds: 142
+  tool_calls_total: 38
+
+  normalized_requirements:
+    - req_id: REQ-001
+      original_text: |
+        WHEN a user submits a cancellation request for an active subscription
+        THE SYSTEM SHALL transition the subscription state to `cancelled_active`
+        AND record the cancellation timestamp in UTC ISO-8601 format.
+      bulleted: "Transition subscription state to cancelled_active and record UTC ISO-8601 timestamp on cancellation request."
+      bulleted_source: direct_quote
+      criticality: critical
+      category: functional
+
+    - req_id: REQ-002
+      original_text: "WHEN a user cancels during a trial, THE SYSTEM SHALL preserve trial_end_date."
+      bulleted: "On cancellation during trial, preserve trial_end_date (do not overwrite to cancellation timestamp)."
+      bulleted_source: direct_quote
+      criticality: critical
+      category: functional
+
+    - req_id: REQ-003
+      original_text: "The confirmation modal SHALL display the access expiration date prominently."
+      bulleted: "Confirmation modal visually shows access expiration date."
+      bulleted_source: direct_quote
+      criticality: normal
+      category: functional
+
+  per_req_compliance:
+    - req_id: REQ-001
+      verdict: partially_compliant
+      confidence: high
+      evidence:
+        code_location:
+          file: src/billing/cancel.ts
+          line_range: [42, 58]
+          function: cancelSubscription
+        test_location:
+          file: tests/subscription-cancellation/unit/test_cancel_records_timestamp.py
+          line_range: [12, 28]
+          test_name: test_cancel_records_timestamp_is_iso_8601
+        tool_traces:
+          - { tool: LOCATE, query: "cancelSubscription|cancel_subscription", matched_files: ["src/billing/cancel.ts", "src/billing/types.ts"], matched_count: 2 }
+          - { tool: READ, file: "src/billing/cancel.ts", lines: [42, 58], observation: "Mutates status to 'cancelled_active' (correct per REQ). Timestamp stored via new Date().toString() at L50, not toISOString() — local time, not UTC." }
+          - { tool: RETRIEVE, query: "based_on:.*REQ-001", matched_files: ["tests/subscription-cancellation/unit/test_cancel_records_timestamp.py"], observation: "Test exists and asserts ISO-8601 format, but uses TZ=UTC in fixture so the local-vs-UTC bug is not caught." }
+        observed_behavior: "Impl satisfies state transition but records local-time timestamp instead of UTC."
+        expected_per_req: "State transition + UTC ISO-8601 timestamp."
+      missing: "Timestamp is not in UTC; uses local time. Test fixture runs in UTC so it passes locally but would fail on non-UTC server."
+      violation: null
+      reason: null
+      regression_from_baseline: false
+      tags: ["impl_partially_correct", "test_blind_spot_to_tz"]
+
+    - req_id: REQ-002
+      verdict: fully_compliant
+      confidence: high
+      evidence:
+        code_location:
+          file: src/billing/cancel.ts
+          line_range: [62, 75]
+          function: cancelTrialSubscription
+        test_location:
+          file: tests/subscription-cancellation/unit/test_cancel_trial_preserves_end_date.py
+          line_range: [8, 24]
+          test_name: test_cancel_during_trial_preserves_trial_end_date
+        tool_traces:
+          - { tool: LOCATE, query: "trial_end_date|cancelTrial", matched_files: ["src/billing/cancel.ts"], matched_count: 1 }
+          - { tool: READ, file: "src/billing/cancel.ts", lines: [62, 75], observation: "cancelTrialSubscription does NOT mutate trial_end_date; only mutates subscription.status. Correct." }
+          - { tool: RETRIEVE, query: "based_on:.*REQ-002", matched_files: ["tests/subscription-cancellation/unit/test_cancel_trial_preserves_end_date.py"], observation: "Test asserts trial_end_date unchanged across cancellation." }
+        observed_behavior: "trial_end_date is preserved on cancellation during trial."
+        expected_per_req: "trial_end_date preserved."
+      missing: null
+      violation: null
+      reason: null
+      regression_from_baseline: false
+      tags: []
+
+    - req_id: REQ-003
+      verdict: requires_human_verification
+      confidence: medium
+      evidence:
+        code_location:
+          file: src/ui/CancelSubscriptionModal.tsx
+          line_range: [45, 60]
+          function: CancelSubscriptionModal
+        test_location:
+          file: null
+          line_range: null
+          test_name: null
+        tool_traces:
+          - { tool: LOCATE, query: "CancelSubscriptionModal|cancellation.*modal", matched_files: ["src/ui/CancelSubscriptionModal.tsx"], matched_count: 1 }
+          - { tool: READ, file: "src/ui/CancelSubscriptionModal.tsx", lines: [40, 70], observation: "Modal renders {endDate} via <p>{endDate.toLocaleDateString()}</p>. Date is present but 'prominently' is a visual-hierarchy judgment." }
+          - { tool: RETRIEVE, query: "modal.*expiration|displays.*end_date", matched_files: [], observation: "No e2e test asserts visual hierarchy of the end date." }
+        observed_behavior: "Modal renders end date as a paragraph element."
+        expected_per_req: "Modal displays expiration date prominently."
+      missing: null
+      violation: null
+      reason: "'Prominently' is a visual hierarchy judgment requiring human eyeball assessment (or design-spec match). Could route to /qa-reviewer e2e layer with a Playwright screenshot + design-spec comparison."
+      regression_from_baseline: false
+      tags: ["non_functional_visual", "no_test_coverage"]
+
+  aggregate:
+    total_reqs: 3
+    by_verdict:
+      fully_compliant: 1
+      partially_compliant: 1
+      not_compliant: 0
+      requires_human_verification: 1
+    by_criticality:
+      critical:
+        total: 2
+        fully_compliant: 1
+        partially_compliant: 1
+        not_compliant: 0
+        requires_human_verification: 0
+      normal:
+        total: 1
+        fully_compliant: 0
+        partially_compliant: 0
+        not_compliant: 0
+        requires_human_verification: 1
+
+  overall_label: partially_compliant
+  block_merge: true
+  block_merge_reasons:
+    - "REQ-001 partially_compliant on critical REQ"
+
+  out_of_scope_observations:
+    - location: src/billing/cancel.ts:54
+      observation: "Refund logic enqueues even if cancellation fails (no try/catch around mutation, but the refund call is before the mutation)."
+      category: bug-likely
+      route_to: "/code-reviewer --focus=logic"
+
+  caveats:
+    scope_mismatch: false
+    non_functional_heavy: false
+    incomplete_normalization: false
+    requirements_source_open_questions: []
+    cross_vendor_unavailable: false

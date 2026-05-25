@@ -19,7 +19,7 @@ The source design doc §7.4 defines an evaluation_result with exactly these top-
 | 5 | `integration_tests.example_based.passed` + `integration_tests.property_based.passed` + `minimal_counterexample` | Same as unit, plus Hypothesis prints the shrunk example on failure | `minimal_counterexample` ← parse pytest stderr for `Falsifying example: ...` block, or capture via `--hypothesis-seed` re-runs. Our skill does **not** require landing the counterexample to disk; if the evaluator wants structured access, it should set `HYPOTHESIS_DATABASE` to a stable path and read it. |
 | 6 | `e2e_tests.passed` | Playwright/Cypress exit code | Same. |
 | 7 | `mutation_testing.mutants_killed` + `kill_rate` + `surviving_mutants` | `mutation.sh` exit code + tool DB | `mutants_killed` / `kill_rate` ← mutation.sh prints them. `surviving_mutants: [{file, line, mutation}]` ← evaluator runs `mutmut results` (or `stryker mutator output`) to dump the survivors. **Our `mutation.sh` does not auto-export this list**; evaluator must call the per-tool results command. Document this in the manifest. |
-| 8 | `fitness.<criterion>: score` | Manually scored per the rubric's "How to run" block | Not auto. Reviewer collates scores into the result. |
+| 8 | _Removed in v1.0.0_ | _was fitness scores; layer retired per HTML v2 §3.5_ | If a v0.x evaluator still references this field, it should be removed. Truly-unautomatable criteria now reach evaluation via `/pm-reviewer`'s `requires_human_verification`. |
 | 9 | `overall_status` | Computed by evaluator from the above | Reviewer's call, but the rule is: any P0 criterion failed → "fail"; all pass → "ok"; budget exhausted before convergence → "stalled". |
 | 10 | `meets_done_when` | boolean derived from `overall_status` | "ok" → true; anything else → false. |
 
@@ -35,9 +35,10 @@ If a Step 5 audit reports that the skill "does not define evaluation_result sche
 - **unit / integration tests**: pytest/vitest is a separate process with no LLM in the loop. ✓ structural separation.
 - **e2e tests**: same — Playwright is a separate process. ✓ structural separation.
 - **mutation.sh**: separate process. ✓ structural separation.
-- **fitness rubrics**: ⚠ **conventional separation only.** The rubric file's "How to run" instructs the user to open a **fresh Claude session** (no implementer context) and paste the rubric + artifacts. This is honor-system, not mechanical. The rubric file MUST contain this instruction verbatim — see `fitness-rubric-guide.md`.
 
-The Step 5 audit should verify that no artifact's design assumes "the agent that wrote the code also scores its own output". The first four layers are structurally safe; the fitness layer is contractually safe via the rubric's how-to-run text.
+All five layers (existence / unit / integration / e2e / mutation) are structurally safe — separation of make-vs-judge is enforced by the process boundary, not by honor system. The pre-v1.0 fitness layer (which was conventionally separated via "fresh Claude session" instructions) is retired; any genuinely-unautomatable criteria now flow to `/pm-reviewer`'s `requires_human_verification` verdict, which is itself a separate skill invocation with structural isolation.
+
+The Step 5 audit should verify that no artifact's design assumes "the agent that wrote the code also scores its own output". All v1.0+ layers are structurally safe.
 
 ---
 

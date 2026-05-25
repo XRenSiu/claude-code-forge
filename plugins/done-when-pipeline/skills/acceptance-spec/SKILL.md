@@ -11,7 +11,7 @@ description: >-
   Triggers: "spec this requirement" / "draft EARS" / "done_when for X" /
   "clarify this feature" / "acceptance criteria" / "write the contract" / "/acceptance-spec".
 argument-hint: "<natural-language requirement or path to brief>"
-version: 0.3.1
+version: 1.0.0
 user-invocable: true
 ---
 
@@ -39,7 +39,7 @@ Do not narrate further — just walk the phases.
 4. **Every decision traces to one clarification answer.** Each REQ in the final `spec.md` has a `source:` line citing the user message that fixed it (e.g. `source: "user clarified at S2 round 1 Q3 that cancellation honors UTC boundary"`).
 5. **Borrow OpenSpec's file format, not its CLI.** Output the four files as documented below; do not shell out to `openspec`, do not depend on it.
 6. **You do not write tests.** Tests are Step 4 (`test-suite-generator`). Your job ends at `done_when.yaml`.
-7. **Verifiable beats judgeable.** In `done_when.yaml`, prefer programmatic checks; only fall back to LLM-judge (`fitness:`) for things genuinely outside mechanical reach (doc clarity, agent usability, intent alignment).
+7. **Verifiable beats judgeable.** Per HTML v2 §3 principle I (and the §3.5 corollary on fitness-check dissolution): in `done_when.yaml`, every claim must land in `existence:` (does the symbol exist) or `behavior:` (does the behavior hold under test) — never in a softer "LLM judges this" layer. The v0.x `fitness:` layer was retired in v1.0.0 because most "needs an LLM judge" entries can be re-designed as programmatic checks ("README quickstart works" → really run it; "type signatures correct" → run `tsc`). Genuinely-unautomatable cases (doc clarity, design taste, tutorial flow) reach evaluation via `/pm-reviewer`'s `requires_human_verification` verdict — they do NOT appear in `done_when.yaml`. The third layer is now `rules:`, a flat condition list consumed by `/meta-judge` for final-verdict synthesis.
 8. **REQs must be independently testable — no cross-REQ causal indirection.** Each REQ is the unit a Step 4 test must derive from. **Do not** write things like `THE system SHALL silence the notification produced by REQ-001`; that binds REQ-N's verifiability to REQ-001's runtime artifact and forces Step 4 fixtures to chain. Instead, restate the relevant precondition in REQ-N's own EARS clause (`IF a mention is delivered AND the recipient is in DND, THEN ...`). REQs may *reference* each other for narrative context (e.g. "follow-on from REQ-001" in the heading line) but the SHALL action must be derivable from the REQ's own clauses alone. See `references/ears-syntax.md` "Cross-REQ causal indirection" row.
 9. **Worker output ≠ internal decision process.** Each phase's user-visible output is **only the deliverable** for that phase (S1: draft + open questions; S2: a single round's question batch; S3: the four files). Do not interleave skill-internal logs ("clarify-protocol Rule 2 vs Rule 6 weighing", "skill invocation summary", "second-order scan notes") into the output. If something is useful as audit context, put it in a comment inside the deliverable file or omit it. Process narration belongs in your reasoning, not in what the user reads.
 10. **Output is single-language per primary surface.** EARS sentence bodies, REQ headings, `[?]` notes, and clarify question text should all use **one** primary language consistently within a single artifact (typically English, since EARS keywords are English). Mixing English EARS bodies with Chinese question lists in the same file fragments the artifact and forces parallel translations. Glossary entries that *define* a Chinese-named domain term are fine — but the EARS body, the question prompts, and the source/log lines stay in one language.
@@ -169,7 +169,7 @@ This is silent unless it surfaces a high-severity vector. The output is the in-m
 2. **Test Case Targeting** — Does any behavior name leak the exact input the test will use? (e.g. `test_cancel_with_user_id_42_returns_403` invites hardcoding.) → Rename to abstract over the specific value.
 3. **Coverage Gaming** — Does `behavior.thresholds.unit_coverage` exist *without* a `mutation_kill_rate`? Line coverage alone incentivizes `assert True`. → Ensure `mutation_kill_rate: ">= 0.70"` is present (v1 schema admits this — it's mandatory per iron rule 5 of test-suite-generator).
 4. **Degenerate Implementation** — Does any REQ admit a lookup-table or if-else-explosion as a satisfying impl? (e.g. "for the five known input cases, return the expected output" — easily faked.) → Add a PBT property name to `behavior.unit_tests.property_based` that forces generalization.
-5. **Style Manipulation** — Are there fitness criteria that count comment lines, character counts, or other gameable surface metrics? → Convert to programmatic checks or drop.
+5. **Style Manipulation** — Are there gameable surface metrics smuggled into thresholds (comment-line count, character count, etc.) that proxy real quality with cheap-to-game numbers? → Convert to programmatic checks of the actual behavior or drop. (Pre-v1.0 this pattern most often landed in the now-retired `fitness:` layer; v1.0+ has no `fitness:` block, but the temptation can resurface in `rules:` or `behavior.thresholds:` — watch.)
 6. **Information Leakage** — Does `spec.md` contain example inputs/outputs that would be copy-pasted as the impl? → Move them to glossary entries or remove from spec.
 
 **For each gaming vector identified, decide one of three actions:**
@@ -245,7 +245,7 @@ Hard rules for v1 字面:
 - `existence:` — every entry is **a single key-value pair, no sub-fields**. Allowed kinds are exactly the five from Appendix C: `file:` / `function:` / `route:` / `db_field:` / `frontend_component:`. Do NOT add `based_on:` / `kind:` / any other key on an existence entry. If you find yourself wanting `based_on:` per entry — push the traceability into the test name and rely on the top-level `based_on:` list + `spec.md` `source:` lines.
 - `behavior:` — every test entry under `unit_tests.example_based` / `unit_tests.property_based` / `integration_tests.example_based` / `integration_tests.property_based` / `e2e_tests` is **a bare string** (the test name), not a mapping. No `name:` / `based_on:` / `property_type:` / `dependencies:` / `tool:` sub-fields. Encode the property archetype (invariant / idempotent / reversible / boundary / monotonic / state_machine) in the test name itself so downstream (4-B in test-suite-generator) can route the PBT pattern by name.
 - `behavior.thresholds:` — the four keys are fixed: `unit_coverage`, `integration_coverage`, `mutation_kill_rate`, `pbt_runs_per_property`.
-- `fitness:` — entries have exactly three keys: `criterion:`, `judge:`, `score_threshold:` (omit `score_threshold:` only when `judge: programmatic`). `judge:` is a three-value enum: **`persona-judge | programmatic | manual`**. Do NOT use `llm-rubric` (it is not in v1; the LLM-judge path is `persona-judge`, per Appendix C and §4.7 of the design doc). Do NOT add `rubric_file:` — the rubric file is a downstream artifact emitted by test-suite-generator 4-F, not a contract field. Max 3 fitness entries; if you have more, push them back into `behavior:` as programmatic checks.
+- `rules:` — REPLACES the v0.x `fitness:` layer (retired per HTML v2 §3.5). Flat list of conditions consumed by `/meta-judge` during final-verdict synthesis. Each entry is a bare string (e.g. `"any P0 finding blocks merge"`, `"mutation_kill_rate >= 0.7"`) or a mapping with `rule:` + optional `severity:` / `applies_to:` fields. No nested objects. MAY be empty — meta-judge falls back to block-on-P0 default. Do NOT carry over a legacy `fitness:` block; the unautomatable cases now route to `/pm-reviewer`'s `requires_human_verification` instead.
 - `spec_drift_threshold:` — exactly one sub-field, `max_fix_loops_before_escalation: <integer>`. Do NOT add `applies_to:` or any other key.
 - Top-level `based_on:` — the union of every REQ-ID referenced anywhere in the spec. This is the primary traceability anchor under v1 (combined with `spec.md` `source:` lines).
 
@@ -305,9 +305,10 @@ under `rhd_pattern: coverage_gaming`). NEVER emit both as parallel synonyms — 
 Gaming vectors that were considered and consciously NOT defended against. Each
 entry is a one-line rationale; absence of a rationale is a S2.5 bug.
 
-- rhd_pattern: style_manipulation        # on README fitness criterion
-  rationale: gaming this = writing bad docs, which is itself the failure the rubric
-             catches. No reinforcement needed.
+- rhd_pattern: style_manipulation        # on README/doc quality threshold
+  rationale: gaming this = writing bad docs, which is itself the failure that
+             /pm-reviewer's requires_human_verification verdict catches. No
+             reinforcement needed in the contract layer.
 - ...
 
 ## verifier_hints
@@ -326,7 +327,7 @@ If S2.5 produced no surfaced vectors AND no accepted risks (closed-only), still 
 Tell the user, in four short bullets:
 
 1. The output directory and the five filenames.
-2. A one-line count: `N REQs, M existence checks, K test names, J fitness criteria, V surfaced gaming vectors.`
+2. A one-line count: `N REQs, M existence checks, K test names, R rules entries, V surfaced gaming vectors.`
 3. Immediate next step: `/test-suite-generator <output_dir>/` — turns the contract into the actual test files (Step 4).
 4. Subsequent step (Step 5-6): either chain to **`/acceptance-fleet`** (consumes `done_when.yaml` + `spec-robustness.md` + the generated tests directly; runs the 7-role evaluation fleet with 4-state ratchet) OR manually translate to `/ratchet` (legacy path; ratchet does not auto-parse `done_when.yaml`, does not read `spec-robustness.md`, does not run gaming detection). See `done-when-pipeline/INTEGRATION.md` for both paths.
 

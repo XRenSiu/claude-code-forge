@@ -1,12 +1,18 @@
-# done_when.yaml — fill-in template (schema v1, aligned with Appendix C).
+# done_when.yaml — fill-in template (schema v1.0+, post HTML v2 §3.5).
 # See ../done-when-schema.yaml for the authoritative schema and field semantics.
 #
-# v1 STRICT RULES (do not violate):
+# v1.0+ STRICT RULES (do not violate):
 #   - existence[]   : single key-value pair per entry, NO sub-fields.
 #                     Allowed kinds: file | function | route | db_field | frontend_component.
 #   - behavior.*    : every test entry is a BARE STRING (test name), NOT a mapping.
-#   - fitness[].judge ∈ {persona-judge, programmatic, manual}  (NOT llm-rubric)
+#   - rules[]       : flat conditions consumed by /meta-judge. Each entry is a bare string
+#                     OR a mapping with rule + optional severity/applies_to. NO nested objects.
 #   - spec_drift_threshold has only `max_fix_loops_before_escalation:` — no other keys.
+#
+# REMOVED IN v1.0.0 per HTML v2 §3.5:
+#   - `fitness:` layer (was: LLM-judge rubric criteria). Most fitness entries re-route
+#     to programmatic checks in `behavior:`; truly-unautomatable cases reach evaluation
+#     via /pm-reviewer's `requires_human_verification` verdict.
 #
 # Traceability lives at the top-level `based_on:` (union) + spec.md `source:` lines.
 # Do NOT add `based_on:` / `property_type:` / `tool:` / `dependencies:` on leaf entries.
@@ -42,12 +48,12 @@ behavior:
     mutation_kill_rate: ">= 0.70"
     pbt_runs_per_property: ">= 500"
 
-fitness:
-  # KEEP SHORT (max 3). Only things genuinely outside mechanical reach.
-  # judge ∈ {persona-judge, programmatic, manual}. See ../done-when-schema.yaml.
-  - criterion: <one-line description>
-    judge: persona-judge                          # LLM-as-judge entry point
-    score_threshold: ">= 8/10"
+rules:
+  # Flat conditions consumed by /meta-judge during final-verdict synthesis.
+  # MAY be empty (meta-judge falls back to block-on-P0 default).
+  - "any P0 finding blocks merge"
+  - "mutation_kill_rate >= 0.7"
+  - "all critical REQs must reach fully_compliant or explicit-human-OK"
 
 spec_drift_threshold:
   # GUIDANCE FIELD — ratchet does not auto-read this. See INTEGRATION.md

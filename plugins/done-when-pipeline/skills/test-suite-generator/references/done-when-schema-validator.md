@@ -1,8 +1,10 @@
-# done_when.yaml validator checklist (schema v1)
+# done_when.yaml validator checklist (schema v1.0+ — post fitness-dissolution)
 
 Run this before sub-step 4-A. If any check fails, **bail out** and tell the user the contract is malformed. Do not try to generate tests against a broken contract.
 
-**Authoritative schema:** Appendix C of `done-when-pipeline.md` (schema v1). This checklist mirrors it literally — entries on `existence:` are single-key mappings with **no sub-fields**, and entries under `behavior.*` are **bare strings** (not mappings). Any extra sub-fields = malformed.
+**Authoritative schema:** v1.0+ schema (post HTML v2 §3.5 fitness-check dissolution). The schema keeps only three top-level layers: `existence` + `behavior` + `rules`. The `fitness:` layer present in v0.x contracts was retired — if you see it, the contract is from a pre-v1.0 generator and must be regenerated via `/acceptance-spec` v1.0+.
+
+Entries on `existence:` are single-key mappings with **no sub-fields**, and entries under `behavior.*` are **bare strings** (not mappings). Any extra sub-fields = malformed.
 
 ---
 
@@ -15,7 +17,8 @@ Run this before sub-step 4-A. If any check fails, **bail out** and tell the user
 - [ ] `existence:` is present (may be empty list for feature with no concrete existence claims, but the key must exist)
 - [ ] `behavior:` is present and contains at least one of `unit_tests`, `integration_tests`, `e2e_tests`
 - [ ] `behavior.thresholds:` is present and includes `mutation_kill_rate:` (this is mandatory per the iron rules)
-- [ ] `fitness:` is present (may be empty list)
+- [ ] `fitness:` is **absent** (this layer was retired in v1.0.0 per HTML v2 §3.5 — if present, reject)
+- [ ] `rules:` is present (may be empty list — used by `/meta-judge` for final-verdict criteria)
 - [ ] `spec_drift_threshold:` is present with `max_fix_loops_before_escalation: <integer>`
 
 ---
@@ -48,20 +51,33 @@ For each entry under `behavior.unit_tests.example_based` / `behavior.unit_tests.
 
 ---
 
-## Fitness — type & shape checks (v1 strict)
+## Fitness — REMOVED in v1.0.0
 
-For each `fitness:` entry:
-- [ ] Has `criterion:` (one-line description)
-- [ ] Has `judge:` ∈ **{persona-judge, programmatic, manual}**  ← this is the v1 enum from Appendix C
-- [ ] If `judge: persona-judge` → has `score_threshold:`. The rubric markdown file is an artifact this skill produces (4-F) — it is **not** a contract field. If the contract has a `rubric_file:` key, treat it as malformed (it was a non-v1 extension).
-- [ ] If `judge: programmatic` → no `score_threshold:` required (pass/fail).
-- [ ] If `judge: manual` → has `score_threshold:` (a human still needs a bar).
-- [ ] If `judge: llm-rubric` → **reject as malformed.** This was a legacy value from earlier drafts. The v1 enum from Appendix C does not include `llm-rubric`; the LLM-as-judge path is `persona-judge`. Tell the user to regenerate via `/acceptance-spec`.
-- [ ] No other keys on the fitness entry.
+The `fitness:` layer was retired per HTML v2 §3.5 (fitness-check dissolution). If the contract has a top-level `fitness:` block, **reject as malformed**:
+
+```
+This contract was generated against the v0.x schema with a `fitness:` block. The
+v1.0+ schema retired the fitness layer (HTML v2 §3.5 corollary). Most fitness
+content re-routes to programmatic checks in `behavior:` or to `/pm-reviewer`'s
+`requires_human_verification` verdict. Regenerate via `/acceptance-spec` v1.0+.
+```
 
 ---
 
-## spec_drift_threshold — type & shape checks (v1 strict)
+## Rules — type & shape checks (v1.0+)
+
+The `rules:` layer is the third pillar of the v1.0+ schema. It feeds `/meta-judge` with the criteria for the final pass/block decision.
+
+For each `rules:` entry:
+- [ ] Is a single-line condition (e.g. `"any P0 finding blocks merge"` / `"mutation_kill_rate >= 0.7"`).
+- [ ] May be a bare string OR a mapping with `rule:` + optional `severity:` / `applies_to:`.
+- [ ] No nested objects — keep rules flat.
+
+`rules:` MAY be an empty list (contract defers to default block-on-P0 behavior). Empty is not an error.
+
+---
+
+## spec_drift_threshold — type & shape checks (v1.0+)
 
 - [ ] Has exactly one sub-field: `max_fix_loops_before_escalation: <integer>`.
 - [ ] If the contract has `applies_to:` (or any other sub-field) on `spec_drift_threshold:`, treat it as malformed — v1 defines only the one field.
@@ -70,7 +86,6 @@ For each `fitness:` entry:
 
 ## Sanity warnings (do not block, but report)
 
-- ⚠ `fitness:` has more than 3 entries → likely over-using LLM-judge; suggest moving some to `behavior:`
 - ⚠ `e2e_tests:` has more than 5 entries → likely too E2E-heavy; suggest moving some to integration
 - ⚠ All tests are example-based, no `property_based:` entries → review whether any REQ is actually a good PBT candidate; the spec is unusual if zero properties exist
 - ⚠ `mutation_kill_rate:` threshold is < 0.7 → below the recommended floor; ask the user to confirm

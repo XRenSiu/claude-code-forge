@@ -1,12 +1,14 @@
-# Pipeline Flow — v0.3.0 全流程
+# Pipeline Flow — v1.0.0 全流程
 
-本文档画清 done-when-pipeline 三个 skill (`/acceptance-spec` → `/test-suite-generator` → `/acceptance-fleet`) 串起来的端到端流程，包括每个阶段的输入/输出、子步骤、关键约束、以及两个最容易踩坑的 boundary。
+本文档画清 done-when-pipeline 在 v1.0+ 架构下端到端怎么跑通：两层拓扑（6 个独立 review skill + 1 个编排 skill），以及上游 contract producer (`/acceptance-spec` → `/test-suite-generator`) 怎么喂给下游编排层。
+
+> v1.0 是 BREAKING 重构。如果你来自 v0.3.x，对照看 README 的"Migrating from v0.x"小节。
 
 辅助文档：
 - `README.md` — 快速上手 + 设计哲学
 - `INTEGRATION.md` — 跟 `/ratchet` 等外部 skill 的 hand-off 细节
 - `skills/<skill>/SKILL.md` — 单个 skill 的完整规格
-- `skills/acceptance-fleet/references/` — fleet 内部协议（角色 prompt / finding schema / 隔离层级 / 反作弊 pattern / 留痕格式 / fix-prompt 模板 / meta-judge 协议）
+- `skills/acceptance-fleet/references/skill-dispatch-matrix.md` — 编排层怎么把 v0.x 角色映射到 v1.0+ skill 调用
 
 ---
 
@@ -14,265 +16,287 @@
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│  Step 1-3                                                                    │
-│  /acceptance-spec  "用户能取消订阅,但保留到付费期结束"                          │
+│  LAYER 1 — STANDALONE SKILLS (each user-invocable, contract-agnostic)        │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  Contract producers:                                                         │
+│    /acceptance-spec ─────► specs/<feature>/  (NL → EARS + done_when.yaml +   │
+│                                              spec-robustness.md)             │
+│    /test-suite-generator ► tests/<feature>/  (5-layer test pyramid)          │
+│                                                                              │
+│  Review skills (any subset usable independently):                            │
+│    /code-reviewer         diff → findings (focus-driven, Detective Loop)     │
+│    /qa-reviewer           run tests + classify failures → release readiness  │
+│    /pm-reviewer           Agent-as-Judge per-REQ compliance                  │
+│    /spec-drift-detector   spec vs code factual divergence (3 types)          │
+│    /spec-gaming-detector  6 RHD patterns + diff mode → risk score + gaps     │
+│    /meta-judge            synthesize findings → PASS / BLOCK / NEEDS_HUMAN   │
+│                                                                              │
 └─────────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  LAYER 2 — ORCHESTRATOR                                                      │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│    /acceptance-fleet ─────► ratchet-log/iteration-NNN/                       │
+│      Dispatches the 6 review skills in parallel,                             │
+│      hands findings to /meta-judge,                                          │
+│      decodes verdict into four-state ratchet:                                │
+│      DONE / FIX / SPEC_DRIFT / GAMING_RISK / NEEDS_HUMAN                     │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+**关键属性：** Layer 1 的 review skills 不知道 `done_when.yaml` 存在。它们各自接受任意格式的 spec / 任意路径的 code，输出独立的 finding-schema。这让任何一个 review skill 都可以独立用于 done_when pipeline 之外的场景（PR 审查、老项目体检、KPI gaming 审计、合规验收）。`/acceptance-fleet` 只是它们的一个消费者。
+
+---
+
+## 全流程（Step 1-6）
+
+### Step 1-3 · `/acceptance-spec` — 写契约
+
+```
+/acceptance-spec  "用户能取消订阅,但保留到付费期结束"
          │
-         │   S0 Bootstrap   读 brief,定 feature-slug
-         │   S1 Draft       NL → EARS,每个模糊处打 [?] tag
+         │   S0 Bootstrap   读 brief, 定 feature-slug
+         │   S1 Draft       NL → EARS, 模糊处打 [?] tag
          │   S2 Clarify     3 类问题、2-3 轮、≤5 轮硬上限
          │   S2.5 反作弊    "如果我要 game 这个 done_when 我会怎么 game?"
-         │                  → 扫 6 类 RHD pattern,close/document/accept 每一项
+         │                  → 扫 6 类 RHD pattern, close/document/accept 每一项
          │   S3 Solidify    写 5 份文件
          ▼
     specs/<feature>/
       ├── proposal.md           Why / What / Non-goals
-      ├── spec.md               EARS REQ-001..NNN,每条带 source: 行
+      ├── spec.md               EARS REQ-001..NNN, 每条带 source: 行
       ├── tasks.md              拆解任务
-      ├── done_when.yaml        v1 strict 契约(Appendix C 不可加字段)
-      └── spec-robustness.md    ★v0.3.0 新★ 反作弊伴生文件
+      ├── done_when.yaml        v1.0+ schema: existence + behavior + rules
+      └── spec-robustness.md    反作弊伴生文件
                                 · closed_vectors   (S2.5 已结构性堵掉)
-                                · surfaced_vectors (堵不掉,acceptance-fleet 监控)
+                                · surfaced_vectors (堵不掉, /spec-gaming-detector 监控)
                                 · accepted_risks   (识别但故意不防)
                                 · verifier_hints   (域特定提醒)
+```
 
-┌─────────────────────────────────────────────────────────────────────────────┐
-│  Step 4                                                                      │
-│  /test-suite-generator  specs/<feature>/                                     │
-└─────────────────────────────────────────────────────────────────────────────┘
+**v1.0 schema 变化：** `done_when.yaml` 三层架构是 `existence + behavior + rules`，**不再有 `fitness:` 层**。原来的 fitness 内容 90% 重新归类到程序性验证（grep/ tsc/ 真跑 quickstart），剩下 10% "真的没法机器评估" 由 `/pm-reviewer` 输出的 `requires_human_verification` verdict 承接。详见 HTML v2 §3.5。
+
+### Step 4 · `/test-suite-generator` — 派生测试
+
+```
+/test-suite-generator  specs/<feature>/
          │
-         │   4-A existence    ripgrep/tree-sitter 检查
+         │   4-A existence    ripgrep/tree-sitter 存在性检查
          │   4-B unit         example + PBT (Hypothesis/fast-check)
-         │   4-C integration  testcontainers,不许 mock
+         │   4-C integration  testcontainers, 不许 mock
          │   4-D e2e          Playwright/Cypress
          │   4-E mutation     mutmut/Stryker (反 reward-hacking)
-         │   4-F fitness      rubric 文件(留给 fresh Claude session 手判)
+         │   ─────────────────────────────────────────────────
          │   每个 batch 一次跑完不混 — 不一次性出全部
          ▼
     tests/<feature>/
-      ├── existence.sh
-      ├── unit/
-      ├── integration/
-      ├── e2e/
-      ├── mutation.sh
-      └── fitness/
+      ├── existence.sh         (fail-fast, set -e)
+      ├── unit/                example + property-based
+      ├── integration/         + testcontainers
+      ├── e2e/                 + Playwright config
+      └── mutation.config      kill-rate ≥ 阈值
+```
 
-┌─────────────────────────────────────────────────────────────────────────────┐
-│  实现阶段(任意 agent / 任意人)                                                │
-│  ★必须用 fresh session★ — 不能让实现 agent 看见下一步的评估 prompt          │
-│  (看到了 = 作弊温床,acceptance-fleet 会拒绝同 session 跑)                    │
-└─────────────────────────────────────────────────────────────────────────────┘
-         │  写代码进 src/
+**v1.0 变化：** 4-F (fitness rubric) 已经删除。原来生成的 `fitness.rubric` 文件不再产出。如果你拿到一个 v0.x 时代的 `done_when.yaml` 里还有 `fitness:` 块，schema validator 会拒绝它，让你重新跑 `/acceptance-spec` v1.0+ 生成新的契约。
+
+### Implementation phase（用户自选 agent，**新 session**）
+
+实现阶段不属于这个 plugin。用户用任意 agent（Claude Code subagent、Cursor、Aider、人工）实现，**必须在新 session 跑** —— 实现 agent 不能看到下游 review skill 的 prompt（否则就是 gaming substrate，整个反作弊架构作废）。
+
+### Step 5-6 · `/acceptance-fleet` — 编排 review + ratchet
+
+```
+/acceptance-fleet  specs/<feature>/
+         │
+         │   S0  Bootstrap         读 specs/<feature>/, 检测隔离层级
+         │                         strong (Codex/Gemini 可用) / medium (Claude 混合 size)
+         │                         weak / 拒绝运行 (无法保证 fresh session)
+         │
+         │   S1  Dispatch fleet    并行调起 7 个 sub-skill 调用:
+         │                         /code-reviewer --focus=security --adversarial  ★ 跨厂商优先
+         │                         /code-reviewer --focus=logic
+         │                         /code-reviewer --focus=perf
+         │                         /qa-reviewer       (跑测试 + maintenance/genuine 分类)
+         │                         /pm-reviewer       (Agent-as-Judge: LOCATE/READ/RETRIEVE)
+         │                         /spec-drift-detector  (iteration ≥ 2)
+         │                         /spec-gaming-detector ★ 跨厂商优先, 比对 history
+         │
+         │   S2  Synthesize        /meta-judge ← 7 份 review 输出 + done_when.yaml.rules
+         │                         (HARD WALL: meta-judge 不重新看代码,只综合)
+         │
+         │   S3  Ratchet decision  解码 meta-judge verdict + gaming/drift 信号 →
+         │                         DONE | FIX | SPEC_DRIFT | GAMING_RISK | NEEDS_HUMAN
+         │
+         │   S4  State output      写对应 report
+         │   S5  Persist           完整 trace 落盘
          ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│  Step 5-6 (推荐路径)                                                          │
-│  /acceptance-fleet  specs/<feature>/                                         │
-└─────────────────────────────────────────────────────────────────────────────┘
-
-         ┌─ S0 Bootstrap ──────────────────────────────────────────────┐
-         │ • 验证 5 份输入齐备                                          │
-         │ • 检测可用 evaluator:                                        │
-         │     codex CLI?  → 强隔离(跨厂商)                            │
-         │     仅 Claude?  → 中等隔离(Haiku+Sonnet+Opus 混尺寸)        │
-         │     单模型?     → 弱隔离 + 警告                             │
-         │     无法分会话? → 拒绝运行                                   │
-         │ • 写 ratchet-log/iteration-NNN/isolation.json               │
-         └─────────────────────────────────────────────────────────────┘
-                                       │
-         ┌─ S1 Fleet 并行 spawn 8 角色 (互不通气) ────────────────────┐
-         │                                                              │
-         │  程序性层 (Haiku — 跑数字,不做 LLM 判断)                     │
-         │    ├─ test-runner         跑 4-A..4-E 测试                  │
-         │    └─ existence-checker   核 existence: 条目                │
-         │                                                              │
-         │  语义层 (Opus + 工具)                                        │
-         │    ├─ requirement-tracer  Agent-as-Judge:每条 REQ          │
-         │    │                      LOCATE/READ/RETRIEVE 找证据       │
-         │    │                      4 态:fully/partially/not/         │
-         │    │                      requires_human_verification       │
-         │    └─ design-reviewer     检查实现是否符合 spec 意图         │
-         │                                                              │
-         │  对抗层 (跨厂商优先)                                          │
-         │    ├─ adversarial-reviewer  ★Codex/Gemini★ — "假设这代码  │
-         │    │                        引发了线上事故,找原因.找不到   │
-         │    │                        = 你失败"                       │
-         │    └─ edge-case-hunter    边界/竞态/异常路径系统扫描       │
-         │                                                              │
-         │  行为层 (Opus + Playwright)                                  │
-         │    └─ e2e-explorer        在真浏览器里像用户一样走流程     │
-         │                                                              │
-         │  反作弊层 (Opus + git_diff)                                  │
-         │    └─ spec-gaming-detector 读 spec-robustness.md 监控点 +   │
-         │                          扫 6 类 RHD pattern (absolute +    │
-         │                          diff 模式),算 gaming_risk_score   │
-         │                                                              │
-         │  每个角色写一份 fleet-outputs/<role>.yaml,统一 schema       │
-         └─────────────────────────────────────────────────────────────┘
-                                       │
-         ┌─ S2 Rebuttal Pass (4-Eyes Principle) ──────────────────────┐
-         │ 每条 finding 路由给另一个角色尝试反驳                         │
-         │ 反驳成功 → 移入 rebutted_findings(不删,留审计)              │
-         │ 反驳失败 → 进 S3                                            │
-         │ 只跑一轮 — 多轮就退化成辩论                                 │
-         └─────────────────────────────────────────────────────────────┘
-                                       │
-         ┌─ S3 Meta-Judge (只合成,绝不重审代码) ──────────────────────┐
-         │ 1. Dedupe        同 file:line + 同 root_cause 合并          │
-         │ 2. Weight        多源 + 跨厂商 → confidence +;              │
-         │                  单源 + 单厂商 → confidence -               │
-         │ 3. Arbitrate     冲突看证据强度,不看票数;无法决 → NEEDS_HUMAN│
-         │ 4. Classify      对照 done_when.thresholds 出 state         │
-         │                                                              │
-         │ ★硬墙★ 不读 src/,不形成自己的代码判断 — 一旦越界就退化成   │
-         │       又一个有 bias 的 reviewer                              │
-         └─────────────────────────────────────────────────────────────┘
-                                       │
-         ┌─ S4 Ratchet 四态 + 一个逃逸阀 ─────────────────────────────┐
-         │                                                              │
-         │  ① DONE          所有阈值过 + gaming_risk < 3                │
-         │                  → 归档,任务完成                            │
-         │                                                              │
-         │  ② FIX           部分过,findings 明确                       │
-         │                  → 生成 fix-prompt.md(不带评估角色名/分数/  │
-         │                    pattern 名 — 信息隔离)                   │
-         │                  → 用户喂回 fresh impl session → 再跑 N+1   │
-         │                                                              │
-         │  ③ SPEC_DRIFT    PBT 反驳与 REQ 字面一致地连续命中 N 轮     │
-         │                  → ★不修代码★ → 回 /acceptance-spec        │
-         │                                                              │
-         │  ④ GAMING_RISK   gaming_risk_score ≥ 7,或趋势单调上升       │
-         │                  → ★不修代码★ → 回 /acceptance-spec        │
-         │                                                              │
-         │  ⑤ NEEDS_HUMAN   meta-judge 拒绝独断(冲突无法仲裁/UI 题)    │
-         │                  → 暂停问用户,得答案后重回 S3              │
-         └─────────────────────────────────────────────────────────────┘
-                                       │
-         ┌─ S5 Persist (永远跑) ──────────────────────────────────────┐
-         │ ratchet-log/iteration-NNN/                                  │
-         │   ├── timestamp.txt                                          │
-         │   ├── isolation.json                                         │
-         │   ├── input-manifest.json   (5 份输入 sha256)                │
-         │   ├── impl-snapshot.txt     (本轮代码快照)                   │
-         │   ├── impl-diff.patch       (vs 上一轮)                      │
-         │   ├── fleet-outputs/*.yaml  (8 个角色)                       │
-         │   ├── rebuttals/*.yaml                                       │
-         │   ├── meta-judge-output.yaml                                 │
-         │   ├── final-state.json                                       │
-         │   └── <state>.md            (fix-prompt / spec-drift /       │
-         │                              gaming-risk / needs-human)      │
-         │ + ratchet-log/summary.json (整 feature 历史)                 │
-         │ + ratchet-log/findings-history.jsonl                         │
-         └─────────────────────────────────────────────────────────────┘
-
-         典型收敛:2-4 轮(四态机制让 spec-drift / gaming 不在 FIX 死循环)
-         每轮成本:~$0.75 ;整 feature ~$2-3
+    ratchet-log/iteration-NNN/
+      ├── timestamp.txt
+      ├── isolation.json
+      ├── input-manifest.json
+      ├── impl-snapshot.tar.gz       (next iteration 的 --history 输入)
+      ├── impl-diff.patch
+      ├── fleet-outputs/
+      │   ├── code-reviewer-security.yaml
+      │   ├── code-reviewer-logic.yaml
+      │   ├── code-reviewer-perf.yaml
+      │   ├── qa-reviewer.yaml
+      │   ├── pm-reviewer.yaml
+      │   ├── spec-drift-detector.yaml
+      │   └── spec-gaming-detector.yaml
+      ├── meta-judge-output.yaml
+      ├── final-state.json
+      └── <state-specific report>.md
+          ├ fix-prompt.md            (FIX state)
+          ├ spec-drift-report.md     (SPEC_DRIFT)
+          ├ gaming-risk-report.md    (GAMING_RISK)
+          └ needs-human.md           (NEEDS_HUMAN)
 ```
+
+**编排层不拥有 review 逻辑。** 它只是 dispatch + state machine + persistence。任何 review 判断都发生在 6 个独立 skill 内部，meta-judge 综合。
 
 ---
 
-## 两个关键 boundary，必须记住
+## 四态 ratchet 状态机
 
-### 1. 实现 → acceptance-fleet 之间必须换 session
+```
+            ┌─────────────────────────────────┐
+            │  iteration N 完成 review + judge │
+            └─────────────────────────────────┘
+                            │
+              ┌─────────────┼─────────────┬──────────────┐
+              ▼             ▼             ▼              ▼
+         ┌─────────┐   ┌─────────┐   ┌──────────┐   ┌────────────┐
+         │  DONE   │   │   FIX   │   │SPEC_DRIFT│   │GAMING_RISK │
+         └─────────┘   └─────────┘   └──────────┘   └────────────┘
+              │             │             │              │
+              │             ▼             │              │
+              │       fix-prompt.md       │              │
+              │             │             │              │
+              │             ▼             │              │
+              │    用户喂给新 impl session │              │
+              │             │             │              │
+              │             ▼             ▼              ▼
+              │       iteration N+1   /acceptance-spec   /acceptance-spec
+              │       (continue)      (narrow REQ)       (harden contract)
+              ▼
+         loop exits
+```
 
-不是软建议。`/acceptance-fleet` 在 S0 检测如果是同 session 会直接 refuse 运行。
+**触发规则（strict 顺序，first match wins）：**
 
-原因：fix-prompt 故意**不告诉**实现 agent
-- 哪个评估角色发现的（"adversarial-reviewer 找到..." 不出现）
-- gaming_risk_score 多少（"我们盯着 coverage_gaming pattern" 不出现）
-- 在防哪类 RHD pattern（"再这么改我会标 P0" 不出现）
+| State | 触发 |
+|---|---|
+| `NEEDS_HUMAN` | `/meta-judge` 返回 NEEDS_HUMAN（冲突无法仲裁 / `requires_human_verification` 未解决 / 跨厂商对 P0/P1 有分歧但证据相当） |
+| `GAMING_RISK` | `gaming_risk_score ≥ 7` OR 连续 2+ 轮单调上涨 ≥2/轮 OR 同一个 `surfaced_vector` 连续 2 轮触发 |
+| `SPEC_DRIFT` | `/spec-drift-detector` 报告同一 REQ 的 behavior_mismatch 在 ≥ `SPEC_DRIFT_TRIGGER` (默认 3) 轮反复出现 OR `/pm-reviewer` 同一 REQ 反复 `not_compliant` 但 impl 在变 |
+| `FIX` | `/meta-judge` 返回 BLOCK_MERGE 且没有上面三种触发 |
+| `DONE` | `/meta-judge` 返回 PASS AND `gaming_risk_score < 3` AND 没有上面任何递归模式 |
 
-只给 `file:line + 简短描述 + 建议改法 + REQ-ID`。
-
-一旦 session 共享，这些被隐藏的信息从对话历史里全部泄露，实现 agent 就能从"修代码"切到"绕过评估"——整套反作弊瞬间废掉。
-
-这也是为什么 `evaluation-isolation-levels.md` 把 Level 0（同 session）单独标为 **FORBIDDEN**，最低接受是 Level 2 Medium（混尺寸 Claude）。
-
-### 2. SPEC_DRIFT / GAMING_RISK 决不修代码
-
-这两态 `/acceptance-fleet` 直接调头把控制权送回 `/acceptance-spec`。
-
-- **SPEC_DRIFT**：PBT 反例与 REQ 字面文本一致地连续命中 N 轮（默认 N=3，来自 `spec_drift_threshold.max_fix_loops_before_escalation`）。代码改了好几轮，反例还是踩同样的字。结论：spec 本身有歧义/漏洞，再修代码就是糊墙。
-- **GAMING_RISK**：`gaming_risk_score ≥ 7`，或者趋势单调上升（2 → 3 → 5 → 7...）。代码在"满足契约的字面"和"达成需求的精神"之间越走越偏。结论：契约本身有可被 game 的洞，要回 `/acceptance-spec` S2.5 重新扫一遍 RHD pattern、加 surfaced_vectors / 改 REQ 措辞。
-
-这两态对应的报告（`spec-drift-report.md` / `gaming-risk-report.md`）都包含"应该回头问的具体 REQ + 具体 done_when.yaml 字段建议"，方便用户重启 /acceptance-spec 时直接当 narrow brief 用。
+**GAMING_RISK 和 SPEC_DRIFT 都不能通过打补丁解决** —— 它们意味着契约本身有问题，必须回到 `/acceptance-spec` 收紧。`/acceptance-fleet` 看到这两种状态会拒绝生成 fix-prompt，强制用户回上游。
 
 ---
 
-## 单 skill 最小用法（独立使用）
+## 跨厂商隔离层级（防 sycophancy）
 
-三个 skill 都可以单独用，不必走完整 pipeline。
+`/acceptance-fleet` S0 自动检测可用 evaluator，挑最高可达层级运行：
 
-### 只用 /acceptance-spec
-当你只想把一段模糊需求结构化成 EARS + 可验收契约，但不打算自动跑测试：
-```
-/acceptance-spec "用户能取消订阅..."
-```
-拿到 5 份文件后人工写测试 / 直接喂 PR 描述 / 交给其他工具消费都行。
+| Level | 触发条件 | 评审分布 |
+|---|---|---|
+| **strong** | `which codex` 或 `which gemini` 成功 | Codex/Gemini 跑 `/code-reviewer --adversarial` + `/spec-gaming-detector`; Claude Opus/Sonnet/Haiku 跑其他 |
+| **medium** | Claude 多 size 可选, 无跨厂商 | 全 Claude, 但 evaluator 用与 impl 不同的 size (Haiku/Sonnet/Opus 混) |
+| **weak** | 只有单 Claude size | 全 Claude 同 size, 加 caveat 警告 |
+| **refuse** | 无法保证 fresh session | 拒绝运行 |
 
-### 只用 /test-suite-generator
-当你已经有 `specs/<feature>/` 目录（来自任何渠道，不一定是 acceptance-spec 生成的）想派生测试金字塔：
-```
-/test-suite-generator specs/<feature>/
-```
-对 `done_when.yaml` 的 schema 要求是 v1 strict（Appendix C），其他字段可以缺。
-
-### 只用 /acceptance-fleet
-当你拿到别人写好的实现 + spec + done_when.yaml，只想跑一轮多 agent 验收看看：
-```
-/acceptance-fleet specs/<feature>/
-```
-注意：`spec-robustness.md` 缺失不会 refuse，但 spec-gaming-detector 会进入"最大怀疑模式"，并在输出里标 "spec-robustness.md absent — verifier ran in max-suspicion mode"。建议先补一轮 `/acceptance-spec` 把 S2.5 跑出来。
+**为什么 strong > medium > weak：** Milvus benchmark 实证 Claude + Gemini 抓到 91% bug, 单 vendor 5 个 agent 也抓不全。跨厂商打破 RLHF 共同盲点。详见 `skills/acceptance-fleet/references/evaluation-isolation-levels.md`。
 
 ---
 
-## Legacy 路径（不推荐但保留）
+## 独立用例（不走 done_when pipeline）
 
-如果环境里没装 Codex/Gemini、feature 又简单、不想付多 agent 的成本，可以跳过 `/acceptance-fleet` 直接用 `/ratchet`：
+v1.0 把 6 个 review skill 拆出来后，它们各自有独立用途。下面是一些典型的非 pipeline 场景：
 
-```
-/acceptance-spec ...
-/test-suite-generator specs/<feature>/
-/ratchet  <用 INTEGRATION.md 的 Goal/Criteria/Scope 配方翻译 done_when.yaml>
-```
+| 场景 | 用法 |
+|---|---|
+| PR 安全审查 | `/code-reviewer HEAD~3..HEAD --focus=security --adversarial` |
+| 跨厂商对抗审查 | `/code-reviewer ... --adversarial`（让 Codex/Gemini 跑） |
+| CI 集成 | `/qa-reviewer tests/ --thresholds=ci-policy.yaml --baseline=last-build.yaml` |
+| PRD 验收 | `/pm-reviewer prd.md src/` |
+| Jira ticket 验收 | `/pm-reviewer jira-export.md src/` |
+| 老项目文档体检 | `/spec-drift-detector docs/ src/` |
+| API 演进追踪 | `/spec-drift-detector openapi.yaml src/api/ --history-depth=200` |
+| AI-coding 防作弊审计 | `/spec-gaming-detector spec.md src/ --history=HEAD~5` |
+| KPI gaming 审计 | `/spec-gaming-detector kpi-doc.md analytics/` |
+| 多 reviewer 综合 | `/meta-judge ./review-outputs/ --rules=team-policy.yaml` |
 
-代价：
-- ❌ 没有 spec-gaming-detector，反作弊只剩 mutation testing 一层
-- ❌ 没有四态 ratchet，spec_drift_threshold 只能被翻译成 `convergence` 让 ratchet 停下来，"是 spec 错还是 code 错"由你手动判
-- ❌ 没有跨厂商对抗，Claude 写代码 Claude 自己审，sycophancy 没被打断
-- ❌ 没有 ratchet-log/ 审计 trail
-
-适合：
-- 单文件 bug fix 这种 1-2 步就收敛的小活儿
-- 个人项目环境，没装 Codex CLI / Gemini CLI 也不想配
-- 学习阶段，想先把 pipeline 概念跑通再上多 agent
-
-具体 hand-off 配方见 `INTEGRATION.md` "Handoff: test-suite-generator → ratchet (legacy, manual)"。
+每个 skill 都有自己的 SKILL.md 描述完整接口。`/acceptance-fleet` 只是它们的诸多消费者之一。
 
 ---
 
-## 成本与收敛速度参考
+## Boundary 1: Step 4 → Step 5-6 隔离
 
-| 路径 | 单轮成本 | 典型收敛轮数 | 整 feature 成本 |
-|------|---------|-------------|----------------|
-| `/acceptance-fleet`（推荐） | ~$0.75 | 2-4 | ~$2-3 |
-| `/ratchet`（legacy） | ~$0.10/轮 subagent | 5-12 | ~$1-2 |
+```
+        Step 4                        Step 5-6
+   /test-suite-generator          /acceptance-fleet (orchestrator)
+        │                                │
+        │ writes tests/<feature>/         │ dispatches 6 review skills
+        ▼                                 │
+   user/impl agent runs in              ★ MUST NOT see review prompts ★
+   FRESH SESSION                          │
+        │                                ▼
+        │ implements src/             reviewer sessions are
+        ▼                              SEPARATE from impl session
+   src/ matches contract                   │
+        │                                  ▼
+        └──────────────────────────► acceptance-fleet S1 dispatches
+```
 
-acceptance-fleet 单轮贵但收敛快——四态机制让 SPEC_DRIFT / GAMING_RISK 不在 FIX 里死循环，跨厂商对抗每轮 catch 的 bug 也多。在中等规模 feature 上总成本通常更低，且每条 finding 都有完整 evidence chain。
-
-ratchet legacy 路径单轮便宜但容易循环——典型死循环是"修 → 评分 → 同一个反例又来 → 又修 → ..."，因为没有 SPEC_DRIFT 信号自动逃出。
-
-合规/审计场景（ISO 26262 / SOC 2 等）必须走 acceptance-fleet，因为 ratchet-log/ 提供的可追溯性是 ratchet 不具备的。
+**铁律：** impl agent 不能看到 review skill 的 prompt。这是 v1.0 / v0.x 都坚持的核心反作弊保证。`/acceptance-fleet` S0 检测隔离层级时如果发现达不到 medium，会拒绝运行。
 
 ---
 
-## 故障排查速查
+## Boundary 2: SPEC_DRIFT vs GAMING_RISK — 都是 "回到 spec"，区别在哪？
 
-| 症状 | 多半在哪 |
-|------|---------|
-| `/acceptance-spec` 5 轮还没把 [?] 清光 | spec 太大，按 SKILL.md 提示拆 feature |
-| `/test-suite-generator` 跑某 batch 报 schema 不符 | done_when.yaml 偷加了 sub-field（v1 strict 禁止）；检查 acceptance-spec iron rule 11 |
-| `/acceptance-fleet` S0 refuse "cannot guarantee isolation" | 实现和评估同 session 了；开一个 fresh Claude session 跑 fleet |
-| 同一个 finding 几轮都修不掉 | meta-judge 会在 iteration 3 自动转 SPEC_DRIFT；该回 /acceptance-spec |
-| `gaming_risk_score` 缓慢上升 | impl agent 在压力下学着 game；不要等到 7，趋势单调上升 2 轮就该回头看 spec-robustness.md |
-| `spec-robustness.md absent` 警告 | 你跳过了 /acceptance-spec S2.5；可以接受运行，但 fleet 进 max-suspicion，会噪一些 |
-| 跨厂商不可用，弱隔离警告 | 装 Codex CLI 或 Gemini CLI；都没有就接受 Level 2 medium |
+| | SPEC_DRIFT | GAMING_RISK |
+|---|---|---|
+| **触发信号** | 反复的 PBT 反例 / 同一 REQ 反复 not_compliant；impl 在变但同样的事在反复出错 | gaming_risk_score 高 / 监控 vector 反复触发 / 趋势单调上涨 |
+| **根因** | spec 写得不准/不完整，impl 在合理范围内但 spec 没法明确判定对错 | spec 写得有漏洞，impl 形式合规但精神违规 |
+| **回去做什么** | `/acceptance-spec` 重新跑 clarify loop，把模糊 REQ 拆细 | `/acceptance-spec` S2.5 强化，关闭 `surfaced_vectors` 里漏掉的 gaming 路径 |
+| **风险信号** | "代码做了 5 次但还是过不了同一个 PBT，每次问 ChatGPT 它都说看起来对" | "impl 在改但 mutation_kill_rate 在掉" / "测试里出现新的 mock" / "代码加了 30 行 dead code" |
+| **修 spec 后** | 跑 `/test-suite-generator` 派生新测试，从 iteration 1 重新跑 | 同上 |
+
+两种 state 都不允许打补丁修代码。这是 v1.0 ratchet 最重要的设计 —— 大多数循环失败的根因是上游契约不好，而不是下游 impl 不会写。打补丁只会把问题往后推。
+
+---
+
+## 性能与成本
+
+每轮一次 `/acceptance-fleet` 跑完（带 prompt caching）：
+
+| Sub-skill | 模型 | 估算 | 估算 cost |
+|---|---|---|---|
+| code-reviewer × 3 focuses | Opus + Sonnet + Haiku | 50K in / 9K out | $0.20 |
+| qa-reviewer | Sonnet + 工具调用 | 50K in / 10K out | $0.20 |
+| pm-reviewer | Opus + 工具调用 | 30K in / 5K out | $0.12 |
+| spec-drift-detector | Opus | 25K in / 4K out | $0.10 |
+| spec-gaming-detector | Opus (跨厂商时为 Codex/Gemini) | 25K in / 4K out | $0.10 |
+| meta-judge | Opus（never weaker） | 25K in / 4K out | $0.10 |
+| Orchestrator | Sonnet | 5K in / 1K out | $0.02 |
+| **总计 / 轮** | | | **~$0.84** |
+
+典型 feature 收敛 2-4 轮：**~$2-4 / feature**。
+
+跨厂商 evaluator 单次调用稍贵但收敛更快（一轮抓到更多 bug），净 cost 通常低于纯 Claude。
+
+---
+
+## 历史
+
+- **v1.0.0** — BREAKING 架构重构per HTML v2 设计。6 个 review skill 抽出独立, `/acceptance-fleet` 纯编排化, `done_when.yaml` schema 简化为 `existence + behavior + rules`(retired fitness layer), test-suite-generator 4-F 删除。
+- v0.3.x — three-role validation pass; landed `/acceptance-fleet` v0.1 as monolithic 7-role fleet。
+- v0.2.0 — three-role validation pass; surfaced 17 P0 issues。
+- v0.1.0 — initial release, Steps 1-4 only。

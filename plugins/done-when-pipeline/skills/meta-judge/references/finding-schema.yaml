@@ -1,0 +1,183 @@
+# finding-schema.yaml — meta-judge output contract
+#
+# Top-level key: final_verdict:
+# Strict schema. Every action taken (dedupe, weight, arbitrate, classify) MUST
+# appear in the audit trail — meta-judge's value is explainability, not just
+# the verdict.
+
+final_verdict:
+  # ====== META BLOCK ======
+  agent_role: meta-judge
+  model: claude-opus-4-7                          # always Opus per iron rule
+  vendor: claude
+  reviews_source: <path-or-list>
+  rules_source: <path-or-list>
+  reviews_loaded:                                  # which reviews were ingested
+    - role: <reviewer-role>
+      file: <path>
+      vendor: <claude | openai | google>
+      finding_count: <int>
+      schema_valid: <bool>
+  rules_loaded:                                    # parsed rules from --rules
+    - condition: <text>
+      severity: <blocking | conditional | informational | needs-human>
+      applies_to: <any-reviewer | code-reviewer | qa-reviewer | pm-reviewer | spec-drift-detector | spec-gaming-detector>
+      parsed_predicate: <object | null>            # null if unparseable
+      source: <which input file this rule came from>
+  context_provided: <object | null>                # --context if given
+  duration_seconds: <int>
+  tool_calls_used: <int>                           # M3 evidence-verification reads (max 5)
+
+  # ====== THE DECISION ======
+  state_decision: <PASS | BLOCK_MERGE | NEEDS_HUMAN>
+  decision_reasons:                                # ordered, why this state was chosen
+    - <text>
+
+  # ====== M1 — DEDUPE LOG ======
+  deduplicated_findings:
+    - merged_finding_id: mf-001
+      sources:                                     # original findings
+        - {role: <role>, finding_id: <id>, vendor: <vendor>, file: <path>, line_range: [<start>, <end>]}
+      synthesized_severity: <P0|P1|P2|P3>
+      synthesized_root_cause: <text>               # verbatim longest source
+      file: <path>
+      line_range: [<start>, <end>]
+      # populated by M2:
+      confidence: <0.0-1.0>
+      confidence_boost: <delta from 0.5>
+      # populated by M4:
+      blocking: <bool>
+      rules_triggered: [<rule index from rules_loaded>, ...]
+
+  # ====== M3 — ARBITRATION LOG ======
+  conflict_arbitration:
+    - between: [<merged_finding_id_a>, <merged_finding_id_b>]
+      on: <file>:<line_range>
+      verdict: <merged_finding_id_winner | needs_human>
+      reasoning: <text>
+      evidence_strength_winner: <text>
+      tool_call_used: <bool>                       # did M3 need a read_file for verification
+
+  # ====== REBUTTED FINDINGS ======
+  rebutted_findings:                               # what didn't survive
+    - merged_finding_id: <id>
+      rebutter_merged_finding_id: <id | null>      # the finding that rebutted it (if any)
+      rebuttal_summary: <text>
+      arbitrated: <bool>                           # was rebuttal from M3 arbitration vs M1 dedupe collapse
+
+  # ====== M4 — RULE EVALUATION LOG ======
+  rules_evaluation:
+    - rule_index: <int>                            # index into rules_loaded above
+      condition: <text>
+      outcome: <triggered | passed | cannot_evaluate>
+      triggered_by: <merged_finding_id | null>
+      cannot_evaluate_reason: <text | null>
+      effect_applied: <block | warn | needs-human | none>
+
+  # ====== NEEDS_HUMAN ITEMS ======
+  # Populated when state_decision = NEEDS_HUMAN. May be non-empty even when state is PASS/BLOCK_MERGE
+  # if some items needed human input but a more strongly-decided path took precedence.
+  needs_human_items:
+    - item_id: nh-001
+      question: <text>                             # the specific question for the human
+      surfaced_by: <merged_finding_id | rule_index | "cross_vendor_disagreement">
+      blocking: <bool>                             # does this item alone necessitate NEEDS_HUMAN?
+      suggested_resolver: <text | null>            # e.g. "domain expert for billing", "designer for UI REQ"
+
+  # ====== CROSS-MODEL AGREEMENT ANALYSIS ======
+  # Surfaces the cross-vendor weighting effect explicitly
+  cross_model_agreement:
+    claude_findings: <int>                         # total raw findings from claude-vendor reviewers
+    openai_findings: <int>
+    google_findings: <int>
+    cross_vendor_overlap: <int>                    # findings reported by 2+ vendors
+    claude_only: <int>
+    openai_only: <int>
+    google_only: <int>
+    note: <text | null>                            # e.g. "no cross-vendor available; same-vendor caveat applies"
+
+  # ====== CAVEATS ======
+  caveats:
+    single_reviewer: <bool>                        # only one reviewer provided
+    rules_source_unrecognized: <bool>              # fell back to defaults
+    heuristic_extracted_rules: [<rule>, ...]       # CLAUDE.md/markdown bullet extraction; user should verify
+    cross_vendor_unavailable: <bool>
+    tool_call_limit_warned: <bool>                 # M3 hit the 5-read budget
+    schema_violations: [<text>, ...]               # any review file had schema issues
+
+# ====== EXAMPLE OUTPUT (BLOCK_MERGE state) ======
+
+final_verdict:
+  agent_role: meta-judge
+  model: claude-opus-4-7
+  vendor: claude
+  reviews_source: ratchet-log/iteration-003/fleet-outputs/
+  rules_source: specs/subscription-cancellation/done_when.yaml
+  reviews_loaded:
+    - { role: code-reviewer, file: code-reviewer-security.yaml, vendor: claude, finding_count: 1, schema_valid: true }
+    - { role: code-reviewer, file: code-reviewer-logic-cross.yaml, vendor: openai, finding_count: 2, schema_valid: true }
+    - { role: qa-reviewer, file: qa-reviewer.yaml, vendor: claude, finding_count: 1, schema_valid: true }
+    - { role: pm-reviewer, file: pm-reviewer.yaml, vendor: claude, finding_count: 1, schema_valid: true }
+    - { role: spec-gaming-detector, file: gaming-detector.yaml, vendor: claude, finding_count: 1, schema_valid: true }
+  rules_loaded:
+    - { condition: "any P0 finding blocks merge", severity: blocking, applies_to: any-reviewer, parsed_predicate: {field: severity, op: ==, value: P0, action: block}, source: done_when.yaml }
+    - { condition: "mutation_kill_rate >= 0.7", severity: blocking, applies_to: qa-reviewer, parsed_predicate: {field: mutation_kill_rate, op: ">=", value: 0.7}, source: done_when.yaml }
+  context_provided: null
+  duration_seconds: 28
+  tool_calls_used: 1
+  state_decision: BLOCK_MERGE
+  decision_reasons:
+    - "Rule 1 fired: P0 race condition in src/billing/cancel.ts:47 reported by both code-reviewer-security (claude) and code-reviewer-logic-cross (openai); cross-vendor agreement, high confidence."
+
+  deduplicated_findings:
+    - merged_finding_id: mf-001
+      sources:
+        - { role: code-reviewer, finding_id: cr-001, vendor: claude, file: src/billing/cancel.ts, line_range: [42, 47] }
+        - { role: code-reviewer, finding_id: cr-002, vendor: openai, file: src/billing/cancel.ts, line_range: [42, 47] }
+      synthesized_severity: P0
+      synthesized_root_cause: "Concurrent cancellation requests for the same user_id can both proceed past the status check at L42 and both mutate end_date at L47; the second overwrites the first, causing double-charge in next billing cycle."
+      file: src/billing/cancel.ts
+      line_range: [42, 47]
+      confidence: 0.9
+      confidence_boost: +0.4
+      blocking: true
+      rules_triggered: [0]
+
+    - merged_finding_id: mf-002
+      sources:
+        - { role: pm-reviewer, finding_id: pm-001, vendor: claude, file: src/billing/cancel.ts, line_range: [50, 50] }
+      synthesized_severity: P1
+      synthesized_root_cause: "REQ-002 SHALL clause requires UTC ISO-8601 timestamp; impl uses new Date().toString() (local time)."
+      file: src/billing/cancel.ts
+      line_range: [50, 50]
+      confidence: 0.5
+      confidence_boost: 0.0
+      blocking: false                              # rule 1 only blocks on P0; this is P1
+      rules_triggered: []
+
+  conflict_arbitration: []
+  rebutted_findings: []
+
+  rules_evaluation:
+    - { rule_index: 0, condition: "any P0 finding blocks merge", outcome: triggered, triggered_by: mf-001, cannot_evaluate_reason: null, effect_applied: block }
+    - { rule_index: 1, condition: "mutation_kill_rate >= 0.7", outcome: passed, triggered_by: null, cannot_evaluate_reason: null, effect_applied: none }
+
+  needs_human_items: []
+
+  cross_model_agreement:
+    claude_findings: 3
+    openai_findings: 2
+    google_findings: 0
+    cross_vendor_overlap: 1
+    claude_only: 2
+    openai_only: 1
+    google_only: 0
+    note: "mf-001 was the cross-vendor overlap finding and drove the BLOCK_MERGE."
+
+  caveats:
+    single_reviewer: false
+    rules_source_unrecognized: false
+    heuristic_extracted_rules: []
+    cross_vendor_unavailable: false
+    tool_call_limit_warned: false
+    schema_violations: []

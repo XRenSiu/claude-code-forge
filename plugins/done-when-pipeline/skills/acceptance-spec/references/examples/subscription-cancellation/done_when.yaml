@@ -57,17 +57,15 @@ behavior:
     mutation_kill_rate: ">= 0.70"
     pbt_runs_per_property: ">= 500"
 
-# Layer 3 — Fitness (Appendix C v1: judge ∈ {persona-judge, programmatic, manual}).
-# test-suite-generator 4-F will produce a rubric file consumed by the
-# persona-judge skill (or by a fresh Claude session driven manually until
-# automation lands).
-fitness:
-  - criterion: a third-party developer can build a CLI for cancellation using only the API reference, with no clarifying questions
-    judge: persona-judge
-    score_threshold: ">= 8/10"
-  - criterion: help-center article reads cleanly to a non-technical user and answers "what happens to my data after I cancel"
-    judge: persona-judge
-    score_threshold: ">= 8/10"
+# Layer 3 — Rules (v1.0+; replaces the retired v0.x fitness layer per HTML v2 §3.5).
+# Flat conditions consumed by /meta-judge during final-verdict synthesis. The
+# two "doc clarity" criteria that lived here in v0.x now reach evaluation via
+# /pm-reviewer's `requires_human_verification` verdict for the corresponding
+# REQs in spec.md — not via a contract layer.
+rules:
+  - "any P0 finding from code-reviewer blocks merge"
+  - "mutation_kill_rate >= 0.7"
+  - "all critical REQs must reach fully_compliant or explicit-human-OK"
 
 spec_drift_threshold:
   # Guidance only — when chaining to /ratchet, translate into ratchet's `convergence`.

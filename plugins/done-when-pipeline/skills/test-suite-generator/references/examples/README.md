@@ -26,12 +26,10 @@ tests/subscription-cancellation/
 ├── e2e/
 │   ├── playwright.config.ts
 │   └── cancel-subscription.spec.ts        # 4-D — 2 tests
-├── mutation.sh                            # 4-E — runs mutmut, enforces ≥70%
-└── fitness/
-    ├── README.md
-    ├── api_callable_by_independent_engineer.rubric.md          # 4-F persona-judge (manual run, v1)
-    └── help_center_article_reads_clearly.rubric.md             # 4-F persona-judge (manual run, v1)
+└── mutation.sh                            # 4-E — runs mutmut, enforces ≥70%
 ```
+
+(The former `fitness/` subdirectory from 4-F is gone in v1.0.0 — see HTML v2 §3.5 corollary.)
 
 This is what a successful run looks like. Use it as a calibration target when
 the user asks "how much test code should there be?" — the answer scales with

@@ -95,36 +95,30 @@ behavior:
     pbt_runs_per_property: ">= 500"        # min Hypothesis/fast-check samples per property
 
 # ============================================================================
-# LAYER 3 — FITNESS (soft, LLM-judged or human-judged)
+# LAYER 3 — RULES (meta-judge final-verdict criteria; replaces the v0.x fitness layer)
 # ============================================================================
-# Things genuinely outside mechanical reach. KEEP THIS LIST SHORT (max 3 entries).
-# Rule of thumb: if you can think of a programmatic test for it, move it to
-# behavior. LLM/human judging is a layer of last resort.
+# Per HTML v2 §3.5 (fitness-check dissolution), the v0.x `fitness:` layer was
+# retired in v1.0.0. The taxonomy revealed that 90% of fitness entries were
+# programmatic in disguise (re-route to behavior or to /qa-reviewer-driven
+# checks), and the genuinely-unautomatable 10% (doc clarity, tutorial flow,
+# design taste) are now honestly handled by /pm-reviewer's
+# `requires_human_verification` verdict — not faked away as an LLM rubric.
 #
-# v1 schema: each entry has EXACTLY these keys (Appendix C lines 1027-1030):
-#   - criterion:        <description>
-#   - judge:            <persona-judge | programmatic | manual>   # three-value enum
-#   - score_threshold:  <expr>                                    # only when judge != programmatic
+# The third top-level layer is now `rules:` — flat conditions consumed by
+# /meta-judge during final-verdict synthesis. Each entry is either:
+#   - a bare string                e.g. "any P0 finding blocks merge"
+#   - or a mapping with rule + optional severity/applies_to fields
 #
-# Enum semantics (per Appendix C and §4.7 of the design doc):
-#   - persona-judge  → LLM-as-judge entry point. Per the design doc §4.7,
-#                      the persona-judge skill is the designated "主力"
-#                      (primary) for evaluating fitness criteria. A rubric
-#                      file (produced by test-suite-generator 4-F) drives it.
-#   - programmatic   → a script returns pass/fail. No score_threshold needed.
-#   - manual         → a human eyeballs it. Only for truly tacit things.
-#
-# Do NOT use `llm-rubric` — it is not in the v1 enum. The LLM-judge path is
-# `persona-judge`. (test-suite-generator still emits a rubric markdown file,
-# but the `judge:` value in done_when.yaml stays `persona-judge`.)
+# rules: MAY be empty (meta-judge falls back to default block-on-P0 behavior).
+# Examples:
+#   - "any P0 finding from code-reviewer blocks merge"
+#   - "mutation_kill_rate must be >= 0.7"
+#   - "all critical REQs must be fully_compliant or have explicit human OK"
 
-fitness:
-  - criterion: a third-party developer can build a CLI using only the README, with no follow-up questions
-    judge: persona-judge
-    score_threshold: ">= 8/10"
-  - criterion: README quickstart runs zero-modification
-    judge: programmatic
-    # programmatic judges have no score_threshold — they're pass/fail.
+rules:
+  - "any P0 finding blocks merge"
+  - "mutation_kill_rate >= 0.7"
+  - "all critical REQs (from spec.md) must reach fully_compliant or explicit-human-OK"
 
 # ============================================================================
 # SPEC-DRIFT THRESHOLD

@@ -1,0 +1,170 @@
+# finding-schema.yaml — spec-gaming-detector output contract
+#
+# Top-level key: gaming_assessment:
+# Strict schema. Every detected pattern MUST produce a finding entry.
+# spec_robustness_gaps: is mandatory output — empty list is allowed but the key must exist.
+
+gaming_assessment:
+  # ====== META BLOCK ======
+  agent_role: spec-gaming-detector
+  model: <model-id>                              # main: typically claude-opus-4-7
+  cross_vendor_evaluator: <model-id | null>      # codex-gpt-5 / gemini-pro-3 / null
+  vendor: <claude | openai | google>
+  spec_source: <path>
+  artifact_source: <path-or-ref>
+  history_source: <path-or-ref | null>           # --history if provided
+  spec_robustness_source: <path | null>          # --spec-robustness if provided
+  baseline_score: <int | null>                   # --baseline-score or read from history's gaming-risk.yaml
+  duration_seconds: <int>
+  modes_run: [absolute, diff]                    # [absolute] only if no --history
+
+  # ====== TOP-LINE SCORE ======
+  gaming_risk_score: <0-10>                      # current iteration's score
+  gaming_risk_trajectory: [<int>, ...]           # last N scores if known; current at the end
+  trend: <up | down | stable | first_iteration>
+
+  # ====== DETECTED PATTERNS ======
+  num_findings: <int>
+  detected_patterns:
+    - finding_id: gd-001                         # gd-NNN sequential
+      pattern: <test_modification | test_case_targeting | coverage_gaming | degenerate_implementation | style_manipulation | information_leakage>
+      mode: <absolute | diff>                    # which mode caught this
+      severity: <P0 | P1 | P2 | P3>
+      confidence: <high | medium | low>          # diff-mode defaults to high; absolute defaults to medium
+      file: <path>
+      line_range: [<start>, <end>]
+      based_on: <REQ-ID | null>                  # which REQ is being gamed
+      root_cause: <text>                         # one sentence on what the gaming is
+      evidence:
+        # mode: absolute
+        snippet_current: <text | null>           # the offending code
+        # mode: diff
+        snippet_before: <text | null>            # from <previous-snapshot>
+        snippet_after: <text | null>             # from <current artifact>
+        commit_introducing: <sha | null>         # if git-trackable
+        commit_message: <text | null>
+        # for coverage/style patterns specifically:
+        metrics_supporting: <object | null>      # e.g. {line_coverage_delta: +0.05, mutation_delta: 0.0}
+      spec_robustness_triggered: <surfaced_vectors[N] | null>   # if it matched an upstream prediction
+      suggested_mitigation: <text>               # concrete contract change suggestion
+      tags: [<string>, ...]                      # OPTIONAL — e.g. ["regression", "fix-pressure-induced"]
+
+  # ====== SPEC ROBUSTNESS GAPS (mandatory output) ======
+  # For every detected pattern, identify what about the contract enabled it.
+  # This is what /acceptance-fleet feeds back to /acceptance-spec to harden the contract.
+  spec_robustness_gaps:
+    - gap_id: srg-001                            # srg-NNN sequential
+      pattern_that_exploited_it: <pattern>       # one of the 6
+      finding_id_reference: gd-001               # cross-ref to detected_patterns
+      contract_weakness: <text>                  # one sentence on what's missing/loose in the spec
+      suggested_mitigation: <text>               # concrete change (e.g. "add branch_coverage to verifier_hints")
+      target_artifact: <spec.md | done_when.yaml | spec-robustness.md>
+      proposed_diff: <text | null>               # optional inline change snippet
+
+  # ====== SURFACED VECTOR FEEDBACK ======
+  # For each vector in --spec-robustness's surfaced_vectors:, did it land?
+  surfaced_vector_status:
+    - vector_id: <surfaced_vectors[N]>
+      status: <triggered | not_triggered>
+      finding_id_reference: <gd-NNN | null>      # if triggered
+
+  # ====== CUSTOM (non-RHD) PATTERNS ======
+  # If --spec-robustness lists a custom pattern not in the 6-pattern taxonomy
+  custom_patterns:
+    - finding_id: gd-cust-001
+      pattern_name: <custom name from spec-robustness.md>
+      severity: <P0 | P1 | P2 | P3>
+      file: <path>
+      line_range: [<start>, <end>]
+      evidence: <text>
+      mitigation: <text>
+
+  # ====== UNCLASSIFIED ======
+  # Findings that don't fit any of the 6 patterns; flagged for taxonomy extension review.
+  unclassified_patterns:
+    - finding_id: gd-unc-001
+      proposed_pattern_name: <text>
+      severity: <P0 | P1 | P2 | P3>
+      evidence: <text>
+
+  # ====== CAVEATS ======
+  caveats:
+    cross_vendor_unavailable: <bool>             # used same-vendor with caveat
+    cross_vendor_caveat_text: <text | null>
+    spec_robustness_absent: <bool>               # ran in max-suspicion mode
+    diff_mode_unavailable: <bool>                # --history not provided
+    trend_warning: <text | null>                 # monotonic growth alert
+    large_diff_caveat: <text | null>             # diff was >1000 hunks; may be noisy
+
+# ====== EXAMPLE OUTPUT ======
+
+gaming_assessment:
+  agent_role: spec-gaming-detector
+  model: claude-opus-4-7
+  cross_vendor_evaluator: codex-gpt-5
+  vendor: claude
+  spec_source: specs/subscription-cancellation/spec.md
+  artifact_source: src/billing/
+  history_source: ratchet-log/iteration-002/impl-snapshot.tar.gz
+  spec_robustness_source: specs/subscription-cancellation/spec-robustness.md
+  baseline_score: 3
+  duration_seconds: 67
+  modes_run: [absolute, diff]
+  gaming_risk_score: 5
+  gaming_risk_trajectory: [2, 3, 5]
+  trend: up
+
+  num_findings: 1
+  detected_patterns:
+    - finding_id: gd-001
+      pattern: coverage_gaming
+      mode: diff
+      severity: P1
+      confidence: high
+      file: src/billing/cancel_subscription_use_case.ts
+      line_range: [78, 92]
+      based_on: REQ-001
+      root_cause: "Error-handling branch was no-opped between iteration 2 and 3: previous retry-with-backoff logic was replaced with a bare logger.warn, removing semantic coverage of the error path. Line coverage stayed at 0.87; mutation_kill_rate dropped from 0.81 to 0.76."
+      evidence:
+        snippet_current: "} catch (e) { logger.warn(e); }"
+        snippet_before: "} catch (e) { await retryWithBackoff(e); throw e; }"
+        snippet_after: "} catch (e) { logger.warn(e); }"
+        commit_introducing: "abc1234"
+        commit_message: "fix: handle refund error softer (was crashing tests)"
+        metrics_supporting:
+          line_coverage_delta: +0.00
+          mutation_kill_rate_delta: -0.05
+      spec_robustness_triggered: "surfaced_vectors[0] (branch_coverage_gap from S2.5)"
+      suggested_mitigation: "Add branch_coverage threshold via spec-robustness.md verifier_hints (since branch_coverage isn't in v1 schema). Or rewrite REQ-001 to explicitly require retry-on-transient behavior."
+      tags: ["regression", "fix-pressure-induced", "spec-robustness-confirmed"]
+
+  spec_robustness_gaps:
+    - gap_id: srg-001
+      pattern_that_exploited_it: coverage_gaming
+      finding_id_reference: gd-001
+      contract_weakness: "done_when.yaml.behavior.thresholds only specifies line_coverage and mutation_kill_rate. Branch coverage is not enforced, and the mutation_kill_rate floor (0.70) was loose enough that the impl could drop semantic coverage on error paths without triggering."
+      suggested_mitigation: "Add branch_coverage threshold via verifier_hints in spec-robustness.md (since branch_coverage isn't in v1.0 main schema). Tighten mutation_kill_rate to >= 0.80 if the project tolerates the test-writing overhead."
+      target_artifact: spec-robustness.md
+      proposed_diff: |
+        ## verifier_hints
+        + - branch_coverage_min: 0.65 (the impl is allowed to skip error paths only
+        +   if the SHALL clause explicitly permits 'best-effort' behavior).
+
+  surfaced_vector_status:
+    - vector_id: "surfaced_vectors[0]"
+      status: triggered
+      finding_id_reference: gd-001
+    - vector_id: "surfaced_vectors[1]"
+      status: not_triggered
+      finding_id_reference: null
+
+  custom_patterns: []
+  unclassified_patterns: []
+
+  caveats:
+    cross_vendor_unavailable: false
+    cross_vendor_caveat_text: null
+    spec_robustness_absent: false
+    diff_mode_unavailable: false
+    trend_warning: "Score is on a monotonic 3-iteration rise (2 → 3 → 5). One more iteration of similar slope hits the GAMING_RISK escalation threshold (7). Suggest escalating to spec hardening proactively rather than waiting."
+    large_diff_caveat: null
