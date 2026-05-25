@@ -1,29 +1,68 @@
 # Integration with existing claude-code-forge skills
 
-The done-when-pipeline plugin covers Steps 1-4 of the source design doc. Steps 5 (execution) and 6 (closed-loop iteration) hand off to other skills in this marketplace — **the handoff is manual on the user's part, not an automated structural integration**. This file documents exactly what each adjacent skill does and does not do for us.
+The done-when-pipeline plugin covers Steps 1-6 of the source design doc as of v0.3.0. Step 5 (execution / fleet evaluation) and Step 6 (four-state ratchet + closed-loop iteration) are owned by the new `/acceptance-fleet` skill in this plugin; the legacy hand-off to the standalone `/ratchet` skill remains supported as a lighter path. This file documents both paths and what each adjacent skill does and does not do for us.
 
-This file was rewritten on 2026-05-24 after the round-1 self-validation pass found that the previous version overclaimed the integrations. See `specs/done-when-skills/_skill-issues.md` ISSUE-002 and ISSUE-003 for the investigation that drove the rewrite.
+This file was rewritten on 2026-05-24 after the round-1 self-validation pass found that the previous version overclaimed the integrations (see `specs/done-when-skills/_skill-issues.md` ISSUE-002 and ISSUE-003), and again on 2026-05-25 to reflect the new `acceptance-fleet` skill landing as the recommended Step 5-6 path.
 
 ---
 
 ## Pipeline boundaries (honest version)
 
 ```
-Step 1-3  →  /acceptance-spec               (this plugin)
+Step 1-3  →  /acceptance-spec               (this plugin) — 5-file output incl. spec-robustness.md
 Step  4   →  /test-suite-generator          (this plugin)
-Step  5   →  user manually invokes /ratchet, pointing at our outputs as input material
-Step  6   →  ratchet's own master/subagent loop with its own done_when block
+Step 5-6  →  /acceptance-fleet              (this plugin — RECOMMENDED) — 7-role fleet + meta-judge + 4-state ratchet
+   OR     →  /ratchet                       (external — LEGACY) — single-stream subagent loop, manual hand-off
 Step 4-F  →  fitness rubrics are inputs to an inline Claude-with-rubric pattern
               (no packaged "fitness judge" skill exists yet; see below)
 ```
 
-The two boundaries that look like automation but aren't:
-- ratchet does **not** parse our `done_when.yaml`. It builds its own `ratchet.md` + `evaluate.sh` from a NL goal.
-- persona-judge does **not** consume our fitness rubric files. It's a quality gate for distilled persona skills, not a general-purpose LLM-as-judge.
+The boundaries that look like automation but aren't (still true under v0.3):
+- `/ratchet` does **not** parse our `done_when.yaml`. It builds its own `ratchet.md` + `evaluate.sh` from a NL goal. (Use `/acceptance-fleet` if you want direct YAML consumption.)
+- `persona-judge` does **not** consume our fitness rubric files. It's a quality gate for distilled persona skills, not a general-purpose LLM-as-judge.
 
 ---
 
-## Handoff: test-suite-generator → ratchet (manual)
+## Handoff: test-suite-generator → acceptance-fleet (recommended, automated)
+
+This is the v0.3.0 path. After `test-suite-generator` writes `tests/<feature>/`, the user invokes `/acceptance-fleet specs/<feature>/`. No translation step — the skill reads `done_when.yaml`, `spec-robustness.md`, `spec.md`, and the generated tests directly.
+
+```
+/acceptance-fleet specs/subscription-cancellation/
+```
+
+What runs internally (per iteration):
+
+1. **S0 Bootstrap** — checks inputs, detects available evaluator runtimes, picks isolation level (weak / medium / strong / extreme — see `skills/acceptance-fleet/references/evaluation-isolation-levels.md`).
+2. **S1 Fleet spawn** — 8 evaluators in parallel: `test-runner`, `existence-checker`, `requirement-tracer`, `design-reviewer`, `adversarial-reviewer` (cross-vendor preferred — Codex or Gemini), `edge-case-hunter`, `e2e-explorer`, `spec-gaming-detector`. Each runs independently; no inter-agent communication.
+3. **S2 Rebuttal pass** — every finding gets challenged once by a different evaluator (4-Eyes Principle). Successfully rebutted findings are dropped.
+4. **S3 Meta-judge** — single Opus session synthesizes the surviving findings: dedupe by `file:line + root_cause`, weight by source diversity (multi-vendor agreement = boost), check thresholds, classify state. Does NOT re-review code.
+5. **S4 Ratchet decision** — one of four states: `DONE` (success, exit), `FIX` (emit fix-prompt for next iteration), `SPEC_DRIFT` (PBT counterexamples consistent with REQ text recurring — return to /acceptance-spec, do NOT patch code), `GAMING_RISK` (gaming_risk_score ≥ 7 from spec-gaming-detector — return to /acceptance-spec for contract hardening, do NOT patch code). A fifth escape `NEEDS_HUMAN` surfaces if meta-judge cannot decide.
+6. **S5 Persist** — writes a complete `ratchet-log/iteration-NNN/` trace: per-role outputs, rebuttals, meta-judge output, state-specific report, full input checksums. Required for debugging, training-data reuse, and audit.
+
+### Why this path (vs. legacy /ratchet)
+
+- **Direct YAML consumption** — no manual translation step.
+- **Spec-gaming-detector runs every iteration** — catches assertion weakening and dead-code padding that single-stream `/ratchet` would miss.
+- **Cross-vendor adversarial review** — the Claude-reviewing-Claude sycophancy loop is broken when Codex/Gemini takes the adversarial-reviewer slot.
+- **Four-state ratchet, not two** — `SPEC_DRIFT` and `GAMING_RISK` are first-class outcomes that route to /acceptance-spec instead of looping FIX endlessly.
+- **Full audit trail** — `ratchet-log/` is the substrate for debugging and (eventually) RLHF/DPO training data.
+
+### When /acceptance-fleet refuses to run
+
+- Missing inputs (`spec.md`, `done_when.yaml`, `tests/<feature>/`).
+- Cannot guarantee at least **medium** isolation (single-session-only environment). Reason: implementation agents seeing evaluator prompts = gaming substrate. See `skills/acceptance-fleet/references/evaluation-isolation-levels.md`.
+- `done_when.yaml` schema violation (v1 strict — does not attempt to repair).
+
+Missing `spec-robustness.md` does NOT cause refusal — it produces a warning and the spec-gaming-detector runs in maximum suspicion mode. (Recommended: re-run `/acceptance-spec` to produce it; the S2.5 phase is what gives `/acceptance-fleet` its targeted hunting hints.)
+
+### Cost expectation
+
+~$0.75 per iteration with prompt caching. Typical feature converges in 2-4 iterations under the four-state machine (since spec-drift and gaming-risk escape FIX-loop thrashing). Budget ~$2-3 per feature acceptance. Cross-vendor evaluators cost more per call but catch more per iteration; net cost usually lower.
+
+---
+
+## Handoff: test-suite-generator → ratchet (legacy, manual)
 
 After `test-suite-generator` writes `tests/<feature>/`, the user can chain to `/ratchet`. This is a manual handoff — the user phrases the ratchet goal so ratchet's own Step 1-3 (goal clarification + criteria design + ratchet.md generation) can derive its own internal contract from our artifacts.
 
@@ -145,25 +184,47 @@ The done_when.yaml continues to drive the *goal/criteria* you hand to ratchet; f
 
 ---
 
-## Cheat-sheet for the full lifecycle (honest)
+## Cheat-sheet for the full lifecycle (v0.3.0 — recommended path)
 
 ```
 1.  /acceptance-spec  "users can cancel their subscription but keep access until end of paid period"
-       → specs/subscription-cancellation/{proposal,spec,tasks}.md + done_when.yaml
+       → specs/subscription-cancellation/
+           ├── proposal.md
+           ├── spec.md           (EARS, REQ-IDs)
+           ├── tasks.md
+           ├── done_when.yaml    (v1 strict contract)
+           └── spec-robustness.md  (S2.5 — anti-gaming companion)
 
 2.  /test-suite-generator  specs/subscription-cancellation/
        → tests/subscription-cancellation/{existence.sh, unit/, integration/, e2e/, mutation.sh, fitness/}
 
-3a. /ratchet  <paste the Goal + Criteria + Scope + done_when block from
-              the "Handoff to ratchet" section above; ratchet does not read
-              done_when.yaml — translate it into ratchet's own format>
-       → src/...  (implementation loop until ratchet's own done_when triggers)
+3.  [implement in src/ using any agent; CRITICAL — implementation agent must NOT have
+     visibility into /acceptance-fleet's evaluator prompts; use a fresh session]
 
-3b. For each `judge: llm-rubric` fitness criterion: open a fresh Claude session,
-    paste the rubric file + the artifact, ask Claude to score per the rubric.
-    No packaged automation yet — see fitness-rubric-guide.md.
+4.  /acceptance-fleet  specs/subscription-cancellation/
+       → ratchet-log/iteration-001/
+       → state_decision: FIX | DONE | SPEC_DRIFT | GAMING_RISK | NEEDS_HUMAN
 
-3c. For each `judge: manual` fitness criterion: a human runs the checklist.
+5.  If FIX     → feed ratchet-log/iteration-001/fix-prompt.md to fresh impl session, then GOTO 4
+    If DONE    → done, ship it
+    If SPEC_DRIFT  → GOTO 1 with the offending REQs as the narrow brief
+    If GAMING_RISK → GOTO 1 to close the surfaced vectors in spec-robustness.md
+
+6.  For each `judge: persona-judge` or `judge: manual` fitness criterion in done_when.yaml:
+    consume per the rubric file's how-to-run block (no packaged auto-runner — see
+    fitness-rubric-guide.md). These are orthogonal to /acceptance-fleet which runs
+    the behavior/correctness layers.
 ```
 
-User effort is concentrated in step 1 (the clarify loop) + step 3 hand-off translation + any fitness-rubric / manual-checklist work. The test execution is mechanical; the orchestration is not.
+## Cheat-sheet for the legacy lifecycle (pre-v0.3.0, /ratchet path)
+
+```
+1.  /acceptance-spec  "..."
+2.  /test-suite-generator  specs/<feature>/
+3.  /ratchet  <paste Goal + Criteria + Scope + done_when block per "Handoff: test-suite-generator → ratchet" §>
+4.  For fitness criteria, the same manual workflow as path-A step 6.
+```
+
+The legacy path is acceptable for small features where the multi-agent overhead isn't worth it, or in environments where cross-vendor evaluators aren't available. For anything non-trivial, the v0.3.0 path catches more bugs per dollar (per the cost comparison in `skills/acceptance-fleet/SKILL.md` § "Cost expectation").
+
+User effort under the v0.3.0 path is concentrated in step 1 (the clarify loop) + step 3 (implementing) + reviewing the iteration state if it lands NEEDS_HUMAN. Acceptance-fleet itself is fully automated.

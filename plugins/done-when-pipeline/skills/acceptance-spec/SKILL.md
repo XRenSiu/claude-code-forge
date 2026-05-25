@@ -11,16 +11,16 @@ description: >-
   Triggers: "spec this requirement" / "draft EARS" / "done_when for X" /
   "clarify this feature" / "acceptance criteria" / "write the contract" / "/acceptance-spec".
 argument-hint: "<natural-language requirement or path to brief>"
-version: 0.2.0
+version: 0.3.0
 user-invocable: true
 ---
 
 # acceptance-spec — Natural language → EARS spec + done_when contract
 
-You are invoked to turn the user's natural-language requirement (`$ARGUMENTS` or recent user message) into a four-file acceptance contract that downstream agents can mechanically consume.
+You are invoked to turn the user's natural-language requirement (`$ARGUMENTS` or recent user message) into a five-file acceptance contract that downstream agents can mechanically consume.
 
 **Say once at the start, then start working:**
-> "I'm using the acceptance-spec skill. I'll draft EARS requirements, run a short clarify loop (only 3 question types, 2-3 rounds), then write proposal.md / spec.md / tasks.md / done_when.yaml."
+> "I'm using the acceptance-spec skill. I'll draft EARS requirements, run a short clarify loop (only 3 question types, 2-3 rounds), then a quick spec-self-adversarial pass, then write proposal.md / spec.md / tasks.md / done_when.yaml / spec-robustness.md."
 
 Do not narrate further — just walk the phases.
 
@@ -43,6 +43,7 @@ Do not narrate further — just walk the phases.
 8. **REQs must be independently testable — no cross-REQ causal indirection.** Each REQ is the unit a Step 4 test must derive from. **Do not** write things like `THE system SHALL silence the notification produced by REQ-001`; that binds REQ-N's verifiability to REQ-001's runtime artifact and forces Step 4 fixtures to chain. Instead, restate the relevant precondition in REQ-N's own EARS clause (`IF a mention is delivered AND the recipient is in DND, THEN ...`). REQs may *reference* each other for narrative context (e.g. "follow-on from REQ-001" in the heading line) but the SHALL action must be derivable from the REQ's own clauses alone. See `references/ears-syntax.md` "Cross-REQ causal indirection" row.
 9. **Worker output ≠ internal decision process.** Each phase's user-visible output is **only the deliverable** for that phase (S1: draft + open questions; S2: a single round's question batch; S3: the four files). Do not interleave skill-internal logs ("clarify-protocol Rule 2 vs Rule 6 weighing", "skill invocation summary", "second-order scan notes") into the output. If something is useful as audit context, put it in a comment inside the deliverable file or omit it. Process narration belongs in your reasoning, not in what the user reads.
 10. **Output is single-language per primary surface.** EARS sentence bodies, REQ headings, `[?]` notes, and clarify question text should all use **one** primary language consistently within a single artifact (typically English, since EARS keywords are English). Mixing English EARS bodies with Chinese question lists in the same file fragments the artifact and forces parallel translations. Glossary entries that *define* a Chinese-named domain term are fine — but the EARS body, the question prompts, and the source/log lines stay in one language.
+11. **Anti-gaming is part of the contract, not the verifier's afterthought.** Specification-gaming research (Komorebi AI 2025) shows 50-70% of LLM implementations game a vulnerable contract — even when the spec looks unambiguous to a human. The S2.5 self-adversarial pass (see below) is mandatory: before solidifying, ask "if I were the implementer trying to satisfy this contract while doing as little as possible, where are the cracks?" Identified gaming vectors become `spec-robustness.md` entries — either closed by adding a `behavior.thresholds:` value (when v1 schema admits one), or surfaced explicitly so the downstream `/acceptance-fleet` verifier knows to watch for them. **Do not skip S2.5 because "this brief looked clean."** Clean-looking briefs are the most game-able. **Do NOT introduce sub-fields outside Appendix C v1 schema** — the schema is rigid for a reason (downstream strict parsers); v1.5 augmentations live in `spec-robustness.md`, not in `done_when.yaml`.
 
 If you catch yourself asking a question that is not in {ambiguity, missing edge, undefined term}, **delete it before sending**. Asking the wrong type is the most common failure of this skill.
 
@@ -51,13 +52,14 @@ If you catch yourself asking a question that is not in {ambiguity, missing edge,
 ## Phase map
 
 ```
-S0  Bootstrap        read the brief, detect scope, pick the EARS sentence types you'll need
-S1  Draft            NL → EARS, every fuzzy spot becomes a [?] marker
-S2  Clarify loop     3 question types, 2-3 rounds, every [?] resolves into a sourced decision
-S3  Solidify         write proposal.md / spec.md / tasks.md / done_when.yaml
+S0    Bootstrap          read the brief, detect scope, pick the EARS sentence types you'll need
+S1    Draft              NL → EARS, every fuzzy spot becomes a [?] marker
+S2    Clarify loop       3 question types, 2-3 rounds, every [?] resolves into a sourced decision
+S2.5  Self-adversarial   "how would I game this contract?" — surface gaming vectors, close or document each
+S3    Solidify           write proposal.md / spec.md / tasks.md / done_when.yaml / spec-robustness.md
 ```
 
-The user only sees output at end of S1 (the draft + question list) and again at end of S3 (the four files). S2 is the interactive part. S0 is silent setup.
+The user only sees output at end of S1 (the draft + question list), one optional line at end of S2.5 (the gaming-vector summary, only if surprises emerged), and again at end of S3 (the five files). S2 is the interactive part. S0 is silent setup. S2.5 is silent unless the pass produces high-severity vectors the user should sanity-check.
 
 ---
 
@@ -149,9 +151,41 @@ Read `references/clarify-protocol.md` once before the first round.
 
 ---
 
+## S2.5 — Spec-self-adversarial pass
+
+After S2 closes (all `[?]` resolved) and before S3 writes files, run an internal adversarial pass. Reverse the default sycophantic posture and ask: **"If I were the implementer trying to satisfy this contract while doing as little real work as possible, where are the cracks?"**
+
+This is silent unless it surfaces a high-severity vector. The output is the in-memory list that drives `spec-robustness.md` in S3.
+
+**Why this exists.** *Specification Self-Correction* (Komorebi AI Tech, 2025) reports that, given a vulnerable spec, 50-70% of LLM implementations game it (weaken assertions, hardcode test inputs, cover line not branch, etc.). SSC's fix is exactly this: have an independent agent critique the spec for game-ability *before* implementation, not after. The numbers drop below 10% when this pass is run. Without it, `/acceptance-fleet` is patching downstream what could have been prevented upstream.
+
+**Scan the resolved spec and `done_when.yaml` draft against the six RHD gaming patterns** (from *Benchmarking Reward Hack Detection in Coding Agents*):
+
+1. **Test Modification** — Does any REQ permit silently weakening an assertion? (e.g. a SHALL clause vague enough that `assert result is not None` would satisfy it as much as the intended deep equality.) → If yes, tighten the REQ wording in S3.
+2. **Test Case Targeting** — Does any behavior name leak the exact input the test will use? (e.g. `test_cancel_with_user_id_42_returns_403` invites hardcoding.) → Rename to abstract over the specific value.
+3. **Coverage Gaming** — Does `behavior.thresholds.unit_coverage` exist *without* a `mutation_kill_rate`? Line coverage alone incentivizes `assert True`. → Ensure `mutation_kill_rate: ">= 0.70"` is present (v1 schema admits this — it's mandatory per iron rule 5 of test-suite-generator).
+4. **Degenerate Implementation** — Does any REQ admit a lookup-table or if-else-explosion as a satisfying impl? (e.g. "for the five known input cases, return the expected output" — easily faked.) → Add a PBT property name to `behavior.unit_tests.property_based` that forces generalization.
+5. **Style Manipulation** — Are there fitness criteria that count comment lines, character counts, or other gameable surface metrics? → Convert to programmatic checks or drop.
+6. **Information Leakage** — Does `spec.md` contain example inputs/outputs that would be copy-pasted as the impl? → Move them to glossary entries or remove from spec.
+
+**For each gaming vector identified, decide one of three actions:**
+
+- **(close)** Adjust `spec.md` REQ wording or add a `behavior.thresholds:` value to close it. Note in S3 `proposal.md` under "Decisions made during clarify" with a `(S2.5 self-adversarial)` tag.
+- **(document)** Cannot close within v1 schema — record in `spec-robustness.md` as a `surfaced_vector` for `/acceptance-fleet` to watch.
+- **(accept)** Theoretically gameable but practically unlikely (e.g. the REQ is about doc text — gaming = writing bad docs, which is its own failure). Record in `spec-robustness.md` as `accepted_risk` with a one-line rationale.
+
+**Hard rule for S2.5:** Do NOT introduce sub-fields into `done_when.yaml` that are outside the Appendix C v1 schema. If you want a check that isn't expressible in v1 (e.g. branch coverage threshold, code complexity limit, cross-PR diff size budget), it goes in `spec-robustness.md` under `verifier_hints:` — `/acceptance-fleet` consumes that block, not `done_when.yaml`. The schema-extension temptation is exactly what iron rule 11 forbids.
+
+**S2.5 user-visible output:** *nothing*, unless step (1) ("close") produced a non-obvious REQ rewrite that the user should sanity-check, in which case emit a one-line note:
+> "Spec-self-adversarial surfaced N gaming vectors. Closed K (REQ-NNN rewrites — please sanity-check spec.md before continuing), documented M for /acceptance-fleet, accepted P as practical-non-risk."
+
+Then proceed to S3 without waiting.
+
+---
+
 ## S3 — Solidify
 
-Write four files into `<output_dir>/`:
+Write five files into `<output_dir>/`:
 
 ### 1. `proposal.md` — high-level intent
 
@@ -215,20 +249,77 @@ Hard rules for v1 字面:
 spec_drift_threshold:
   max_fix_loops_before_escalation: 3
 ```
-This is **guidance for the human chaining to `/ratchet`**, not a contract field anything auto-reads today. When chaining, translate `max_fix_loops_before_escalation` into ratchet's own `convergence` value (see `done-when-pipeline/INTEGRATION.md` for the recipe). Auto-escalation is future work; do not promise the user it happens automatically.
+This is **guidance for the human chaining to `/ratchet`** (today) **or `/acceptance-fleet`** (when that skill takes over the Step 5-6 loop) — not a contract field anything auto-reads today. When chaining to `/ratchet`, translate `max_fix_loops_before_escalation` into ratchet's own `convergence` value (see `done-when-pipeline/INTEGRATION.md` for the recipe). When chaining to `/acceptance-fleet`, it's read directly as the ratchet four-state machine's `PBT-repeat → SPEC_DRIFT` trigger threshold. Auto-escalation in `/ratchet` is future work; do not promise the user it happens automatically there.
 
 Every entry under `existence:` and `behavior:` is fine to be *aspirational* — they are names of things the implementer will create. They do not have to exist yet. They become the rubric.
 
 > **Why so strict?** Earlier drafts of this skill let the writer scatter `based_on:` and `property_type:` onto leaf entries to make traceability "explicit per row". That looks helpful but violates v1 schema literally; downstream strict parsers will reject it, lenient parsers will drop the extra keys silently — either way the per-row traceability is lost. Until Appendix C grows a v2, keep traceability at the union top-level `based_on:` plus the test-name semantics.
 
-### After writing the four files
+### 5. `spec-robustness.md` — anti-gaming companion to `done_when.yaml`
+
+Produced from the S2.5 self-adversarial pass. This is the carrier for v1.5 augmentations that **cannot live in `done_when.yaml`** under Appendix C v1 schema (iron rule 11). `/acceptance-fleet` reads this file when scoring `gaming_risk`; the human reads it to understand what the spec deliberately accepts as untested.
+
+Three sections, in order:
+
+```markdown
+# Spec Robustness — <feature-slug>
+
+(Generated by acceptance-spec S2.5 self-adversarial pass. Consumed by /acceptance-fleet
+spec-gaming-detector. Not part of the strict v1 contract — augmentation only.)
+
+## closed_vectors
+Gaming vectors that were identified during S2.5 and closed by adjusting spec.md or
+done_when.yaml (within v1 schema). Listed for audit — these should NOT need re-checking
+by the verifier; they are already structurally prevented.
+
+- pattern: assertion_weakening
+  rewrote: REQ-003 SHALL clause tightened from "completes successfully" to "returns
+           HTTP 200 with body matching CancelResponse schema"
+  source: S2.5 (S2 round 1 Q3 surfaced underlying ambiguity)
+- ...
+
+## surfaced_vectors
+Gaming vectors that COULD NOT be closed inside the v1 schema. /acceptance-fleet's
+spec-gaming-detector role MUST watch for these specifically. Each entry tells the
+verifier what to grep for / what mutation to inject / what counter-test to derive.
+
+- pattern: coverage_gaming
+  spec_robustness_gap: done_when.yaml requires mutation_kill_rate >= 0.70 but does
+                       not require branch coverage; a happy-path-only impl that skips
+                       error branches could pass.
+  verifier_hint: spec-gaming-detector should check branch coverage on impl; flag if
+                 < 0.60 even when mutation_kill_rate >= 0.70.
+  affects: REQ-001, REQ-004
+- ...
+
+## accepted_risks
+Gaming vectors that were considered and consciously NOT defended against. Each
+entry is a one-line rationale; absence of a rationale is a S2.5 bug.
+
+- pattern: style_manipulation on README fitness criterion
+  rationale: gaming this = writing bad docs, which is itself the failure the rubric
+             catches. No reinforcement needed.
+- ...
+
+## verifier_hints
+Optional. Free-form hints to /acceptance-fleet beyond the six RHD patterns above —
+e.g. domain-specific gaming vectors only this feature would face.
+
+- when scoring qa-reviewer output for REQ-007, flag if the test list includes any
+  selector that matches `_test_only_*` patterns — those endpoints exist for test
+  setup, not for product behavior, and shouldn't drive PBT input space.
+```
+
+If S2.5 produced no surfaced vectors AND no accepted risks (closed-only), still emit the file with an empty `## surfaced_vectors` block and a single `## accepted_risks` entry: `none — S2.5 closed all identified vectors structurally`. The file's existence is the verifier's signal that S2.5 ran; absence of the file is a contract bug.
+
+### After writing the five files
 
 Tell the user, in four short bullets:
 
-1. The output directory and the four filenames.
-2. A one-line count: `N REQs, M existence checks, K test names, J fitness criteria.`
+1. The output directory and the five filenames.
+2. A one-line count: `N REQs, M existence checks, K test names, J fitness criteria, V surfaced gaming vectors.`
 3. Immediate next step: `/test-suite-generator <output_dir>/` — turns the contract into the actual test files (Step 4).
-4. Subsequent step (Step 5-6): the user **manually** translates the resulting `done_when.yaml` into a `/ratchet` invocation. Ratchet is the Step 5-6 master controller; it does **not** auto-parse `done_when.yaml`. See `done-when-pipeline/INTEGRATION.md` for the Goal/Criteria/Scope translation recipe and `spec_drift_threshold:` mapping.
+4. Subsequent step (Step 5-6): either chain to **`/acceptance-fleet`** (consumes `done_when.yaml` + `spec-robustness.md` + the generated tests directly; runs the 7-role evaluation fleet with 4-state ratchet) OR manually translate to `/ratchet` (legacy path; ratchet does not auto-parse `done_when.yaml`, does not read `spec-robustness.md`, does not run gaming detection). See `done-when-pipeline/INTEGRATION.md` for both paths.
 
 That's the end of this skill. **Do not** generate tests, do not start implementing, do not run anything — those are downstream steps.
 
@@ -236,15 +327,17 @@ That's the end of this skill. **Do not** generate tests, do not start implementi
 
 ## Step 5-6 hand-off — what this skill's outputs feed into
 
-This skill ends at `done_when.yaml`. The four files are consumed downstream by two manual hand-offs:
+This skill ends at the five files. They are consumed downstream by either of two paths:
 
 1. **Step 4 (test-suite-generator)** consumes `spec.md` + `done_when.yaml` automatically — that's the immediate next slash command.
 
-2. **Step 5-6 (ratchet)** consumes `done_when.yaml` indirectly: a human translates it into ratchet's own Goal / Criteria / Scope / `done_when` block. The two relevant translation facts:
+2. **Step 5-6 — recommended path: `/acceptance-fleet`** consumes the full five-file output directly. It runs a 7-role evaluation fleet (test-runner / existence-checker / requirement-tracer / design-reviewer / adversarial-reviewer / edge-case-hunter / e2e-explorer) plus a standalone spec-gaming-detector that reads `spec-robustness.md`, aggregates via meta-judge (no inter-agent debate — Dartmouth/Yale 2025 showed debate *amplifies* bias), and runs a four-state ratchet (DONE / FIX / SPEC_DRIFT / GAMING_RISK). When SPEC_DRIFT triggers, control returns *here* (re-invoke `/acceptance-spec` to narrow the offending REQ). No manual translation required.
+
+3. **Step 5-6 — legacy path: `/ratchet`** consumes `done_when.yaml` indirectly: a human translates it into ratchet's own Goal / Criteria / Scope / `done_when` block. Ratchet does NOT read `spec-robustness.md` and does NOT run gaming detection — this path is fine for simple features but does not benefit from the S2.5 work. Two relevant translation facts:
    - `spec_drift_threshold.max_fix_loops_before_escalation` ≈ ratchet's `convergence` (rounds with no improvement before stopping). The two are *not* strictly equivalent — ours says "escalate to the user after N fix loops", ratchet's says "stop the loop after N stalled rounds". Both end in a manual decision; see `INTEGRATION.md` "Spec drift guidance" for the recipe.
    - If PBT keeps finding counterexamples across multiple fix loops, the **spec** is probably the bug, not the code (cf. design doc §12.1.IV). The user — not ratchet — decides whether to come back here (re-invoke `/acceptance-spec` to narrow REQs) or stay in `/ratchet` with more budget. **A practical judgment rule**: if a PBT shrunk counterexample is *consistent* with the literal text of the REQ that produced the test (i.e. the REQ as written would also produce a misbehaving impl), the spec is wrong — return here. If the counterexample contradicts the REQ's text (the REQ says X, the impl does not-X), the code is wrong — stay in ratchet.
 
-There is no automated Step 5-6 wrapper in v0.1; both translation and the "spec vs code" verdict are user actions. See `INTEGRATION.md` for the complete hand-off recipe.
+See `INTEGRATION.md` for the complete hand-off recipe for both paths.
 
 ---
 
@@ -262,5 +355,6 @@ There is no automated Step 5-6 wrapper in v0.1; both translation and the "spec v
 - `references/ears-syntax.md` — five EARS sentence types with examples and selection rules
 - `references/clarify-protocol.md` — full rules for the clarify loop, with examples of good vs bad questions
 - `references/done-when-schema.yaml` — the schema `done_when.yaml` must conform to
-- `references/output-templates/` — boilerplate for the four output files
-- `references/examples/subscription-cancellation/` — a worked end-to-end example, all four files
+- `references/spec-robustness-template.md` — boilerplate + worked patterns for the S2.5 fifth-file output
+- `references/output-templates/` — boilerplate for the five output files
+- `references/examples/subscription-cancellation/` — a worked end-to-end example

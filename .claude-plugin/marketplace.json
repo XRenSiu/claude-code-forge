@@ -186,8 +186,8 @@
     },
     {
       "name": "done-when-pipeline",
-      "description": "Done_When Pipeline — turn fuzzy natural-language requirements into machine-verifiable completion contracts. Two skills compose Steps 1-4: `acceptance-spec` (NL → EARS spec + done_when.yaml via strict 3-question-type clarify loop, max 2-3 rounds, 4-file output: proposal/spec/tasks/done_when) and `test-suite-generator` (EARS → full test pyramid: existence checks via ripgrep/tree-sitter, unit/integration/e2e tests in both example-based and property-based styles, mutation-testing config as anti-reward-hacking, llm-rubric fitness files for manual fresh-Claude-session scoring). Step 5/6 hand off MANUALLY — user invokes /ratchet with translated Goal/Criteria/Scope; ratchet does not auto-parse done_when.yaml. No packaged fitness-judge skill yet — rubric files are scored by a fresh Claude session per their how-to-run block. spec_drift_threshold is guidance for the human composer, not an auto-honored field.",
-      "version": "0.2.0",
+      "description": "Done_When Pipeline — turn fuzzy natural-language requirements into machine-verifiable completion contracts, then run a multi-agent acceptance loop against an implementation. Three skills cover Steps 1-6: `acceptance-spec` (Steps 1-3: NL → EARS spec + done_when.yaml via strict 3-question-type clarify loop + S2.5 spec-self-adversarial pass that emits spec-robustness.md identifying gaming vectors per the 6 RHD patterns — 5-file output), `test-suite-generator` (Step 4: EARS → full test pyramid with existence/unit/integration/e2e tests + mutation-testing anti-reward-hacking + fitness rubrics), and `acceptance-fleet` (Steps 5-6: 7-role evaluation fleet — test-runner / existence-checker / requirement-tracer / design-reviewer / adversarial-reviewer / edge-case-hunter / e2e-explorer — plus a standalone spec-gaming-detector, non-debating meta-judge synthesis, four-state ratchet DONE/FIX/SPEC_DRIFT/GAMING_RISK with full ratchet-log/iteration-NNN trace persistence; cross-vendor evaluators preferred — Codex/Gemini break the Claude-reviewing-Claude sycophancy loop). The /ratchet hand-off remains supported as a legacy lighter path. Anti-gaming structural guarantee: implementation agents MUST NOT see evaluator prompts; minimum medium isolation (mixed Claude sizes) enforced. Borrows file formats from OpenSpec, clarify protocol from GitHub Spec Kit, role design from Anthropic Code Review + BMAD edge-case-hunter + Builder.io QRA, all without CLI integration. Design philosophy: verifiable beats judgeable; debate amplifies bias (use meta-judge, not debate); PBT + mutation + cross-vendor review close the reward-hacking loop.",
+      "version": "0.3.0",
       "author": {
         "name": "XRenSiu",
         "email": "xrensiu@gmail.com"
@@ -209,7 +209,12 @@
         "fitness-rubric",
         "verifiable-completion",
         "ratchet-integration",
-        "anti-reward-hacking"
+        "anti-reward-hacking",
+        "multi-agent-acceptance",
+        "spec-gaming-detection",
+        "cross-vendor-review",
+        "meta-judge",
+        "four-state-ratchet"
       ]
     },
     {
