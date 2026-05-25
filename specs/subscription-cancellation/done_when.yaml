@@ -1,0 +1,62 @@
+feature: subscription-cancellation
+based_on: [REQ-001, REQ-002, REQ-003, REQ-004, REQ-005]
+created_at: 2026-05-25T00:00:00Z
+created_by: acceptance-spec
+
+existence:
+  - file: src/billing/cancel_subscription_use_case.ts
+  - function: CancelSubscriptionUseCase
+  - route: POST /api/subscription/cancel
+  - db_field: subscription.status
+  - db_field: subscription.period_end
+  - db_field: subscription.cancellation_timestamp
+  - frontend_component: CancelSubscriptionButton
+
+behavior:
+  unit_tests:
+    example_based:
+      - test_cancel_active_transitions_status_to_cancelled_active
+      - test_cancel_active_stops_next_billing_cycle_charge
+      - test_cancel_records_cancellation_timestamp
+      - test_cancel_on_cancelled_active_returns_already_cancelled_true
+      - test_cancel_on_expired_returns_already_cancelled_true
+      - test_premium_access_granted_while_cancelled_active
+      - test_premium_request_returns_402_when_expired
+      - test_402_body_error_field_equals_subscription_expired
+      - test_period_boundary_transitions_to_expired_at_period_end
+      - test_in_flight_billing_retry_continues_after_cancellation
+    property_based:
+      - test_cancel_is_idempotent
+      - test_premium_access_invariant_active_and_cancelled_active_have_identical_access
+      - test_status_transition_is_monotonic_active_to_cancelled_active_to_expired
+      - test_cancel_atomicity_invariant_both_side_effects_or_neither
+
+  integration_tests:
+    example_based:
+      - test_cancel_api_returns_200_and_cancellation_record
+      - test_cancel_api_idempotent_re_cancel_returns_already_cancelled_true
+      - test_premium_endpoint_returns_402_for_expired_subscription
+    property_based:
+      - test_subscription_status_state_machine_is_well_formed
+      - test_no_premium_request_after_period_end_succeeds_state_machine
+
+  e2e_tests:
+    - test_user_can_cancel_active_subscription_via_ui_and_retains_access_until_period_end
+    - test_user_with_expired_subscription_sees_renewal_prompt_on_premium_action
+
+  thresholds:
+    unit_coverage: ">= 0.80"
+    integration_coverage: ">= 0.60"
+    mutation_kill_rate: ">= 0.70"
+    pbt_runs_per_property: ">= 500"
+
+fitness:
+  - criterion: the cancellation confirmation surface (UI button + response payload) clearly communicates to the user that access continues until period_end and is not lost on click
+    judge: persona-judge
+    score_threshold: ">= 8/10"
+  - criterion: the HTTP 402 response body's human-readable `message` field accurately describes the renewal action without leaking internal terminology
+    judge: persona-judge
+    score_threshold: ">= 7/10"
+
+spec_drift_threshold:
+  max_fix_loops_before_escalation: 3

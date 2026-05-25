@@ -1,9 +1,14 @@
 # Issues 累计汇总
 
-**全局计数**:
+> **Status convention**: every entry in this file is a P1 or P2 finding from a
+> branch-B CLEARED attempt (Auditor verdict: no P0, P1 ≤ 3 — or, for Step 4/5/6,
+> the iter-1 protocol's relaxed cap; see PROTOCOL.md). All entries here are
+> therefore **ACCEPTED**. Entries are organised by `iter-{N} / step{M} / attempt-{K}`.
+
+**全局计数**（累计 ACCEPTED 条目）:
 - P0: 0
-- P1: 20
-- P2: 22
+- P1: 24
+- P2: 29
 
 ---
 
@@ -64,3 +69,22 @@
 
 ### iter-1 / step6 / attempt-2 (P2 共 3 — 新增)
 - **P2-1 至 P2-3**: 措辞精度、首屏信息密度问题
+
+### iter-2 / step1 / attempt-1 (P1 共 2 — ACCEPTED)
+- **P1-1**: REQ-003 把"状态机迁移 cancelled_active→expired"和"下次 premium 请求拒绝"两个独立可派生行为塞进同一条 Event-driven SHALL；后者与 REQ-005 重叠
+- **P1-2**: existence 漏列 REQ-005 的 premium-access authorization middleware 和 REQ-005 UI 的 renewal-prompt 组件（tasks.md 已命名但 done_when.yaml 未提升为 existence 入口）
+
+### iter-2 / step1 / attempt-1 (P2 共 3 — ACCEPTED)
+- **P2-1**: done_when.yaml `created_at` 用零点占位与文件 mtime 不一致
+- **P2-2**: spec-robustness.md 每条目同时给 `pattern:` 和 `rhd_pattern:` 两个 key 表达近似语义，排版冗余
+- **P2-3**: clarify 三轮答题段把 PM 决策理由（Stripe/RFC 7231 等引用）内联到 worker 归档日志，落点不会进入 5 份产出文件
+
+### iter-2 / step2 / attempt-1 (P1 共 2 — ACCEPTED)
+- **P1-1**: `unit/premium_access.test.ts` 末尾再次 import `CancelSubscriptionUseCase` 与顶部 import block 分裂；该 PBT 文件因此不可直接运行
+- **P1-2**: existence.sh `function: CancelSubscriptionUseCase` 的 rg pattern 漏 `export { ... }` 命名重导出和 `export default class` 两种合法 TS 形态，存在假阴性
+
+### iter-2 / step2 / attempt-1 (P2 共 4 — ACCEPTED)
+- **P2-1**: 14 个产出文件均自报 `test-suite-generator/0.2.0`，与 plugin.json `version: 0.3.0` 不一致
+- **P2-2**: stryker.conf.json `mutate` 数组同一来源被列两遍（具体路径 + glob 重叠）
+- **P2-3**: 两份 rubric "How to run" 段落几乎逐字重复，未抽到 fitness/README.md
+- **P2-4**: tests/subscription-cancellation/README.md "Counts" 行 16 unit vs NOTE 行 14 unit 自相矛盾

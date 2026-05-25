@@ -63,3 +63,26 @@ iter-1 完整跑完 6 个 Step。但 Step 3、Step 4、Step 6 都需要 attempt 
 ## iter-2
 
 
+
+### iter-2 / Step 1 / attempt 1
+
+- iter-2 / step1 / attempt-1: Worker ✔（3 轮 / 5+3+1 题 / 9 题全部命中三类标签 / S2.5 close=2 surface=2 accept=2）→ Auditor ✔ (P0=0, P1=2, P2=3) → 进入分支 B
+- **Step 1 CLEARED (attempt 1, P0=0, P1=2 accepted, P2=3 accepted)**
+
+### iter-2 / Step 2 / attempt 1
+
+- iter-2 / step2 / attempt-1: Worker ✔（Skill 工具 Unknown skill → fallback 直读源码；6 batch 顺序分批 emit；14 测试文件 + 1 manifest；existence fail-fast ✔；testcontainers Postgres 无 mock；fast-check PBT numRuns=500；Stryker break=70）→ Auditor ✔ (P0=0, P1=2, P2=4) → 进入分支 B
+- **Step 2 CLEARED (attempt 1, P0=0, P1=2 accepted, P2=4 accepted)**
+
+---
+
+## iter-2 总结
+
+iter-2 完整跑过 Step 1 + Step 2（本次 /goal 范围）。两个 Step 均在 attempt 1 通过 Branch B（无 P0，P1 ≤ 3）。完成条件 1、3 均满足：
+
+- Step 1 (acceptance-spec): attempt=1，P0=0 / P1=2 / P2=3 — CLEARED
+- Step 2 (test-suite-generator): attempt=1，P0=0 / P1=2 / P2=4 — CLEARED
+
+P1/P2 全部 ACCEPTED 记入 issues-summary.md。无 Fixer 调用，无 NEEDS_DESIGN_REVIEW，无 STUCK 事件。
+
+FINAL CLEAN ITERATION: 2
