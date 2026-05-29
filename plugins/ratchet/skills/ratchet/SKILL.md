@@ -13,7 +13,7 @@ description: >
   即使用户只是模糊地说"我想把这个做好"或"帮我优化这个",也应触发此 skill。
   与 autoresearch 的区别：ratchet 有独立评估者、自动杀死重启、明确的终止条件,
   适合更大规模、更长时间的自主任务。autoresearch 更适合单文件的轻量迭代。
-version: 1.0.0
+version: 1.1.0
 ---
 
 # Ratchet — 目标驱动的棘轮优化系统
@@ -243,6 +243,9 @@ anti_cheat: [防作弊条款]
   round = 0
   best_score = 0
   stale_count = 0
+  touch learnings.md dead-ends.md   # 滚动记忆：已验证规律 / 已证伪方向（蒸馏，不抄原文）
+  did_exploratory_rewrite = false
+  edit_budget = [按产物规模设上限,如 ≤150 行/轮]
 
 创建 subagent:
   description: "Ratchet Worker: [Goal 摘要]"
@@ -262,27 +265,41 @@ MASTER LOOP:
 
     记录到 results.tsv
 
-    // ── 终止判断 ──
-    if score 满足 done_when.success:
-      输出成功报告 → 停止
-    if stale_count >= done_when.convergence:
-      输出收敛报告 → 停止
-    if round >= done_when.budget:
-      输出预算耗尽报告 → 停止
-
-    // ── 棘轮判断 ──
+    // ── 棘轮判断 + 记忆更新 ──
     if score > best_score:
       best_score = score
       stale_count = 0
       git tag "best-r{round}"
+      追加 learnings.md：本轮"有效改动 + 为什么涨"蒸馏成 ≤3 行规律(不抄原文)
     else:
       stale_count += 1
+      追加 dead-ends.md：本轮"试了什么方向 + 为什么没涨/退化"蒸馏成 ≤3 行
+
+    // ── 成功 / 预算终止 ──
+    if score 满足 done_when.success:
+      输出成功报告 → 停止
+    if round >= done_when.budget:
+      git checkout best-r{best_round} → 输出预算耗尽报告 → 停止
+
+    // ── 收敛前的探索性逃逸（见 4.5.5）──
+    if stale_count >= done_when.convergence:
+      if not did_exploratory_rewrite:
+        执行一次探索性重写(4.5.5) → 重评
+        更好 → 采用,stale_count = 0,did_exploratory_rewrite = true
+        没更好 → 恢复 best,did_exploratory_rewrite = true,下一次收敛即真停
+      else:
+        git checkout best-r{best_round} → 输出收敛报告 → 停止
 
     // ── Kill & Restart ──
-    创建新 subagent（同样的 prompt + 附加上下文）：
-      附加："当前进度：Milestone {M}, 最佳分数 {best_score},
-             上一轮失败原因：{failure_summary},
-             results.tsv 历史：{last_10_rows}"
+    创建新 subagent（同样 subagent_prompt + 附加上下文）：
+      附加：
+        "当前进度：Milestone {M}，最佳分数 {best_score}
+         本轮反馈：{failure_summary}（≤200 字）
+         已验证规律(learnings.md 全文)：{learnings}
+         死路清单(dead-ends.md 全文,禁止重试这些方向)：{dead_ends}
+         results.tsv 最近 10 行：{last_10_rows}
+         变更预算：在 best-r{N} 基础上增量修改,禁止从头重写整个产物,
+                  改动控制在 {edit_budget} 行内(除非反馈明确要求重写)"
 ```
 
 ### 4.3 Subagent 的 Prompt 构造
@@ -292,6 +309,9 @@ Subagent 只接收以下信息：
 - Scope（CAN / CANNOT）
 - Milestone 列表和当前所在 milestone
 - 上一轮的简要反馈（master 提供,不超过 200 字）
+- `learnings.md` 全文 — 已验证的规律（什么有效、为什么）
+- `dead-ends.md` 全文 — 已证伪的方向（**禁止重试**）
+- 本轮变更预算（edit budget）
 - results.tsv 最近 10 行
 
 Subagent **不接收**：
@@ -300,6 +320,16 @@ Subagent **不接收**：
 - done_when 的具体阈值
 
 这确保 subagent 不能针对评估逻辑做 reward hacking。
+
+### 4.3.1 为什么传记忆和预算（移植自 SkillOpt）
+
+kill & restart 丢掉的是进程,不该丢掉教训。SkillOpt 的消融实验里,**去掉长程记忆是单一最致命的控制**（同 benchmark 从 77.5 暴跌到 55.0）。对应到 ratchet：
+
+- **`dead-ends.md`（拒绝缓冲区）**：新 subagent 不知道前任试过什么死路,results.tsv 只有分数不说"试了什么"。把证伪的方向蒸馏成负反馈,避免一代代重复同一个错误。
+- **`learnings.md`（慢更新/元记忆）**：把已验证的规律滚动沉淀,而不是每个新 subagent 从零摸索。
+- **edit budget（文本学习率）**：约束每轮变更量,防止新 subagent 推倒 best 重写、丢掉已稳定的行为(SkillOpt 称之为"语义跳跃")。
+
+这三者是 SkillOpt 三个稳定性控制在 ratchet kill-restart 架构下的落地。
 
 ### 4.4 评估方式详解
 
@@ -334,16 +364,49 @@ prompt: |
 
 评估 subagent 与执行 subagent **完全隔离**——不同上下文、不同角色、不同信息。
 
+**Mode B 的单评委陷阱（重要）：**
+
+SkillLens 实测：让单个 AI 评委对"两份产物选更好的那份"做判断,准确率只有 **46.4%——比掷硬币还差**,而且真实差距越大评委越糊涂。ratchet 用「对固定 criteria 做绝对 PASS/FAIL」而非「成对选优」,从设计上已规避了大半——这是 Mode A 优先、criteria 必须机器可验的根本原因。
+
+但只要某条 criterion 仍带主观「陌生人测试」式判断（如"文档读起来清不清楚"）,单评委依然落在这个不可靠区间。此时：
+
+- 启动 **N 个（默认 3）相互独立**的评估 subagent（同 prompt、同 criteria、互不可见）
+- 每条 criterion 取**多数票**,`pass_rate` 取**中位数**
+- 这与 criteria-guide「半硬判据 = LLM-as-judge + 固定 rubric + 多采样取中位数」是同一招
+
+全部是机器可验硬指标（Mode A）时不需要多评委——硬指标本身就不在 46.4% 的射程内。
+
 ### 4.5 多轮续跑的上下文传递
 
 每次 kill & restart 时,通过**文件系统**传递状态,不依赖上下文：
 
-- `results.tsv` — 完整的实验历史
+- `results.tsv` — 完整的实验历史（分数轨迹）
+- `learnings.md` — 已验证规律（蒸馏后的正反馈）
+- `dead-ends.md` — 已证伪方向（蒸馏后的负反馈,禁止重试）
 - `git log` — 所有修改记录
 - 文件系统中的代码/产物 — subagent 直接读取继续
 - master 提供的一段简要反馈（上一轮哪些 criteria 没过、建议方向）
 
 新 subagent 通过读取这些文件"接力",不需要看前一个 subagent 的推理过程。
+`results.tsv` 是原始分数,`learnings.md` / `dead-ends.md` 是从原始历史蒸馏出的可执行教训——前者防"忘了涨过",后者防"重蹈覆辙"。
+
+### 4.5.5 收敛前的探索性重写（破局部最优）
+
+爬山算法的经典毛病是卡在局部最优。ratchet 的 kill-restart 提供了部分随机性,但新 subagent 默认在 best 基础上增量（受 edit budget 约束）,不会主动推倒重来。所以在**宣告收敛之前**插一次大扰动（类模拟退火）：
+
+```
+当 stale_count 首次达到 convergence 阈值时（且尚未做过探索性重写）：
+  1. git stash 或 git branch 保存当前 best-r{N}
+  2. 启动一个新 subagent,prompt 特别说明：
+     "前面的增量路线已卡死。允许你 **无视 edit budget、从头重新设计**整个产物,
+      但 Scope/CANNOT/Anti-Cheat/frozen_files 仍然铁律不可破。
+      参考 dead-ends.md,别再走那些死路。"
+  3. 独立评估这次重写
+  4. score > best_score → 采用,stale_count 归零,继续主循环
+     否则 → 恢复 best,标记 did_exploratory_rewrite,下一次收敛即真正停止
+```
+
+约束：每个 ratchet 任务**最多一次**探索性重写（避免无限大扰动烧预算）；frozen_files 和防作弊条款在重写期间**绝不松动**——重写的是产物,不是规则。
 
 ### 4.6 降级模式：无 subagent 工具时
 
@@ -407,7 +470,7 @@ prompt: |
 
 - **Criteria 是命门。** 写不出机器可验的 criteria,就不该启动循环。
 - **评估与执行永远分离。** master 只评估,subagent 只执行。
-- **进程是一次性的。** subagent 卡住就杀,状态在文件系统里,不在上下文里。
+- **进程是一次性的,教训不是。** subagent 卡住就杀,状态在文件系统里,不在上下文里;但每轮要把"有效规律"和"死路"蒸馏进 `learnings.md` / `dead-ends.md` 喂给下一个 subagent——丢的是进程,不是教训。（移植自 SkillOpt 的 rejected-buffer + slow-update,其消融实验中长程记忆是最关键的单一稳定性控制。）
 - **防作弊是设计的一部分。** 评估脚本 frozen、测试数据不可见、inoculation prompt。
 - **有终止条件。** 成功/收敛/预算,三个出口必须在启动前全部定好。
 - **薄 harness。** 不规定 subagent 怎么解题,只规定终点和约束。

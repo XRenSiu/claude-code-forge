@@ -161,7 +161,7 @@
     {
       "name": "ratchet",
       "description": "Ratchet — Goal-driven multi-agent persistent optimization system. Combines Goal-Driven master/subagent separation with AutoResearch signal design methodology. Implements an 'independent evaluation + kill-and-restart + ratchet progress' autonomous loop: master only judges, subagent only executes; if a subagent stalls or claims success without meeting acceptance criteria, it is killed and replaced. Suitable for long-running autonomous coding tasks that require verifiable deliverables and explicit termination conditions.",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "author": {
         "name": "XRenSiu",
         "email": "xrensiu@gmail.com"

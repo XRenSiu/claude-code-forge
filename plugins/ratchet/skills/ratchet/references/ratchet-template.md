@@ -145,9 +145,11 @@ echo "SCORE=$score PASS=$pass FAIL=$fail MILESTONE=$milestone"
    mkdir -p [实验目录] && cd [实验目录]
    git init && git add -A && git commit -m "init: ratchet baseline"
    ```
-2. 初始化实验记录:
+2. 初始化实验记录与滚动记忆:
    ```bash
    echo -e "round\tscore\tpass\tfail\tmilestone\tstale_count\tbest\ttimestamp" > results.tsv
+   : > learnings.md   # 已验证规律（正反馈,master 每次涨分时追加）
+   : > dead-ends.md   # 已证伪方向（负反馈,master 每次没涨时追加,禁止重试）
    ```
 3. 运行基线评估,记录 round=0
 
@@ -176,16 +178,23 @@ echo "SCORE=$score PASS=$pass FAIL=$fail MILESTONE=$milestone"
 - 当前 Milestone: [Mx]
 - 最佳评分: [best_score]
 - 上一轮反馈: [master 提供的简要反馈]
+- 已验证规律(learnings.md 全文): [什么有效、为什么——直接复用,别重新发现]
+- 死路清单(dead-ends.md 全文): [已证伪的方向——禁止重试]
 - 实验历史(最近 10 轮):
 [results.tsv 最近 10 行]
 
 Milestones:
 [Milestone 列表,标注当前位置]
 
+变更预算:
+- 在 best-r[N] 基础上**增量修改**,禁止从头重写整个产物
+- 本轮改动控制在 [edit_budget] 行内
+- (例外: 反馈明确说"前面路线卡死,允许重写"时,才可无视此预算)
+
 工作方式:
-1. 先读取文件系统中已有的代码/产物,理解当前状态
-2. 基于上一轮反馈和历史,制定本轮改进计划
-3. 每次只改一个方面
+1. 先读取文件系统中已有的代码/产物 + learnings.md + dead-ends.md,理解当前状态和已知教训
+2. 基于反馈、规律、死路,制定本轮改进计划(不重走 dead-ends.md 里的方向)
+3. 每次只改一个方面,且不超变更预算
 4. 改完后 commit: git add -A && git commit -m "r[N]: [改了什么]"
 5. 持续工作直到你认为当前 milestone 的所有条件都满足
 
@@ -199,37 +208,49 @@ Milestones:
 round = 0
 best_score = 0
 stale_count = 0
+did_exploratory_rewrite = false
+edit_budget = [按产物规模设,如 ≤150 行/轮]
 
 LOOP:
-  启动 subagent(prompt = subagent_prompt,填入当前进度)
+  启动 subagent(prompt = subagent_prompt,填入当前进度 + learnings/dead-ends + edit_budget)
   等待 subagent 返回
 
   round += 1
-  执行评估 → score, pass, fail, milestone
+  执行评估 → score, pass, fail, milestone      # Mode B 主观 criterion 用 3 评委取多数/中位数
   追加 results.tsv
 
-  if done_when.success 满足:
-    git tag "final-success"
-    输出成功报告 → 停止
-
+  # ── 棘轮 + 记忆更新 ──
   if score > best_score:
     best_score = score
     stale_count = 0
     git tag "best-r{round}"
+    追加 learnings.md: 本轮有效改动 + 为什么涨(≤3 行,蒸馏)
   else:
     stale_count += 1
+    追加 dead-ends.md: 本轮试了什么 + 为什么没涨/退化(≤3 行)
 
-  if stale_count >= [convergence_limit]:
-    git checkout "best-r{上次 best 的 round}"
-    输出收敛报告 → 停止
-
+  # ── 成功 / 预算 ──
+  if done_when.success 满足:
+    git tag "final-success"
+    输出成功报告 → 停止
   if round >= [budget_limit]:
     git checkout "best-r{上次 best 的 round}"
     输出预算报告 → 停止
+
+  # ── 收敛前探索性重写逃逸 ──
+  if stale_count >= [convergence_limit]:
+    if not did_exploratory_rewrite:
+      启动重写 subagent(允许无视 edit_budget 从头重设计,但 frozen/CANNOT/Anti-Cheat 不变)
+      独立评估
+      更好 → 采用,stale_count = 0,did_exploratory_rewrite = true
+      没更好 → git checkout best,did_exploratory_rewrite = true(下次收敛即真停)
+    else:
+      git checkout "best-r{上次 best 的 round}"
+      输出收敛报告 → 停止
 
   准备 failure_summary:
     "本轮评分 {score},未通过的 criteria: {fail_list},
      当前 milestone: {milestone},建议方向: {suggestion}"
 
-  → 回到 LOOP(用 failure_summary 更新 subagent_prompt)
+  → 回到 LOOP(用 failure_summary + learnings + dead-ends 更新 subagent_prompt)
 ```

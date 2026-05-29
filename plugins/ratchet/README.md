@@ -2,7 +2,7 @@
 
 > Goal-driven master/subagent autonomous loop. Define the finish line, let independent evaluation kill-and-restart workers until they cross it — or the budget runs out.
 
-**v1.0.0** · MIT · Combines [Goal-Driven](https://github.com/disler/goal-driven-framework) master/subagent separation with [Karpathy's autoresearch](https://github.com/karpathy/autoresearch) signal-design discipline.
+**v1.1.0** · MIT · Combines [Goal-Driven](https://github.com/disler/goal-driven-framework) master/subagent separation with [Karpathy's autoresearch](https://github.com/karpathy/autoresearch) signal-design discipline, plus the three stability controls from Microsoft's **SkillOpt** (rejected-edit buffer / slow-update memory / text learning-rate) and the single-judge caution from **SkillLens** (the 46.4% pairwise-judge finding).
 
 ---
 
@@ -84,7 +84,7 @@ plugins/ratchet/
 
 - **Criteria is everything.** Can't write machine-verifiable criteria? Don't start the loop.
 - **Judge and worker never share context.** Mode A: frozen `evaluate.sh`. Mode B: independent judge subagent with its own prompt.
-- **Processes are disposable.** State lives in `results.tsv`, git tags, and the filesystem — not in the worker's context.
+- **Processes are disposable, lessons aren't.** State lives in `results.tsv`, git tags, and the filesystem — not in the worker's context. Each round distills what worked into `learnings.md` and what failed into `dead-ends.md`, both fed to the next worker (SkillOpt's most load-bearing stability control: dropping long-range memory was its single most damaging ablation).
 - **Anti-cheat is a design feature.** Frozen evaluation files, frozen test data, inoculation prompt in the worker instructions.
 - **Three explicit exits.** Success, convergence, budget — all must have numbers before starting.
 
