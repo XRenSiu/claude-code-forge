@@ -135,8 +135,8 @@
     },
     {
       "name": "skill-evolve",
-      "description": "Skill Evolution Engine — Darwin-style autonomous SKILL.md optimizer. Applies an 8-dimension rubric (60 structural + 40 effectiveness), independent-subagent scoring, and git-backed ratchet hill-climbing (keep-or-revert) to evolve any Claude Code skill from initial draft toward 90+. Inspired by Karpathy's autoresearch and alchaincyf/darwin-skill.",
-      "version": "0.1.1",
+      "description": "Skill Evolution Engine — Darwin-style autonomous SKILL.md optimizer. Applies a 9-dimension rubric (60 structural + 40 effectiveness; structure now elevates the three SkillLens-validated high-signal dimensions — failure-mechanism encoding / executable specificity / high-risk-action blacklist — that lift pairwise judge accuracy 46.4%→73.8%), default multi-judge independent scoring, mandatory with-skill-vs-no-skill baseline comparison (negative-transfer is a hard non-ship gate), and git-backed ratchet hill-climbing (keep-or-revert) to evolve any Claude Code skill from initial draft toward 90+. Ports SkillOpt's three stability controls: rejected-edit buffer (dead-ends.md) + slow-update memory (learnings.md) + text learning-rate (≤30-line edit budget). Inspired by Karpathy's autoresearch, alchaincyf/darwin-skill, and Microsoft SkillLens/SkillOpt.",
+      "version": "0.2.0",
       "author": {
         "name": "XRenSiu",
         "email": "xrensiu@gmail.com"

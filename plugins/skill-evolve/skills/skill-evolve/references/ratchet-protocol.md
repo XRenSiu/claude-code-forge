@@ -38,14 +38,17 @@ git commit -m "experiment: round-N baseline before mutation" --allow-empty
 
 ## 决策表（Strict）
 
-| Δ total | 任一维度下降？ | 决策 | git 操作 |
-|---------|---------------|------|----------|
-| > 0 | 否 | **KEEP** | `git add . && git commit -m "evolve: <change> (+N pts: <old>→<new>) [dim: <dim>]"` |
-| > 0 | 是（且非用户已确认的牺牲） | **REVERT** | `git checkout -- <SKILL.md path>` 然后日志记录"局部回退" |
-| == 0 | 否 + 至少一弱维提升 | **KEEP**（横向重平衡） | 同 KEEP，commit message 注明 `(rebalance)` |
-| == 0 | 是 | **REVERT** | 同上 |
-| < 0 | 任意 | **REVERT** | 同上 |
-| 评分崩溃 / subagent 失败 | — | **SKIP** | `git checkout -- <SKILL.md path>`，experiments.tsv 标记 SKIP |
+| 条件 | 决策 | git 操作 |
+|------|------|----------|
+| **`negative_transfer == true`（任意 Δ）** | **REVERT（铁律）** | `git checkout -- <SKILL.md path>`，标 `REVERT(neg-transfer)`。带 skill 还不如不带,分再高也丢 |
+| Δ total > 0 且无维度下降 | **KEEP** | `git add . && git commit -m "evolve: <change> (+N pts: <old>→<new>) [dim: <dim>]"` |
+| Δ total > 0 但某维下降（非用户确认的牺牲） | **REVERT** | `git checkout -- <SKILL.md path>` 然后记"局部回退" |
+| Δ total == 0 且某弱维提升、无维度下降 | **KEEP**（横向重平衡） | 同 KEEP，message 注明 `(rebalance)` |
+| Δ total == 0 且某维下降 | **REVERT** | 同上 |
+| Δ total < 0 | **REVERT** | 同上 |
+| 评分崩溃 / subagent 失败 | **SKIP** | `git checkout -- <SKILL.md path>`，experiments.tsv 标 SKIP |
+
+**`negative_transfer` 优先于一切**：先看负迁移标志，再看 Δ。这是 SkillLens 核心发现一（25% 的 skill 反而拖累 agent）的硬护栏。
 
 **永远不要 `git revert HEAD`**（那会创建反向 commit），用 `git checkout -- <file>` 直接丢弃工作区改动。基线 commit 仍在 history 里供后续诊断。
 

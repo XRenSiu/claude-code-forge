@@ -1,8 +1,8 @@
 # skill-evolve
 
-> Darwin-style autonomous SKILL.md optimizer. Take any Claude Code skill from "1" to "100" via 8-dimension rubric + ratchet hill-climbing.
+> Darwin-style autonomous SKILL.md optimizer. Take any Claude Code skill from "1" to "100" via a 9-dimension rubric + no-skill baseline comparison + ratchet hill-climbing.
 
-**v0.1.0** · MIT · Inspired by [Karpathy's autoresearch](https://github.com/karpathy/autoresearch) and [alchaincyf/darwin-skill](https://github.com/alchaincyf/darwin-skill).
+**v0.2.0** · MIT · Inspired by [Karpathy's autoresearch](https://github.com/karpathy/autoresearch), [alchaincyf/darwin-skill](https://github.com/alchaincyf/darwin-skill), and Microsoft **SkillLens** (arXiv 2605.23899) / **SkillOpt** (arXiv 2605.23904).
 
 ---
 
@@ -12,8 +12,10 @@ Most SKILL.md files stop at "it runs". The gap between "runs" and "actually good
 
 `skill-evolve` automates that gap:
 
-- **8-dimension rubric** (60 structural + 40 effectiveness) tells you exactly which dimension is weakest
-- **Independent subagent scoring** so the model that *changes* the skill is not the one that *grades* it
+- **9-dimension rubric** (60 structural + 40 effectiveness) tells you exactly which dimension is weakest — structure now elevates the three SkillLens-validated high-signal dimensions (failure-mechanism encoding / executable specificity / high-risk-action blacklist) that lift pairwise judge accuracy 46.4%→73.8%
+- **Default multi-judge independent scoring** so the model that *changes* the skill is not the one that *grades* it — and a single judge (the 46.4% coin-flip case) is never the last word
+- **No-skill baseline comparison** every round — a skill that makes the agent *worse* than no skill (negative transfer, ~25% of skills per SkillLens) is caught and blocked from shipping
+- **SkillOpt stability controls** — rejected-edit buffer (`dead-ends.md`) + slow-update memory (`learnings.md`) + ≤30-line text learning-rate
 - **Git-backed ratchet** — every round either commits the improvement or `git checkout`s it away. Scores only go up.
 
 ## Install
@@ -55,7 +57,7 @@ plugins/skill-evolve/
 └── skills/skill-evolve/
     ├── SKILL.md                      # main loop + Phase 0/1/2 contract
     ├── references/
-    │   ├── rubric.md                 # 8-dim scoring detail + JSON schema
+    │   ├── rubric.md                 # 9-dim scoring detail + JSON schema (incl. negative_transfer)
     │   ├── ratchet-protocol.md       # git workflow + decision table
     │   ├── test-protocol.md          # subagent eval prompt template
     │   └── design-rationale.md       # why this design, what it's not
@@ -76,8 +78,9 @@ See `references/design-rationale.md` for the full non-goals list.
 ## Acknowledgments
 
 - **Andrej Karpathy** — autoresearch范式（modify → eval → keep/revert）
-- **alchaincyf / 花叔** — darwin-skill 把范式迁移到 SKILL.md 优化领域，本插件直接借鉴其 8 维 rubric 设计与独立 subagent 评分机制
-- **Anthropic skill-creator** — 60/40 train/test split 思想（v0.2 计划集成）
+- **alchaincyf / 花叔** — darwin-skill 把范式迁移到 SKILL.md 优化领域，本插件借鉴其 rubric 设计、独立 subagent 评分与 with/without-skill 实测对比
+- **Microsoft SkillLens / SkillOpt** — v0.2 的三高信号维（46.4%→73.8%）、负迁移检测、多评委、拒绝缓冲/慢更新记忆/文本学习率均源自这两篇
+- **Anthropic skill-creator** — 60/40 train/test split 思想
 
 ## License
 

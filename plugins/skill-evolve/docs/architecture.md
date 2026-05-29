@@ -1,12 +1,14 @@
 ---
 name: architecture
 description: Structural view of skill-evolve — components, phase state machine, per-round data flow, subagent contract, file artifacts, recovery model
-version: 0.1.0
+version: 0.2.0
 ---
 
 # skill-evolve — 架构文档（Architecture）
 
 > 组件图、状态机、数据流、文件产物、恢复模型。读 `principles.md` 之后再读本文件。
+
+> **v0.2 结构变化**（依据 SkillLens/SkillOpt）：① rubric 8→9 维；② 新增 Phase 0.5「测试 prompt 设计 + 用户确认门」前置于基线评估；③ 评分默认 2 评委取中位数；④ 每轮效果维度跑「带 skill vs 无 skill」基线对比，`negative_transfer` 是硬性不交付闸门；⑤ 工作目录新增滚动记忆 `learnings.md` / `dead-ends.md`；⑥ 收敛前插入一次探索性重写破局部最优。下文状态机/数据流图若与此处冲突，以本说明为准（图未逐一重绘）。
 
 ---
 
@@ -59,7 +61,7 @@ skill-evolve/
 └── skills/skill-evolve/
     ├── SKILL.md                            # 入口 + 3 Phase 编排
     ├── references/
-    │   ├── rubric.md                       # 8 维评分细则（必读）
+    │   ├── rubric.md                       # 9 维评分细则（必读）
     │   ├── ratchet-protocol.md             # git 操作流 + 决策表
     │   ├── test-protocol.md                # 独立 subagent 评估协议
     │   └── design-rationale.md             # 三上游 + 三取舍 + 非目标
@@ -183,7 +185,7 @@ def should_stop(history, target=90, max_rounds=15, plateau=3):
       ├─── 3 test prompts ──────────▶│                        │
       │                              │  Read SKILL.md         │
       │                              │  simulate 3 prompts    │
-      │                              │  score 8 dims          │
+      │                              │  score 9 dims          │
       │◀────── JSON scores ──────────│                        │
       │                              │                        │
       │ [Step 4 Ratchet]             │                        │
@@ -281,7 +283,7 @@ def should_stop(history, target=90, max_rounds=15, plateau=3):
 ### `.skill-evolve/<skill-name>/baseline.md`（Phase 0 一次性）
 
 包含：
-- 基线总分 + 8 维分数表
+- 基线总分 + 9 维分数表
 - 最弱 3 维 + 失分段落引用
 - 3 测试 prompt 实际输出 vs 期望对比
 - 初步改进路线建议
@@ -302,7 +304,7 @@ TSV 是**后续迭代不重复犯错的索引**。失败比成功更值钱——
 
 ### `.skill-evolve/<skill-name>/final-report.md`（Phase 2 一次性）
 
-- 基线 vs 终值对比表（8 维 + 总分）
+- 基线 vs 终值对比表（9 维 + 总分）
 - 实验统计：KEEP / REVERT / SKIP 各多少
 - 关键改进列表：每次 KEEP 的 commit message
 - 剩余最弱维度 = 下一次 evolve 的起点
@@ -406,7 +408,7 @@ skill-evolve 是 **spec-driven**——没有常驻进程，所有状态在：
 
 - `docs/principles.md` — 为什么这么设计
 - `docs/architecture.md` — 本文件
-- `skills/skill-evolve/references/rubric.md` — 8 维细则 + JSON schema
+- `skills/skill-evolve/references/rubric.md` — 9 维细则 + JSON schema
 - `skills/skill-evolve/references/ratchet-protocol.md` — git 操作流 + 决策表
 - `skills/skill-evolve/references/test-protocol.md` — subagent spawn 规范
 - `skills/skill-evolve/references/design-rationale.md` — 三上游 + 三取舍 + 非目标
