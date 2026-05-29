@@ -2,7 +2,7 @@
 
 > Darwin-style autonomous SKILL.md optimizer. Take any Claude Code skill from "1" to "100" via a 9-dimension rubric + no-skill baseline comparison + ratchet hill-climbing.
 
-**v0.2.0** · MIT · Inspired by [Karpathy's autoresearch](https://github.com/karpathy/autoresearch), [alchaincyf/darwin-skill](https://github.com/alchaincyf/darwin-skill), and Microsoft **SkillLens** (arXiv 2605.23899) / **SkillOpt** (arXiv 2605.23904).
+**v0.2.1** · MIT · Inspired by [Karpathy's autoresearch](https://github.com/karpathy/autoresearch), [alchaincyf/darwin-skill](https://github.com/alchaincyf/darwin-skill), and Microsoft **SkillLens** (arXiv 2605.23899) / **SkillOpt** (arXiv 2605.23904).
 
 ---
 

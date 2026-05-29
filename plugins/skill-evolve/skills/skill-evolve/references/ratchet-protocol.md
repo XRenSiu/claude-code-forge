@@ -56,10 +56,10 @@ git commit -m "experiment: round-N baseline before mutation" --allow-empty
 
 ## experiments.tsv 行格式（必填）
 
-每轮一行，tab 分隔：
+每轮一行，tab 分隔（与 `templates/experiments.tsv.tmpl` 表头一致）：
 
 ```
-round  timestamp  total_old  total_new  delta  dim_old_lowest  dim_new_lowest  hypothesis  decision  commit_hash
+round  timestamp  total_old  total_new  delta  negative_transfer  dim_old_lowest  dim_new_lowest  hypothesis  decision  flags  commit_hash
 ```
 
 字段说明：
@@ -67,10 +67,12 @@ round  timestamp  total_old  total_new  delta  dim_old_lowest  dim_new_lowest  h
 - `timestamp`：ISO 8601
 - `total_old` / `total_new`：本轮改动前后总分
 - `delta`：新-旧
+- `negative_transfer`：本轮复评的负迁移标志（true/false）；true 时无论 delta 一律 REVERT
 - `dim_old_lowest`：本轮改动前最弱维度名
 - `dim_new_lowest`：复评后最弱维度名（用于看是否真的修好了）
 - `hypothesis`：「如果 X 改成 Y，则 dim 应 +N」一句话
-- `decision`：KEEP / REVERT / SKIP
+- `decision`：KEEP / REVERT / REVERT(neg-transfer) / REVERT(constraint) / KEEP(rebalance) / KEEP(user-approved-sacrifice) / SKIP
+- `flags`：`dry_run`（无 subagent 降级估分）/ `single_judge`（未走默认双评委）/ `exploratory`（探索性重写轮）/ `-`（无）
 - `commit_hash`：KEEP 时是 evolve commit hash，REVERT/SKIP 时是 baseline experiment commit hash
 
 ---

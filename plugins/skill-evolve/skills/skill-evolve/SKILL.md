@@ -15,7 +15,7 @@ when_to_use: |
   - 新生成的 skill（来自 nuwa / persona-distill / 手写）需要进化精炼
   - 想对一个目录下多个 skill 做批量质量普查与定向修补
   - 不要用于：从零生成 skill（那是 distill-meta / nuwa 的活，本 skill 只优化已存在的）
-version: 0.2.0
+version: 0.2.1
 ---
 
 # skill-evolve

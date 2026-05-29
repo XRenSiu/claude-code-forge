@@ -4,6 +4,8 @@
 **Ended**: {{end_ts}}
 **Total rounds**: {{total_rounds}}
 **Termination reason**: {{termination_reason}}
+**Final negative_transfer**: {{final_negative_transfer}}（交付前必须为 false）
+**Exploratory rewrite used**: {{exploratory_rewrite_used}}（破局部最优，每个 skill 限一次）
 
 ---
 
@@ -12,33 +14,41 @@
 | | Baseline | Final | Δ |
 |---|---|---|---|
 | **Total** | {{baseline_total}} / 100 | **{{final_total}} / 100** | **{{delta_total}}** |
+| **Negative transfer** | {{baseline_negtransfer}} | {{final_negative_transfer}} | — |
+
+> 若 final_negative_transfer == true：**不得交付**，已回退到最近一个 negative_transfer=false 的 KEEP 版本（见下方 Reproducibility）。
 
 ---
 
-## Per-Dimension Change
+## Per-Dimension Change（9 维）
 
-| Dimension | Baseline | Final | Δ | Notes |
-|-----------|----------|-------|---|-------|
-| Workflow Clarity | {{wc_b}} | {{wc_f}} | {{wc_d}} | {{wc_note}} |
-| Boundary Handling | {{bh_b}} | {{bh_f}} | {{bh_d}} | {{bh_note}} |
-| Checkpoint Design | {{cd_b}} | {{cd_f}} | {{cd_d}} | {{cd_note}} |
-| Instruction Specificity | {{is_b}} | {{is_f}} | {{is_d}} | {{is_note}} |
-| Trigger Coverage | {{tc_b}} | {{tc_f}} | {{tc_d}} | {{tc_note}} |
-| Architecture Conciseness | {{ac_b}} | {{ac_f}} | {{ac_d}} | {{ac_note}} |
-| Known Test Pass Rate | {{ktpr_b}} | {{ktpr_f}} | {{ktpr_d}} | {{ktpr_note}} |
-| Edge + Voice Test | {{evt_b}} | {{evt_f}} | {{evt_d}} | {{evt_note}} |
+| # | Dimension | 权重 | Baseline | Final | Δ | Notes |
+|---|-----------|------|----------|-------|---|-------|
+| 1 | Trigger & Frontmatter | 8 | {{tf_b}} | {{tf_f}} | {{tf_d}} | {{tf_note}} |
+| 2 | Workflow Clarity | 8 | {{wc_b}} | {{wc_f}} | {{wc_d}} | {{wc_note}} |
+| 3 | ★ Failure-Mechanism | 12 | {{fm_b}} | {{fm_f}} | {{fm_d}} | {{fm_note}} |
+| 4 | ★ Executable Specificity | 12 | {{es_b}} | {{es_f}} | {{es_d}} | {{es_note}} |
+| 5 | ★ High-Risk Blacklist | 8 | {{hb_b}} | {{hb_f}} | {{hb_d}} | {{hb_note}} |
+| 6 | Checkpoint Design | 6 | {{cd_b}} | {{cd_f}} | {{cd_d}} | {{cd_note}} |
+| 7 | Architecture Conciseness | 6 | {{ac_b}} | {{ac_f}} | {{ac_d}} | {{ac_note}} |
+| 8 | Measured Gain vs Baseline | 25 | {{mg_b}} | {{mg_f}} | {{mg_d}} | {{mg_note}} |
+| 9 | Edge + Neg-Transfer + Voice | 15 | {{env_b}} | {{env_f}} | {{env_d}} | {{env_note}} |
+
+> ★ = SkillLens 高信号维。
 
 ---
 
 ## Experiment Stats
 
 - KEEP: {{n_keep}} 轮
-- REVERT: {{n_revert}} 轮（{{revert_pct}}%）
+- REVERT: {{n_revert}} 轮（{{revert_pct}}%）  —— 其中 REVERT(neg-transfer): {{n_revert_negtransfer}} 轮
 - SKIP: {{n_skip}} 轮
+- dry_run 评分轮次: {{n_dry_run}}（无 subagent 环境的降级估分，可信度低于真评委）
+- single_judge 轮次: {{n_single_judge}}（未走默认双评委）
 - 平均每 KEEP 涨分：{{avg_gain_per_keep}}
 
-> 若 REVERT > 50%：mutate 太激进，下次缩小修改幅度。
-> 若连续 5 轮无 KEEP：rubric 已封顶或局部最优，考虑换 rubric / 引入变异。
+> 若 REVERT > 50%：mutate 太激进，收紧到 ≤30 行/轮并多读 dead-ends.md 避免重复死路。
+> 若连续 5 轮无 KEEP：已触发探索性重写；仍不动则该维标「已达上限」。
 
 ---
 
@@ -50,12 +60,24 @@
 
 ---
 
-## Notable Reverts（学习用）
+## Notable Reverts（学习用，与 dead-ends.md 同源）
 
-| Round | 假设 | 复评 Δ | 失败原因 |
-|-------|------|--------|---------|
-| {{rev_r1}} | {{rev_h1}} | {{rev_d1}} | {{rev_why1}} |
-| {{rev_r2}} | {{rev_h2}} | {{rev_d2}} | {{rev_why2}} |
+| Round | 假设 | 复评 Δ | neg-transfer? | 失败原因 |
+|-------|------|--------|---------------|---------|
+| {{rev_r1}} | {{rev_h1}} | {{rev_d1}} | {{rev_nt1}} | {{rev_why1}} |
+| {{rev_r2}} | {{rev_h2}} | {{rev_d2}} | {{rev_nt2}} | {{rev_why2}} |
+
+---
+
+## 滚动记忆摘要
+
+### learnings.md（已验证规律 — 跨轮复用）
+
+{{learnings_summary}}
+
+### dead-ends.md（已证伪改法 — {{dead_ends_count}} 条，禁止重试）
+
+{{dead_ends_summary}}
 
 ---
 
@@ -68,8 +90,14 @@
 
 ## Reproducibility
 
-- Rubric version: 1.0
+- Rubric version: 2.0
 - experiments.tsv: `{{experiments_path}}`
+- learnings.md / dead-ends.md: `{{memory_dir}}`
+- Delivered version (negative_transfer=false): `git checkout {{delivered_commit}}`
 - All git commits: `git log --oneline --grep='^evolve\|^experiment' -- {{skill_path}}`
 
 End of report.
+
+---
+
+> **铁律 3 提醒**：分数达标 ≠ 这份 skill 有品味。9 维 rubric + 基线对比能挡住「负迁移」「刷分但没用」，但 90→100 的最后一段仍是人的手艺——本报告是工程证据，不是品味背书。
