@@ -1139,6 +1139,239 @@
         }
       ],
       "last_seen": "2026-05-24T12:00:00Z"
+    },
+    "shopify-color-dark-first-with-green-undertone-001:canvas_undertone_green_to_amber_for_archival": {
+      "adaptation_id": "shopify-color-dark-first-with-green-undertone-001:canvas_undertone_green_to_amber_for_archival",
+      "occurrences": 1,
+      "contexts": [
+        {
+          "product": "qanat",
+          "user_kansei": [
+            "archival",
+            "weighty"
+          ],
+          "from": "green_forest_warm",
+          "to": "warm_neutral_amber_~80",
+          "generated_at": "2026-06-14"
+        }
+      ],
+      "last_seen": "2026-06-14"
+    },
+    "shopify-color-dark-first-with-green-undertone-001:base_canvas_4tier_replace_for_archival": {
+      "adaptation_id": "shopify-color-dark-first-with-green-undertone-001:base_canvas_4tier_replace_for_archival",
+      "occurrences": 1,
+      "contexts": [
+        {
+          "product": "qanat",
+          "user_kansei": [
+            "archival"
+          ],
+          "from": "[#000000,#02090A,#061A1C,#102620]",
+          "to": "[#0B0804,#181308,#221B10,#2E2618]",
+          "generated_at": "2026-06-14"
+        }
+      ],
+      "last_seen": "2026-06-14"
+    },
+    "vercel-color-near-black-text-002:text_polarity_invert_dark_to_light_for_calm": {
+      "adaptation_id": "vercel-color-near-black-text-002:text_polarity_invert_dark_to_light_for_calm",
+      "occurrences": 1,
+      "contexts": [
+        {
+          "product": "qanat",
+          "user_kansei": [
+            "calm",
+            "refined"
+          ],
+          "from": "dark_on_light_#171717",
+          "to": "light_on_dark_#ECE6DB",
+          "generated_at": "2026-06-14"
+        }
+      ],
+      "last_seen": "2026-06-14"
+    },
+    "binance-color-singular-gold-ingot-001:brand_role_extend_signature_for_accountable": {
+      "adaptation_id": "binance-color-singular-gold-ingot-001:brand_role_extend_signature_for_accountable",
+      "occurrences": 1,
+      "contexts": [
+        {
+          "product": "qanat",
+          "user_kansei": [
+            "accountable",
+            "authoritative"
+          ],
+          "from": "cta+active+brand+value",
+          "to": "+human_signature_moment",
+          "generated_at": "2026-06-14"
+        }
+      ],
+      "last_seen": "2026-06-14"
+    },
+    "binance-color-singular-gold-ingot-001:brand_lightness_increase_for_dark_canvas": {
+      "adaptation_id": "binance-color-singular-gold-ingot-001:brand_lightness_increase_for_dark_canvas",
+      "occurrences": 1,
+      "contexts": [
+        {
+          "product": "qanat",
+          "user_kansei": [
+            "authoritative",
+            "confident"
+          ],
+          "from": "0.50-0.55",
+          "to": "oklch_L_0.757",
+          "generated_at": "2026-06-14"
+        }
+      ],
+      "last_seen": "2026-06-14"
+    },
+    "ant-color-data-dense-semantic-palette-001:semantic_count_5_to_7_for_structured": {
+      "adaptation_id": "ant-color-data-dense-semantic-palette-001:semantic_count_5_to_7_for_structured",
+      "occurrences": 1,
+      "contexts": [
+        {
+          "product": "qanat",
+          "user_kansei": [
+            "structured",
+            "trustworthy"
+          ],
+          "from": "5",
+          "to": "7_verdict_gate_run_states",
+          "generated_at": "2026-06-14"
+        }
+      ],
+      "last_seen": "2026-06-14"
+    },
+    "ant-color-data-dense-semantic-palette-001:status_chroma_mute_for_calm": {
+      "adaptation_id": "ant-color-data-dense-semantic-palette-001:status_chroma_mute_for_calm",
+      "occurrences": 1,
+      "contexts": [
+        {
+          "product": "qanat",
+          "user_kansei": [
+            "structured",
+            "calm"
+          ],
+          "from": "undefined",
+          "to": "oklch_chroma_lt_0.10",
+          "generated_at": "2026-06-14"
+        }
+      ],
+      "last_seen": "2026-06-14"
+    },
+    "linear-app-color-translucent-borders-003:border_alpha_extend_for_dense_data": {
+      "adaptation_id": "linear-app-color-translucent-borders-003:border_alpha_extend_for_dense_data",
+      "occurrences": 1,
+      "contexts": [
+        {
+          "product": "qanat",
+          "user_kansei": [
+            "structured",
+            "refined"
+          ],
+          "from": "[0.05,0.08]",
+          "to": "[0.06,0.13]",
+          "generated_at": "2026-06-14"
+        }
+      ],
+      "last_seen": "2026-06-14"
+    },
+    "cohere-typography-serif-display-sans-utility-004:three_voice_add_mono_for_authoritative": {
+      "adaptation_id": "cohere-typography-serif-display-sans-utility-004:three_voice_add_mono_for_authoritative",
+      "occurrences": 1,
+      "contexts": [
+        {
+          "product": "qanat",
+          "user_kansei": [
+            "authoritative",
+            "archival"
+          ],
+          "from": "serif_display+sans_body",
+          "to": "+mono_machine_voice",
+          "generated_at": "2026-06-14"
+        }
+      ],
+      "last_seen": "2026-06-14"
+    },
+    "coinbase-typography-extreme-display-hero-004:display_hero_size_decrease_for_dashboard": {
+      "adaptation_id": "coinbase-typography-extreme-display-hero-004:display_hero_size_decrease_for_dashboard",
+      "occurrences": 1,
+      "contexts": [
+        {
+          "product": "qanat",
+          "user_kansei": [
+            "precise"
+          ],
+          "from": "64-80",
+          "to": "56",
+          "generated_at": "2026-06-14"
+        }
+      ],
+      "last_seen": "2026-06-14"
+    },
+    "coinbase-typography-extreme-display-hero-004:display_line_height_increase_for_serif": {
+      "adaptation_id": "coinbase-typography-extreme-display-hero-004:display_line_height_increase_for_serif",
+      "occurrences": 1,
+      "contexts": [
+        {
+          "product": "qanat",
+          "user_kansei": [
+            "precise"
+          ],
+          "from": "1.00",
+          "to": "1.05",
+          "generated_at": "2026-06-14"
+        }
+      ],
+      "last_seen": "2026-06-14"
+    },
+    "notion-components-translucent-secondary-button-009:secondary_fill_invert_for_dark": {
+      "adaptation_id": "notion-components-translucent-secondary-button-009:secondary_fill_invert_for_dark",
+      "occurrences": 1,
+      "contexts": [
+        {
+          "product": "qanat",
+          "user_kansei": [
+            "confident"
+          ],
+          "from": "rgba(0,0,0,0.05)",
+          "to": "rgba(236,230,219,0.05)",
+          "generated_at": "2026-06-14"
+        }
+      ],
+      "last_seen": "2026-06-14"
+    },
+    "linear-app-spacing-8px-base-with-optical-008:section_padding_decrease_for_cockpit": {
+      "adaptation_id": "linear-app-spacing-8px-base-with-optical-008:section_padding_decrease_for_cockpit",
+      "occurrences": 1,
+      "contexts": [
+        {
+          "product": "qanat",
+          "user_kansei": [
+            "structured"
+          ],
+          "from": "80",
+          "to": "48_via_mintlify",
+          "generated_at": "2026-06-14"
+        }
+      ],
+      "last_seen": "2026-06-14"
+    },
+    "vercel-voice-infrastructure-invisible-009:cta_verb_replace_for_intervention": {
+      "adaptation_id": "vercel-voice-infrastructure-invisible-009:cta_verb_replace_for_intervention",
+      "occurrences": 1,
+      "contexts": [
+        {
+          "product": "qanat",
+          "user_kansei": [
+            "accountable",
+            "confident"
+          ],
+          "from": "[start_deploying,get_started,contact_sales]",
+          "to": "[Resume,Halt,Approve&sign,Take_over,Redo,Replace_skill]",
+          "generated_at": "2026-06-14"
+        }
+      ],
+      "last_seen": "2026-06-14"
     }
   },
   "_template": {
