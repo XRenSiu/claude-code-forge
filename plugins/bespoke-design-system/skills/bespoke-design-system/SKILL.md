@@ -11,7 +11,7 @@ description: >-
   触发词：" 设计系统 " / " 调性 " / " UI 风格 " / " bespoke design " / " DESIGN.md " /
   " 拆解设计系统 " / " 导入 OD " / " 沉淀 adaptation "。
 argument-hint: "[mode=interactive|auto] <product-brief> | maintain <subcommand>"
-version: 1.9.1
+version: 1.10.0
 user-invocable: true
 ---
 
@@ -216,7 +216,7 @@ Rules library: <N> rules from <M> extracted systems (out of <K> registered).
 | **archetype_check** | 贴合：archetype always/never list | `checks/archetype_check.py` | primary 0 blocker（never 触发为 blocker） |
 | **kansei_coverage_check** | 贴合：Kansei 覆盖度 + 反向词冲突 | `checks/kansei_coverage_check.py` | 覆盖率 ≥ 80% AND 0 reverse_violation |
 | **neighbor_check** | 品味下限：corpus 最近邻距离 | `checks/neighbor_check.py` | 距离 < 0.3 pass / 0.3-0.6 needs_review / ≥ 0.6 reject |
-| **rationale-judge** | 论证质量（独立维度） | `agents/rationale-judge.md` via Agent 工具 | verdict = pass |
+| **rationale-judge** | 论证质量（独立维度） | plugin 级 `../../agents/rationale-judge.md`，经 `Agent(subagent_type="bespoke-design-system:rationale-judge")` 隔离调用（skill 目录下无此文件） | verdict = pass |
 
 **5 项全过 → B6 出货**
 **任一 reject → 整体 reject → 回 B4 重做（限 2 轮）**

@@ -115,6 +115,117 @@ DIM_WEIGHTS = [
 assert len(DIM_NAMES) == len(DIM_WEIGHTS), 'DIM_NAMES/DIM_WEIGHTS length mismatch'
 
 
+# v1.10.0 — "unknown" convention for honest distance.
+#
+# Bug (skill-issue-2026-06-13 #1 + #2): encode() used to FABRICATE a default
+# value (0 / 1.5 / 0.333) for dimensions whose source data was simply absent.
+# Across the A1-extracted corpus this made 9 dimensions constant (std=0) —
+# body_contrast / line_height / section_padding / no_explicit_dividers /
+# button_radius / num_button_variants / uses_shadow_as_border /
+# has_rgba_translucent_bg / has_status_palette — plus a mostly-noise has_serif
+# (brand-named fonts are never substring-detected). A new, fully-B4 design that
+# HONESTLY populates those fields was then penalised for differing from a
+# fabricated constant, structurally biasing the neighbor gate against
+# B4-complete and serif designs.
+#
+# Fix: when the source data for a dimension is genuinely absent, encode() emits
+# `None` (UNKNOWN) instead of a fabricated default. weighted_euclidean() skips
+# any dimension that is None on either side and normalises by the FULL weight
+# sum — so corpus-internal distances are unchanged (the formerly-constant dims
+# contributed 0 to corpus pairs and now skip to 0), while a new design no longer
+# accrues spurious distance on dimensions the corpus never recorded.
+UNKNOWN = None
+
+
+KNOWN_SERIF_TOKENS = (
+    'serif', 'georgia', 'cormorant', 'didone', 'tiempos', 'lyon', 'garamond',
+    'times', 'freight', 'canela', 'recoleta', 'domine', 'lora', 'playfair',
+    'signifier', 'reckless', 'jannon', 'sectra', 'spectral', 'noto serif',
+    'source serif', 'ibm plex serif', 'pt serif', 'merriweather', 'newsreader',
+)
+KNOWN_SANS_TOKENS = (
+    'inter', 'sf pro', 'system-ui', 'feather', 'gg sans', 'cereal', 'helvetica',
+    'sohne', 'söhne', 'suisse', 'roboto', 'open sans', 'segoe', 'geist', 'arial',
+    'circular', 'graphik', 'aktiv', 'neue', 'grotesk', 'grotesque',
+)
+KNOWN_HUMANIST_TOKENS = (
+    'inter', 'sf pro', 'system-ui', 'feather', 'gg sans', 'cereal', 'roboto',
+    'open sans', 'segoe',
+)
+
+
+def _detect_serif_humanist(typo):
+    """Return (has_serif, is_humanist_sans), each in {1.0, 0.0, None}.
+
+    None means "undeterminable from the tokens" (e.g. brand-named fonts with no
+    `category`/`class` metadata) — NOT "absent / false". Prefers explicit
+    `families[].category` and `display/body.class` signals, then a known-typeface
+    token match, and only returns a concrete 0.0 when every family is positively
+    classifiable as non-serif.
+    """
+    families = typo.get('families') or []
+    cats, names = [], []
+    for f in families:
+        if isinstance(f, dict):
+            c = (f.get('category') or '').lower()
+            if c:
+                cats.append(c)
+            names.append(str(f.get('family', '')).lower())
+        else:
+            names.append(str(f).lower())
+    for role in ('display', 'body', 'mono'):
+        blk = typo.get(role)
+        if isinstance(blk, dict):
+            c = (blk.get('class') or blk.get('category') or '').lower()
+            if c:
+                cats.append(c)
+            names.append(str(blk.get('family', '')).lower())
+    joined_cats = ' '.join(cats)
+    joined_names = ' '.join(names)
+
+    # serif evidence: a category token containing 'serif' but not 'sans-serif',
+    # or a known serif typeface name.
+    cat_says_serif = any(('serif' in c and 'sans' not in c) for c in cats)
+    name_says_serif = any(tok in joined_names for tok in KNOWN_SERIF_TOKENS)
+    # non-serif evidence per family: category sans/grotesque/geometric/mono, or
+    # a known sans/mono typeface name.
+    def _fam_is_nonserif(cat, name):
+        if cat and any(k in cat for k in ('sans', 'grotesque', 'geometric', 'mono', 'humanist')):
+            return True
+        if any(tok in name for tok in KNOWN_SANS_TOKENS) or 'mono' in name:
+            return True
+        return False
+
+    if cat_says_serif or name_says_serif:
+        has_serif = 1.0
+    else:
+        # need EVERY family positively classifiable as non-serif to claim 0.0;
+        # any unclassifiable brand font → unknown.
+        fam_pairs = []
+        for f in families:
+            if isinstance(f, dict):
+                fam_pairs.append(((f.get('category') or '').lower(), str(f.get('family', '')).lower()))
+        for role in ('display', 'body', 'mono'):
+            blk = typo.get(role)
+            if isinstance(blk, dict):
+                fam_pairs.append(((blk.get('class') or blk.get('category') or '').lower(),
+                                  str(blk.get('family', '')).lower()))
+        if fam_pairs and all(_fam_is_nonserif(c, n) for c, n in fam_pairs):
+            has_serif = 0.0
+        else:
+            has_serif = UNKNOWN
+
+    if has_serif == 1.0:
+        is_humanist = 0.0
+    elif any(tok in joined_names for tok in KNOWN_HUMANIST_TOKENS) or 'humanist' in joined_cats:
+        is_humanist = 1.0
+    elif has_serif == 0.0:
+        is_humanist = 0.0
+    else:
+        is_humanist = UNKNOWN
+    return has_serif, is_humanist
+
+
 def _safe_max(seq, default=0):
     seq = [x for x in seq if isinstance(x, (int, float))]
     return max(seq) if seq else default
@@ -182,7 +293,7 @@ def encode(tokens: dict) -> list[float]:
         entropy = 0.0
 
     body_contrast = (color.get('contrast', {}) or {}).get('body_on_bg')
-    body_contrast_norm = (body_contrast / 21) if isinstance(body_contrast, (int, float)) else 0.0
+    body_contrast_norm = (body_contrast / 21) if isinstance(body_contrast, (int, float)) else UNKNOWN
 
     is_dark_canvas = 1.0 if neutral_L_min < 0.15 else 0.0
     chromatic_count_norm = min(len(chromatic), 10) / 10
@@ -218,19 +329,17 @@ def encode(tokens: dict) -> list[float]:
 
     lh_rules = typo.get('line_height_rules') or {}
     line_height_body = (lh_rules.get('body') or lh_rules.get('body_relaxed')
-                         or lh_rules.get('body_standard') or 1.5)
+                         or lh_rules.get('body_standard'))
     if not isinstance(line_height_body, (int, float)):
-        line_height_body = 1.5
+        line_height_body = UNKNOWN   # absent → unknown, not a fabricated 1.5
 
     weights = typo.get('weights_seen') or []
-    weight_max_norm = max(weights, default=400) / 900
+    weight_max_norm = (max(weights) / 900) if weights else UNKNOWN
 
-    families = typo.get('families') or []
-    family_names = ' '.join(f.get('family', '') if isinstance(f, dict) else str(f)
-                             for f in families).lower()
-    has_serif = 1.0 if any(k in family_names for k in ('serif', 'georgia', 'cormorant', 'didone')) else 0.0
-    is_humanist_sans = 1.0 if (any(k in family_names for k in ('inter', 'sf pro', 'feather', 'gg sans', 'cereal'))
-                                and not has_serif) else 0.0
+    # v1.10.0: serif/humanist via explicit category/class signals, else UNKNOWN
+    # (brand-named fonts with no metadata are NOT assumed sans — that was the
+    # has_serif structural bias bug).
+    has_serif, is_humanist_sans = _detect_serif_humanist(typo)
 
     # ---------- Spacing ----------
     base = sp.get('base_unit_px') or 8
@@ -239,9 +348,10 @@ def encode(tokens: dict) -> list[float]:
     spacing_scale = [v for v in spacing_scale if isinstance(v, (int, float)) and 0 < v < 200]
     spacing_scale_length_norm = min(len(spacing_scale), 14) / 14
     spacing_scale_max_norm = min(_safe_max(spacing_scale, 0) / 100, 1.0)
-    section_padding_min = sp.get('section_vertical_padding_min_px') or 64
-    section_padding_min_norm = min(section_padding_min / 100, 1.5)
-    no_explicit_dividers = 1.0 if 'no_explicit_section_dividers' in str(sp) else 0.0
+    section_padding_min = sp.get('section_vertical_padding_min_px') or sp.get('section_padding_min')
+    section_padding_min_norm = min(section_padding_min / 100, 1.5) if isinstance(section_padding_min, (int, float)) else UNKNOWN
+    # absence of the flag does NOT mean "has explicit dividers" — it's unknown.
+    no_explicit_dividers = 1.0 if 'no_explicit_section_dividers' in str(sp) else UNKNOWN
 
     # ---------- Radius ----------
     radius_pairs = radius.get('role_radius_pairs') if isinstance(radius, dict) else None
@@ -270,29 +380,41 @@ def encode(tokens: dict) -> list[float]:
     has_bounce = 1.0 if any('1.5' in str(c) or 'spring' in str(c).lower() for c in bezier_curves) else 0.0
 
     # ---------- Components (heuristic) ----------
+    # v1.10.0: component dims are UNKNOWN when the tokens carry no components
+    # block (the A1 corpus never recorded buttons), rather than a fabricated 0.
     button_section = components.get('buttons') if isinstance(components, dict) else None
     if isinstance(button_section, dict):
         num_button_variants = len(button_section)
         primary_btn = button_section.get('primary_brand') or button_section.get('primary_cta') or {}
         radius_field = primary_btn.get('radius') if isinstance(primary_btn, dict) else None
-        if isinstance(radius_field, (int, float)):
-            button_radius = radius_field
-        else:
-            button_radius = 8   # default
+        button_radius = radius_field if isinstance(radius_field, (int, float)) else 8
+        button_radius_norm = min(button_radius / 24, 1.5)
+        num_button_variants_norm = min(num_button_variants, 6) / 6
+        has_rgba_translucent_bg = 1.0 if ('rgba(255' in str(button_section) and ',0.0' in str(button_section)) else 0.0
     else:
-        num_button_variants = 0
-        button_radius = 8
-    button_radius_norm = min(button_radius / 24, 1.5)
-    num_button_variants_norm = min(num_button_variants, 6) / 6
+        button_radius_norm = UNKNOWN
+        num_button_variants_norm = UNKNOWN
+        has_rgba_translucent_bg = UNKNOWN
 
-    # Heuristic: shadow-as-border systems (Vercel signature) — look for "0px 0px 0px 1px" in shadows
-    rgba_shadows = ((components.get('card', {}) or {}).get('shadow', '') if isinstance(components.get('card'), dict) else '')
+    # shadow-as-border heuristic — UNKNOWN if no shadow data anywhere
+    card_block = components.get('card') if isinstance(components, dict) else None
+    rgba_shadows = card_block.get('shadow', '') if isinstance(card_block, dict) else ''
+    depth_shadows = str((tokens.get('depth_elevation', {}) or {}).get('rgba_shadows', ''))
     if not rgba_shadows:
-        rgba_shadows = str((tokens.get('depth_elevation', {}) or {}).get('rgba_shadows', ''))
-    uses_shadow_as_border = 1.0 if '0px 0px 0px 1px' in rgba_shadows else 0.0
-    has_rgba_translucent_bg = 1.0 if any('rgba(255' in str(s) and ',0.0' in str(s) for s in
-                                          [str(button_section)]) else 0.0
-    has_status_palette = 1.0 if isinstance(color.get('status'), dict) and len(color.get('status', {})) >= 3 else 0.0
+        rgba_shadows = depth_shadows
+    if not rgba_shadows and not isinstance(card_block, dict):
+        uses_shadow_as_border = UNKNOWN
+    else:
+        uses_shadow_as_border = 1.0 if '0px 0px 0px 1px' in rgba_shadows else 0.0
+
+    # status palette — accept either color.status or color.state; UNKNOWN if neither block exists
+    status_block = color.get('status') if isinstance(color.get('status'), dict) else None
+    state_block = color.get('state') if isinstance(color.get('state'), dict) else None
+    chosen = status_block or state_block
+    if chosen is None:
+        has_status_palette = UNKNOWN
+    else:
+        has_status_palette = 1.0 if len(chosen) >= 3 else 0.0
 
     return [
         primary_brand_L, primary_brand_C, primary_brand_H_sin, primary_brand_H_cos,
@@ -339,7 +461,7 @@ def main():
             print(f'  skip {sys_name} (encode error: {e})', file=sys.stderr)
             continue
         systems[sys_name] = {
-            'vector': [round(v, 4) for v in vec],
+            'vector': [round(v, 4) if isinstance(v, (int, float)) else None for v in vec],
             'dialect': tokens.get('dialect'),
             'extracted_at': tokens.get('extracted_at'),
         }

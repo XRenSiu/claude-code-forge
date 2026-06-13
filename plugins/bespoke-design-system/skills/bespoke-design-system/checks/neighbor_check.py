@@ -32,15 +32,29 @@ from build_neighbor_corpus import encode, DIM_NAMES, DIM_WEIGHTS  # type: ignore
 CORPUS_PATH = os.path.normpath(os.path.join(HERE, '..', 'grammar', 'meta', 'neighbor-corpus.json'))
 
 
-def weighted_euclidean(v1: list[float], v2: list[float], weights: list[float]) -> float:
+def weighted_euclidean(v1: list, v2: list, weights: list[float]) -> float:
+    """Weighted Euclidean distance with UNKNOWN-dimension masking (v1.10.0).
+
+    Any dimension that is None on EITHER side is skipped (we don't know it, so we
+    don't accrue distance on it). The denominator stays the FULL weight sum, so
+    corpus-internal distances are unchanged — the formerly-constant dims the A1
+    corpus never recorded contributed 0 to corpus pairs and now skip to 0 — while
+    a new, fully-populated design no longer eats spurious distance on dimensions
+    the corpus has no value for. See build_neighbor_corpus.py UNKNOWN note +
+    skill-issue-2026-06-13 (#1 serif bias, #2 B4-completeness bias).
+    """
     if len(v1) != len(v2) or len(v1) != len(weights):
         raise ValueError(f'vector length mismatch: {len(v1)} vs {len(v2)} vs {len(weights)}')
     s = 0.0
     total_weight = sum(weights)
     for i in range(len(v1)):
-        diff = v1[i] - v2[i]
+        a, b = v1[i], v2[i]
+        if a is None or b is None:
+            continue  # UNKNOWN on either side → skip (full denominator preserved)
+        diff = a - b
         s += weights[i] * diff * diff
-    # Normalize by total weight so distance is roughly 0..2 regardless of dim count
+    # Normalize by FULL total weight (not active-only) so corpus-internal
+    # distances — and therefore the calibrated thresholds — are preserved.
     return math.sqrt(s / total_weight) if total_weight > 0 else math.sqrt(s)
 
 
