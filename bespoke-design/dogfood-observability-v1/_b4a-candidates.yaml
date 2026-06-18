@@ -1,0 +1,45 @@
+# B4a — 3 grounded candidate directions (develop B0.5 seeds with B3 rules).
+# Each traces to B3 anchor + productive_tensions. NOT three flavors of Linear.
+
+candidates:
+  - id: A
+    concept: "潜艇控制台：黑暗、极密、平静的仪表盘——连看数小时不疲劳"
+    anchor_system: linear-app + vercel (dark canvas + luminance stepping)
+    productive_tension: "Linear 的平静暗底 × ANT 的严格数据网格密度（calm × dense，通常互斥）"
+    source_rules: [linear-app-color-dark-native-001, linear-app-elevation-luminance-stepping-007,
+                   linear-app-spacing-8px-base-with-optical-008, ant-layout-strict-type-spacing-scale-003,
+                   github-color-hairline-border-not-shadow-003]
+    signature_moves:
+      - "等宽 tabular-figure 读数严格对齐基线网格，行=仪表"
+      - "唯一冷青色 (#3DD6C4-ish) 只给 live/active 数据流"
+    key_decisions: "canvas #0b0d10；luminance stepping；JetBrains Mono tabular 全量指标；hairline rgba(255,255,255,.06) 边框无阴影；weight 460/560 两档"
+    boldness: balanced
+
+  - id: B
+    concept: "事件日志即'存档报纸'：系统事件像严肃大报一样排版，时间线是专栏不是消防水管"
+    anchor_system: mintlify (generous sections, whisper borders) + vercel restraint
+    productive_tension: "developer_tool 里用衬线编辑体 + 暖纸色（dev 期待 mono+dark，这是高张力）"
+    source_rules: [mintlify-spacing-generous-sections-009, mintlify-components-whisper-borders-008,
+                   mintlify-typography-three-weight-006, ant-layout-strict-type-spacing-scale-003,
+                   github-color-hairline-border-not-shadow-003]
+    signature_moves:
+      - "衬线 display（事件/区段标题）+ 暖纸 canvas (#faf7f1)，正文 mono 只给 log payload"
+      - "栏式时间线：左侧细 column-rule + 时间戳像报纸边栏"
+    key_decisions: "canvas #faf7f1 暖纸；serif display (e.g. Newsreader/Spectral) ；mono(JetBrains) 仅 log 行；hairline ink 边框；ink #1a1714 文字"
+    boldness: bold
+
+  - id: C
+    concept: "Datadog 的反面：粗野、全等宽、终端原生、近乎挑衅地朴素，像 htop 拿到设计预算"
+    anchor_system: brutalism (hard borders, no radius, raw)
+    productive_tension: "brutalist 极致克制 × 唯一一个滚烫告警色（binance 交易所两色思路）—— 平静里突然刺眼报警"
+    source_rules: [brutalism-color-stark-mono-base-001, brutalism-components-hard-border-no-radius-002,
+                   brutalism-typography-mono-everything-003, binance-color-trading-floor-two-tone-002,
+                   github-color-hairline-border-not-shadow-003]
+    signature_moves:
+      - "mono-everything + 0 圆角 + 硬 1px 黑/白边；ALL-CAPS 标签"
+      - "全局仅一个滚烫告警红 (#ff2d20)，只在告警 firing 时出现——其余一律灰阶"
+    key_decisions: "canvas #ffffff / #000 双态；IBM Plex Mono 全量；radius 0；hard 1px #111 边框；单一 alert #ff2d20；无渐变无阴影"
+    boldness: bold
+
+# 注：brutalism-* / binance two-tone / mintlify serif-ish 这些都是 B3 留下的 productive_tension，
+# 旧逻辑（删孤立点）会把它们当 outlier 丢掉 → 三个候选只能都长成 anchor(Linear)。

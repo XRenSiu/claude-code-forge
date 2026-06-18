@@ -31,7 +31,32 @@
 
 版本 1.12.0 → 1.13.0（SKILL.md / plugin.json / marketplace.json）。所有 spec 同步（B0-B6 流程、prompts、CLAUDE.md dogfooding 表、README、tacit/dieter 引用、37→44 维表述）。
 
-**仍未做**：A1-A4 提取脚本批量回填 organizing_principle/signature_move（存量规则只示范了 1 条）；3 对 stub tokens re-extract/排除；端到端 dogfooding 验证整条新 B0.5→B5 流程（LLM 阶段无法单测，需跑真实 brief）。
+**仍未做**：A1-A4 提取脚本批量回填 organizing_principle/signature_move（存量规则只示范了 1 条）；3 对 stub tokens re-extract/排除。
+
+## 端到端 dogfood 验证（2026-06-18，brief = 自托管可观测性工具 / developer_tool 压力测试）
+
+产物：`bespoke-design/dogfood-observability-v1/`。**结论：新内核端到端跑通，且证明治住了"很普通"**：
+
+| 机制 | 验证结果 |
+|---|---|
+| B0.5 concept-first | 产出 3 个**真发散** POV（潜艇仪表 / 编辑大报 / 粗野终端）——**不是** Linear 一种 |
+| B3 anchor+tension | anchor=linear+vercel,但**132 条 productive_tension 保留**(含 brutalism 6 条、binance 两色、mintlify 编辑),旧逻辑会删 |
+| **taste-critic(rank)** | **把 Linear-ish 候选 A 判 `derivative` 0.50** 并选了编辑方向 B（distinctive 0.94）——**这正是旧 5 闸会 5/5 放行的平庸,被新闸拦下** |
+| neighbor(winner) | `distinctive` 0.130,最近邻 = mastercard/airbnb(暖系),**完全不在 Linear/vercel 簇** |
+| 4 Python check | coherence 0.65 / archetype Sage / kansei 0.80 / neighbor 0.130 全 pass |
+| **改动5B transformational** | 衬线大标题标 `transformational:true`,**rationale-judge 正确认作合法(非 phantom)**,taste-critic 验证它服务概念 |
+| rationale-judge | `pass`(0 blocker)。且**真抓到** github 规则 why.avoid 被我误述(soft→heavy)=闸门有效,非装饰 |
+| taste-critic(gate) | `distinctive` 0.92,`signature_survived_develop:true`(衬线没在 9-section 展开时退回 Inter) |
+
+**6/6 闸门通过,且 winner 是一个编辑调性的可观测性工具,而非 Linear 复刻。**
+
+### dogfood 新发现（需后续处理）
+
+| # | 严重度 | 问题 | 建议 |
+|---|---|---|---|
+| 4 | medium | **union-kansei vs 单一 winner 覆盖**：B0.5 三发散概念 → B1 取并集做检索宽度,但单一 winner 天然覆盖不了被否概念的 kansei（本次 raw/terminal-native 属概念 C）→ coverage 卡在 0.80 阈值线。 | ✅ **已修 v1.13.1**：kansei_coverage 加 `--kansei` 覆盖参数,B5 传 winner 概念 kansei 而非并集。实测:winner 8 词 → coverage 1.0。SKILL.md B5 / b5 prompt / CLAUDE.md 已同步。 |
+| 5 | medium（**闸门在干净环境跑不起来**） | `kansei_coverage_check.py` **硬依赖 PyYAML**（`ERROR: PyYAML required`）。本机默认无 pyyaml,其余 5 个 check 全读 JSON 能跑。这意味着干净环境里这一闸直接挂。 | ✅ **已修 v1.13.1**：改为 YAML-或-JSON 加载;无 pyyaml 时传 JSON 仍能跑,否则优雅降级 `evaluable:false`(不再 `exit(2)` 崩闸门)。4 条路径实测通过(yaml/json/--kansei/无-pyyaml 降级)。 |
+| 6 | low（观察） | 概念优先检索使候选集很宽（216）→ 共现稀疏 → B3 anchor 极小（2 条）、tension 极大（132 条）。anchor 作为"协调骨架"作用被削弱。 | 可让 anchor 用 winner 的 `anchor_system` 播种,或候选集很宽时下调共现阈值让 anchor 成形。 |
 
 ## 根因定位
 

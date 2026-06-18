@@ -1,0 +1,30 @@
+mode: auto
+# v1.13.0 改动3: concept seeds 覆盖 defaults.yaml 的 developer_tool 质心。
+# 质心本会给: [Sage,Creator] + [structured,precise,modern,calm,confident] (窄).
+# concept 并集把它拓宽 —— 这正是"防止每个 dev 工具都长成 Linear"的关键。
+inferred_fields: [audience, brand_archetypes, kansei_words, semantic_differentials, concept_seeds]
+concept_seeds_ref: ./concept-seeds.yaml   # A 潜艇仪表 / B 编辑大报 / C 粗野终端
+
+product_context:
+  category: developer_tool
+  audience: 小型后端团队（自托管、成本敏感、终端原生、看仪表数小时）
+  unique_constraints:
+    - 自托管（非 SaaS 营销站）—— 工具感 > 营销感
+    - 长时间盯屏（眼疲劳是真约束）
+    - 反 Datadog（拒绝彩虹仪表盘与企业 SaaS 模板感）
+
+brand_archetypes:
+  primary: Sage           # 三概念的共同骨架（精确、可信）
+  secondary: Creator      # 概念 B 编辑感；概念 C 的 Outlaw 在 B2 也要拉取
+  also_pull_for_concepts: [Outlaw]   # 概念 C —— B2 须包含 Outlaw 规则
+
+kansei_words:
+  # 并集（非质心）：editorial / dense / raw / terminal-native 都超出 developer_tool 默认
+  positive: [structured, precise, calm, dense, legible, editorial, authoritative, raw, terminal-native, confident]
+  reverse_constraint: [ai_slop, generic_corporate, decorative, cluttered, playful]
+
+semantic_differentials:
+  warm_to_cold: 0.0       # 宽：A 冷 / B 暖 / C 中 —— 不塌缩到单一温度
+  ornate_to_minimal: 0.5  # 偏极简（三者都反装饰）
+  serious_to_playful: -0.6
+  modern_to_classical: 0.0 # 宽：A/C 现代 / B 偏古典（编辑大报）

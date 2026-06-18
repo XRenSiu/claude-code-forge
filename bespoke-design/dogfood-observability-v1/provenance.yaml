@@ -1,0 +1,172 @@
+# Provenance — dogfood-observability winner (concept B, editorial broadsheet)
+# v1.13.0 dogfood. Demonstrates: anchor inheritance + productive-tension adaptation
+# + ONE bounded transformational operator (serif display).
+
+decisions:
+  - decision: "Warm paper canvas #faf7f1 with tone-step depth (no shadow)"
+    section: color
+    inheritance:
+      source_rules: [github-color-hairline-border-not-shadow-003]
+      source_systems: [github]
+      original_rationale: |
+        github-color-hairline-border-not-shadow-003.action (verbatim intent):
+        depth via hairline borders, not drop shadows.
+        why.avoid (verbatim): soft_shadow_elevation, rounded_floating_cards, visual_softening
+        why.establish (verbatim): engineering-precision-via-borders
+    adaptation:
+      fully_aligned_kansei: [calm, structured]
+      needs_extension_kansei: [editorial, authoritative]
+      modifications:
+        - dimension: canvas_lightness
+          from: "near-white / dark (source contexts)"
+          to: "#faf7f1 warm paper"
+          out_of_source_range: true
+          reason: editorial 'newspaper' warmth; reduces hours-on-screen glare vs pure white
+      preserved: [depth-by-hairline-not-shadow]
+    justification:
+      internal_consistency: ["depth model (§6) uses tone steps, consistent with this canvas"]
+      user_kansei_coverage:
+        addressed_in_this_decision: [calm (matrix primary)]
+        addressed_elsewhere: ["editorial → 'Serif display' (matrix primary)"]
+        uncovered: []
+      conflict_check: none
+    confidence: medium
+
+  - decision: "Serif display (Newsreader) for all headings; mono quarantined to log payload"
+    section: typography
+    transformational: true                 # v1.13.0 改动5B — the ONE bounded transformational move
+    inheritance:
+      source_rules: []                     # honest: NO dev-tool rule provides serif display
+      source_systems: []
+      original_rationale: |
+        ⚠️ Transformational: not traceable to any B3 rule. The rule-bearing corpus's
+        developer_tool typography rules prescribe geometric/humanist sans (Inter/Geist
+        family). This decision deliberately changes that defining dimension.
+    transformation_argument: |
+      - Defining dimension altered: heading typeface CLASS (sans → serif) in a developer tool —
+        a rule-of-the-space change, not a parameter tweak.
+      - Why the concept requires it: concept B ("event log as a newspaper of record") is
+        constituted by serif editorial typesetting; without serif headings the identity
+        collapses to a generic sans dev tool (taste-critic must_preserve #1).
+      - Why no existing rule covers it: the 42 rule-bearing systems are sans/mono dev tools;
+        the corpus's editorial/serif systems (warm-editorial, publication, paper) are
+        token-only stubs with no abstracted rules, so there is no serif-display rule to inherit.
+    adaptation:
+      fully_aligned_kansei: [editorial, authoritative, legible]
+      needs_extension_kansei: []
+      modifications: []
+      preserved: []
+    justification:
+      internal_consistency: ["mono restricted to payload (§3) so serif headings carry hierarchy"]
+      user_kansei_coverage:
+        addressed_in_this_decision: [editorial (matrix primary), authoritative (matrix primary)]
+        addressed_elsewhere: ["legible → 'Single editorial column' (matrix primary)"]
+        uncovered: []
+      conflict_check: none
+    confidence: medium
+
+  - decision: "Single oxblood accent #8c2f2a (links/active/CTA only)"
+    section: color
+    inheritance:
+      source_rules: [linear-app-color-single-chromatic-anchor-002]
+      source_systems: [linear-app]
+      original_rationale: |
+        linear-app-color-single-chromatic-anchor-002.action (verbatim):
+        brand_chromatic_count: 1 ; brand_hue_range: [240, 270] (cool)
+    adaptation:
+      fully_aligned_kansei: [confident, structured]
+      needs_extension_kansei: [editorial]
+      modifications:
+        - dimension: hue
+          from: "[240, 270] (cool indigo)"
+          to: "~22 (warm oxblood)"
+          out_of_source_range: true
+          reason: warm oxblood keys to the paper palette; cool indigo would read as dev-tool default (anti-slop B3)
+      preserved: [single-chromatic-anchor discipline]
+    justification:
+      internal_consistency: ["only chromatic in chrome, consistent with §2 strategy"]
+      user_kansei_coverage:
+        addressed_in_this_decision: [confident (matrix primary)]
+        addressed_elsewhere: []
+        uncovered: []
+      conflict_check: none
+    confidence: medium
+
+  - decision: "Single editorial column ≤760px + marginal timestamp rail; generous section padding"
+    section: layout
+    inheritance:
+      source_rules: [mintlify-spacing-generous-sections-009, ant-layout-strict-type-spacing-scale-003]
+      source_systems: [mintlify, ant]
+      original_rationale: |
+        mintlify-spacing-generous-sections-009: generous vertical section rhythm.
+        ant-layout-strict-type-spacing-scale-003: strict baseline grid discipline.
+    adaptation:
+      fully_aligned_kansei: [structured, precise, legible, dense]
+      needs_extension_kansei: [editorial]
+      modifications:
+        - dimension: max_content_width
+          from: "wide app shell (source)"
+          to: "760px reading measure"
+          out_of_source_range: true
+          reason: a newspaper column reads at a controlled measure; not an app dashboard width
+      preserved: [generous-section-rhythm, strict-baseline-grid]
+    justification:
+      internal_consistency: ["timeline (§4 event row) sits in this column with hairline rule"]
+      user_kansei_coverage:
+        addressed_in_this_decision: [structured (matrix primary), precise (matrix primary), legible (matrix primary), dense (matrix primary)]
+        addressed_elsewhere: []
+        uncovered: []
+      conflict_check: none
+    confidence: high
+
+# v1.9.0 top-level kansei matrix (authoritative coverage claim)
+kansei_primary_addresser:
+  - kansei: structured
+    primary_decision: "Single editorial column ≤760px + marginal timestamp rail"
+    primary_section: layout
+    secondary_addressers: ["Warm paper canvas"]
+  - kansei: precise
+    primary_decision: "Single editorial column ≤760px + marginal timestamp rail"
+    primary_section: layout
+    secondary_addressers: []
+  - kansei: calm
+    primary_decision: "Warm paper canvas #faf7f1 with tone-step depth"
+    primary_section: color
+    secondary_addressers: []
+  - kansei: dense
+    primary_decision: "Single editorial column ≤760px + marginal timestamp rail"
+    primary_section: layout
+    secondary_addressers: []
+  - kansei: legible
+    primary_decision: "Single editorial column ≤760px + marginal timestamp rail"
+    primary_section: layout
+    secondary_addressers: ["Serif display"]
+  - kansei: editorial
+    primary_decision: "Serif display (Newsreader) for all headings"
+    primary_section: typography
+    secondary_addressers: ["Warm paper canvas", "Single oxblood accent"]
+  - kansei: authoritative
+    primary_decision: "Serif display (Newsreader) for all headings"
+    primary_section: typography
+    secondary_addressers: []
+  - kansei: confident
+    primary_decision: "Single oxblood accent #8c2f2a"
+    primary_section: color
+    secondary_addressers: []
+  - kansei: raw
+    primary_decision: null
+    note: see kansei_unaddressable.raw — belongs to non-selected concept C (brutalist)
+  - kansei: terminal-native
+    primary_decision: null
+    note: see kansei_unaddressable.terminal-native — belongs to non-selected concept C
+
+# Honest: 2 of the 10 profile kansei belong to the REJECTED concept C (brutalist),
+# not the editorial winner. This is the union-kansei vs winner-coverage tension
+# (dogfood finding — see skill-issue-2026-06-18 #4).
+kansei_unaddressable:
+  - kansei: raw
+    reason: profile kansei was the UNION of 3 divergent concepts; 'raw' was concept C's lean, not winner B's
+    where_it_manifests_in_product: [concept C — not selected]
+  - kansei: terminal-native
+    reason: concept C's lean (brutalist terminal); winner B is editorial, deliberately the opposite
+    where_it_manifests_in_product: [concept C — not selected]

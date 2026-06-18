@@ -1,0 +1,33 @@
+# B0.5 — Concept Seeds (v1.13.0 改动3). Auto-mode, brief-driven, 3 divergent POVs.
+brief: >-
+  Self-hosted observability — tail, search, alert on logs & traces, for small
+  backend teams tired of paying for Datadog.
+
+concept_seeds:
+  - id: A
+    pov: "潜艇控制台——黑暗、密集、每个仪表都挣到了位置；连看几小时不疲劳"
+    rejects: Datadog 的彩虹仪表盘和营销级图表噪音
+    signature_hypothesis: 极高信息密度 + 克制单色 + 等宽表格数字对齐成"仪表读数"
+    tension_hint: "极密 AND 平静（通常密集=吵）——把编辑级排版节奏 + tabular mono 放进冷静暗底"
+    archetype_lean: Sage
+    kansei_lean: [structured, precise, calm, dense, legible]
+    boldness: balanced
+  - id: B
+    pov: "事件日志即'存档报纸'——系统事件像严肃大报一样排版，时间线读起来像专栏而非消防水管"
+    rejects: 把可观测性当"监控墙"；改当"阅读"
+    signature_hypothesis: 衬线编辑体 + 暖中性纸张色 + 栏式时间线，devs 期待的 mono+dark 之外
+    tension_hint: "衬线编辑排版 + 暖纸色，放进一个 developer_tool（高张力：dev 工具里用 serif）"
+    archetype_lean: Creator
+    kansei_lean: [editorial, authoritative, readable, archival, structured]
+    boldness: bold
+  - id: C
+    pov: "Datadog 的反面——拒绝企业 SaaS 彩虹；粗野、全等宽、终端原生，近乎挑衅地朴素，像 htop 拿到了设计预算"
+    rejects: 企业级 SaaS 的圆角卡片+渐变+友好感
+    signature_hypothesis: 粗野主义 + mono-everything + 硬边框 + 唯一一个滚烫的告警色
+    tension_hint: "brutalist 朴素 + 单一高饱和告警色（张力：极克制里突然一个刺眼报警瞬间）"
+    archetype_lean: Outlaw
+    kansei_lean: [raw, terminal-native, defiant, honest, structured]
+    boldness: bold
+
+# Divergence check: A=潜艇仪表(暗/密/克制) B=编辑大报(衬线/暖/阅读) C=粗野终端(mono/生/挑衅)
+# 三个隐喻、温度、借鉴领域、冒险度都显著不同；B/C 明显远离 dev-tool 默认的 Linear 引力。

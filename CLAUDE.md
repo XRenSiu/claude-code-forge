@@ -129,7 +129,7 @@ $SKILL_DIR/agents/rationale-judge.md   # B5 的对抗式审查方角色定义
 |-------|-----|---------|
 | coherence | `python3 checks/coherence_check.py <tokens.json>` | score ≥ 0.55, 0 blocker |
 | archetype | `python3 checks/archetype_check.py <tokens.json> --primary <X> --secondary <Y>` | primary 0 blocker |
-| kansei_coverage | `python3 checks/kansei_coverage_check.py --profile <yaml> --provenance <yaml>` | coverage ≥ 0.8, 0 reverse violation |
+| kansei_coverage | `python3 checks/kansei_coverage_check.py --profile <yaml\|json> --provenance <yaml\|json> --kansei <winner kansei>` | coverage ≥ 0.8（按 winner kansei，v1.13.1）, 0 reverse violation。无 pyyaml 时传 JSON 或优雅降级 |
 | neighbor | `python3 checks/neighbor_check.py <tokens.json>` | v1.11.0 独特性带：verdict=pass (0.12–0.45 distinctive)；<0.05 reject(clone)，0.05–0.12 / >0.45 needs_review |
 | **rationale-judge** | `Agent(subagent_type="general-purpose", prompt=<完整 rationale-judge.md 角色 + provenance/DESIGN.md/tokens 路径 + grammar/rules 核验源>)` | round 1-2 verdict = pass |
 | **taste-critic** (gate) | `Agent(subagent_type="general-purpose", prompt=<完整 taste-critic.md 角色 + mode=gate + DESIGN.md/provenance/neighbor 输出 + source-design-systems 路径>)` | verdict = `distinctive`（`derivative`→needs_revision，`generic`→reject） |

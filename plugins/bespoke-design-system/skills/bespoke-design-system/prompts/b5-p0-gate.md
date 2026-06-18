@@ -53,10 +53,15 @@ python3 checks/archetype_check.py <draft-tokens.json> --primary <archetype> [--s
 ### 2.3 kansei_coverage_check.py
 
 ```bash
-python3 checks/kansei_coverage_check.py --profile <user_profile.yaml> --provenance <provenance.yaml>
+# v1.13.1: 用 B4.5 WINNER 的 kansei 判覆盖，而非三概念并集（改动4 fix / skill-issue #4）
+python3 checks/kansei_coverage_check.py --profile <user_profile.yaml|.json> --provenance <provenance.yaml|.json> \
+  --kansei <winner concept kansei_lean + 共享 base，逗号分隔>
 ```
 
-阈值默认 0.8（user kansei.positive 中至少 80% 被某决策 addressed），且 0 reverse_violation。
+阈值默认 0.8（**winner kansei** 中至少 80% 被某决策 addressed），且 0 reverse_violation。
+
+- **v1.13.1 改动4**：B0.5 三个发散概念取并集做检索宽度，但单一 winner 天然覆盖不了被否概念的 kansei。所以 B5 必须传 `--kansei`＝winner 概念的 kansei_lean +（三概念共有的 base 词），否则 winner 会因没覆盖被否概念而误扣分。不传 `--kansei` 则回退用 profile.positive（并集，会偏严）。
+- **v1.13.1 #5**：输入接受 YAML 或 JSON；无 PyYAML 时若传 JSON 仍能跑，否则优雅降级为 `evaluable:false`（不再 `exit(2)` 崩整条闸门）。干净环境建议 `pip install pyyaml` 或传 JSON。
 
 ### 2.4 neighbor_check.py
 

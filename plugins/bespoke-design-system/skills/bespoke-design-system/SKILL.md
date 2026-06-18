@@ -11,7 +11,7 @@ description: >-
   触发词：" 设计系统 " / " 调性 " / " UI 风格 " / " bespoke design " / " DESIGN.md " /
   " 拆解设计系统 " / " 导入 OD " / " 沉淀 adaptation "。
 argument-hint: "[mode=interactive|auto] <product-brief> | maintain <subcommand>"
-version: 1.13.0
+version: 1.13.1
 user-invocable: true
 ---
 
@@ -254,7 +254,7 @@ Agent(subagent_type="bespoke-design-system:taste-critic", prompt=<critic_input: 
 |---|---|---|---|
 | **coherence_check** | 合理：内在协调（数学公式） | `checks/coherence_check.py` | 0 blocker（WCAG body 失败为 blocker），score ≥ 0.55 |
 | **archetype_check** | 贴合：archetype always/never list | `checks/archetype_check.py` | primary 0 blocker（never 触发为 blocker） |
-| **kansei_coverage_check** | 贴合：Kansei 覆盖度 + 反向词冲突 | `checks/kansei_coverage_check.py` | 覆盖率 ≥ 80% AND 0 reverse_violation |
+| **kansei_coverage_check** | 贴合：Kansei 覆盖度 + 反向词冲突 | `checks/kansei_coverage_check.py`（v1.13.1：传 `--kansei`＝winner 概念 kansei；YAML/JSON 皆可，无 pyyaml 优雅降级） | 覆盖率 ≥ 80%（按 **winner kansei**，非并集）AND 0 reverse_violation |
 | **neighbor_check** | 反 clone：corpus 独特性带（v1.11.0 反转） | `checks/neighbor_check.py` | <0.05 reject(clone) / 0.05-0.12 needs_review(疑似派生) / 0.12-0.45 pass(独特) / >0.45 needs_review(过远)。**只抓 token clone，不证明有品味** |
 | **rationale-judge** | 论证质量（独立维度） | plugin 级 `../../agents/rationale-judge.md`，经 `Agent(subagent_type="bespoke-design-system:rationale-judge")` 隔离调用 | verdict = pass |
 | **taste-critic**（gate 模式，v1.12.0 新增） | **独特性 / 有没有 POV**（治"很普通"的维度，前 5 项都看不见） | plugin 级 `../../agents/taste-critic.md`，经 `Agent(subagent_type="bespoke-design-system:taste-critic")` 隔离调用 | verdict = `distinctive`（pass）。`derivative`→needs_revision，`generic`→reject |
