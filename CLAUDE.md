@@ -127,7 +127,7 @@ $SKILL_DIR/agents/rationale-judge.md   # B5 的对抗式审查方角色定义
 | coherence | `python3 checks/coherence_check.py <tokens.json>` | score ≥ 0.55, 0 blocker |
 | archetype | `python3 checks/archetype_check.py <tokens.json> --primary <X> --secondary <Y>` | primary 0 blocker |
 | kansei_coverage | `python3 checks/kansei_coverage_check.py --profile <yaml> --provenance <yaml>` | coverage ≥ 0.8, 0 reverse violation |
-| neighbor | `python3 checks/neighbor_check.py <tokens.json>` | distance < 0.3 |
+| neighbor | `python3 checks/neighbor_check.py <tokens.json>` | v1.11.0 独特性带：verdict=pass (0.12–0.45 distinctive)；<0.05 reject(clone)，0.05–0.12 / >0.45 needs_review |
 | **rationale-judge** | `Agent(subagent_type="general-purpose", prompt=<完整 rationale-judge.md 角色 + provenance/DESIGN.md/tokens 路径 + grammar/rules 核验源>)` | round 1-2 verdict = pass |
 
 `rationale-judge` 必须用 Agent 工具显式隔离上下文调用，不能在主对话里自评——**这是闸门有效性的关键**。本次实测发现 round 1 抓到了真实 blocker（Linear elevation 规则 +0.02 vs +0.04 误述），是装饰不出来的对抗式审查价值。

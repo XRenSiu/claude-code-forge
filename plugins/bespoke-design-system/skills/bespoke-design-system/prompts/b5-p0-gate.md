@@ -63,11 +63,16 @@ python3 checks/kansei_coverage_check.py --profile <user_profile.yaml> --provenan
 python3 checks/neighbor_check.py <draft-tokens.json>
 ```
 
-距离阈值（详见 `references/tacit-knowledge-boundary.md` §4 关于"下限保证"的诚实声明）：
+**v1.11.0 起这是「独特性带」而非「靠近度奖励」**（语义反转，详见 `references/tacit-knowledge-boundary.md` §4 与 `bespoke-design/skill-issue-2026-06-18.md`）。距离不再是越小越好——它是要**赚来的、有界的**：
 
-- 距离 < 0.3 → pass
-- 0.3 ≤ d < 0.6 → needs_review（在 corpus 边缘，需检查 rationale）
-- d ≥ 0.6 → reject（drifted out of corpus）
+- 距离 < 0.05 → **reject**（`derivative_clone`：token 空间里和某个现有系统几乎一模一样。B3 多半收敛到单一密集风格岛、B4 照搬了它）
+- 0.05 ≤ d < 0.12 → **needs_review**（`derivative_suspect`：低于 corpus 最近邻中位数，可能只是"某系统换个强调色"，需 taste 复核）
+- 0.12 ≤ d ≤ 0.45 → **pass**（`distinctive`：有区分度又有根基。**注意：只证明不是 token clone，不证明有品味**）
+- d > 0.45 → **needs_review**（`far_outlier`：比任何真实系统离邻居都远，可能大胆也可能不自洽。本 check 分不清，交给 coherence/archetype/rationale，**不**单凭距离 reject）
+
+阈值是从 corpus 自身距离分布**校准**出来的（corpus 内部最近邻：中位 0.12 / p90 0.20 / 最大 0.26），不是拍脑袋。
+
+**诚实边界（必读）**：这是 37 维 token 统计距离，只能抓 token 空间的 clone，**看不见概念级平庸**（统领想法 / 签名动作）。一份把 Linear 结构整套抄走、只换强调色的设计会落在 ~0.18 判 pass。"很普通"这种感知层面的平庸由 taste critic 抓，不是这个 check 的职责。
 
 如果 neighbor-corpus.json 不存在，工具会返回 `evaluable: false`，整体 check **不算 fail**——只是缺数据。
 

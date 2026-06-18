@@ -78,14 +78,16 @@ print('all vectors length-OK')
 "
 ```
 
-## 距离阈值的诚实声明
+## 距离阈值的诚实声明（v1.11.0 语义反转）
 
-`neighbor_check.py` 用阈值 0.3 / 0.6 来分级 pass / needs_review / reject。**这两个值是经验值**，依赖 corpus 规模和 dialect 多样性：
+`neighbor_check.py` **从 v1.11.0 起是「独特性带」**：距离是要赚来的、有界的，不再是越小越 pass。分级 `<0.05 reject(clone)` / `0.05–0.12 needs_review(疑似派生)` / `0.12–0.45 pass(独特)` / `>0.45 needs_review(过远)`。
 
-- corpus 越大、风格越多，0.3 阈值越合理
-- corpus 偏向某种风格（例如 80% 都是 dev SaaS），生成"非主流但好"的 brief 会被 reject — 这是 corpus 偏差，不是 bug
+阈值**从 corpus 自身距离分布校准**（不是经验拍脑袋）。重建 corpus 后应复核分布是否漂移：
 
-如果用户反映 reject 过多，建议先扩 corpus（添加更多 dialect / archetype 样本）而非调阈值。
+- corpus 内部最近邻距离应大致维持 中位 ~0.12 / p90 ~0.20 / 最大 ~0.26；`suspect`(0.12) 取的就是这个中位数。若分布大幅变化，按比例调 `SUSPECT_THRESHOLD` / `DISTINCT_CEILING`。
+- **编码器分辨率是硬约束**：当前 37 维编码把约 50 个语义不同的系统压成 <0.08 的近似重复（corporate/futuristic/sleek/storytelling 全编码到同一点）。所以 `clone` 阈值不能往上调太多，否则会误杀大量"真正不同但相近"的系统。要根治需提升编码维度的判别力，不是调阈值。详见 `bespoke-design/skill-issue-2026-06-18.md`。
+
+如果用户反映"生成的设计很普通"，**不要**指望调这个 check——它只能抓 token clone。感知层面的平庸是 taste critic 的职责。
 
 ## 与 spec §3.4 A5 的对应
 
