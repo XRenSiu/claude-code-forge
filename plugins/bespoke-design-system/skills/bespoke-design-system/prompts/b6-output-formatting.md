@@ -168,7 +168,7 @@ degraded_sections: [...]
 
 ## 品味终审需由人完成（v4 必须显示，铁律 3）
 
-> 这份 DESIGN.md 通过了 5 项可计算 check（数学正确 + 语境贴合 + 不出格 + 论证通），但**这不等于它有品味**。
+> 这份 DESIGN.md 通过了 6 项 check（数学正确 + 语境贴合 + 不是 clone + 论证通 + 不平庸有 POV），但**这不等于它有品味**。taste-critic 拦掉了"很普通"（平庸下限可判），但"有大师级品味"是上限，仍需人审。
 >
 > 学界共识（Polanyi 1966；CHI 2024）：design taste 是 tacit knowledge，无法形式化。任何声称"AI 自动生成有品味设计"的工具都是伪科学。
 >
@@ -176,13 +176,14 @@ degraded_sections: [...]
 >
 > 详见 `references/tacit-knowledge-boundary.md`。
 
-## 已知限制（来自 P0 闸门 5 项 check 的 warnings）
+## 已知限制（来自 P0 闸门 6 项 check 的 warnings）
 
 - <列出 coherence_check 的非 blocker warnings>
 - <列出 archetype_check 的 warning 级 violation>
 - <列出 kansei_coverage_check 的 uncovered list>
 - <列出 neighbor_check 的 verdict（特别是 needs_review 时的距离）>
 - <列出 rationale_judge 的非 blocker issues>
+- <列出 taste-critic 的 verdict + generic_tells（derivative 时哪些决策需磨锐）>
 - <列出 degraded sections>
 ```
 

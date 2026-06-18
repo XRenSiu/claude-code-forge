@@ -1,6 +1,8 @@
 # Tacit Knowledge Boundary — 品味为什么必须人审
 
-> 本文档是本 skill 的产品诚实声明的理论依据。它解释为什么 5 项 check 全过 ≠ 这份 DESIGN.md 有品味。这是 SKILL.md §1.4 / 铁律 3 / B6 negotiation-summary 的引用源。
+> 本文档是本 skill 的产品诚实声明的理论依据。它解释为什么 6 项 check 全过 ≠ 这份 DESIGN.md 有品味。这是 SKILL.md §1.4 / 铁律 3 / B6 negotiation-summary 的引用源。
+>
+> v1.12.0 注：新增的 taste-critic 把"很普通/没观点"从不可判变成**可判的平庸下限**——这缩小了"下限"和"上限"的差距，但**没有消除它**。taste-critic 能说"这没有 POV"，不能说"这有大师级品味"。下面的论证依然成立，只是"下限"现在更高了一层。
 
 ## 1. Tacit Knowledge（默会知识）的概念
 
@@ -51,21 +53,22 @@ Semir Zeki 等神经美学研究表明：审美判断激活前额叶 + 岛叶等
 
 ## 4. 本 skill 的诚实定位
 
-### 5 项 check 能做的（下限保证）
+### 6 项 check 能做的（下限保证）
 
 | check | 拦掉什么 |
 |---|---|
 | **coherence_check** | 数学错误（对比度不足 / 间距不上 grid / 色相无 scheme） |
 | **archetype_check** | 语境错配（用 Hero archetype 但配 pastel 色板） |
 | **kansei_coverage_check** | 调性不响应用户画像（用户要 mystical 但产物只 modern） |
-| **neighbor_check** | 跑出已知好设计的范围（hallucinate 出从未见过的奇怪组合） |
+| **neighbor_check** | token clone（把某现有系统换个强调色就出货；v1.11.0 独特性带） |
 | **rationale-judge** | 论证不通（inheritance 编造 / adaptation 反 Kansei） |
+| **taste-critic**（v1.12.0） | 平庸 / 无观点（通篇默认值堆叠 / 结构换皮 / 只是品类标签没有 POV） |
 
-### 5 项 check **不能**做的
+### 6 项 check **不能**做的
 
-> ❌ 判断"这份设计有品味"
+> ❌ 判断"这份设计有大师级品味"（taste-critic 能判"没有观点"这个下限，判不了"有伟大品味"这个上限）
 > ❌ 替代设计师的最终判断
-> ❌ 区分"独创新方向"和"奇怪 hallucinate"（neighbor_check 只能拦掉后者，无法识别前者的价值）
+> ❌ 保证"独创新方向"一定是好的（taste-critic 奖励有身份的独特，但"独特且伟大"仍需人审；远端的大胆与不自洽由 coherence 区分，价值由人定）
 
 ### 结论：这是带论证的初稿，不是成品
 

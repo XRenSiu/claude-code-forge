@@ -1,10 +1,11 @@
-# B5 — P0 闸门（v4：4 个可计算 check + 1 个 LLM judge 并行）
+# B5 — P0 闸门（v1.12.0：4 个可计算 check + 2 个 LLM judge）
 
 > 当 SKILL.md 主流程进入 B5 时读取本文件作为执行指引。
+> 前置：B4.5 已用 taste-critic（rank 模式）选出 winner direction，B4b 已把它展开成完整 DESIGN.md。B5 对这份成稿把关。
 
 ## 你的任务
 
-执行 5 项独立检查（4 个 Python check + 1 个独立 subagent judge），合并产出 `check-report.json` + verdict（pass / needs_revision / reject）。**限 2 轮迭代**。
+执行 6 项独立检查（4 个 Python check + 2 个独立 subagent judge：rationale-judge 判论证、taste-critic 判独特性），合并产出 `check-report.json` + verdict（pass / needs_revision / reject）。**限 2 轮迭代**。
 
 ---
 
@@ -80,9 +81,26 @@ python3 checks/neighbor_check.py <draft-tokens.json>
 
 通过 Agent 工具调起 `subagent_type=rationale-judge`（agent 注册在 `plugins/bespoke-design-system/agents/rationale-judge.md`）。
 
-**重要的 v4 角色限定**：rationale-judge **只判论证质量**（inheritance 真实性 / adaptation 合理性 / justification 协同性 / confidence 校准）。设计本身的好坏由 4 个 Python check 判，不属于 rationale-judge 的职责范围。
+**重要的 v4 角色限定**：rationale-judge **只判论证质量**（inheritance 真实性 / adaptation 合理性 / justification 协同性 / confidence 校准）。设计本身的好坏由 Python check + taste-critic 判，不属于 rationale-judge 的职责范围。
 
 调用包内容见 `agents/rationale-judge.md` 的 §输入 部分。
+
+## Step 3.5 — 调用 taste-critic subagent（gate 模式，v1.12.0 新增 / 改动4）
+
+通过 Agent 工具独立调起 `subagent_type=bespoke-design-system:taste-critic`（agent 注册在 `plugins/bespoke-design-system/agents/taste-critic.md`）：
+
+```
+Agent(subagent_type="bespoke-design-system:taste-critic",
+      prompt=<critic_input: mode=gate, design_md=<成稿全文>, provenance, user_profile, brief,
+              neighbor_result=<2.4 的 neighbor_check 输出>,
+              references_paths=[anti-slop-blacklist.md, source-design-systems/]>)
+```
+
+**角色限定**：taste-critic **只判独特性**——这份成稿有没有自己的 POV，还是又一份能干却没人记得住的通用壁纸。这是 4 个 Python check + rationale-judge **都看不见**的维度（数学协调 / 贴合画像 / token 距离 / 论证质量都可以满分，设计依然"很普通"）。
+
+**重点核验**：B4.5 选中的签名动作，**在展开成完整 9-section 后是否还活着**（常见失败：concept 好，但逐 section 落地全退回安全默认，签名被稀释）。
+
+verdict 映射：`distinctive → pass` / `derivative → needs_revision` / `generic → reject`。**必须独立 spawn，不和主对话或 B4 生成方共享上下文**（同 rationale-judge 纪律）。
 
 ## Step 4 — 合并产出 check-report.json
 
@@ -97,6 +115,8 @@ python3 checks/neighbor_check.py <draft-tokens.json>
     "neighbor": <neighbor_check 输出>
   },
   "rationale_judge_verdict": <rationale-judge 输出>,
+  "taste_critic_verdict": <taste-critic gate 模式输出>,
+  "b4_5_selection": <taste-critic rank 模式输出：winner + 各候选 score + all_generic>,
   "summary": {
     "all_blockers": [...],
     "all_warnings": [...],
@@ -107,9 +127,11 @@ python3 checks/neighbor_check.py <draft-tokens.json>
 
 **整体 verdict 决策**：
 
-- 任一 check 输出 `reject`（含 neighbor `verdict=reject` 或 rationale-judge `verdict=reject`） → 整体 `reject`
-- 任一 check `needs_revision`（含 neighbor `verdict=needs_review`，rationale-judge `verdict=needs_revision`，或任一 check 有 blocker） → 整体 `needs_revision`
-- 全部 `pass` 或仅 warning → 整体 `pass`
+- 任一 check 输出 `reject`（含 neighbor `verdict=reject`、rationale-judge `verdict=reject`、或 taste-critic `verdict=generic`） → 整体 `reject`
+- 任一 check `needs_revision`（含 neighbor `verdict=needs_review`，rationale-judge `verdict=needs_revision`，taste-critic `verdict=derivative`，或任一 check 有 blocker） → 整体 `needs_revision`
+- 全部 `pass`（taste-critic = `distinctive`）或仅 warning → 整体 `pass`
+
+> taste-critic 抓的是**平庸下限**：`generic`（换皮 clone / 通篇默认值）= reject，`derivative`（有点东西但不够尖）= needs_revision 回 B4 磨锐 concept/signature。这是治"很普通"的闸门，**不要因为前 5 项全绿就放它过**。
 
 写入 `<output_dir>/check-report.json`。
 
@@ -151,13 +173,15 @@ P0 闸门 2 轮迭代均未通过。具体卡点：
 
 - [ ] 4 个 Python check 都跑了（即使有的 evaluable=false 也要记录）
 - [ ] rationale-judge 通过 Agent 工具独立 spawn（不和主对话共享上下文）
-- [ ] check-report.json 含 5 项独立结果 + 整体 verdict + 决策原因
+- [ ] taste-critic（gate 模式）通过 Agent 工具独立 spawn（v1.12.0；不和主对话/B4 生成方共享上下文）
+- [ ] check-report.json 含 6 项独立结果 + B4.5 选优记录 + 整体 verdict + 决策原因
 - [ ] 迭代次数 ≤ 2
 - [ ] needs_revision 时的反馈给 B4 是具体的（每条 blocker 指向具体决策 + 修正方向）
 - [ ] 失败时已给用户清晰说明而非追问
 
-## v4 重要约束
+## v4 / v1.12.0 重要约束
 
-- **rationale-judge 角色限定**：v3 时它要"判设计 + 论证"，v4 起**只判论证**。设计本身的好坏由 4 个 Python check 判。
-- **neighbor_check 的诚实**：它不能判"有品味"，只判"在 corpus 范围内"。这是下限保证不是上限，B6 必须传达给用户。
-- **5 项 check 全过 ≠ 有品味**：本 skill 的产物始终是初稿，品味终审由人审。
+- **rationale-judge 角色限定**：v3 时它要"判设计 + 论证"，v4 起**只判论证**。设计本身的好坏由 Python check + taste-critic 判。
+- **neighbor_check 的诚实**：它不能判"有品味"，只判"不是 token clone"（v1.11.0 独特性带）。这是下限保证不是上限。
+- **taste-critic 的定位（v1.12.0）**：它把"很普通"从不可判变成可判的**平庸下限**——能判"这没有 POV / 是换皮"，但**不能**判"这有大师级品味"（那仍是 tacit、需人终审）。pass = "有一个能说清的身份"，不是"伟大"。
+- **6 项 check 全过 ≠ 有品味**：本 skill 的产物始终是初稿，品味终审由人审（铁律 3）。

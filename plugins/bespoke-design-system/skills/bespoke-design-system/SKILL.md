@@ -11,7 +11,7 @@ description: >-
   触发词：" 设计系统 " / " 调性 " / " UI 风格 " / " bespoke design " / " DESIGN.md " /
   " 拆解设计系统 " / " 导入 OD " / " 沉淀 adaptation "。
 argument-hint: "[mode=interactive|auto] <product-brief> | maintain <subcommand>"
-version: 1.11.0
+version: 1.12.0
 user-invocable: true
 ---
 
@@ -37,10 +37,13 @@ user-invocable: true
 **它能做到的**：
 - 内在协调性（配色/排版/间距的数学关系正确）— 完全可量化
 - 语境贴合性（匹配 archetype 和 Kansei 画像）— 离散判据 + 半量化
-- 不出格（不会跑出已知好设计的范围）— 可量化下限保证
+- 不抄袭（不是某现有系统换个强调色）— neighbor 独特性带可量化下限（v1.11.0）
+- 不平庸（有一个能说清的 POV / 签名动作，不是品类默认值堆叠）— taste-critic 可判的平庸下限（v1.12.0）
+
+> ⚠️ v1.12.0 起**不再声称"不出格"**。旧版用"不会跑出已知好设计的范围"当卖点，恰恰是把下限焊成天花板、逼出平庸的病根（详见 `bespoke-design/skill-issue-2026-06-18.md`）。现在的定位是**在协调的前提下争取独特**，而不是"安全地待在已知范围内"。
 
 **它做不到的**：
-- 判断"这份设计有品味" — 学界共识：tacit knowledge 无法形式化（Polanyi 1966；CHI 2024）
+- 判断"这份设计有大师级品味" — taste-critic 能判"没有观点"（下限），判不了"有伟大品味"（上限）。学界共识：tacit knowledge 无法形式化（Polanyi 1966；CHI 2024）
 - 替代设计师的最终判断 — 品味这一关必须由人完成
 
 定位上，它替代的是"用户硬选 5 个固定方向"或"硬选别人的 DESIGN.md"这个低质量起点，**不是替代设计师**。详见 `references/tacit-knowledge-boundary.md`。
@@ -49,7 +52,7 @@ user-invocable: true
 
 1. **双向 Rationale 对称**：拆解时怎么提取 rationale，生成时就怎么产出 rationale。生成时的 rationale 必须三段式：`inheritance`（来源）+ `adaptation`（调适）+ `justification`（协同）。
 2. **一次性追问铁律**（interactive）：所有澄清问题必须在 B1a 一次性问完，硬上限 7 条，超过则强制 B1a 重新规划聚焦。**B2 之后绝不向用户追问任何信息**——不管是 B3 冲突、B4 决策、B5 闸门失败，都不许打断用户。
-3. **品味需自审**（v4 新增）：B5 的 5 项 check 全过 ≠ 这份 DESIGN.md 有品味。B6 的 negotiation-summary 必须明确告知用户"品味终审需由人完成"。引用 `references/tacit-knowledge-boundary.md`。
+3. **品味需自审**（v4 新增 / v1.12.0 加 taste-critic）：B5 的 6 项 check 全过 ≠ 这份 DESIGN.md 有品味。taste-critic 把"很普通"变成可判的**平庸下限**，但"有大师级品味"仍是上限、需人审。B6 的 negotiation-summary 必须明确告知用户"品味终审需由人完成"。引用 `references/tacit-knowledge-boundary.md`。
 4. **不产生 AI slop**：紫渐变 + Inter + 圆角卡片那一套是 anti-pattern。每个决策都要在 `references/anti-slop-blacklist.md` 上过一遍。
 5. **模式选择交给用户**：模式是用户对 " 我愿意花多少时间换多少精度 " 的偏好，不是技术问题。skill 不替用户决定。
 
@@ -182,13 +185,19 @@ Rules library: <N> rules from <M> extracted systems (out of <K> registered).
 3. **风格岛聚集**：计算候选集内规则两两 `co_occurs_with` 频率的图密度。优先保留密度高的子图（" 自洽风格岛 "）；孤立点若与画像匹配度低则剔除。
 4. **覆盖检查**：确认 5 个 rule-bearing section（`color / typography / components / layout / depth_elevation`）都至少有规则覆盖；缺的 section 用 `defaults.yaml` 中该 product_category 的 backstop 规则补。4 个元 section（Visual Theme / Do's and Don'ts / Responsive / Agent Guide）由 B4 阶段从 rule-bearing 派生，不需要在 B3 单独覆盖。
 
-### B4 — 带 Rationale 生成
+### B4 — 发散生成 + 带 Rationale 生成（v1.12.0：先发散后收敛 / 改动4）
 
 读 `prompts/b4-generation-with-rationale.md` 作为该步骤的工作指引。引用 `references/shape-grammar.md`、`references/reflective-practice.md`。
 
 **输入**：B3 自洽规则子集 + 调性画像
 
-**输出**：DESIGN.md 草稿 + Provenance Report（schema 见 §六 3.3.7）
+**v1.12.0 新流程（治"很普通"的核心）**：B4 不再一次产一份"安全平均"草稿，而是 **B4a 发散 → B4.5 选优 → B4b 展开**：
+
+- **B4a — 发散出 N=3 个候选方向**（不是 3 份完整 9-section，是 3 个 *direction* 摘要）。每个候选**必须承诺一个不同的统领观点（POV）**，且每个都给：`concept`（一句话观点，"X 像 Y 一样"，**不是品类标签**）+ `signature_moves`（≥1 个承载身份的具体形式决策）+ `key_decisions`（足以判别的 token/形式摘要）+ `rationale_sketch`。三个候选要**真发散**（不同 anchor、不同张力、不同 signature），不是同一方向的三个微调。
+- 所有候选仍受下面"核心约束"约束（不创造新规则、可追溯 B3 子集），但**鼓励每个候选采纳一条 productive tension**（B3 子集里与主 anchor 低共现、但被该候选 concept 背书的规则）——独特性活在不寻常的组合里。
+- **B4b — 只把 B4.5 选中的 winner 展开成完整 9-section DESIGN.md + Provenance**。展开时必须守住 B4.5 标记的 `must_preserve_in_develop` 签名动作，别在逐 section 落地时把它磨回默认。
+
+**输出**：3 个候选方向（→ B4.5）；选优后 winner 的 DESIGN.md 草稿 + Provenance Report（schema 见 §六 3.3.7，→ B5）
 
 **核心约束**：
 
@@ -204,11 +213,24 @@ Rules library: <N> rules from <M> extracted systems (out of <K> registered).
 - `modifications`：每条调适列出 `dimension`（saturation / lightness / scale / etc.）、`from`、`to`、`reason`
 - `preserved`：从规则原状照搬的部分
 
-### B5 — P0 闸门（v4 重写：4 个 check + 1 个 LLM judge 并行）
+### B4.5 — 品味选优（v1.12.0 新增 / 改动4）
+
+读 `prompts/b4-generation-with-rationale.md` §B4.5。**独立 subagent 调用** `taste-critic`（rank 模式），从 B4a 的 3 个候选方向里选出最有身份的那个：
+
+```
+Agent(subagent_type="bespoke-design-system:taste-critic", prompt=<critic_input: mode=rank + 3 候选 + 画像 + brief + references>)
+```
+
+- taste-critic 对每个候选跑 5 项独特性测试（clone / signature / POV / substitutable / modal-default），返回 `winner` + `must_preserve_in_develop`。
+- **winner ≠ generic** → 交给 B4b 展开。
+- **所有候选都 generic**（`all_generic: true`）→ 回 B4a 要求**重新发散**（限 2 轮；不是矮子里拔将军）。
+- **铁律**：taste-critic 必须独立 spawn，**不能**在主对话里自评——和 rationale-judge 同纪律，这是闸门有效性的关键。
+
+### B5 — P0 闸门（v1.12.0：4 个 check + 2 个 LLM judge）
 
 读 `prompts/b5-p0-gate.md` 作为该步骤的工作指引。详细判据见 `references/` 下各理论文档。
 
-**5 项独立检查并行执行**：
+**6 项独立检查并行执行**：
 
 | Check | 判什么 | 实现 | 通过条件 |
 |---|---|---|---|
@@ -216,13 +238,16 @@ Rules library: <N> rules from <M> extracted systems (out of <K> registered).
 | **archetype_check** | 贴合：archetype always/never list | `checks/archetype_check.py` | primary 0 blocker（never 触发为 blocker） |
 | **kansei_coverage_check** | 贴合：Kansei 覆盖度 + 反向词冲突 | `checks/kansei_coverage_check.py` | 覆盖率 ≥ 80% AND 0 reverse_violation |
 | **neighbor_check** | 反 clone：corpus 独特性带（v1.11.0 反转） | `checks/neighbor_check.py` | <0.05 reject(clone) / 0.05-0.12 needs_review(疑似派生) / 0.12-0.45 pass(独特) / >0.45 needs_review(过远)。**只抓 token clone，不证明有品味** |
-| **rationale-judge** | 论证质量（独立维度） | plugin 级 `../../agents/rationale-judge.md`，经 `Agent(subagent_type="bespoke-design-system:rationale-judge")` 隔离调用（skill 目录下无此文件） | verdict = pass |
+| **rationale-judge** | 论证质量（独立维度） | plugin 级 `../../agents/rationale-judge.md`，经 `Agent(subagent_type="bespoke-design-system:rationale-judge")` 隔离调用 | verdict = pass |
+| **taste-critic**（gate 模式，v1.12.0 新增） | **独特性 / 有没有 POV**（治"很普通"的维度，前 5 项都看不见） | plugin 级 `../../agents/taste-critic.md`，经 `Agent(subagent_type="bespoke-design-system:taste-critic")` 隔离调用 | verdict = `distinctive`（pass）。`derivative`→needs_revision，`generic`→reject |
 
-**5 项全过 → B6 出货**
+taste-critic gate 重点核验：B4.5 选中的签名动作**在展开成完整 9-section 后是否还活着**（常见失败：concept 好，但逐 section 落地时全退回安全默认，签名被稀释）。
+
+**6 项全过 → B6 出货**
 **任一 reject → 整体 reject → 回 B4 重做（限 2 轮）**
 **任一 needs_revision → 回 B4 带反馈重做（限 2 轮）**
 
-**重要**：5 项全过 ≠ 这份 DESIGN.md 有品味。它只保证下限（数学正确 + 语境贴合 + 不跑出范围 + 论证通），不保证上限。最终品味关必须由人完成（铁律 3）。
+**重要**：6 项全过 ≠ 这份 DESIGN.md 有品味。它保证下限（数学正确 + 语境贴合 + 不是 clone + 论证通 + **不平庸/有观点**），不保证上限——"有大师级品味"仍是 tacit、需人终审（铁律 3）。taste-critic 把"很普通"从不可判变成可判的**平庸下限**，但它抓的是 floor 不是 ceiling。
 
 **铁律**：**限 2 轮迭代**。两轮还过不了 → 标记"持续失败"，输出当前最好的版本 + 所有 issues 列表给用户判断。**不**追问用户。
 
@@ -445,6 +470,9 @@ cross_category_transfer_policy: |
 - ❌ **不能 interactive 模式下让 batch 超过 7 题**（超过就强制 B1a 重新规划）
 - ❌ **不能在生成中途引入 B3 候选集之外的新规则**（B4 是翻译不是创造）
 - ❌ **不能让 rationale-judge 评判方与 B4 生成方共享上下文**（必须独立 subagent）
+- ❌ **不能让 taste-critic 与 B4 生成方共享上下文**（v1.12.0；必须独立 subagent，否则失去对抗式有效性）
+- ❌ **不能跳过 B4a 发散直接出单一候选**（v1.12.0；先发散后收敛是治"很普通"的核心机制，单候选 = 回到"安全平均"）
+- ❌ **不能矮子里拔将军**（v1.12.0；taste-critic 判所有候选都 generic 时，回 B4a 重新发散，不许硬选一个最不烂的出货）
 - ❌ **不能让 P0 闸门超过 2 轮迭代**（卡住就退到更早阶段，不要无限 loop）
 - ❌ **不能产 AI slop**（紫渐变 + Inter + 圆角卡片那一套，过 `references/anti-slop-blacklist.md`）
 - ❌ **不能在空规则库上硬生成**（先提示用户导入起步素材）
@@ -458,7 +486,8 @@ cross_category_transfer_policy: |
 
 - `prompts/` — B 阶段每一步的执行指引
 - `scripts/` — 维护流程的执行指引
-- `../../agents/rationale-judge.md` — P0 闸门评判方（plugin 级 agent，通过 `Agent(subagent_type="rationale-judge", ...)` 调用）
+- `../../agents/rationale-judge.md` — P0 闸门论证评判方（plugin 级 agent，通过 `Agent(subagent_type="bespoke-design-system:rationale-judge", ...)` 调用）
+- `../../agents/taste-critic.md` — 独特性评审（v1.12.0 / 改动4；plugin 级 agent，rank 模式用于 B4.5 选优、gate 模式用于 B5 第 6 闸，通过 `Agent(subagent_type="bespoke-design-system:taste-critic", ...)` 调用）
 - `references/` — 理论基础（按需引用，主流程不全读）
   - `kansei-theory.md` — 调性词与设计参数的桥梁
   - `brand-archetypes.md` — 12 原型分类

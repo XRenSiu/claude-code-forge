@@ -14,6 +14,49 @@
 
 ---
 
+## v1.12.0 流程总览（改动4：先发散后收敛 — 必读）
+
+为治"生成的设计很普通"，B4 不再一次产一份"安全平均"草稿。流程是 **B4a 发散 → B4.5 选优 → B4b 展开**。本文件其余部分（ANTI-PHANTOM、闸 1–5、9-section、生成流程）是 **B4b 展开 winner** 的机制——B4a 先发散方向，选中后才用这套机制把 winner 做成完整 DESIGN.md。
+
+### B4a — 发散出 N=3 个候选方向
+
+产出 **3 个 *direction* 摘要**（不是 3 份完整 9-section）。每个候选**承诺一个不同的统领观点**，三者要**真发散**（不同 anchor / 不同 productive tension / 不同 signature），不是同方向三个微调。每个候选给：
+
+```yaml
+candidates:
+  - id: A
+    concept: <一句话 POV，"X 像 Y 一样" / 一个具体立场——不是 "clean dev tool" 这种品类标签>
+    anchor_system: <这个方向主要靠 B3 子集里哪套系统的规则做协调骨架>
+    productive_tension: <采纳的那条与 anchor 低共现、但被 concept 背书的 B3 规则；独特性活在不寻常组合里>
+    signature_moves: [<≥1 个承载身份的具体形式决策——不是 "8px grid" 这种人人都用的>]
+    key_decisions: <足以判别的 color/type/spacing/radius/signature 摘要>
+    rationale_sketch: <为什么这个方向对这个 brief 成立，用了哪些 B3 规则>
+  - id: B ...
+  - id: C ...
+```
+
+**约束**：每个候选的 `key_decisions` / `signature` 仍必须可追溯到 B3 子集（不创造新规则的铁律在发散阶段同样成立）；但**鼓励**每个候选采一条不同的 productive tension。
+
+### B4.5 — taste-critic 选优（独立 subagent）
+
+把 3 个候选交给 `taste-critic`（rank 模式）选出 winner：
+
+```
+Agent(subagent_type="bespoke-design-system:taste-critic",
+      prompt=<critic_input: mode=rank, candidates=[A,B,C], user_profile, brief,
+              references_paths=[anti-slop-blacklist.md, source-design-systems/]>)
+```
+
+- 拿回 `winner` + `must_preserve_in_develop`（展开时必须守住的签名动作）。
+- `all_generic: true`（三个都没观点）→ 回 B4a **重新发散**（限 2 轮），不要硬选最不烂的。
+- **铁律**：taste-critic 必须独立 spawn，不在主对话自评。
+
+### B4b — 展开 winner
+
+只把 winner 用下面全套机制展开成完整 9-section DESIGN.md + Provenance。**展开时守住 `must_preserve_in_develop` 的签名动作**——最常见的退化是 concept 很好，但逐 section 落地时每个 section 都退回安全默认，签名被稀释成又一份通用壁纸。每写完一个 section 自问：winner 的签名在这个 section 里还看得见吗？
+
+---
+
 ## ⚠️ ANTI-PHANTOM 硬约束（v1.5.0 新增 — 必读必行）
 
 **问题历史**：v1.4.0 之前 B4 在缺规则锚点时会编造 plausible-sounding rule_ids（如 `vercel-typography-geist-system-002` 不存在但听起来对）。P0 闸门虽能抓出，但用户首轮拿到的 provenance 含编造引用就破信任。

@@ -97,9 +97,9 @@ B2 规则检索（Archetype 硬筛 + Kansei 软排 + SD 距离修正，候选 10
     ↓
 B3 冲突解决（图算法：消解冲突、补依赖、聚风格岛 → 自洽 40-60 条）
     ↓
-B4 带 Rationale 生成（inheritance + adaptation + justification 三段式）
+B4a 发散 3 候选方向 → B4.5 taste-critic(rank) 选优 → B4b 展开 winner（三段式 rationale）
     ↓
-B5 P0 闸门（rationale-judge subagent 对抗式评审，限 2 轮迭代）
+B5 P0 闸门（4 Python check + rationale-judge + taste-critic(gate)，6 闸，限 2 轮迭代）
     ↓
 B6 输出三份产物
 ```
@@ -119,7 +119,7 @@ skills/bespoke-design-system/
 ├── SKILL.md                     # 主入口
 ├── prompts/                     # B 阶段 7 个步骤模板
 ├── scripts/                     # 维护流程子文档
-├── subagents/rationale-judge.md # P0 闸门
+│   (P0 judges 在 plugin 级 ../../agents/：rationale-judge.md 判论证 + taste-critic.md 判独特性)
 ├── references/                  # 理论文档（按需引用）
 ├── grammar/                     # 规则库（核心资产）
 ├── source-design-systems/       # 素材库

@@ -116,11 +116,13 @@ $SKILL_DIR/agents/rationale-judge.md   # B5 的对抗式审查方角色定义
 | B1b | auto 模式画像（含 inferred_fields 标注） | 读 `grammar/meta/defaults.yaml` |
 | B2 | `_b2-candidates.json`（顶层字段名 `candidate_rules`） | 自己写 archetype/kansei filter |
 | B3 | `_b3-self-consistent.json` | `tools/b3_resolve.py --b2 <file> --output <file_path>` |
-| B4 | `DESIGN.md` + `provenance.yaml`（每个决策三段式） | 自己写，严格不创造新规则；可拒绝 B3 自洽集中 archetype-mismatch 规则但需写 `rejected_alternative_<id>` |
-| B5 | 5 项 P0 闸门并行 | 见下表 |
+| B4a | 发散出 3 个候选方向（concept / signature / productive tension） | 自己写，严格不创造新规则；三者要真发散 |
+| B4.5 | taste-critic（rank）选优 winner | `Agent(subagent_type="general-purpose", prompt=<完整 taste-critic.md 角色 + mode=rank + 3 候选 + 画像/brief>)` |
+| B4b | 展开 winner → `DESIGN.md` + `provenance.yaml`（每个决策三段式） | 自己写，严格不创造新规则；守住 winner 签名；可拒绝 B3 自洽集中 archetype-mismatch 规则但需写 `rejected_alternative_<id>` |
+| B5 | 6 项 P0 闸门并行 | 见下表 |
 | B6 | `negotiation-summary.md` + 自演化 stats 更新 | 自己写 |
 
-**B5 的 5 项闸门必须全跑**：
+**B5 的 6 项闸门必须全跑**：
 
 | Check | 命令 | 通过条件 |
 |-------|-----|---------|
@@ -129,8 +131,9 @@ $SKILL_DIR/agents/rationale-judge.md   # B5 的对抗式审查方角色定义
 | kansei_coverage | `python3 checks/kansei_coverage_check.py --profile <yaml> --provenance <yaml>` | coverage ≥ 0.8, 0 reverse violation |
 | neighbor | `python3 checks/neighbor_check.py <tokens.json>` | v1.11.0 独特性带：verdict=pass (0.12–0.45 distinctive)；<0.05 reject(clone)，0.05–0.12 / >0.45 needs_review |
 | **rationale-judge** | `Agent(subagent_type="general-purpose", prompt=<完整 rationale-judge.md 角色 + provenance/DESIGN.md/tokens 路径 + grammar/rules 核验源>)` | round 1-2 verdict = pass |
+| **taste-critic** (gate) | `Agent(subagent_type="general-purpose", prompt=<完整 taste-critic.md 角色 + mode=gate + DESIGN.md/provenance/neighbor 输出 + source-design-systems 路径>)` | verdict = `distinctive`（`derivative`→needs_revision，`generic`→reject） |
 
-`rationale-judge` 必须用 Agent 工具显式隔离上下文调用，不能在主对话里自评——**这是闸门有效性的关键**。本次实测发现 round 1 抓到了真实 blocker（Linear elevation 规则 +0.02 vs +0.04 误述），是装饰不出来的对抗式审查价值。
+`rationale-judge` 与 `taste-critic` 都必须用 Agent 工具显式隔离上下文调用，不能在主对话里自评——**这是闸门有效性的关键**。本次实测发现 round 1 抓到了真实 blocker（Linear elevation 规则 +0.02 vs +0.04 误述），是装饰不出来的对抗式审查价值。
 
 闸门 verdict = `needs_revision` 时**自动跑 round 2 修订**（限 2 轮），不要打扰用户。两轮还过不了才输出"持续失败"+ issues 列表。
 
@@ -165,7 +168,7 @@ bespoke-design/skill-issue-<YYYY-MM-DD>.md
 
 不要长篇大论。说三件事：
 
-1. 5 项 P0 闸门是 pass 还是 needs_revision（连同关键数据，如 neighbor distance、kansei coverage rate）
+1. 6 项 P0 闸门是 pass 还是 needs_revision（连同关键数据，如 taste-critic verdict、neighbor distance、kansei coverage rate）
 2. 产物路径 + 三份/四份文件清单
 3. 提醒 SKILL.md 铁律 3：**5/5 通过 ≠ 这份 DESIGN.md 有品味**，最终品味关必须由人完成（这一句是 SKILL.md 强制项，不要省）。
 
