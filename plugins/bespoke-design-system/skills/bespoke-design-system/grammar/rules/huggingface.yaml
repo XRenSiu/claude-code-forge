@@ -24,6 +24,8 @@ rules:
   emerges_from: [huggingface]
   provenance: original
   confidence: 0.55
+  organizing_principle: 黄色只当标点不当底色——稀疏使用才让欢快保持可读
+  signature_move: true
 
 - rule_id: huggingface-typography-mono-everywhere-002
   section: typography
@@ -44,6 +46,8 @@ rules:
   emerges_from: [huggingface]
   provenance: original
   confidence: 0.5
+  organizing_principle: 等宽字蔓延到标题导航标签——config 文件就是 README 的平台 DNA
+  signature_move: true
 
 - rule_id: huggingface-components-crisp-radius-1px-borders-003
   section: components
@@ -64,6 +68,8 @@ rules:
   emerges_from: [huggingface]
   provenance: original
   confidence: 0.55
+  organizing_principle: 1px 实线边框主动宣告自己——是 GitHub 不是 Notion 的密度感
+  signature_move: false
 
 - rule_id: huggingface-components-category-tinted-task-tags-004
   section: components
@@ -84,6 +90,8 @@ rules:
   emerges_from: [huggingface]
   provenance: original
   confidence: 0.5
+  organizing_principle: 任务标签用分类色着色——让用户一眼扫到 NLP/视觉/音频的分类法
+  signature_move: false
 
 - rule_id: huggingface-typography-weight-cap-600-005
   section: typography
@@ -104,3 +112,5 @@ rules:
   emerges_from: [huggingface]
   provenance: original
   confidence: 0.5
+  organizing_principle: 字重封顶 600——避免重体与黄色标点抢戏
+  signature_move: false

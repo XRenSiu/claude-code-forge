@@ -78,7 +78,7 @@ for R in kept:
 2. 保留权重 ≥ `μ` 的边（高 co-occurrence 是"自洽风格岛"信号）
 3. 用连通分量算法找出所有 cluster
 4. 对每个 cluster，计算 `cluster_score = mean(rule.final_score for rule in cluster)`
-5. cluster_score 最高的 cluster = **anchor（协调骨架）**，记录其 dominant_systems；次高的 1 个可留作辅助岛
+5. **anchor（协调骨架）= 规模加权最高的 cluster**（v1.14.0 #6：按 size×score 选而非纯 mean_score，避免一个 2-node 高分对冒充 anchor；候选集很宽/共现稀疏时自适应放松阈值 μ-σ → μ-1.5σ → μ-2σ 直到 backbone 成形）。记录其 dominant_systems；次高的可留作辅助岛
 6. 主岛之外的孤立点（= 与 anchor 低共现）：**v1.13.0 反转**——若 final_score ≥ 候选集 **p25**（旧为 median）→ 保留并标 `productive_tension`（**独特性来源，B4 要主动据此发散、用候选 concept 背书这个组合**，不是"补充规则"）；只有真正 bottom-quartile（< p25，连张力都不配）才剔除
 
 ### 小规模 fallback

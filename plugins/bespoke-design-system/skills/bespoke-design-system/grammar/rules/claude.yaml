@@ -42,6 +42,8 @@ rules:
   - claude
   provenance: original
   confidence: 0.7
+  organizing_principle: 画布是被印刷过的纸，不是被点亮的屏
+  signature_move: true
   known_conflicts:
   - rule: figma-color-binary-chrome-001
     reason: warm-cream canvas vs binary-chrome — opposite chromatic philosophies
@@ -82,6 +84,8 @@ rules:
   - claude
   provenance: original
   confidence: 0.7
+  organizing_principle: 唯一品牌色是泥土色，刻意反硅谷的暖
+  signature_move: true
 - rule_id: claude-color-warm-near-black-text-003
   section: color
   preconditions:
@@ -112,6 +116,8 @@ rules:
   - claude
   provenance: original
   confidence: 0.6
+  organizing_principle: 连最深的文字也是暖的，没有纯黑来破坏体系
+  signature_move: false
 - rule_id: claude-color-focus-blue-only-cool-004
   section: color
   preconditions:
@@ -140,6 +146,8 @@ rules:
   - claude
   provenance: original
   confidence: 0.55
+  organizing_principle: 暖体系唯一让步给冷的地方，只为可达性
+  signature_move: false
 - rule_id: claude-typography-serif-single-weight-005
   section: typography
   preconditions:
@@ -173,6 +181,8 @@ rules:
   - claude
   provenance: original
   confidence: 0.7
+  organizing_principle: 标题用单一中等字重的衬线，像文学期刊而非科技产品
+  signature_move: true
 - rule_id: claude-typography-relaxed-body-line-height-006
   section: typography
   preconditions:
@@ -204,6 +214,8 @@ rules:
   - claude
   provenance: original
   confidence: 0.6
+  organizing_principle: 正文用读书的节奏呼吸，衬线比无衬线需要更多留白
+  signature_move: false
 - rule_id: claude-components-ring-shadow-warm-halo-007
   section: depth_elevation
   preconditions:
@@ -237,6 +249,8 @@ rules:
   - claude
   provenance: original
   confidence: 0.6
+  organizing_principle: 用暖色光晕代替冷投影，深度也服从暖体系
+  signature_move: false
 - rule_id: claude-components-generous-radius-008
   section: components
   preconditions:
@@ -271,6 +285,8 @@ rules:
   - claude
   provenance: original
   confidence: 0.55
+  organizing_principle: 圆角像手稿的留白边缘——柔软但不至于变成药丸
+  signature_move: false
 - rule_id: claude-layout-light-dark-alternation-009
   section: layout
   preconditions:
@@ -300,6 +316,8 @@ rules:
   - claude
   provenance: original
   confidence: 0.55
+  organizing_principle: 明暗交替的章节像翻书换页，给阅读以节奏
+  signature_move: false
 - rule_id: claude-voice-thoughtful-companion-010
   section: voice
   preconditions:
@@ -332,6 +350,8 @@ rules:
   - claude
   provenance: original
   confidence: 0.5
+  organizing_principle: 声音是体贴的同伴，不是强大的工具，先尊重再说能力
+  signature_move: false
 - rule_id: claude-anti-pattern-tech-creep-011
   section: anti_patterns
   preconditions:
@@ -367,3 +387,5 @@ rules:
   - claude
   provenance: original
   confidence: 0.7
+  organizing_principle: 守住暖文学调性的纪律，列出所有会滑向硅谷科技感的禁忌
+  signature_move: false

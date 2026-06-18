@@ -7,6 +7,8 @@
 从 `grammar/rules/*.yaml`（含 `_generated.yaml`）里捞出与调性画像匹配的候选规则集。**直接在规则层检索，不在 DESIGN.md 层**。候选集应宽，冲突解决留到 B3。
 
 > **v1.13.0（改动3）概念覆盖**：除了按画像三层检索，**必须额外确保每个 B0.5 concept seed 的 `tension_hint` 指向的规则进入候选集**——即使它与画像质心低共现（那正是 B3 要留作 `productive_tension`、B4a 发散所需的独特性原料）。检索服务的是"三个概念各自需要的张力"，不是只服务画像质心。覆盖不到的 tension_hint 在输出里标注，让 B3/B4a 知道缺料。
+>
+> **v1.14.0（改动5A）signature 加权**：规则现在带可选 `signature_move`（bool）与 `organizing_principle`。对 `signature_move: true` 的规则在 `final_score` 上加一个小幅 boost（如 +0.1），让承载身份的规则更容易进候选并在 B3 排序靠前——B4 据此建立识别度。`organizing_principle` 帮你判断规则的"想法"是否贴合 concept，而不只是 token 参数匹配。
 
 ---
 

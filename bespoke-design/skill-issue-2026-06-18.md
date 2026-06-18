@@ -56,7 +56,7 @@
 |---|---|---|---|
 | 4 | medium | **union-kansei vs 单一 winner 覆盖**：B0.5 三发散概念 → B1 取并集做检索宽度,但单一 winner 天然覆盖不了被否概念的 kansei（本次 raw/terminal-native 属概念 C）→ coverage 卡在 0.80 阈值线。 | ✅ **已修 v1.13.1**：kansei_coverage 加 `--kansei` 覆盖参数,B5 传 winner 概念 kansei 而非并集。实测:winner 8 词 → coverage 1.0。SKILL.md B5 / b5 prompt / CLAUDE.md 已同步。 |
 | 5 | medium（**闸门在干净环境跑不起来**） | `kansei_coverage_check.py` **硬依赖 PyYAML**（`ERROR: PyYAML required`）。本机默认无 pyyaml,其余 5 个 check 全读 JSON 能跑。这意味着干净环境里这一闸直接挂。 | ✅ **已修 v1.13.1**：改为 YAML-或-JSON 加载;无 pyyaml 时传 JSON 仍能跑,否则优雅降级 `evaluable:false`(不再 `exit(2)` 崩闸门)。4 条路径实测通过(yaml/json/--kansei/无-pyyaml 降级)。 |
-| 6 | low（观察） | 概念优先检索使候选集很宽（216）→ 共现稀疏 → B3 anchor 极小（2 条）、tension 极大（132 条）。anchor 作为"协调骨架"作用被削弱。 | 可让 anchor 用 winner 的 `anchor_system` 播种,或候选集很宽时下调共现阈值让 anchor 成形。 |
+| 6 | low（观察） | 概念优先检索使候选集很宽（216）→ 共现稀疏 → B3 anchor 极小（2 条）、tension 极大（132 条）。anchor 作为"协调骨架"作用被削弱。 | ✅ **已修 v1.14.0**：anchor 改为 size×score 规模加权选取 + 候选集稀疏时自适应放松共现阈值(μ-σ/-1.5σ/-2σ)。实测 anchor 从 2 → 57 条真 backbone；tension surface 上限 30(全量仍保留)。 |
 
 ## 根因定位
 

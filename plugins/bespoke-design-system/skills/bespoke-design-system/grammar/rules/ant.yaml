@@ -23,7 +23,8 @@ rules:
   emerges_from: [ant]
   provenance: original
   confidence: 0.5
-
+  organizing_principle: 五色严格绑定状态语义——高密数据里靠语义而非装饰区分
+  signature_move: true
 - rule_id: ant-typography-sans-mono-pair-002
   section: typography
   preconditions:
@@ -43,7 +44,8 @@ rules:
   emerges_from: [ant]
   provenance: original
   confidence: 0.45
-
+  organizing_principle: UI 用 sans、数据与代码用 mono——靠等宽实现数字对齐
+  signature_move: false
 - rule_id: ant-layout-strict-type-spacing-scale-003
   section: layout
   preconditions:
@@ -62,3 +64,5 @@ rules:
   emerges_from: [ant]
   provenance: original
   confidence: 0.45
+  organizing_principle: 字号与间距用严格离散刻度——为百元素级密度提供统一节奏
+  signature_move: false

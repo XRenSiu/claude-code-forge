@@ -504,9 +504,28 @@ def encode(tokens: dict) -> list[float]:
     ]
 
 
+# v1.14.0 (skill-issue-2026-06-18 #2/#3): the "adjective" stub systems (clean,
+# colorful, simple, corporate, futuristic, sleek, storytelling, cosmic, creative,
+# ...) were never really extracted — they all carry the IDENTICAL Tailwind-default
+# 7-hex palette and have no rule files. In the neighbor corpus they only create
+# duplicate near-0 neighbors and confusing "clone of 'colorful'" messages. Skip any
+# system whose palette is exactly this stub set (detected by value, not by name, so
+# it catches any future stub regardless of label).
+STUB_PALETTE = frozenset({
+    '#3B82F6', '#8B5CF6', '#16A34A', '#D97706', '#DC2626', '#FFFFFF', '#111827',
+})
+
+
+def _is_stub(tokens: dict) -> bool:
+    hexes = {str(h).upper() for h in ((tokens.get('color') or {}).get('all_hex_colors') or [])}
+    return bool(hexes) and hexes == STUB_PALETTE
+
+
 def main():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument('--skill-root', default=os.path.normpath(os.path.join(HERE, '..')))
+    p.add_argument('--keep-stubs', action='store_true',
+                   help='Include Tailwind-default stub systems (default: exclude them — #2/#3)')
     p.add_argument('--include-only', help='Comma-separated list of system names to include (default: all)')
     args = p.parse_args()
 
@@ -516,6 +535,7 @@ def main():
     only = set(args.include_only.split(',')) if args.include_only else None
 
     systems = {}
+    skipped_stubs = []
     for fname in sorted(os.listdir(tokens_dir)):
         if not fname.endswith('.json'):
             continue
@@ -528,6 +548,9 @@ def main():
             except Exception as e:
                 print(f'  skip {sys_name} (invalid JSON: {e})', file=sys.stderr)
                 continue
+        if not args.keep_stubs and _is_stub(tokens):
+            skipped_stubs.append(sys_name)
+            continue
         try:
             vec = encode(tokens)
         except Exception as e:
@@ -568,6 +591,9 @@ def main():
     print(f'Wrote {output_path}')
     print(f'  systems encoded: {len(systems)}')
     print(f'  dim_count: {len(DIM_NAMES)}')
+    if skipped_stubs:
+        print(f'  skipped {len(skipped_stubs)} Tailwind-default stub systems (#2/#3): '
+              f'{", ".join(skipped_stubs)}')
 
 
 if __name__ == '__main__':

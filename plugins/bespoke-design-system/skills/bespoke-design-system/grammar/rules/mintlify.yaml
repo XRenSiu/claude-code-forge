@@ -40,6 +40,8 @@ rules:
   - mintlify
   provenance: original
   confidence: 0.65
+  organizing_principle: 画布为阅读让路——纯白不分区，靠边框与留白而非灰块分隔，仅留一缕清新
+  signature_move: false
 - rule_id: mintlify-color-near-black-text-002
   section: color
   preconditions:
@@ -68,6 +70,8 @@ rules:
   - mintlify
   provenance: original
   confidence: 0.6
+  organizing_principle: 长文阅读要的是近黑而非纯黑——一点微暖换来眼睛的久读舒适
+  signature_move: false
 - rule_id: mintlify-color-7tier-gray-scale-003
   section: color
   preconditions:
@@ -95,6 +99,8 @@ rules:
   - mintlify
   provenance: original
   confidence: 0.55
+  organizing_principle: 文档需要更细的灰阶层级——7 级中性色为语法标注留足层次
+  signature_move: false
 - rule_id: mintlify-typography-inter-tight-display-004
   section: typography
   preconditions:
@@ -129,6 +135,8 @@ rules:
   - mintlify
   provenance: original
   confidence: 0.65
+  organizing_principle: 标题压紧、正文舒展——大字负字距求密度，小字回正常求可读
+  signature_move: false
 - rule_id: mintlify-typography-relaxed-body-line-height-005
   section: typography
   preconditions:
@@ -156,6 +164,8 @@ rules:
   - mintlify
   provenance: original
   confidence: 0.6
+  organizing_principle: 长文要宽敞的行道——1.5 行高给阅读留出从容的呼吸
+  signature_move: false
 - rule_id: mintlify-typography-three-weight-006
   section: typography
   preconditions:
@@ -185,6 +195,8 @@ rules:
   - mintlify
   provenance: original
   confidence: 0.6
+  organizing_principle: 层级靠字号驱动而非字重——三档权重就够，不让粗体打断阅读流
+  signature_move: false
 - rule_id: mintlify-components-ultra-round-corners-007
   section: components
   preconditions:
@@ -217,6 +229,8 @@ rules:
   - mintlify
   provenance: original
   confidence: 0.6
+  organizing_principle: 用超大圆角说出“严谨也可以亲切”——16/24px 加全药丸按钮，圆而不幼稚
+  signature_move: true
 - rule_id: mintlify-components-whisper-borders-008
   section: components
   preconditions:
@@ -246,6 +260,8 @@ rules:
   - mintlify
   provenance: original
   confidence: 0.6
+  organizing_principle: 分隔到几乎看不见——0.05 透明边框与极淡阴影，不与阅读争注意力
+  signature_move: false
 - rule_id: mintlify-spacing-generous-sections-009
   section: spacing
   preconditions:
@@ -282,6 +298,8 @@ rules:
   - mintlify
   provenance: original
   confidence: 0.55
+  organizing_principle: 区块间距像章节换页——48-96px 的节奏给文档以书卷气的呼吸
+  signature_move: false
 - rule_id: mintlify-anti-pattern-marketing-creep-010
   section: anti_patterns
   preconditions:
@@ -312,3 +330,5 @@ rules:
   - mintlify
   provenance: original
   confidence: 0.6
+  organizing_principle: 守住“阅读优先”的纪律——任何向营销 SaaS 模板或仪表盘密度的漂移都要拦下
+  signature_move: false

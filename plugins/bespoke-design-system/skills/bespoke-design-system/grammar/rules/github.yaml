@@ -34,6 +34,8 @@ rules:
   - github
   provenance: original
   confidence: 0.7
+  organizing_principle: 14px 正文+紧凑行距把信息密度本身当作品牌——开发者要看到更多
+  signature_move: true
 - rule_id: github-color-dual-chromatic-anchor-002
   section: color
   preconditions:
@@ -66,6 +68,8 @@ rules:
   - github
   provenance: original
   confidence: 0.65
+  organizing_principle: 只用两种色且各司其职——蓝色管交互，绿色管成功，色彩有明确分工
+  signature_move: false
   known_conflicts:
   - rule: linear-app-color-single-chromatic-anchor-002
     reason: 1 vs 2 chromatic anchors — different chromatic budget philosophies
@@ -100,6 +104,8 @@ rules:
   - github
   provenance: original
   confidence: 0.7
+  organizing_principle: 用1px发丝边框而非阴影分隔面板——工程感来自精确划界而非柔化漂浮
+  signature_move: false
 - rule_id: github-typography-system-ui-only-004
   section: typography
   preconditions:
@@ -133,6 +139,8 @@ rules:
   - github
   provenance: original
   confidence: 0.65
+  organizing_principle: 全程用系统字体栈不加载 webfont——说"你所在系统"的母语，零延迟零跨平台偏差
+  signature_move: false
 - rule_id: github-components-pill-status-badge-005
   section: components
   preconditions:
@@ -169,6 +177,8 @@ rules:
   - github
   provenance: original
   confidence: 0.65
+  organizing_principle: 胶囊徽章只承载状态/角色等语义，颜色等于含义，可瞬间扫读
+  signature_move: false
 - rule_id: github-anti-pattern-decoration-creep-006
   section: anti_patterns
   preconditions:
@@ -198,3 +208,5 @@ rules:
   - github
   provenance: original
   confidence: 0.7
+  organizing_principle: 守住工程化密度，抵抗向消费级 app 和营销装饰漂移的压力
+  signature_move: false

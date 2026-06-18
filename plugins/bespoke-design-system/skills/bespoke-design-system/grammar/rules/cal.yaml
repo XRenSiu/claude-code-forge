@@ -23,6 +23,8 @@ rules:
   emerges_from: [cal]
   provenance: original
   confidence: 0.7
+  organizing_principle: 纯灰阶，色彩被当作外来异物——用单色对比与字重制造力量
+  signature_move: true
 
 - rule_id: cal-color-warm-near-black-text-002
   section: color
@@ -43,6 +45,8 @@ rules:
   emerges_from: [cal]
   provenance: original
   confidence: 0.6
+  organizing_principle: 暖近黑文字在权威与亲和之间取得平衡，不用冷的纯黑
+  signature_move: false
 
 - rule_id: cal-typography-cal-sans-display-extreme-tight-003
   section: typography
@@ -65,6 +69,8 @@ rules:
   emerges_from: [cal]
   provenance: original
   confidence: 0.6
+  organizing_principle: 展示字距极紧，像被刻进页面——展示型说话，正文型解释
+  signature_move: true
 
 - rule_id: cal-depth-elevation-11-tier-shadow-system-004
   section: depth_elevation
@@ -85,6 +91,8 @@ rules:
   emerges_from: [cal]
   provenance: original
   confidence: 0.55
+  organizing_principle: 多层阴影栈成为单色体系里代替颜色的深度语言
+  signature_move: false
 
 - rule_id: cal-layout-wide-radius-scale-005
   section: layout
@@ -104,3 +112,5 @@ rules:
   emerges_from: [cal]
   provenance: original
   confidence: 0.5
+  organizing_principle: 用半径区分 chrome 角色，每种容器有自己的圆角档位
+  signature_move: false

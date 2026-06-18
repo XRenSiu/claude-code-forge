@@ -43,6 +43,8 @@ rules:
   - notion
   provenance: original
   confidence: 0.7
+  organizing_principle: 中性色不是灰，是被阳光晒过的纸——温度藏在每一级灰里
+  signature_move: true
   known_conflicts:
   - rule: linear-app-color-dark-native-001
     reason: warm-light canvas vs cool-dark canvas — opposite ambient strategies
@@ -74,6 +76,8 @@ rules:
   - notion
   provenance: original
   confidence: 0.6
+  organizing_principle: 留 5% 余白给眼睛——纯黑太狠，长文需要喘息
+  signature_move: false
 - rule_id: notion-color-single-blue-anchor-003
   section: color
   preconditions:
@@ -106,6 +110,8 @@ rules:
   - notion
   provenance: original
   confidence: 0.65
+  organizing_principle: 整片暖灰里只留一抹蓝——唯一的彩色就是唯一的信号
+  signature_move: false
 - rule_id: notion-color-content-tagging-palette-004
   section: color
   preconditions:
@@ -139,6 +145,8 @@ rules:
   - notion
   provenance: original
   confidence: 0.55
+  organizing_principle: 色彩的自由属于用户内容，不属于界面骨架
+  signature_move: false
 - rule_id: notion-color-multi-layer-whisper-shadow-005
   section: depth_elevation
   preconditions:
@@ -166,6 +174,8 @@ rules:
   - notion
   provenance: original
   confidence: 0.6
+  organizing_principle: 阴影要被感觉到而非被看到——多层低透叠出空气感
+  signature_move: true
 - rule_id: notion-typography-modified-inter-with-tight-display-006
   section: typography
   preconditions:
@@ -201,6 +211,8 @@ rules:
   - notion
   provenance: original
   confidence: 0.65
+  organizing_principle: 字号越大越收紧——标题致密，正文照常呼吸
+  signature_move: false
 - rule_id: notion-typography-4-weight-system-007
   section: typography
   preconditions:
@@ -231,6 +243,8 @@ rules:
   - notion
   provenance: original
   confidence: 0.6
+  organizing_principle: 四档字重织出层次，正文里永不出现 bold 打断阅读
+  signature_move: false
 - rule_id: notion-typography-12px-positive-tracking-exception-008
   section: typography
   preconditions:
@@ -255,6 +269,8 @@ rules:
   - notion
   provenance: original
   confidence: 0.5
+  organizing_principle: 小字反而要松——可读性凌驾于系统一致性之上
+  signature_move: false
 - rule_id: notion-components-translucent-secondary-button-009
   section: components
   preconditions:
@@ -286,6 +302,8 @@ rules:
   - notion
   provenance: original
   confidence: 0.55
+  organizing_principle: 次级按钮用半透明退场，而非另一种实色去抢戏
+  signature_move: false
 - rule_id: notion-components-subtle-card-radius-010
   section: components
   preconditions:
@@ -311,6 +329,8 @@ rules:
   - notion
   provenance: original
   confidence: 0.5
+  organizing_principle: 4px 圆角——刚好软到不锋利，又不软到撒娇
+  signature_move: false
 - rule_id: notion-spacing-organic-non-rigid-011
   section: spacing
   preconditions:
@@ -348,6 +368,8 @@ rules:
   - notion
   provenance: original
   confidence: 0.55
+  organizing_principle: 网格做骨，但允许中间步长——结构里留一点有机的松动
+  signature_move: false
 - rule_id: notion-anti-pattern-coldness-012
   section: anti_patterns
   preconditions:
@@ -378,3 +400,5 @@ rules:
   - notion
   provenance: original
   confidence: 0.6
+  organizing_principle: 温暖极简的纪律——守住温度，拒绝滑向冷峻或喧闹
+  signature_move: false

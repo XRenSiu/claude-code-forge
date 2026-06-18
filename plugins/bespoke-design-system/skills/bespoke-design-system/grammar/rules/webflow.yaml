@@ -24,6 +24,8 @@ rules:
   emerges_from: [webflow]
   provenance: original
   confidence: 0.55
+  organizing_principle: 丰富的多色副板本身就是平台创造力的信号
+  signature_move: true
 
 - rule_id: webflow-typography-variable-font-uppercase-labels-002
   section: typography
@@ -44,6 +46,8 @@ rules:
   emerges_from: [webflow]
   provenance: original
   confidence: 0.5
+  organizing_principle: 精密的可变字体与大写标签呼应设计工具的精确承诺
+  signature_move: false
 
 - rule_id: webflow-components-conservative-radius-003
   section: components
@@ -64,6 +68,8 @@ rules:
   emerges_from: [webflow]
   provenance: original
   confidence: 0.5
+  organizing_principle: 保守圆角传达设计工具的工程精确感
+  signature_move: false
   known_conflicts:
   - rule: pinterest-components-generous-radius-scale-004
     reason: conservative 4-8 vs generous 12-40 — opposite chrome philosophies

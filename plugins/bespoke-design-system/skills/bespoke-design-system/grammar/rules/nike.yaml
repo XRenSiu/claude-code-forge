@@ -23,7 +23,8 @@ rules:
   emerges_from: [nike]
   provenance: original
   confidence: 0.65
-
+  organizing_principle: 界面只用黑白、把彩色全留给产品图——产品是唯一的颜色来源
+  signature_move: true
 - rule_id: nike-color-functional-semantic-only-002
   section: color
   preconditions:
@@ -42,7 +43,8 @@ rules:
   emerges_from: [nike]
   provenance: original
   confidence: 0.55
-
+  organizing_principle: 彩色只承担语义状态——绝不用颜色做装饰或层级
+  signature_move: false
 - rule_id: nike-typography-split-display-body-003
   section: typography
   preconditions:
@@ -63,7 +65,8 @@ rules:
   emerges_from: [nike]
   provenance: original
   confidence: 0.6
-
+  organizing_principle: 大字用压缩体超紧行高呐喊、正文用瑞士中性体——抱负与执行分工
+  signature_move: true
 - rule_id: nike-components-pill-button-fullbleed-imagery-004
   section: components
   preconditions:
@@ -84,3 +87,5 @@ rules:
   emerges_from: [nike]
   provenance: original
   confidence: 0.55
+  organizing_principle: 胶囊按钮配零圆角满版图——友好行动与原始能量的二元并置
+  signature_move: false

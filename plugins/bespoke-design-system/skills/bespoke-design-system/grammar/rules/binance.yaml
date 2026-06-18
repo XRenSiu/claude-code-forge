@@ -25,6 +25,8 @@ rules:
   emerges_from: [binance]
   provenance: original
   confidence: 0.6
+  organizing_principle: 金色是价值与权威的同义词——单一金黄，绝不沦为装饰
+  signature_move: true
 
 - rule_id: binance-color-trading-floor-two-tone-002
   section: color
@@ -46,6 +48,8 @@ rules:
   emerges_from: [binance]
   provenance: original
   confidence: 0.55
+  organizing_principle: 白与近黑两段交替，复刻交易大厅的节奏——白做盘面，黑做亮点
+  signature_move: false
 
 - rule_id: binance-typography-proprietary-across-levels-003
   section: typography
@@ -66,6 +70,8 @@ rules:
   emerges_from: [binance]
   provenance: original
   confidence: 0.55
+  organizing_principle: 一套自有字体贯穿所有层级——统一即权威，是金融信任的字面证据
+  signature_move: false
 
 - rule_id: binance-components-50px-pill-cta-token-004
   section: components
@@ -86,6 +92,8 @@ rules:
   emerges_from: [binance]
   provenance: original
   confidence: 0.5
+  organizing_principle: 50px 药丸 CTA 把按钮塑成必须被点的代币
+  signature_move: false
   known_conflicts:
   - rule: bmw-components-zero-radius-rectangular-cta-004
     reason: extreme pill (50) vs zero radius — opposite chrome philosophies

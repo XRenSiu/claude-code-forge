@@ -23,6 +23,8 @@ rules:
   emerges_from: [cohere]
   provenance: original
   confidence: 0.7
+  organizing_principle: chrome 里零彩色，色彩只在照片带和渐变分隔出现——AI 是严肃的基础设施
+  signature_move: true
 
 - rule_id: cohere-components-22px-signature-radius-002
   section: components
@@ -42,6 +44,8 @@ rules:
   emerges_from: [cohere]
   provenance: original
   confidence: 0.55
+  organizing_principle: 22px 这个非常规圆角作为品牌识别符——云朵般的容纳感，避开 8/12/16 的通用值
+  signature_move: true
 
 - rule_id: cohere-color-interactive-blue-hover-only-003
   section: color
@@ -62,6 +66,8 @@ rules:
   emerges_from: [cohere]
   provenance: original
   confidence: 0.55
+  organizing_principle: 蓝色只在 hover/focus 出现，不做静态链接色——蓝是"唤醒"信号而非常驻装饰
+  signature_move: false
 
 - rule_id: cohere-typography-serif-display-sans-utility-004
   section: typography
@@ -81,6 +87,8 @@ rules:
   emerges_from: [cohere]
   provenance: original
   confidence: 0.55
+  organizing_principle: 衬线做声明性标题、无衬线做功能正文——分工借来已发表研究的权威感
+  signature_move: false
 
 - rule_id: cohere-typography-single-body-weight-with-size-hierarchy-005
   section: typography
@@ -101,3 +109,5 @@ rules:
   emerges_from: [cohere]
   provenance: original
   confidence: 0.6
+  organizing_principle: 正文只用 400 单一字重，靠字号而非加粗建立层级——克制带来视觉平静
+  signature_move: false

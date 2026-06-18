@@ -23,6 +23,8 @@ rules:
   emerges_from: [lovable]
   provenance: original
   confidence: 0.55
+  organizing_principle: 羊皮纸暖米色把工具从冷感开发者惯例里拉出来——纸感而非屏幕感的人味
+  signature_move: true
 
 - rule_id: lovable-typography-humanist-rounded-terminals-002
   section: typography
@@ -44,6 +46,8 @@ rules:
   emerges_from: [lovable]
   provenance: original
   confidence: 0.5
+  organizing_principle: 温暖不只靠颜色——圆角末端的人文无衬线让字形本身带上手写般的亲和
+  signature_move: false
 
 - rule_id: lovable-color-opacity-driven-gray-scale-003
   section: color
@@ -64,6 +68,8 @@ rules:
   emerges_from: [lovable]
   provenance: original
   confidence: 0.5
+  organizing_principle: 灰阶用同一炭色调透明度推导——共享色相让所有灰在数学上彼此和谐
+  signature_move: false
 
 - rule_id: lovable-components-inset-shadow-pressed-button-004
   section: components
@@ -85,6 +91,8 @@ rules:
   emerges_from: [lovable]
   provenance: original
   confidence: 0.5
+  organizing_principle: 按钮压进表面而非浮起——多层内阴影制造被按下的物理实感
+  signature_move: false
 
 - rule_id: lovable-typography-variable-weight-480-005
   section: typography
@@ -105,6 +113,8 @@ rules:
   emerges_from: [lovable]
   provenance: original
   confidence: 0.45
+  organizing_principle: 层级靠细微的字重而非粗跳——可变字体的 480 这一档填补常规与半粗之间
+  signature_move: false
 
 - rule_id: lovable-components-pill-only-for-toggles-006
   section: components
@@ -125,3 +135,5 @@ rules:
   emerges_from: [lovable]
   provenance: original
   confidence: 0.5
+  organizing_principle: 药丸形状专属于切换类动作——形态本身承载语义，主 CTA 反而用矩形
+  signature_move: false

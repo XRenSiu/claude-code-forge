@@ -39,6 +39,8 @@ rules:
   - pinterest
   provenance: original
   confidence: 0.6
+  organizing_principle: 中性色全部走暖橄榄沙调而非冷蓝灰——画布要有生活方式杂志的手作温度
+  signature_move: false
 - rule_id: pinterest-color-confident-singular-red-002
   section: color
   preconditions:
@@ -75,6 +77,8 @@ rules:
   - pinterest
   provenance: original
   confidence: 0.55
+  organizing_principle: 唯一的高饱和暖红只做声明式表态，绝不削弱也不装饰——红即品牌
+  signature_move: true
 - rule_id: pinterest-color-plum-tinted-near-black-text-003
   section: color
   preconditions:
@@ -108,6 +112,8 @@ rules:
   - pinterest
   provenance: original
   confidence: 0.5
+  organizing_principle: 正文用带李子暖调的近黑而非纯黑——连文字都拒绝冷塑料感
+  signature_move: false
 - rule_id: pinterest-components-generous-radius-scale-004
   section: components
   preconditions:
@@ -149,6 +155,8 @@ rules:
   - pinterest
   provenance: original
   confidence: 0.5
+  organizing_principle: 大圆角阶梯（12-40px）让界面柔软可触，拒绝棱角与中庸的犹豫半径
+  signature_move: false
 - rule_id: pinterest-meta-3-tier-design-token-architecture-005
   section: anti_patterns
   preconditions:
@@ -178,3 +186,5 @@ rules:
   - pinterest
   provenance: original
   confidence: 0.45
+  organizing_principle: 三层 token 架构（组件/语义/基础）让设计系统能跨多产品规模化演进
+  signature_move: false

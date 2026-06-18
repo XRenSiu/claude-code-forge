@@ -1,6 +1,6 @@
 # build-neighbor-corpus — 构建邻居语料库（A5 阶段）
 
-> 程序化把 137 套 tokens 编码成定长 37 维特征向量，写入 `grammar/meta/neighbor-corpus.json`。供 B5 的 `neighbor_check.py` 使用。
+> 程序化把 tokens 编码成定长 44 维特征向量（v1.14.0；137 套中排除 16 个 Tailwind-stub → 121 套真实系统），写入 `grammar/meta/neighbor-corpus.json`。供 B5 的 `neighbor_check.py` 使用。
 
 ## 用法
 
@@ -86,7 +86,7 @@ print('all vectors length-OK')
 阈值**从 corpus 自身距离分布校准**（不是经验拍脑袋）。重建 corpus 后应复核分布是否漂移：
 
 - corpus 内部最近邻距离应大致维持 中位 ~0.12 / p90 ~0.20 / 最大 ~0.26；`suspect`(0.12) 取的就是这个中位数。若分布大幅变化，按比例调 `SUSPECT_THRESHOLD` / `DISTINCT_CEILING`。
-- **编码器分辨率是硬约束**：v1.13.0 已把 37 维扩到 44 维（加 has_mono / num_font_families / 更细色彩维），把 exact-0 坍缩对从 ~5 降到 3。**剩 3 对是真 stub 数据重复**（sleek/storytelling、cosmic/creative、colorful/simple：调色板+字体全同——共用 Tailwind 默认 7 色），任何编码器都分不开，需 re-extract 或排除这些 stub。`clone` 阈值仍不宜上调太多。详见 `bespoke-design/skill-issue-2026-06-18.md` #2。
+- **编码器分辨率 + stub 排除（v1.13.0/v1.14.0）**：37→44 维（加 has_mono / num_font_families / 更细色彩维）破开了大部分坍缩；v1.14.0 进一步把 16 个共用 Tailwind 默认 7 色、无规则文件的"形容词 stub"系统排除出语料库（`_is_stub()` 按调色板检测，`--keep-stubs` 可保留）。结果:**exact-0 重复邻居 = 0**(原 6),corpus 137→121。NN 中位仍 ~0.126,改动1 阈值不变。`clone` 阈值仍不宜上调太多(编码器对真实相近系统仍有分辨率上限)。详见 `bespoke-design/skill-issue-2026-06-18.md` #2/#3。
 
 如果用户反映"生成的设计很普通"，**不要**指望调这个 check——它只能抓 token clone。感知层面的平庸是 taste critic 的职责。
 

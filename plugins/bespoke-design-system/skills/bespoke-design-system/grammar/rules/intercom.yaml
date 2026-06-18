@@ -24,6 +24,8 @@ rules:
   emerges_from: [intercom]
   provenance: original
   confidence: 0.55
+  organizing_principle: 把客服平台放进杂志纸面——暖米白画布替代清冷 SaaS 白
+  signature_move: true
 
 - rule_id: intercom-typography-saans-billboard-compression-002
   section: typography
@@ -44,6 +46,8 @@ rules:
   emerges_from: [intercom]
   provenance: original
   confidence: 0.5
+  organizing_principle: 大字号挤压成广告牌标题——暖底之上压出工程般的精度
+  signature_move: false
 
 - rule_id: intercom-color-fin-orange-singular-ai-accent-003
   section: color
@@ -64,6 +68,8 @@ rules:
   emerges_from: [intercom]
   provenance: original
   confidence: 0.55
+  organizing_principle: Fin 橙只为 AI 而亮——品牌色被绑死在 AI 身份上，绝不装饰
+  signature_move: false
 
 - rule_id: intercom-components-sharp-4px-button-radius-004
   section: components
@@ -85,6 +91,8 @@ rules:
   emerges_from: [intercom]
   provenance: original
   confidence: 0.5
+  organizing_principle: 暖软的底上放锐利的 4px 直角——温度与精度互为反衬
+  signature_move: true
 
 - rule_id: intercom-components-scale-hover-physical-interaction-005
   section: components
@@ -105,6 +113,8 @@ rules:
   emerges_from: [intercom]
   provenance: original
   confidence: 0.5
+  organizing_principle: 悬停长大、按下缩小——交互要给出按压实体感，而非淡入淡出
+  signature_move: false
 
 - rule_id: intercom-color-warm-oat-borders-006
   section: color
@@ -124,3 +134,5 @@ rules:
   emerges_from: [intercom]
   provenance: original
   confidence: 0.55
+  organizing_principle: 连边框都是暖燕麦色——每一级中性都不许偷溜回冷灰
+  signature_move: false

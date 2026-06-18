@@ -24,6 +24,8 @@ rules:
   emerges_from: [openai]
   provenance: original
   confidence: 0.6
+  organizing_principle: 研究实验室为公众场合而盛装——克制到几乎没有装饰
+  signature_move: false
 
 - rule_id: openai-color-singular-teal-not-blue-002
   section: color
@@ -47,6 +49,8 @@ rules:
   emerges_from: [openai]
   provenance: original
   confidence: 0.6
+  organizing_principle: 品牌色选青绿而非蓝紫——既反医疗蓝又反游戏紫
+  signature_move: true
 
 - rule_id: openai-typography-restrained-weights-with-serif-editorial-003
   section: typography
@@ -68,6 +72,8 @@ rules:
   emerges_from: [openai]
   provenance: original
   confidence: 0.55
+  organizing_principle: 把产品公告当作随笔来排版，用衬线赋予文学权威
+  signature_move: true
 
 - rule_id: openai-components-uniformly-soft-radii-004
   section: components
@@ -89,6 +95,8 @@ rules:
   emerges_from: [openai]
   provenance: original
   confidence: 0.55
+  organizing_principle: 圆角统一柔和，让整个 chrome 安静下来不抢戏
+  signature_move: false
 
 - rule_id: openai-layout-whitespace-primary-divider-005
   section: layout
@@ -109,3 +117,5 @@ rules:
   emerges_from: [openai]
   provenance: original
   confidence: 0.55
+  organizing_principle: 用留白而非分割线来分章，安静的文学式分区
+  signature_move: false

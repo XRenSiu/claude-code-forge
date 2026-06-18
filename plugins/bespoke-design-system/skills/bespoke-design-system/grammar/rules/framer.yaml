@@ -23,6 +23,8 @@ rules:
   emerges_from: [framer]
   provenance: original
   confidence: 0.55
+  organizing_principle: 纯黑深空画布让每个元素都显得珍贵
+  signature_move: true
 
 - rule_id: framer-typography-extreme-negative-tracking-002
   section: typography
@@ -45,6 +47,8 @@ rules:
   emerges_from: [framer]
   provenance: original
   confidence: 0.5
+  organizing_principle: 极端负字距把标题压成蓄势待发的弹簧，压缩即个性
+  signature_move: true
 
 - rule_id: framer-color-single-accent-blue-throughline-003
   section: color
@@ -65,6 +69,8 @@ rules:
   emerges_from: [framer]
   provenance: original
   confidence: 0.55
+  organizing_principle: 单一冷电蓝是黑色虚空里唯一的交互信号线索
+  signature_move: false
 
 - rule_id: framer-components-pill-buttons-only-004
   section: components
@@ -85,6 +91,8 @@ rules:
   emerges_from: [framer]
   provenance: original
   confidence: 0.5
+  organizing_principle: 药丸按钮对中等圆角卡片，用半径差制造视觉等级
+  signature_move: false
 
 - rule_id: framer-components-frosted-translucent-pill-005
   section: components
@@ -106,6 +114,8 @@ rules:
   emerges_from: [framer]
   provenance: original
   confidence: 0.5
+  organizing_principle: 次级按钮用简单半透明白呈现半存在感，而非厚重毛玻璃
+  signature_move: false
 
 - rule_id: framer-depth_elevation-blue-ring-shadow-as-border-006
   section: depth_elevation
@@ -126,3 +136,5 @@ rules:
   emerges_from: [framer]
   provenance: original
   confidence: 0.5
+  organizing_principle: 用蓝色环形阴影代替实线边框，每个容器都隐隐发着品牌的光
+  signature_move: false

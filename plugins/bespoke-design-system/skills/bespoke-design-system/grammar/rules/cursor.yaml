@@ -19,6 +19,8 @@ rules:
   emerges_from: [cursor]
   provenance: original
   confidence: 0.65
+  organizing_principle: 三种字体讲产品哲学——几何展示、文学衬线、精炼等宽，各司其职即叙事
+  signature_move: true
 
 - rule_id: cursor-typography-display-extreme-negative-tracking-002
   section: typography
@@ -41,6 +43,8 @@ rules:
   emerges_from: [cursor]
   provenance: original
   confidence: 0.6
+  organizing_principle: 展示标题像被压缩过的代码——极端负字距求最小化的工程质感
+  signature_move: false
 
 - rule_id: cursor-color-warm-dark-with-orange-accent-003
   section: color
@@ -66,6 +70,8 @@ rules:
   emerges_from: [cursor]
   provenance: original
   confidence: 0.65
+  organizing_principle: 编辑器是羊皮纸不是屏幕——暖底色加橙红点睛，技术清晰里藏一点温度
+  signature_move: false
 
 - rule_id: cursor-layout-8base-with-micro-increments-004
   section: layout
@@ -86,6 +92,8 @@ rules:
   emerges_from: [cursor]
   provenance: original
   confidence: 0.6
+  organizing_principle: 在 8 的节奏里允许像素级微调——微增量只为光学精修，不做装饰
+  signature_move: false
 
 - rule_id: cursor-components-extreme-pill-radius-005
   section: components
@@ -105,3 +113,5 @@ rules:
   emerges_from: [cursor]
   provenance: original
   confidence: 0.55
+  organizing_principle: 极致药丸作为品牌签名——无限大圆角给标签与按钮统一的自信轮廓
+  signature_move: false

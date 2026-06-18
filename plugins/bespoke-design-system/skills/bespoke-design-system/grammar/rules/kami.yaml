@@ -24,6 +24,8 @@ rules:
   emerges_from: [kami]
   provenance: original
   confidence: 0.55
+  organizing_principle: 画布是暖牛皮纸而非屏幕——交付物该像印出来的，不像渲染出来的
+  signature_move: true
 
 - rule_id: kami-color-single-ink-blue-accent-5-percent-002
   section: color
@@ -46,6 +48,8 @@ rules:
   emerges_from: [kami]
   provenance: original
   confidence: 0.55
+  organizing_principle: 唯一一抹墨蓝是标点而非装饰，封顶 5% 覆盖率守住印刷克制
+  signature_move: true
 
 - rule_id: kami-typography-serif-single-weight-500-003
   section: typography
@@ -67,6 +71,8 @@ rules:
   emerges_from: [kami]
   provenance: original
   confidence: 0.55
+  organizing_principle: 衬线单字重的印刷纪律——强调靠墨蓝，绝不靠加粗或斜体
+  signature_move: true
 
 - rule_id: kami-color-tag-fill-solid-hex-not-rgba-004
   section: color
@@ -87,6 +93,8 @@ rules:
   emerges_from: [kami]
   provenance: original
   confidence: 0.55
+  organizing_principle: 标签填色用预混实色而非 alpha，让 PDF 打印管线不出现叠涂接缝
+  signature_move: false
 
 - rule_id: kami-color-warm-grays-only-005
   section: color
@@ -107,6 +115,8 @@ rules:
   emerges_from: [kami]
   provenance: original
   confidence: 0.55
+  organizing_principle: 所有中性灰都锁定暖偏色温，把温度当作 DNA 而非可调参数
+  signature_move: false
 
 - rule_id: kami-depth_elevation-ring-and-whisper-only-006
   section: depth_elevation
@@ -130,3 +140,5 @@ rules:
   emerges_from: [kami]
   provenance: original
   confidence: 0.55
+  organizing_principle: 纸面只有三级深度，用环线与一缕微影代替现代合成与玻璃拟态
+  signature_move: false

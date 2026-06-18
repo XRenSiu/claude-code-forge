@@ -24,6 +24,8 @@ rules:
   emerges_from: [coinbase]
   provenance: original
   confidence: 0.7
+  organizing_principle: 蓝白二元即金融可靠的视觉契约——单一饱和蓝，别无杂色
+  signature_move: true
 
 - rule_id: coinbase-color-alternating-light-dark-sections-002
   section: color
@@ -44,6 +46,8 @@ rules:
   emerges_from: [coinbase]
   provenance: original
   confidence: 0.55
+  organizing_principle: 白与近黑两段交替制造翻页节奏——明承载密度，暗承载焦点
+  signature_move: false
 
 - rule_id: coinbase-typography-four-proprietary-family-003
   section: typography
@@ -66,6 +70,8 @@ rules:
   emerges_from: [coinbase]
   provenance: original
   confidence: 0.55
+  organizing_principle: 四套自有字体即铸出的信任徽记——展示、界面、正文、图标各司其职
+  signature_move: false
 
 - rule_id: coinbase-typography-extreme-display-hero-004
   section: typography
@@ -86,6 +92,8 @@ rules:
   emerges_from: [coinbase]
   provenance: original
   confidence: 0.5
+  organizing_principle: 巨大字号本身就是品牌宣言——层级靠尺寸而非字重拉开
+  signature_move: false
 
 - rule_id: coinbase-components-56px-pill-cta-005
   section: components
@@ -106,3 +114,5 @@ rules:
   emerges_from: [coinbase]
   provenance: original
   confidence: 0.5
+  organizing_principle: 56px 药丸 CTA 把按钮变成可点的代币隐喻
+  signature_move: false

@@ -23,6 +23,8 @@ rules:
   emerges_from: [spotify]
   provenance: original
   confidence: 0.7
+  organizing_principle: UI 隐入暗处、内容自己发光——近黑分层让封面色成为画面唯一的光源
+  signature_move: false
 
 - rule_id: spotify-color-singular-functional-green-002
   section: color
@@ -45,6 +47,8 @@ rules:
   emerges_from: [spotify]
   provenance: original
   confidence: 0.7
+  organizing_principle: 一抹绿只做三件事——播放、激活、CTA 的三位一体，绝不装饰
+  signature_move: true
 
 - rule_id: spotify-components-pill-and-circle-geometry-003
   section: components
@@ -66,6 +70,8 @@ rules:
   emerges_from: [spotify]
   provenance: original
   confidence: 0.6
+  organizing_principle: 只用药丸与圆形——像硬件控制器一样的触感，没有犹疑的中庸圆角
+  signature_move: false
 
 - rule_id: spotify-depth-elevation-heavy-shadow-with-inset-004
   section: depth_elevation
@@ -86,6 +92,8 @@ rules:
   emerges_from: [spotify]
   provenance: original
   confidence: 0.55
+  organizing_principle: 暗色画布上的物理层叠——重投影加内描边让浮层有真实的厚度
+  signature_move: false
 
 - rule_id: spotify-typography-multi-script-global-fallback-005
   section: typography
@@ -105,3 +113,5 @@ rules:
   emerges_from: [spotify]
   provenance: original
   confidence: 0.55
+  organizing_principle: 品牌字体要能说全世界的语言——多文字 fallback 把识别度与全球可读并存
+  signature_move: false

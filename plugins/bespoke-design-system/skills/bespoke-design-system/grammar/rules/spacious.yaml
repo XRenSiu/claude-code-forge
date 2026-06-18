@@ -23,6 +23,8 @@ rules:
   emerges_from: [spacious]
   provenance: original
   confidence: 0.4
+  organizing_principle: 纯白底加极简语义色板——克制干净作为默认基线
+  signature_move: false
 
 - rule_id: spacious-typography-display-body-split-002
   section: typography
@@ -43,6 +45,8 @@ rules:
   emerges_from: [spacious]
   provenance: original
   confidence: 0.4
+  organizing_principle: 几何标题配人文正文——靠字体分工拉开层级而非堆砌密度
+  signature_move: false
 
 - rule_id: spacious-layout-8pt-baseline-wide-step-003
   section: layout
@@ -63,3 +67,5 @@ rules:
   emerges_from: [spacious]
   provenance: original
   confidence: 0.4
+  organizing_principle: 8pt 基线配宽幅字号阶梯——用呼吸感而非密度构建空旷气质
+  signature_move: false

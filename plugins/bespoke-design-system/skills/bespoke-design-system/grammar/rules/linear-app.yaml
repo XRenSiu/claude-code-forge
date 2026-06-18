@@ -39,6 +39,8 @@ rules:
   - linear-app
   provenance: original
   confidence: 0.7
+  organizing_principle: 暗色不是被反转出来的主题，而是这套系统的原生介质
+  signature_move: true
   known_conflicts:
   - rule: vercel-color-extreme-white-minimalism-001
     reason: dark-native canvas vs pure-white canvas — opposite base assumptions
@@ -82,6 +84,8 @@ rules:
   - linear-app
   provenance: original
   confidence: 0.65
+  organizing_principle: 全场只留一种品牌色，作为注意力的唯一锚点而非装饰
+  signature_move: false
 - rule_id: linear-app-color-translucent-borders-003
   section: color
   preconditions:
@@ -114,6 +118,8 @@ rules:
   - linear-app
   provenance: original
   confidence: 0.7
+  organizing_principle: 用半透明白边在暗面上勾出结构，要定义不要硬边的视觉噪声
+  signature_move: false
   known_conflicts:
   - rule: vercel-elevation-shadow-as-border-005
     reason: translucent-white-border vs shadow-as-border — different border philosophies for different canvases
@@ -154,6 +160,8 @@ rules:
   - linear-app
   provenance: original
   confidence: 0.7
+  organizing_principle: 字体本身是被工程化打磨出的身份，不靠通用 Inter 也不靠 700 粗体喊话
+  signature_move: false
 - rule_id: linear-app-typography-display-compression-005
   section: typography
   preconditions:
@@ -225,6 +233,8 @@ rules:
   - linear-app
   provenance: original
   confidence: 0.65
+  organizing_principle: 按钮近乎透明、靠 hover 才显形——UI 不该大声说话
+  signature_move: false
   known_conflicts:
   - rule: vercel-components-dark-pill-cta-007
     reason: transparent ghost button vs solid dark CTA — opposite primary-button strategies
@@ -261,6 +271,8 @@ rules:
   - linear-app
   provenance: original
   confidence: 0.7
+  organizing_principle: 深度靠背景明度逐级抬升，而不是在暗面上投不可见的阴影
+  signature_move: true
   known_conflicts:
   - rule: vercel-elevation-shadow-as-border-005
     reason: luminance-stepping vs shadow-as-border — different elevation systems for different canvases
@@ -313,6 +325,8 @@ rules:
   - linear-app
   provenance: original
   confidence: 0.65
+  organizing_principle: 数学精确的 8px 栅格，再叠一层光学微调让结构服务于可读
+  signature_move: false
 - rule_id: linear-app-voice-engineered-not-designed-009
   section: voice
   preconditions:
@@ -344,6 +358,8 @@ rules:
   - linear-app
   provenance: original
   confidence: 0.5
+  organizing_principle: 每处装饰都要有功能理由——是工程出来的，不是画出来的
+  signature_move: false
   inferred: true
 - rule_id: linear-app-anti-pattern-warmth-in-chrome-010
   section: anti_patterns
@@ -376,3 +392,5 @@ rules:
   - linear-app
   provenance: original
   confidence: 0.65
+  organizing_principle: 守住冷调工程化克制的纪律，禁掉一切会让 chrome 变暖变友好的诱惑
+  signature_move: false

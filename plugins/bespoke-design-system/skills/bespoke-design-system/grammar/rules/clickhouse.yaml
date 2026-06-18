@@ -24,6 +24,8 @@ rules:
   emerges_from: [clickhouse]
   provenance: original
   confidence: 0.6
+  organizing_principle: 速度即视觉强度——霓虹黄绿打在纯黑上，用极端对比表达性能的锋利
+  signature_move: true
   known_conflicts:
   - rule: linear-app-color-dark-native-001
     reason: pure-black + neon vs near-black with cool undertone — opposite dark canvas philosophies
@@ -48,6 +50,8 @@ rules:
   emerges_from: [clickhouse]
   provenance: original
   confidence: 0.55
+  organizing_principle: 字体作为建筑般的物理存在——900 黑体在 80px+ 制造压倒性的视觉质量
+  signature_move: false
   known_conflicts:
   - rule: linear-app-typography-geometric-sans-with-features-004
     reason: weight 900 (extreme) vs no_weight_above 590 (restrained) — opposite weight ladders
@@ -71,6 +75,8 @@ rules:
   emerges_from: [clickhouse]
   provenance: original
   confidence: 0.55
+  organizing_principle: 导航是系统标牌而非营销链接——大写加宽字距让其读起来像技术权威的旗语
+  signature_move: false
 
 - rule_id: clickhouse-color-secondary-cta-forest-green-004
   section: color
@@ -90,3 +96,5 @@ rules:
   emerges_from: [clickhouse]
   provenance: original
   confidence: 0.5
+  organizing_principle: 次级动作用暗森林绿建立层级——不与霓虹主色争夺却仍区分动作深度
+  signature_move: false

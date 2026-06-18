@@ -25,6 +25,8 @@ rules:
   emerges_from: [mastercard]
   provenance: original
   confidence: 0.55
+  organizing_principle: 暖灰画布配暖近黑文字——把界面做成年报纸张的编辑式底色
+  signature_move: true
 
 - rule_id: mastercard-components-circular-portraits-with-orbital-arcs-002
   section: components
@@ -46,6 +48,8 @@ rules:
   emerges_from: [mastercard]
   provenance: original
   confidence: 0.5
+  organizing_principle: 服务用圆形头像加细橙弧连接——把列表变成运动中的星座
+  signature_move: true
 
 - rule_id: mastercard-typography-weight-450-load-bearing-body-003
   section: typography
@@ -67,6 +71,8 @@ rules:
   emerges_from: [mastercard]
   provenance: original
   confidence: 0.45
+  organizing_principle: 正文用 450 半档字重——比 500 软半步，软却仍承重
+  signature_move: false
 
 - rule_id: mastercard-color-signal-orange-consent-only-004
   section: color
@@ -87,6 +93,8 @@ rules:
   emerges_from: [mastercard]
   provenance: original
   confidence: 0.55
+  organizing_principle: 信号橙锁死在合规法务场景——不被营销稀释才保住信号纯度
+  signature_move: false
 
 - rule_id: mastercard-layout-radius-three-tier-gap-rule-005
   section: layout
@@ -108,6 +116,8 @@ rules:
   emerges_from: [mastercard]
   provenance: original
   confidence: 0.5
+  organizing_principle: 圆角分三档并刻意留缺口——跳过 8/12/16 才躲开通用 SaaS 的中庸
+  signature_move: false
 
 - rule_id: mastercard-depth_elevation-atmospheric-cushion-shadow-006
   section: depth_elevation
@@ -129,3 +139,5 @@ rules:
   emerges_from: [mastercard]
   provenance: original
   confidence: 0.5
+  organizing_principle: 大扩散低透明的氛围阴影——卡片在纸面上呼吸而非投定向落影
+  signature_move: false

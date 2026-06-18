@@ -41,6 +41,8 @@ rules:
   - stripe
   provenance: original
   confidence: 0.7
+  organizing_principle: 金融权威可以是暖的——navy 代替纯黑，紫罗兰带来人味
+  signature_move: false
 - rule_id: stripe-color-purple-ladder-002
   section: color
   preconditions:
@@ -74,6 +76,8 @@ rules:
   - stripe
   provenance: original
   confidence: 0.55
+  organizing_principle: 状态用实色阶梯表达而非透明度——每个交互态都是被设计过的颜色
+  signature_move: false
 - rule_id: stripe-color-decorative-only-magenta-ruby-003
   section: color
   preconditions:
@@ -101,6 +105,8 @@ rules:
   - stripe
   provenance: original
   confidence: 0.5
+  organizing_principle: 装饰色与交互色严格分工——艳色只负责氛围，绝不承担动作
+  signature_move: false
 - rule_id: stripe-color-blue-tinted-shadow-004
   section: depth_elevation
   preconditions:
@@ -139,6 +145,8 @@ rules:
   - stripe
   provenance: original
   confidence: 0.65
+  organizing_principle: 阴影也是品牌——蓝调多层投影让深度自带 Stripe 的呼吸
+  signature_move: true
 - rule_id: stripe-typography-sohne-ss01-required-005
   section: typography
   preconditions:
@@ -171,6 +179,8 @@ rules:
   - stripe
   provenance: original
   confidence: 0.65
+  organizing_principle: 字体的 OpenType 特性就是品牌指纹——ss01 全局开启把 Söhne 变成 Stripe 的字
+  signature_move: true
 - rule_id: stripe-typography-light-weight-300-signature-006
   section: typography
   preconditions:
@@ -206,6 +216,8 @@ rules:
   - stripe
   provenance: original
   confidence: 0.7
+  organizing_principle: 用轻盈而非厚重表达奢华——300 字重的低语比粗体更显克制的高级
+  signature_move: false
   known_conflicts:
   - rule: duolingo-typography-extra-bold-rounded-display-003
     reason: weight 300 luxury whisper vs weight 800 confident shout — opposite typographic stances
@@ -240,6 +252,8 @@ rules:
   - stripe
   provenance: original
   confidence: 0.55
+  organizing_principle: 标题像被编译压缩过的代码——字号越大字距越负，密度即精度
+  signature_move: false
 - rule_id: stripe-components-conservative-radius-008
   section: components
   preconditions:
@@ -272,6 +286,8 @@ rules:
   - stripe
   provenance: original
   confidence: 0.55
+  organizing_principle: 圆角是微小的温度计——4-8px 既不冷峻也不亲昵，正好是工程信任的体感
+  signature_move: false
 - rule_id: stripe-components-dashed-affordance-009
   section: components
   preconditions:
@@ -296,6 +312,8 @@ rules:
   - stripe
   provenance: original
   confidence: 0.5
+  organizing_principle: 虚线即“尚未完成”的语义——边框形态本身承载交互状态的信号
+  signature_move: false
 - rule_id: stripe-spacing-fine-grained-financial-010
   section: spacing
   preconditions:
@@ -336,6 +354,8 @@ rules:
   - stripe
   provenance: original
   confidence: 0.5
+  organizing_principle: 在 8 的节奏里留出更细的刻度——金融图表的微对齐需要小端密集的间距
+  signature_move: false
 - rule_id: stripe-layout-dense-data-generous-chrome-011
   section: layout
   preconditions:
@@ -363,6 +383,8 @@ rules:
   - stripe
   provenance: original
   confidence: 0.5
+  organizing_principle: 数据致密、外壳从容——把电子表格装进一个呼吸感的画框里
+  signature_move: false
 - rule_id: stripe-voice-engineering-luxury-012
   section: voice
   preconditions:
@@ -393,6 +415,8 @@ rules:
   - stripe
   provenance: original
   confidence: 0.5
+  organizing_principle: 像工程论文那样克制地说话——精确而非营销腔，也不堆术语
+  signature_move: false
 - rule_id: stripe-anti-pattern-decoration-creep-013
   section: anti_patterns
   preconditions:
@@ -424,3 +448,5 @@ rules:
   - stripe
   provenance: original
   confidence: 0.6
+  organizing_principle: 守住“工程式奢华”的纪律线——任何向友好营销风的漂移都是失守
+  signature_move: false

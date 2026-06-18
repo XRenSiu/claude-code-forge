@@ -220,31 +220,52 @@ def resolve(b2_path, graph_path, output_path):
         mu = sum(freqs) / len(freqs)
         sigma = (sum((f - mu) ** 2 for f in freqs) / len(freqs)) ** 0.5
         threshold = max(0.0, mu - sigma) if library_total_rules < 100 else mu
-        high_edges = [e for e in edges if e[2] >= threshold]
 
-        adj = defaultdict(set)
-        for a, b, _ in high_edges:
-            adj[a].add(b)
-            adj[b].add(a)
-        visited = set()
-        clusters = []
-        for n in adj.keys():
-            if n in visited:
-                continue
-            cluster = []
-            stk = [n]
-            while stk:
-                x = stk.pop()
-                if x in visited:
+        def _components(es):
+            adj = defaultdict(set)
+            for a, b, _ in es:
+                adj[a].add(b)
+                adj[b].add(a)
+            visited = set()
+            out = []
+            for n in adj.keys():
+                if n in visited:
                     continue
-                visited.add(x)
-                cluster.append(x)
-                stk.extend(adj[x])
-            clusters.append(cluster)
+                cluster = []
+                stk = [n]
+                while stk:
+                    x = stk.pop()
+                    if x in visited:
+                        continue
+                    visited.add(x)
+                    cluster.append(x)
+                    stk.extend(adj[x])
+                out.append(cluster)
+            return out
 
+        high_edges = [e for e in edges if e[2] >= threshold]
+        clusters = _components(high_edges)
+
+        # v1.14.0 (skill-issue-2026-06-18 #6): concept-first (改动3) makes the candidate
+        # set wide & diverse, so co-occurrence is sparse and the LARGEST cluster (the
+        # coherence backbone) can be tiny while many fragmentary pairs exist. If no
+        # substantial backbone formed, relax the threshold (mu-σ, -1.5σ, -2σ) until one
+        # does. This only grows the ANCHOR; isolated rules stay productive_tension.
+        kept_n = max(1, len(kept))
+        target = max(8, kept_n // 8)
+        for relax in (sigma, 1.5 * sigma, 2.0 * sigma):
+            if max((len(c) for c in clusters), default=0) >= target:
+                break
+            threshold = max(0.0, mu - relax)
+            high_edges = [e for e in edges if e[2] >= threshold]
+            clusters = _components(high_edges)
+
+        # Rank clusters SIZE-WEIGHTED so the backbone (not a tiny high-score pair) is the
+        # anchor; tie-break on mean score. main_clusters[0] is the anchor.
         clusters_scored = sorted(
             ((sum(score_map.get(r, 0) for r in c) / len(c), c) for c in clusters),
-            reverse=True
+            key=lambda sc: (len(sc[1]), sc[0]),
+            reverse=True,
         )
         # Take top 1-2 (larger libraries get up to 5)
         max_clusters = 5 if library_total_rules > 300 else 2
@@ -347,6 +368,11 @@ def resolve(b2_path, graph_path, output_path):
             ],
             'cluster_metadata': cluster_metadata,
             'anchor': anchor,
+            # v1.14.0 (#6): surface the TOP-ranked tensions so B4 gets a focused menu
+            # instead of being flooded (a wide concept-first set can yield 100+). All
+            # tensions remain in `rules` (kept) with kept_reason=productive_tension; this
+            # is only the highlighted shortlist. productive_tensions_total is the full count.
+            'productive_tensions_total': len(isolated_kept_set),
             'productive_tensions': [
                 {
                     'rule_id': rid,
@@ -356,7 +382,7 @@ def resolve(b2_path, graph_path, output_path):
                     'tension_with': (anchor or {}).get('dominant_systems', []),
                     'note': 'low co-occurrence with anchor — B4 should lean into this for distinctiveness, justifying the combination via the candidate concept',
                 }
-                for rid in sorted(isolated_kept_set, key=lambda r: -score_map.get(r, 0))
+                for rid in sorted(isolated_kept_set, key=lambda r: -score_map.get(r, 0))[:30]
             ],
             'dropped': dropped,
             'cascade_dropped': sorted(cascade_dropped),

@@ -24,6 +24,8 @@ rules:
   emerges_from: [bugatti]
   provenance: original
   confidence: 0.55
+  organizing_principle: chrome 退到只剩黑白灰——把全部色彩留给产品摄影
+  signature_move: true
 
 - rule_id: bugatti-color-pure-black-not-near-black-002
   section: color
@@ -43,6 +45,8 @@ rules:
   emerges_from: [bugatti]
   provenance: original
   confidence: 0.5
+  organizing_principle: 画布必须是纯黑而非近黑——博物馆橱窗式的零反射严苛
+  signature_move: false
 
 - rule_id: bugatti-typography-architectural-display-scale-003
   section: typography
@@ -64,6 +68,8 @@ rules:
   emerges_from: [bugatti]
   provenance: original
   confidence: 0.5
+  organizing_principle: 文字即建筑——200px+ 大写细体从展厅地板就能读到
+  signature_move: true
 
 - rule_id: bugatti-typography-zero-bold-scale-only-hierarchy-004
   section: typography
@@ -83,6 +89,8 @@ rules:
   emerges_from: [bugatti]
   provenance: original
   confidence: 0.5
+  organizing_principle: 只用字号不用字重做层级——每次强调都得付出版面空间的代价
+  signature_move: false
 
 - rule_id: bugatti-components-three-radius-extreme-005
   section: components
@@ -103,6 +111,8 @@ rules:
   emerges_from: [bugatti]
   provenance: original
   confidence: 0.55
+  organizing_principle: 圆角只取 0、6、pill 三档——拒绝庸俗的中间值
+  signature_move: false
 
 - rule_id: bugatti-anti_patterns-silent-chrome-no-shadows-006
   section: anti_patterns
@@ -123,3 +133,5 @@ rules:
   emerges_from: [bugatti]
   provenance: original
   confidence: 0.55
+  organizing_principle: chrome 让出所有光线给产品——禁阴影、辉光、玻璃拟态
+  signature_move: false

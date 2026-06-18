@@ -41,6 +41,8 @@ rules:
   - starbucks
   provenance: original
   confidence: 0.6
+  organizing_principle: 画布引用咖啡馆的纸与木，而不是无菌的屏幕白
+  signature_move: false
 - rule_id: starbucks-color-4-tier-green-system-002
   section: color
   preconditions:
@@ -77,6 +79,8 @@ rules:
   - starbucks
   provenance: original
   confidence: 0.6
+  organizing_principle: 绿不是一种颜色而是一套分层系统，每一档对应一种表面角色
+  signature_move: true
 - rule_id: starbucks-color-gold-ceremony-only-003
   section: color
   preconditions:
@@ -110,6 +114,8 @@ rules:
   - starbucks
   provenance: original
   confidence: 0.55
+  organizing_principle: 金色只在仪式时刻出现，把它留给会员荣誉而非日常装饰
+  signature_move: false
 - rule_id: starbucks-components-50px-pill-universal-with-press-004
   section: components
   preconditions:
@@ -146,6 +152,8 @@ rules:
   - starbucks
   provenance: original
   confidence: 0.55
+  organizing_principle: 按钮做成全药丸并带按压回弹，像门店招牌一样友好可触
+  signature_move: false
 - rule_id: starbucks-components-floating-frap-cta-005
   section: components
   preconditions:
@@ -181,6 +189,8 @@ rules:
   - starbucks
   provenance: original
   confidence: 0.5
+  organizing_principle: 右下角那颗绿色圆形点单按钮是品牌的视觉记忆锚点
+  signature_move: true
 - rule_id: starbucks-typography-disciplined-multi-family-006
   section: typography
   preconditions:
@@ -214,6 +224,8 @@ rules:
   - starbucks
   provenance: original
   confidence: 0.5
+  organizing_principle: 字体家族是页面语境的标记——每个家族只在特定页面出现
+  signature_move: false
 - rule_id: starbucks-anti-pattern-flatten-warm-cafe-007
   section: anti_patterns
   preconditions:
@@ -246,3 +258,5 @@ rules:
   - starbucks
   provenance: original
   confidence: 0.55
+  organizing_principle: 守住暖咖啡馆零售调性，禁止任何抹平品牌分层的做法
+  signature_move: false

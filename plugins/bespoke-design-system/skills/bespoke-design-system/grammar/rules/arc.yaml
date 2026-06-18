@@ -17,6 +17,8 @@ rules:
   emerges_from: [arc]
   provenance: original
   confidence: 0.65
+  organizing_principle: 饱和渐变做底+磨砂玻璃罩面——chrome 是可呼吸的风景而非装内容的容器
+  signature_move: true
   known_conflicts:
   - rule: linear-app-color-dark-native-001
     reason: gradient-canvas vs dark-native — opposite atmosphere strategies
@@ -41,6 +43,8 @@ rules:
   emerges_from: [arc]
   provenance: original
   confidence: 0.6
+  organizing_principle: 主题色由用户从预设里选——品牌是用户当下的心情，不是公司强加的标记
+  signature_move: false
 
 - rule_id: arc-components-squircle-soft-radii-003
   section: components
@@ -61,6 +65,8 @@ rules:
   emerges_from: [arc]
   provenance: original
   confidence: 0.65
+  organizing_principle: squircle 柔角让 chrome 显得活而不锐——拒绝棱角也拒绝过于锋利的小半径
+  signature_move: false
 
 - rule_id: arc-depth-elevation-soft-blur-shadow-004
   section: depth_elevation
@@ -80,3 +86,5 @@ rules:
   emerges_from: [arc]
   provenance: original
   confidence: 0.6
+  organizing_principle: 大模糊低透明度阴影让面板浮在渐变情绪上——深度不打断氛围的连续性
+  signature_move: false

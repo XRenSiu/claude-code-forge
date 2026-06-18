@@ -24,6 +24,8 @@ rules:
   emerges_from: [shopify]
   provenance: original
   confidence: 0.65
+  organizing_principle: 暗色不是黑，是夜森林——每一级深色都掺进绿色暖调
+  signature_move: true
 
 - rule_id: shopify-color-neon-green-focus-only-002
   section: color
@@ -46,6 +48,8 @@ rules:
   emerges_from: [shopify]
   provenance: original
   confidence: 0.6
+  organizing_principle: 霓虹绿是生物荧光——只在交互被触发时才亮，静态绝不出现
+  signature_move: true
 
 - rule_id: shopify-typography-ultralight-monumental-display-003
   section: typography
@@ -66,6 +70,8 @@ rules:
   emerges_from: [shopify]
   provenance: original
   confidence: 0.6
+  organizing_principle: 标题像被光蚀刻而非被墨印出——超细字重撑起巨大字号
+  signature_move: false
   known_conflicts:
   - rule: clickhouse-typography-extreme-display-weight-002
     reason: ultralight (330) vs extreme heavy (900) — opposite weight ladders
@@ -88,6 +94,8 @@ rules:
   emerges_from: [shopify]
   provenance: original
   confidence: 0.5
+  organizing_principle: 字重落在传统档位之间——精度本身就是细节信号
+  signature_move: false
 
 - rule_id: shopify-components-fullpill-buttons-005
   section: components
@@ -108,3 +116,5 @@ rules:
   emerges_from: [shopify]
   provenance: original
   confidence: 0.55
+  organizing_principle: 全药丸按钮延续有机生物形语言——白填充或霓虹描边
+  signature_move: false

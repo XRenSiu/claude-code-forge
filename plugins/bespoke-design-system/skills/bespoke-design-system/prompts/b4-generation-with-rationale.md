@@ -57,6 +57,8 @@ Agent(subagent_type="bespoke-design-system:taste-critic",
 
 只把 winner 用下面全套机制展开成完整 9-section DESIGN.md + Provenance。**展开时守住 `must_preserve_in_develop` 的签名动作**——最常见的退化是 concept 很好，但逐 section 落地时每个 section 都退回安全默认，签名被稀释成又一份通用壁纸。每写完一个 section 自问：winner 的签名在这个 section 里还看得见吗？
 
+**v1.14.0（改动5A）用概念级字段建身份**：B3 子集里 `signature_move: true` 的规则是**优先用于建立识别度**的原料——展开时主动把它们做成可见签名，别埋进默认。读规则的 `organizing_principle` 理解它服务的"想法"（而非只翻译 action 参数），让翻译忠于意图。
+
 ---
 
 ## ⚠️ ANTI-PHANTOM 硬约束（v1.5.0 新增 — 必读必行）

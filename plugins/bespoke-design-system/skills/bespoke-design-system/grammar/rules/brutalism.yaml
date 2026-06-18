@@ -40,6 +40,8 @@ rules:
   - brutalism
   provenance: original
   confidence: 0.45
+  organizing_principle: 黑白高对比二元加一记温暖泥土色——拒绝灰阶柔化的反设计宣言
+  signature_move: true
 - rule_id: brutalism-typography-grotesque-broad-weight-002
   section: typography
   preconditions:
@@ -73,6 +75,8 @@ rules:
   - brutalism
   provenance: original
   confidence: 0.4
+  organizing_principle: 字重从 100 到 900 全开——极端字重对比本身就是主表达
+  signature_move: true
   inferred: true
 - rule_id: brutalism-spacing-tight-functional-003
   section: spacing
@@ -110,6 +114,8 @@ rules:
   - brutalism
   provenance: original
   confidence: 0.4
+  organizing_principle: 刺耳的紧凑就是用意——拒绝画廊式的留白与从容
+  signature_move: false
   inferred: true
 - rule_id: brutalism-components-single-chromatic-anchor-004
   section: components
@@ -140,6 +146,8 @@ rules:
   - brutalism
   provenance: original
   confidence: 0.45
+  organizing_principle: 单一暖色 CTA 当视觉铁锤——拒绝多个竞争按钮与装饰特效
+  signature_move: false
 - rule_id: brutalism-motion-functional-not-dramatic-005
   section: motion
   preconditions:
@@ -172,6 +180,8 @@ rules:
   - brutalism
   provenance: original
   confidence: 0.4
+  organizing_principle: 动效只做反馈不做奇观——拒绝弹跳、过冲与戏剧化过渡
+  signature_move: false
 - rule_id: brutalism-voice-imperative-no-marketing-006
   section: voice
   preconditions:
@@ -200,6 +210,8 @@ rules:
   - brutalism
   provenance: original
   confidence: 0.4
+  organizing_principle: 祈使动词、零营销腔——文案的直白即反设计身份
+  signature_move: false
   inferred: true
 - rule_id: brutalism-anti-pattern-decoration-creep-007
   section: anti_patterns
@@ -230,3 +242,5 @@ rules:
   - brutalism
   provenance: original
   confidence: 0.5
+  organizing_principle: 守住反设计纪律——抵御向打磨与营销模板的审美漂移
+  signature_move: false

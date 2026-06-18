@@ -39,6 +39,8 @@ rules:
   - vercel
   provenance: original
   confidence: 0.7
+  organizing_principle: 白是工程产物不是留白——画布的空即纪律本身
+  signature_move: true
 - rule_id: vercel-color-near-black-text-002
   section: color
   preconditions:
@@ -69,6 +71,8 @@ rules:
   - vercel
   provenance: original
   confidence: 0.6
+  organizing_principle: 用微偏移的暖黑替代纯黑——权威里藏一点不刺眼的人味
+  signature_move: false
 - rule_id: vercel-color-functional-only-accents-003
   section: color
   preconditions:
@@ -99,6 +103,8 @@ rules:
   - vercel
   provenance: original
   confidence: 0.7
+  organizing_principle: 彩色只为状态和流程服务——颜色即功能，绝不装饰
+  signature_move: false
 - rule_id: vercel-typography-geometric-sans-extreme-tracking-004
   section: typography
   preconditions:
@@ -140,6 +146,8 @@ rules:
   - vercel
   provenance: original
   confidence: 0.7
+  organizing_principle: 大字负字距把标题压成被压缩的代码——密度即精度
+  signature_move: true
 - rule_id: vercel-elevation-shadow-as-border-005
   section: depth_elevation
   preconditions:
@@ -172,6 +180,8 @@ rules:
   - vercel
   provenance: original
   confidence: 0.65
+  organizing_principle: 用零偏移阴影当边框——结构感来自光而非实线的重量
+  signature_move: true
 - rule_id: vercel-elevation-multi-layer-shadow-stack-006
   section: depth_elevation
   preconditions:
@@ -209,6 +219,8 @@ rules:
   - vercel
   provenance: original
   confidence: 0.65
+  organizing_principle: 多层耳语级阴影叠出深度——卡片像被造出来的而非漂浮上去的
+  signature_move: false
 - rule_id: vercel-components-dark-pill-cta-007
   section: components
   preconditions:
@@ -244,6 +256,8 @@ rules:
   - vercel
   provenance: original
   confidence: 0.7
+  organizing_principle: 主操作用近黑小圆角块——在白画布里做最高对比的唯一锚点
+  signature_move: false
 - rule_id: vercel-spacing-jump-scale-008
   section: layout
   preconditions:
@@ -279,6 +293,8 @@ rules:
   - vercel
   provenance: original
   confidence: 0.55
+  organizing_principle: 间距用跳跃刻度而非连续刻度——在区块级强制结构性选择
+  signature_move: false
   inferred: true
 - rule_id: vercel-voice-infrastructure-invisible-009
   section: voice
@@ -315,6 +331,8 @@ rules:
   - vercel
   provenance: original
   confidence: 0.5
+  organizing_principle: 让基础设施隐形——存在感来自结构而非营销式的喧哗
+  signature_move: false
   inferred: true
 - rule_id: vercel-anti-pattern-decoration-creep-010
   section: anti_patterns
@@ -347,3 +365,5 @@ rules:
   - vercel
   provenance: original
   confidence: 0.65
+  organizing_principle: 守住工程化极简的纪律——主动拒绝一切装饰漂移
+  signature_move: false

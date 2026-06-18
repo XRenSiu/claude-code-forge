@@ -40,6 +40,8 @@ rules:
   - airbnb
   provenance: original
   confidence: 0.7
+  organizing_principle: 照片是内容、chrome 是仆人——白底让每张房源照自己说话
+  signature_move: true
 - rule_id: airbnb-color-rausch-key-actions-only-002
   section: color
   preconditions:
@@ -75,6 +77,8 @@ rules:
   - airbnb
   provenance: original
   confidence: 0.65
+  organizing_principle: Rausch 红只在"承诺"时刻出现——稀缺即信号
+  signature_move: true
 - rule_id: airbnb-color-singular-text-token-003
   section: color
   preconditions:
@@ -104,6 +108,8 @@ rules:
   - airbnb
   provenance: original
   confidence: 0.6
+  organizing_principle: 一种文字色撑起九成正文——层级靠字重字号而非调色板
+  signature_move: false
 - rule_id: airbnb-typography-single-family-vf-004
   section: typography
   preconditions:
@@ -136,6 +142,8 @@ rules:
   - airbnb
   provenance: original
   confidence: 0.6
+  organizing_principle: 整个产品只有一种声音——字体本身就是品牌身份
+  signature_move: false
 - rule_id: airbnb-typography-500-is-regular-005
   section: typography
   preconditions:
@@ -166,6 +174,8 @@ rules:
   - airbnb
   provenance: original
   confidence: 0.55
+  organizing_principle: 把 500 当默认字重——一点点额外密度即从容自信
+  signature_move: false
 - rule_id: airbnb-typography-display-tight-body-relaxed-006
   section: typography
   preconditions:
@@ -196,6 +206,8 @@ rules:
   - airbnb
   provenance: original
   confidence: 0.6
+  organizing_principle: 大标题收紧凿刻、正文放松呼吸——同一字体两种气质
+  signature_move: false
 - rule_id: airbnb-components-rounded-photo-cards-007
   section: components
   preconditions:
@@ -228,6 +240,8 @@ rules:
   - airbnb
   provenance: original
   confidence: 0.55
+  organizing_principle: 圆角让照片变成可挑选的卡片而非背景墙纸
+  signature_move: false
 - rule_id: airbnb-components-circular-icon-buttons-008
   section: components
   preconditions:
@@ -256,6 +270,8 @@ rules:
   - airbnb
   provenance: original
   confidence: 0.5
+  organizing_principle: 圆形悬浮按钮漂在照片之上——控制不抢照片的地
+  signature_move: false
 - rule_id: airbnb-components-sticky-booking-009
   section: components
   preconditions:
@@ -285,6 +301,8 @@ rules:
   - airbnb
   provenance: original
   confidence: 0.55
+  organizing_principle: 预订动作永远一键可达——决策不该消失在滚动里
+  signature_move: false
 - rule_id: airbnb-layout-hairline-separators-010
   section: layout
   preconditions:
@@ -311,6 +329,8 @@ rules:
   - airbnb
   provenance: original
   confidence: 0.5
+  organizing_principle: 分隔线只低语列表结构——不打断照片的视觉流
+  signature_move: false
 - rule_id: airbnb-anti-pattern-photography-disrespect-011
   section: anti_patterns
   preconditions:
@@ -342,3 +362,5 @@ rules:
   - airbnb
   provenance: original
   confidence: 0.55
+  organizing_principle: 守住"照片优先的温暖"——抵御企业 chrome 与营销喧嚣的双向漂移
+  signature_move: false

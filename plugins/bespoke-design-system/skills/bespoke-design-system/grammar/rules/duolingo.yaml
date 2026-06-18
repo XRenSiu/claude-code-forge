@@ -46,6 +46,8 @@ rules:
   - duolingo
   provenance: original
   confidence: 0.7
+  organizing_principle: 品牌绿占据三成屏幕成为主色调而非点缀——用色彩饱和度本身游戏化
+  signature_move: true
   known_conflicts:
   - rule: linear-app-color-dark-native-001
     reason: white canvas + dominant green vs near-black canvas + spot brand — opposite chromatic strategies
@@ -84,6 +86,8 @@ rules:
   - duolingo
   provenance: original
   confidence: 0.65
+  organizing_principle: 每个强调色严格对应一个游戏机制——颜色即概念，训练视觉记忆
+  signature_move: false
 - rule_id: duolingo-typography-extra-bold-rounded-display-003
   section: typography
   preconditions:
@@ -120,6 +124,8 @@ rules:
   - duolingo
   provenance: original
   confidence: 0.7
+  organizing_principle: 圆角超粗体作为默认字重——自信要大声说出来，不耳语
+  signature_move: true
   known_conflicts:
   - rule: stripe-typography-light-weight-300-signature-006
     reason: extra-bold-default vs whisper-weight-300 — opposite typographic stances
@@ -158,6 +164,8 @@ rules:
   - duolingo
   provenance: original
   confidence: 0.7
+  organizing_principle: 实底4px下沿阴影+按下时下移——按钮像实体积木，按压本身就是多巴胺
+  signature_move: true
 - rule_id: duolingo-components-skill-tree-node-005
   section: components
   preconditions:
@@ -190,6 +198,8 @@ rules:
   - duolingo
   provenance: original
   confidence: 0.65
+  organizing_principle: 学习路径是空间化的游戏地图节点而非线性列表——进度就是探险
+  signature_move: false
 - rule_id: duolingo-components-borders-chunky-only-006
   section: components
   preconditions:
@@ -221,6 +231,8 @@ rules:
   - duolingo
   provenance: original
   confidence: 0.6
+  organizing_principle: 边框至少2px实色，拒绝发丝线——边界要有卡牌般的实体感
+  signature_move: false
 - rule_id: duolingo-spacing-4px-base-007
   section: spacing
   preconditions:
@@ -257,6 +269,8 @@ rules:
   - duolingo
   provenance: original
   confidence: 0.55
+  organizing_principle: 4px 基准网格专为对齐粗下沿阴影的增量——网格服务于实体阴影系统
+  signature_move: false
 - rule_id: duolingo-motion-overshoot-easing-008
   section: motion
   preconditions:
@@ -291,6 +305,8 @@ rules:
   - duolingo
   provenance: original
   confidence: 0.65
+  organizing_principle: 解锁用过冲缓动+吉祥物活体动画——动效携带情绪奖励而非单纯反馈
+  signature_move: false
 - rule_id: duolingo-anti-pattern-flatten-009
   section: anti_patterns
   preconditions:
@@ -321,3 +337,5 @@ rules:
   - duolingo
   provenance: original
   confidence: 0.7
+  organizing_principle: 守住触感游戏美学，抵抗向现代扁平极简漂移的压力
+  signature_move: false

@@ -40,6 +40,8 @@ rules:
   - apple
   provenance: original
   confidence: 0.7
+  organizing_principle: 把页面切成明暗交替的章节，让色彩克制本身成为戏剧节奏
+  signature_move: false
 - rule_id: apple-color-blue-action-only-002
   section: color
   preconditions:
@@ -68,6 +70,8 @@ rules:
   - apple
   provenance: original
   confidence: 0.65
+  organizing_principle: 唯一一种蓝只承担"可操作"这一信号，色彩即语义
+  signature_move: true
 - rule_id: apple-color-near-black-text-1d1d1f-003
   section: color
   preconditions:
@@ -96,6 +100,8 @@ rules:
   - apple
   provenance: original
   confidence: 0.55
+  organizing_principle: 文字不用纯黑，留 1% 暖偏移让对比里仍有温度
+  signature_move: false
 - rule_id: apple-color-dark-surface-4-step-004
   section: color
   preconditions:
@@ -122,6 +128,8 @@ rules:
   - apple
   provenance: original
   confidence: 0.5
+  organizing_principle: 暗色章节内部用极细的明度阶梯分层，分层不靠色相跳变
+  signature_move: false
 - rule_id: apple-typography-display-text-dual-005
   section: typography
   preconditions:
@@ -153,6 +161,8 @@ rules:
   - apple
   provenance: original
   confidence: 0.6
+  organizing_principle: 字体族即阅读模式——Display 给气场、Text 给密集零售信息
+  signature_move: false
 - rule_id: apple-typography-billboard-display-tight-tracking-006
   section: typography
   preconditions:
@@ -184,6 +194,8 @@ rules:
   - apple
   provenance: original
   confidence: 0.6
+  organizing_principle: 巨幅标题用负字距收紧，大尺度里见工程克制而非广告喧嚣
+  signature_move: true
 - rule_id: apple-typography-600-dominant-emphasis-007
   section: typography
   preconditions:
@@ -210,6 +222,8 @@ rules:
   - apple
   provenance: original
   confidence: 0.55
+  organizing_principle: 以 600 为自信的默认字重，极端字重只作选择性强调
+  signature_move: false
 - rule_id: apple-components-pill-capsule-family-008
   section: components
   preconditions:
@@ -248,6 +262,8 @@ rules:
   - apple
   provenance: original
   confidence: 0.6
+  organizing_principle: 胶囊形是签名——一族圆角既柔和又锚定，不退化成纯药丸或矩形
+  signature_move: true
 - rule_id: apple-components-restraint-depth-009
   section: depth_elevation
   preconditions:
@@ -276,6 +292,8 @@ rules:
   - apple
   provenance: original
   confidence: 0.55
+  organizing_principle: 深度靠对比与表面色变引导，阴影只是次要手段，不堆叠重影
+  signature_move: false
 - rule_id: apple-components-border-led-retail-010
   section: components
   preconditions:
@@ -306,6 +324,8 @@ rules:
   - apple
   provenance: original
   confidence: 0.5
+  organizing_principle: 密集零售卡片靠细边框界定，而非靠卡片装饰加重视觉
+  signature_move: false
 - rule_id: apple-spacing-8-base-with-microsteps-011
   section: spacing
   preconditions:
@@ -341,6 +361,8 @@ rules:
   - apple
   provenance: original
   confidence: 0.5
+  organizing_principle: 8 为刚性栅格基数，但允许零售密度所需的细颗粒微步
+  signature_move: false
 - rule_id: apple-voice-product-first-restrained-012
   section: voice
   preconditions:
@@ -369,6 +391,8 @@ rules:
   - apple
   provenance: original
   confidence: 0.5
+  organizing_principle: 文案是发布会式的产品优先口吻，不堆营销最高级也不倾倒参数
+  signature_move: false
 - rule_id: apple-anti-pattern-decoration-creep-013
   section: anti_patterns
   preconditions:
@@ -399,3 +423,5 @@ rules:
   - apple
   provenance: original
   confidence: 0.6
+  organizing_principle: 守住克制型高端的纪律，主动禁掉一切会滑向喧闹或装饰的诱惑
+  signature_move: false

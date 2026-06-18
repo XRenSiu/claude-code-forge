@@ -24,6 +24,8 @@ rules:
   emerges_from: [spacex]
   provenance: original
   confidence: 0.55
+  organizing_principle: 不是设计系统而是展览——文字直接压在满幅摄影上，去掉卡片与容器
+  signature_move: true
 
 - rule_id: spacex-color-pure-black-with-spectral-white-002
   section: color
@@ -45,6 +47,8 @@ rules:
   emerges_from: [spacex]
   provenance: original
   confidence: 0.6
+  organizing_principle: 纯黑底配带蓝紫微染的近白字，让摄影成为画面里唯一的颜色来源
+  signature_move: true
 
 - rule_id: spacex-typography-uppercase-wide-tracking-003
   section: typography
@@ -65,6 +69,8 @@ rules:
   emerges_from: [spacex]
   provenance: original
   confidence: 0.6
+  organizing_principle: 全大写加宽字距，发出军事航天任务简报般的口吻
+  signature_move: true
   known_conflicts:
   - rule: linear-app-typography-display-compression-005
     reason: positive_tracking_uppercase vs aggressive_negative_tracking — opposite tracking philosophies
@@ -87,6 +93,8 @@ rules:
   emerges_from: [spacex]
   provenance: original
   confidence: 0.55
+  organizing_principle: 只用两个字重，像任务关键系统一样把层级压成二元开关
+  signature_move: false
 
 - rule_id: spacex-typography-tight-line-height-005
   section: typography
@@ -106,3 +114,5 @@ rules:
   emerges_from: [spacex]
   provenance: original
   confidence: 0.5
+  organizing_principle: 压紧的行高带来仪表读数般的密度感
+  signature_move: false

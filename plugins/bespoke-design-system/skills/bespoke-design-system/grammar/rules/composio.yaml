@@ -24,6 +24,8 @@ rules:
   emerges_from: [composio]
   provenance: original
   confidence: 0.55
+  organizing_principle: 开发者终端美学——近黑画布配低透明生物荧光青，桥接营销与文档
+  signature_move: true
 
 - rule_id: composio-color-border-mist-opacity-ladder-002
   section: color
@@ -44,6 +46,8 @@ rules:
   emerges_from: [composio]
   provenance: original
   confidence: 0.55
+  organizing_principle: 暗面上用白色透明度阶梯而非阴影来表达深度层级
+  signature_move: false
 
 - rule_id: composio-typography-ultra-tight-line-heights-003
   section: typography
@@ -63,6 +67,8 @@ rules:
   emerges_from: [composio]
   provenance: original
   confidence: 0.5
+  organizing_principle: 超紧行高让标题显得是命令式的权威，而非装饰性的舒展
+  signature_move: false
 
 - rule_id: composio-typography-dual-font-mono-as-credibility-004
   section: typography
@@ -84,6 +90,8 @@ rules:
   emerges_from: [composio]
   provenance: original
   confidence: 0.55
+  organizing_principle: 等宽字体是技术可信度的信号，绝不沦为纯装饰
+  signature_move: false
 
 - rule_id: composio-depth_elevation-brutalist-hard-offset-shadow-005
   section: depth_elevation
@@ -104,3 +112,5 @@ rules:
   emerges_from: [composio]
   provenance: original
   confidence: 0.5
+  organizing_principle: 硬投影是被定量配给的个性破例，只点在签名卡片上透出复古计算味
+  signature_move: true

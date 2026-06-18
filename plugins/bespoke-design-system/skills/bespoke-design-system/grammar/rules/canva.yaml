@@ -24,6 +24,8 @@ rules:
   emerges_from: [canva]
   provenance: original
   confidence: 0.6
+  organizing_principle: 紫到青的渐变只在魔法时刻出现，是"变魔法"的信号而非通用装饰
+  signature_move: true
   known_conflicts:
   - rule: vercel-anti-pattern-decoration-creep-010
     reason: gradient brand vs no-gradient minimalism — opposite philosophies
@@ -48,6 +50,8 @@ rules:
   emerges_from: [canva]
   provenance: original
   confidence: 0.55
+  organizing_principle: 层级由字重而非颜色驱动，避免颜色加字重的双重强调
+  signature_move: false
 
 - rule_id: canva-typography-single-rounded-family-003
   section: typography
@@ -68,6 +72,8 @@ rules:
   emerges_from: [canva]
   provenance: original
   confidence: 0.55
+  organizing_principle: 用单一圆体家族贯通 chrome 与正文，亲和感来自字体的圆润统一
+  signature_move: false
 
 - rule_id: canva-components-friendly-radius-strategy-004
   section: components
@@ -88,3 +94,5 @@ rules:
   emerges_from: [canva]
   provenance: original
   confidence: 0.55
+  organizing_principle: 圆角下限锁在 12px 以上，chrome 要友好而非工程化的锐利
+  signature_move: false

@@ -40,6 +40,8 @@ rules:
   - figma
   provenance: original
   confidence: 0.7
+  organizing_principle: 界面是美术馆的白墙——自己零彩色，好让作品成为主角
+  signature_move: true
   known_conflicts:
   - rule: stripe-color-purple-ladder-002
     reason: chromatic-free chrome vs persistent purple chromatic ladder — opposite chrome strategies
@@ -72,6 +74,8 @@ rules:
   - figma
   provenance: original
   confidence: 0.55
+  organizing_principle: 用玻璃透叠造层级，绝不引入实色背景破坏黑白二元
+  signature_move: false
 - rule_id: figma-typography-variable-microstep-weights-003
   section: typography
   preconditions:
@@ -111,6 +115,8 @@ rules:
   - figma
   provenance: original
   confidence: 0.65
+  organizing_principle: 层级靠微步字重而非字号跳变——设计工具该有像素级的字感
+  signature_move: true
 - rule_id: figma-typography-light-base-004
   section: typography
   preconditions:
@@ -138,6 +144,8 @@ rules:
   - figma
   provenance: original
   confidence: 0.55
+  organizing_principle: 正文用 320-340 的轻盈作底——空气感本身就是工艺态度
+  signature_move: false
 - rule_id: figma-typography-negative-tracking-everywhere-005
   section: typography
   preconditions:
@@ -165,6 +173,8 @@ rules:
   - figma
   provenance: original
   confidence: 0.55
+  organizing_principle: 全字号一律收紧，正文也不放过——文字密度是统一的纪律
+  signature_move: false
 - rule_id: figma-typography-mono-uppercase-signposts-006
   section: typography
   preconditions:
@@ -192,6 +202,8 @@ rules:
   - figma
   provenance: original
   confidence: 0.55
+  organizing_principle: 等宽字只做技术路标——大写、短促，标记"这里是工程语境"
+  signature_move: false
 - rule_id: figma-components-pill-circle-geometry-007
   section: components
   preconditions:
@@ -224,6 +236,8 @@ rules:
   - figma
   provenance: original
   confidence: 0.6
+  organizing_principle: 按钮做成药丸或正圆——工具调色板该有触手可玩的有机感
+  signature_move: false
 - rule_id: figma-components-dashed-focus-outline-008
   section: components
   preconditions:
@@ -249,6 +263,8 @@ rules:
   - figma
   provenance: original
   confidence: 0.5
+  organizing_principle: 焦点框用虚线，呼应编辑器里的选区把手——产品在指认自己
+  signature_move: true
 - rule_id: figma-anti-pattern-chromatic-creep-009
   section: anti_patterns
   preconditions:
@@ -278,3 +294,5 @@ rules:
   - figma
   provenance: original
   confidence: 0.6
+  organizing_principle: 设计工具的精确纪律——守住中性，不滑向通用 SaaS 或营销腔
+  signature_move: false

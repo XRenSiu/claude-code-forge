@@ -39,6 +39,8 @@ rules:
   - bmw
   provenance: original
   confidence: 0.55
+  organizing_principle: 大字标题用 300 细体——以纤细而非粗壮发出被压低的权威
+  signature_move: true
 - rule_id: bmw-typography-extreme-weight-contrast-002
   section: typography
   preconditions:
@@ -73,6 +75,8 @@ rules:
   - bmw
   provenance: original
   confidence: 0.5
+  organizing_principle: 字重只取 300 与 900 两极——靠极端落差而非连续阶梯制造张力
+  signature_move: true
 - rule_id: bmw-typography-single-family-all-sizes-003
   section: typography
   preconditions:
@@ -106,6 +110,8 @@ rules:
   - bmw
   provenance: original
   confidence: 0.55
+  organizing_principle: 从大字到正文只用一款专有字体——以单一字面达成品牌统一
+  signature_move: false
 - rule_id: bmw-components-zero-radius-rectangular-cta-004
   section: components
   preconditions:
@@ -141,6 +147,8 @@ rules:
   - bmw
   provenance: original
   confidence: 0.65
+  organizing_principle: 按钮与卡片一律零圆角——用棱角几何说出工业级精密
+  signature_move: true
   known_conflicts:
   - rule: cursor-components-extreme-pill-radius-005
     reason: zero radius vs extreme pill — opposite chrome philosophies
@@ -181,6 +189,8 @@ rules:
   - bmw
   provenance: original
   confidence: 0.55
+  organizing_principle: 标志蓝只用于交互态——把蓝当仪表盘高亮而非装饰色
+  signature_move: false
 - rule_id: bmw-meta-css-variable-multi-brand-theming-006
   section: anti_patterns
   preconditions:
@@ -214,3 +224,5 @@ rules:
   - bmw
   provenance: original
   confidence: 0.5
+  organizing_principle: 颜色全走 CSS 变量令牌层——靠令牌替换实现多品牌部署
+  signature_move: false

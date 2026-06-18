@@ -23,7 +23,8 @@ rules:
   emerges_from: [elevenlabs]
   provenance: original
   confidence: 0.5
-
+  organizing_principle: 暖白画布——高端画册式的温度而非临床纯白的冷
+  signature_move: false
 - rule_id: elevenlabs-typography-light-weight-display-002
   section: typography
   preconditions:
@@ -44,7 +45,8 @@ rules:
   emerges_from: [elevenlabs]
   provenance: original
   confidence: 0.5
-
+  organizing_principle: 大字用 300 细体——像声波细线，靠轻盈而非粗重制造神秘
+  signature_move: true
 - rule_id: elevenlabs-depth_elevation-warm-tinted-shadows-003
   section: depth_elevation
   preconditions:
@@ -65,7 +67,8 @@ rules:
   emerges_from: [elevenlabs]
   provenance: original
   confidence: 0.5
-
+  organizing_principle: 阴影带暖色偏移而非纯黑——深度也要保持暖意与轻盈
+  signature_move: false
 - rule_id: elevenlabs-typography-positive-letter-spacing-body-004
   section: typography
   preconditions:
@@ -84,7 +87,8 @@ rules:
   emerges_from: [elevenlabs]
   provenance: original
   confidence: 0.5
-
+  organizing_principle: 正文用正字距透气、大字用紧字距——疏密对比像声波的呼吸
+  signature_move: false
 - rule_id: elevenlabs-components-warm-stone-pill-cta-005
   section: components
   preconditions:
@@ -104,3 +108,5 @@ rules:
   emerges_from: [elevenlabs]
   provenance: original
   confidence: 0.5
+  organizing_principle: 主 CTA 用暖石半透明胶囊——把可触的物理质感做成签名动作
+  signature_move: true

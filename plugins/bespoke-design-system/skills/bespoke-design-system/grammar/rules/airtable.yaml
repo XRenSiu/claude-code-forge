@@ -24,6 +24,8 @@ rules:
   emerges_from: [airtable]
   provenance: original
   confidence: 0.55
+  organizing_principle: 白底加一记克制的蓝——用企业权威外加创意亲和力
+  signature_move: false
 
 - rule_id: airtable-depth_elevation-blue-tinted-shadow-002
   section: depth_elevation
@@ -45,6 +47,8 @@ rules:
   emerges_from: [airtable]
   provenance: original
   confidence: 0.5
+  organizing_principle: 阴影里掺一层品牌蓝——让品牌温度延伸进 chrome 的高度感
+  signature_move: true
 
 - rule_id: airtable-typography-haas-positive-tracking-003
   section: typography
@@ -66,6 +70,8 @@ rules:
   emerges_from: [airtable]
   provenance: original
   confidence: 0.55
+  organizing_principle: 瑞士精度配上偏正的字距——企业可信度兼可读的暖意
+  signature_move: false
 
 - rule_id: airtable-components-medium-radius-buttons-004
   section: components
@@ -86,6 +92,8 @@ rules:
   emerges_from: [airtable]
   provenance: original
   confidence: 0.55
+  organizing_principle: 12px 圆角——既不工程化棱角也不软糯过头的舒适
+  signature_move: false
 
 - rule_id: airtable-anti_patterns-skip-letter-spacing-and-heavy-shadows-005
   section: anti_patterns
@@ -104,3 +112,5 @@ rules:
   emerges_from: [airtable]
   provenance: original
   confidence: 0.55
+  organizing_principle: 把通透可读与柔和高度当纪律——拒绝密集压缩与生硬投影
+  signature_move: false
