@@ -113,8 +113,9 @@ $SKILL_DIR/agents/rationale-judge.md   # B5 的对抗式审查方角色定义
 | 阶段 | 关键产物 | 工具 |
 |------|---------|------|
 | B0 | 报 Mode + 规则库健康度（N rules / M extracted_systems / K registered） | `tools/check_state.py` + 自己读 `grammar/rules/*.yaml` |
-| B1b | auto 模式画像（含 inferred_fields 标注） | 读 `grammar/meta/defaults.yaml` |
-| B2 | `_b2-candidates.json`（顶层字段名 `candidate_rules`） | 自己写 archetype/kansei filter |
+| B0.5 | 3 个发散 concept seeds（POV，非品类标签，≥1 个 bold） | 自己写，读 `prompts/b05-concept-seeding.md` |
+| B1b | auto 模式画像（含 inferred_fields；**concept seeds lean 覆盖品类质心，别塌缩**） | 读 `grammar/meta/defaults.yaml`（只当先验） |
+| B2 | `_b2-candidates.json`（顶层 `candidate_rules`；**额外覆盖每个 concept 的 tension_hint**） | 自己写 archetype/kansei filter |
 | B3 | `_b3-self-consistent.json` | `tools/b3_resolve.py --b2 <file> --output <file_path>` |
 | B4a | 发散出 3 个候选方向（concept / signature / productive tension） | 自己写，严格不创造新规则；三者要真发散 |
 | B4.5 | taste-critic（rank）选优 winner | `Agent(subagent_type="general-purpose", prompt=<完整 taste-critic.md 角色 + mode=rank + 3 候选 + 画像/brief>)` |

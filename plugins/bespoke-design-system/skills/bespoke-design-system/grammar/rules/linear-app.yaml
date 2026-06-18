@@ -189,6 +189,9 @@ rules:
   - linear-app
   provenance: original
   confidence: 0.65
+  # v1.13.0 (改动5) concept-level fields — optional, additive.
+  organizing_principle: 标题像被编译压缩过的代码——密度即精度
+  signature_move: true   # aggressive negative display tracking is a recognizable identity carrier
 - rule_id: linear-app-components-button-near-zero-opacity-006
   section: components
   preconditions:

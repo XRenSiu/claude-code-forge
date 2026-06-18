@@ -55,7 +55,9 @@ for R in kept:
 
 **为什么这样**：原始 v1.5.0 spec 写"保留依赖剔除冲突方"，但这让 step 2 的 score-based 决定被 step 3 的 dep-closure 反复推翻，造成规则集不稳定。v1.8.1 改为"级联剔除依赖方"——保持 step 2 的决定权威，只是要求依赖方一起退出。
 
-## Step 4 — 风格岛聚集（**v1.5.0 规模感知**）
+## Step 4 — Anchor + Productive Tension（**v1.13.0 反极性 / 改动2**；旧称"风格岛聚集"）
+
+> **语义反转（改动2）**：旧逻辑"留最密的风格岛、剔除孤立点"——但**独特性恰恰活在孤立点里**（与主流低共现、但被概念背书的组合）。把它们当 outlier 删掉，就是在系统性地制造平庸（见对话诊断：Mednick 陡峭联想层级 / Koestler bisociation）。所以本步现在：选一个**anchor**（协调骨架）+ **保留并标注 productive_tension**（独特性原料），只剔除真正无关的 bottom-quartile。**注意：冲突已经在 Step 2/3 按 `conflicts_with` 剪过了——那是真逻辑矛盾。本步不再因"统计稀有"而删任何东西。**
 
 构建子图 `G_kept`：节点 = 当前留下的规则，边 = `co_occurs_with` 关系（带频率权重）。
 
@@ -76,8 +78,8 @@ for R in kept:
 2. 保留权重 ≥ `μ` 的边（高 co-occurrence 是"自洽风格岛"信号）
 3. 用连通分量算法找出所有 cluster
 4. 对每个 cluster，计算 `cluster_score = mean(rule.final_score for rule in cluster)`
-5. 保留 cluster_score 最高的 1–2 个 cluster 作为"主风格岛"
-6. 主岛之外的孤立点：若 final_score > 候选集 median → 保留作为"补充规则"；否则剔除
+5. cluster_score 最高的 cluster = **anchor（协调骨架）**，记录其 dominant_systems；次高的 1 个可留作辅助岛
+6. 主岛之外的孤立点（= 与 anchor 低共现）：**v1.13.0 反转**——若 final_score ≥ 候选集 **p25**（旧为 median）→ 保留并标 `productive_tension`（**独特性来源，B4 要主动据此发散、用候选 concept 背书这个组合**，不是"补充规则"）；只有真正 bottom-quartile（< p25，连张力都不配）才剔除
 
 ### 小规模 fallback
 
@@ -93,7 +95,7 @@ elif len(all_rules_in_library) < 100:
     # ... rest as standard
 ```
 
-**为什么这样做**：素材库里高频共现的规则形成了"自洽设计判断的样本"。让候选集围绕这些岛聚集，比让模型自由组合更接近"真有人这么设计过、被市场验证过"。**但**当素材库太小时（< 30 条），共现统计本身不够稳定，强行聚类会得到伪 cluster，反而丢质量——此时直接 score 排序更诚实。
+**为什么这样做**：高频共现的规则形成"被验证过的协调骨架"——这是 **anchor** 的价值（reference-driven 的单一强信号，不是 40 条规则的平均）。**但识别度不来自 anchor，来自张力**：把 anchor 没有的、平时不一起出现的高相关规则**接上去**，由概念证成。旧逻辑把这些 tension 当 outlier 删了，正是"很普通"的成因之一。v1.13.0 反转：anchor 保协调（下限），productive_tension 给识别度（上限原料），B4 负责用 concept 把张力变成签名而非冲突。**当素材库太小时（< 30 条），共现统计本身不够稳定，强行聚类会得到伪 cluster——此时直接 score 排序更诚实。**
 
 ## Step 5 — Section 覆盖最终核查
 
@@ -111,15 +113,24 @@ self_consistent_subset:
     - rule_id: ...
       section: ...
       final_score: ...
-      kept_reason: cluster_main | dependency | backstop | supplementary
+      kept_reason: anchor | cluster_main | dependency | recovered_for_coverage | productive_tension
   clusters:
     - id: main_cluster_1
-      density: 0.78
+      mean_score: 0.78
       member_count: 32
-      dominant_systems: [linear, vercel]
+      dominant_systems: [linear-app, vercel]
+  anchor:                     # v1.13.0 — 协调骨架（top cluster）
+    mean_score: 0.78
+    member_count: 32
+    dominant_systems: [linear-app, vercel]
+  productive_tensions:        # v1.13.0 — 与 anchor 低共现、被保留供 B4 发散的独特性原料
+    - rule_id: ...
+      section: ...
+      final_score: ...
+      tension_with: [linear-app, vercel]    # 它与 anchor 的哪些主系统形成张力
   dropped:
     - rule_id: ...
-      reason: conflicts_with <id> | low_score_isolated | reverse_constraint
+      reason: conflicts_with <id> | bottom_quartile_isolated | reverse_constraint
   section_coverage:
     color: 8
     typography: 6
@@ -162,6 +173,6 @@ for node in nodes:
 - [ ] 5 个 rule-bearing section（color / typography / components / layout / depth_elevation）都有规则覆盖（除非显式标 degraded）
 - [ ] 任意两条规则之间**没有** `conflicts_with` 关系
 - [ ] 每条规则的 `depends_on` 闭包都已纳入子集
-- [ ] 主风格岛已识别，dominant_systems 已记录
+- [ ] anchor 已识别（dominant_systems 记录）+ productive_tensions 已保留并标注（不被当 outlier 删）
 - [ ] `dropped` 列表完整、每条有 reason
 - [ ] **没有向用户追问任何信息**

@@ -6,6 +6,8 @@
 
 不向用户问任何问题，从用户已给的需求 + 项目上下文推断出完整的调性画像。所有缺失字段走 `grammar/meta/defaults.yaml` 推断，并在画像的 `inferred_fields` 中标注。
 
+> **v1.13.0（改动3）concept-first**：B0.5 已经为这个 brief 产了 3 个 concept seeds。**优先级是：concept seeds 的 `archetype_lean` / `kansei_lean`（取三种子并集）> 上下文证据 > `defaults.yaml` 品类质心**。品类默认只填 concept seeds 和上下文都没覆盖的字段。**不要**让品类质心盖过概念——那正是"每个同品类产品长一样"的根源。把 concept seeds 原样带进画像供 B6 暴露。
+
 ---
 
 ## Step 1 — 抓取所有可用上下文

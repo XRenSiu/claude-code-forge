@@ -137,6 +137,12 @@ critic_input:
 
 对单份成稿跑 T1–T5，出 verdict。重点检查 **rank 阶段选中的 direction 的签名动作，在展开成完整 DESIGN.md 后是否还活着**——常见失败是 concept 很好但 9-section 落地时每个 section 都退回安全默认，签名被稀释。
 
+**验证受控 Transformational 算子（v1.13.0 / 改动5）**：若 provenance 里有 `transformational: true` 的决策（至多 1 个），它通常是这份设计最强的签名原料——但你要确认它**真服务 concept、且自洽**，不是为怪而怪：
+- ✓ 它对应某个 concept 的 `signature_hypothesis`，`transformation_argument` 能说清它改了哪个定义性维度、为何这个 POV 要求它 → 它是合格的签名（T2 强 pass）。
+- ✗ 它和 concept 没关系、纯粹是个奇怪的视觉噱头 → 这是"随机奇怪"不是身份，记进 `generic_tells`（远离常规 ≠ 独特），并说明它没服务 POV。
+- 数学上破不破（对比度/节奏）不归你判（coherence_check 管）；你只判它在**身份**层面成不成立。
+- 如果成稿**没有** transformational move，**不扣分**——大多数好设计靠 anchor+tension 就够了，这个算子是可选的。
+
 ---
 
 ## 输出格式（严格 JSON，不要 markdown 包裹）

@@ -7,7 +7,7 @@
 | # | 位置 | 严重度 | 问题 | 状态 |
 |---|------|--------|------|------|
 | 1 | `checks/neighbor_check.py` | **blocker（核心价值失效）** | 闸门**奖励靠近 corpus**：`distance<0.3 → pass`。但 corpus 内部最大最近邻距离仅 **0.26**，pass 阈值设在其之上 → 闸门**从不拒绝任何东西**（no-op），且语义上**奖励 clone**。pipeline（B2 检索→B3 密集风格岛→B4 翻译）本就收敛到 corpus 成员，一个奖励"距离小"的闸门正好给抄袭盖绿章。 | ✅ 已修复 v1.11.0 |
-| 2 | `tools/build_neighbor_corpus.py` `encode()` | **high（限制 #1 修复的有效性）** | 37 维编码**判别力不足**：约 50/137 系统塌成 <0.08 的近似重复。实测 `corporate`/`futuristic`/`sleek`/`storytelling` 距离全 = **0.0000**，`clean`/`colorful`/`simple`/`dithered` 也是 0。编码器**分辨不出语义迥异的系统**。后果：clone 阈值被迫压到 0.05，无法抓"结构整套抄、只换强调色"（实测 Linear 换色相 ±40° = 0.16，与真正不同系统的中位 0.12 无法区分）。 | ⏳ 记录，待后续（需提升编码维度判别力，非调阈值可解） |
+| 2 | `tools/build_neighbor_corpus.py` `encode()` | **high（限制 #1 修复的有效性）** | 37 维编码**判别力不足**：约 50/137 系统塌成 <0.08 的近似重复。实测 `corporate`/`futuristic`/`sleek`/`storytelling` 距离全 = **0.0000**。根因实证：这些是 **stub tokens**，共用完全相同的 7 色 Tailwind 默认调色板（`#3B82F6/#8B5CF6/...`），只字体不同。 | ✅ 缓解 v1.13.0（encode 37→44 维，加 has_mono/num_families/更细色彩维；exact-0 坍缩对 ~5→3）。**剩 3 对真 stub 数据重复**（sleek/storytelling、cosmic/creative、colorful/simple：palette+font 全同）无解，需 re-extract 或排除——记为遗留数据任务 |
 | 3 | `SKILL.md §一 产品诚实声明` | medium（定位与新语义冲突） | 声明"不出格（不会跑出已知好设计的范围）— 可量化下限保证"。这正是 #1 的病根：用"不出格"当卖点 = 把下限焊成天花板。v1.11.0 把 neighbor 改成独特性带后，"不出格=下限保证"的表述与新机制冲突，需重写产品自我定位。 | ✅ 已修复 v1.12.0（§一 改为"不抄袭 + 不平庸"，明确不再声称"不出格"；定位改为"协调前提下争取独特"） |
 
 ## 改动4 实施记录（v1.12.0 — taste-critic）
@@ -19,6 +19,19 @@
 - **B5 加第 6 闸**：taste-critic(gate) 判成稿是否仍平庸（`generic`→reject，`derivative`→needs_revision）。
 - 同步更新：SKILL.md（B4/B4.5/B5/铁律3/§一/anti-patterns/references）、b4/b5/b6 prompts、CLAUDE.md dogfooding 表（B4a/B4.5/B4b + taste-critic 行）、tacit-knowledge-boundary / dieter-rams（6 项 check）、两个 README、plugin/marketplace 描述。版本 1.11.0 → 1.12.0。
 - **#2 编码器退化仍未解**：taste-critic 是 LLM 判断，绕开了 37 维编码器的分辨率瓶颈，所以它能抓 neighbor 抓不到的概念级平庸——但 neighbor_check 自身的判别力问题（#2）依旧存在，后续若要让 neighbor 更准仍需提升编码维度。
+
+## 改动2/3/5 + 编码器#2 实施记录（v1.13.0 — distinctiveness kernel）
+
+承接诊断的五条改造，本轮把剩余四条全部落地（改动1=v1.11.0、改动4=v1.12.0 已做）：
+
+- **编码器#2**：`encode()` 37→44 维，新增 `palette_mean_L / L_contrast_range / chroma_spread / neutral_avg_chroma / has_mono / num_font_families_norm / weight_spread_norm`。重建 corpus，corporate↔futuristic、clean↔colorful 从 0.0→0.177（靠字体维分开）。NN 分布几乎不变（中位 0.119），改动1 阈值无需重校。剩 3 对真 stub 数据重复（见 #2）。验证：cursor 仍 clone、OPC 仍 distinctive。
+- **改动2（B3 反极性）**：`b3_resolve.py` Step4 从"删孤立 outlier"反转为"选 anchor + 保留 productive_tension（孤立但 relevance≥p25 的规则，标注供 B4 发散）"，丢弃线 median→p25。冲突消解（Step2/3）不变（真逻辑冲突）。真实 OPC B2 实测：anchor=linear-app+vercel，55 条 productive_tension 被保留（含 cursor 极端负字距等签名，旧逻辑会丢）。输出加 `anchor` / `productive_tensions` 字段。
+- **改动3（concept-first B0.5）**：新增 `prompts/b05-concept-seeding.md` + SKILL.md B0.5 阶段。为 brief 产 3 个发散 POV（非品类标签，≥1 bold），驱动 B1b（覆盖品类质心，防塌缩）+ B2（覆盖各 concept 的 tension_hint）+ B4a（发展种子而非重发明）。
+- **改动5（概念级规则 + transformational 算子）**：规则 schema 加可选 `organizing_principle` / `signature_move`（非破坏；linear-app 压缩规则做示范）。B4 开"至多 1 个 `transformational: true`"受控例外（Boden transformational 有界化）：honest 空 source_rules + transformation_argument + confidence≤medium，由 taste-critic 验证服务 concept、rationale-judge 认标记不当 phantom（额度≤1，洞不重开）。
+
+版本 1.12.0 → 1.13.0（SKILL.md / plugin.json / marketplace.json）。所有 spec 同步（B0-B6 流程、prompts、CLAUDE.md dogfooding 表、README、tacit/dieter 引用、37→44 维表述）。
+
+**仍未做**：A1-A4 提取脚本批量回填 organizing_principle/signature_move（存量规则只示范了 1 条）；3 对 stub tokens re-extract/排除；端到端 dogfooding 验证整条新 B0.5→B5 流程（LLM 阶段无法单测，需跑真实 brief）。
 
 ## 根因定位
 

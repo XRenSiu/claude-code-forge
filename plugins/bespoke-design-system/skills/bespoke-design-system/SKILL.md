@@ -11,7 +11,7 @@ description: >-
   触发词：" 设计系统 " / " 调性 " / " UI 风格 " / " bespoke design " / " DESIGN.md " /
   " 拆解设计系统 " / " 导入 OD " / " 沉淀 adaptation "。
 argument-hint: "[mode=interactive|auto] <product-brief> | maintain <subcommand>"
-version: 1.12.0
+version: 1.13.0
 user-invocable: true
 ---
 
@@ -118,6 +118,19 @@ Rules library: <N> rules from <M> extracted systems (out of <K> registered).
 
 ⚠️ **不要**直接展示 source-registry.json 里 137 套登记数当成"规则库覆盖度"——这是 v1.4.0 的失误。M（extracted_systems）才是真实可用数。
 
+### B0.5 — Concept Seeding（v1.13.0 新增 / 改动3：concept-first）
+
+读 `prompts/b05-concept-seeding.md` 作为该步骤的工作指引。
+
+**为什么**：旧流程从「品类 → `defaults.yaml` 固定质心」出发，每个同品类产品拿到同一个起点画像，产品的具体性在检索前就被丢掉——这是"很普通"的**第一个成因**（B2 之前就塌缩到品类均值）。B0.5 反转顺序：先为**这一个 brief** 生成组织性概念（POV），让概念**驱动**画像与检索，而不是品类质心驱动。
+
+**产出**：3 个**发散**的 concept seeds（具体立场/隐喻，**非品类标签**，至少一个 `boldness: bold`），每个带 `archetype_lean` / `kansei_lean` / `tension_hint` / `signature_hypothesis`。
+
+**下游约定**：
+- B1 用 concept seeds 的 lean **覆盖/扩展** `defaults.yaml` 品类默认（品类默认是**先验**不是**结论**），取并集得到**不塌缩**的画像。
+- B2 确保每个 `tension_hint` 指向的规则进候选集（否则 B3 无张力原料、B4a 无法发散）。
+- B4a **不重新发明概念**——把这 3 个种子发展成 grounded candidate directions。
+
 ### B1 — 调性画像构建（按模式分支）
 
 #### B1a — interactive 模式：一次性追问
@@ -145,9 +158,11 @@ Rules library: <N> rules from <M> extracted systems (out of <K> registered).
 **B1b 工作方式**：
 
 1. 从用户需求关键词推断 `product_category`
-2. 查 `grammar/meta/defaults.yaml` 拿到该 category 的 likely_archetypes、likely_kansei、avoid_kansei、sd_defaults
-3. 用所有可用上下文（用户消息历史、当前项目内容、CLAUDE.md 等）覆盖默认值
-4. 仍缺的字段走默认；**所有推断字段在画像的 `inferred_fields` 列表中标注**
+2. 查 `grammar/meta/defaults.yaml` 拿到该 category 的 likely_archetypes、likely_kansei、avoid_kansei、sd_defaults —— **这是先验，不是结论（v1.13.0）**
+3. **用 B0.5 concept seeds 的 `archetype_lean` / `kansei_lean` 覆盖/扩展品类默认**（取三种子并集，得到不塌缩的画像），再用所有可用上下文（用户消息历史、当前项目内容、CLAUDE.md 等）覆盖
+4. 仍缺的字段走默认；**所有推断字段在画像的 `inferred_fields` 列表中标注**，concept seeds 也一并保留供 B6 暴露
+
+> ⚠️ **不要**直接套用 `defaults.yaml` 的品类质心就完事（v1.13.0 改动3）。那样每个同品类产品都长一样。品类默认只填 concept seeds 没覆盖到的字段。
 
 **铁律**：
 
@@ -170,6 +185,8 @@ Rules library: <N> rules from <M> extracted systems (out of <K> registered).
 
 **关键**：直接在**规则层**检索，不在 DESIGN.md 层。候选集应宽，冲突解决留到 B3。
 
+**v1.13.0（改动3）concept 覆盖**：除上面三层外，**额外确保每个 B0.5 concept seed 的 `tension_hint` 指向的规则进入候选集**——即使它与主画像低共现。否则 B3 没有 productive_tension 原料可留、B4a 无法发散出有识别度的方向。检索不是只服务"画像质心"，是要服务"三个概念各自需要的张力"。
+
 ### B3 — 冲突解决与自洽化
 
 读 `prompts/b3-conflict-resolution.md` 作为该步骤的工作指引。引用 `references/pattern-language.md`。
@@ -182,7 +199,7 @@ Rules library: <N> rules from <M> extracted systems (out of <K> registered).
 
 1. **冲突消解**：扫描候选集中 `conflicts_with` 关系。同时存在的对，留 Kansei 匹配度（B2 评分）高的，剔除另一条。
 2. **依赖补全**：对每条留下来的规则，沿 `depends_on` 反向闭包，把所有依赖项纳入。
-3. **风格岛聚集**：计算候选集内规则两两 `co_occurs_with` 频率的图密度。优先保留密度高的子图（" 自洽风格岛 "）；孤立点若与画像匹配度低则剔除。
+3. **Anchor + Productive Tension（v1.13.0 反极性 / 改动2）**：最密的高分子图 = **anchor**（协调骨架，reference-driven 单一强信号）。与 anchor 低共现的孤立规则**不再当 outlier 删**——relevance ≥ p25 的保留并标 `productive_tension`，作为 B4 发散独特性的原料（**独特性活在不寻常的组合里**，旧逻辑删掉它正是"很普通"的成因）。只剔除真正无关的 bottom-quartile。冲突仍由步骤 1 按 `conflicts_with` 剪（真逻辑矛盾，非统计稀有）。
 4. **覆盖检查**：确认 5 个 rule-bearing section（`color / typography / components / layout / depth_elevation`）都至少有规则覆盖；缺的 section 用 `defaults.yaml` 中该 product_category 的 backstop 规则补。4 个元 section（Visual Theme / Do's and Don'ts / Responsive / Agent Guide）由 B4 阶段从 rule-bearing 派生，不需要在 B3 单独覆盖。
 
 ### B4 — 发散生成 + 带 Rationale 生成（v1.12.0：先发散后收敛 / 改动4）
@@ -204,6 +221,7 @@ Rules library: <N> rules from <M> extracted systems (out of <K> registered).
 - 每个决策**必须**产 `inheritance` + `adaptation` + `justification` 三段。
 - 模型工作严格限定为 " 把规则集翻译成 DESIGN.md 的语言并产 rationale"，**不创造新规则**。任何看起来像新规则的判断都必须能追溯到 B3 子集里的某条；否则视为越权。
 - **B3 子集是上限，不是下限**（v1.9.1 起明确）：B4 可以**拒绝采用** B3 自洽集中某条规则，前提是把拒绝写进 provenance `justification.conflict_check.rejected_alternative_<rule_id>`，并给出基于 archetype-do-dont-table / kansei-theory / brand-archetypes 的具体证据。例如 B3 自洽集留下了一条 `cohere-22px-radius` 但其 `brand_archetypes: [Sage, Ruler]` 与画像 `[Sage, Creator]` 的 secondary 不匹配，B4 可以拒绝采用。**拒绝 ≠ 创造**。无论引用证据缺失，则视为越权。
+- **受控 Transformational 算子（v1.13.0 / 改动5 — "不创造新规则"的唯一例外）**：B4 可以引入**至多 1 个** `transformational: true` 的决策，它**不**追溯到任何 B3 规则——这是 Boden transformational creativity 的有界化：改变设计空间本身、造一个 corpus 里没有的签名动作。它**必须**：①`source_rules: []`（诚实，不伪造继承）；②带 `transformation_argument`（改了哪个定义性维度 + 为何 concept 要求它 + 为何没有现成规则覆盖）；③`confidence: medium` 上限（未经验证）；④由 taste-critic 验证它**自洽且服务 concept**（不是为怪而怪）。**超过 1 个、或没标 `transformational: true` 却空 source_rules → 仍是 phantom 越权**（ANTI-PHANTOM 的洞不重开）。详见 b4 prompt 闸 2.5。
 - **不向用户追问任何信息**。
 
 **adaptation 必须记录**：
@@ -288,7 +306,7 @@ taste-critic gate 重点核验：B4.5 选中的签名动作**在展开成完整 
 | `extract` / 重新拆解某套 | `scripts/extract-grammar.md` | A1-A4 四步流程的标准化操作（被其它脚本调用，也可独立跑） |
 | `rebuild` / 重建关系图 | `scripts/rebuild-graph.md` | 全量重算 `grammar/graph/rules_graph.json` |
 | `consolidate` / 沉淀高频 adaptation | `scripts/consolidate-adaptations.md` | 扫描 adaptation-stats，提议新规则，用户确认后写入 `_generated.yaml` |
-| `build-neighbors` / 重建邻居语料库 | `scripts/build-neighbor-corpus.md` | 把 tokens.json 编码成 37 维向量，供 B5 `neighbor_check.py` 用。新增素材或改 encode() 后必跑。 |
+| `build-neighbors` / 重建邻居语料库 | `scripts/build-neighbor-corpus.md` | 把 tokens.json 编码成 44 维向量（v1.13.0；37 base + 7 判别维），供 B5 `neighbor_check.py` 用。新增素材或改 encode() 后必跑。 |
 
 **通用规则**：
 
@@ -353,7 +371,12 @@ why:
 emerges_from: [linear, vercel, supabase]
 provenance: original   # original | generated | merged
 confidence: 0.85
+# v1.13.0（改动5）概念级字段 — 可选、非破坏性：
+organizing_principle: "把工程精度当成视觉克制来表达"   # optional — 这条规则服务的"想法"（一句话），不是参数
+signature_move: false   # optional bool — 是否编码可被认出的签名动作（true 的规则 B4 应优先用于建立身份）
 ```
+
+> **概念级字段（v1.13.0 / 改动5）**：`organizing_principle`（规则服务的"想法"）和 `signature_move`（是否承载可认出的身份）**可选**——没有这两个字段的旧规则照常工作。目的是把规则从 **token 碎片**（`saturation: 0.40-0.55`）抬到**设计想法**层面，让重组在想法上发生而非残渣上（"重组残渣 = 平均数"是"很普通"的成因之一）。新拆解素材（A1-A4）应尽量填；存量规则由 `consolidate` 维护流程逐步补。B2 检索可对 `signature_move: true` 的规则加权；B4 应优先用它们建立身份。
 
 ### 3.3.4 Rules Graph Schema (`grammar/graph/rules_graph.json`)
 
@@ -478,6 +501,8 @@ cross_category_transfer_policy: |
 - ❌ **不能在空规则库上硬生成**（先提示用户导入起步素材）
 - ❌ **不能让产物缺三段式 rationale 中的任何一段**（这是双向对称原则的核心）
 - ❌ **不能让 auto 模式下推断字段在 negotiation-summary 里隐身**（必须显式列出供反馈）
+- ❌ **不能用 `defaults.yaml` 品类质心盖过 B0.5 concept seeds**（v1.13.0 改动3；品类默认是先验不是结论，否则每个同品类产品长一样）
+- ❌ **不能让 B0.5 产出品类标签当概念**（"clean dev tool" 不是 POV；必须是绑定本 brief 的具体立场/隐喻，且 3 个真发散、≥1 个 bold）
 - ❌ **不能不更新 adaptation-stats.json**（自演化机制依赖它）
 
 ---

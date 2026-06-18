@@ -3,7 +3,7 @@
 build_neighbor_corpus.py — A5 phase: encode every system's tokens.json into a
 fixed-length feature vector for nearest-neighbor distance lookup.
 
-Vector schema (37 dimensions):
+Vector schema (44 dimensions = 37 base + 7 v1.13.0 discriminative):
   Color (12 dims):
     [0]  primary_brand_L
     [1]  primary_brand_C
@@ -47,11 +47,19 @@ Vector schema (37 dimensions):
     [34] uses_shadow_as_border      (0 or 1, heuristic)
     [35] has_rgba_translucent_bg    (0 or 1, heuristic for ghost-button style)
     [36] has_status_palette         (0 or 1)
+  v1.13.0 discriminative (7 dims) — skill-issue-2026-06-18 #2 (corpus degeneracy):
+    [37] palette_mean_L             (lightness center of the palette)
+    [38] L_contrast_range           (neutral_L_max - neutral_L_min)
+    [39] chroma_spread              ((max_C - mean_C) / 0.4 — one punchy accent vs many)
+    [40] neutral_avg_chroma         (warm vs cool neutrals; avg C of near-neutrals / 0.06)
+    [41] has_mono                   (1 if a mono typeface present — dev signal)
+    [42] num_font_families_norm     (min(distinct non-mono families, 4) / 4)
+    [43] weight_spread_norm         ((max_weight - min_weight) / 900 — narrow vs wide ladder)
 
 Output: grammar/meta/neighbor-corpus.json:
   {
     "schema_version": "1.0",
-    "dim_count": 37,
+    "dim_count": 44,
     "dim_names": [...],
     "weights": [...],     // optional per-dim weight for distance calc
     "systems": {
@@ -94,6 +102,14 @@ DIM_NAMES = [
     'duration_count_norm', 'duration_avg_norm', 'has_bounce',
     'button_radius_norm', 'num_button_variants_norm', 'uses_shadow_as_border',
     'has_rgba_translucent_bg', 'has_status_palette',
+    # v1.13.0 — discriminative dims (skill-issue-2026-06-18 #2: corpus degeneracy).
+    # The 37-dim encoder collapsed ~50 systems to <0.08 of a neighbor; several
+    # "adjective" stub systems share an identical Tailwind-default palette and
+    # differ ONLY in fonts (which the old encoder barely saw). These add the
+    # font-family + finer-color signal that breaks those ties and separates real
+    # systems better.
+    'palette_mean_L', 'L_contrast_range', 'chroma_spread', 'neutral_avg_chroma',
+    'has_mono', 'num_font_families_norm', 'weight_spread_norm',
 ]
 
 # Per-dimension weight for distance calculation. Color and typography are most
@@ -111,6 +127,11 @@ DIM_WEIGHTS = [
     0.5, 0.6, 0.4, 0.3,          # radius
     0.3, 0.3, 0.6,               # motion
     0.5, 0.4, 0.4, 0.4, 0.5,     # components
+    # v1.13.0 discriminative dims: color refinement (mean_L/contrast/spread/neutral
+    # temp) + font signal (mono / family count / weight ladder spread). Font dims
+    # weighted relatively high — they carry identity the palette alone misses.
+    1.0, 0.9, 0.8, 0.6,          # palette_mean_L, L_contrast_range, chroma_spread, neutral_avg_chroma
+    1.0, 0.7, 0.7,               # has_mono, num_font_families_norm, weight_spread_norm
 ]
 assert len(DIM_NAMES) == len(DIM_WEIGHTS), 'DIM_NAMES/DIM_WEIGHTS length mismatch'
 
@@ -242,7 +263,7 @@ def _safe_avg(seq, default=0):
 
 
 def encode(tokens: dict) -> list[float]:
-    """Encode a tokens.json dict into a 37-dim vector."""
+    """Encode a tokens.json dict into a 44-dim vector (37 base + 7 v1.13.0)."""
     color = tokens.get('color', {}) or {}
     typo = tokens.get('typography', {}) or {}
     sp = tokens.get('spacing', {}) or {}
@@ -416,6 +437,56 @@ def encode(tokens: dict) -> list[float]:
     else:
         has_status_palette = 1.0 if len(chosen) >= 3 else 0.0
 
+    # ---------- v1.13.0 discriminative dims (skill-issue-2026-06-18 #2) ----------
+    # Color refinement: center lightness, contrast range, chroma spread (one punchy
+    # accent vs many medium colors), warmth of the neutrals.
+    palette_mean_L = _safe_avg(L_values, 0.5) if L_values else UNKNOWN
+    L_contrast_range = (neutral_L_max - neutral_L_min) if L_values else UNKNOWN
+    if chromatic:
+        c_vals = [c[1] for c in chromatic]
+        chroma_spread = min((max(c_vals) - (sum(c_vals) / len(c_vals))) / 0.4, 1.0)
+    else:
+        chroma_spread = UNKNOWN
+    neutral_chromas = []
+    for hx in all_hexes:
+        try:
+            _nL, _nC, _nH = hex_to_oklch(hx)
+            if _nC < 0.06:
+                neutral_chromas.append(_nC)
+        except Exception:
+            continue
+    neutral_avg_chroma = (min(_safe_avg(neutral_chromas, 0.0) / 0.06, 1.0)
+                          if neutral_chromas else UNKNOWN)
+
+    # Font-family signal — the dimension the old encoder barely saw. This is what
+    # separates the adjective-stub systems (identical palette, different fonts) and
+    # carries dev-tool (mono) / multi-typeface identity.
+    fam_names = []
+    for f in (typo.get('families') or []):
+        nm = (f.get('family') if isinstance(f, dict) else f)
+        if nm:
+            fam_names.append(str(nm).strip().lower())
+    for role in ('display', 'body', 'mono'):
+        blk = typo.get(role)
+        if isinstance(blk, dict) and blk.get('family'):
+            fam_names.append(str(blk['family']).strip().lower())
+    distinct_fams = set(fam_names)
+    if distinct_fams:
+        has_mono = 1.0 if any('mono' in n for n in distinct_fams) else 0.0
+        non_mono = {n for n in distinct_fams if 'mono' not in n}
+        num_font_families_norm = min(len(non_mono), 4) / 4
+    else:
+        has_mono = UNKNOWN
+        num_font_families_norm = UNKNOWN
+
+    # Weight-ladder spread: narrow (e.g. Linear 400–590) vs wide (100–900 stub default).
+    if len(weights) >= 2:
+        weight_spread_norm = (max(weights) - min(weights)) / 900
+    elif weights:
+        weight_spread_norm = 0.0
+    else:
+        weight_spread_norm = UNKNOWN
+
     return [
         primary_brand_L, primary_brand_C, primary_brand_H_sin, primary_brand_H_cos,
         neutral_L_min, neutral_L_max, palette_avg_saturation_norm, entropy,
@@ -428,6 +499,8 @@ def encode(tokens: dict) -> list[float]:
         duration_count_norm, duration_avg_norm, has_bounce,
         button_radius_norm, num_button_variants_norm, uses_shadow_as_border,
         has_rgba_translucent_bg, has_status_palette,
+        palette_mean_L, L_contrast_range, chroma_spread, neutral_avg_chroma,
+        has_mono, num_font_families_norm, weight_spread_norm,
     ]
 
 

@@ -47,13 +47,14 @@ python3 tools/build_neighbor_corpus.py --include-only linear-app,vercel,apple
 ## 工具自动做的
 
 1. 加载 `grammar/tokens/*.json`
-2. 对每套调 `encode(tokens)`，把 tokens 映射成 37 维向量：
+2. 对每套调 `encode(tokens)`，把 tokens 映射成 44 维向量（37 base + 7 v1.13.0）：
    - 12 维 color（primary L/C/H + 灰阶范围 + 调色板属性）
    - 8 维 typography（scale ratio + 字号 + line-height + weight + serif/humanist）
    - 5 维 spacing/layout
    - 4 维 radius
    - 3 维 motion
    - 5 维 components
+   - **7 维 v1.13.0 判别维**（palette_mean_L / L_contrast_range / chroma_spread / neutral_avg_chroma / has_mono / num_font_families / weight_spread；skill-issue-2026-06-18 #2 增）
 3. 写入 `neighbor-corpus.json`（覆盖式）
 
 ## 失败处理
@@ -85,7 +86,7 @@ print('all vectors length-OK')
 阈值**从 corpus 自身距离分布校准**（不是经验拍脑袋）。重建 corpus 后应复核分布是否漂移：
 
 - corpus 内部最近邻距离应大致维持 中位 ~0.12 / p90 ~0.20 / 最大 ~0.26；`suspect`(0.12) 取的就是这个中位数。若分布大幅变化，按比例调 `SUSPECT_THRESHOLD` / `DISTINCT_CEILING`。
-- **编码器分辨率是硬约束**：当前 37 维编码把约 50 个语义不同的系统压成 <0.08 的近似重复（corporate/futuristic/sleek/storytelling 全编码到同一点）。所以 `clone` 阈值不能往上调太多，否则会误杀大量"真正不同但相近"的系统。要根治需提升编码维度的判别力，不是调阈值。详见 `bespoke-design/skill-issue-2026-06-18.md`。
+- **编码器分辨率是硬约束**：v1.13.0 已把 37 维扩到 44 维（加 has_mono / num_font_families / 更细色彩维），把 exact-0 坍缩对从 ~5 降到 3。**剩 3 对是真 stub 数据重复**（sleek/storytelling、cosmic/creative、colorful/simple：调色板+字体全同——共用 Tailwind 默认 7 色），任何编码器都分不开，需 re-extract 或排除这些 stub。`clone` 阈值仍不宜上调太多。详见 `bespoke-design/skill-issue-2026-06-18.md` #2。
 
 如果用户反映"生成的设计很普通"，**不要**指望调这个 check——它只能抓 token clone。感知层面的平庸是 taste critic 的职责。
 
@@ -100,5 +101,6 @@ spec 列出的特征向量维度示例（30-50 维）：
 | 间距 | 6 维 | 5 维（合并 layout） |
 | 节奏 | 4 维 | 4 维 radius ✓ |
 | 其它 | — | 3 维 motion + 5 维 components |
+| 判别维（v1.13.0） | — | 7 维（color 细化 4 + font 信号 3） |
 
-总 37 维，落在 spec 30-50 区间内。
+总 44 维（37 base + 7 v1.13.0），落在 spec 30-50 区间内。

@@ -18,9 +18,11 @@
 
 为治"生成的设计很普通"，B4 不再一次产一份"安全平均"草稿。流程是 **B4a 发散 → B4.5 选优 → B4b 展开**。本文件其余部分（ANTI-PHANTOM、闸 1–5、9-section、生成流程）是 **B4b 展开 winner** 的机制——B4a 先发散方向，选中后才用这套机制把 winner 做成完整 DESIGN.md。
 
-### B4a — 发散出 N=3 个候选方向
+### B4a — 发散出 N=3 个候选方向（发展 B0.5 概念种子）
 
-产出 **3 个 *direction* 摘要**（不是 3 份完整 9-section）。每个候选**承诺一个不同的统领观点**，三者要**真发散**（不同 anchor / 不同 productive tension / 不同 signature），不是同方向三个微调。每个候选给：
+**v1.13.0（改动3）：不要重新发明概念**——把 B0.5 产出的 3 个 `concept_seeds` **发展**成 grounded candidate directions，用 B3 的真实规则（anchor + productive_tensions）落地。每个候选对应一个种子，把种子的 `signature_hypothesis` / `tension_hint` 用 B3 子集里的具体规则坐实。
+
+产出 **3 个 *direction* 摘要**（不是 3 份完整 9-section）。每个候选**承诺一个不同的统领观点**（来自对应 concept seed），三者要**真发散**（不同 anchor 侧重 / 不同 productive tension / 不同 signature），不是同方向三个微调。每个候选给：
 
 ```yaml
 candidates:
@@ -161,6 +163,37 @@ original_rationale: |
 
 - ❌ "Vercel 直接用 Geist 体现这一原则" + 编 `vercel-typography-geist-system-002`
 - ✅ "Linear typography rule 要求 geometric/humanist sans + OpenType + 拒绝 Inter；选 Geist 是符合这组约束的现成字体（brief-derived，非规则原文要求）"
+
+### 闸 2.5：受控 Transformational 算子（v1.13.0 / 改动5 — "不创造新规则"的唯一例外）
+
+`derived_from_brief`（闸 2）是"没规则覆盖，用了工业惯例"的兜底。**transformational 不一样**：它是**故意**离开 corpus / 惯例，造一个签名动作来给设计身份——Boden transformational creativity 的有界化（改变设计空间本身，而不只是在空间内重组/探索）。
+
+**额度：整份设计至多 1 个 `transformational: true` 决策。** 它必须长这样：
+
+```yaml
+- decision: <X — 一个 corpus 里没有的签名动作>
+  transformational: true              # 必填标记
+  inheritance:
+    source_rules: []                  # 诚实为空——不伪造继承
+    source_systems: []
+    original_rationale: |
+      ⚠️ Transformational：此决策**不**追溯任何 B3 规则。它故意改变设计空间的一个
+      定义性维度，为 concept <哪个 B0.5/候选 concept> 建立签名。
+  transformation_argument: |
+    - 改了哪个定义性维度（不是参数微调，是规则层面的"换一种玩法"）
+    - 为什么这个 concept 要求它（绑定 POV，不是为怪而怪）
+    - 为什么没有现成规则能覆盖（说明它确实是新的，不是漏检了 B3）
+  justification:
+    design_argument: <为什么它自洽、不破坏其它 section>
+  confidence: medium                  # 上限 medium —— 未经验证
+```
+
+**铁律**：
+
+- **至多 1 个**。第 2 个 `transformational: true` → 越权（回退成普通决策或删掉）。
+- **没标 `transformational: true` 却 `source_rules: []` 且不是 `derived_from_brief` → 仍是 phantom 越权**（闸 1 的洞不重开）。空 source_rules 只有两条合法路径：`derived_from_brief: true`（惯例兜底）或 `transformational: true`（故意签名），二选一，必须显式。
+- taste-critic（B4.5/B5）会专门验证这个 transformational move **自洽且服务 concept**；coherence_check 验证它数学上不破。两关之一不过 → 撤掉它，回退到可追溯决策。
+- 这个算子是**可选**的——大多数设计不需要它。只在 concept 真的要求一个 corpus 给不了的签名时才用。宁可不用，也不要拿它当"绕过 B3"的后门。
 
 ### 闸 3：调适越界必须显式标注（v1.9.0 扩展为 4 类）
 

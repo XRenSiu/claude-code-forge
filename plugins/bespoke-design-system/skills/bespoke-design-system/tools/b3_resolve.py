@@ -23,7 +23,15 @@ Algorithm (deterministic, no LLM):
            blocked by an already-kept rule K (D in conflicts_with[K] or
            vice versa), CASCADE-DROP R rather than re-adding D. This
            preserves Step 2's score-based authority.
-  Step 4 — Style-island clustering (size-aware per b3-conflict-resolution.md)
+  Step 4 — Anchor + productive-tension selection (v1.13.0 改动2; was: drop
+           isolated outliers). The densest high-score cluster is the ANCHOR
+           (coherence backbone). Isolated rules (low co-occurrence with the
+           anchor) are RETAINED down to the 25th score percentile and labeled
+           `productive_tension` — distinctiveness lives in combining things that
+           don't usually co-occur, so we surface them for B4 instead of deleting
+           them. Only the genuinely-irrelevant bottom quartile is dropped.
+           Conflicts are still pruned in Step 2/3 (real logical contradiction,
+           NOT statistical rarity).
   Step 5 — Section coverage check + backstop fill
   Step 6 — Emit _b3-self-consistent.json
 
@@ -202,6 +210,7 @@ def resolve(b2_path, graph_path, output_path):
     cluster_metadata = {}
     isolated_kept_set = set()
     isolated_dropped_set = set()
+    anchor = None
 
     if library_total_rules < 30:
         # Too small — skip clustering
@@ -246,19 +255,36 @@ def resolve(b2_path, graph_path, output_path):
             main_member_set |= set(c)
 
         isolated = kept - main_member_set
-        median_score = sorted(score_map.values())[len(score_map) // 2] if score_map else 0
-        isolated_kept_set = {r for r in isolated if score_map.get(r, 0) > median_score}
+        # v1.13.0 (改动2) — REVERSE POLARITY. Isolated = low co-occurrence with the
+        # dense anchor. Distinctiveness lives in productive tension (rules that
+        # don't usually co-occur but a concept can justify combining), so we now
+        # RETAIN isolated rules down to the 25th score percentile (was: median) and
+        # label them productive_tension for B4 to lean into. Only the genuinely
+        # irrelevant bottom quartile is dropped. Conflicts already pruned in Step 2/3.
+        scores_sorted = sorted(score_map.values())
+        p25_score = scores_sorted[len(scores_sorted) // 4] if scores_sorted else 0
+        isolated_kept_set = {r for r in isolated if score_map.get(r, 0) >= p25_score}
         isolated_dropped_set = isolated - isolated_kept_set
 
-        # Drop low-score isolated, but keep deps (they were added for a reason)
         kept = main_member_set | isolated_kept_set | to_add
         for r in isolated_dropped_set:
             if r not in kept:
                 dropped.append({
                     'rule_id': r,
-                    'reason': 'low_score_isolated_after_clustering',
-                    'phase': 'step4_clustering',
+                    'reason': 'bottom_quartile_isolated (below p25 relevance — not even tension-worthy)',
+                    'phase': 'step4_anchor_tension',
                 })
+
+        # The top-scoring cluster is the anchor (coherence backbone).
+        if main_clusters:
+            a_score, a_members = main_clusters[0]
+            a_systems = [sys for sys, _ in Counter(
+                rule_lookup.get(r, {}).get('system', '?') for r in a_members).most_common(5)]
+            anchor = {
+                'mean_score': round(a_score, 4),
+                'member_count': len(a_members),
+                'dominant_systems': a_systems,
+            }
 
     # Step 5 — Section coverage check
     required_sections = ['color', 'typography', 'components', 'layout', 'depth_elevation']
@@ -284,9 +310,9 @@ def resolve(b2_path, graph_path, output_path):
         if rid in to_add:
             return 'dependency'
         if any(rid in c for _, c in main_clusters):
-            return 'cluster_main'
+            return 'anchor' if main_clusters and rid in main_clusters[0][1] else 'cluster_main'
         if rid in isolated_kept_set:
-            return 'supplementary'
+            return 'productive_tension'
         if any(d['rule_id'] == rid for d in recovered):
             return 'recovered_for_coverage'
         return 'unknown'
@@ -320,6 +346,18 @@ def resolve(b2_path, graph_path, output_path):
                 for i, (s, c) in enumerate(main_clusters)
             ],
             'cluster_metadata': cluster_metadata,
+            'anchor': anchor,
+            'productive_tensions': [
+                {
+                    'rule_id': rid,
+                    'section': sec_of.get(rid, 'unknown'),
+                    'system': rule_lookup.get(rid, {}).get('system', 'unknown'),
+                    'final_score': score_map.get(rid, 0),
+                    'tension_with': (anchor or {}).get('dominant_systems', []),
+                    'note': 'low co-occurrence with anchor — B4 should lean into this for distinctiveness, justifying the combination via the candidate concept',
+                }
+                for rid in sorted(isolated_kept_set, key=lambda r: -score_map.get(r, 0))
+            ],
             'dropped': dropped,
             'cascade_dropped': sorted(cascade_dropped),
             'recovered_for_coverage': recovered,

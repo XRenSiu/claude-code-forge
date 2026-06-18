@@ -66,6 +66,17 @@ judge_input:
 
 任何一项对不上 → **blocker**（编造来源是最严重的违规）。
 
+**v1.13.0 空 source_rules 的两条合法路径（不算 phantom）**：
+
+1. `derived_from_brief: true` —— 没规则覆盖、用了工业惯例。空 source_rules 是预期的，**不**算编造。
+2. `transformational: true`（改动5 受控算子）—— 故意离开 corpus 造签名。空 source_rules 是预期的。但你**必须**核验：
+   - 整份 provenance 里 `transformational: true` 的决策 **≤ 1 个**（第 2 个 → blocker）。
+   - 它有非空的 `transformation_argument`（说清改了哪个定义性维度 + 为何 concept 要求 + 为何无现成规则）。空泛或缺失 → warning。
+   - `confidence` ≤ medium。标了 high → warning。
+
+**仍是 phantom blocker 的情况**：`source_rules: []` 但**既没标** `derived_from_brief: true` **也没标** `transformational: true` —— 这是伪装成继承的凭空决策，最严重违规。ANTI-PHANTOM 的洞不因改动5 重开：合法的无锚点决策必须**显式**走上面两条路径之一。
+（设计本身好不好、transformational move 是否真有识别度，由 taste-critic 判，不在你职责内——你只核验"标记诚实 + 额度 + 论证非空"。）
+
 ### 维度 2: Adaptation 合理性
 
 对每个有 `adaptation.modifications` 的决策：

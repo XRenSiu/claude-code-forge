@@ -91,13 +91,15 @@ skill 自动判断模式：
 ```
 B0 模式分流（interactive | auto）
     ↓
-B1a 一次性追问（≤7 题，interactive）  /  B1b 全自动推断（auto）
+B0.5 Concept Seeding（为这个 brief 产 3 个发散 POV，驱动后续——非品类质心）
     ↓
-B2 规则检索（Archetype 硬筛 + Kansei 软排 + SD 距离修正，候选 100-200 条）
+B1a 一次性追问（≤7 题，interactive）  /  B1b 全自动推断（concept 覆盖品类质心）
     ↓
-B3 冲突解决（图算法：消解冲突、补依赖、聚风格岛 → 自洽 40-60 条）
+B2 规则检索（Archetype 硬筛 + Kansei 软排 + SD 距离修正 + 覆盖各 concept 张力，候选 100-200 条）
     ↓
-B4a 发散 3 候选方向 → B4.5 taste-critic(rank) 选优 → B4b 展开 winner（三段式 rationale）
+B3 anchor + productive tension（图算法：消解冲突、补依赖、留张力 → 自洽子集）
+    ↓
+B4a 发散 3 候选方向（发展 concept seeds） → B4.5 taste-critic(rank) 选优 → B4b 展开 winner（三段式 rationale）
     ↓
 B5 P0 闸门（4 Python check + rationale-judge + taste-critic(gate)，6 闸，限 2 轮迭代）
     ↓

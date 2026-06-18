@@ -73,7 +73,7 @@ python3 checks/neighbor_check.py <draft-tokens.json>
 
 阈值是从 corpus 自身距离分布**校准**出来的（corpus 内部最近邻：中位 0.12 / p90 0.20 / 最大 0.26），不是拍脑袋。
 
-**诚实边界（必读）**：这是 37 维 token 统计距离，只能抓 token 空间的 clone，**看不见概念级平庸**（统领想法 / 签名动作）。一份把 Linear 结构整套抄走、只换强调色的设计会落在 ~0.18 判 pass。"很普通"这种感知层面的平庸由 taste critic 抓，不是这个 check 的职责。
+**诚实边界（必读）**：这是 44 维 token 统计距离（v1.13.0），只能抓 token 空间的 clone，**看不见概念级平庸**（统领想法 / 签名动作）。一份把 Linear 结构整套抄走、只换强调色的设计会落在 ~0.18 判 pass。"很普通"这种感知层面的平庸由 taste critic 抓，不是这个 check 的职责。
 
 如果 neighbor-corpus.json 不存在，工具会返回 `evaluable: false`，整体 check **不算 fail**——只是缺数据。
 
