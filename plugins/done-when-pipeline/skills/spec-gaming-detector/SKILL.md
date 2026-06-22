@@ -93,7 +93,9 @@ G2 is the highest-leverage phase but requires `--history`. G3 is what closes the
 
 ## G1 — Absolute scan
 
-For each of the 6 RHD patterns, run the pattern-specific scan on the current state of `<artifact_source>`. Don't multi-pass — one walk per pattern, in this fixed order:
+**Detective Loop, not flowchart.** The six-pattern list below is a *coverage checklist* — all six must be walked so nothing is missed — but it is **not** a forced sequence, and within each pattern you decide what to read next from what you see (multi-hop into the call site, the test fixtures, the migration, wherever the evidence leads). Do not impose a fixed read order on the code; the only fixed thing is that every pattern gets covered. (Same principle code-reviewer states explicitly as its iron rule 2.)
+
+For each of the 6 RHD patterns, run the pattern-specific scan on the current state of `<artifact_source>` — one honest walk per pattern, covering all six:
 
 1. **Test Modification** — assertion weakening, mocking real failures, exception swallowing.
 2. **Test Case Targeting** — hardcoded outputs for specific test inputs.
@@ -144,23 +146,15 @@ Each gap is recorded as one `spec_robustness_gaps:` entry with `pattern_that_exp
 
 ## G4 — Score + trend
 
-Per `references/rhd-patterns.md` § "Computing gaming_risk_score":
+The score and trend are a deterministic computation, not a judgment call — the Models table marks G4 "inline deterministic, no LLM call", so it ships as a primitive. You supply the findings (with severities) you judged in G1-G3; the script sums them and computes the trend. **Do not add up the severities by hand:**
 
 ```
-gaming_risk_score = sum(per_finding_score, capped at 10)
-where:
-  P0 finding → +3
-  P1 finding → +2
-  P2 finding → +1
-  P3 finding → +0.5
+python scripts/compute_score.py <findings.json> --baseline <prev-score> --trajectory <s1,s2,...> --json
 ```
 
-Then trend:
-- If `--baseline-score` provided (or read from `--history`'s gaming-risk.yaml): compute `delta = current - baseline`.
-- Track `gaming_risk_trajectory:` (last N scores) if more history is available.
-- Flag in `caveats.trend_warning:` if delta ≥ 2 (significant rise) or if trajectory shows monotonic growth over 2+ iterations.
+`scripts/compute_score.py` implements `references/rhd-patterns.md` § "Computing gaming_risk_score" (`P0→+3 / P1→+2 / P2→+1 / P3→+0.5`, capped at 10) and § "Trend matters" (`delta`, monotonic-rise detection, `trend_warning`). Per skillwise THEORY.md §3, sealing the arithmetic in a primitive means a miscount has no slot to land in. Paste its `gaming_risk_score`, `gaming_risk_trajectory`, `trend`, and `trend_warning` verbatim into the output.
 
-The trend is sometimes more important than the absolute score. A score going 2 → 3 → 5 → ... is converging on gaming under pressure — escalate before hitting the threshold, not after.
+The trend is sometimes more important than the absolute score: a score going 2 → 3 → 5 → ... is converging on gaming under pressure — escalate before hitting the threshold, not after. The script flags this in `trend_warning`; surface it.
 
 ---
 
@@ -214,6 +208,10 @@ Beyond `/acceptance-fleet`:
 The skill is entirely contract-agnostic. It works on `done_when.yaml` because that's a common contract format; it also works on Jira tickets, KPI definitions, regulatory documents.
 
 ---
+
+## Bundled primitives (scripts/)
+
+- `scripts/compute_score.py` — the deterministic G4 `gaming_risk_score` + trend (skillwise THEORY.md §3). The LLM judges which findings and severities; the script sums them and flags monotonic rises, identically every run.
 
 ## Resource index
 

@@ -99,55 +99,15 @@ For each entry in `done_when.yaml`'s `existence:` block, emit one check line.
 
 Read `references/sub-modules/existence-extractor.md` for the full grammar.
 
-**Output:** a single script (`existence.sh` for shell-friendly projects, `existence.py` if Python-only stack). Each line:
+**Emit the script with the bundled primitive — do not hand-write the bash:**
 
-- `file:` → `test -f <path>`
-- `function:` → broadly-covering `rg` that matches ALL legal export forms (direct `export class|function|const|let|var`, `export default class|function`, and named re-exports `export { Name }` / `export { Name as Alias }`). For TS: `rg -qU "export\s+(default\s+)?(class|function|const|let|var)\s+<Name>\b|export\s*\{[^}]*\b<Name>\b" src/`. For Python: use `ast` introspection. Falling back to a too-narrow regex (e.g. `export\s+(class|function|const)\s+<Name>` only) produces false negatives on `export default …` and barrel re-exports — both are legitimate exported forms. See `references/sub-modules/existence-extractor.md` for the full per-kind recipe.
-- `route:` → grep for the route declaration in router files
-- `db_field:` → grep migration/schema files for `<table>.<column>`
-- `frontend_component:` → grep for the component name in `src/components/`
-
-(Schema v1 defines exactly these five kinds. Older drafts of this skill listed `env_var:` and `cli_command:`; those are not part of v1 — if you see them in a contract, the validator should have already rejected it. Bail out and ask the user to regenerate via `/acceptance-spec`.)
-
-### Fail-fast is mandatory (do not "count-all-then-exit")
-
-Per `done-when-pipeline.md` §6.2, existence checks MUST stop on the **first** failure (`set -e` semantics). The whole point is "fast-fail before behavior" — surfacing one missing symbol immediately is more valuable than a 20-line tally of everything that's missing.
-
-**Required pattern** (each check):
-
-```bash
-set -euo pipefail   # MUST be on the first non-shebang line
-
-echo "checking <label>..." && <check command> >/dev/null 2>&1 \
-  || { echo "✗ FAIL: <label>" >&2; exit 1; }
-echo "✓ <label>"
+```
+python scripts/gen_existence.py <done_when.yaml> --src src --version <this SKILL's frontmatter version> > tests/<feature>/existence.sh
 ```
 
-Or as a helper without `if`:
+`scripts/gen_existence.py` is the existence-script primitive. It seals the mechanical correctness so it is never re-improvised each run: `set -euo pipefail` is always line 1, every check runs through a no-`if` helper (so `errexit` can never be silently swallowed), and the `function:` check always uses the broad export-matching regex (direct / `export default` / barrel re-export) — a too-narrow regex that false-negatives on the latter two now has no slot to slip into. It maps the five v1 kinds (`file` / `function` / `route` / `db_field` / `frontend_component`) per `references/sub-modules/existence-extractor.md`; v0.x kinds like `env_var:` / `cli_command:` are not v1 and should already have been rejected by the validator.
 
-```bash
-check() {
-  local label="$1"; shift
-  "$@" >/dev/null 2>&1 || { echo "✗ FAIL: $label" >&2; exit 1; }
-  echo "✓ $label"
-}
-```
-
-**Forbidden patterns** (these defeat `set -e` because `if`/`||`-with-assignment swallow the failure):
-
-```bash
-# WRONG — `if` context disables errexit; script counts and runs to the end.
-if "$@" >/dev/null 2>&1; then PASS=$((PASS+1)); else FAIL=$((FAIL+1)); fi
-
-# WRONG — same problem with a PASS/FAIL tally + exit at the bottom.
-echo "─────"
-echo "Passed: $PASS · Failed: $FAIL"
-if [[ $FAIL -gt 0 ]]; then exit 1; fi
-```
-
-If a user *insists* on a count-all-then-exit diagnostic mode, that's a SKILL-level upgrade discussion (and a different file name like `existence-diag.sh`); do not silently switch defaults.
-
-Append at the end: `echo "✓ All <N> existence checks passed"`.
+**Why a primitive, not prose (skillwise THEORY.md §3).** Fail-fast (per `done-when-pipeline.md` §6.2) means stop on the **first** missing symbol — surfacing one immediately beats a 20-line tally. The forbidden anti-pattern is a count-all-then-exit tally, because an `if`/`||`-with-assignment wrapper disables `errexit` and swallows the failure. Hand-writing the bash is exactly where that bug crept back in before; the generator is the guarantee. If a user *insists* on a count-all diagnostic mode, that is a separate file (`existence-diag.sh`) and a SKILL-level discussion — do not silently switch the default.
 
 Run it. If it fails (which is expected on first run — the implementer hasn't written the code yet), that's fine — the script becomes part of the contract, not a current-pass requirement. Document this in a header comment, and make sure the header does NOT contradict the fail-fast behavior (no "after counting all" wording).
 
@@ -288,7 +248,15 @@ Re-routing reference (for users migrating from v0.x contracts):
 
 ## After all five sub-steps
 
-Tell the user, in short bullets:
+**First, run the traceability exit gate (bundled primitive):**
+
+```
+python scripts/check_verbatim_names.py <done_when.yaml> tests/<feature>/ --check
+```
+
+It asserts every contract test name appears in the generated files character-for-character. Any `MISSING (verbatim)` line means a name was paraphrased (the TS/JS `test('humanized title')` trap — iron rule 9), which silently breaks the downstream `grep`-based contract↔impl traceability. Fix the offending file before reporting to the user. This is the *product* check skillwise THEORY.md §4 asks for — a rule the author "should follow" is not a guarantee; a runnable check of the emitted files is.
+
+Then tell the user, in short bullets:
 
 1. Output directory + the file tree (≤15 lines).
 2. Counts: `<N> existence checks · <M> unit tests (<E> example / <P> PBT) · <I> integration tests · <K> e2e tests`.
@@ -297,14 +265,14 @@ Tell the user, in short bullets:
 
 ### Counts must be verbatim from `done_when.yaml` (hard rule)
 
-When emitting the counts line above AND when populating the same counts in the generated `tests/<feature>/README.md`'s "Counts" section, every number MUST be derived by **counting entries in the input `done_when.yaml`**, not by counting tests in the generated files or by inferring "we probably emitted 16 because there were 10 examples and 4 PBTs and we threw in some extras". Specifically:
+Both the counts line above AND the same counts in the generated `tests/<feature>/README.md` MUST come from the bundled count primitive — never hand-counted:
 
-- `<N>` existence checks = `len(done_when.yaml.existence)` — count entries verbatim.
-- `<M>` unit tests = `len(behavior.unit_tests.example_based) + len(behavior.unit_tests.property_based)`; `<E>` = `len(.example_based)`; `<P>` = `len(.property_based)`. The relationship `M = E + P` is mathematical, not narrative — do NOT add helper or synthesized tests into the count.
-- `<I>` integration tests = `len(integration_tests.example_based) + len(integration_tests.property_based)`.
-- `<K>` e2e tests = `len(e2e_tests)`.
+```
+python scripts/derive_counts.py <done_when.yaml>          # human line + table
+python scripts/derive_counts.py <done_when.yaml> --json    # machine
+```
 
-If your prose explanation diverges from those mathematical counts (e.g. "16 unit tests but actually the YAML lists 14"), the prose is wrong — re-count. **Never emit two contradicting numbers in the same artifact** (e.g. "16 unit tests" in the headline and "14 unit entries" in the footnote — exactly the iter-2 step2 P2-4 bug). If the test files end up containing more or fewer tests than the YAML promised, that is itself a skill bug that must be surfaced upstream (push back per iron rule 7 "No inventing requirements" / iron rule 9 "Verbatim test names") — not papered over by inflating the count in the README.
+`scripts/derive_counts.py` derives every number straight from the contract (`<N>`=`len(existence)`; `<M>`=`E+P` where `<E>`=`len(unit_tests.example_based)`, `<P>`=`len(unit_tests.property_based)`; `<I>`=integration example+PBT; `<K>`=`len(e2e_tests)`). Paste its output line verbatim into both surfaces. The relationship `M = E + P` is arithmetic done once by the script, not narrative re-counted by hand — which is the whole point: the divergence bug (iter-2 step2 P2-4: README said 16, YAML listed 14) had no named slot to land in once a primitive owns the count. **Never emit two contradicting numbers in the same artifact.** If the generated files end up with more/fewer tests than the script's count, that is a skill bug to surface upstream (push back per iron rule 7 "No inventing requirements" / iron rule 9 "Verbatim test names") — not papered over by inflating the README.
 
 Do not implement the feature. Do not run the integration / e2e suites unless the user explicitly asks ("run integration"). Mutation is too slow to run by default.
 
@@ -328,6 +296,14 @@ The test files this skill emits become the **acceptance contract** that Step 5 (
 - **Legacy contract has `fitness:` block** → bail out at sub-step 0 with a clear migration message: "this contract was generated under v0.x schema; v1.0+ has retired `fitness:` per HTML v2 §3.5. Regenerate via `/acceptance-spec` v1.0+."
 
 ---
+
+## Bundled primitives (scripts/)
+
+Per skillwise THEORY.md §3, the mechanical sub-parts ship as runnable primitives, not prose the agent re-improvises each run:
+
+- `scripts/gen_existence.py` — emits the fail-fast `existence.sh` (4-A); forces `set -euo pipefail`, the no-`if` helper, and the broad export regex.
+- `scripts/derive_counts.py` — derives the canonical test counts from `done_when.yaml` (kills the headline/README count-divergence bug).
+- `scripts/check_verbatim_names.py` — asserts every contract test name appears verbatim in the generated files (iron rule 9 traceability gate).
 
 ## Resource index
 

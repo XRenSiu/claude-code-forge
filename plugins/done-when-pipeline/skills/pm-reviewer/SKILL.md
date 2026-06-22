@@ -116,6 +116,8 @@ Edge case: requirements that are **non-functional** (performance, security postu
 
 ## P2 — Per-REQ judgment (Agent-as-Judge)
 
+**Detective Loop, not flowchart.** LOCATE → READ → RETRIEVE names the three atoms, but it is *not* a rigid one-pass sequence: a READ often sends you back to LOCATE in a different module, and a missing RETRIEVE may make you re-READ to confirm the impl really is untested. Multi-hop freely and decide the next atom from what the last one showed; the fixed thing is that every verdict cites `tool_traces:`, not the order you collected them in. (Same principle code-reviewer states as its iron rule 2.)
+
 For each `normalized_requirement`, run three tool atoms:
 
 ### LOCATE — find the relevant code

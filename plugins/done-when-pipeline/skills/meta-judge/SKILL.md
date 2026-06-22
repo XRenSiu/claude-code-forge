@@ -121,19 +121,16 @@ Findings that don't cluster with anything else become single-source `merged_find
 
 ## M2 — Weight
 
-For each `merged_finding`:
+The weighting is a deterministic arithmetic formula (base `0.5` ± source-role / vendor-diversity / self-confidence terms). You do the *judgment* — which findings merged, what their sources and self-confidences are — then hand that to the bundled primitive and use the number it returns. **Do not do the arithmetic by hand:**
 
 ```
-base_confidence = 0.5
-+ 0.2 per additional distinct source role (cap +0.4)
-+ 0.2 per additional vendor diversity (cap +0.2)
-- 0.2 if single-source AND single-vendor
-- 0.3 if originating evaluator reported low confidence (preserved from source finding)
+python scripts/compute_confidence.py <merged_findings.json>          # human table
+python scripts/compute_confidence.py <merged_findings.json> --json    # fills confidence + confidence_boost
 ```
 
-Resulting `confidence ∈ [0.0, 1.0]`. Cross-vendor multi-source findings (3+ roles, 2+ vendors) routinely hit 0.9+. Single-source single-vendor low-confidence findings hover at 0.0-0.2 and are dropped during classify (M4).
+Input is the `deduplicated_findings` list (each with its `sources: [{role, vendor, confidence}]`). `scripts/compute_confidence.py` implements `references/synthesis-protocol.md` § "Action 2 — Weight" exactly and returns `confidence ∈ [0.0, 1.0]` plus `confidence_boost` (delta from 0.5). Per skillwise THEORY.md §3, a deterministic computation is a Capability gap — shipping it as a primitive means a fat-fingered sum has no slot to land in (the Models table already calls this "deterministic, no LLM call"; now it actually is one).
 
-Record both the absolute confidence and `confidence_boost:` (delta from baseline) — the boost field is what makes the weighting explainable to the user.
+Why it matters: cross-vendor multi-source findings (3+ roles, 2+ vendors) routinely land 0.9+; single-source single-vendor low-confidence findings sit at 0.0-0.2 and get dropped during classify (M4). Record both `confidence` and `confidence_boost` verbatim from the script — the boost field is what makes the weighting explainable to the user.
 
 ---
 
@@ -195,10 +192,11 @@ Why Opus only: meta-judge is the system's "constitutional court". The cost of a 
 
 - `read_file` — **only** for verifying contested-by-evidence findings during M3 arbitration. Maximum 5 read calls per session.
 - `parse_yaml` / `parse_md` — for ingesting review files and rules sources.
+- `bash` — **only** to run `scripts/compute_confidence.py` on findings you have already collected. This is a pure function over the review outputs; it does the M2 arithmetic and nothing else. It does NOT read implementation code, so it does not breach the hard wall (rule 1). Any other `bash` use is forbidden.
 
 NOT available:
 - `grep` / `glob` / `git_log` / `git_blame` — these would let you expand your own analysis (rule 1 violation).
-- `bash` — no code execution.
+- `bash` for anything other than the scoring primitive above — no reading or executing implementation code.
 - Spawning sub-agents — no review re-running.
 
 ---
@@ -225,6 +223,10 @@ Beyond `/acceptance-fleet`:
 The skill is entirely contract-agnostic. The "rules source" makes the skill work in any domain — security policy review, ADR compliance, regulatory adherence.
 
 ---
+
+## Bundled primitives (scripts/)
+
+- `scripts/compute_confidence.py` — the deterministic M2 weighting (skillwise THEORY.md §3). The LLM supplies the merged findings + sources; the script returns `confidence` + `confidence_boost` identically every run, so the arithmetic can't drift.
 
 ## Resource index
 

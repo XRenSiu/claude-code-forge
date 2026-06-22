@@ -326,7 +326,15 @@ If S2.5 produced no surfaced vectors AND no accepted risks (closed-only), still 
 
 ### After writing the five files
 
-Tell the user, in four short bullets:
+**First, run the schema exit gate (bundled primitive) before declaring done:**
+
+```
+python scripts/validate_done_when.py <output_dir>/done_when.yaml --spec <output_dir>/spec.md --check
+```
+
+`scripts/validate_done_when.py` is the v1-schema exit primitive. It mechanically enforces what iron rules 7 / 11 ask you to "walk by hand": existence entries are single-key with no stray sub-fields, behavior leaves are bare strings (no `name:`/`based_on:`/`property_type:`), `mutation_kill_rate` is present, `fitness:` is absent, `spec_drift_threshold` has exactly one sub-field, and `based_on` cross-references real REQs in `spec.md`. Per skillwise THEORY.md §3-4, a strictness rule the author self-enforces by re-reading is not a guarantee; this runnable check of the *product* is. If it reports any hard failure, fix `done_when.yaml` and re-run before handing off — a malformed contract fails downstream slower and more expensively (`/test-suite-generator`'s validator, then the fleet). (The check is schema-only; iron rule 12's tasks.md→existence completeness walk is still yours to do, since it needs the prose intent the schema can't see.)
+
+Then tell the user, in four short bullets:
 
 1. The output directory and the five filenames.
 2. A one-line count: `N REQs, M existence checks, K test names, R rules entries, V surfaced gaming vectors.`
@@ -358,6 +366,10 @@ If PBT keeps finding counterexamples across multiple fix loops, the **spec** is 
 - **Brief is a single bug fix** → this is heavyweight overkill. Suggest writing a 1-line failing test instead and fixing the code against that, without going through the full spec → tests → fleet pipeline.
 
 ---
+
+## Bundled primitives (scripts/)
+
+- `scripts/validate_done_when.py` — the v1-schema exit gate (run with `--check` after S3). Seals iron rules 7/11's mechanical strictness so a malformed contract has no slot to slip through (skillwise THEORY.md §3).
 
 ## Resource index
 

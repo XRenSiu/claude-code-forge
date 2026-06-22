@@ -112,6 +112,8 @@ Vague claims with no testable form are recorded with `claim_text` + `testable: f
 
 ## D2 — Find code per claim
 
+**Detective Loop, not flowchart.** D2 (find) → D3 (compare) → D5 (archaeology) is the natural data flow, but locating and reading is a loop, not a fixed march: when a READ in D3 reveals the behavior actually lives in a different module, hop back and re-LOCATE; chase the evidence wherever it goes. The fixed requirement is that every emitted signal anchors to a concrete `code_location:` and/or `spec_location:` (iron rule 5) — not the order you found them. (Same principle code-reviewer states as its iron rule 2.)
+
 For each testable claim, use LOCATE (glob + grep, same as pm-reviewer's atom). Record the `code_location:` candidate. If no candidate found, the drift signal is "spec claims X but no code seems to implement X" — that's a `behavior_mismatch` with `code_location: null` and `divergence_severity: high` (spec claim has no code at all).
 
 ---
