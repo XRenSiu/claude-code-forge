@@ -18,7 +18,7 @@ description: >-
   "check spec vs code consistency" / "is the documentation still accurate" /
   "look for spec drift" / "/spec-drift-detector" / pointing at a doc + impl.
 argument-hint: "<spec_source> <code_paths> [--history-depth=<N commits to scan back>]"
-version: 1.0.0
+version: 1.0.1
 user-invocable: true
 ---
 

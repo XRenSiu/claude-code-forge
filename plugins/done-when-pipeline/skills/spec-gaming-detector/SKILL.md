@@ -20,7 +20,7 @@ description: >-
   Triggers: "is this code gaming the spec?" / "check for reward hacking" /
   "gaming risk audit" / "/spec-gaming-detector" / pointing at a spec + code.
 argument-hint: "<spec_source> <artifact_source> [--history=<previous artifact snapshot or git ref>] [--spec-robustness=<path>]"
-version: 1.0.0
+version: 1.1.0
 user-invocable: true
 ---
 

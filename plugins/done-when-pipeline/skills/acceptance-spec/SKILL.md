@@ -13,7 +13,7 @@ description: >-
   Triggers: "spec this requirement" / "draft EARS" / "done_when for X" /
   "clarify this feature" / "acceptance criteria" / "write the contract" / "/acceptance-spec".
 argument-hint: "<natural-language requirement or path to brief>"
-version: 1.0.4
+version: 1.1.0
 user-invocable: true
 ---
 

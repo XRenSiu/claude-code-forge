@@ -17,7 +17,7 @@ description: >-
   test suite" / "build verification battery" / "/test-suite-generator" /
   pointing at any specs/<feature>/ directory.
 argument-hint: "<path to specs/<feature>/ or path to done_when.yaml>"
-version: 1.0.1
+version: 1.1.0
 user-invocable: true
 ---
 

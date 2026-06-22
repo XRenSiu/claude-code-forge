@@ -23,7 +23,7 @@ description: >-
   verdict" / "decide merge based on findings" / "/meta-judge" / pointing at
   a directory of review outputs.
 argument-hint: "<reviews_source: directory or list> --rules=<path> [--context=<json with PR metadata>]"
-version: 1.0.0
+version: 1.1.0
 user-invocable: true
 ---
 

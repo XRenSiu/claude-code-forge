@@ -20,7 +20,7 @@ description: >-
   validation" / "EARS verification" / "/pm-reviewer" / pointing at a spec +
   code.
 argument-hint: "<requirements_source> <code_source> [--severity-marks=<critical-req-ids-list>]"
-version: 1.0.0
+version: 1.0.1
 user-invocable: true
 ---
 
