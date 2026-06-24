@@ -1,0 +1,45 @@
+{
+  "skill": ".claude/skills/dos-extract",
+  "tier": "production",
+  "evaluated_layers": ["structural"],
+  "gate_pass": "static_only",
+  "structural": {
+    "findings": [],
+    "failure_taxonomy": {
+      "underfill": 0, "overfill": 0, "wrong-layer": 0,
+      "wrong-route": 0, "no-exit": 0, "seam-misplacement": 0
+    },
+    "waived_count": 0
+  },
+  "effect": null,
+  "discrimination": null,
+  "fix_list": [],
+  "provenance": {
+    "date": "2026-06-24",
+    "evaluator": "EMULATED — 2 independent general-purpose judges applying skillwise docs/THEORY.md §1-4 + skills/write-skill construction invariants + shared/effect-gate.md. NOT a run of the installed evaluate-skill skill (it is not installed in this project). Do not read this as an official skillwise certification.",
+    "rounds": 2,
+    "round1": {
+      "judges": 2,
+      "blocking": [
+        "DE1: welded numbered step-march (Stage 1a->5) embedded in references/scripts/assets, contradicting the body's no-step-order claim (over-fill / skill inertia)",
+        "DE3: SKILL.md listed 'must_not traces to anti-pattern/rule' under the mechanical-reject list, but verify_dos.py only flags it (false guarantee)",
+        "exit section overstated verify_dos.py as 'the only guarantee'"
+      ],
+      "verdict": "fail (structural)"
+    },
+    "round2": {
+      "judges": "2 fresh (4-eyes: confirmers != original flaggers)",
+      "blocking_closure": "all closed — de-stage verified (grep for 'stage [0-9]' empty across the whole skill dir); 4 judgments + code-vs-docs 5 rules + anti-pattern catalog confirmed intact; inventory.py logic byte-identical (only comments changed)",
+      "scripts_run": {
+        "verify_dos.py": "exit 1 on the repo dos.yaml (rejects 8>7 objects + empty open_questions) and on adversarial fixtures (UI/impl-suffixed name, undeclared relationship ref); exit 0 on a clean 7-object dos; rejects confirmed product-level, not well-formedness",
+        "inventory.py": "runs; prunes impl-suffix noise to a transparency section"
+      },
+      "verdict": "pass (structural / Tier-1)"
+    },
+    "post_re_judge_fixes": [
+      "aligned SKILL.md + verify_dos.py docstring: '>7 objects' rejects unconditionally (justification is a human waiver in decisions.md, not auto-detected)",
+      "aligned the section-presence claim: only objects/relationships/rules are reject-on-omission; the softer sections report as info"
+    ],
+    "tier2_status": "NOT RUN — no held-out repo set + executor available. Per effect-gate.md a production-tier skill with the effect layer required-but-unrun resolves to static_only: structurally sound, effectiveness unverified. To finish: run with/without delta_exist on >=1 held-out repo (extract a DOS with and without the skill, assert on the dos.yaml produced)."
+  }
+}

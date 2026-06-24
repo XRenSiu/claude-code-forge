@@ -248,6 +248,37 @@
         "self-evolving",
         "interactive-auto-modes"
       ]
+    },
+    {
+      "name": "looper",
+      "description": "Looper — reverse-engineer a system's design contract from existing code and its failure memory, via two symmetric extraction skills. `/dos-extract` deductively recovers a Design Ontology Spec (DOS): a 12-section dos.yaml (objects / relationships / constitutional rules / bounded contexts / agent guidelines) + decisions.md audit trail, applying four classification judgments (object vs UI vs impl vs rule; same-object-vs-two; constitution vs policy; single vs multi context) that a naive noun-scan skips, gated by verify_dos.py + a human sign-off seam. `/invariant-extract` abductively recovers ONE Territory's □-class resident invariants from the failures it paid for (a violation is the most reliable signal an invariant exists) and deductively from code execution points, emitting a named-field invariant card gated by verify_card.py; hard invariants are propose-only, entering only by human signature. The two are mirror images — dos-extract draws the system's ontology + constitution from a static repo; invariant-extract draws a single block's resident law from its scars and consumes dos-extract's dos.yaml. Both are static_only tier (structurally gated; effectiveness on held-out repos unverified).",
+      "version": "0.1.0",
+      "author": {
+        "name": "XRenSiu",
+        "email": "xrensiu@gmail.com"
+      },
+      "source": "./plugins/looper",
+      "category": "knowledge",
+      "homepage": "https://github.com/XRenSiu/claude-code-forge/tree/main/plugins/looper",
+      "repository": "https://github.com/XRenSiu/claude-code-forge",
+      "license": "MIT",
+      "tags": [
+        "dos-extract",
+        "invariant-extract",
+        "design-ontology-spec",
+        "ontology-extraction",
+        "ubiquitous-language",
+        "domain-model",
+        "invariant-extraction",
+        "abduction",
+        "deduction",
+        "reverse-engineering",
+        "contract-extraction",
+        "kaos",
+        "bounded-context",
+        "constitution-vs-policy",
+        "static-only"
+      ]
     }
   ]
 }

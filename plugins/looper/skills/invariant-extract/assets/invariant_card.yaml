@@ -1,0 +1,75 @@
+# invariant-extract 输出:一块领地的不变量卡(候选)
+# 这是落卡阶段的主产物。每条候选都带溯源、置信度、□/◊ 裁断、强度分类。
+# 注意:本卡是「候选 + 提案」,不是已生效的宪法 —— 硬不变量须经人签字(R002)才落地。
+
+territory_id: ""                 # 领地锁定时绑定的唯一领地
+dos_ref: ""                      # 该领地 dos.yaml 的引用(统一语言来源)
+purpose:                         # 取景框 = name + kpi + dos.scope;贯穿全程的透镜,非一次性输入
+  name: ""                       # 一句话责任(Territory.name)
+  kpi: ""                        # Territory.kpi —— aspect 轴的直接载体
+  aspect: ""                     # 由 kpi 推出的主维度:correctness | latency | cost | safety | reversibility …
+  scope_ref: ""                  # dos.yaml scope / 统一语言引用
+extracted_at: ""                 # 由 skill 运行时间戳填(运行后回填,不在脚本里取时间)
+mode: interactive                # interactive | auto
+
+# 通道二无输入时显式记录,而非假装跑过
+channel_2_input: { failure_memory_count: 0, dry: false }
+
+# 按目的投影为 ∅ 而跳过的 obstacle(非排他:可被别的领地接走) —— 显式记录,不假装处理过
+projected_out_obstacles:
+  - obstacle_ref: ""
+    why_empty: ""                # 为什么在本领地目的下投影为 ∅
+
+# —— 硬不变量栏(□,不可覆盖,默认责任级、非 R00x) ——
+hard_invariants:
+  - id: INV-<territory>-001
+    statement: ""                # EARS 形态:WHEN/WHILE … THE SYSTEM SHALL (NEVER) …
+    ears_type: unwanted          # ubiquitous | event | state | unwanted | optional
+    survival_test: pass          # 存活测试:必须 pass(活得过揭示它的那次 Run)
+    strength: hard               # 强度分类:hard(不能被任务合法违反)
+    altitude: territory          # territory(默认) | proposed_to_constitution
+    aspect: ""                   # 该 □ 投在哪个维度(correctness/latency/…),来自目的投影
+    channel: abductive           # deductive | abductive | both
+    provenance:                  # 铁律:无溯源不许进卡
+      execution_point: ""        # 通道一:file:line(若来自演绎)
+      obstacle_ref: ""           # 通道二:MemoryAsset/Run/Verdict id(若来自溯因)
+    narrowest_rule_note: ""      # 通道二:为什么这是覆盖该 obstacle 的最窄规则
+    confidence: high             # high | low(low → 见 disposition)
+    disposition: propose         # propose(硬不变量恒走立法) | carded
+    golden_regression: true      # 同时登记为回归守卫(棘轮)
+
+# —— 可覆盖默认栏(带 authority level,任务级可在护栏内覆盖) ——
+overridable_defaults:
+  - id: DEF-<territory>-001
+    statement: ""
+    authority_level: ""          # 谁能覆盖、在什么护栏内(Model Spec 指挥链)
+    survival_test: pass
+    strength: overridable
+    channel: deductive
+    provenance: { execution_point: "", obstacle_ref: "" }
+    confidence: high
+    disposition: carded          # 可作为候选落卡,但仍提交复审
+
+# —— 踢回任务级的 ◊ 候选(不进本卡,移交 done_when 生成器) ——
+kicked_to_done_when:
+  - statement: ""
+    why_diamond: ""              # 为什么只对某任务成立 = ◊
+    handoff_to: done-when-pipeline   # acceptance-spec / done-when-pipeline
+
+# —— 待立法的冲突(两条不能同真) ——
+conflicts_for_legislation:
+  - a: ""
+    b: ""
+    note: ""
+
+# —— 与 dos.yaml.rules 去重的记录(已升宪法的不重复立法) ——
+deduped_against_constitution:
+  - candidate: ""
+    matched_rule: ""             # 已是 R00x 的哪条,故合并掉
+
+# —— 分层探针:purpose-independent 嫌疑(送立法,不复制进每张卡) ——
+# 嫌疑非判决:单领地绑定下本刀无权认定为 R00x,只标记 + NEEDS_HUMAN 送立法上浮。
+constitution_promotion_suspects:
+  - statement: ""
+    why_purpose_independent: ""  # 代入哪块领地的目的都成立的理由
+    routed_to: legislation
