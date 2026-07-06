@@ -251,8 +251,8 @@
     },
     {
       "name": "looper",
-      "description": "Looper — reverse-engineer a system's design contract from existing code and its failure memory, via two symmetric extraction skills. `/dos-extract` deductively recovers a Design Ontology Spec (DOS): a 12-section dos.yaml (objects / relationships / constitutional rules / bounded contexts / agent guidelines) + decisions.md audit trail, applying four classification judgments (object vs UI vs impl vs rule; same-object-vs-two; constitution vs policy; single vs multi context) that a naive noun-scan skips, gated by verify_dos.py + a human sign-off seam. `/invariant-extract` abductively recovers ONE Territory's □-class resident invariants from the failures it paid for (a violation is the most reliable signal an invariant exists) and deductively from code execution points, emitting a named-field invariant card gated by verify_card.py; hard invariants are propose-only, entering only by human signature. The two are mirror images — dos-extract draws the system's ontology + constitution from a static repo; invariant-extract draws a single block's resident law from its scars and consumes dos-extract's dos.yaml. Both are static_only tier (structurally gated; effectiveness on held-out repos unverified).",
-      "version": "0.1.0",
+      "description": "Looper — a system's design contract in both directions: forward-author the product world from a raw idea, or reverse-engineer it from existing code and failure memory. `/psl` turns one experiential / semantically-fuzzy requirement (plus optional materials) into a complete Product Specification Language document — six derivation-ordered layers (Vision / Mental Model / Domain Model that must overturn the naive schema / State Machine / Workflow split into Σ facts + φ disambiguation criteria, never Step 1-2-3 / behavioral Acceptance in ask-X-get-Y form) — under a three-provenance honesty discipline (surface engine world knowledge / elicit private load-bearing slots one topic at a time with recommended lettered answers / seam everything unanswerable into Open Questions, never default-fill), a dual-track entry gate (deterministic requirements get told 'PRD suffices' instead of a fabricated world), and a hard delivery contract (never refuses for lack of info), mechanically pre-gated by verify_psl.py. `/dos-extract` deductively recovers a Design Ontology Spec (DOS): a 12-section dos.yaml (objects / relationships / constitutional rules / bounded contexts / agent guidelines) + decisions.md audit trail, applying four classification judgments (object vs UI vs impl vs rule; same-object-vs-two; constitution vs policy; single vs multi context) that a naive noun-scan skips, gated by verify_dos.py + a human sign-off seam. `/invariant-extract` abductively recovers ONE Territory's □-class resident invariants from the failures it paid for (a violation is the most reliable signal an invariant exists) and deductively from code execution points, emitting a named-field invariant card gated by verify_card.py; hard invariants are propose-only, entering only by human signature. psl and dos-extract are reverse twins (idea→world vs code→world) sharing one domain vocabulary; invariant-extract draws a single block's resident law from its scars and consumes dos-extract's dos.yaml. All static_only tier (structurally gated; effectiveness on held-out tasks unverified).",
+      "version": "0.2.0",
       "author": {
         "name": "XRenSiu",
         "email": "xrensiu@gmail.com"
@@ -263,6 +263,11 @@
       "repository": "https://github.com/XRenSiu/claude-code-forge",
       "license": "MIT",
       "tags": [
+        "psl",
+        "product-specification-language",
+        "product-world",
+        "world-model",
+        "behavioral-acceptance",
         "dos-extract",
         "invariant-extract",
         "design-ontology-spec",
