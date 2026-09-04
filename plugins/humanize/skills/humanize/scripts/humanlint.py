@@ -282,6 +282,49 @@ def analyze(text: str, lang: str, genre: str):
         f"{len(lens)} 句，均长 {round(statistics.mean(lens), 1) if lens else 0}；人写的说明文通常 ≥0.45，AI 常在 0.2–0.35",
     ))
 
+    # 1b. 短句存在性：中文每 300 字至少一句 ≤12 字；英文每 150 词至少一句 ≤6 词
+    short_cap, per = (12, 300) if lang == "zh" else (6, 150)
+    short_n = sum(1 for n in lens if n <= short_cap)
+    required = max(1, size // per)
+    short_ratio = short_n / required
+    metrics.append(Metric(
+        "short_sentence_presence", "短句存在性", round(short_ratio, 2), "ratio",
+        band(short_ratio, 1.0, 0.5, higher_is_worse=False) if size >= per and len(lens) >= 6 else "info",
+        f"{short_n} 句 ≤{short_cap}{'字' if lang == 'zh' else '词'}，需要 ≥{required}；LLM 把短句压掉了 9–30 倍（ACL 2025）",
+    ))
+
+    # 1c. 连续平句 run：相邻句长差都在容差内的最长连续段
+    tol = 8 if lang == "zh" else 5
+    run, best = 1, 1
+    for a, b in zip(lens, lens[1:]):
+        run = run + 1 if abs(a - b) <= tol else 1
+        best = max(best, run)
+    metrics.append(Metric(
+        "flat_run_max", "最长连续平句数", best, "count",
+        ("ok" if best <= 3 else ("warn" if best <= 4 else "flag")) if len(lens) >= 6 else "info",
+        f"连续 {best} 句长度差 ≤{tol}；三句以上等长像念经",
+    ))
+
+    # 1d. 同开头句比例（排除代词/冠词）
+    def opener(s):
+        s = s.lstrip("*「\"'(（")
+        if lang == "zh":
+            w = s[:2]
+            return None if not w or w[0] in "我这它该在这那此" else w
+        m = re.match(r"[A-Za-z']+", s)
+        if not m:
+            return None
+        w = m.group(0).lower()
+        return None if w in ("the", "a", "an", "i", "we", "it", "this", "that", "these", "those", "you") else w
+    ops = [o for o in (opener(s) for s in all_sents) if o]
+    top_op = max((ops.count(o) for o in set(ops)), default=0)
+    same_ratio = 0.0 if not all_sents else top_op / len(all_sents)
+    metrics.append(Metric(
+        "same_opener_ratio", "同开头句比例", round(same_ratio, 2), "ratio",
+        band(same_ratio, 0.15, 0.25) if len(all_sents) >= 8 else "info",
+        "同一个词开头的句子占比；模板化段落每句都以同一个主语或路标词起",
+    ))
+
     # 2. 段落长度均匀度（弱信号：≥8 段才计分）
     plens = [sent_len(p, lang) for p in paras]
     pcv = cv(plens)

@@ -10,7 +10,7 @@ Wikipedia《Signs of AI writing》那张表，处理的是词和句。但读者�
 
 | 命令 | 用途 | 出口闸门 |
 |---|---|---|
-| `/humanize <文件或文本>` | 改写一份草稿，**事实一字不改**，表达像人 | `humanlint.py` 表层 20 项指标 · `factdiff.py` 数字/日期/标识符零增删 · `cold-reader` 隔离冷读 |
+| `/humanize <文件或文本>` | 改写一份草稿，**事实一字不改**，表达像人 | `humanlint.py` 表层 23 项指标 · `factdiff.py` 数字/日期/标识符零增删 · `cold-reader` 隔离冷读 |
 | `/techdoc <brief>` | 从一句话 brief 写出资深工程师形状的方案 / 设计文档 / ADR / 复盘 | `verify_techdoc.py` 产物序 + 上面三道 |
 | `/voice-profile <3-5 篇样文>` | 从你自己的文字提炼可执行的声音档案，之后两个 skill 自动加载 | `verify_voice.py` |
 
@@ -53,9 +53,9 @@ Wikipedia《Signs of AI writing》那张表，处理的是词和句。但读者�
 
 | 样本 | humanlint 指数 | verify_techdoc |
 |---|---|---|
-| ai-zh.md | 65 FLAG | REJECT ×5 |
+| ai-zh.md | 60 FLAG | REJECT ×5 |
 | human-zh.md | 2 | PASS |
-| ai-en.md | 62 FLAG | REJECT ×4 |
+| ai-en.md | 63 FLAG | REJECT ×4 |
 | human-en.md | 0 PASS | PASS |
 
 改任何阈值或词表后必须重跑。
@@ -64,6 +64,6 @@ Wikipedia《Signs of AI writing》那张表，处理的是词和句。但读者�
 
 三个 skill 都是 `static_only`：结构过审（skillwise L0 lint 0 blocking）、脚本在样本上冒烟；
 "带本插件写出来的东西是否比不带的更常通过隔离冷读"未在留出样本上测。校准样本与阈值出自同一作者，
-指数的绝对值不要当真，方向（AI ≫ 人）在全部 20 项指标上稳定。各 skill 的 `eval/gate.json` 有 fix_list。
+指数的绝对值不要当真，方向（AI ≫ 人）在全部 23 项指标上稳定。各 skill 的 `eval/gate.json` 有 fix_list。
 
 **5 项闸门全过 ≠ 这份文档写得好。** 品味那一关只能由人过。

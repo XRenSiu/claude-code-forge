@@ -2,7 +2,7 @@
 name: humanize
 description: "Use when a draft (yours or the model's) reads like AI — every word is clear but the reader loses the thread, hedges everywhere, bullets instead of argument, 首先/其次/最后, 值得注意的是, In today's landscape — and you need it rewritten so a competent human professional could have written it, without changing a single fact. 去AI味 / 人味 / 像人写的 / 改得自然点 / 太AI了 / 翻译腔 / 太别扭. Works on 技术方案、设计文档、ADR、复盘、README 叙述段、邮件、评审意见, Chinese or English. NOT for code, code comments, commit messages, API reference tables, or config docs (those should be tables); NOT for beating AI detectors; NOT for adding slang, jokes, typos, or emoji as 'texture'."
 argument-hint: "[文件路径 | 直接粘贴的文本 | 'last'（上一条回复）] [--reader <谁读>] [--genre proposal|design|adr|postmortem|memo|readme|email] [--voice <voice.md>] [--lang zh|en]"
-version: 0.1.0
+version: 0.1.1
 user-invocable: true
 ---
 
@@ -80,7 +80,7 @@ user-invocable: true
 
 ## Π：原语（存在即可用；不叙述调用顺序）
 
-- `scripts/humanlint.py <file> [--lang zh|en] [--genre narrative|reference] [--json]`：20 项表层指标 + AI 味指数（0-100）+ 先修三项。
+- `scripts/humanlint.py <file> [--lang zh|en] [--genre narrative|reference] [--json]`：23 项表层指标 + AI 味指数（0-100）+ 先修三项。
   退出码 1 = 有 flag。**改前改后各跑一次**，两份输出都进工艺报告。校准样本在 `fixtures/`。
 - `scripts/factdiff.py <source> <rewrite> [--allow-drop …] [--allow-add …]`：事实锚点增删比对 + 确定性漂移。
   退出码 1 = 硬锚点有增删。放行参数只能由人给出，引擎不得自己 `--allow-*`。
@@ -157,5 +157,5 @@ user-invocable: true
 
 ## 本 skill 自身的出口门
 
-`eval/gate.json`：`static_only`——结构过审、脚本在 `fixtures/` 四份样本上冒烟（AI 样本 65/62 FLAG，人写样本 2/0）；
+`eval/gate.json`：`static_only`——结构过审、脚本在 `fixtures/` 四份样本上冒烟（AI 样本 60/63 FLAG，人写样本 2/0）；
 行为层（带 / 不带本 skill 在留出草稿上的 cold-reader 通过率差）未跑。静态读不是裁决。

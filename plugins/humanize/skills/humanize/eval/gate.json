@@ -1,20 +1,44 @@
 {
   "skill": "plugins/humanize/skills/humanize",
   "tier": "production",
-  "evaluated_layers": ["structural", "script-smoke"],
+  "evaluated_layers": [
+    "structural",
+    "script-smoke"
+  ],
   "gate_pass": "static_only",
   "structural": {
-    "lint_skill": {"routes_by_gap": true, "procedural_hits": 0, "has_exit": true, "has_scripts": true, "persona_hits": 0, "lines": 161, "blocking": 0},
+    "lint_skill": {
+      "routes_by_gap": true,
+      "procedural_hits": 0,
+      "has_exit": true,
+      "has_scripts": true,
+      "persona_hits": 0,
+      "lines": 161,
+      "blocking": 0
+    },
     "findings": [],
     "waived_count": 0
   },
   "script_smoke": {
     "humanlint.py": {
-      "fixtures/ai-zh.md": {"ai_flavor_score": 65, "verdict": "flag"},
-      "fixtures/human-zh.md": {"ai_flavor_score": 2, "verdict": "warn"},
-      "fixtures/ai-en.md": {"ai_flavor_score": 62, "verdict": "flag"},
-      "fixtures/human-en.md": {"ai_flavor_score": 0, "verdict": "pass"},
-      "calibration_rule": "ai-* must FLAG with index >= 50; human-* must be <= 15 — rerun after any threshold or wordlist change"
+      "fixtures/ai-zh.md": {
+        "ai_flavor_score": 60,
+        "verdict": "flag"
+      },
+      "fixtures/human-zh.md": {
+        "ai_flavor_score": 2,
+        "verdict": "warn"
+      },
+      "fixtures/ai-en.md": {
+        "ai_flavor_score": 63,
+        "verdict": "flag"
+      },
+      "fixtures/human-en.md": {
+        "ai_flavor_score": 0,
+        "verdict": "pass"
+      },
+      "calibration_rule": "ai-* must FLAG with index >= 50; human-* must be <= 15 — rerun after any threshold or wordlist change",
+      "v0.1.1": "added short_sentence_presence (zh ≤12字/300字, en ≤6 words/150 words), flat_run_max (consecutive sentences within ±8字/±5 words; ai-en = 8 → flag), same_opener_ratio; calibration re-run: ai 60/63 FLAG, human 2/0"
     },
     "factdiff.py": {
       "clean_paraphrase(human-en)": "pass (soft warn: sentence-initial 'Two' read as proper noun)",
