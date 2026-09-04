@@ -121,7 +121,7 @@
 | [Persona Distill](plugins/persona-distill/) | 0.4.0 | Distill any persona (person or rule system) into a self-contained Claude Code skill. 5 skills, 9 schemas, 19 components, 12-dim rubric, 9-phase pipeline (CDM execution-profile + self-containment linter + fingerprint verifier). v0.4.0 security hardening: consent attestation gate, untrusted-corpus delimiters, rubric config range locks, corpus access declaration, 6 runnable parsers (iMessage/email/Twitter/generic/Telegram/Slack). | - |
 | [Skill Evolve](plugins/skill-evolve/) | 0.1.1 | Darwin-style autonomous SKILL.md optimizer. 8-dimension rubric + independent-subagent scoring + git-backed ratchet hill-climbing (keep-or-revert) to evolve any skill from initial draft toward 90+. | - |
 | [Ratchet](plugins/ratchet/) | 1.0.0 | Goal-driven master/subagent autonomous loop. Master only evaluates (via frozen script or independent judge subagent), subagent only executes; stalled or cheating workers are killed and restarted. Suitable for long-running tasks with verifiable deliverables and explicit termination conditions. | - |
-| [Humanize](plugins/humanize/) | 0.1.0 | 去AI味 at the discourse level. `/humanize` rewrites a draft (zh/en) so a competent human could have written it — targets given-new inversion, broken topic strings, participle/以实现 tails, lists replacing argument, stance flattening, generic openings, summary closers, plus the solved lexical layer and Chinese translationese — with three gates: `humanlint.py` (20 metrics, 0-100 index), `factdiff.py` (numbers/dates/identifiers zero add-or-drop), and a context-isolated `cold-reader` agent. `/techdoc` writes proposals / design docs / ADRs / postmortems in the senior-engineer shape (incident first, decision in one sentence, alternatives killed, all consequences, rollout/rollback, open questions) gated by `verify_techdoc.py`. `/voice-profile` distills your own 3–5 samples into an executable voice file. All `static_only`. | python3 |
+| [Humanize](plugins/humanize/) | 0.1.1 | 去AI味 at the discourse level. `/humanize` rewrites a draft (zh/en) so a competent human could have written it — targets given-new inversion, broken topic strings, participle/以实现 tails, lists replacing argument, stance flattening, generic openings, summary closers, plus the solved lexical layer and Chinese translationese — with three gates: `humanlint.py` (23 metrics, 0-100 index), `factdiff.py` (numbers/dates/identifiers zero add-or-drop), and a context-isolated `cold-reader` agent. `/techdoc` writes proposals / design docs / ADRs / postmortems in the senior-engineer shape (incident first, decision in one sentence, alternatives killed, all consequences, rollout/rollback, open questions) gated by `verify_techdoc.py`. `/voice-profile` distills your own 3–5 samples into an executable voice file. All `static_only`. | python3 |
 
 ### Which plugin to use?
 
@@ -521,7 +521,7 @@ Goal-driven, long-running autonomous loop with strict separation of judge and wo
 
 ## Humanize
 
-**Version**: 0.1.0 · **Category**: Writing · **Requires**: `python3`
+**Version**: 0.1.1 · **Category**: Writing · **Requires**: `python3`
 
 Makes AI-written technical prose read like a competent human professional wrote it. The problem it targets is
 the one every existing "humanizer" skill leaves out: not the vocabulary (delve / 赋能 — that layer is solved and
@@ -536,7 +536,7 @@ author's own samples, contrastive pairs, candidate-and-discard-the-modal, critiq
 
 | Skill | What it does | Compiled gate |
 |---|---|---|
-| `/humanize` | Rewrite a draft (zh/en) without changing a single fact: fixes given-new inversion, broken topic strings, stress-position leakage, lists replacing argument, cross-section restatement, stance flattening, generic openings, summary closers; then the lexical / syntax / format layer and Chinese translationese | `humanlint.py` (20 metrics, 0-100 index) · `factdiff.py` (numbers / dates / identifiers / URLs zero add-or-drop + certainty drift) · `cold-reader` agent (isolated, per-paragraph expected / got / lost_at) |
+| `/humanize` | Rewrite a draft (zh/en) without changing a single fact: fixes given-new inversion, broken topic strings, stress-position leakage, lists replacing argument, cross-section restatement, stance flattening, generic openings, summary closers; then the lexical / syntax / format layer and Chinese translationese | `humanlint.py` (23 metrics, 0-100 index) · `factdiff.py` (numbers / dates / identifiers / URLs zero add-or-drop + certainty drift) · `cold-reader` agent (isolated, per-paragraph expected / got / lost_at) |
 | `/techdoc` | Write a proposal / design doc / ADR / postmortem / memo from a brief in the senior-engineer shape: triggering incident with a number first, decision in one sentence, obvious alternatives killed with specific reasons, all consequences, rollout / rollback, open questions last; facts only from brief / materials, else `[需核实]` | `verify_techdoc.py` (product-order rejects) + the three humanize gates |
 | `/voice-profile` | Distill the user's own 3–5 samples into `.humanize/voice.md`: rhythm stats, quoted sentence habits, personal 忌口表 with replacements, positive examples for completion-style few-shot | `verify_voice.py` |
 
