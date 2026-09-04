@@ -11,6 +11,7 @@
 - **[Persona Distill](#persona-distill)** — distill a person / expert / rule system into a self-contained, portable persona skill
 - **[Skill Evolve](#skill-evolve)** — autonomous Darwin-style hill-climbing optimizer for any existing SKILL.md
 - **[Ratchet](#ratchet)** — goal-driven master/subagent loop with independent evaluation + kill-and-restart for long-running autonomous tasks
+- **[Humanize](#humanize)** — make AI-written technical prose read like a competent human wrote it, at the discourse level where readers actually get lost; write proposals / design docs / ADRs in the shape senior engineers use; learn your own voice from your samples
 
 ## Contents
 
@@ -24,6 +25,7 @@
 - [Persona Distill](#persona-distill)
 - [Skill Evolve](#skill-evolve)
 - [Ratchet](#ratchet)
+- [Humanize](#humanize)
 - [Marketplace Management](#marketplace-management)
 - [Plugin Management](#plugin-management)
 - [Contributing](#contributing)
@@ -59,6 +61,9 @@
 
 # Install Ratchet (goal-driven master/subagent autonomous loop)
 /plugin install ratchet@XRenSiu/claude-code-forge
+
+# Install Humanize (去AI味: /humanize rewrite, /techdoc write, /voice-profile learn your voice)
+/plugin install humanize@XRenSiu/claude-code-forge
 ```
 
 ### Step 3: Use Plugin
@@ -116,6 +121,7 @@
 | [Persona Distill](plugins/persona-distill/) | 0.4.0 | Distill any persona (person or rule system) into a self-contained Claude Code skill. 5 skills, 9 schemas, 19 components, 12-dim rubric, 9-phase pipeline (CDM execution-profile + self-containment linter + fingerprint verifier). v0.4.0 security hardening: consent attestation gate, untrusted-corpus delimiters, rubric config range locks, corpus access declaration, 6 runnable parsers (iMessage/email/Twitter/generic/Telegram/Slack). | - |
 | [Skill Evolve](plugins/skill-evolve/) | 0.1.1 | Darwin-style autonomous SKILL.md optimizer. 8-dimension rubric + independent-subagent scoring + git-backed ratchet hill-climbing (keep-or-revert) to evolve any skill from initial draft toward 90+. | - |
 | [Ratchet](plugins/ratchet/) | 1.0.0 | Goal-driven master/subagent autonomous loop. Master only evaluates (via frozen script or independent judge subagent), subagent only executes; stalled or cheating workers are killed and restarted. Suitable for long-running tasks with verifiable deliverables and explicit termination conditions. | - |
+| [Humanize](plugins/humanize/) | 0.1.0 | 去AI味 at the discourse level. `/humanize` rewrites a draft (zh/en) so a competent human could have written it — targets given-new inversion, broken topic strings, participle/以实现 tails, lists replacing argument, stance flattening, generic openings, summary closers, plus the solved lexical layer and Chinese translationese — with three gates: `humanlint.py` (20 metrics, 0-100 index), `factdiff.py` (numbers/dates/identifiers zero add-or-drop), and a context-isolated `cold-reader` agent. `/techdoc` writes proposals / design docs / ADRs / postmortems in the senior-engineer shape (incident first, decision in one sentence, alternatives killed, all consequences, rollout/rollback, open questions) gated by `verify_techdoc.py`. `/voice-profile` distills your own 3–5 samples into an executable voice file. All `static_only`. | python3 |
 
 ### Which plugin to use?
 
@@ -133,6 +139,9 @@
 | Distill a persona / expert / rule system into a skill | Persona Distill |
 | Improve quality of an existing SKILL.md | Skill Evolve |
 | Long-running task with verifiable acceptance criteria (compiler fuzz, API schema conformance, perf target) | Ratchet |
+| A draft reads like AI (every word clear, thread lost); make it read like a human wrote it without changing facts | Humanize `/humanize` |
+| Write a technical proposal / design doc / ADR / postmortem from a brief, in the shape senior engineers use | Humanize `/techdoc` |
+| Make AI output sound like *you* (or your team) from 3–5 of your own samples | Humanize `/voice-profile` |
 
 > **Agent Teams** plugins (Forge Teams, Adversarial Debugger) require the experimental Agent Teams feature:
 > ```json
@@ -509,6 +518,54 @@ Goal-driven, long-running autonomous loop with strict separation of judge and wo
 # Show plugin info
 /plugin info pdforge
 ```
+
+## Humanize
+
+**Version**: 0.1.0 · **Category**: Writing · **Requires**: `python3`
+
+Makes AI-written technical prose read like a competent human professional wrote it. The problem it targets is
+the one every existing "humanizer" skill leaves out: not the vocabulary (delve / 赋能 — that layer is solved and
+reused here), but the discourse level where a reader understands every word and still loses the thread. Built on
+a 2026 survey of ~60 sources: corpus studies of LLM text (nominalization 1.5–2×, participle tails 2–5×, sentence-length
+dispersion 5 vs 16, Chinese 并列短语 4.6 vs 0.8), information-structure theory (given-new contract, Gopen & Swan
+reader expectations, Williams' topic strings, Minto), design-doc cultures (Google, Oxide, Amazon, ADR, Shape Up,
+HashiCorp, Rust, 阿里), and the prompting techniques with measured effect (completion-style few-shot from the
+author's own samples, contrastive pairs, candidate-and-discard-the-modal, critique in an isolated context).
+
+### Humanize Skills
+
+| Skill | What it does | Compiled gate |
+|---|---|---|
+| `/humanize` | Rewrite a draft (zh/en) without changing a single fact: fixes given-new inversion, broken topic strings, stress-position leakage, lists replacing argument, cross-section restatement, stance flattening, generic openings, summary closers; then the lexical / syntax / format layer and Chinese translationese | `humanlint.py` (20 metrics, 0-100 index) · `factdiff.py` (numbers / dates / identifiers / URLs zero add-or-drop + certainty drift) · `cold-reader` agent (isolated, per-paragraph expected / got / lost_at) |
+| `/techdoc` | Write a proposal / design doc / ADR / postmortem / memo from a brief in the senior-engineer shape: triggering incident with a number first, decision in one sentence, obvious alternatives killed with specific reasons, all consequences, rollout / rollback, open questions last; facts only from brief / materials, else `[需核实]` | `verify_techdoc.py` (product-order rejects) + the three humanize gates |
+| `/voice-profile` | Distill the user's own 3–5 samples into `.humanize/voice.md`: rhythm stats, quoted sentence habits, personal 忌口表 with replacements, positive examples for completion-style few-shot | `verify_voice.py` |
+
+Also ships `rules/human-voice.md`, an always-on writing contract you can paste into any project's CLAUDE.md.
+
+### Humanize Flow
+
+```
+draft (or brief)
+    |
+    +-- humanlint.py  ──▶ before-score (surface: rhythm, signposts, stock phrases, nominalization, anchors…)
+    |
+    +-- rewrite / write against φ
+    |       document: incident first · decision early · alternatives killed · no summary closer
+    |       paragraph: old→new · one claim per paragraph, first sentence · ≥1 concrete anchor (from source, else [需核实])
+    |       sentence: agent-verb · no participle tails · hedge only where uncertain, and say what would resolve it
+    |
+    +-- factdiff.py   ──▶ FAIL on any added/dropped number, date, identifier, URL, path (rollback that span)
+    +-- humanlint.py  ──▶ after-score
+    +-- cold-reader   ──▶ isolated Agent; sees only the text + reader + genre; never the brief or the lint
+    |       needs_revision → fix worst_three → one more round (cap 2) → deliver with residual named
+    |
+    +-- deliverable: rewritten doc + craft report (what changed → which mechanism → why facts unchanged)
+```
+
+> Not for beating AI detectors (they train on humanizer output), not for injecting slang / emoji / typos as "texture"
+> (a new tell in technical register), not for code, commit messages, or API reference tables.
+
+---
 
 ## Contributing
 
