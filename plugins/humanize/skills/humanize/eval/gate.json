@@ -1,0 +1,43 @@
+{
+  "skill": "plugins/humanize/skills/humanize",
+  "tier": "production",
+  "evaluated_layers": ["structural", "script-smoke"],
+  "gate_pass": "static_only",
+  "structural": {
+    "lint_skill": {"routes_by_gap": true, "procedural_hits": 0, "has_exit": true, "has_scripts": true, "persona_hits": 0, "lines": 161, "blocking": 0},
+    "findings": [],
+    "waived_count": 0
+  },
+  "script_smoke": {
+    "humanlint.py": {
+      "fixtures/ai-zh.md": {"ai_flavor_score": 65, "verdict": "flag"},
+      "fixtures/human-zh.md": {"ai_flavor_score": 2, "verdict": "warn"},
+      "fixtures/ai-en.md": {"ai_flavor_score": 62, "verdict": "flag"},
+      "fixtures/human-en.md": {"ai_flavor_score": 0, "verdict": "pass"},
+      "calibration_rule": "ai-* must FLAG with index >= 50; human-* must be <= 15 — rerun after any threshold or wordlist change"
+    },
+    "factdiff.py": {
+      "clean_paraphrase(human-en)": "pass (soft warn: sentence-initial 'Two' read as proper noun)",
+      "tampered_numbers_and_code(human-en)": "FAIL — DROPPED 10 / sqs.send_message, ADDED 45 / sqs.publish",
+      "tampered_numbers(human-zh)": "FAIL — DROPPED 5 万, ADDED 8 万 / 90 秒",
+      "ai-zh vs human-zh": "FAIL as expected (different documents; 14 numbers the AI draft never had) — demonstrates why humanize must mark [需核实] instead of inventing anchors"
+    }
+  },
+  "effect": null,
+  "discrimination": null,
+  "fix_list": [
+    "run behaviorally: take 5 held-out AI drafts (not the fixtures), run /humanize with and without the skill loaded, send both outputs to an isolated cold-reader; certify only if with-skill pass rate beats no-skill beyond a 2-of-5 noise band",
+    "factdiff proper-noun layer is noisy (sentence-initial capitalized words); consider excluding words that also appear lowercase in the same text",
+    "humanlint TRIAD_EN regex is coarse (matches any 'A, B, and C'); acceptable as density signal, do not promote to reject",
+    "cold-reader verdict rules are declarative in agents/cold-reader.md — not compiled; a yaml schema check for cold-read.yaml would make round-cap enforcement mechanical"
+  ],
+  "provenance": {
+    "date": "2026-09-05",
+    "evaluator": "author-run L0 (skillwise lint_skill.py) + author-run script smoke on four self-written fixtures. NOT an independent judge read, NOT a behavioral run. Do not read this as certification.",
+    "research_basis": "four parallel research agents (existing tools survey / linguistics of LLM text / senior-engineer doc craft / prompting evidence), ~60 primary sources, see references/sources.md",
+    "known_honest_gaps": [
+      "fixtures were written by the same author who calibrated the thresholds — calibration is circular until external samples are added",
+      "no Chinese human-written sample from a third party yet"
+    ]
+  }
+}

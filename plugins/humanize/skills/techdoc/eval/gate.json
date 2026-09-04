@@ -1,0 +1,31 @@
+{
+  "skill": "plugins/humanize/skills/techdoc",
+  "tier": "production",
+  "evaluated_layers": ["structural", "script-smoke"],
+  "gate_pass": "static_only",
+  "structural": {
+    "lint_skill": {"routes_by_gap": true, "procedural_hits": 0, "has_exit": true, "has_scripts": true, "persona_hits": 0, "lines": 117, "blocking": 0},
+    "findings": [],
+    "waived_count": 0
+  },
+  "script_smoke": {
+    "verify_techdoc.py": {
+      "../humanize/fixtures/ai-zh.md": "REJECT ×5 (generic opening, no decision in first 3 paragraphs, no killed alternative, no open question/next step, summary closer) + FLAG ×6",
+      "../humanize/fixtures/human-zh.md": "PASS (after NONGOAL regex learned 先只做/暂不/不动)",
+      "../humanize/fixtures/ai-en.md": "REJECT ×4 + FLAG ×6",
+      "../humanize/fixtures/human-en.md": "PASS"
+    }
+  },
+  "effect": null,
+  "discrimination": null,
+  "fix_list": [
+    "behavioral: 5 held-out briefs, /techdoc with vs without the skill, judged by verify_techdoc + isolated cold-reader; certify only on a delta beyond noise",
+    "DECISION regex is lexical; a decision phrased without 我们会/We will (e.g. '方案：…') passes only via 决定：/结论： — widen after observing real drafts",
+    "postmortem genre has no dedicated shape checks yet (timeline / root cause / why defenses failed / owned action items) — currently only the generic five rejects apply"
+  ],
+  "provenance": {
+    "date": "2026-09-05",
+    "evaluator": "author-run L0 + author-run script smoke on the humanize fixtures. NOT independent, NOT behavioral.",
+    "skeleton_sources": "Google design docs (Ubl), Oxide RFD 1, Orosz RFC survey, Amazon 6-pager/PR-FAQ, Nygard ADR, Shape Up, HashiCorp RFC, Rust RFC, PEP 1, Alibaba Cloud 技术方案 template; writers: Graham, Spolsky, Larson, Slatton, Luu, Evans, Yan, Lynch — see ../humanize/references/sources.md"
+  }
+}

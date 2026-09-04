@@ -1,0 +1,35 @@
+{
+  "name": "humanize",
+  "description": "Humanize — make AI-written technical prose read like a competent human professional wrote it, at the level where readers actually get lost: discourse, not vocabulary. Three skills. `/humanize` rewrites a draft (zh/en) without changing a single fact: it targets the mechanisms behind 'every word is clear but I can't follow' — given-new inversion, broken topic strings, stress-position leakage (participle / 以实现… tails), lists replacing argument, cross-section restatement, stance flattening, generic openings, summary closers — plus the solved lexical/syntax/format layer (Wikipedia 'Signs of AI writing' + 2026 density-era tics: mannered prose, invented jargon, 'not X, it's Y') and Chinese translationese (yage.ai four classes + 余光中 欧化 catalog, CCL-2023 corpus-backed). Three non-skippable gates: humanlint.py (20 surface metrics, zh/en, 0-100 AI-flavor index, calibrated on four fixtures: AI 65/62 vs human 2/0), factdiff.py (numbers / dates / identifiers / URLs / paths zero add-or-drop, plus certainty-drift warning per Belem 2026), and a context-isolated cold-reader agent that records per paragraph where a reader who never saw the brief loses the thread (expected / got / lost_at / told_not_shown) — never self-graded in the drafting context (self-refine amplifies self-bias). Max 2 revision rounds, then deliver with the residual named. `/techdoc` writes a proposal / design doc / ADR / postmortem / memo from a brief in the shape senior engineers use (Google design docs, Oxide RFD, Amazon 6-pager, Nygard ADR, Shape Up, HashiCorp/Rust RFC, 阿里 安全生产): triggering incident with a number first, decision in one sentence, obvious alternatives killed with specific reasons, all consequences, rollout/rollback, open questions last — enforced as product order by verify_techdoc.py; facts only from brief/materials/domain knowledge, else [需核实]. `/voice-profile` distills the user's own 3–5 samples into an executable .humanize/voice.md (rhythm stats from humanlint, quoted sentence habits, personal 忌口表 with replacements, positive examples for completion-style few-shot — the technique with 20x measured style-match gain), gated by verify_voice.py. Ships rules/human-voice.md as an always-on contract pasteable into CLAUDE.md. Explicitly NOT for beating AI detectors (they train on humanizer output), NOT for injecting slang/emoji/typos as 'texture' (a new tell in technical register). All static_only tier: scripts smoke-tested on fixtures; behavioral delta on held-out drafts unverified.",
+  "version": "0.1.0",
+  "author": {
+    "name": "XRenSiu",
+    "email": "xrensiu@gmail.com"
+  },
+  "homepage": "https://github.com/XRenSiu/claude-code-forge/tree/main/plugins/humanize",
+  "repository": "https://github.com/XRenSiu/claude-code-forge",
+  "license": "MIT",
+  "keywords": [
+    "humanize",
+    "de-ai",
+    "去AI味",
+    "ai-flavor",
+    "anti-slop",
+    "human-voice",
+    "technical-writing",
+    "design-doc",
+    "techdoc",
+    "rfc",
+    "adr",
+    "postmortem",
+    "discourse",
+    "given-new",
+    "cohesion",
+    "cold-reader",
+    "fact-preservation",
+    "voice-profile",
+    "translationese",
+    "chinese",
+    "static-only"
+  ]
+}

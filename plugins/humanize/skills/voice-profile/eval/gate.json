@@ -1,0 +1,29 @@
+{
+  "skill": "plugins/humanize/skills/voice-profile",
+  "tier": "production",
+  "evaluated_layers": ["structural", "script-smoke"],
+  "gate_pass": "static_only",
+  "structural": {
+    "lint_skill": {"routes_by_gap": true, "procedural_hits": 0, "has_exit": true, "has_scripts": true, "persona_hits": 0, "blocking": 0},
+    "findings": [],
+    "waived_count": 0
+  },
+  "script_smoke": {
+    "verify_voice.py": {
+      "fixtures/voice.example.md": "PASS (61 lines)",
+      "assets/voice.template.md": "REJECT ×3 (placeholder rhythm data, 忌口 without replacement, <3 positive examples) + FLAG (no confidence)"
+    }
+  },
+  "effect": null,
+  "discrimination": null,
+  "fix_list": [
+    "behavioral: with a real user's 4 samples, build voice.md, then run /humanize on a held-out draft with vs without the profile; blind-rank by the sample author",
+    "the example fixture's 'samples' are the humanize fixtures written by the same author — replace with a third party's consented samples before using it as a calibration reference",
+    "--update distillation (diff of user's post-edit → new 忌口 entry) is declarative; no script computes the diff yet"
+  ],
+  "provenance": {
+    "date": "2026-09-05",
+    "evaluator": "author-run L0 + script smoke. NOT independent, NOT behavioral.",
+    "evidence_basis": "few-shot completion-style imitation (arXiv 2509.24930, 2509.14543), contrastive in-context (2401.17390), 宝玉 living-style-file loop (2026-02)"
+  }
+}
