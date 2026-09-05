@@ -400,6 +400,8 @@ def cmd_gate(a):
         g["record"] = a.record
     if a.attribution:
         g["attribution"] = a.attribution
+    elif a.verdict == "pass":
+        g.pop("attribution", None)   # a stale reject attribution must not sit beside a pass (dogfood 2026-09-05, I-51)
     # only a rule_error is a world-layer error (the PSL itself was wrong); a derivation_error re-derives with the
     # same PSL and must not inflate the world counter (dogfood 2026-09-05, I-34)
     if a.gate == "g1" and a.verdict == "reject" and a.attribution == "rule_error":

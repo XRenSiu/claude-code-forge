@@ -229,6 +229,7 @@ expect "gate g1 pass with derived products" 0 py "$SS" gate g1 --verdict pass --
 expect "advance issue ok after G1" 0 py "$SS" advance issue
 expect "gate g1 reject with attribution bumps world counter" 0 bash -c "python3 '$SS' gate g1 --verdict reject --by human --attribution rule_error >/dev/null && python3 '$SS' show | grep -q '\"world\": 1'"
 expect "gate g1 reject with derivation_error does NOT bump world (I-34)" 0 bash -c "python3 '$SS' gate g1 --verdict reject --by human --attribution derivation_error >/dev/null && python3 '$SS' show | grep -q '\"world\": 1'"
+expect "gate g1 pass after a reject clears the stale attribution (I-51)" 0 bash -c "python3 '$SS' gate g1 --verdict pass --by human >/dev/null && ! python3 '$SS' show | grep -q 'derivation_error'"
 # dogfood 2026-09-05 (I-17): a delegated signature needs an authorization on record and is traced as agent:, not human:
 expect "gate: delegated_agent without --authorization refused" 1 py "$SS" gate g3 --verdict pass --by proxy-bot --signer-kind delegated_agent
 expect "gate: delegated_agent with authorization recorded as agent:<by> + [delegated]" 0 bash -c "python3 '$SS' gate g3 --verdict pass --by proxy-bot --signer-kind delegated_agent --authorization 'user said so' >/dev/null && grep -q 'agent:proxy-bot' .sdlc/demo-psl/trace.jsonl && grep -q '\[delegated\]' .sdlc/demo-psl/ledger.md"
