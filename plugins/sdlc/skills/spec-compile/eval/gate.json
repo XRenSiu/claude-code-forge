@@ -1,13 +1,19 @@
 {
-  "skill": ".claude/skills/spec-compile",
+  "skill": "plugins/sdlc/skills/spec-compile",
   "tier": "production",
-  "evaluated_layers": ["structural"],
+  "evaluated_layers": [
+    "structural"
+  ],
   "gate_pass": "static_only",
   "structural": {
     "findings": [],
     "failure_taxonomy": {
-      "underfill": 0, "overfill": 0, "wrong-layer": 0,
-      "wrong-route": 0, "no-exit": 0, "seam-misplacement": 0
+      "underfill": 0,
+      "overfill": 0,
+      "wrong-layer": 0,
+      "wrong-route": 0,
+      "no-exit": 0,
+      "seam-misplacement": 0
     },
     "waived_count": 0
   },
@@ -37,5 +43,11 @@
       "verdict": "pass (structural / Tier-1)"
     },
     "tier2_status": "NOT RUN — no held-out spec set + executor available. Per effect-gate.md resolves to static_only: structurally sound, effectiveness unverified. To finish: run with/without delta_exist on held-out specs (does the skill route DOWN the ladder more, and emit non-example-only batteries, vs the engine alone?)."
+  },
+  "imported_into_sdlc": {
+    "date": "2026-09-05",
+    "from": "qanat/.claude/skills",
+    "changes": "body kept; added 术语映射 (qanat-derived only) + 接线（在 sdlc 里的位置）; support files: 立法收件箱/daemon wording mapped to sdlc change proposal / local tests+CI",
+    "smoke_2026_09_05": "verify_compile.py: decidability-routed manifest pass; behavioral→judgment up-route reject"
   }
 }

@@ -1,7 +1,7 @@
 # donewhen-extract 输出:一次任务的 done_when 验收卡(候选)
 # 这是落卡阶段的主产物。每条候选都是可证伪的 本次验收 谓词,带阈值、happy/unhappy 配对、溯源。
 # 注意:本卡是「Contract 草案」,不是已签合同 —— done_when 骑在 Contract 模板上,
-#       模板是闸门资产,只能人签(R002);高风险/改模板的条款 PROPOSE-only 走立法收件箱。
+#       模板是闸门资产,只能人签(R002);高风险/改模板的条款 PROPOSE-only 走变更提案 / G2 签字（sdlc）。
 # 落点:投影为 dos.yaml Contract.done_when[](结构化条目 {id, statement, ears_type?, verify?, based_on?})。
 
 issue_ref: ""                    # 催生本卡的 Issue / Signal id
@@ -28,7 +28,7 @@ clauses:
     paired_with: ""              # 纪律②:happy↔unhappy 互指的对方 id(event/state 类必须有)
     verify: command              # command | checklist | rubric(逐条核验意图,交给 spec-compile 分流)
     based_on: ""                 # 复利溯源:催生本条的 MemoryAsset:failure_memory id(从 Issue 直出则空)
-    disposition: draft           # draft(随合同签约落地) | propose(高风险/改模板,走立法收件箱)
+    disposition: draft           # draft(随合同签约落地) | propose(高风险/改模板,走变更提案 / G2 签字（sdlc）)
 
 # —— 踢给 invariant-extract 的 常驻不变量 候选(能活过未来不相关 Run,不属本卡) ——
 kicked_to_invariant:

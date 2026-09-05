@@ -1,0 +1,4 @@
+[
+  {"merged_finding_id": "mf-001", "sources": [{"role": "code-reviewer", "vendor": "claude", "confidence": "high"}, {"role": "spec-gaming-detector", "vendor": "openai", "confidence": "high"}]},
+  {"merged_finding_id": "mf-002", "sources": [{"role": "qa-reviewer", "vendor": "claude", "confidence": "low"}]}
+]

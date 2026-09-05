@@ -7,7 +7,9 @@ turns around: G2 freezes it, the hidden set is its variant, spec-gaming checks w
 the ratchet reads it to decide DONE. Without a lock, "acceptance" degrades into a parrot of the design.
 
 Usage:
-  lock_done_when.py sign   --by NAME [--out .done_when.lock] FILE [FILE ...]
+  lock_done_when.py sign   --by NAME [--stage g2|l5] [--out .done_when.lock] FILE [FILE ...]
+      two-stage lock: g2 signs the criteria (done_when.yaml [contract.yaml]); l5 re-signs after tests are written
+      (done_when.yaml with behavior filled + tests/**) — C6: tests are locked too, they are just not the gate
   lock_done_when.py verify [--lock .done_when.lock] [--proposal-glob 'change-proposal-*.md'] [--staged]
 
 Exit codes:
@@ -49,8 +51,10 @@ def cmd_sign(a):
         if not os.path.isfile(p):
             sys.stderr.write(f"lock: not a file: {p}\n"); sys.exit(2)
         files.append({"path": p, "sha256": sha256(p)})
-    lock = {"version": 1, "signed_by": a.by, "signed_at": now(), "files": files,
-            "note": "G2 freeze. Changing a listed file requires a change-proposal-*.md in the same diff."}
+    lock = {"version": 1, "stage": a.stage, "signed_by": a.by, "signed_at": now(), "files": files,
+            "note": ("G2 freeze: acceptance/existence/thresholds/rules/constraints signed. " if a.stage == "g2" else
+                     "L5 freeze: tests/** + behavior manifest signed (written by a non-implementer). ")
+                    + "Changing a listed file requires a change-proposal-*.md in the same diff."}
     tmp = a.out + ".tmp"
     with open(tmp, "w", encoding="utf-8") as f:
         json.dump(lock, f, ensure_ascii=False, indent=2); f.write("\n")
@@ -87,7 +91,7 @@ def cmd_verify(a):
     else:
         proposals = glob.glob(a.proposal_glob) + glob.glob(os.path.join("**", a.proposal_glob), recursive=True)
     proposals = sorted(set(proposals))
-    result = {"lock": a.lock, "signed_by": lock.get("signed_by"), "signed_at": lock.get("signed_at"),
+    result = {"lock": a.lock, "stage": lock.get("stage", "g2"), "signed_by": lock.get("signed_by"), "signed_at": lock.get("signed_at"),
               "changed": changed, "missing": missing, "proposals": proposals}
     if not changed and not missing:
         result["status"] = "ok"; print(json.dumps(result, ensure_ascii=False, indent=2)); sys.exit(0)
@@ -103,7 +107,7 @@ def cmd_verify(a):
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)
-    s = sub.add_parser("sign"); s.add_argument("--by", required=True); s.add_argument("--out", default=".done_when.lock"); s.add_argument("files", nargs="+")
+    s = sub.add_parser("sign"); s.add_argument("--by", required=True); s.add_argument("--out", default=".done_when.lock"); s.add_argument("--stage", choices=["g2", "l5"], default="g2"); s.add_argument("files", nargs="+")
     s = sub.add_parser("verify"); s.add_argument("--lock", default=".done_when.lock"); s.add_argument("--proposal-glob", default="change-proposal-*.md"); s.add_argument("--staged", action="store_true")
     a = ap.parse_args()
     {"sign": cmd_sign, "verify": cmd_verify}[a.cmd](a)

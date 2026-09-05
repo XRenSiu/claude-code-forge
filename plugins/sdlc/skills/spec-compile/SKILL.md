@@ -19,6 +19,7 @@ description: |
 argument-hint: "<spec ref: R00x id | done_when card | contract id> [--line structural|behavioral|judgment] [--auto]"
 version: 0.1.0
 user-invocable: true
+# imported into sdlc 2026-09-05 from qanat/.claude/skills; body kept, sdlc wiring added (see 接线 / 术语映射)
 ---
 
 # spec-compile
@@ -29,6 +30,23 @@ skill describes the decidability ladder the routing rides on, what each line emi
 disciplines that keep each line load-bearing, and the exit that proves a clause was pushed as
 far down as it could go. **It prescribes no step order — the engine sequences the work; what
 follows are the gaps to fill and the gates that must hold, in any order.**
+
+## 术语映射（在 sdlc 里怎么读这份文件）
+
+本 skill 引自 qanat 仓库，正文保留其领域词汇；在 sdlc 里按下表读：
+
+| 原文 | sdlc 里的对应物 |
+|---|---|
+| Territory（领地） | 一个 bounded context / 模块：`dos.yaml` 的 `bounded_contexts.current_context`；issue 的 `Depends on DOS` 所属上下文 |
+| Run（一次执行） | 一次 issue → PR 的交付，即 `.sdlc/<slug>/` 一个 slug |
+| Contract / Contract 模板 | `done_when.yaml`（v2，以 AC 为单位）；模板 = 同类需求复用的 AC 骨架 |
+| R001（评估者与执行者隔离） | sdlc 的信息隔离：实现子 agent 看不到评审判据；验收在独立会话 |
+| R002（闸门资产只能人签） | sdlc 的 **G2**（判据冻结 `lock_done_when.py sign --by <人>`）与 **G3**（例外复核） |
+| 变更提案 / G2 签字（sdlc） / change proposal / G2 signing (sdlc) / NEEDS_HUMAN | `assets/change_proposal.md` 变更提案 + G2/G3 人签；账本 `ledger.md` 记 propose |
+| `verify_g1` / `review_g2`（qanat 的机器闸 / 评审闸） | sdlc L7 的 **A 档机械验收** / **C 档判断验收**——注意与 sdlc 的 G1（世界裁决）、G2（判据冻结）**不是同一对门** |
+| MemoryAsset（eval_case / rubric_version / failure_memory） | 归档目录 `specs/<slug>/` 里的测试集 / 评判 rubric；failure_memory = `ledger.md` 的 fail 行 + `escape-defects.md` |
+| daemon / 运行时 | 本地测试与 CI；`/sdlc` 的 acceptance 阶段 |
+| `calibration.resolved` 事件 | G3 记录里"标准不清"的改判（`g3_record.md`） |
 
 ## The gap (why "write some tests" is not a compiler)
 
@@ -142,7 +160,7 @@ The engine runs the compilation; these gates do not move:
   standard straight to a gate without calibrate is the headline anti-pattern (a green report that
   decorates, not gates).
 - **Rubric is a gate asset — human signs (R002).** A G2 `rubric_version` (MemoryAsset) lands only by
-  human signature. spec-compile emits it as a proposal to the legislation inbox.
+  human signature. spec-compile emits it as a proposal to the change proposal / G2 signing (sdlc).
 - **G2 is isolated (R001).** The judge program runs in a process/session independent of the executor,
   read-only on the executor's worktree, input = artifact + rubric only; cross-vendor when the
   Territory sets it. spec-compile must not emit a G2 standard that reads the executor's context.
@@ -202,6 +220,17 @@ The engine runs the compilation; these gates do not move:
   rubrics, the calibrate seam, the boundary reminders.
 - `assets/compile_manifest.yaml` — the named-field routing output.
 - `assets/decisions_template.md` — the per-clause routing audit-trail shape.
+
+## 接线（在 sdlc 里的位置）
+
+- **L5 测试实现的编译器**：输入 `done_when.yaml`（`/donewhen-extract` / `/issue` 的 AC）与不变量卡
+  （`/invariant-extract`），按可判性下推到 fitness fn / eval_case（example + property + metamorphic）/ 评判程序。
+  没有 done-when-pipeline 的 `/test-suite-generator` 时它就是测试的来源；有则两者产物合并进 `tests-manifest.yaml`。
+- **落点**：① ② → 仓库测试与 CI（sdlc L7 A 档）；③ → `/pr-review` 的 C 档 rubric（`tier: C` 条目按 PAJAMA 维度写）。
+  产物路径记入 `sdlc_state.py set contract.compile_manifest=…`。
+- **写完锁**：测试文件进卡的 `forbidden_files`（默认含 `tests/**`）；`verify_commit.py --lock` 拦改动。
+- **未认证不承重**：每个标准 `calibration_pending: true`，直到 `/calibrate` 过门；PR 的 Verification 段只能引用
+  已校准的标准，未校准的标为 `uncalibrated`。
 
 ## Exit gate for this skill itself
 

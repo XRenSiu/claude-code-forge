@@ -1,13 +1,19 @@
 {
-  "skill": ".claude/skills/dos-extract",
+  "skill": "plugins/sdlc/skills/dos-extract",
   "tier": "production",
-  "evaluated_layers": ["structural"],
+  "evaluated_layers": [
+    "structural"
+  ],
   "gate_pass": "static_only",
   "structural": {
     "findings": [],
     "failure_taxonomy": {
-      "underfill": 0, "overfill": 0, "wrong-layer": 0,
-      "wrong-route": 0, "no-exit": 0, "seam-misplacement": 0
+      "underfill": 0,
+      "overfill": 0,
+      "wrong-layer": 0,
+      "wrong-route": 0,
+      "no-exit": 0,
+      "seam-misplacement": 0
     },
     "waived_count": 0
   },
@@ -41,5 +47,11 @@
       "aligned the section-presence claim: only objects/relationships/rules are reject-on-omission; the softer sections report as info"
     ],
     "tier2_status": "NOT RUN — no held-out repo set + executor available. Per effect-gate.md a production-tier skill with the effect layer required-but-unrun resolves to static_only: structurally sound, effectiveness unverified. To finish: run with/without delta_exist on >=1 held-out repo (extract a DOS with and without the skill, assert on the dos.yaml produced)."
+  },
+  "imported_into_sdlc": {
+    "date": "2026-09-05",
+    "from": "looper v0.2.0",
+    "changes": "body kept; added 术语映射 (qanat-derived only) + 接线（在 sdlc 里的位置）; support files: 立法收件箱/daemon wording mapped to sdlc change proposal / local tests+CI",
+    "smoke_2026_09_05": "verify_dos.py: clean 3-object dos pass; UI-suffixed object reject"
   }
 }

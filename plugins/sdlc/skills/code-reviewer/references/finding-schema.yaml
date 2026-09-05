@@ -1,0 +1,154 @@
+# finding-schema.yaml — code-reviewer output contract
+#
+# Strict schema. Deviations get one re-prompt; second failure = output dropped.
+# Top-level key is `code_review:`. All required fields below MUST be present even
+# if value is empty (e.g. `evidence: []`).
+
+code_review:
+  # ====== META BLOCK ======
+  agent_role: <focus>                       # one of: security | logic | perf | style | all
+  model: <model-id>                         # e.g. claude-opus-4-7, codex-gpt-5, gemini-pro-3
+  vendor: <claude | openai | google>
+  adversarial_mode: <bool>                  # was --adversarial passed?
+  diff_source: <string>                     # what was reviewed: "HEAD~3..HEAD", "path/to/file.diff", "src/billing/"
+  diff_total_hunks: <int>                   # how many hunks the diff contained
+  diff_total_lines_changed: <int>
+  rules_loaded: [<path>, ...]               # --rules paths read, in order
+  repo_root: <path>
+  iteration_seconds: <int>                  # wall-clock for this review
+  tool_calls_used: <int>                    # how many read_file / grep / git_log calls
+  tool_call_budget: 20
+
+  # ====== FINDINGS ======
+  # cap at max_findings_limit (default 5). Findings sorted by severity then evidence strength.
+  num_findings: <int>
+  max_findings_limit: <int>
+  findings:
+    - finding_id: cr-001                    # local to this run; cr-NNN sequential
+      severity: <P0 | P1 | P2 | P3>
+      file: <path>                          # NEW-file coordinates per diff-format.md
+      line_range: [<start>, <end>]          # inclusive, in new file
+      category: <string>                    # category within focus, e.g. authorization / null_safety / n_plus_one / naming
+      root_cause: <text>                    # one sentence — what is wrong, mechanically
+      reproduction_scenario: <text>         # REQUIRED for P0/P1; concrete trigger
+      confidence: <high | medium | low>
+      evidence:                             # list of tool observations supporting the finding
+        - kind: read | grep | git_log | git_blame | find_similar
+          # one of:
+          file: <path>
+          lines: [<start>, <end>]
+          # or:
+          query: <text>
+          matches: <int>
+          match_files: [<path>, ...]        # optional, up to 5
+          # or:
+          observation: <text>               # free-form summary for non-grep tools
+      needs_codebase_check: <bool>          # true if finding depends on something the diff didn't show; meta-judge / human verifies
+      deleted_in_diff: <bool>               # OPTIONAL — true if finding is about removed code; absent defaults to false
+      deleted_from_old_lines: [<start>, <end>]  # required if deleted_in_diff: true
+      suggested_change: <text>              # one-line concrete suggestion (REQUIRED for P0/P1)
+      tags: [<string>, ...]                 # OPTIONAL — free-form, e.g. ["owasp:A01", "cwe-89"]
+
+  # ====== NO-FINDING CASE ======
+  # If findings: [] then `rationale:` MUST be populated. Otherwise rationale: null.
+  rationale: <text | null>                  # if findings empty: what was walked + why nothing flagged
+
+  # ====== CAVEATS ======
+  caveats:                                  # OPTIONAL — non-blocking notes the user should see
+    adversarial_mode_caveat: <text | null>  # if --adversarial but same-vendor same-size, explain limitation
+    diff_truncation_caveat: <text | null>   # if diff was clipped due to size, explain
+    rules_conflict_caveat: <text | null>    # if --rules contained contradictions, explain how resolved
+    cross_vendor_unavailable_caveat: <text | null>
+
+# ====== EXAMPLE: BUGS FOUND ======
+# (saved at ratchet-log/iteration-NNN/fleet-outputs/code-reviewer-security.yaml or similar)
+
+code_review:
+  agent_role: security
+  model: claude-opus-4-7
+  vendor: claude
+  adversarial_mode: true
+  diff_source: HEAD~1..HEAD
+  diff_total_hunks: 7
+  diff_total_lines_changed: 142
+  rules_loaded: ["CLAUDE.md"]
+  repo_root: /Users/me/projects/billing-api
+  iteration_seconds: 87
+  tool_calls_used: 14
+  tool_call_budget: 20
+  num_findings: 2
+  max_findings_limit: 5
+  findings:
+    - finding_id: cr-001
+      severity: P0
+      file: src/billing/cancel.ts
+      line_range: [47, 49]
+      category: authorization
+      root_cause: "sub_id from request body is used to fetch and mutate a subscription without verifying that current_user owns it."
+      reproduction_scenario: "user A authenticates, sends POST /api/cancel with body {sub_id: <user B's sub_id>}; subscription cancellation succeeds."
+      confidence: high
+      evidence:
+        - kind: read
+          file: src/billing/cancel.ts
+          lines: [40, 60]
+        - kind: grep
+          query: "verifyOwnership|assertOwner|sub\\.owner|sub\\.user_id\\s*==\\s*currentUser"
+          matches: 0
+          match_files: []
+        - kind: git_log
+          file: src/billing/cancel.ts
+          observation: "No ownership check has ever been present; the file's first commit (2026-03-14) introduced cancel() without an authz step."
+      needs_codebase_check: false
+      suggested_change: "Add `if (sub.user_id !== currentUser.id) throw new ForbiddenError()` before line 47, or move auth check to middleware that runs on the route."
+      tags: ["owasp:A01_Broken_Access_Control", "cwe-639"]
+
+    - finding_id: cr-002
+      severity: P1
+      file: src/billing/cancel.ts
+      line_range: [55, 55]
+      category: input_validation
+      root_cause: "reason field from request body is concatenated into a SQL LIKE query without parameterization."
+      reproduction_scenario: "reason='%' OR 1=1 --' matches all rows; cancellation log query returns full table."
+      confidence: high
+      evidence:
+        - kind: read
+          file: src/billing/cancel.ts
+          lines: [50, 58]
+        - kind: grep
+          query: "db\\.query\\(`.*\\$\\{"
+          matches: 3
+          match_files: ["src/billing/cancel.ts", "src/billing/refund.ts", "src/auth/login.ts"]
+      needs_codebase_check: false
+      suggested_change: "Use parameterized query: db.query('... WHERE reason LIKE $1', [reason])."
+      tags: ["owasp:A03_Injection", "cwe-89"]
+  rationale: null
+  caveats:
+    adversarial_mode_caveat: null
+    diff_truncation_caveat: null
+    rules_conflict_caveat: null
+    cross_vendor_unavailable_caveat: null
+
+# ====== EXAMPLE: NO BUGS FOUND ======
+
+code_review:
+  agent_role: perf
+  model: claude-sonnet-4-6
+  vendor: claude
+  adversarial_mode: false
+  diff_source: HEAD~1..HEAD
+  diff_total_hunks: 3
+  diff_total_lines_changed: 28
+  rules_loaded: []
+  repo_root: /Users/me/projects/billing-api
+  iteration_seconds: 22
+  tool_calls_used: 5
+  tool_call_budget: 20
+  num_findings: 0
+  max_findings_limit: 5
+  findings: []
+  rationale: "Walked all 3 hunks. Changes are: (1) added a status field to a record (no I/O), (2) renamed a variable, (3) added a single early-return guard. No new loops, no I/O calls, no allocations in hot path. Existing call sites unchanged."
+  caveats:
+    adversarial_mode_caveat: null
+    diff_truncation_caveat: null
+    rules_conflict_caveat: null
+    cross_vendor_unavailable_caveat: null

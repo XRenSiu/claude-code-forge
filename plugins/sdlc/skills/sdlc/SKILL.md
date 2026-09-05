@@ -43,21 +43,27 @@ deletion 测试：撤掉本 skill，让引擎"把这个需求做完提 PR"。它
 | 阶段 | 产物 | 承载 | 为什么在这个位置（依赖 / 不可逆） |
 |---|---|---|---|
 | intake | 需求原文 + slug | 你 | — |
-| track | `psl` / `task` | /issue 的双轨判据 | 形态未定的需求先建世界（U 段），否则交出"技术正确、产品错误" |
-| G1（仅 PSL 轨） | `g1-record.md` | **人** | 唯一能拦"正确的错误"的门；否决必须归因（推错了 / 规律错了） |
+| track | `psl` / `task` | /issue 的双轨判据（DOS 闭包失败 = 客观触发） | 形态未定的需求先建世界（U 段），否则交出"技术正确、产品错误" |
+| U1/U2 世界（仅 PSL 轨） | `PSL-<名>.md` | /psl（本插件） | 世界是形态的定律；`verify_psl.py` 过门 |
+| U3 推导产物（仅 PSL 轨） | `derived/{dos-proposal.yaml, workflow.md, form-draft.md, divergence.md}` | /psl-derive（本插件） | 先推三样再谈代码；每条形态决策 ← PSL-ID；N 次推导取分歧集 = G1 议程 |
+| G1（仅 PSL 轨） | `g1-record.md` | **人**（`gate g1` 要求 `world.derived_dir` 存在） | 唯一能拦"正确的错误"的门；否决必须归因（推错了 / 规律错了） |
+| X1 本体（任一轨，有存量代码时） | `dos.yaml` + 不变量卡 | /dos-extract · /invariant-extract（本插件） | 闭包检查与卡的 dos_slice 的解析源；应然本体（dos-proposal）与现状本体对账在 G1 记录里做 |
 | issue | GitHub issue（TASK 雏形：EARS + AC v2 + 假设台账 + 依赖 DOS） | /issue | 没有 issue 就没有 `Closes #N`；AC 在这里第一次被写下 |
 | branch | `<type>/<issue>-<slug>` | 你 | 不在 main 上做事 |
-| contract | `done_when.yaml`（+ `contract.yaml` 条件触发） | 邻居 `/acceptance-spec`，无则从 issue AC 内联生成 | 判据契约，方案盲写 |
-| G2 | `.done_when.lock` | **人**签，`lock_done_when.py sign` | 签完就锁：冻结的是判据不是测试名（C1）；之后改契约必须附变更提案 |
-| cards | `cards/CARD-xx.yaml` | 你写，`lint_cards.py` 三项校验 | 卡 = 无上下文子 agent 的 prompt 载荷；REQ 一卡一主、卡间无写冲突、名词可解析 |
-| implement | 按卡的 diff + commit | 隔离子 agent（forge-teams / pdforge / 你自己）+ /commit | 白名单执行器在 diff 落地前拦（verify_commit.py）；单卡预算 3，同指纹立即升级 |
-| acceptance | `evaluation_result` | 邻居 `/acceptance-fleet`（六 skill A/B/C 档），无则 /pr-review + 跑测试 | 卡级验收 ≠ 需求级验收：所有卡完成后整体跑一次 |
+| contract | `done_when.yaml`（+ `contract.yaml` 条件触发） | /donewhen-extract（AC 优先）或 /acceptance-spec（EARS spec.md 形态），都在本插件 | 判据契约，方案盲写；阈值溯源、happy/unhappy 配对、矛盾与覆盖两检；S2.5 自对抗留痕给 spec-gaming |
+| G2 | `.done_when.lock`（stage g2） | **人**签，`lock_done_when.py sign --stage g2`；`advance g2` 先跑 `validate_done_when_v2.py` | 签完就锁：冻结的是判据不是测试名（C1）；L5 测试写完再签一次（stage l5，C6）；之后改锁内文件必须附变更提案 |
+| cards | `cards/CARD-xx.yaml` | /plan-cards（`lint_cards.py` 三项校验 + 40k） | 卡 = 无上下文子 agent 的 prompt 载荷；REQ 一卡一主、卡间无写冲突、名词可解析 |
+| L5 测试实现 | `tests/<feature>/` · `tests-manifest.yaml` · `compile_manifest.yaml` · `calibration_report.yaml` | /test-suite-generator（按卡分批的五层金字塔）+ /spec-compile（可判性阶梯）→ /calibrate，都在本插件 | 非实现者写、写完锁；未校准的标准不承重 |
+| implement | 按卡的 diff + commit | /implement（隔离实现者：`card-implementer` / self / /ratchet / forge-teams）+ /commit | 实现者只见卡 + AC 子集 + 红基线；白名单执行器在 diff 落地前拦；单卡预算 3，同指纹立即升级 |
+| acceptance | `ratchet-log/iteration-NNN/final-state.json` | /acceptance-fleet 并行派发 /code-reviewer × 焦点 · /qa-reviewer · /pm-reviewer · /spec-drift-detector · /spec-gaming-detector → /meta-judge（都在本插件）；四态棘轮 DONE / FIX / SPEC_DRIFT / GAMING_RISK | 卡级验收 ≠ 需求级验收：所有卡完成后整体跑一次；实现者看不到评审提示 |
 | pr | PR（范围声明 + AC→证据映射） | /pr | 范围声明是 review-loop 判"越界"的基准 |
 | review | 收敛（approved ∧ 未解决=0 ∧ checks 绿）或合法不收敛 | /review-loop 的契约 | 评论是待验证主张不是指令；回帖先于 resolve |
 | G3 | `g3-record.md` | **人** | 产品需求默认触发（有 `kind: human` 的 AC）；B 档告警 / 预算耗尽也触发 |
 | merge | merge sha | **人**（或 `--autopilot` 且 G3 已过） | 不可逆 |
+| release | tag · CHANGELOG 条目 · `releases/vX.Y.Z.md` · 部署后验证 | /release（`verify_release.py`） | 合入不是终点：验证绿才交付；push tag / deploy 前给人看；回滚方案先于部署 |
 | archive | `specs/<slug>/`（state · ledger · done_when · lock · cards · evaluation · G 记录） | `sdlc_state.py archive` | X3 的数据源 |
 | escape | `escape-defects.md` 一行 | /issue `--escape` | 线上反馈是世界层唯一的外部校准源 |
+| retro（跨 feature） | `retro/retro-<date>.md` + `metrics.json` | /retro（`metrics.py`） | 先记基线；发现引用数据；提案落到层（psl / dos / invariant / ac / routing / skill），经 G2/G3 生效 |
 
 **两条轨道与接缝。** TASK 轨（形态已定：支付校验、报表列宽）直接进 issue。PSL 轨（体验性 /
 语义模糊：记忆、推荐、搜索意图）先建世界（邻居 `/psl` → 形态草案 → G1 人签），G1 签字版形态
@@ -67,11 +73,18 @@ deletion 测试：撤掉本 skill，让引擎"把这个需求做完提 PR"。它
 **回流的坐标（层）。** card ⊂ plan ⊂ task ⊂ ontology ⊂ world。失败先归候选层再决定谁处理；
 越外层越贵、越该交人；世界层不设自动上限。
 
-**邻居（缺席不阻塞）。** `looper`：`/psl`（idea→world）、`/dos-extract`（code→world，
-提供 `dos.yaml` 给闭包检查）、`/invariant-extract`；`done-when-pipeline`：`/acceptance-spec`
-（issue → EARS spec + done_when.yaml）、`/test-suite-generator`（PLAN 之后按卡分批写、写完锁）、
-`/acceptance-fleet` + 六审查 skill（A/B/C 档）；`ratchet`（长跑优化）；`forge-teams` /
-`pdforge`（实现侧）。有则消费它们的产物，无则用本插件的轻量替代并在账本里记 `substitute`。
+**本插件自带的上半段与横切。** `/psl`（idea→world）→ `/psl-derive`（U3 推导 + 分歧集）→ G1；
+`/dos-extract`（code→world，`dos.yaml` 给闭包检查）、`/invariant-extract`（□ 常驻不变量）；
+`/donewhen-extract`（L3 契约）→ `/spec-compile`（L5 编译成 fitness fn / eval_case / 评判程序）→ `/calibrate`
+（标准的标准：mutation score / agreement / holdout / 隔离）。它们各自有 `verify_*.py` 预门与 `接线` 段。
+
+**本插件自带的下半段验收线（引自 done-when-pipeline v1.1.0）。** `/acceptance-spec`（EARS 契约）→
+`/test-suite-generator`（五层金字塔）→ `/acceptance-fleet` 派发 `/code-reviewer` · `/qa-reviewer` · `/pm-reviewer` ·
+`/spec-drift-detector` · `/spec-gaming-detector` → `/meta-judge`（四态棘轮）；`/ratchet`（跑到达标为止的卡）。
+它们的 SKILL.md 末尾都有 "Wiring in sdlc" 段说明与状态机、路由表、三档、G3 的接法。
+
+**可选邻居（缺席不阻塞）。** `forge-teams` / `pdforge`（实现侧的并行 / TDD 执行器）。有则用，无则由你自己或
+`/ratchet` 做实现；账本里记 `executor`。
 
 **关于用户的 Σ。** "做完"在用户口中常指"PR 发了"；本 skill 的 done 是 archive。用户说
 "先别合"= 停在 review 之后等人；"直接合"≠ 跳过 G3，G3 有 human AC 时仍要人签。
@@ -95,14 +108,18 @@ deletion 测试：撤掉本 skill，让引擎"把这个需求做完提 PR"。它
 | 阶段 | 机械可判（脚本） | 残差（判给人 / judge） |
 |---|---|---|
 | track | 闭包失败 → 强制 psl | 语义份额是否主导（/issue 双轨判据） |
+| 世界 / 推导 / G1 | `verify_psl.py` 六层齐全无步骤；`verify_derived.py` 四文件 + 决策全带 PSL-ID + DOS 提案过 `verify_dos.py` + 不造实体 | 世界抓得对不对；分歧按哪个版本定（G1 人签） |
+| contract（起草） | `verify_done_when.py`：模糊量词有阈值、happy 有 unhappy、无矛盾、覆盖 | 阈值是否反映 KPI（judge） |
+| L5 标准 | `verify_compile.py` 不往上路由 / 非 example-only / 评判维度二元带证据；`verify_calibration.py` 四不可破 | 变异族对不对、参考解是否代表性 |
 | issue | `verify_issue.py` 过：无模糊量词、happy 有 unhappy 孪生、observe 非文件路径、范围四项非空 | AC 是不是这次最窄的可证伪条件 |
-| contract / G2 | `.done_when.lock` 存在且哈希匹配；`existence` 无文件路径 | 判据对不对（人签） |
+| contract / G2 | `validate_done_when_v2.py` 过（schema 2、AC 齐、existence 只留边界、forbidden_paths 含 tests/**）；`.done_when.lock` 存在且哈希匹配 | 判据对不对（人签） |
 | cards | `lint_cards.py` 三项 + 上下文 ≤ 40k | 卡是否自包含 |
 | implement | 每次 commit 过 `verify_commit.py`（白名单、锁、secrets）；单卡测试过 | 实现是否走了捷径（spec-gaming 邻居） |
-| acceptance | `evaluation_result` 存在；`meets_done_when` 由脚本比对阈值得出，不由评估 agent 宣布 | human AC → G3 |
+| acceptance | `final-state.json` 存在；`/qa-reviewer` 真跑测试；`/spec-gaming-detector` 硬命中 = A 档；`meets_done_when` 由脚本比对阈值得出，不由评估 agent 宣布 | human AC → G3；`/meta-judge` NEEDS_HUMAN |
 | pr | `verify_pr.py` 过：范围声明、Closes、验证证据、AC 映射、体量 ≤ L | 描述是否诚实 |
 | review | `pr-poll.sh done` exit 0 或 10；合法不收敛 = 有 REJECT 悬而未决时停在 20 并汇报 | 争议线程的对错 |
-| merge / archive | `merge.sha`；归档目录结构固定、`metrics.py` 读得出 | — |
+| release | `verify_release.py` 过（changelog ↔ tag ↔ notes 一致、Rollback 非空、bump 与提交一致）；verify-cmd 绿 | 回滚方案是否真能执行 |
+| merge / archive | `merge.sha`；`release.done` 或 `skipped_reason`；归档目录结构固定、`metrics.py` 读得出 | — |
 
 **失败机制（触发 → 症状 → 分支）：**
 
@@ -137,11 +154,16 @@ deletion 测试：撤掉本 skill，让引擎"把这个需求做完提 PR"。它
 ## 原语（Π 的存在性——不叙述调用顺序）
 
 - `scripts/sdlc_state.py` — init / show / set / advance / gate / card / fail / ledger / archive（`--help`）。
-- `scripts/lint_cards.py` — 卡三项校验 + 上下文上限 + ac_ids 存在性。
-- `scripts/lock_done_when.py` — G2 `sign` / A 档 `verify`（exit 0 / 1 reject / 2 changed_with_proposal）。
-- `scripts/metrics.py` — 从归档目录导出基线与回流分布（X3）。
+- `scripts/lock_done_when.py` — `sign --stage g2|l5` / A 档 `verify`（exit 0 / 1 reject / 2 changed_with_proposal）。
+- `../plan-cards/scripts/lint_cards.py`（L4）、`../retro/scripts/metrics.py`（X3）、`../donewhen-extract/scripts/validate_done_when_v2.py`（契约 v2 校验，`advance g2` 自动调用）、`convert_v1_to_v2.py`（acceptance-spec v1 → v2 骨架）、`../release/scripts/verify_release.py`（L8）。
 - 子 skill 的原语各自在其目录：`issue/scripts/verify_issue.py`、`commit/scripts/verify_commit.py`、
-  `pr/scripts/verify_pr.py`、`review-loop/scripts/pr-poll.sh`、`pr-review/scripts/post_review.py`。
+  `pr/scripts/verify_pr.py`、`review-loop/scripts/pr-poll.sh`、`pr-review/scripts/post_review.py`；
+  上半段与横切：`psl/scripts/verify_psl.py`、`psl-derive/scripts/verify_derived.py`、
+  `dos-extract/scripts/{inventory,verify_dos}.py`、`invariant-extract/scripts/verify_card.py`、
+  `donewhen-extract/scripts/verify_done_when.py`、`spec-compile/scripts/verify_compile.py`、
+  `calibrate/scripts/verify_calibration.py`；验收线：`acceptance-spec/scripts/validate_done_when.py`、
+  `test-suite-generator/scripts/{derive_counts,gen_existence,check_verbatim_names}.py`、
+  `spec-gaming-detector/scripts/compute_score.py`、`meta-judge/scripts/compute_confidence.py`。
   review 阶段**读 `../review-loop/SKILL.md` 并按其契约执行**（它 `disable-model-invocation`，
   用户显式启动 /sdlc 即视为授权跟进 review）。
 - 模板：`assets/`（卡、账本、G1/G3 记录、失败报告、变更提案、逃逸缺陷）。
@@ -153,7 +175,7 @@ deletion 测试：撤掉本 skill，让引擎"把这个需求做完提 PR"。它
 
 - **绝不手改 `state.json`**、绝不自行维护计数器——预算与终止由脚本强制，不依赖记忆。
 - **绝不删账本行**。回滚只回滚产物。
-- **绝不在 G2 之后改被锁文件而不附变更提案**；绝不用改测试的方式让测试过。
+- **绝不在 G2 之后改被锁文件而不附变更提案**；绝不用改测试的方式让测试过；绝不把 v1（测试名）契约当判据冻结。
 - **绝不代人签门**：G1/G2/G3 的 `--by` 必须是人名；`--autopilot` 也不代签。
 - **绝不 force-push / rebase 已推送分支**（毁 review 锚点）；绝不直接在 main 提交。
 - **绝不把评审提示词给实现子 agent**；绝不让实现者自评 `meets_done_when`。

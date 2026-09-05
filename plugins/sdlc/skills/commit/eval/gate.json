@@ -25,8 +25,8 @@
   ],
   "provenance": {
     "date": "2026-09-05",
-    "evaluator": "AUTHOR-RUN structural pass: (a) skillwise evaluate-skill/scripts/lint_skill.py L0 (0 blocking on every skill; the two '▲ description' items are a linter artifact — it reads only the first line of a folded `>-` description, the full text carries 'Use when:'), (b) plugins/sdlc/eval/smoke.sh — 77 expectations, 77 pass on fixtures. NOT a decorrelated 2-judge read, NOT an L2 with/without run. Do not read this as certification.",
-    "smoke": "bash plugins/sdlc/eval/smoke.sh → 77 passed, 0 failed (2026-09-05)",
+    "evaluator": "AUTHOR-RUN structural pass: (a) skillwise evaluate-skill/scripts/lint_skill.py L0 (0 blocking on every skill; the two '▲ description' items are a linter artifact — it reads only the first line of a folded `>-` description, the full text carries 'Use when:'), (b) plugins/sdlc/eval/smoke.sh — 101 expectations, 101 pass on fixtures (suite covers all 13 skills). NOT a decorrelated 2-judge read, NOT an L2 with/without run. Do not read this as certification.",
+    "smoke": "bash plugins/sdlc/eval/smoke.sh → 101 passed, 0 failed (2026-09-05)",
     "harness_note": "scripts exercised in temp git repos / temp dirs; gh-networked paths (issue create, pr create, pr-poll watch/threads/resolve/done, post_review real post) NOT exercised — they need a live repo/PR",
     "scripts_run": {
       "verify_commit.py": "in a temp repo: good staged + conventional message passes; 'update stuff' rejected; trailing period rejected; on main rejected; AKIA secret in added lines rejected; .env staged rejected; `debugger;` rejected; card whitelist in-list passes / overflow rejected; locked file without proposal rejected / with proposal passes (flag)"

@@ -1,0 +1,37 @@
+source_ref: "done_when.yaml#42"
+source_level: task
+mode: auto
+routed:
+  - clause_ref: INV-search-001
+    statement: "search must not import from ui layer"
+    decidability: structural
+    line: 1
+    gate: g1
+    fitness_function: { tool: dependency-cruiser, principle: "dependency direction: ui -> search never search -> ui", ratchet_threshold: "0 violations" }
+    calibration_pending: true
+  - clause_ref: DW-001
+    statement: "overlap >= 2 → disambiguation prompt"
+    decidability: behavioral
+    line: 3
+    gate: g2
+    eval_case_battery:
+      example: ["上个月 with era-overlap → prompt"]
+      property: ["for any TimeRef resolving to n>=2 eras, response.type == prompt and len(candidates)==n"]
+      metamorphic: []
+      examples_only_justification: ""
+      assured_filters: { compiles: true, passes_stably: true, catches_injected_fault: false }
+      ach_mutant_families: ["off-by-one on overlap count"]
+    calibration_pending: true
+  - clause_ref: AC-002-a
+    statement: "result reads as a period with scenes"
+    decidability: judgment
+    line: 3
+    gate: g2
+    judge_program:
+      dimensions:
+        - { name: has_scene_summary, binary: true, evidence_ref: "ui:data-test=era-result .scene-summary", pajama_probe: "dom.query('.scene-summary').text.length > 0" }
+      free_form: false
+      isolation_ok: true
+    calibration_pending: true
+sent_back_to_spec: []
+handoff_to_calibrate: { eval_case_sets: ["DW-001"], rubric_versions: ["AC-002-a"] }

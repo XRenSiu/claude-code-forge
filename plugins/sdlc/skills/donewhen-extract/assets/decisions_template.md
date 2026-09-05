@@ -36,5 +36,5 @@
 
 ## 签约处置
 
-- disposition：draft（随合同签约）/ propose（高风险或改模板 → 立法收件箱，NEEDS_HUMAN）
+- disposition：draft（随合同签约）/ propose（高风险或改模板 → 变更提案 / G2 签字（sdlc），NEEDS_HUMAN）
 - 若 propose：触发原因（risk_class=high / 改模板 / 阈值无根）：

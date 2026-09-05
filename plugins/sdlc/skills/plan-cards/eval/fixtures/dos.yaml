@@ -1,0 +1,6 @@
+objects:
+  Memory: { description: "a captured moment" }
+  Era: { description: "a period with scenes" }
+rules:
+  - id: R003
+    statement: "an Era has >= 1 Memory"

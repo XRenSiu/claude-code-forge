@@ -1,0 +1,24 @@
+meta: { dos_version: "0.1.0", product: "memory", bounded_context: "search", owner: "xrensiu", status: draft }
+scope:
+  in_scope: "relative-time search over memories"
+  out_of_scope: "absolute date picker"
+objects:
+  Memory: { description: "a captured moment", type: entity }
+  Era: { description: "a period with scenes aggregating memories", type: aggregate_root }
+  TimeRef: { description: "a relative time expression with ambiguity", type: value_object }
+  DateFilterCard: { description: "invented ui thing", type: entity }
+relationships:
+  - { subject: Era, verb: CONTAINS, object: Memory, cardinality: "1:N", inverse: BELONGS_TO }
+  - { subject: TimeRef, verb: RESOLVES_TO, object: Era, cardinality: "1:N", inverse: null }
+rules:
+  - { id: R001, statement: "an Era has at least one Memory", rationale: "empty eras are not periods", enforced_by: system }
+  - { id: R002, statement: "a TimeRef that resolves to >= 2 Eras is ambiguous, never auto-picked", rationale: "PSL-003", enforced_by: system }
+composition: {}
+behaviors:
+  - { trigger: "TimeRef entered", effects: ["resolve against Eras", "ambiguous when >= 2"], notes: "" }
+bounded_contexts: { current_context: search }
+agent_guidelines: { must: ["use Era/Memory/TimeRef names"], should: [], must_not: ["introduce DateFilter"] }
+anti_patterns: []
+open_questions:
+  - { id: Q001, question: "overlap threshold 2 or 3?", raised_at: "2026-09-05", raised_by: "psl-derive", owner: "xrensiu", deadline: "2026-09-12" }
+evolution_log: []

@@ -48,7 +48,7 @@ calibrate 证明尺子对**——这条边不可省。
 
 - **别写规约**：常驻不变量 是 invariant-extract、本次验收 是 donewhen-extract 的活。本刀消费它们的输出，不自造规则。
 - **别做校准**：mutation score / agreement / holdout 是 calibrate 的活。本刀产尺子，不产"尺子对的证明"。
-- **别跑闸门**：verify_g1 / review_g2 的运行时是 daemon 的活。本刀产标准，运行时跑标准。
+- **别跑闸门**：verify_g1 / review_g2 的运行时是本地测试 / CI 与 /sdlc 验收阶段的活。本刀产标准，运行时跑标准。
 - **别绕过签字**：G2 rubric 是闸门资产，只能人签（R002）；本刀提案，签字走 seam。
 - **别工具先行**：原则先于工具；fitness fn 溯到规则而非 ArchUnit 的功能表；阈值只棘轮收紧不回弹。
 - **别让 G2 读执行上下文**：R001 隔离；编出会读执行会话的 G2 标准等于没有评估。

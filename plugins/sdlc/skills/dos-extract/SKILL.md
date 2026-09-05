@@ -20,6 +20,7 @@ description: |
 argument-hint: "[repo path] [--auto]"
 version: 0.2.0
 user-invocable: true
+# imported into sdlc 2026-09-05 from looper v0.2.0; body kept, sdlc wiring added (see 接线 / 术语映射)
 ---
 
 # dos-extract
@@ -160,6 +161,16 @@ artifacts live in a `.dos-extract/` workspace; finals copy to the project root.
   before-code edition."
 - **Mock/stub-heavy** → filter test fixtures from the inventory (ghost objects like `MockUser`).
 - **Disagreement after the fact** → re-run the relevant judgment; workspace artifacts persist.
+
+## 接线（在 sdlc 里的位置）
+
+- **X1 DOS 生命周期的现状本体一源**：产出的 `dos.yaml` 是 `/issue --dos`（依赖 DOS 词表闭包）与
+  `lint_cards.py --dos`（卡的 dos_slice 闭包）的解析源；闭包失败 = 客观触发 PSL 轨。
+- **应然本体**（`/psl-derive` 的 `dos-proposal.yaml`，同一 schema `assets/dos_template.yaml`）与本 skill 的现状本体
+  逐条对账：一致 → 采纳；名异实同 → 同义词表；实质冲突 → 人裁决。对账 skill 与 ontology-drift 尚未实现（登记为空白），
+  目前由人在 G1 记录里对账。
+- **agent 无写权**：`dos.yaml` 进 G2 锁与卡的 `forbidden_files`；改本体走变更提案（本体层回流）。
+- 路径记入 `sdlc_state.py set world.dos=…`。
 
 ## Exit gate for this skill itself
 

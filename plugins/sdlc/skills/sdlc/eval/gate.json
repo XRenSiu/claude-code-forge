@@ -26,14 +26,13 @@
   ],
   "provenance": {
     "date": "2026-09-05",
-    "evaluator": "AUTHOR-RUN structural pass: (a) skillwise evaluate-skill/scripts/lint_skill.py L0 (0 blocking on every skill; the two '▲ description' items are a linter artifact — it reads only the first line of a folded `>-` description, the full text carries 'Use when:'), (b) plugins/sdlc/eval/smoke.sh — 77 expectations, 77 pass on fixtures. NOT a decorrelated 2-judge read, NOT an L2 with/without run. Do not read this as certification.",
-    "smoke": "bash plugins/sdlc/eval/smoke.sh → 77 passed, 0 failed (2026-09-05)",
+    "evaluator": "AUTHOR-RUN structural pass: (a) skillwise evaluate-skill/scripts/lint_skill.py L0 (0 blocking on every skill; the two '▲ description' items are a linter artifact — it reads only the first line of a folded `>-` description, the full text carries 'Use when:'), (b) plugins/sdlc/eval/smoke.sh — 101 expectations, 101 pass on fixtures (suite covers all 13 skills). NOT a decorrelated 2-judge read, NOT an L2 with/without run. Do not read this as certification.",
+    "smoke": "bash plugins/sdlc/eval/smoke.sh → 101 passed, 0 failed (2026-09-05)",
     "harness_note": "scripts exercised in temp git repos / temp dirs; gh-networked paths (issue create, pr create, pr-poll watch/threads/resolve/done, post_review real post) NOT exercised — they need a live repo/PR",
     "scripts_run": {
-      "sdlc_state.py": "init/advance/set/gate/card/fail/archive: transition order enforced (skip refused), prerequisites checked against state (issue.number, lock.path, cards.lint_passed, cards done, evaluation/skip reason), --force requires --reason and writes a waiver row to ledger.md, G2 pass refused without lock.path, G1 reject refused without attribution, same-fingerprint 2nd failure → escalate:true, whitelist_overflow → escalate_to human, unknown signal refused; argparse bug (--slug after subcommand unrecognized) found by smoke and fixed same-day",
-      "lint_cards.py": "bad set rejected on 6 independent breaches (dup REQ, glob overlap, missing REQ-003, ac_ids not in done_when, dos closure, context>40k); good set passes; shared-file logic bug (`src/**` treated as covering root package.json) found by smoke and fixed same-day",
-      "lock_done_when.py": "sign → verify ok; tampered done_when.yaml → exit 1; same tamper + change-proposal-001.md → exit 2",
-      "metrics.py": "exports lead time / rounds / reflow distribution / G1 rate / human-AC ratio / escapes from a fixture archive"
-    }
+      "sdlc_state.py": "init/advance/set/gate/card/fail/archive: transition order enforced (skip refused), prerequisites checked against state (issue.number, lock.path, cards.lint_passed, cards done, evaluation/skip reason), --force requires --reason and writes a waiver row to ledger.md, G2 pass refused without lock.path, G1 reject refused without attribution, same-fingerprint 2nd failure → escalate:true, whitelist_overflow → escalate_to human, unknown signal refused; argparse bug (--slug after subcommand unrecognized) found by smoke and fixed same-day; advance g2 refuses a v1-shaped contract (validate_done_when_v2.py compiled in); release stage: archive refused until release.done or skipped_reason",
+      "lock_done_when.py": "sign --stage g2 → verify ok; tampered done_when.yaml → exit 1; same tamper + change-proposal → exit 2; re-sign --stage l5 with tests/**; tampered locked test → exit 1"
+    },
+    "moved": "lint_cards.py → plan-cards/scripts, metrics.py → retro/scripts (2026-09-05 re-split)"
   }
 }

@@ -1,0 +1,34 @@
+territory_id: search
+dos_ref: dos.yaml
+purpose: { name: "resolve relative time into eras", kpi: "p95 <= 300ms, 0 wrong-era", aspect: correctness, scope_ref: "dos.scope" }
+mode: auto
+channel_2_input: { failure_memory_count: 1, dry: false }
+hard_invariants:
+  - id: INV-search-001
+    statement: "WHILE a TimeRef resolves to >= 2 Eras THE SYSTEM SHALL NEVER auto-pick one"
+    ears_type: unwanted
+    survival_test: pass
+    strength: hard
+    altitude: territory
+    aspect: correctness
+    channel: abductive
+    provenance: { execution_point: "", obstacle_ref: "ledger:fail#3 wrong era auto-picked" }
+    narrowest_rule_note: "covers the failure without forbidding single-era resolution"
+    confidence: high
+    disposition: propose
+    golden_regression: true
+overridable_defaults:
+  - id: DEF-search-001
+    statement: "WHEN candidates are shown THE SYSTEM SHALL order them by scene richness"
+    authority_level: "product owner may override per surface"
+    aspect: correctness
+    survival_test: pass
+    strength: overridable
+    channel: deductive
+    provenance: { execution_point: "src/search/rank.ts:12", obstacle_ref: "" }
+    confidence: high
+    disposition: carded
+kicked_to_done_when: []
+conflicts_for_legislation: []
+deduped_against_constitution: []
+constitution_promotion_suspects: []

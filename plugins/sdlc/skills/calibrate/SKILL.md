@@ -18,6 +18,7 @@ description: |
 argument-hint: "<standard ref: eval_case set id | rubric_version id> [--mirror mutation|agreement] [--auto]"
 version: 0.1.0
 user-invocable: true
+# imported into sdlc 2026-09-05 from qanat/.claude/skills; body kept, sdlc wiring added (see 接线 / 术语映射)
 ---
 
 # calibrate
@@ -29,6 +30,23 @@ certify a ruler, the two non-negotiables (holdout + isolation) that make the cer
 and the meta-gate verdict that decides whether a standard may go live. **It prescribes no step
 order — the engine sequences the work; what follows are the gaps to fill and the gates that must
 hold, in any order.**
+
+## 术语映射（在 sdlc 里怎么读这份文件）
+
+本 skill 引自 qanat 仓库，正文保留其领域词汇；在 sdlc 里按下表读：
+
+| 原文 | sdlc 里的对应物 |
+|---|---|
+| Territory（领地） | 一个 bounded context / 模块：`dos.yaml` 的 `bounded_contexts.current_context`；issue 的 `Depends on DOS` 所属上下文 |
+| Run（一次执行） | 一次 issue → PR 的交付，即 `.sdlc/<slug>/` 一个 slug |
+| Contract / Contract 模板 | `done_when.yaml`（v2，以 AC 为单位）；模板 = 同类需求复用的 AC 骨架 |
+| R001（评估者与执行者隔离） | sdlc 的信息隔离：实现子 agent 看不到评审判据；验收在独立会话 |
+| R002（闸门资产只能人签） | sdlc 的 **G2**（判据冻结 `lock_done_when.py sign --by <人>`）与 **G3**（例外复核） |
+| 变更提案 / G2 签字（sdlc） / change proposal / G2 signing (sdlc) / NEEDS_HUMAN | `assets/change_proposal.md` 变更提案 + G2/G3 人签；账本 `ledger.md` 记 propose |
+| `verify_g1` / `review_g2`（qanat 的机器闸 / 评审闸） | sdlc L7 的 **A 档机械验收** / **C 档判断验收**——注意与 sdlc 的 G1（世界裁决）、G2（判据冻结）**不是同一对门** |
+| MemoryAsset（eval_case / rubric_version / failure_memory） | 归档目录 `specs/<slug>/` 里的测试集 / 评判 rubric；failure_memory = `ledger.md` 的 fail 行 + `escape-defects.md` |
+| daemon / 运行时 | 本地测试与 CI；`/sdlc` 的 acceptance 阶段 |
+| `calibration.resolved` 事件 | G3 记录里"标准不清"的改判（`g3_record.md`） |
 
 ## The gap (why a green test report is not a calibrated ruler)
 
@@ -198,6 +216,16 @@ The engine runs the calibration; these gates do not move:
   loosened-threshold trap, the boundary reminders.
 - `assets/calibration_report.yaml` — the named-field meta-gate report.
 - `assets/decisions_template.md` — the per-standard calibration audit-trail shape.
+
+## 接线（在 sdlc 里的位置）
+
+- **标准的标准**：`/spec-compile` 产出的 eval_case 集与 rubric 在进入 L7 验收（A 档 / C 档）前必须过本门；
+  未过的标准不能在 PR 的 Verification 段当证据，`meets_done_when` 不得引用它。
+  报告路径记入 `sdlc_state.py set contract.calibration_report=…`。
+- **holdout = 隐藏变体集**：参考文档 L5 的"隐藏集只含冻结 AC 的变体、放在实现 agent 不可读的环境"就是 ☐3；
+  隐藏集失败路由 `sdlc_state.py fail --signal hidden_variant_fail`（任务层）。
+- **☐4 隔离** = sdlc 的实现者 / 评审者信息隔离（`/pr-review` 输出不直接喂实现子 agent；跨供应商可用则用）。
+- **运行时改判**：G3 记录里人把某次失败改判为"标准不清"→ 该样本入黄金集、重触发本 skill（`g3_record.md`）。
 
 ## Exit gate for this skill itself
 

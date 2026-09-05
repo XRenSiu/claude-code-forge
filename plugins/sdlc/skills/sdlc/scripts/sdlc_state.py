@@ -26,7 +26,8 @@ Every mutating command appends a ledger row. Writes are atomic (tmp + rename).
 Mechanical guarantees (the non-waivable half):
   - stage transitions follow ORDER; skipping requires --force + --reason, recorded as a waiver
   - each stage's prerequisites (PREREQS) are checked against the state, not against the model's claim
-  - gates are recorded with who/when/verdict; G2 pass requires a lock path; G1 reject requires attribution
+  - gates are recorded with who/when/verdict; G2 pass requires a lock path; G1 pass requires world.derived_dir
+    (psl-derive products exist) and G1 reject requires attribution
   - `fail` consults routing.yaml, bumps the layer counter, detects fingerprint repeats, applies budgets by
     track, and emits an escalation decision the model must not override
 Semantic half (a judge / a human, never this script): whether the candidate layer is the RIGHT layer.
@@ -37,11 +38,12 @@ import hashlib
 import json
 import os
 import shutil
+import subprocess
 import sys
 
 ROOT_DEFAULT = ".sdlc"
 ORDER = ["intake", "track", "issue", "branch", "contract", "g2", "cards", "implement",
-         "acceptance", "pr", "review", "g3", "merge", "archive"]
+         "acceptance", "pr", "review", "g3", "merge", "release", "archive"]
 SETTABLE = {
     "track", "title",
     "issue.number", "issue.url", "issue.kind",
@@ -54,6 +56,9 @@ SETTABLE = {
     "review.done", "review.exit_reason", "review.rounds",
     "merge.sha", "merge.merged_at",
     "gates.g3.required",
+    "world.psl", "world.derived_dir", "world.dos", "world.invariants", "world.form_draft_sha256",
+    "contract.compile_manifest", "contract.calibration_report", "contract.tests_manifest",
+    "release.version", "release.tag", "release.notes", "release.done", "release.skipped_reason",
 }
 LAYER_COUNTERS = ["card", "plan", "task", "ontology", "world"]
 BUDGET_KEY = {"card": "card_retries", "plan": "plan_reflows", "task": "task_reflows",
@@ -168,6 +173,13 @@ def prereqs(st, target):
     elif target == "g2":
         dw = get_path(st, "contract.done_when")
         need(dw and os.path.isfile(dw), "contract.done_when points at an existing file")
+        if dw and os.path.isfile(dw):
+            v2 = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "donewhen-extract", "scripts", "validate_done_when_v2.py")
+            if os.path.isfile(v2):
+                r = subprocess.run([sys.executable, v2, dw], capture_output=True, text=True)
+                need(r.returncode == 0, "contract.done_when validates as schema v2 (validate_done_when_v2.py; v1 → run convert_v1_to_v2.py and complete the ACs) — C1 compiled")
+            else:
+                need(False, "validate_done_when_v2.py not found next to donewhen-extract — cannot certify the contract shape")
     elif target == "cards":
         need(get_path(st, "gates.g2.verdict") == "pass", "G2 verdict pass — run `gate g2`")
         need(get_path(st, "lock.path") and os.path.isfile(get_path(st, "lock.path")), "lock.path exists")
@@ -190,8 +202,12 @@ def prereqs(st, target):
             need(get_path(st, "gates.g3.verdict") in ("pass", "waived"), "G3 verdict pass — run `gate g3`")
         else:
             need(get_path(st, "review.done") is True, "review.done true")
+    elif target == "release":
+        need(get_path(st, "merge.sha"), "merge.sha set")
     elif target == "archive":
         need(get_path(st, "merge.sha"), "merge.sha set")
+        need(get_path(st, "release.done") is True or get_path(st, "release.skipped_reason"),
+             "release.done true (verify_release.py + post-deploy verification) OR release.skipped_reason recorded")
     return unmet
 
 
@@ -284,6 +300,11 @@ def cmd_gate(a):
         die("G2 pass requires lock.path (run lock_done_when.py sign, then `set lock.path=...`)", 1)
     if a.gate == "g1" and a.verdict == "reject" and a.attribution in (None, "none"):
         die("G1 reject requires --attribution derivation_error|rule_error (feeds world-layer routing)", 1)
+    if a.gate == "g1" and a.verdict == "pass":
+        dd = get_path(st, "world.derived_dir")
+        if not (dd and os.path.isdir(dd)):
+            die("G1 pass requires world.derived_dir pointing at an existing derived/ directory (psl-derive output: "
+                "dos-proposal.yaml / workflow.md / form-draft.md / divergence.md) — G1 adjudicates derivation products, not vibes", 1)
     g.update({"verdict": a.verdict, "by": a.by, "at": now()})
     if a.record:
         g["record"] = a.record

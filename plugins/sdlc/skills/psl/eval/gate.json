@@ -1,13 +1,19 @@
 {
-  "skill": "plugins/looper/skills/psl",
+  "skill": "plugins/sdlc/skills/psl",
   "tier": "production",
-  "evaluated_layers": ["structural"],
+  "evaluated_layers": [
+    "structural"
+  ],
   "gate_pass": "static_only",
   "structural": {
     "findings": [],
     "failure_taxonomy": {
-      "underfill": 0, "overfill": 0, "wrong-layer": 0,
-      "wrong-route": 0, "no-exit": 0, "seam-misplacement": 0
+      "underfill": 0,
+      "overfill": 0,
+      "wrong-layer": 0,
+      "wrong-route": 0,
+      "no-exit": 0,
+      "seam-misplacement": 0
     },
     "waived_count": 0
   },
@@ -23,7 +29,10 @@
     "rounds": 2,
     "round1": {
       "judges": 2,
-      "verdicts": { "judge_a": "pass (0 blocking, 5 non-blocking)", "judge_b": "fail (1 blocking)" },
+      "verdicts": {
+        "judge_a": "pass (0 blocking, 5 non-blocking)",
+        "judge_b": "fail (1 blocking)"
+      },
       "blocking": [
         "SKILL.md '本 skill 自身的出口门' referenced eval/gate.json + eval/report.md before either existed — dangling certification references in the very section that vouches for the skill's honesty"
       ],
@@ -48,5 +57,11 @@
       }
     },
     "tier2_status": "NOT RUN — spec §6 T1–T5 are L2-native behavioral tests (deletion/improvisation-class, require live /psl invocation with a user in the loop; the Skill registry only picks up looper v0.2.0 in a new session). Per THEORY.md §7 a static read must not impersonate L2; a production-tier skill with the required effect layer unrun resolves to static_only: structurally sound, effectiveness unverified."
+  },
+  "imported_into_sdlc": {
+    "date": "2026-09-05",
+    "from": "looper v0.2.0",
+    "changes": "body kept; added 术语映射 (qanat-derived only) + 接线（在 sdlc 里的位置）; support files: 立法收件箱/daemon wording mapped to sdlc change proposal / local tests+CI",
+    "smoke_2026_09_05": "verify_psl.py: legal PSL fixture pass; Step-N Workflow reject"
   }
 }

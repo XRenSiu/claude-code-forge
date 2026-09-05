@@ -1,0 +1,223 @@
+# finding-schema.yaml — qa-reviewer output contract
+#
+# Strict schema. Top-level key is `qa_report:`.
+# Findings are populated only from classifier-genuine failures.
+# Maintenance failures go to `maintenance_issues:` — never become findings.
+
+qa_report:
+  # ====== META BLOCK ======
+  agent_role: qa-reviewer
+  model: <model-id>                          # main orchestrator model
+  classifier_model: <model-id>               # typically Haiku
+  vendor: <claude | openai | google>
+  test_source: <path>                        # what was executed
+  thresholds_source: <path>                  # where thresholds came from
+  baseline_source: <path | null>             # --baseline if provided
+  layers_run: [<existence|unit|integration|e2e|mutation>, ...]
+  layers_skipped: [{name: <layer>, reason: <text>}, ...]
+  duration_seconds: <int>
+  auto_fix_maintenance: <bool>               # --auto-fix-maintenance flag state
+
+  # ====== DECISION ======
+  decision: <GO | NO-GO | CONDITIONAL>
+  decision_reasons:                          # ordered list of why this decision
+    - <text>                                 # e.g. "1 P0 genuine failure remains"
+    - <text>                                 # e.g. "mutation kill rate 0.62 < threshold 0.70"
+  conditional_caveats:                       # only populated when decision: CONDITIONAL
+    - <text>
+
+  # ====== SCOPE ======
+  scope:
+    tests_executed: <int>
+    tests_passed: <int>
+    tests_failed: <int>
+    tests_skipped: <int>
+    tests_errored: <int>                     # runner errors, distinct from assertion failures
+
+  # ====== RESULTS PER LAYER ======
+  results:
+    existence:
+      exit_code: <int>
+      checks_passed: <int>
+      checks_failed: <int>
+      failure_details:
+        - {kind: <file|function|route|db_field|frontend_component>, target: <text>, searched_globs: [...]}
+      duration_seconds: <int>
+
+    unit:
+      passed: <int>
+      failed: <int>
+      skipped: <int>
+      errored: <int>
+      line_coverage: <float | null>
+      branch_coverage: <float | null>
+      duration_seconds: <int>
+
+    integration:
+      passed: <int>
+      failed: <int>
+      line_coverage: <float | null>
+      duration_seconds: <int>
+      containers_used: [<name>, ...]         # for the audit trail
+
+    e2e:
+      passed: <int>
+      failed: <int>
+      duration_seconds: <int>
+      browser_used: <chromium|firefox|webkit|null>
+
+  # ====== MUTATION (special) ======
+  mutation:
+    tool: <mutmut | stryker | pit | cargo-mutants | gremlins | null>
+    qualified: <bool>                        # false if upstream had crashes
+    mutants_generated: <int>
+    mutants_killed: <int>
+    kill_rate: <float>
+    surviving_mutants:                       # diagnostic, not findings
+      - file: <path>
+        line: <int>
+        mutation_kind: <text>                # e.g. "boundary <= to <"
+        what_was_mutated: <text>             # the actual line
+        hint: <text>                         # optional, what test case might catch it
+    duration_seconds: <int>
+
+  # ====== FINDINGS (only genuine failures) ======
+  num_findings: <int>
+  findings:
+    - finding_id: qa-001                     # qa-NNN sequential
+      severity: <P0 | P1 | P2 | P3>
+      classification: genuine                # always genuine for items in findings:
+      classification_uncertain: <bool>       # OPTIONAL — true if classifier said needs_human
+      test_file: <path>
+      test_line: <int>
+      test_name: <text>
+      layer: <existence | unit | integration | e2e>
+      based_on: <REQ-ID | null>              # if test has based_on: comment, copy it; else null
+      failure_type: <selector | assertion | timing | resource | pbt | crash>
+      assertion_message: <text | null>       # one-line summary
+      stack_trace: <text | null>             # full trace if available; truncate to 30 lines
+      evidence:
+        # one or more of:
+        pbt_counterexample_input: <text | null>     # verbatim from runner output
+        container_logs:                              # for integration failures
+          <container_name>: <text>                   # last 50 lines
+        screenshot_path: <path | null>               # for E2E browser failures
+        transport_trace: <text | null>               # for E2E API failures
+        rerun_count: <int>                           # how many times re-attempted
+        rerun_passes: <int>
+      regression: <bool>                     # was passing in baseline, now failing
+      proposed_fix: <text | null>            # one-line, only if obvious
+      tags: [<string>, ...]                  # OPTIONAL — e.g. ["regression", "race-condition"]
+
+  # ====== MAINTENANCE ISSUES (non-blocking) ======
+  maintenance_issues:                        # classifier-maintenance failures; surfaced but not findings
+    - test_file: <path>
+      test_line: <int>
+      test_name: <text>
+      classification: maintenance
+      confidence: <high | medium | low>
+      reason: <text>                         # classifier's one-sentence reasoning
+      auto_fix_available: <bool>
+      auto_fixed: <bool>                     # only true if --auto-fix-maintenance applied successfully
+      proposed_fix: <text | null>            # the diff or change description
+
+  # ====== BASELINE REGRESSIONS ======
+  regressions:                               # populated only when --baseline provided
+    - test_file: <path>
+      test_name: <text>
+      was: <passed | skipped>
+      now: <failed | errored>
+      first_iteration_seen: <text>           # baseline's iteration ref if known
+      blocking_per_policy: <bool>
+
+  # ====== CAVEATS ======
+  caveats:
+    runtime_gaps: [<text>, ...]              # e.g. ["docker not available, integration layer skipped"]
+    unknown_threshold_keys: [<text>, ...]    # threshold file had keys we don't recognize
+    slow_layers: [<text>, ...]               # e.g. ["unit layer took 8min, 3x typical"]
+    decision_qualifier: <text | null>        # e.g. "mutation_unverified" when mutation skipped
+
+# ====== EXAMPLE: NO-GO ======
+
+qa_report:
+  agent_role: qa-reviewer
+  model: claude-sonnet-4-6
+  classifier_model: claude-haiku-4-5
+  vendor: claude
+  test_source: tests/subscription-cancellation/
+  thresholds_source: specs/subscription-cancellation/done_when.yaml
+  baseline_source: ratchet-log/iteration-002/final-state.json
+  layers_run: [existence, unit, integration, e2e, mutation]
+  layers_skipped: []
+  duration_seconds: 487
+  auto_fix_maintenance: false
+  decision: NO-GO
+  decision_reasons:
+    - "1 P0 genuine failure in integration layer (test_cancel_atomicity)"
+    - "mutation kill rate 0.62 < threshold 0.70"
+  conditional_caveats: []
+  scope:
+    tests_executed: 245
+    tests_passed: 232
+    tests_failed: 1
+    tests_skipped: 12
+    tests_errored: 0
+  results:
+    existence: { exit_code: 0, checks_passed: 8, checks_failed: 0, failure_details: [], duration_seconds: 3 }
+    unit: { passed: 18, failed: 0, skipped: 0, errored: 0, line_coverage: 0.87, branch_coverage: 0.71, duration_seconds: 12 }
+    integration: { passed: 4, failed: 1, line_coverage: 0.62, duration_seconds: 145, containers_used: [postgres, redis] }
+    e2e: { passed: 2, failed: 0, duration_seconds: 89, browser_used: chromium }
+  mutation:
+    tool: stryker
+    qualified: true
+    mutants_generated: 62
+    mutants_killed: 47
+    kill_rate: 0.758
+    surviving_mutants:
+      - file: src/billing/cancel.ts
+        line: 47
+        mutation_kind: "boundary <= to <"
+        what_was_mutated: "if (subscription.end_date <= now) { ... }"
+        hint: "no test covers end_date exactly equal to now"
+    duration_seconds: 238
+  num_findings: 1
+  findings:
+    - finding_id: qa-001
+      severity: P0
+      classification: genuine
+      classification_uncertain: false
+      test_file: tests/subscription-cancellation/integration/test_cancel_atomicity.py
+      test_line: 47
+      test_name: test_cancel_with_concurrent_retry_is_atomic
+      layer: integration
+      based_on: REQ-001
+      failure_type: assertion
+      assertion_message: "expected snapshot_before == snapshot_after, got difference at field retry_job"
+      stack_trace: |
+        File "tests/.../test_cancel_atomicity.py", line 47, in test_cancel_with_concurrent_retry_is_atomic
+        AssertionError: expected snapshot_before == snapshot_after, got difference at field retry_job
+      evidence:
+        container_logs:
+          postgres: |
+            ...slow query log showing 2 concurrent BEGIN/COMMIT cycles overlapping...
+        rerun_count: 3
+        rerun_passes: 0
+      regression: false
+      proposed_fix: "Wrap cancellation + refund_queue.enqueue in a single transaction with SELECT FOR UPDATE on the subscription row."
+      tags: ["race-condition", "atomicity"]
+  maintenance_issues:
+    - test_file: tests/subscription-cancellation/e2e/test_cancel_button.spec.ts
+      test_line: 22
+      test_name: cancel button renders with confirm modal
+      classification: maintenance
+      confidence: high
+      reason: "Selector .btn-cancel-3 not found; impl diff did not touch UI; baseline passed. Likely refactor of component classnames."
+      auto_fix_available: true
+      auto_fixed: false
+      proposed_fix: "Update selector to [data-testid=cancel-subscription-button]"
+  regressions: []
+  caveats:
+    runtime_gaps: []
+    unknown_threshold_keys: []
+    slow_layers: []
+    decision_qualifier: null

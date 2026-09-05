@@ -17,6 +17,7 @@ description: |
 argument-hint: "<territory id or name> [--cross-territory] [--auto]"
 version: 0.2.0
 user-invocable: true
+# imported into sdlc 2026-09-05 from looper v0.2.0; body kept, sdlc wiring added (see 接线 / 术语映射)
 ---
 
 # invariant-extract
@@ -183,6 +184,15 @@ The engine runs the extraction; these gates do not move:
   the honest framing of the abductive use of KAOS's obstacle model.
 - `assets/invariant_card.yaml` — the named-field output card.
 - `assets/cross_territory_promotion_template.md` — the `--cross-territory` batch proposal.
+
+## 接线（在 sdlc 里的位置）
+
+- **X1 的常驻不变量**：消费 `/dos-extract` 的 `dos.yaml`；抽出的 □ 不变量卡（`verify_card.py` 过门）交
+  `/spec-compile` 编成 fitness fn / property 测试；硬不变量 propose-only，签字走 G2（`change_proposal.md`）。
+- **失败记忆的来源**：`.sdlc/<slug>/ledger.md` 的 `fail` 行、`escape-defects.md`、G3 记录——逃逸缺陷是最可靠的
+  "有不变量存在"信号（R12 路由：人归因后回到本体层再抽一次）。
+- **◊ 候选**（本次验收）→ `/donewhen-extract`（本插件），不是 acceptance-spec 专属。
+- 路径记入 `sdlc_state.py set world.invariants=…`。
 
 ## Exit gate for this skill itself
 

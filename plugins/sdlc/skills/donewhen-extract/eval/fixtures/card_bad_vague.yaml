@@ -1,0 +1,45 @@
+issue_ref: "#42"
+territory_id: search
+purpose: { name: "relative-time search", kpi: "p95 <= 300ms", aspect_focus: [correctness, latency] }
+mode: auto
+risk_class: low
+clauses:
+  - id: DW-001
+    statement: "WHEN input resolves to >= 2 Eras THE SYSTEM SHALL return a disambiguation prompt with >= 2 candidates"
+    ears_type: event
+    given: "fixture era-overlap"
+    when: "input 上个月"
+    then: "disambiguation prompt, candidates >= 2"
+    threshold: ">= 2 candidates"
+    threshold_source: "kpi"
+    paired_with: DW-002
+    verify: command
+    based_on: ""
+    disposition: draft
+  - id: DW-002
+    statement: "WHEN input is empty THE SYSTEM SHALL reject with 400 empty_query"
+    ears_type: unwanted
+    given: "none"
+    when: "input 上个月"
+    then: "拒绝 400 empty_query"
+    threshold: "400"
+    threshold_source: "kpi"
+    paired_with: DW-001
+    verify: command
+    based_on: ""
+    disposition: draft
+  - id: DW-003
+    statement: "WHEN searching THE SYSTEM SHALL respond 快"
+    ears_type: ubiquitous
+    given: "1000 requests"
+    when: "search"
+    then: "p95 <= 300 ms"
+    threshold: ""
+    threshold_source: "slo:search-p95"
+    paired_with: ""
+    verify: command
+    based_on: ""
+    disposition: draft
+kicked_to_invariant: []
+exit_checks: { contradiction: { machine_pass: true, suspected_pairs: [] }, coverage: { machine_pass: true, uncovered_aspects: [] } }
+deduped_against_template: []

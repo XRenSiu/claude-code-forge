@@ -1,0 +1,33 @@
+{
+  "skill": "plugins/sdlc/skills/psl-derive",
+  "tier": "production",
+  "evaluated_layers": [
+    "structural"
+  ],
+  "gate_pass": "static_only",
+  "structural": {
+    "findings": [],
+    "failure_taxonomy": {
+      "underfill": 0,
+      "overfill": 0,
+      "wrong-layer": 0,
+      "wrong-route": 0,
+      "no-exit": 0,
+      "seam-misplacement": 0
+    },
+    "waived_count": 0
+  },
+  "effect": null,
+  "discrimination": null,
+  "fix_list": [
+    "L2: run N=3 isolated derivations on one real PSL and hold a real G1 — measure whether the divergence set actually surfaces the PSL's underdetermined slots",
+    "DOS proposal ↔ dos-extract actual ontology reconciliation is still manual (G1 record); a reconcile skill is a registered blank"
+  ],
+  "provenance": {
+    "date": "2026-09-05",
+    "evaluator": "AUTHOR-RUN structural pass (skillwise lint_skill.py L0 + plugins/sdlc/eval/smoke.sh). NOT a decorrelated read, NOT an L2 run.",
+    "scripts_run": {
+      "verify_derived.py": "good derived dir passes (4 files, all decisions cite existing PSL-IDs, dos-proposal passes verify_dos.py, no invented entities, divergence n:3 with agenda); bad dir rejected on 4 independent breaches (decision without ref, fake PSL-099, Step 1 in workflow, invented DateFilterCard)"
+    }
+  }
+}

@@ -17,6 +17,7 @@ description: |
 argument-hint: "<issue id / signal id / intent text> [--template <contract_template_id>] [--auto]"
 version: 0.1.0
 user-invocable: true
+# imported into sdlc 2026-09-05 from qanat/.claude/skills; body kept, sdlc wiring added (see 接线 / 术语映射)
 ---
 
 # donewhen-extract
@@ -28,6 +29,23 @@ criteria that separate a falsifiable one from boilerplate, the primitive that ma
 Given/When/Then shape mechanical, and the gates a draft must clear before a Contract is signed.
 **It prescribes no step order — the engine sequences the work; what follows are the gaps to
 fill and the gates that must hold, in any order.**
+
+## 术语映射（在 sdlc 里怎么读这份文件）
+
+本 skill 引自 qanat 仓库，正文保留其领域词汇；在 sdlc 里按下表读：
+
+| 原文 | sdlc 里的对应物 |
+|---|---|
+| Territory（领地） | 一个 bounded context / 模块：`dos.yaml` 的 `bounded_contexts.current_context`；issue 的 `Depends on DOS` 所属上下文 |
+| Run（一次执行） | 一次 issue → PR 的交付，即 `.sdlc/<slug>/` 一个 slug |
+| Contract / Contract 模板 | `done_when.yaml`（v2，以 AC 为单位）；模板 = 同类需求复用的 AC 骨架 |
+| R001（评估者与执行者隔离） | sdlc 的信息隔离：实现子 agent 看不到评审判据；验收在独立会话 |
+| R002（闸门资产只能人签） | sdlc 的 **G2**（判据冻结 `lock_done_when.py sign --by <人>`）与 **G3**（例外复核） |
+| 变更提案 / G2 签字（sdlc） / change proposal / G2 signing (sdlc) / NEEDS_HUMAN | `assets/change_proposal.md` 变更提案 + G2/G3 人签；账本 `ledger.md` 记 propose |
+| `verify_g1` / `review_g2`（qanat 的机器闸 / 评审闸） | sdlc L7 的 **A 档机械验收** / **C 档判断验收**——注意与 sdlc 的 G1（世界裁决）、G2（判据冻结）**不是同一对门** |
+| MemoryAsset（eval_case / rubric_version / failure_memory） | 归档目录 `specs/<slug>/` 里的测试集 / 评判 rubric；failure_memory = `ledger.md` 的 fail 行 + `escape-defects.md` |
+| daemon / 运行时 | 本地测试与 CI；`/sdlc` 的 acceptance 阶段 |
+| `calibration.resolved` 事件 | G3 记录里"标准不清"的改判（`g3_record.md`） |
 
 ## The gap (why the engine can't just paraphrase the Issue)
 
@@ -136,7 +154,7 @@ The engine runs the extraction; these gates do not move:
   human signs (R002)**. This skill is a drafting clerk: it emits the done_when card as a Contract
   draft. The Contract goes live only when signed — by a human, or auto-signed for `risk_class ∈
   config.auto_sign_risk_classes` (default `low`). **High-risk or template-changing done_when is
-  PROPOSE-only** (`NEEDS_HUMAN` → legislation inbox). The skill never auto-signs a contract.
+  PROPOSE-only** (`NEEDS_HUMAN` → change proposal / G2 signing (sdlc)). The skill never auto-signs a contract.
 - **Generation-side, trusted-side.** done_when is produced **pre-Run, on the trusted side** (the
   Goodhart fix from dos 0.1.13): the executor never writes its own acceptance criteria. Drafting
   here, before execution, is what keeps the contract honest.
@@ -147,7 +165,7 @@ The engine runs the extraction; these gates do not move:
   handed to invariant-extract. Iteration to get there is the engine's.
 - **Schema (landed).** `Contract.done_when` exists (structured items, stable REQ-IDs). The skill
   writes a Contract draft; the contract.drafted/signed 三件套 (guards / projection / sign-off UI)
-  already ships in the daemon. Until signed, the draft lives in the workspace + legislation inbox.
+  already ships in the daemon. Until signed, the draft lives in the workspace + change proposal / G2 signing (sdlc).
 
 ## High-risk — never do (non-waivable)
 
@@ -194,6 +212,15 @@ The engine runs the extraction; these gates do not move:
   reminders (don't become invariant-extract / spec-compile).
 - `assets/done_when_card.yaml` — the named-field output card.
 - `assets/decisions_template.md` — the per-clause audit-trail shape.
+
+## 接线（在 sdlc 里的位置）
+
+- **L3 契约起草者**：`/issue` 已把 AC 写成 v2 形状；本 skill 把它收紧成可签的 `done_when.yaml`（阈值溯源、
+  happy/unhappy 配对、矛盾与覆盖两检），没有 done-when-pipeline 的 `/acceptance-spec` 时它就是契约产出者。
+  产物路径记入 `sdlc_state.py set contract.done_when=… contract.source=donewhen-extract`。
+- **G2 之前**：卡是草案；`lock_done_when.py sign` 之后才冻结。改动走变更提案。
+- **常驻不变量候选 → `/invariant-extract`**（本插件）；编译成测试 / 评判程序 → `/spec-compile`；证明尺子承重 → `/calibrate`。
+- **失败记忆的来源**：`.sdlc/<slug>/ledger.md` 的 `fail` 行与 `escape-defects.md`；`based_on` 引它们的行。
 
 ## Exit gate for this skill itself
 

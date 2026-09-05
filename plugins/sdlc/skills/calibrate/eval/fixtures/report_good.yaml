@@ -1,0 +1,20 @@
+standard_ref: "DW-001 eval_case set"
+kind: eval_case
+source_compile_ref: manifest_good.yaml
+mode: auto
+mutation:
+  tool: Stryker
+  total_mutants: 20
+  killed: 17
+  mutation_score: 0.85
+  failure_memory_mutants: ["ledger:fail#3"]
+  surviving_mutants:
+    - { mutant: "rank.ts:12 >= → >", slipped_through: "tie ordering", eval_case_to_add: "tie at equal richness keeps insertion order" }
+  budget_note: "all 20 run"
+agreement: { reference_solutions: 0, krippendorff_alpha: 0.0, inconsistent_dimensions: [], dropped_rubric_sets: [] }
+holdout_ref: "hidden/variants-of-frozen-ACs-2026-09-05"
+holdout_unexposed_confirmed: true
+isolation_attested: true
+cross_vendor_required: false
+verdict: { c1_mutation_pass: true, c2_agreement_pass: true, c3_holdout_pass: true, c4_isolation_pass: true, result: pass, gaps_routed_to: { spec_compile: [], spec_authors: [] } }
+activation: { rubric_sign_required: false, signed_by: "" }

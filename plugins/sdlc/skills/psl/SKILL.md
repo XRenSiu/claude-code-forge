@@ -11,6 +11,7 @@ description: |
 argument-hint: "[一句/一段产品需求，或需求文件路径] [可选：物料文件路径…]"
 version: 0.1.0
 user-invocable: true
+# imported into sdlc 2026-09-05 from looper v0.2.0; body kept, sdlc wiring added (see 接线 / 术语映射)
 ---
 
 # psl
@@ -153,6 +154,14 @@ Vision 赌注、目标 Persona、关键 Mental Model 承诺、能推翻朴素数
 - `references/EXAMPLE.md` — 完整推导示例（"记忆产品按时间搜索"：需求 → 朴素实现为什么错 →
   提问轨迹 → 带 `[Σ]/[φ]/[γ]` 标注的完整 PSL），外加一个不同领域的迷你例证明模式可复用。
   **写前先读。** 对照的是形状，不是内容——别把示例里的世界抄进别的产品。
+
+## 接线（在 sdlc 里的位置）
+
+- **PSL 轨的第一步**：`/sdlc` 或 `/issue` 判定 track=psl（语义份额主导、或 DOS 闭包失败）→ 先用本 skill 写
+  `PSL-<名>.md`（`verify_psl.py` 过门）→ `/psl-derive` 推导 DOS 提案 / Workflow / 形态草案 / 分歧集 →
+  **G1 人签**（`sdlc_state.py gate g1`）→ 签字版形态草案 + 范围段才进 `/issue`。
+- **不给确定性需求套世界模型**：双轨判据在 `/issue` 入口就拦；TASK 轨不经过本 skill。
+- 产物路径记入 `sdlc_state.py set world.psl=…`。
 
 ## 本 skill 自身的出口门
 

@@ -1,0 +1,27 @@
+schema: 2
+feature: memory-time-search
+based_on: [REQ-001, REQ-002, REQ-003]
+created_at: 2026-09-05T10:02:33Z
+created_by: donewhen-extract
+track: task
+acceptance:
+  - { id: AC-001-a, req: REQ-001, kind: mechanical, ears_type: event, observe: "route:POST /search/time", given: {input: "上个月"}, expect: {candidates: ">= 2"}, paired_with: AC-001-b }
+  - { id: AC-001-b, req: REQ-001, kind: mechanical, ears_type: unwanted, observe: "route:POST /search/time", given: {input: ""}, expect: {status: 400}, paired_with: AC-001-a }
+  - { id: AC-002-a, req: REQ-002, kind: human, observe: "ui:data-test=era-result", statement: "period with scenes", judge: product, evidence: demo }
+  - { id: AC-003-a, req: REQ-003, kind: mechanical, ears_type: unwanted, observe: "route:POST /search/time", given: {input: ""}, expect: {status: 400} }
+existence:
+  - route: POST /search/time
+  - file: src/search/time.ts
+  - ui: data-test=era-result
+behavior:
+  unit_tests: { example_based: [], property_based: [] }
+  integration_tests: { example_based: [], property_based: [] }
+  e2e_tests: []
+  thresholds: { unit_coverage: ">= 0.80", mutation_kill_rate: ">= 0.70" }
+  threshold_source: "team floor"
+rules: ["any P0 finding blocks merge"]
+constraints:
+  forbidden_paths: [tests/**, done_when.yaml, dos.yaml, .done_when.lock]
+  mock_allowlist: []
+budgets: { card_retries: 3, plan_reflows: 2, task_reflows: 1 }
+spec_drift_threshold: { max_fix_loops_before_escalation: 3 }

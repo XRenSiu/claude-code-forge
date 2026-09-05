@@ -3,7 +3,7 @@
 **gate_pass: `static_only`** · tier: production · evaluated_layers: `[structural]` · date: 2026-09-05
 
 > **What this is (and is not).** An author-run *structural* pass: the skillwise L0 linter (0 blocking) and the
-> plugin smoke suite (`bash plugins/sdlc/eval/smoke.sh`, 77/77 on fixtures). It is **not** a decorrelated
+> plugin smoke suite (`bash plugins/sdlc/eval/smoke.sh`, 101/101 on fixtures). It is **not** a decorrelated
 > two-judge read and **not** an L2 with/without-skill comparison. Per skillwise THEORY §7 an unguided read is
 > ~46% accurate on "which skill is better"; everything here about runtime behaviour is a prediction.
 

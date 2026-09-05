@@ -1,0 +1,78 @@
+# done_when.yaml — schema v2 (sdlc 的契约之本；参考文档裁决 C1/C2/C3 的落实)
+#
+# 与 v1（acceptance-spec 的 Appendix C）的关系：v2 是 v1 的超集——
+#   + schema: 2
+#   + acceptance:   以 AC 为单位的判据（G2 签的就是这一块；测试名不是判据）           ← C1
+#   ~ existence:    只留观察边界（route / db_field / ui / cli / event）；file / function 下放到卡 ← C2
+#   = behavior:     保留，但语义变为 tests-manifest（test → AC 的映射种子，由 test-suite-generator / spec-compile 填，
+#                   L5 写完后随 tests/** 一起二次锁定；G2 时可为空）                 ← C6
+#   = rules:        保留（meta-judge 的规则源）
+#   + constraints:  禁改路径、mock 白名单（白名单执行器与 spec-gaming 的输入）
+#   + budgets:      按轨道的预算（缺省取 routing.yaml）
+#   + spec_drift_threshold: acceptance-fleet 的 SPEC_DRIFT 触发
+# 消费方：/issue（AC 形状）、/pr（AC→证据映射）、/plan-cards（ac_ids / forbidden_paths）、/spec-compile、
+#         /test-suite-generator（behavior）、/qa-reviewer（thresholds）、/meta-judge（rules + thresholds）、
+#         /acceptance-fleet、/spec-gaming-detector、lock_done_when.py（两段锁）、sdlc_state.py（advance g2 校验 v2）。
+
+schema: 2
+feature: memory-time-search
+based_on: [REQ-001, REQ-002, REQ-003]
+created_at: 2026-09-05T10:02:33Z
+created_by: donewhen-extract              # donewhen-extract | acceptance-spec(+convert) | issue-inline
+track: task                               # psl | task
+
+acceptance:                               # G2 冻结的判据。每条挂 REQ；kind 决定档位。
+  - id: AC-001-a
+    req: REQ-001
+    kind: mechanical                      # 可降解 → A 档一票否决
+    ears_type: event                      # ubiquitous | event | state | unwanted | optional
+    observe: "route:POST /search/time"    # 观察边界，不是文件路径
+    given: { input: "上个月", fixture: era-overlap }
+    expect: { type: disambiguation_prompt, candidates: ">= 2" }
+    paired_with: AC-001-b
+  - id: AC-001-b
+    req: REQ-001
+    kind: mechanical
+    ears_type: unwanted
+    observe: "route:POST /search/time"
+    given: { input: "", fixture: none }
+    expect: { status: 400, error: empty_query }
+    paired_with: AC-001-a
+  - id: AC-002-a
+    req: REQ-002
+    kind: human                           # 不可降解 → C 档，指定裁决人
+    observe: "ui:data-test=era-result"
+    statement: 返回的是"有场景的时期"，不是一行日期
+    judge: product                        # product | design | tech（封闭集）
+    evidence: demo                        # checklist | demo
+
+existence:                                # 只留观察边界
+  - route: POST /search/time
+  - db_field: memories.era_id
+  - ui: data-test=era-result
+
+behavior:                                 # tests-manifest 种子；G2 时可为空，L5 由 test-suite-generator / spec-compile 填
+  unit_tests:
+    example_based: []
+    property_based: []
+  integration_tests:
+    example_based: []
+    property_based: []
+  e2e_tests: []
+  thresholds:                             # 阈值本身就是判据（qa-reviewer / meta-judge 读这里）
+    unit_coverage: ">= 0.80"
+    mutation_kill_rate: ">= 0.70"
+    pbt_runs_per_property: ">= 500"
+    p95_latency_ms: "<= 300"
+  threshold_source: "SLO search-p95; team coverage floor"
+
+rules:                                    # meta-judge 规则源
+  - "any P0 finding blocks merge"
+  - "mutation_kill_rate >= 0.7"
+
+constraints:
+  forbidden_paths: [tests/**, done_when.yaml, dos.yaml, contract.yaml, .done_when.lock]
+  mock_allowlist: [external.mail]
+
+budgets: { card_retries: 3, plan_reflows: 2, task_reflows: 1 }
+spec_drift_threshold: { max_fix_loops_before_escalation: 3 }

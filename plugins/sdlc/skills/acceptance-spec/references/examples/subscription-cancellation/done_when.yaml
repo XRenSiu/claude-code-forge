@@ -1,0 +1,72 @@
+feature: subscription-cancellation
+based_on: [REQ-001, REQ-002, REQ-003, REQ-004, REQ-005, REQ-006]
+created_at: 2026-05-24T00:00:00Z
+created_by: acceptance-spec
+
+# Layer 1 — Existence (Appendix C v1: 5 kinds, no sub-fields)
+existence:
+  - file: src/billing/cancel_subscription_use_case.ts
+  - file: src/billing/reactivate_subscription_use_case.ts
+  - function: CancelSubscriptionUseCase
+  - function: ReactivateSubscriptionUseCase
+  - function: ExpireSubscriptionJob
+  - route: POST /api/subscription/cancel
+  - route: POST /api/subscription/reactivate
+  - db_field: subscription.status
+  - db_field: subscription.cancelled_at
+  - db_field: subscription.end_date
+  - frontend_component: CancelSubscriptionButton
+  - frontend_component: ExpiryNoticeBanner
+
+# Layer 2 — Behavior (Appendix C v1: each test entry is a bare string).
+# Property type is encoded in the test name suffix (idempotent / invariant /
+# state_machine / ...) so test-suite-generator 4-B can route by name.
+behavior:
+  unit_tests:
+    example_based:
+      - test_cancel_active_sets_status_to_cancelled_active
+      - test_cancel_records_cancellation_timestamp
+      - test_cancel_clears_future_scheduled_charges
+      - test_cancel_trialing_sets_status_to_cancelled_expired
+      - test_cancel_trialing_does_not_create_charge
+      - test_reactivate_in_cancelled_active_restores_status_and_schedules_charge
+      - test_create_new_subscription_while_cancelled_active_is_rejected
+    property_based:
+      - test_cancel_preserves_end_date_invariant
+      - test_cancel_is_idempotent
+      - test_cancel_then_reactivate_is_reversible_within_window
+      - test_no_charge_scheduled_in_future_after_cancel_invariant
+
+  integration_tests:
+    example_based:
+      - test_cancel_api_returns_200_and_correct_payload
+      - test_cancel_triggers_confirmation_email
+      - test_cancelled_active_user_still_accesses_premium_until_end_date
+      - test_expire_job_transitions_cancelled_active_to_expired_at_utc_boundary
+    property_based:
+      - test_cancel_atomicity_across_billing_and_access_modules_invariant
+      - test_subscription_status_state_machine_is_well_formed
+
+  e2e_tests:
+    - test_user_can_cancel_active_subscription_via_ui
+    - test_cancelled_user_sees_expiry_notice_on_login
+
+  thresholds:
+    unit_coverage: ">= 0.80"
+    integration_coverage: ">= 0.60"
+    mutation_kill_rate: ">= 0.70"
+    pbt_runs_per_property: ">= 500"
+
+# Layer 3 — Rules (v1.0+; replaces the retired v0.x fitness layer per HTML v2 §3.5).
+# Flat conditions consumed by /meta-judge during final-verdict synthesis. The
+# two "doc clarity" criteria that lived here in v0.x now reach evaluation via
+# /pm-reviewer's `requires_human_verification` verdict for the corresponding
+# REQs in spec.md — not via a contract layer.
+rules:
+  - "any P0 finding from code-reviewer blocks merge"
+  - "mutation_kill_rate >= 0.7"
+  - "all critical REQs must reach fully_compliant or explicit-human-OK"
+
+spec_drift_threshold:
+  # Read by /acceptance-fleet as the SPEC_DRIFT_TRIGGER threshold.
+  max_fix_loops_before_escalation: 3
