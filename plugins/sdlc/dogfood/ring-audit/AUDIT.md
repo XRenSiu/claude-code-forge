@@ -971,7 +971,7 @@ python3 plugins/sdlc/dogfood/ring-audit/check_audit.py plugins/sdlc/dogfood/ring
 | **碰了被审目录的提交数** | **0** |
 | 回放被拒的提交数 | 0 |
 
-> 快照取于 e5ffbbd（CARD-06 的第二个提交）之后，覆盖当时全部 8 个 Card 提交。承载这份记录的第三个提交必然落在自己的快照之外——它只改 audit.yaml 与 AUDIT.md，两者都不在被审的三个目录里，重跑一次 replay_card_commits.sh 即可自证。
+> 这是快照，不是恒等式：取于 e5ffbbd 之后，覆盖当时全部 8 个 Card 提交。一份记录不可能覆盖承载它自己的那个提交，所以重跑 replay_card_commits.sh 会看到更大的 card_commits——CARD-06 之后的每个提交都只改 audit.yaml / AUDIT.md / render_audit.py，三者都不在被审的三个目录里，touches 仍是 0。不随快照漂移的是下面的 git_diff_stat：它一路算到 HEAD，恒为空，那才是 PSL-003 的承重数字。
 
 | 提交 | 卡 | 回放 exit | 碰被审目录 |
 |---|---|---|---|
