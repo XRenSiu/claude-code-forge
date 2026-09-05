@@ -77,36 +77,47 @@ bash plugins/sdlc/eval/smoke.sh                                             # 19
 
 ## Known issues
 
-> 依 g2-judge 对 iteration-001 的裁决列全；AC-005-a / AC-006-a **待 G3 代签，未通过**。校准措辞：**instrument mutation 0.767; holdout 6/10 with 4 known gaps**（不写无限定的 calibrated）。
+> 依 g2-judge 对 iteration-002 的解码列全（known_issues_must_list）；AC-005-a / AC-006-a **待 G3 代签，未通过**。校准措辞：**instrument mutation 0.767; holdout 6/10 with 4 known gaps**（不写无限定的 calibrated）。finding id 以 `ratchet-log/iteration-002/meta-judge-output.yaml` 的 mf-* 为准，iteration-003 的存活项按其自身 id 另列。
 
-**A. known_gaps（11 项，`calibration/known_gaps.yaml`，状态 open → change-proposal-002）**
+**A. known_gaps（11 项，`calibration/known_gaps.yaml`，状态 open → change-proposal-002，本轮不变）**
 - KG-01 `check_audit.py:376-391` waived 无 waiver_ref（G1 规则 3c 未命名 token）
-- KG-02 `check_audit.py:399` proposal.source 只检非空、不解析（AC-004-b 读法）——39 条 source 已人工核对可解析
+- KG-02 `check_audit.py:399` proposal.source 只检非空、不解析（AC-004-b 读法；= mf-011）——39 条 source 已人工核对可解析
 - KG-03 `check_audit.py:151-170` 重复环 id → rings 11 无谓词（AC-001-a rings == 10）
-- KG-04 `check_audit.py:376-391` signer_kind 超 F-07 枚举无 token
-- KG-05..KG-11 `check_audit.py` 7 个存活仪器变体 M03/M04/M07/M14/M22/M23/M28（ring_unexpected / parts_missing / evidence_missing / 跨环 gap 引用 / gate_verdict_outside_enum / reject-waived 无 signer / --rings 视图）
+- KG-04 `check_audit.py:376-391` signer_kind 超 F-07 枚举无 token（= mf-007）
+- KG-05..KG-11 `check_audit.py` 7 个存活仪器变体 M03/M04/M07/M14/M22/M23/M28
 
-**B. 契约层延后项（change-proposal-002；先开一轮 G1 解释）**
-- mf-004 `check_audit.py:328-343` 规则 1 信任自报的 artifacts[] 且任意非空 alternatives_of 即豁免（F-05 三条件未检；srg-005）
-- mf-008 `check_audit.py:265-267` 规则 2e 同环子句被用于 fills[]（G1 文本只对 missing[]）
-- mf-009 `check_audit.py:231-238` 维度级 `implemented: true` 的 token 编码
-- F-16 vs `audit.schema.md#Assessment` disposition 枚举不一致（g3-input #2）
-- srg-003 → AC-007-c：无 footer 提交触碰被审目录作为**记录字段**（不门控；PSL L122-123 偏差提交合法）
-- srg-006 → 实现期间重签者规则（本次重签者与实现者同厂商同会话族，用户授权下允许）
-- I-68 acceptance-fleet S3 对 3 ≤ gaming_risk_score < 7 无规则（本次先例：见 ledger decision）
+**B. 契约 / 解释层延后项（change-proposal-002；先开一轮 G1 解释）**
+- mf-008 `check_audit.py:161-168` `--rings` 使 ring_unexpected 失效（F-17 "不改任何既有谓词"）
+- mf-010 `check_audit.py:258-278` 规则 2e 同环子句被用于 fills[]（G1 文本只对 missing[]）
+- mf-011 / KG-02 AC-004-b 的 source 可解析读法
+- mf-013 `check_audit.py:328-343` alternatives_of 任意非空即豁免（F-05 三条件未检）
+- mf-014 `check_audit.py:364-374` gates[].kind 超枚举落空规则 3
+- mf-007 / KG-04 signer_kind 枚举
+- mf-015 注册表可选 · mf-016 exit-2 路径不出 JSON · mf-017 注册表 8 vs 6 · mf-018 whitelist_overflow vs replay_reject token · mf-019 audit.schema.md 描述已移除的 CARD-01 状态 · mf-020 disposition 枚举 F-16 vs schema
+- srg-003 → AC-007-c：无 footer 提交触碰被审目录作为**记录字段**（不门控）· srg-006 → 实现期间重签者规则 · I-68 acceptance-fleet S3 对 3 ≤ gaming_risk_score < 7 无规则
 
-**C. iteration-002 存活的 P1 / P2（按 finding id）**
-__ITER2_SURVIVORS__
+**C. nh-004：本轮所有修复均无锁定测试 → change-proposal-002 测试清单**
+- AUDIT.md golden-file 字节比对；atoms / id 含 `|` 的 fixture；signer_kind 人签 / agent 变体；含重命名移出与非 ASCII 路径的孪生仓库；空 main..HEAD 范围 exit 0 + card_commits 0；gates[] kind human_gate 条目
 
-**D. nh-003 裁决摘要（无 footer 提交的合法性）**
-- 587f371 / ebe270d / c729f76：PSL L122-123 偏差提交（in-run verifier 修复，账本 deviation 行），早于首个 Card 提交；c729f76 改了回放所调用的 oracle verify_commit.py，run_evidence 的门/锁签字由修复后版本产生
-- e217d10：change-proposal-001 的 l5 重锁（R04，g2-judge 9/9 确认）
-- fafcad7 / 5a6889c：cards/*.yaml + skill-issues.md，不在 forbidden_paths（评审前提有误）
-- 逐提交表（footer / 被审目录 / forbidden 三列）：`plugins/sdlc/dogfood/ring-audit/commit-table.md`
+**D. G3 裁项**
+- mf-009 F-06 封顶：R6/human_gate.G3、R7/agent.pr-reviewer、R8/tune 记 compiled 而其所有 Artifact checked_by 为空（"任一"还是"独占" Artifact 的读法）
+- `g3-input.md` 第 1–20 项；AC-005-a / AC-006-a 待 G3，从不渲染为 passed
 
-**E. 随行的非 run 提交**：100aa12 · df48739 · bf3f13e（peer session；内容已在 main，PR diff 不含，见 Notes）
+**E. iteration-003 关闭项（仅列 iteration-003 确认关闭者；存活者按 id 留在 F）**
+__ITER3_CLOSED__
 
-链接：`plugins/sdlc/dogfood/ring-audit/failure-report-002-holdout.md` · `calibration_report.yaml` · `ratchet-log/iteration-001/` · `ratchet-log/iteration-002/`
+**F. iteration-003 存活的 P1 / P2（按其 finding id）**
+__ITER3_SURVIVORS__
+
+**G. 过程记录**
+- iteration-002 修复轮自身引入的两条回归（回放空范围崩溃 / run_evidence exit:1 与 ok:true 矛盾）及其在 iteration-003 的关闭
+- gaming 轨迹 [3.5, 4.0, __ITER3_GAMING__]（4.0 = stale-sha P1 + exit/ok P2 + F-06 P2 的组合）
+- card 预算 4/3：两次 budget_exhausted 升级由 g2-judge（代签）豁免，此后无授予；task 预算 2/2 耗尽（change-proposal-001；hidden_variant_fail）
+- 无 footer 提交的合法性（nh-003 裁决）：587f371 / ebe270d / c729f76 = PSL L122-123 偏差提交（账本 deviation 行）；e217d10 = change-proposal-001 重锁；fafcad7 / 5a6889c 不在 forbidden_paths；bf3f13e = peer 提交、main 已有孪生 fbc6a3c；逐提交表 `commit-table.md`
+- 所有评审均为 claude 厂商（fable / sonnet），编排者撰写评审提示；隔离为协议级，非 OS 级（isolation.json）
+- 报告底线："0 verified / 26 compiled / 16 declared；三门两道代签；G3 待定"
+
+链接：`failure-report-002-holdout.md` · `calibration_report.yaml` · `ratchet-log/iteration-00{1,2,3}/` · `g3-input.md` · `commit-table.md`
 
 ## Notes
 
