@@ -33,9 +33,11 @@ notes: '上下文自包含：只读 (1) 本卡；(2) sdlc_state.py show 的摘�
   kind, ring_evidence, provenance, loop, artifact, assessment{needed, implemented, naming}}, missing[]}，外加顶层 artifacts[]、gates[]、proposals[]、run_evidence{}——把这份 schema 写成 audit.schema.md 供内容卡照抄。replay_card_commits.sh：对分支上每个带
   ''Card: CARD-xx'' footer 的提交跑 verify_commit.py --range <sha>^..<sha> --card cards/<xx>.yaml，任一 exit 1 即 exit 1 并打印 whitelist_overflow（AC-007）。用标准库；不写测试（tests/** 禁改，测试由 L5 另写）。 接口以 L5 测试为准（tests/ring-audit/test_check_audit.py
   头部 INTERFACE PINNED + fixtures/complete.yaml 头注释）：stdout 一个 JSON 对象，计数在顶层（或 counts 下），失败谓词名在 error（字符串，可带定位后缀）或 errors/failed_predicates 列表；audit.yaml 另有顶层 gaps[]（每条带 ring）与 parts[].fills[]（gap id）——这是
-  F-04 ''Gap 状态由 FILLS 边派生'' 的物化，orphan_gaps 据此算；human Gate 可带 exercised: false（本次未行使的 merge / harness-review），此时 signer 可空，exercised 的必须有 signer 且 delegated_agent 必带 authorization_ref；双生产者谓词读作''未被认领的双生产者''：两个非
-  alternatives_of 的 producer 且两者 Assessment 都标 merge_candidate 时合法，否则 exit 1 double_producer（G1 解释规则待确认，先按测试）。允许使用 pyyaml（仓库已依赖，verify_commit.py 亦 import yaml）；replay_card_commits.sh 在仓库根运行 git，cards/<id>.yaml
-  相对 cwd 或脚本目录解析，输出 JSON 含 card_commits_touching_audited_dirs；分支为 docs/1-sdlc-ring-audit（不在 main），不必 --allow-main。'
+  F-04 ''Gap 状态由 FILLS 边派生'' 的物化，orphan_gaps 据此算；gates[] 只含 G1/G2/G3 三个人签门 + 脚本闸（human.merge / harness-review 是 human_gate 类的 Part，不是 Gate 对象；列进 gates[] → exit 1 gate_not_declared；无 exercised 标志）；签字人三元组随
+  verdict ∈ {pending, pass, reject, waived} 放在 run_evidence.gates[]，pending 可空，其余必须有 signer + signer_kind，delegated_agent 必带 authorization_ref（G1 解释规则 3，已裁）；双生产者谓词读作''未被认领的双生产者''：≥2 个非 alternatives_of 的
+  producer 且每个的 Assessment.needed.verdict 都是 merge_candidate 时合法，否则 exit 1 double_producer；反向：不是双生产者却标 merge_candidate → exit 1 spurious_merge_candidate（G1 解释规则 1，已裁）。gaps[] 每条带确定性 key，parts[].fills[] 与
+  rings[].missing[] 都放 gap key：fills 为空 ⇒ needed.verdict 必须是 overfill（否则 overfill_unmarked）；引用不存在或环不匹配的 key → unknown_gap_ref（G1 解释规则 2，已裁）。允许使用 pyyaml（仓库已依赖，verify_commit.py 亦 import yaml）；replay_card_commits.sh
+  在仓库根运行 git，cards/<id>.yaml 相对 cwd 或脚本目录解析，输出 JSON 含 card_commits_touching_audited_dirs；分支为 docs/1-sdlc-ring-audit（不在 main），不必 --allow-main。'
 forbidden_files:
 - tests/**
 - '**/tests/**'
