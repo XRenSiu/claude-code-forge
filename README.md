@@ -11,7 +11,7 @@
 - **[Persona Distill](#persona-distill)** — distill a person / expert / rule system into a self-contained, portable persona skill
 - **[Skill Evolve](#skill-evolve)** — autonomous Darwin-style hill-climbing optimizer for any existing SKILL.md
 - **[Ratchet](#ratchet)** — goal-driven master/subagent loop with independent evaluation + kill-and-restart for long-running autonomous tasks
-- **[SDLC](#sdlc)** — the delivery spine: issue → commit → PR → review-loop → merge, with a script-validated lifecycle state, failure routing by layer, and three human-only gates
+- **[SDLC](#sdlc)** — the complete lifecycle: PSL world-building → derivation → G1, issue → commit → PR → review-loop → merge, DOS ontology + invariants, done_when v2 → tests → six-skill acceptance fleet → meta-judge → release → retro; 27 skills in nine rings, script-validated state, failure routing by layer, three human-only gates
 - **[Humanize](#humanize)** — make AI-written technical prose read like a competent human wrote it, at the discourse level where readers actually get lost; write proposals / design docs / ADRs in the shape senior engineers use; learn your own voice from your samples
 
 ## Contents
@@ -126,7 +126,7 @@
 | [Design Clone](plugins/design-clone/) | 1.0.0 | Design DNA extraction + pixel-perfect website cloning. Browser-MCP-driven CSS introspection produces a 150+ field Design DNA profile; `--full` mode additionally spawns parallel builder agents to generate a Next.js clone. | Browser MCP |
 | [Persona Distill](plugins/persona-distill/) | 0.4.0 | Distill any persona (person or rule system) into a self-contained Claude Code skill. 5 skills, 9 schemas, 19 components, 12-dim rubric, 9-phase pipeline (CDM execution-profile + self-containment linter + fingerprint verifier). v0.4.0 security hardening: consent attestation gate, untrusted-corpus delimiters, rubric config range locks, corpus access declaration, 6 runnable parsers (iMessage/email/Twitter/generic/Telegram/Slack). | - |
 | [Skill Evolve](plugins/skill-evolve/) | 0.1.1 | Darwin-style autonomous SKILL.md optimizer. 8-dimension rubric + independent-subagent scoring + git-backed ratchet hill-climbing (keep-or-revert) to evolve any skill from initial draft toward 90+. | - |
-| [SDLC](plugins/sdlc/) | 0.1.0 | Software development lifecycle delivery spine. Six skills: `/sdlc` orchestrator (state file validated by script, append-only ledger, routing.yaml with layered budgets + fingerprint termination, human-only gates G1/G2/G3), `/issue`, `/commit`, `/pr`, `/review-loop` (zero-token wait, comments as claims to verify, compiled termination), `/pr-review` (tiered findings, never approves). Written per skillwise four-atom discipline; all `static_only`. | gh CLI, jq |
+| [SDLC](plugins/sdlc/) | 0.2.0 | Complete software development lifecycle, 27 skills in nine rings (world / ontology / contract / standards / plan / build / accept / deliver / learn) + a spine. Delivery spine: `/sdlc` orchestrator (script-validated state, append-only ledger, routing.yaml with layered budgets + fingerprint termination, human-only gates G1/G2/G3), `/issue`, `/commit`, `/pr`, `/review-loop`, `/pr-review`. Upper half: `/psl`, `/psl-derive`. Cross-cutting: `/dos-extract`, `/invariant-extract`. Contract & standards: `/donewhen-extract`, `/spec-compile`, `/calibrate`. Acceptance line (from done-when-pipeline + ratchet): `/acceptance-spec`, `/test-suite-generator`, `/code-reviewer`, `/qa-reviewer`, `/pm-reviewer`, `/spec-drift-detector`, `/spec-gaming-detector`, `/meta-judge`, `/acceptance-fleet`, `/ratchet`. Plan / build / deliver / learn: `/plan-cards`, `/implement`, `/release`, `/retro`. One contract schema (done_when.yaml v2, two-stage lock). Written per skillwise four-atom discipline; all `static_only`. | gh CLI, jq |
 | [Ratchet](plugins/ratchet/) | 1.0.0 | Goal-driven master/subagent autonomous loop. Master only evaluates (via frozen script or independent judge subagent), subagent only executes; stalled or cheating workers are killed and restarted. Suitable for long-running tasks with verifiable deliverables and explicit termination conditions. | - |
 | [Humanize](plugins/humanize/) | 0.1.1 | 去AI味 at the discourse level. `/humanize` rewrites a draft (zh/en) so a competent human could have written it — targets given-new inversion, broken topic strings, participle/以实现 tails, lists replacing argument, stance flattening, generic openings, summary closers, plus the solved lexical layer and Chinese translationese — with three gates: `humanlint.py` (23 metrics, 0-100 index), `factdiff.py` (numbers/dates/identifiers zero add-or-drop), and a context-isolated `cold-reader` agent. `/techdoc` writes proposals / design docs / ADRs / postmortems in the senior-engineer shape (incident first, decision in one sentence, alternatives killed, all consequences, rollout/rollback, open questions) gated by `verify_techdoc.py`. `/voice-profile` distills your own 3–5 samples into an executable voice file. All `static_only`. | python3 |
 
@@ -490,11 +490,16 @@ Goal-driven, long-running autonomous loop with strict separation of judge and wo
 
 ## SDLC
 
-**Version**: 0.1.0 · **Category**: Development · **Requires**: `gh` (authenticated), `jq`, `python3` + `pyyaml`
+**Version**: 0.2.0 · **Category**: Development · **Requires**: `gh` (authenticated), `jq`, `python3` + `pyyaml`
 
-The delivery spine of the software development lifecycle: requirement → issue → branch → frozen acceptance
-contract → task cards → per-card implementation + commits → PR → review follow-up → merge → archive →
-escaped-defect registry. Every step's artifact is either checked by a script or blocked by a human-only gate.
+The complete software development lifecycle, in three parts. **Upper half — build the world**: `/psl` writes the
+product world, `/psl-derive` derives DOS proposal / workflow / form draft (every decision cites a PSL-ID) plus an
+N-run divergence set, a human adjudicates at G1. **Lower half — converge and deliver**: issue → branch → frozen
+acceptance contract (`/donewhen-extract`) → task cards → per-card implementation + commits → PR → review follow-up →
+merge → archive → escaped-defect registry. **Cross-cutting**: `/dos-extract` + `/invariant-extract` (ontology and
+resident invariants), `/spec-compile` + `/calibrate` (decidability-routed standards and the meta-gate that proves
+they bite), routing by layer with budgets, metrics. Every step's artifact is either checked by a script or blocked by
+a human-only gate.
 Skills are written per the skillwise four-atom discipline (Knowledge / Capability / Judgment / Control, no
 Step 1/2/3); the runtime follows SKILL.state (a state file as sufficient statistic, transitions validated by
 `sdlc_state.py`) and WikiSkill (an append-only ledger that never rolls back). The flow reconciles
@@ -512,6 +517,19 @@ live here; PSL/DOS world-building and contract/test generation are optional neig
 | `/pr` | PR body in product order (scope declaration, `Closes #N`, verification evidence, AC→evidence, risk & rollback); size classes, XL must split | `verify_pr.py` |
 | `/review-loop` | Zero-token blocking wait, reviewer comments as claims to verify, ACCEPT/REJECT/REPLY/ESCALATE/SKIPPED, reply-before-resolve, per-thread strikes, compiled termination (adapted from vana-builder) | `pr-poll.sh` |
 | `/pr-review` | Reviewer side: Detective Loop, reproduction required for P0/P1, 5-finding cap, A/B/C tiers, posts a GitHub review — never approves | `post_review.py` |
+| `/psl` | Experiential requirement → six-layer Product Specification Language (from looper) | `verify_psl.py` |
+| `/psl-derive` | PSL → dos-proposal / workflow / form-draft with PSL-ID citations + N-run divergence set (G1 agenda) | `verify_derived.py` |
+| `/dos-extract` | Code + docs → 12-section `dos.yaml` + `decisions.md`, four classification judgments (from looper) | `verify_dos.py` |
+| `/invariant-extract` | Abductive + deductive recovery of a territory's □ invariants; hard ones propose-only (from looper) | `verify_card.py` |
+| `/donewhen-extract` | Issue intent → falsifiable done_when card: thresholds, happy/unhappy twins, contradiction + coverage (from qanat) | `verify_done_when.py` |
+| `/spec-compile` | Decidability ladder: fitness fn / eval_case (example + property + metamorphic) / PAJAMA judge program (from qanat) | `verify_compile.py` |
+| `/calibrate` | The standard's standard: mutation score, agreement α ≥ 0.80, holdout, isolation (from qanat) | `verify_calibration.py` |
+| `/acceptance-spec` · `/test-suite-generator` | EARS contract + spec-robustness; 5-layer test pyramid batch-by-card (from done-when-pipeline) | `validate_done_when.py` · `derive_counts.py` `gen_existence.py` `check_verbatim_names.py` |
+| `/code-reviewer` `/qa-reviewer` `/pm-reviewer` `/spec-drift-detector` `/spec-gaming-detector` | The six independent review skills of the acceptance line (from done-when-pipeline) | `compute_score.py` |
+| `/meta-judge` · `/acceptance-fleet` | Synthesis with a hard wall; parallel dispatch → four-state ratchet mapped onto sdlc's routing.yaml | `compute_confidence.py` |
+| `/ratchet` | Master-evaluates / worker-executes loop for cards that must run to green (from ratchet) | — |
+| `/plan-cards` · `/implement` | L4 self-contained task cards (three lints + 40k cap); L6 isolated per-card implementation with whitelist executor | `lint_cards.py` · `verify_commit.py` |
+| `/release` · `/retro` | L8 delivery (SemVer from commits, changelog ↔ tag ↔ notes, rollback, verified-green); X3 learning (baseline → reflow distribution → proposals routed to layers) | `verify_release.py` · `metrics.py` |
 
 ```bash
 /issue "users can search memories by relative time"      # shows the body, then creates
@@ -519,12 +537,15 @@ live here; PSL/DOS world-building and contract/test generation are optional neig
 /pr --issue 42 --done-when specs/x/done_when.yaml         # pre-gate + confirm + create
 /review-loop 57                                           # follow PR #57 until approved / budget
 /pr-review 57 --focus security --post                     # findings.yaml → GitHub review
+/psl "users can search memories by relative time"         # PSL track: write the world first
+/psl-derive PSL-memory-time-search.md --n 3               # derive → G1 agenda
+/donewhen-extract "#42" && /spec-compile done_when.yaml   # contract → compiled standards → /calibrate
 /sdlc "users can search memories by relative time"        # full lifecycle (human signs G1/G2/G3)
 ```
 
-> All six skills are `static_only`: structurally reviewed and smoke-tested on fixtures
-> (`bash plugins/sdlc/eval/smoke.sh`, 77/77); with/without-skill behavioural comparison not yet run.
-> See [`plugins/sdlc/README.md`](plugins/sdlc/README.md) and [`docs/lifecycle.md`](plugins/sdlc/docs/lifecycle.md).
+> All twenty-seven skills are `static_only`: structurally reviewed and smoke-tested on fixtures
+> (`bash plugins/sdlc/eval/smoke.sh`); with/without-skill behavioural comparison not yet run.
+> See [`plugins/sdlc/README.md`](plugins/sdlc/README.md), [`docs/ARCHITECTURE.md`](plugins/sdlc/docs/ARCHITECTURE.md) and [`docs/lifecycle.md`](plugins/sdlc/docs/lifecycle.md).
 
 ---
 
