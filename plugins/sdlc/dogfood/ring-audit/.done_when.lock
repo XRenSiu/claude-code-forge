@@ -1,0 +1,47 @@
+{
+  "version": 1,
+  "stage": "g2",
+  "signed_by": "g2-judge",
+  "signer_kind": "delegated_agent",
+  "authorization": "user instruction 2026-09-05: '需要人审核的地方，请你弄一个子agent代替我审核一下' — G2 delegated to g2-judge (g2-record.md FREEZE at contract sha fb5af3f0…, confirm 42)",
+  "signed_at": "2026-09-05T14:58:30+00:00",
+  "files": [
+    {
+      "path": "plugins/sdlc/dogfood/ring-audit/done_when.yaml",
+      "sha256": "fb5af3f06734070c98481b27901ca895febf3ce873086dcf2d1ebdd7db0ca367"
+    },
+    {
+      "path": "plugins/sdlc/dogfood/ring-audit/PSL-sdlc-ring-audit.md",
+      "sha256": "3e3d91f9a56f68e0e022b43a6f31766217a48034bbb3be883cd0a5ea33de1210"
+    },
+    {
+      "path": "plugins/sdlc/dogfood/ring-audit/derived/form-draft.md",
+      "sha256": "746c56ef3e39e8e7089db0914bc01015b6dd522ef622c449e3d6260fbc10880d"
+    },
+    {
+      "path": "plugins/sdlc/dogfood/ring-audit/derived/dos-proposal.yaml",
+      "sha256": "d3386d0a54dfec66325f4c37bda73e9fa78452d4e7f991151989c28a3621e475"
+    },
+    {
+      "path": "plugins/sdlc/dogfood/ring-audit/g1-record.md",
+      "sha256": "f15afe279323b1830e2c729282597b63f8e0d8b3256d78f659164ee168795222"
+    },
+    {
+      "path": "plugins/sdlc/dogfood/ring-audit/issue-body.md",
+      "sha256": "2aa2e65d9ff67eb3f99211bc3040e5c7f0c429c5e3de9b2edb386bdd7b9d1b57"
+    },
+    {
+      "path": "plugins/sdlc/dogfood/ring-audit/dos.yaml",
+      "sha256": "fa3efb4a8f7110485cdd2dca30129f2262c41faea052784c062d2c46095ec1a6"
+    },
+    {
+      "path": "plugins/sdlc/dogfood/ring-audit/invariants/sdlc-plugin.card.yaml",
+      "sha256": "4cd4cfb4411f8bcbe14c21518c6fe618f6e80980b5be84cb37f96b5496d3c1f6"
+    },
+    {
+      "path": "plugins/sdlc/dogfood/ring-audit/g2-record.md",
+      "sha256": "0c04b10bd468c87336817c1183622e99886d155834ad806066b5e489d931703b"
+    }
+  ],
+  "note": "G2 freeze: acceptance/existence/thresholds/rules/constraints signed. Changing a listed file requires a change-proposal-*.md in the same diff."
+}

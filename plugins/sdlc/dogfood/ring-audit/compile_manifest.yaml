@@ -1,0 +1,430 @@
+source_ref: plugins/sdlc/dogfood/ring-audit/done_when.yaml (G2 sha fb5af3f0…)
+source_level: task
+mode: auto
+routed:
+- clause_ref: AC-001-a
+  statement: 'event: given complete audit.yaml → {''exit'': 0, ''rings'': 10, ''parts_total'': 42, ''parts_without_assessment'': 0, ''required_parts_missing'': 0}'
+  decidability: behavioral
+  line: 2
+  gate: g1
+  eval_case_battery:
+    example:
+    - AC-001-a via check_audit.py / verify_commit.py on the named fixture
+    property: []
+    metamorphic:
+    - reordering rings[] does not change any predicate outcome
+    examples_only_justification: ''
+    assured_filters:
+      compiles: false
+      passes_stably: false
+      catches_injected_fault: false
+    ach_mutant_families:
+    - (happy path — killed via its unwanted twin)
+  calibration_pending: true
+- clause_ref: AC-001-b
+  statement: 'unwanted: given audit.yaml with one ring entry removed → {''exit'': 1, ''error'': ''ring_missing''}'
+  decidability: behavioral
+  line: 2
+  gate: g1
+  eval_case_battery:
+    example:
+    - AC-001-b via check_audit.py / verify_commit.py on the named fixture
+    property:
+    - for any complete audit.yaml, deleting any single ring ⇒ exit 1 ring_missing (F-14 variant)
+    metamorphic: []
+    examples_only_justification: ''
+    assured_filters:
+      compiles: false
+      passes_stably: false
+      catches_injected_fault: false
+    ach_mutant_families:
+    - delete a ring entry
+  calibration_pending: true
+- clause_ref: AC-002-a
+  statement: 'event: given complete audit.yaml → {''dims_without_psl_id'': 0, ''dims_with_unknown_psl_id'': 0, ''dims_without_evidence'': 0}'
+  decidability: behavioral
+  line: 2
+  gate: g1
+  eval_case_battery:
+    example:
+    - AC-002-a via check_audit.py / verify_commit.py on the named fixture
+    property: []
+    metamorphic: []
+    examples_only_justification: single-fixture error token; property form would restate the predicate
+    assured_filters:
+      compiles: false
+      passes_stably: false
+      catches_injected_fault: false
+    ach_mutant_families:
+    - (happy path — killed via its unwanted twin)
+  calibration_pending: true
+- clause_ref: AC-002-b
+  statement: 'unwanted: given audit.yaml with one assessment dimension whose psl_ids is empty → {''exit'': 1, ''error'': ''psl_id_missing''}'
+  decidability: behavioral
+  line: 2
+  gate: g1
+  eval_case_battery:
+    example:
+    - AC-002-b via check_audit.py / verify_commit.py on the named fixture
+    property: []
+    metamorphic: []
+    examples_only_justification: single-fixture error token; property form would restate the predicate
+    assured_filters:
+      compiles: false
+      passes_stably: false
+      catches_injected_fault: false
+    ach_mutant_families:
+    - empty psl_ids on one dim
+    - unknown psl id
+    - evidence kind outside enum
+    - evidence ref empty
+  calibration_pending: true
+- clause_ref: AC-003-a
+  statement: 'event: given complete audit.yaml → {''boolean_implemented'': 0, ''implemented_outside_enum'': 0, ''rename_true'': 0}'
+  decidability: behavioral
+  line: 2
+  gate: g1
+  eval_case_battery:
+    example:
+    - AC-003-a via check_audit.py / verify_commit.py on the named fixture
+    property: []
+    metamorphic: []
+    examples_only_justification: single-fixture error token; property form would restate the predicate
+    assured_filters:
+      compiles: false
+      passes_stably: false
+      catches_injected_fault: false
+    ach_mutant_families:
+    - implemented → true/false
+    - implemented outside enum
+    - rename → true
+  calibration_pending: true
+- clause_ref: AC-003-b
+  statement: 'unwanted: given audit.yaml with implemented set to a boolean on one part → {''exit'': 1, ''error'': ''boolean_implemented''}'
+  decidability: behavioral
+  line: 2
+  gate: g1
+  eval_case_battery:
+    example:
+    - AC-003-b via check_audit.py / verify_commit.py on the named fixture
+    property: []
+    metamorphic: []
+    examples_only_justification: single-fixture error token; property form would restate the predicate
+    assured_filters:
+      compiles: false
+      passes_stably: false
+      catches_injected_fault: false
+    ach_mutant_families:
+    - implemented → true/false
+    - implemented outside enum
+    - rename → true
+  calibration_pending: true
+- clause_ref: AC-004-a
+  statement: 'event: given complete audit.yaml → {''rings_without_missing_key'': 0, ''orphan_gaps'': 0, ''proposals_without_source'': 0}'
+  decidability: behavioral
+  line: 2
+  gate: g1
+  eval_case_battery:
+    example:
+    - AC-004-a via check_audit.py / verify_commit.py on the named fixture
+    property: []
+    metamorphic: []
+    examples_only_justification: single-fixture error token; property form would restate the predicate
+    assured_filters:
+      compiles: false
+      passes_stably: false
+      catches_injected_fault: false
+    ach_mutant_families:
+    - (happy path — killed via its unwanted twin)
+  calibration_pending: true
+- clause_ref: AC-004-b
+  statement: 'unwanted: given audit.yaml with one proposal lacking a source assessment or gap id → {''exit'': 1, ''error'': ''proposal_without_source''}'
+  decidability: behavioral
+  line: 2
+  gate: g1
+  eval_case_battery:
+    example:
+    - AC-004-b via check_audit.py / verify_commit.py on the named fixture
+    property: []
+    metamorphic: []
+    examples_only_justification: single-fixture error token; property form would restate the predicate
+    assured_filters:
+      compiles: false
+      passes_stably: false
+      catches_injected_fault: false
+    ach_mutant_families:
+    - drop proposal.source
+    - orphan gap (no FILLS, not in missing)
+    - ring without missing key
+  calibration_pending: true
+- clause_ref: AC-005-a
+  statement: 每个 Part 行给出 Gap 原子集合、独占 Artifact（或 role gate | orchestrator）、检它的 Gate（script 写"闸"、human 写"门"）与 Loop； needed 判定的 deletion 测试写出撤掉它后流水线会产出的具体错误产物或漏检（不接受"流程会断"一类泛语）
+  decidability: judgment
+  line: 3
+  gate: g2
+  judge_program:
+    dimensions:
+    - name: row_has_gap_artifact_gate_loop
+      binary: true
+      evidence_ref: AUDIT.md#ring-tables row
+      pajama_probe: 每行含 atoms / artifact(or role) / gates(闸|门 标注) / loop
+    - name: deletion_sentence_names_concrete_failure
+      binary: true
+      evidence_ref: assessment.needed.evidence[]
+      pajama_probe: deletion_test 不含泛语'流程会断'且提到具体错误产物或漏检
+    - name: naming_provenance_before_fit
+      binary: true
+      evidence_ref: assessment.naming
+      pajama_probe: provenance 字段在 fit 前且 misfit ⇒ suggested_name 存在且 rename=false
+    - name: duplicate_pairs_adjudicated
+      binary: true
+      evidence_ref: artifacts[] + assessment.needed.verdict
+      pajama_probe: pr-review/code-reviewer 与 donewhen-extract/acceptance-spec 两对各有 distinct_exits|merge_candidate|alternatives_of
+    - name: missing_rows_tagged
+      binary: true
+      evidence_ref: rings[].missing[]
+      pajama_probe: 每条 missing 有 source ∈ 3 值、necessity、deletion_test
+    free_form: false
+    isolation_ok: true
+    judge: G3 (delegated g3-judge; contract judge=tech)
+  calibration_pending: true
+- clause_ref: AC-006-a
+  statement: run_evidence 节列出 G1 / G2 / G3 的签字人、signer_kind 与授权引用，signer_kind = delegated_agent 的门不渲染为"人签"； 列出 check-audit 对 audit.yaml 的 exit 0 与对删环变体的 exit 1 两次运行记录（缺变体记录时
+  decidability: judgment
+  line: 3
+  gate: g2
+  judge_program:
+    dimensions:
+    - name: signers_listed_with_kind
+      binary: true
+      evidence_ref: AUDIT.md#run-evidence
+      pajama_probe: G1/G2/G3 三行各有 signer, signer_kind, authorization_ref；delegated 不渲染'人签'
+    - name: two_check_runs_recorded
+      binary: true
+      evidence_ref: run_evidence.check_runs
+      pajama_probe: 含 exit 0 完整运行与 --variant delete-ring exit 1 运行；否则标 uncalibrated
+    - name: audited_dirs_diff_and_skill_issues
+      binary: true
+      evidence_ref: run_evidence.audited_dirs_diff / skill_issues
+      pajama_probe: git diff --stat 记录为空 + skill-issues.md 路径存在
+    - name: substitute_evidence_labelled
+      binary: true
+      evidence_ref: run_evidence.external_evidence.kind
+      pajama_probe: == substitute，未渲染为用户验证
+    free_form: false
+    isolation_ok: true
+    judge: G3 (delegated g3-judge; contract judge=product)
+  calibration_pending: true
+- clause_ref: AC-007-a
+  statement: 'event: given each commit carrying a `Card: CARD-xx` footer on the feature branch, replayed as --range <sha>^..<sha> --card <its card> → {''exit'': 0,
+    ''card_commits_touching_audited_dirs'': 0}'
+  decidability: behavioral
+  line: 2
+  gate: g1
+  eval_case_battery:
+    example:
+    - AC-007-a via check_audit.py / verify_commit.py on the named fixture
+    property: []
+    metamorphic: []
+    examples_only_justification: single-fixture error token; property form would restate the predicate
+    assured_filters:
+      compiles: false
+      passes_stably: false
+      catches_injected_fault: false
+    ach_mutant_families:
+    - (happy path — killed via its unwanted twin)
+  calibration_pending: true
+- clause_ref: AC-007-b
+  statement: 'unwanted: given a Card commit whose diff modifies a file under plugins/sdlc/skills/** → {''exit'': 1, ''error'': ''whitelist_overflow''}'
+  decidability: behavioral
+  line: 2
+  gate: g1
+  eval_case_battery:
+    example:
+    - AC-007-b via check_audit.py / verify_commit.py on the named fixture
+    property: []
+    metamorphic: []
+    examples_only_justification: single-fixture error token; property form would restate the predicate
+    assured_filters:
+      compiles: false
+      passes_stably: false
+      catches_injected_fault: false
+    ach_mutant_families:
+    - Card commit touching plugins/sdlc/skills/**
+  calibration_pending: true
+- clause_ref: AC-008-a
+  statement: 'event: given complete audit.yaml → {''exit'': 0, ''parts_without_assessment'': 0, ''required_parts_missing'': 0}'
+  decidability: behavioral
+  line: 2
+  gate: g1
+  eval_case_battery:
+    example:
+    - AC-008-a via check_audit.py / verify_commit.py on the named fixture
+    property: []
+    metamorphic: []
+    examples_only_justification: single-fixture error token; property form would restate the predicate
+    assured_filters:
+      compiles: false
+      passes_stably: false
+      catches_injected_fault: false
+    ach_mutant_families:
+    - (happy path — killed via its unwanted twin)
+  calibration_pending: true
+- clause_ref: AC-008-b
+  statement: 'unwanted: given audit.yaml with one required part of rings R0,R1,R2,spine removed → {''exit'': 1, ''error'': ''required_part_missing''}'
+  decidability: behavioral
+  line: 2
+  gate: g1
+  eval_case_battery:
+    example:
+    - AC-008-b via check_audit.py / verify_commit.py on the named fixture
+    property:
+    - for any audit.yaml and any required part p in given.required_parts, removing p ⇒ exit 1 required_part_missing
+    metamorphic: []
+    examples_only_justification: ''
+    assured_filters:
+      compiles: false
+      passes_stably: false
+      catches_injected_fault: false
+    ach_mutant_families:
+    - remove one required part of R0,R1,R2,spine
+  calibration_pending: true
+- clause_ref: AC-009-a
+  statement: 'event: given complete audit.yaml → {''exit'': 0, ''parts_without_assessment'': 0, ''required_parts_missing'': 0}'
+  decidability: behavioral
+  line: 2
+  gate: g1
+  eval_case_battery:
+    example:
+    - AC-009-a via check_audit.py / verify_commit.py on the named fixture
+    property: []
+    metamorphic: []
+    examples_only_justification: single-fixture error token; property form would restate the predicate
+    assured_filters:
+      compiles: false
+      passes_stably: false
+      catches_injected_fault: false
+    ach_mutant_families:
+    - (happy path — killed via its unwanted twin)
+  calibration_pending: true
+- clause_ref: AC-009-b
+  statement: 'unwanted: given audit.yaml with one required part of rings R3,R4,R5 removed → {''exit'': 1, ''error'': ''required_part_missing''}'
+  decidability: behavioral
+  line: 2
+  gate: g1
+  eval_case_battery:
+    example:
+    - AC-009-b via check_audit.py / verify_commit.py on the named fixture
+    property:
+    - for any audit.yaml and any required part p in given.required_parts, removing p ⇒ exit 1 required_part_missing
+    metamorphic: []
+    examples_only_justification: ''
+    assured_filters:
+      compiles: false
+      passes_stably: false
+      catches_injected_fault: false
+    ach_mutant_families:
+    - remove one required part of R3,R4,R5
+  calibration_pending: true
+- clause_ref: AC-010-a
+  statement: 'event: given complete audit.yaml → {''exit'': 0, ''parts_without_assessment'': 0, ''required_parts_missing'': 0}'
+  decidability: behavioral
+  line: 2
+  gate: g1
+  eval_case_battery:
+    example:
+    - AC-010-a via check_audit.py / verify_commit.py on the named fixture
+    property: []
+    metamorphic: []
+    examples_only_justification: single-fixture error token; property form would restate the predicate
+    assured_filters:
+      compiles: false
+      passes_stably: false
+      catches_injected_fault: false
+    ach_mutant_families:
+    - (happy path — killed via its unwanted twin)
+  calibration_pending: true
+- clause_ref: AC-010-b
+  statement: 'unwanted: given audit.yaml with one required part of ring R6 removed → {''exit'': 1, ''error'': ''required_part_missing''}'
+  decidability: behavioral
+  line: 2
+  gate: g1
+  eval_case_battery:
+    example:
+    - AC-010-b via check_audit.py / verify_commit.py on the named fixture
+    property:
+    - for any audit.yaml and any required part p in given.required_parts, removing p ⇒ exit 1 required_part_missing
+    metamorphic: []
+    examples_only_justification: ''
+    assured_filters:
+      compiles: false
+      passes_stably: false
+      catches_injected_fault: false
+    ach_mutant_families:
+    - remove one required part of R6
+  calibration_pending: true
+- clause_ref: AC-011-a
+  statement: 'event: given complete audit.yaml → {''exit'': 0, ''parts_without_assessment'': 0, ''required_parts_missing'': 0}'
+  decidability: behavioral
+  line: 2
+  gate: g1
+  eval_case_battery:
+    example:
+    - AC-011-a via check_audit.py / verify_commit.py on the named fixture
+    property: []
+    metamorphic: []
+    examples_only_justification: single-fixture error token; property form would restate the predicate
+    assured_filters:
+      compiles: false
+      passes_stably: false
+      catches_injected_fault: false
+    ach_mutant_families:
+    - (happy path — killed via its unwanted twin)
+  calibration_pending: true
+- clause_ref: AC-011-b
+  statement: 'unwanted: given audit.yaml with one required part of rings R7,R8 removed → {''exit'': 1, ''error'': ''required_part_missing''}'
+  decidability: behavioral
+  line: 2
+  gate: g1
+  eval_case_battery:
+    example:
+    - AC-011-b via check_audit.py / verify_commit.py on the named fixture
+    property:
+    - for any audit.yaml and any required part p in given.required_parts, removing p ⇒ exit 1 required_part_missing
+    metamorphic: []
+    examples_only_justification: ''
+    assured_filters:
+      compiles: false
+      passes_stably: false
+      catches_injected_fault: false
+    ach_mutant_families:
+    - remove one required part of R7,R8
+  calibration_pending: true
+sent_back_to_spec: []
+handoff_to_calibrate:
+  eval_case_sets:
+  - AC-001-a
+  - AC-001-b
+  - AC-002-a
+  - AC-002-b
+  - AC-003-a
+  - AC-003-b
+  - AC-004-a
+  - AC-004-b
+  - AC-007-a
+  - AC-007-b
+  - AC-008-a
+  - AC-008-b
+  - AC-009-a
+  - AC-009-b
+  - AC-010-a
+  - AC-010-b
+  - AC-011-a
+  - AC-011-b
+  rubric_versions:
+  - AC-005-a
+  - AC-006-a
+notes:
+- 'no clause is structurally decidable (line 1): the audit deliverable is data + a report, no dependency/architecture rule to lint statically'
+- assured_filters all false until check_audit.py exists (CARD-01); calibrate runs after CARD-01 and before content cards
+- mutant families mirror the contract mutation comment (F-13 predicate set), not only the unwanted twins (G2 E-6)
