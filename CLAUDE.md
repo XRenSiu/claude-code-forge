@@ -40,11 +40,16 @@
      "<plugin-name>@claude-code-forge": true
    }
    ```
-5. **重启 Claude Code 会话**——`Skill` 工具的可用列表在 session 启动时定型，运行中改 `settings.json` 不会热加载。
+5. **同步 plugin cache**：session 启动从 `~/.claude/plugins/cache/<marketplace>/<plugin>/<version>/` 读 skill 索引，**不是**从源仓库读。未推送到 GitHub 前 `/plugin install` 拿不到新 plugin，手动复制：
+   ```bash
+   cp -R plugins/<name> ~/.claude/plugins/cache/claude-code-forge/<name>/<version>
+   ```
+   并在 `~/.claude/plugins/installed_plugins.json` 加一条 `"<name>@claude-code-forge"`（照抄已有条目的形状，`installPath` 指向上面的目录）。
+6. **重启 Claude Code 会话**——`Skill` 工具的可用列表在 session 启动时定型，运行中改 `settings.json` / cache 不会热加载。
 
-第 4-5 步是**用户级、不入 git** 的本机配置，但它决定了你能不能调用新 plugin 的 skill。漏了它就会得到 `Unknown skill` 报错，且本会话无法补救（必须新开 session）。
+第 4-6 步是**用户级、不入 git** 的本机配置，但它决定了你能不能调用新 plugin 的 skill。漏了它就会得到 `Unknown skill` 报错，且本会话无法补救（必须新开 session）。
 
-> 历史 bug：`bespoke-design-system` v1.8.0 完整注册到 `marketplace.json` 但漏了 `enabledPlugins`，导致用户调 `/bespoke-design-system` 时 Skill 工具找不到。详见 `~/.claude/projects/.../memory/feedback_plugin_enable_required.md`。
+> 历史 bug：`bespoke-design-system` v1.8.0 完整注册到 `marketplace.json` 但漏了 `enabledPlugins`，导致用户调 `/bespoke-design-system` 时 Skill 工具找不到；v1.9.0 前 4 项全对仍 Unknown skill，根因是 cache 目录缺失。详见 memory `feedback_plugin_enable_required.md` / `feedback_plugin_cache_must_sync.md`。
 
 ## Commit 规范
 
