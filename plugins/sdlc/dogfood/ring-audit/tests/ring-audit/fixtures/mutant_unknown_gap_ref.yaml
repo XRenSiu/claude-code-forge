@@ -1,4 +1,4 @@
-# based_on: REQ-006 (F-13 delegated_agent 附 authorization_ref; rule 3b) — MUTANT of complete.yaml: run_evidence.gates[G2] verdict pass, signer_kind delegated_agent, authorization_ref null
+# based_on: REQ-004 (AC-004-a; rule 2e) — MUTANT of complete.yaml: R5.missing references a gap id that is not in gaps[] → unknown_gap_ref
 schema: audit/1
 feature: sdlc-ring-audit
 psl: PSL-sdlc-ring-audit.md
@@ -645,7 +645,7 @@ rings:
         - {kind: file, ref: plugins/sdlc/skills/ratchet/SKILL.md}
       disposition: none
       adjudications: []
-  missing: []
+  missing: [R5/newly_identified/control/nonexistent-gap]
 - id: R6
   question: 做出来的东西对不对、谁裁？
   parts:
@@ -1977,7 +1977,7 @@ run_evidence:
   run: {slug: sdlc-ring-audit, state: .sdlc/sdlc-ring-audit/state.json, ledger: .sdlc/sdlc-ring-audit/ledger.md}
   gates:
   - {gate: G1, verdict: pass, signer: g1-judge, signer_kind: delegated_agent, authorization_ref: 'g1-record.md#authorization (user instruction 2026-09-05: ''需要人审核的地方，请你弄一个子agent代替我审核一下'')'}
-  - {gate: G2, verdict: pass, signer: g2-judge, signer_kind: delegated_agent, authorization_ref: null}
+  - {gate: G2, verdict: pass, signer: g2-judge, signer_kind: delegated_agent, authorization_ref: .done_when.lock#authorization}
   - {gate: G3, verdict: pending, signer: null, signer_kind: null, authorization_ref: null}
   external_evidence: {kind: substitute, what: check-audit 机械检查 + 代签 agent 独立读, valid_for: this dogfood only}
   check_runs:

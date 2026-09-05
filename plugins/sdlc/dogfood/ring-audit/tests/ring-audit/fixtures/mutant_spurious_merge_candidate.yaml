@@ -1,4 +1,4 @@
-# based_on: REQ-006 (F-13 delegated_agent 附 authorization_ref; rule 3b) — MUTANT of complete.yaml: run_evidence.gates[G2] verdict pass, signer_kind delegated_agent, authorization_ref null
+# based_on: REQ-001 (rule 1 symmetric face) — MUTANT of complete.yaml: R0/psl needed.verdict = merge_candidate although PSL-<feature>.md has a single producer → spurious_merge_candidate
 schema: audit/1
 feature: sdlc-ring-audit
 psl: PSL-sdlc-ring-audit.md
@@ -20,11 +20,12 @@ rings:
       id: A-psl
       state: evidenced
       needed:
-        verdict: necessary
+        verdict: merge_candidate
         psl_ids: [PSL-002, PSL-016]
         evidence:
         - {kind: file, ref: plugins/sdlc/skills/psl/SKILL.md}
         deletion_test: 撤掉后引擎从一句需求直接推形态，世界层错误延迟到 R6 才暴露
+        merge_candidate_with: psl-derive
       implemented:
         verdict: compiled
         psl_ids: [PSL-010, PSL-015]
@@ -1977,7 +1978,7 @@ run_evidence:
   run: {slug: sdlc-ring-audit, state: .sdlc/sdlc-ring-audit/state.json, ledger: .sdlc/sdlc-ring-audit/ledger.md}
   gates:
   - {gate: G1, verdict: pass, signer: g1-judge, signer_kind: delegated_agent, authorization_ref: 'g1-record.md#authorization (user instruction 2026-09-05: ''需要人审核的地方，请你弄一个子agent代替我审核一下'')'}
-  - {gate: G2, verdict: pass, signer: g2-judge, signer_kind: delegated_agent, authorization_ref: null}
+  - {gate: G2, verdict: pass, signer: g2-judge, signer_kind: delegated_agent, authorization_ref: .done_when.lock#authorization}
   - {gate: G3, verdict: pending, signer: null, signer_kind: null, authorization_ref: null}
   external_evidence: {kind: substitute, what: check-audit 机械检查 + 代签 agent 独立读, valid_for: this dogfood only}
   check_runs:

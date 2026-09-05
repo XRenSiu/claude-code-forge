@@ -340,3 +340,47 @@ F-21 末句"adjudication 留空交 G3 / 报告人审"**可以站住，不必改*
 **摩擦（追加候选）**
 - i. state.json 的 `gates.g1` 在 verdict=pass 后仍带上一轮的 `attribution: derivation_error`；`gate … --verdict pass` 应清掉 attribution，否则 retro 读到"pass 且 derivation_error"。
 - j. 编排者落盘与"请 G1 落盘"的消息交叉，导致 G1 差点二次写入；靠脚本守卫挡住。追加类形态变更应有唯一落盘者并在 ledger 先记 `set world.form_draft_sha256` 再发消息（本次编排者做到了前者）。
+
+---
+
+## 签字版解释规则（2026-09-05）
+
+**性质**：对签字版 `746c56ef…880d` 的**解释**，与第三轮的 F-21 裁决同类——只记录读法，不改 form-draft.md 一个字节（签字前后 sha 复核一致）。触发：L5 测试作者（非实现者）把 F-12 / F-13 编进 fixture 时遇到三处欠定读法。裁决人同前（g1-judge，delegated_agent，authorization 同前）。
+
+### 规则 1 · F-05 与 F-13 的"双生产者"——**确认负责人读法，并补对称面**
+
+签字版 F-13 的谓词"无 Artifact 有两个非 `alternatives_of` 的 producer"若按字面读，是对**被审插件**的断言而不是对**审计**的断言：被审世界今天就有双生产者（donewhen-extract / acceptance-spec 都写 done_when.yaml，现状 Q008），F-05 / F-20 又要求审计**必须**把它标成 merge_candidate——字面读法下正确的审计永远过不了自己的检查脚本，等于把"插件健康"当成"审计合法"来检。检查脚本检的是审计的**形状与自洽**，所以读作：
+
+> 对每个有 ≥ 2 个 producer 的 Artifact：Artifact 记录带 `alternatives_of`（F-05 三条件） → 合法；否则**每一个** producer 的 `Assessment.needed.verdict` 必须是 `merge_candidate: <另一 Part>` → 合法；两者都不满足 → exit 1 `double_producer`。
+> **对称面**：任何 `needed.verdict = merge_candidate` 的 Assessment，其 Part 必须确实是某个无 `alternatives_of` Artifact 的双生产者之一，否则 exit 1 `spurious_merge_candidate`——merge_candidate 不能当装饰撒。
+
+一句话：merge_candidate ⇔ 未被豁免的双生产者。PSL v2.1 Workflow φ 的"无双生产者（同阶段替代豁免）"据此读作"无**未登记**的双生产者"；措辞下次触 PSL 时顺手改，非阻塞。
+
+### 规则 2 · FILLS 边与 Gap 在 audit.yaml 里的落位——**确认，并定住"值对象 + 引用"的边界**
+
+F-13 的"每个无 FILLS 边的 Gap 出现在其 Ring 的 missing 中"与 F-04 的"Part 声明填充但 atoms 为空 → overfill"都预设 FILLS 边可读，而签字版 F-12 只定了顶层 `rings:`（每项 `{id, question, parts[], missing[]}`），没说 Artifact / Gate / 提案 / run_evidence / 有 Part 填的 Gap 住在哪。读作：
+
+> (a) F-12 的"顶层为 `rings:` 列表"是**主键**而非**唯一键**：F-05 / F-06 / F-15 / F-16 / F-17 各自要求的记录以**加性**顶层注册表落盘——`artifacts[]`、`gates[]`、`gaps[]`、`proposals[]`、`run_evidence`——不算新实体，都是签字版已有的对象或投影。
+> (b) `gaps[]` 每项 = F-04 的 Gap 值对象 + `ring` + 一个**文档内引用键**；该键**确定性地**由 `(ring, source, atoms, 描述 slug)` 生成（如 `R2/lifecycle_blank/control/interface-contract`），是序列化句柄，不是存储身份——Gap 仍是值对象，键变了就是另一个 Gap。
+> (c) `parts[].fills[]` = 该 Part 填的 gap 键列表；这就是 FILLS 边的物化。`fills == []` ⇒ 该 Part 的 `needed.verdict` 必须是 `overfill`（F-04），否则 exit 1 `overfill_unmarked`。
+> (d) `rings[].missing[]` 的项是 gap 键（引用），报告投影时展开成 F-11 要求的整行；yaml 只有一处真值。
+> (e) 谓词：`gaps[]` 中没有任何 `parts[].fills` 引用的 gap 必出现在其 `ring` 的 `missing[]`（F-13 原谓词）；`missing[]` 里的每个键必在 `gaps[]` 且其 `ring` 一致；`fills[]` 里的每个键必在 `gaps[]`。任一不满足 → exit 1 `orphan_gap` / `unknown_gap_ref`。
+
+### 规则 3 · "human Gate 有 signer"——**纠正前提，用插件自己的词**
+
+L5 作者的前提"graph.yaml 五个 human 节点都是 Gate 记录"不成立于签字版：F-06 写明 `kind=human` 的 Gate **仅 G1 / G2 / G3**，F-08 写明 human.merge / human.harness-review 是 `kind=human_gate` 的 **Part**、**不持有 Gate 对象**（这正是现状 Q004，它们各得一条 Assessment）。所以 `gates[]` 里只有三条 human Gate，不需要为 merge / harness-review 造 `exercised: false`。
+
+真实的空槽是另一个：审计 Run 产出 audit.yaml 时 G3 尚未发生（G2 可能刚发生）。读作：
+
+> (a) `gates[]` 里的 human Gate 记录是**设计视图**（它检哪个 Artifact、kind），不承载签字；F-07 的 `signer / signer_kind / authorization_ref` 三元组随**判决**走，落在 F-15 的 `run_evidence.gates[]`（本次 Run 的 G1 / G2 / G3）。
+> (b) 用现状本体 Gate.verdict 的词表而不是新造 `exercised`：`run_evidence.gates[].verdict ∈ {pending, pass, reject, waived}`。`pending` → signer 三元组可为 null；`pass / reject / waived` → `signer` 与 `signer_kind` 必填；`signer_kind = delegated_agent` → `authorization_ref` 必填。F-13 的"human Gate 有 signer 且 delegated_agent 附 authorization_ref"即对 `run_evidence.gates[]` 中 verdict ≠ pending 者的断言。
+> (c) `waived` 只能引用 state.json 的 waiver 记录；audit.yaml 不能自己 waive。
+> (d) fixture 若把 human.merge / human.harness-review 放进 `gates[]` → exit 1 `gate_not_declared`（F-06 枚举）。
+
+### 顺带（契约层，只记不裁）
+
+负责人记录的"AC-008..011 的 -b 孪生只列 rings 不列 required_parts，测试按配对 -a 继承"：同意作为契约形状问题登记——donewhen-extract 的孪生纪律本意是 unhappy 路径**自足**可证伪，`given` 不应靠继承；不改冻结字节，进 G2 记录的 fix_list。
+
+**摩擦（追加候选）**
+- k. 形态草案的 F-12 只定了主键，其余四个注册表的落位靠 G1 事后解释；`form_draft_template.md` 应给"数据形态"一节要求把每个记录类型的落位写全（顶层键 / 引用方式）。
+- l. 三条欠定读法都是 L5 在写 fixture 时才暴露——说明 psl-derive 的"对的结果长什么样"没有被机械到 schema 层；建议 form-draft 附一份最小 `audit.schema.json` 草案作为第五个产物（或由 spec-compile 产出并回喂 G1 解释）。

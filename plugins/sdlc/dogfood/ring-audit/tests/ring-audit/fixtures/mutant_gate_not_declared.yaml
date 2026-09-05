@@ -1,4 +1,4 @@
-# based_on: REQ-006 (F-13 delegated_agent 附 authorization_ref; rule 3b) — MUTANT of complete.yaml: run_evidence.gates[G2] verdict pass, signer_kind delegated_agent, authorization_ref null
+# based_on: REQ-006 (F-06 human Gate ∈ {G1,G2,G3}; rule 3d) — MUTANT of complete.yaml: gates[] gains human.merge, which is a human_gate Part not a Gate object → gate_not_declared
 schema: audit/1
 feature: sdlc-ring-audit
 psl: PSL-sdlc-ring-audit.md
@@ -1966,6 +1966,10 @@ gates:
 - {id: verify_release.py, kind: script, label: 闸, ref: plugins/sdlc/skills/release/scripts/verify_release.py}
 - {id: sdlc_state.py, kind: script, label: 闸, ref: plugins/sdlc/skills/sdlc/scripts/sdlc_state.py}
 - {id: check_audit.py, kind: script, label: 闸, ref: plugins/sdlc/dogfood/ring-audit/check_audit.py}
+- id: merge
+  kind: human
+  label: 门
+  checks: [pull request]
 proposals:
 - {id: P-01, source: A-tune, destination: new_issue, text: 'naming misfit: tune → suggested_name harness-tune；不重命名，另开 G2 变更提案'}
 - {id: P-02, source: R2/lifecycle_blank/control/interface-contract, destination: new_issue, text: R2 缺接口契约制品（lifecycle_blank）}
@@ -1977,7 +1981,7 @@ run_evidence:
   run: {slug: sdlc-ring-audit, state: .sdlc/sdlc-ring-audit/state.json, ledger: .sdlc/sdlc-ring-audit/ledger.md}
   gates:
   - {gate: G1, verdict: pass, signer: g1-judge, signer_kind: delegated_agent, authorization_ref: 'g1-record.md#authorization (user instruction 2026-09-05: ''需要人审核的地方，请你弄一个子agent代替我审核一下'')'}
-  - {gate: G2, verdict: pass, signer: g2-judge, signer_kind: delegated_agent, authorization_ref: null}
+  - {gate: G2, verdict: pass, signer: g2-judge, signer_kind: delegated_agent, authorization_ref: .done_when.lock#authorization}
   - {gate: G3, verdict: pending, signer: null, signer_kind: null, authorization_ref: null}
   external_evidence: {kind: substitute, what: check-audit 机械检查 + 代签 agent 独立读, valid_for: this dogfood only}
   check_runs:

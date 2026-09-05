@@ -1,13 +1,21 @@
-# based_on: REQ-001..004, REQ-008..011 — COMPLETE audit.yaml fixture in the F-12 shape (form-draft.md, G1-signed 746c56ef…).
-# 10 rings (R0..R8 + spine), 42 parts (28 skill + 5 agent + 5 human_gate + 4 asset), every required_parts name from
-# AC-001-a / AC-008-a..AC-011-a present.  Top level: rings[] gaps[] artifacts[] gates[] proposals[] run_evidence{}.
-# Conventions the checker must read (documented here because F-12 leaves them open):
-#   - Part FILLS Gap edge = parts[].fills[] (gap ids); Gap registry = top-level gaps[] (each with `ring`);
-#     ring.missing[] holds the full Gap records that no part fills  → orphan_gaps = gaps[] entries with no fills edge absent from their ring's missing.
-#   - artifacts[]: one entry per (artifact, producer); a second producer is legal only with `alternatives_of: stage.<x>`.
-#   - gates[]: kind ∈ {script, human}; `label` is the rendered word (script → 闸, human → 门);
-#     human gates carry signer / signer_kind / authorization_ref; a human gate with `not_exercised: true` may have signer null (CARD-06: merge / harness-review).
-#   - implemented.verdict ∈ {declared, compiled, verified}; naming.rename is the constant false.
+# based_on: REQ-001..004, REQ-006, REQ-008..011 — COMPLETE audit.yaml fixture: F-12 shape (form-draft.md 746c56ef…) read under
+# G1 签字版解释规则 1-3 (g1-record.md, 2026-09-05).  10 rings (R0..R8 + spine), 42 parts (28 skill + 5 agent + 5 human_gate + 4 asset),
+# every required_parts name from AC-001-a / AC-008-a..AC-011-a present.
+# Top level (rule 2a, additive registries): rings[] gaps[] artifacts[] gates[] proposals[] run_evidence{}.
+#   rule 1  artifacts[]: one entry per (artifact, producer).  ≥2 producers of one id is legal iff `alternatives_of` is set
+#           (implement / agent.card-implementer / ratchet → stage.implement) OR every producer's needed.verdict == merge_candidate
+#           (donewhen-extract + acceptance-spec → done_when.yaml, each with merge_candidate_with: <other>); else double_producer.
+#           merge_candidate on a part that is not an unexempted double producer → spurious_merge_candidate.
+#   rule 2  gaps[]: Gap value object + ring + deterministic id `<ring>/<source>/<atoms lowercase joined by +>/<slug>`.
+#           parts[].fills[] = gap ids (the FILLS edge); fills == [] ⇒ needed.verdict must be overfill (else overfill_unmarked).
+#           rings[].missing[] = gap ids that must exist in gaps[] with the same ring (else unknown_gap_ref); a gap nobody fills
+#           that is absent from its ring's missing → orphan_gap.
+#   rule 3  gates[]: human Gate objects are ONLY G1 / G2 / G3 (design view: kind, label 门, checks) + script gates (label 闸);
+#           human.merge / human.harness-review are human_gate PARTS, listing them in gates[] → gate_not_declared.  The F-07 triplet
+#           travels in run_evidence.gates[] {gate, verdict ∈ {pending, pass, reject, waived}, signer, signer_kind, authorization_ref}:
+#           pending → nulls allowed; pass/reject/waived → signer + signer_kind required; delegated_agent → authorization_ref required.
+#   implemented.verdict ∈ {declared, compiled, verified}; an Artifact with checked_by == [] keeps its producer at declared (F-06);
+#   naming.rename is the constant false.
 # Mutants in this directory are derived from this file by ONE edit each — see MUTANTS.md.
 schema: audit/1
 feature: sdlc-ring-audit
@@ -25,7 +33,7 @@ rings:
     loop: null
     artifact: PSL-<feature>.md
     gates: [verify_psl.py]
-    fills: [G-R0-01]
+    fills: [R0/newly_identified/knowledge/world-before-form]
     assessment:
       id: A-psl
       state: evidenced
@@ -61,7 +69,7 @@ rings:
     loop: null
     artifact: derived/form-draft.md
     gates: [verify_form.py, G1]
-    fills: [G-R0-02]
+    fills: [R0/newly_identified/capability/form-derivation]
     assessment:
       id: A-psl-derive
       state: evidenced
@@ -98,7 +106,7 @@ rings:
     artifact: null
     role: gate
     gates: [G1]
-    fills: [G-R0-03]
+    fills: [R0/newly_identified/judgment/form-signoff]
     assessment:
       id: A-human_gate.G1
       state: evidenced
@@ -138,7 +146,7 @@ rings:
     loop: null
     artifact: dos.yaml
     gates: [verify_dos.py]
-    fills: [G-R1-01]
+    fills: [R1/newly_identified/knowledge/shared-ontology]
     assessment:
       id: A-dos-extract
       state: evidenced
@@ -174,7 +182,7 @@ rings:
     loop: null
     artifact: invariants/<territory>.card.yaml
     gates: [verify_invariants.py]
-    fills: [G-R1-02]
+    fills: [R1/newly_identified/knowledge+control/resident-invariants]
     assessment:
       id: A-invariant-extract
       state: evidenced
@@ -202,16 +210,7 @@ rings:
         - {kind: file, ref: plugins/sdlc/skills/invariant-extract/SKILL.md}
       disposition: none
       adjudications: []
-  missing:
-  - id: G-R1-03
-    ring: R1
-    atoms: [Control]
-    source: lifecycle_blank
-    necessity: necessary
-    deletion_test: 无 DOS 对账 / drift 检查：本体与代码分叉不被发现
-    evidence:
-    - {kind: file, ref: docs/lifecycle.md#制品映射表}
-    disposition: issue
+  missing: [R1/lifecycle_blank/control/dos-drift-check]
 - id: R2
   question: 这次要达成什么、如何证伪？
   parts:
@@ -223,7 +222,7 @@ rings:
     loop: null
     artifact: issue-body.md
     gates: [verify_issue.py]
-    fills: [G-R2-01]
+    fills: [R2/newly_identified/knowledge/falsifiable-intent]
     assessment:
       id: A-issue
       state: evidenced
@@ -259,16 +258,18 @@ rings:
     loop: null
     artifact: done_when.yaml
     gates: [verify_donewhen.py, G2]
-    fills: [G-R2-01, G-R2-02]
+    fills: [R2/newly_identified/knowledge/falsifiable-intent, R2/newly_identified/judgment/happy-unhappy-twin]
     assessment:
       id: A-donewhen-extract
       state: evidenced
       needed:
-        verdict: necessary
-        psl_ids: [PSL-002, PSL-016]
+        verdict: merge_candidate
+        psl_ids: [PSL-001, PSL-002]
         evidence:
         - {kind: file, ref: plugins/sdlc/skills/donewhen-extract/SKILL.md}
+        - {kind: file, ref: plugins/sdlc/graph.yaml#L26 stage.contract handled_by (no conditional edge)}
         deletion_test: 撤掉后 Run 的本次验收只剩一句愿望，无法证伪
+        merge_candidate_with: acceptance-spec
       implemented:
         verdict: compiled
         psl_ids: [PSL-010, PSL-015]
@@ -293,18 +294,20 @@ rings:
     ring_evidence: graph.yaml#L26
     provenance: adopted
     loop: null
-    artifact: specs/<feature>/ (v1 bundle)
+    artifact: done_when.yaml
     gates: [G2]
-    fills: [G-R2-02]
+    fills: [R2/newly_identified/judgment/happy-unhappy-twin]
     assessment:
       id: A-acceptance-spec
       state: evidenced
       needed:
-        verdict: necessary
-        psl_ids: [PSL-002, PSL-016]
+        verdict: merge_candidate
+        psl_ids: [PSL-001, PSL-002]
         evidence:
         - {kind: file, ref: plugins/sdlc/skills/acceptance-spec/SKILL.md}
+        - {kind: file, ref: plugins/sdlc/graph.yaml#L26 stage.contract handled_by (no conditional edge)}
         deletion_test: 撤掉后 AC 无 happy/unhappy 孪生，闸门只能检 happy 路径
+        merge_candidate_with: donewhen-extract
       implemented:
         verdict: compiled
         psl_ids: [PSL-010, PSL-015]
@@ -315,7 +318,7 @@ rings:
       naming:
         verdict: fits
         provenance: adopted
-        artifact_or_position: specs/<feature>/ (v1 bundle)
+        artifact_or_position: done_when.yaml
         fit: fits
         rename: false
         psl_ids: [PSL-014]
@@ -332,7 +335,7 @@ rings:
     artifact: null
     role: gate
     gates: [G2]
-    fills: [G-R2-03]
+    fills: [R2/newly_identified/judgment/contract-freeze]
     assessment:
       id: A-human_gate.G2
       state: evidenced
@@ -360,16 +363,7 @@ rings:
         - {kind: file, ref: plugins/sdlc/graph.yaml#kind=human}
       disposition: none
       adjudications: []
-  missing:
-  - id: G-R2-04
-    ring: R2
-    atoms: [Control]
-    source: lifecycle_blank
-    necessity: necessary
-    deletion_test: 无接口契约制品：卡间接口漂移到 R6 才被发现
-    evidence:
-    - {kind: file, ref: docs/lifecycle.md#制品映射表}
-    disposition: issue
+  missing: [R2/lifecycle_blank/control/interface-contract]
 - id: R3
   question: 判据怎么编译成可跑的尺子、尺子本身对不对？
   parts:
@@ -381,7 +375,7 @@ rings:
     loop: null
     artifact: tests/<feature>/**
     gates: [check_verbatim_names.py]
-    fills: [G-R3-01]
+    fills: [R3/newly_identified/capability/independent-tests]
     assessment:
       id: A-test-suite-generator
       state: evidenced
@@ -417,7 +411,7 @@ rings:
     loop: null
     artifact: eval_cases/ + rubric_version
     gates: [verify_compile.py]
-    fills: [G-R3-02]
+    fills: [R3/newly_identified/judgment+control/calibrated-ruler]
     assessment:
       id: A-spec-compile
       state: evidenced
@@ -453,7 +447,7 @@ rings:
     loop: null
     artifact: calibration-report.yaml
     gates: [verify_calibrate.py]
-    fills: [G-R3-02]
+    fills: [R3/newly_identified/judgment+control/calibrated-ruler]
     assessment:
       id: A-calibrate
       state: evidenced
@@ -481,16 +475,7 @@ rings:
         - {kind: file, ref: plugins/sdlc/skills/calibrate/SKILL.md}
       disposition: none
       adjudications: []
-  missing:
-  - id: G-R3-03
-    ring: R3
-    atoms: [Control]
-    source: lifecycle_blank
-    necessity: necessary
-    deletion_test: 无红-绿脚本：测试在实现前是否为红只靠自述
-    evidence:
-    - {kind: file, ref: docs/lifecycle.md#制品映射表}
-    disposition: issue
+  missing: [R3/lifecycle_blank/control/red-green-script]
 - id: R4
   question: 怎么拆、怎么做、怎么原子地落地？
   parts:
@@ -502,7 +487,7 @@ rings:
     loop: null
     artifact: cards/CARD-*.yaml
     gates: [lint_cards.py]
-    fills: [G-R4-01]
+    fills: [R4/newly_identified/knowledge/context-bounded-cards]
     assessment:
       id: A-plan-cards
       state: evidenced
@@ -538,7 +523,7 @@ rings:
     loop: loops.yaml#card
     artifact: card diff + commits
     gates: [verify_commit.py]
-    fills: [G-R4-02]
+    fills: [R4/newly_identified/capability+control/implementer-isolation]
     assessment:
       id: A-implement
       state: evidenced
@@ -574,7 +559,7 @@ rings:
     loop: null
     artifact: atomic commit
     gates: [verify_commit.py]
-    fills: [G-R4-03]
+    fills: [R4/newly_identified/control/commit-pregate]
     assessment:
       id: A-commit
       state: evidenced
@@ -610,7 +595,7 @@ rings:
     loop: loops.yaml#card
     artifact: card diff + commits
     gates: [verify_commit.py]
-    fills: [G-R4-02]
+    fills: [R4/newly_identified/capability+control/implementer-isolation]
     assessment:
       id: A-agent.card-implementer
       state: evidenced
@@ -650,7 +635,7 @@ rings:
     loop: loops.yaml#ratchet
     artifact: card diff + commits
     gates: [verify_commit.py]
-    fills: [G-R5-01]
+    fills: [R5/newly_identified/control/budget-and-escalation]
     assessment:
       id: A-ratchet
       state: evidenced
@@ -689,8 +674,8 @@ rings:
     provenance: adopted
     loop: null
     artifact: ratchet-log/**/code-reviewer.yaml
-    gates: [meta-judge]
-    fills: [G-R6-01]
+    gates: []
+    fills: [R6/newly_identified/judgment/independent-judgment]
     assessment:
       id: A-code-reviewer
       state: evidenced
@@ -701,12 +686,11 @@ rings:
         - {kind: file, ref: plugins/sdlc/skills/code-reviewer/SKILL.md}
         deletion_test: 撤掉后实现由写它的同一个上下文自评，sycophancy 循环
       implemented:
-        verdict: compiled
-        psl_ids: [PSL-010, PSL-015]
+        verdict: declared
+        psl_ids: [PSL-010]
         evidence:
         - {kind: file, ref: plugins/sdlc/skills/code-reviewer/SKILL.md}
-        - {kind: gate_json, ref: plugins/sdlc/skills/code-reviewer/gate.json#static_only}
-        not_reached: {verified: 无行为层运行记录}
+        not_reached: {compiled: 无 verify 脚本、无门（no_gate）, verified: 无行为层运行}
       naming:
         verdict: fits
         provenance: adopted
@@ -725,8 +709,8 @@ rings:
     provenance: adopted
     loop: null
     artifact: ratchet-log/**/qa-reviewer.yaml
-    gates: [meta-judge]
-    fills: [G-R6-01]
+    gates: []
+    fills: [R6/newly_identified/judgment/independent-judgment]
     assessment:
       id: A-qa-reviewer
       state: evidenced
@@ -737,12 +721,11 @@ rings:
         - {kind: file, ref: plugins/sdlc/skills/qa-reviewer/SKILL.md}
         deletion_test: 撤掉后实现由写它的同一个上下文自评，sycophancy 循环
       implemented:
-        verdict: compiled
-        psl_ids: [PSL-010, PSL-015]
+        verdict: declared
+        psl_ids: [PSL-010]
         evidence:
         - {kind: file, ref: plugins/sdlc/skills/qa-reviewer/SKILL.md}
-        - {kind: gate_json, ref: plugins/sdlc/skills/qa-reviewer/gate.json#static_only}
-        not_reached: {verified: 无行为层运行记录}
+        not_reached: {compiled: 无 verify 脚本、无门（no_gate）, verified: 无行为层运行}
       naming:
         verdict: fits
         provenance: adopted
@@ -761,8 +744,8 @@ rings:
     provenance: adopted
     loop: null
     artifact: ratchet-log/**/pm-reviewer.yaml
-    gates: [meta-judge]
-    fills: [G-R6-01]
+    gates: []
+    fills: [R6/newly_identified/judgment/independent-judgment]
     assessment:
       id: A-pm-reviewer
       state: evidenced
@@ -773,12 +756,11 @@ rings:
         - {kind: file, ref: plugins/sdlc/skills/pm-reviewer/SKILL.md}
         deletion_test: 撤掉后实现由写它的同一个上下文自评，sycophancy 循环
       implemented:
-        verdict: compiled
-        psl_ids: [PSL-010, PSL-015]
+        verdict: declared
+        psl_ids: [PSL-010]
         evidence:
         - {kind: file, ref: plugins/sdlc/skills/pm-reviewer/SKILL.md}
-        - {kind: gate_json, ref: plugins/sdlc/skills/pm-reviewer/gate.json#static_only}
-        not_reached: {verified: 无行为层运行记录}
+        not_reached: {compiled: 无 verify 脚本、无门（no_gate）, verified: 无行为层运行}
       naming:
         verdict: fits
         provenance: adopted
@@ -797,8 +779,8 @@ rings:
     provenance: adopted
     loop: null
     artifact: ratchet-log/**/spec-drift-detector.yaml
-    gates: [meta-judge]
-    fills: [G-R6-01]
+    gates: []
+    fills: [R6/newly_identified/judgment/independent-judgment]
     assessment:
       id: A-spec-drift-detector
       state: evidenced
@@ -809,12 +791,11 @@ rings:
         - {kind: file, ref: plugins/sdlc/skills/spec-drift-detector/SKILL.md}
         deletion_test: 撤掉后实现由写它的同一个上下文自评，sycophancy 循环
       implemented:
-        verdict: compiled
-        psl_ids: [PSL-010, PSL-015]
+        verdict: declared
+        psl_ids: [PSL-010]
         evidence:
         - {kind: file, ref: plugins/sdlc/skills/spec-drift-detector/SKILL.md}
-        - {kind: gate_json, ref: plugins/sdlc/skills/spec-drift-detector/gate.json#static_only}
-        not_reached: {verified: 无行为层运行记录}
+        not_reached: {compiled: 无 verify 脚本、无门（no_gate）, verified: 无行为层运行}
       naming:
         verdict: fits
         provenance: adopted
@@ -833,8 +814,8 @@ rings:
     provenance: adopted
     loop: null
     artifact: ratchet-log/**/spec-gaming-detector.yaml
-    gates: [meta-judge]
-    fills: [G-R6-01]
+    gates: []
+    fills: [R6/newly_identified/judgment/independent-judgment]
     assessment:
       id: A-spec-gaming-detector
       state: evidenced
@@ -845,12 +826,11 @@ rings:
         - {kind: file, ref: plugins/sdlc/skills/spec-gaming-detector/SKILL.md}
         deletion_test: 撤掉后实现由写它的同一个上下文自评，sycophancy 循环
       implemented:
-        verdict: compiled
-        psl_ids: [PSL-010, PSL-015]
+        verdict: declared
+        psl_ids: [PSL-010]
         evidence:
         - {kind: file, ref: plugins/sdlc/skills/spec-gaming-detector/SKILL.md}
-        - {kind: gate_json, ref: plugins/sdlc/skills/spec-gaming-detector/gate.json#static_only}
-        not_reached: {verified: 无行为层运行记录}
+        not_reached: {compiled: 无 verify 脚本、无门（no_gate）, verified: 无行为层运行}
       naming:
         verdict: fits
         provenance: adopted
@@ -870,7 +850,7 @@ rings:
     loop: null
     artifact: final-verdict.yaml
     gates: [G3]
-    fills: [G-R6-01, G-R6-02]
+    fills: [R6/newly_identified/judgment/independent-judgment, R6/newly_identified/judgment+control/verdict-synthesis]
     assessment:
       id: A-meta-judge
       state: evidenced
@@ -906,7 +886,7 @@ rings:
     loop: loops.yaml#acceptance
     artifact: ratchet-log/iteration-NNN/
     gates: [G3]
-    fills: [G-R6-02]
+    fills: [R6/newly_identified/judgment+control/verdict-synthesis]
     assessment:
       id: A-acceptance-fleet
       state: evidenced
@@ -941,8 +921,8 @@ rings:
     provenance: authored
     loop: null
     artifact: GitHub review (findings.yaml projection)
-    gates: [human_gate.merge]
-    fills: [G-R6-01]
+    gates: []
+    fills: [R6/newly_identified/judgment/independent-judgment]
     assessment:
       id: A-pr-review
       state: evidenced
@@ -957,7 +937,7 @@ rings:
         psl_ids: [PSL-010]
         evidence:
         - {kind: file, ref: plugins/sdlc/skills/pr-review/SKILL.md}
-        not_reached: {compiled: 无 verify 脚本、无门, verified: 无行为层运行}
+        not_reached: {compiled: 无 verify 脚本、无门（no_gate）, verified: 无行为层运行}
       naming:
         verdict: fits
         provenance: authored
@@ -978,7 +958,7 @@ rings:
     artifact: null
     role: gate
     gates: [G3]
-    fills: [G-R6-03]
+    fills: [R6/newly_identified/judgment/human-ac-signoff]
     assessment:
       id: A-human_gate.G3
       state: evidenced
@@ -1013,8 +993,8 @@ rings:
     provenance: authored
     loop: null
     artifact: findings.yaml
-    gates: [review-triager]
-    fills: [G-R6-01]
+    gates: []
+    fills: [R6/newly_identified/judgment/independent-judgment]
     assessment:
       id: A-agent.pr-reviewer
       state: evidenced
@@ -1025,12 +1005,11 @@ rings:
         - {kind: file, ref: plugins/sdlc/agents/pr-reviewer.md}
         deletion_test: 撤掉后实现由写它的同一个上下文自评，sycophancy 循环
       implemented:
-        verdict: compiled
-        psl_ids: [PSL-010, PSL-015]
+        verdict: declared
+        psl_ids: [PSL-010]
         evidence:
         - {kind: file, ref: plugins/sdlc/agents/pr-reviewer.md}
-        - {kind: gate_json, ref: plugins/sdlc/agents/gate.json#static_only}
-        not_reached: {verified: 无行为层运行记录}
+        not_reached: {compiled: 无 verify 脚本、无门（no_gate）, verified: 无行为层运行}
       naming:
         verdict: fits
         provenance: authored
@@ -1042,16 +1021,7 @@ rings:
         - {kind: file, ref: plugins/sdlc/agents/pr-reviewer.md}
       disposition: none
       adjudications: []
-  missing:
-  - id: G-R6-04
-    ring: R6
-    atoms: [Control]
-    source: lifecycle_blank
-    necessity: necessary
-    deletion_test: 无 meets_done_when 比对：验收结论与契约条目无逐条对账
-    evidence:
-    - {kind: file, ref: docs/lifecycle.md#制品映射表}
-    disposition: issue
+  missing: [R6/lifecycle_blank/control/meets-done-when]
 - id: R7
   question: 怎么合入与交付？
   parts:
@@ -1063,7 +1033,7 @@ rings:
     loop: null
     artifact: pull request
     gates: [verify_pr.py]
-    fills: [G-R7-01]
+    fills: [R7/newly_identified/capability/pr-context]
     assessment:
       id: A-pr
       state: evidenced
@@ -1098,8 +1068,8 @@ rings:
     provenance: adopted
     loop: loops.yaml#review
     artifact: review thread verdicts
-    gates: [fix-verifier]
-    fills: [G-R7-02]
+    gates: []
+    fills: [R7/newly_identified/judgment+control/review-adjudication]
     assessment:
       id: A-review-loop
       state: evidenced
@@ -1110,12 +1080,11 @@ rings:
         - {kind: file, ref: plugins/sdlc/skills/review-loop/SKILL.md}
         deletion_test: 撤掉后评论直接改代码，无裁决、无独立验证
       implemented:
-        verdict: compiled
-        psl_ids: [PSL-010, PSL-015]
+        verdict: declared
+        psl_ids: [PSL-010]
         evidence:
         - {kind: file, ref: plugins/sdlc/skills/review-loop/SKILL.md}
-        - {kind: gate_json, ref: plugins/sdlc/skills/review-loop/gate.json#static_only}
-        not_reached: {verified: 无行为层运行记录}
+        not_reached: {compiled: 无 verify 脚本、无门（no_gate）, verified: 无行为层运行}
       naming:
         verdict: fits
         provenance: adopted
@@ -1135,7 +1104,7 @@ rings:
     loop: null
     artifact: release tag + notes
     gates: [verify_release.py]
-    fills: [G-R7-03]
+    fills: [R7/newly_identified/control/release-verification]
     assessment:
       id: A-release
       state: evidenced
@@ -1171,8 +1140,8 @@ rings:
     loop: null
     artifact: null
     role: gate
-    gates: [merge]
-    fills: [G-R7-04]
+    gates: []
+    fills: [R7/newly_identified/judgment/merge-signoff]
     assessment:
       id: A-human_gate.merge
       state: evidenced
@@ -1208,7 +1177,7 @@ rings:
     loop: loops.yaml#review
     artifact: fix commit
     gates: [verify_commit.py]
-    fills: [G-R7-02]
+    fills: [R7/newly_identified/judgment+control/review-adjudication]
     assessment:
       id: A-agent.comment-fixer
       state: evidenced
@@ -1243,8 +1212,8 @@ rings:
     provenance: authored
     loop: loops.yaml#review
     artifact: fix-verdict.yaml
-    gates: [human_gate.merge]
-    fills: [G-R7-02]
+    gates: []
+    fills: [R7/newly_identified/judgment+control/review-adjudication]
     assessment:
       id: A-agent.fix-verifier
       state: evidenced
@@ -1255,12 +1224,11 @@ rings:
         - {kind: file, ref: plugins/sdlc/agents/fix-verifier.md}
         deletion_test: 撤掉后评论直接改代码，无裁决、无独立验证
       implemented:
-        verdict: compiled
-        psl_ids: [PSL-010, PSL-015]
+        verdict: declared
+        psl_ids: [PSL-010]
         evidence:
         - {kind: file, ref: plugins/sdlc/agents/fix-verifier.md}
-        - {kind: gate_json, ref: plugins/sdlc/agents/gate.json#static_only}
-        not_reached: {verified: 无行为层运行记录}
+        not_reached: {compiled: 无 verify 脚本、无门（no_gate）, verified: 无行为层运行}
       naming:
         verdict: fits
         provenance: authored
@@ -1279,8 +1247,8 @@ rings:
     provenance: authored
     loop: null
     artifact: triage.yaml
-    gates: [human_gate.merge]
-    fills: [G-R7-02]
+    gates: []
+    fills: [R7/newly_identified/judgment+control/review-adjudication]
     assessment:
       id: A-agent.review-triager
       state: evidenced
@@ -1295,7 +1263,7 @@ rings:
         psl_ids: [PSL-010]
         evidence:
         - {kind: file, ref: plugins/sdlc/agents/review-triager.md}
-        not_reached: {compiled: 无 verify 脚本、无门, verified: 无行为层运行}
+        not_reached: {compiled: 无 verify 脚本、无门（no_gate）, verified: 无行为层运行}
       naming:
         verdict: fits
         provenance: authored
@@ -1318,8 +1286,8 @@ rings:
     provenance: authored
     loop: null
     artifact: retro.md
-    gates: [harness-review]
-    fills: [G-R8-01]
+    gates: []
+    fills: [R8/newly_identified/knowledge/escape-to-rule]
     assessment:
       id: A-retro
       state: evidenced
@@ -1334,7 +1302,7 @@ rings:
         psl_ids: [PSL-010]
         evidence:
         - {kind: file, ref: plugins/sdlc/skills/retro/SKILL.md}
-        not_reached: {compiled: 无 verify 脚本、无门, verified: 无行为层运行}
+        not_reached: {compiled: 无 verify 脚本、无门（no_gate）, verified: 无行为层运行}
       naming:
         verdict: fits
         provenance: authored
@@ -1353,8 +1321,8 @@ rings:
     provenance: authored
     loop: null
     artifact: harness change proposal
-    gates: [harness-review]
-    fills: [G-R8-01]
+    gates: []
+    fills: [R8/newly_identified/knowledge/escape-to-rule]
     assessment:
       id: A-tune
       state: evidenced
@@ -1369,7 +1337,7 @@ rings:
         psl_ids: [PSL-010]
         evidence:
         - {kind: file, ref: plugins/sdlc/skills/tune/SKILL.md}
-        not_reached: {compiled: 无 verify 脚本、无门, verified: 无行为层运行}
+        not_reached: {compiled: 无 verify 脚本、无门（no_gate）, verified: 无行为层运行}
       naming:
         verdict: misfit
         provenance: authored
@@ -1391,8 +1359,8 @@ rings:
     loop: null
     artifact: null
     role: gate
-    gates: [harness-review]
-    fills: [G-R8-02]
+    gates: []
+    fills: [R8/newly_identified/judgment/harness-change-signoff]
     assessment:
       id: A-human_gate.harness-review
       state: evidenced
@@ -1433,7 +1401,7 @@ rings:
     artifact: null
     role: orchestrator
     gates: [sdlc_state.py]
-    fills: [G-S-01]
+    fills: [spine/newly_identified/control/enforced-state-machine]
     assessment:
       id: A-sdlc
       state: evidenced
@@ -1469,7 +1437,7 @@ rings:
     loop: null
     artifact: graph.yaml
     gates: [sdlc_state.py]
-    fills: [G-S-02]
+    fills: [spine/newly_identified/knowledge/graph-as-data]
     assessment:
       id: A-asset.graph.yaml
       state: evidenced
@@ -1505,7 +1473,7 @@ rings:
     loop: null
     artifact: loops.yaml
     gates: [sdlc_state.py]
-    fills: [G-S-02]
+    fills: [spine/newly_identified/knowledge/graph-as-data]
     assessment:
       id: A-asset.loops.yaml
       state: evidenced
@@ -1541,7 +1509,7 @@ rings:
     loop: null
     artifact: routing.yaml
     gates: [sdlc_state.py]
-    fills: [G-S-02]
+    fills: [spine/newly_identified/knowledge/graph-as-data]
     assessment:
       id: A-asset.routing.yaml
       state: evidenced
@@ -1577,7 +1545,7 @@ rings:
     loop: null
     artifact: triggers.yaml
     gates: [sdlc_state.py]
-    fills: [G-S-02]
+    fills: [spine/newly_identified/knowledge/graph-as-data]
     assessment:
       id: A-asset.triggers.yaml
       state: evidenced
@@ -1588,11 +1556,12 @@ rings:
         - {kind: file, ref: plugins/sdlc/triggers.yaml}
         deletion_test: 撤掉后图与环是散文不是数据，路由不可机检
       implemented:
-        verdict: declared
-        psl_ids: [PSL-010]
+        verdict: compiled
+        psl_ids: [PSL-010, PSL-015]
         evidence:
         - {kind: file, ref: plugins/sdlc/triggers.yaml}
-        not_reached: {compiled: 无 verify 脚本、无门, verified: 无行为层运行}
+        - {kind: gate_json, ref: plugins/sdlc/gate.json#static_only}
+        not_reached: {verified: 无行为层运行记录}
       naming:
         verdict: fits
         provenance: authored
@@ -1604,18 +1573,9 @@ rings:
         - {kind: file, ref: plugins/sdlc/triggers.yaml}
       disposition: none
       adjudications: []
-  missing:
-  - id: G-S-03
-    ring: spine
-    atoms: [Control]
-    source: unenforced_rule
-    necessity: necessary
-    deletion_test: R001 评估者/执行者隔离只由 user_workflow 保证，无闸检
-    evidence:
-    - {kind: file, ref: dos.yaml#R001}
-    disposition: issue
+  missing: [spine/unenforced_rule/control/r001-isolation-unenforced]
 gaps:
-- id: G-R0-01
+- id: R0/newly_identified/knowledge/world-before-form
   ring: R0
   atoms: [Knowledge]
   source: newly_identified
@@ -1624,7 +1584,7 @@ gaps:
   evidence:
   - {kind: file, ref: ARCHITECTURE.md#§1}
   disposition: none
-- id: G-R0-02
+- id: R0/newly_identified/capability/form-derivation
   ring: R0
   atoms: [Capability]
   source: newly_identified
@@ -1633,7 +1593,7 @@ gaps:
   evidence:
   - {kind: file, ref: ARCHITECTURE.md#§1}
   disposition: none
-- id: G-R0-03
+- id: R0/newly_identified/judgment/form-signoff
   ring: R0
   atoms: [Judgment]
   source: newly_identified
@@ -1642,7 +1602,7 @@ gaps:
   evidence:
   - {kind: file, ref: ARCHITECTURE.md#§6.6}
   disposition: none
-- id: G-R1-01
+- id: R1/newly_identified/knowledge/shared-ontology
   ring: R1
   atoms: [Knowledge]
   source: newly_identified
@@ -1651,7 +1611,7 @@ gaps:
   evidence:
   - {kind: file, ref: ARCHITECTURE.md#§1}
   disposition: none
-- id: G-R1-02
+- id: R1/newly_identified/knowledge+control/resident-invariants
   ring: R1
   atoms: [Knowledge, Control]
   source: newly_identified
@@ -1660,7 +1620,7 @@ gaps:
   evidence:
   - {kind: file, ref: ARCHITECTURE.md#§1}
   disposition: none
-- id: G-R1-03
+- id: R1/lifecycle_blank/control/dos-drift-check
   ring: R1
   atoms: [Control]
   source: lifecycle_blank
@@ -1669,7 +1629,7 @@ gaps:
   evidence:
   - {kind: file, ref: docs/lifecycle.md#制品映射表}
   disposition: issue
-- id: G-R2-01
+- id: R2/newly_identified/knowledge/falsifiable-intent
   ring: R2
   atoms: [Knowledge]
   source: newly_identified
@@ -1678,7 +1638,7 @@ gaps:
   evidence:
   - {kind: file, ref: ARCHITECTURE.md#§1}
   disposition: none
-- id: G-R2-02
+- id: R2/newly_identified/judgment/happy-unhappy-twin
   ring: R2
   atoms: [Judgment]
   source: newly_identified
@@ -1687,7 +1647,7 @@ gaps:
   evidence:
   - {kind: file, ref: ARCHITECTURE.md#§1}
   disposition: none
-- id: G-R2-03
+- id: R2/newly_identified/judgment/contract-freeze
   ring: R2
   atoms: [Judgment]
   source: newly_identified
@@ -1696,7 +1656,7 @@ gaps:
   evidence:
   - {kind: file, ref: ARCHITECTURE.md#§6.2}
   disposition: none
-- id: G-R2-04
+- id: R2/lifecycle_blank/control/interface-contract
   ring: R2
   atoms: [Control]
   source: lifecycle_blank
@@ -1705,7 +1665,7 @@ gaps:
   evidence:
   - {kind: file, ref: docs/lifecycle.md#制品映射表}
   disposition: issue
-- id: G-R3-01
+- id: R3/newly_identified/capability/independent-tests
   ring: R3
   atoms: [Capability]
   source: newly_identified
@@ -1714,7 +1674,7 @@ gaps:
   evidence:
   - {kind: file, ref: ARCHITECTURE.md#§6.7}
   disposition: none
-- id: G-R3-02
+- id: R3/newly_identified/judgment+control/calibrated-ruler
   ring: R3
   atoms: [Judgment, Control]
   source: newly_identified
@@ -1723,7 +1683,7 @@ gaps:
   evidence:
   - {kind: file, ref: ARCHITECTURE.md#§6.7}
   disposition: none
-- id: G-R3-03
+- id: R3/lifecycle_blank/control/red-green-script
   ring: R3
   atoms: [Control]
   source: lifecycle_blank
@@ -1732,7 +1692,7 @@ gaps:
   evidence:
   - {kind: file, ref: docs/lifecycle.md#制品映射表}
   disposition: issue
-- id: G-R4-01
+- id: R4/newly_identified/knowledge/context-bounded-cards
   ring: R4
   atoms: [Knowledge]
   source: newly_identified
@@ -1741,7 +1701,7 @@ gaps:
   evidence:
   - {kind: file, ref: ARCHITECTURE.md#§1}
   disposition: none
-- id: G-R4-02
+- id: R4/newly_identified/capability+control/implementer-isolation
   ring: R4
   atoms: [Capability, Control]
   source: newly_identified
@@ -1750,7 +1710,7 @@ gaps:
   evidence:
   - {kind: file, ref: ARCHITECTURE.md#§6.3}
   disposition: none
-- id: G-R4-03
+- id: R4/newly_identified/control/commit-pregate
   ring: R4
   atoms: [Control]
   source: newly_identified
@@ -1759,7 +1719,7 @@ gaps:
   evidence:
   - {kind: file, ref: ARCHITECTURE.md#§6.4}
   disposition: none
-- id: G-R5-01
+- id: R5/newly_identified/control/budget-and-escalation
   ring: R5
   atoms: [Control]
   source: newly_identified
@@ -1768,7 +1728,7 @@ gaps:
   evidence:
   - {kind: file, ref: ARCHITECTURE.md#§6.8}
   disposition: none
-- id: G-R6-01
+- id: R6/newly_identified/judgment/independent-judgment
   ring: R6
   atoms: [Judgment]
   source: newly_identified
@@ -1777,7 +1737,7 @@ gaps:
   evidence:
   - {kind: file, ref: ARCHITECTURE.md#§6.3}
   disposition: none
-- id: G-R6-02
+- id: R6/newly_identified/judgment+control/verdict-synthesis
   ring: R6
   atoms: [Judgment, Control]
   source: newly_identified
@@ -1786,7 +1746,7 @@ gaps:
   evidence:
   - {kind: file, ref: ARCHITECTURE.md#§6.12}
   disposition: none
-- id: G-R6-03
+- id: R6/newly_identified/judgment/human-ac-signoff
   ring: R6
   atoms: [Judgment]
   source: newly_identified
@@ -1795,7 +1755,7 @@ gaps:
   evidence:
   - {kind: file, ref: ARCHITECTURE.md#§6.6}
   disposition: none
-- id: G-R6-04
+- id: R6/lifecycle_blank/control/meets-done-when
   ring: R6
   atoms: [Control]
   source: lifecycle_blank
@@ -1804,7 +1764,7 @@ gaps:
   evidence:
   - {kind: file, ref: docs/lifecycle.md#制品映射表}
   disposition: issue
-- id: G-R7-01
+- id: R7/newly_identified/capability/pr-context
   ring: R7
   atoms: [Capability]
   source: newly_identified
@@ -1813,7 +1773,7 @@ gaps:
   evidence:
   - {kind: file, ref: ARCHITECTURE.md#§1}
   disposition: none
-- id: G-R7-02
+- id: R7/newly_identified/judgment+control/review-adjudication
   ring: R7
   atoms: [Judgment, Control]
   source: newly_identified
@@ -1822,7 +1782,7 @@ gaps:
   evidence:
   - {kind: file, ref: ARCHITECTURE.md#§6.3}
   disposition: none
-- id: G-R7-03
+- id: R7/newly_identified/control/release-verification
   ring: R7
   atoms: [Control]
   source: newly_identified
@@ -1831,7 +1791,7 @@ gaps:
   evidence:
   - {kind: file, ref: ARCHITECTURE.md#§6.9}
   disposition: none
-- id: G-R7-04
+- id: R7/newly_identified/judgment/merge-signoff
   ring: R7
   atoms: [Judgment]
   source: newly_identified
@@ -1840,7 +1800,7 @@ gaps:
   evidence:
   - {kind: file, ref: ARCHITECTURE.md#§6.6}
   disposition: none
-- id: G-R8-01
+- id: R8/newly_identified/knowledge/escape-to-rule
   ring: R8
   atoms: [Knowledge]
   source: newly_identified
@@ -1849,7 +1809,7 @@ gaps:
   evidence:
   - {kind: file, ref: ARCHITECTURE.md#§6.12}
   disposition: none
-- id: G-R8-02
+- id: R8/newly_identified/judgment/harness-change-signoff
   ring: R8
   atoms: [Judgment]
   source: newly_identified
@@ -1858,7 +1818,7 @@ gaps:
   evidence:
   - {kind: file, ref: ARCHITECTURE.md#§6.13}
   disposition: none
-- id: G-S-01
+- id: spine/newly_identified/control/enforced-state-machine
   ring: spine
   atoms: [Control]
   source: newly_identified
@@ -1867,7 +1827,7 @@ gaps:
   evidence:
   - {kind: file, ref: ARCHITECTURE.md#§6.4}
   disposition: none
-- id: G-S-02
+- id: spine/newly_identified/knowledge/graph-as-data
   ring: spine
   atoms: [Knowledge]
   source: newly_identified
@@ -1876,7 +1836,7 @@ gaps:
   evidence:
   - {kind: file, ref: ARCHITECTURE.md#§6.11}
   disposition: none
-- id: G-S-03
+- id: spine/unenforced_rule/control/r001-isolation-unenforced
   ring: spine
   atoms: [Control]
   source: unenforced_rule
@@ -1904,7 +1864,7 @@ artifacts:
 - id: done_when.yaml
   producer: donewhen-extract
   checked_by: [verify_donewhen.py, G2]
-- id: specs/<feature>/ (v1 bundle)
+- id: done_when.yaml
   producer: acceptance-spec
   checked_by: [G2]
 - id: tests/<feature>/**
@@ -1935,19 +1895,19 @@ artifacts:
   alternatives_of: stage.implement
 - id: ratchet-log/**/code-reviewer.yaml
   producer: code-reviewer
-  checked_by: [meta-judge]
+  checked_by: []
 - id: ratchet-log/**/qa-reviewer.yaml
   producer: qa-reviewer
-  checked_by: [meta-judge]
+  checked_by: []
 - id: ratchet-log/**/pm-reviewer.yaml
   producer: pm-reviewer
-  checked_by: [meta-judge]
+  checked_by: []
 - id: ratchet-log/**/spec-drift-detector.yaml
   producer: spec-drift-detector
-  checked_by: [meta-judge]
+  checked_by: []
 - id: ratchet-log/**/spec-gaming-detector.yaml
   producer: spec-gaming-detector
-  checked_by: [meta-judge]
+  checked_by: []
 - id: final-verdict.yaml
   producer: meta-judge
   checked_by: [G3]
@@ -1956,16 +1916,16 @@ artifacts:
   checked_by: [G3]
 - id: GitHub review (findings.yaml projection)
   producer: pr-review
-  checked_by: [human_gate.merge]
+  checked_by: []
 - id: findings.yaml
   producer: agent.pr-reviewer
-  checked_by: [review-triager]
+  checked_by: []
 - id: pull request
   producer: pr
   checked_by: [verify_pr.py]
 - id: review thread verdicts
   producer: review-loop
-  checked_by: [fix-verifier]
+  checked_by: []
 - id: release tag + notes
   producer: release
   checked_by: [verify_release.py]
@@ -1974,16 +1934,16 @@ artifacts:
   checked_by: [verify_commit.py]
 - id: fix-verdict.yaml
   producer: agent.fix-verifier
-  checked_by: [human_gate.merge]
+  checked_by: []
 - id: triage.yaml
   producer: agent.review-triager
-  checked_by: [human_gate.merge]
+  checked_by: []
 - id: retro.md
   producer: retro
-  checked_by: [harness-review]
+  checked_by: []
 - id: harness change proposal
   producer: tune
-  checked_by: [harness-review]
+  checked_by: []
 - id: graph.yaml
   producer: asset.graph.yaml
   checked_by: [sdlc_state.py]
@@ -2001,39 +1961,14 @@ gates:
   kind: human
   label: 门
   checks: [derived/form-draft.md]
-  signer: g1-judge
-  signer_kind: delegated_agent
-  authorization_ref: 'g1-record.md#authorization (user instruction 2026-09-05: ''需要人审核的地方，请你弄一个子agent代替我审核一下'')'
 - id: G2
   kind: human
   label: 门
   checks: [done_when.yaml]
-  signer: g2-judge
-  signer_kind: delegated_agent
-  authorization_ref: .done_when.lock#authorization
 - id: G3
   kind: human
   label: 门
   checks: [final-verdict.yaml, AUDIT.md]
-  signer: g3-judge
-  signer_kind: delegated_agent
-  authorization_ref: .sdlc/sdlc-ring-audit/state.json#g3.authorization
-- id: merge
-  kind: human
-  label: 门
-  checks: [pull request]
-  signer: null
-  signer_kind: null
-  authorization_ref: null
-  not_exercised: true
-- id: harness-review
-  kind: human
-  label: 门
-  checks: [harness change proposal]
-  signer: null
-  signer_kind: null
-  authorization_ref: null
-  not_exercised: true
 - {id: verify_psl.py, kind: script, label: 闸, ref: plugins/sdlc/skills/psl/scripts/verify_psl.py}
 - {id: verify_form.py, kind: script, label: 闸, ref: plugins/sdlc/skills/psl-derive/scripts/verify_form.py}
 - {id: verify_dos.py, kind: script, label: 闸, ref: plugins/sdlc/skills/dos-extract/scripts/verify_dos.py}
@@ -2051,18 +1986,17 @@ gates:
 - {id: check_audit.py, kind: script, label: 闸, ref: plugins/sdlc/dogfood/ring-audit/check_audit.py}
 proposals:
 - {id: P-01, source: A-tune, destination: new_issue, text: 'naming misfit: tune → suggested_name harness-tune；不重命名，另开 G2 变更提案'}
-- {id: P-02, source: G-R2-04, destination: new_issue, text: R2 缺接口契约制品（lifecycle_blank）}
-- {id: P-03, source: G-R3-03, destination: new_issue, text: R3 缺红-绿脚本（lifecycle_blank）}
-- {id: P-04, source: G-S-03, destination: skill_fix_list, text: R001 隔离规则无闸检（unenforced_rule）}
+- {id: P-02, source: R2/lifecycle_blank/control/interface-contract, destination: new_issue, text: R2 缺接口契约制品（lifecycle_blank）}
+- {id: P-03, source: R3/lifecycle_blank/control/red-green-script, destination: new_issue, text: R3 缺红-绿脚本（lifecycle_blank）}
+- {id: P-04, source: spine/unenforced_rule/control/r001-isolation-unenforced, destination: skill_fix_list, text: R001 隔离规则无闸检（unenforced_rule）}
 - {id: P-05, source: A-pr-review, destination: no_action, text: pr-review vs code-reviewer：Artifact 不同（GitHub review vs findings.yaml）→ distinct_exits}
+- {id: P-06, source: A-donewhen-extract, destination: new_issue, text: donewhen-extract + acceptance-spec 都写 done_when.yaml 且无 conditional 边 → merge_candidate（现状 Q008），交人裁}
 run_evidence:
   run: {slug: sdlc-ring-audit, state: .sdlc/sdlc-ring-audit/state.json, ledger: .sdlc/sdlc-ring-audit/ledger.md}
   gates:
-  - {id: G1, signer: g1-judge, signer_kind: delegated_agent, authorization_ref: 'g1-record.md#authorization (user instruction 2026-09-05: ''需要人审核的地方，请你弄一个子agent代替我审核一下'')'}
-  - {id: G2, signer: g2-judge, signer_kind: delegated_agent, authorization_ref: .done_when.lock#authorization}
-  - {id: G3, signer: g3-judge, signer_kind: delegated_agent, authorization_ref: .sdlc/sdlc-ring-audit/state.json#g3.authorization}
-  - {id: merge, signer: null, signer_kind: null, authorization_ref: null}
-  - {id: harness-review, signer: null, signer_kind: null, authorization_ref: null}
+  - {gate: G1, verdict: pass, signer: g1-judge, signer_kind: delegated_agent, authorization_ref: 'g1-record.md#authorization (user instruction 2026-09-05: ''需要人审核的地方，请你弄一个子agent代替我审核一下'')'}
+  - {gate: G2, verdict: pass, signer: g2-judge, signer_kind: delegated_agent, authorization_ref: .done_when.lock#authorization}
+  - {gate: G3, verdict: pending, signer: null, signer_kind: null, authorization_ref: null}
   external_evidence: {kind: substitute, what: check-audit 机械检查 + 代签 agent 独立读, valid_for: this dogfood only}
   check_runs:
   - {cmd: python3 check_audit.py audit.yaml --psl PSL-sdlc-ring-audit.md, exit: 0}

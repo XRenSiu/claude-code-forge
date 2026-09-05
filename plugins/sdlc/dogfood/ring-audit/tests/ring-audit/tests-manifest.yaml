@@ -23,7 +23,8 @@ behavior:
       - test_AC_001_a_complete_exit0_rings10_parts_total42
       - test_AC_001_b_ring_removed_exit1_ring_missing
       - test_AC_001_b_F14_variant_delete_ring_R6_exit1
-      - test_F13_double_producer_without_alternatives_of_exit1
+      - test_AC_001_a_F13_double_producer_unacknowledged_exit1_double_producer
+      - test_AC_001_a_F13_spurious_merge_candidate_exit1_spurious_merge_candidate
       - test_AC_002_a_complete_dims_psl_and_evidence_counts_zero
       - test_AC_002_b_empty_psl_ids_exit1_psl_id_missing
       - test_AC_002_a_F13_unknown_psl_id_exit1_dims_with_unknown_psl_id_1
@@ -37,9 +38,12 @@ behavior:
       - test_AC_004_b_proposal_without_source_exit1_proposal_without_source
       - test_AC_004_a_F13_ring_without_missing_key_exit1_count1
       - test_AC_004_a_F13_orphan_gap_exit1_orphan_gaps_1
-      - test_F13_human_gate_without_signer_exit1
-      - test_F13_delegated_agent_without_authorization_ref_exit1
-      - test_F13_script_gate_rendered_as_door_exit1
+      - test_AC_004_a_F13_unknown_gap_ref_exit1_unknown_gap_ref
+      - test_AC_004_a_F13_overfill_unmarked_exit1_overfill_unmarked
+      - test_AC_006_a_F13_run_evidence_gate_pass_without_signer_exit1
+      - test_AC_006_a_F13_run_evidence_delegated_agent_without_authorization_ref_exit1
+      - test_AC_006_a_F13_script_gate_rendered_as_door_exit1
+      - test_AC_006_a_F13_gate_not_declared_exit1_gate_not_declared
       - test_AC_008_a_rings_R0_R2_spine_required_parts_exit0
       - test_AC_008_b_required_part_removed_R0_R2_spine_exit1_required_part_missing
       - test_AC_009_a_rings_R3_R5_required_parts_exit0
@@ -69,7 +73,8 @@ mutation:                               # 4-E — input to /calibrate mirror ①
   runner: plugins/sdlc/dogfood/ring-audit/tests/ring-audit/mutation.sh
   kill_rate: ">= 0.70"
   kind: fixture-mutation                # mutants are audit.yaml INPUT documents; check_audit.py is the ruler under test
-  families:                             # 19 — one per F-13 predicate family / unwanted AC (done_when thresholds comment lists ≥ 10)
+  interpretation: g1-record.md#签字版解释规则（2026-09-05） rules 1-3   # fixes tokens double_producer / spurious_merge_candidate / orphan_gap / unknown_gap_ref / overfill_unmarked / gate_not_declared
+  families:                             # 23 files (+1 in-memory --variant entry) — one per F-13 predicate family / unwanted AC (done_when thresholds comment lists ≥ 10)
     - fixtures/mutant_ring_missing.yaml
     - fixtures/mutant_psl_id_missing.yaml
     - fixtures/mutant_psl_id_unknown.yaml
@@ -89,22 +94,26 @@ mutation:                               # 4-E — input to /calibrate mirror ①
     - fixtures/mutant_delegated_without_authorization_ref.yaml
     - fixtures/mutant_script_gate_rendered_as_door.yaml
     - fixtures/mutant_double_producer.yaml
+    - fixtures/mutant_spurious_merge_candidate.yaml
+    - fixtures/mutant_unknown_gap_ref.yaml
+    - fixtures/mutant_overfill_unmarked.yaml
+    - fixtures/mutant_gate_not_declared.yaml
 
 human_acs:                              # kind: human — NO automated test; routed to G3 (done_when rules), never auto-passed
   AC-005-a: plugins/sdlc/dogfood/ring-audit/tests/ring-audit/checklist_G3.md
   AC-006-a: plugins/sdlc/dogfood/ring-audit/tests/ring-audit/checklist_G3.md
 
 test_to_ac:                             # traceability (AC → tests); F13 families attach to the AC whose count field they exercise
-  AC-001-a: [test_AC_001_a_complete_exit0_rings10_parts_total42]
+  AC-001-a: [test_AC_001_a_complete_exit0_rings10_parts_total42, test_AC_001_a_F13_double_producer_unacknowledged_exit1_double_producer, test_AC_001_a_F13_spurious_merge_candidate_exit1_spurious_merge_candidate]
   AC-001-b: [test_AC_001_b_ring_removed_exit1_ring_missing, test_AC_001_b_F14_variant_delete_ring_R6_exit1]
   AC-002-a: [test_AC_002_a_complete_dims_psl_and_evidence_counts_zero, test_AC_002_a_F13_unknown_psl_id_exit1_dims_with_unknown_psl_id_1, test_AC_002_a_F13_evidence_kind_outside_enum_exit1, test_AC_002_a_F13_evidence_ref_empty_exit1]
   AC-002-b: [test_AC_002_b_empty_psl_ids_exit1_psl_id_missing]
   AC-003-a: [test_AC_003_a_complete_implemented_and_rename_counts_zero, test_AC_003_a_F13_implemented_outside_enum_exit1_count1, test_AC_003_a_F13_rename_true_exit1_count1]
   AC-003-b: [test_AC_003_b_boolean_implemented_exit1_boolean_implemented]
-  AC-004-a: [test_AC_004_a_complete_missing_key_orphan_and_source_counts_zero, test_AC_004_a_F13_ring_without_missing_key_exit1_count1, test_AC_004_a_F13_orphan_gap_exit1_orphan_gaps_1]
+  AC-004-a: [test_AC_004_a_complete_missing_key_orphan_and_source_counts_zero, test_AC_004_a_F13_ring_without_missing_key_exit1_count1, test_AC_004_a_F13_orphan_gap_exit1_orphan_gaps_1, test_AC_004_a_F13_unknown_gap_ref_exit1_unknown_gap_ref, test_AC_004_a_F13_overfill_unmarked_exit1_overfill_unmarked]
   AC-004-b: [test_AC_004_b_proposal_without_source_exit1_proposal_without_source]
   AC-005-a: [checklist_G3.md]
-  AC-006-a: [checklist_G3.md, test_F13_human_gate_without_signer_exit1, test_F13_delegated_agent_without_authorization_ref_exit1, test_F13_script_gate_rendered_as_door_exit1]
+  AC-006-a: [checklist_G3.md, test_AC_006_a_F13_run_evidence_gate_pass_without_signer_exit1, test_AC_006_a_F13_run_evidence_delegated_agent_without_authorization_ref_exit1, test_AC_006_a_F13_script_gate_rendered_as_door_exit1, test_AC_006_a_F13_gate_not_declared_exit1_gate_not_declared]
   AC-007-a: [test_AC_007_a_replay_card_commits_exit0_touching_zero]
   AC-007-b: [test_AC_007_b_card_commit_touching_skills_exit1_whitelist_overflow]
   AC-008-a: [test_AC_008_a_rings_R0_R2_spine_required_parts_exit0]
@@ -115,7 +124,6 @@ test_to_ac:                             # traceability (AC → tests); F13 famil
   AC-010-b: [test_AC_010_b_required_part_removed_R6_exit1_required_part_missing]
   AC-011-a: [test_AC_011_a_rings_R7_R8_required_parts_exit0]
   AC-011-b: [test_AC_011_b_required_part_removed_R7_R8_exit1_required_part_missing]
-  F-13-only: [test_F13_double_producer_without_alternatives_of_exit1]   # REQ-001 family from thresholds.mutation_kill_rate; no AC count field
 
 matrix_notes:                           # iron rule 13 — EARS type → layer sanity check (references/ears-to-test-matrix.md)
   - "all mechanical ACs are event/unwanted on a CLI: unit (CLI-on-fixture) layer only; no e2e — matrix marks e2e '–' for both, no deviation"

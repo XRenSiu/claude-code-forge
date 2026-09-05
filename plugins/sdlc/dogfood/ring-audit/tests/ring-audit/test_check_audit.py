@@ -5,8 +5,8 @@
 # L5 tests for the sdlc-ring-audit instrument.  Written by a NON-implementer before check_audit.py exists — every test
 # is red on the base commit (RED_BASELINE.txt) and must go green when CARD-01 (check_audit.py + replay_card_commits.sh)
 # lands.  One method per mechanical AC, AC id verbatim in the method name; extra F-13 predicate families are attached
-# to the AC whose count field they exercise (test_AC_xxx_F13_*) or, where no AC count exists, named test_F13_*.
-# Human ACs (AC-005-a / AC-006-a) have NO method here — see checklist_G3.md.
+# to the AC whose count field they exercise (test_AC_xxx_F13_*).
+# AC-005-a (human) has NO method here — see checklist_G3.md; AC-006-a's four F-13 gate predicates are attached as test_AC_006_a_F13_* alongside checklist_G3.md.
 #
 # Interface this file pins down (the AC `expect:` keys are the JSON field names — CARD-01):
 #   python3 check_audit.py <audit.yaml> --psl <PSL.md> [--rings R0,..] [--required-parts a,b,..] [--variant delete-ring:<id>]
@@ -15,6 +15,13 @@
 #   rename_true, rings_without_missing_key, orphan_gaps, proposals_without_source, required_parts_missing.
 #   On failure: exit 1 and the failing predicate name(s) in "error" (string, may carry a location suffix after ':' or
 #   whitespace) or "errors" / "failed_predicates" (list of strings or {predicate|name|error}).
+#   Predicate tokens fixed by the contract: ring_missing, psl_id_missing, boolean_implemented, proposal_without_source,
+#   required_part_missing, whitelist_overflow.  Fixed by G1 签字版解释规则 1-3 (g1-record.md 2026-09-05): double_producer,
+#   spurious_merge_candidate (rule 1); orphan_gap, unknown_gap_ref, overfill_unmarked (rule 2); gate_not_declared (rule 3).
+#   audit.yaml shape read under those rules (see fixtures/complete.yaml header): top-level gaps[] registry with deterministic
+#   ids + parts[].fills[] as the FILLS edge + rings[].missing[] as gap ids; ≥2 producers legal iff alternatives_of or every
+#   producer's needed.verdict == merge_candidate; gates[] human = G1/G2/G3 only, F-07 signer triplet lives in
+#   run_evidence.gates[] {gate, verdict ∈ {pending, pass, reject, waived}, signer, signer_kind, authorization_ref}.
 #   bash replay_card_commits.sh — inspects the git repository of its CWD (verify_commit.py shells out to git in cwd),
 #   resolves cards/<id>.yaml relative to cwd or to its own directory, prints a JSON object with
 #   card_commits_touching_audited_dirs and exits 1 printing whitelist_overflow when any Card commit overflows.
@@ -152,11 +159,17 @@ class TestREQ001(CheckAuditBase):
         # with ring_missing — the exit 0 in run_evidence is only evidence when this twin run is recorded next to it.
         self.assert_fail(COMPLETE, "ring_missing", "--variant", "delete-ring:R6")
 
-    def test_F13_double_producer_without_alternatives_of_exit1(self):
-        # F-13 "无 Artifact 有两个非 alternatives_of 的 producer" (thresholds.mutation_kill_rate family 双生产者非 alternatives_of)
-        # complete.yaml already carries the legal case (implement / agent.card-implementer / ratchet share one artifact via
-        # alternatives_of: stage.implement) and passes; a second producer WITHOUT alternatives_of must fail.
-        self.assert_fail(FIX / "mutant_double_producer.yaml", None)
+    def test_AC_001_a_F13_double_producer_unacknowledged_exit1_double_producer(self):
+        # F-13 read under G1 rule 1: "no UNACKNOWLEDGED double producer".  complete.yaml (AC-001-a) carries both legal cases —
+        # implement / agent.card-implementer / ratchet share one artifact via alternatives_of: stage.implement, and
+        # donewhen-extract + acceptance-spec both produce done_when.yaml with needed.verdict merge_candidate — and passes.
+        # A second producer with neither alternatives_of nor merge_candidate on every producer → exit 1 double_producer.
+        self.assert_fail(FIX / "mutant_double_producer.yaml", "double_producer")
+
+    def test_AC_001_a_F13_spurious_merge_candidate_exit1_spurious_merge_candidate(self):
+        # G1 rule 1, symmetric face: merge_candidate ⇔ unexempted double producer.  R0/psl flagged merge_candidate while
+        # PSL-<feature>.md has a single producer → exit 1 spurious_merge_candidate.
+        self.assert_fail(FIX / "mutant_spurious_merge_candidate.yaml", "spurious_merge_candidate")
 
 
 # ---------------------------------------------------------------- REQ-002 (psl_ids + evidence per dimension)
@@ -235,27 +248,44 @@ class TestREQ004(CheckAuditBase):
         self.assert_count(obj, ctx, "rings_without_missing_key", 1)
 
     def test_AC_004_a_F13_orphan_gap_exit1_orphan_gaps_1(self):
-        # F-04 / F-13: a Gap (gaps[] G-R5-99) with no FILLS edge that is absent from its ring's missing → exit 1, orphan_gaps 1
-        obj, ctx = self.assert_fail(FIX / "mutant_orphan_gap.yaml", None)
+        # F-04 / F-13 under G1 rule 2e: a gaps[] entry (R5/newly_identified/control/plateau-detection) that no parts[].fills
+        # references and that is absent from R5.missing → exit 1 orphan_gap, orphan_gaps 1
+        obj, ctx = self.assert_fail(FIX / "mutant_orphan_gap.yaml", "orphan_gap")
         self.assert_count(obj, ctx, "orphan_gaps", 1)
 
+    def test_AC_004_a_F13_unknown_gap_ref_exit1_unknown_gap_ref(self):
+        # G1 rule 2e: rings[].missing[] (and parts[].fills[]) are ids that must exist in gaps[] with the same ring;
+        # R5.missing references an id that is not in gaps[] → exit 1 unknown_gap_ref
+        self.assert_fail(FIX / "mutant_unknown_gap_ref.yaml", "unknown_gap_ref")
 
-# ---------------------------------------------------------------- REQ-006 (gate signer predicates of F-13; mechanical twin of AC-006-a's signer clauses)
+    def test_AC_004_a_F13_overfill_unmarked_exit1_overfill_unmarked(self):
+        # G1 rule 2c (F-04): fills == [] ⇒ needed.verdict must be overfill; R3/spec-compile fills [] with verdict necessary
+        # → exit 1 overfill_unmarked (its gap stays filled by calibrate, so this is not also an orphan)
+        self.assert_fail(FIX / "mutant_overfill_unmarked.yaml", "overfill_unmarked")
+
+
+# ---------------------------------------------------------------- REQ-006 (gate predicates of F-13 under G1 rule 3; mechanical twins of AC-006-a's signer clauses)
 class TestREQ006Gates(CheckAuditBase):
     # based_on: REQ-006
 
-    def test_F13_human_gate_without_signer_exit1(self):
-        # F-13 "human Gate 有 signer": exercised gate G2 without signer → exit 1
-        # (merge / harness-review in complete.yaml carry signer null WITH not_exercised: true and must pass — CARD-06 shape)
+    def test_AC_006_a_F13_run_evidence_gate_pass_without_signer_exit1(self):
+        # F-13 "human Gate 有 signer" read under G1 rule 3b: the signer triplet lives in run_evidence.gates[]; a gate with
+        # verdict pass/reject/waived and signer null → exit 1.  complete.yaml has G3 pending with nulls and must pass.
         self.assert_fail(FIX / "mutant_human_gate_without_signer.yaml", None)
 
-    def test_F13_delegated_agent_without_authorization_ref_exit1(self):
-        # F-13 "delegated_agent 附 authorization_ref": G3 signer_kind delegated_agent without authorization_ref → exit 1
+    def test_AC_006_a_F13_run_evidence_delegated_agent_without_authorization_ref_exit1(self):
+        # F-13 "delegated_agent 附 authorization_ref" (rule 3b): run_evidence.gates[G2] pass, signer_kind delegated_agent,
+        # authorization_ref null → exit 1
         self.assert_fail(FIX / "mutant_delegated_without_authorization_ref.yaml", None)
 
-    def test_F13_script_gate_rendered_as_door_exit1(self):
-        # F-13 / F-94 "无 script Gate 被渲染为门": kind script with label 门 → exit 1
+    def test_AC_006_a_F13_script_gate_rendered_as_door_exit1(self):
+        # F-13 / F-94 "无 script Gate 被渲染为门": gates[] kind script with label 门 → exit 1
         self.assert_fail(FIX / "mutant_script_gate_rendered_as_door.yaml", None)
+
+    def test_AC_006_a_F13_gate_not_declared_exit1_gate_not_declared(self):
+        # G1 rule 3d (F-06): human Gate objects are only G1 / G2 / G3; human.merge is a human_gate PART, listing it in gates[]
+        # → exit 1 gate_not_declared
+        self.assert_fail(FIX / "mutant_gate_not_declared.yaml", "gate_not_declared")
 
 
 # ---------------------------------------------------------------- REQ-007 (Card commits never touch the audited dirs)
