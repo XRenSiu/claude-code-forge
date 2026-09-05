@@ -1,0 +1,17 @@
+{
+  "_comment": "模板，不自动安装（design-notes：不做插件级 hooks）。复制到项目 .claude/settings.json 的 hooks 段；把 <plugin> 换成插件根、<slug> 换成当前 run 或去掉 --slug（单 run 时自动解析）。语义：每轮结束跑 check-clean；有卡 doing 且工作区脏、或 fail 升级后失败报告未写（pending.failure_report）→ 输出 {decision: block, reason} 让 Claude 先收拾干净——Anthropic 长跑 harness 的 'leave the environment in a clean state' 编译态。",
+  "hooks": {
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 <plugin>/skills/sdlc/scripts/sdlc_state.py check-clean --slug <slug> --as-hook",
+            "timeout": 30
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,6 @@
+{"version":1,"slug":"feat-b","title":"b","track":"psl","stage":"archive","created_at":"2026-09-02T10:00:00+00:00","updated_at":"2026-09-04T10:00:00+00:00",
+ "gates":{"g1":{"required":true,"verdict":"reject","attribution":"rule_error"},"g2":{"required":true,"verdict":"pass"},"g3":{"required":true,"verdict":"pass"}},
+ "counters":{"card":3,"plan":0,"task":0,"ontology":0,"world":1,"last_fingerprints":{},"fingerprint_repeats":{},"fingerprint_history":{},"scores":{}},
+ "pending":{"failure_report":false},
+ "review":{"done":true,"rounds":3},"merge":{"sha":"def","merged_at":"2026-09-04T09:00:00+00:00"},
+ "waivers":[{"stage":"pr","reason":"task track lightweight","at":"2026-09-03T10:00:00+00:00"}],"assumptions":[],"artifacts":{}}

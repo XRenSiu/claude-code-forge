@@ -6,7 +6,7 @@ within size limits. Pre-flight facts about the branch are checked from git, not 
 
 Usage:
   verify_pr.py --body BODY.md [--title T] [--base main] [--head HEAD] [--done-when F] [--lock L]
-               [--proposal-glob 'change-proposal-*.md'] [--allow-xl] [--skip-preflight]
+               [--proposal-glob 'change-proposal-*.md'] [--allow-xl] [--skip-preflight] [--pre-review]
 
 Exit 0 = pass (flags may remain) · 1 = REJECT · 2 = git/IO error. Output JSON includes size_class.
 
@@ -20,6 +20,10 @@ Mechanical guarantees (REJECT — non-waivable half):
   - --lock: locked files in base..head diff without a change proposal in the diff → reject
   - preflight (unless --skip-preflight): head branch ≠ base; working tree clean; every commit in
     base..head has a Conventional Commits subject; not behind origin/<base> (flag if cannot fetch)
+  - --pre-review: a `## Known issues` section must exist and be either `none` / `无` or a list whose items carry
+    a file:line anchor (the findings that survived ≤ 2 self-review rounds are documented for the human reviewer,
+    not iterated on forever — agentpatterns self-review loop); an item tagged P0 / A-tier is a REJECT (an A-tier
+    finding is fixed, not shipped as a known issue)
 Flags: L size; untested; TODO/FIXME in body; Reviewer focus without file refs; draft recommended.
 """
 import argparse
@@ -66,7 +70,7 @@ def main():
     ap.add_argument("--body", required=True); ap.add_argument("--title"); ap.add_argument("--base", default="main")
     ap.add_argument("--head", default="HEAD"); ap.add_argument("--done-when"); ap.add_argument("--lock")
     ap.add_argument("--proposal-glob", default="change-proposal-*.md"); ap.add_argument("--allow-xl", action="store_true")
-    ap.add_argument("--skip-preflight", action="store_true")
+    ap.add_argument("--skip-preflight", action="store_true"); ap.add_argument("--pre-review", action="store_true")
     a = ap.parse_args()
     rejects, flags = [], []
     md = open(a.body, encoding="utf-8").read()
@@ -93,6 +97,24 @@ def main():
         flags.append("Reviewer focus names no file — point at file:line")
     if re.search(r"\b(TODO|FIXME|XXX)\b", md):
         flags.append("TODO/FIXME in body — resolve or move to an issue")
+    if a.pre_review:
+        ki = secs.get("known issues")
+        if ki is None:
+            rejects.append("--pre-review: section missing: ## Known issues (surviving self-review findings, or `none`)")
+        else:
+            body_ = ki.strip()
+            items = re.findall(r"^\s*[-*]\s+(.+)$", ki, re.M)
+            if not body_ or (not items and not re.search(r"^\s*(none|无|n/a)\b", body_, re.I | re.M)):
+                rejects.append("--pre-review: Known issues must list surviving findings (file:line each) or say `none`")
+            for it in items:
+                if not re.search(r"[\w/.-]+\.(ts|tsx|js|py|go|rs|java|kt|rb|vue|md|yaml|yml|json|sh):\d+", it):
+                    rejects.append(f"--pre-review: Known issues item without file:line anchor: {it[:60]!r}")
+                if re.search(r"\b(P0|A-tier|tier:\s*A)\b", it, re.I):
+                    rejects.append(f"--pre-review: Known issues carries a P0 / A-tier finding — fix it, do not ship it: {it[:60]!r}")
+            if items and len(items) > 5:
+                flags.append(f"--pre-review: {len(items)} known issues — more than the 5-finding cap; consider splitting the PR")
+    elif "known issues" in secs and not secs["known issues"].strip():
+        flags.append("Known issues section present but empty — write `none` or list items")
     if a.title:
         if not SUBJECT_RE.match(a.title):
             rejects.append(f"title not Conventional Commits: {a.title!r}")

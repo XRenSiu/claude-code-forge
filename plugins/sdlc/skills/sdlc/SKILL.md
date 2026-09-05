@@ -12,7 +12,7 @@ description: >-
   只想发 PR（/pr）、只想审别人的 PR（/pr-review）、只想盯一个已有 PR 的评论（/review-loop）——
   单点动作直接用对应 skill，进流水线反而慢。前置：git 仓库内、gh 已认证、python3。
 argument-hint: "<需求一句话 | 需求文件路径 | #issue> [--track psl|task] [--resume <slug>] [--autopilot] [--dry-run]"
-version: 0.1.0
+version: 0.2.0
 user-invocable: true
 # 只能由人显式调起：它会建 issue、开分支、发 PR、自动回帖——都是公开且部分不可逆的动作，
 # 不能因为对话里出现"需求""流程"就被模型自行调起。它是编排者，没有别的 skill 依赖它。
@@ -98,6 +98,13 @@ deletion 测试：撤掉本 skill，让引擎"把这个需求做完提 PR"。它
 - **`.sdlc/<slug>/ledger.md`** 只增不删：每次失败、被拒的修复、路由决定、门的裁决、豁免。
   产物可回滚（代码、卡、PR），判据和失败记录不回滚（WikiSkill 非对称回滚）。下一轮读它，
   就不撞同一堵墙。
+- **`.sdlc/<slug>/trace.jsonl`** 是账本的机器可读伴生：每行一个事件，`refs` 带类型边（`caused_by` / `decided_by` /
+  `supersedes` / `implements` / `references` / `depends_on` / `rejected_alternative`，封闭集）。它是证据不是控制状态——
+  损坏不影响预算与迁移。`scripts/trace.py why AC-003` 回答"这条 AC 为什么改、谁签的、上游是哪次失败"；`impact` 回答改它
+  波及哪些卡与 commit；失败报告的"已排除的可能"由它预填。
+- **`assets/graph.yaml` / `assets/loops.yaml` / `assets/triggers.yaml`** 把图、环、触发写成数据：`verify_graph.py` 五条 lint
+  （写范围有界 · 每个圈有环契约 · 评估者→实现者只带 fix_prompt · 人节点有恢复绑定 · 扇入有 merge）；`verify_loop.py`
+  （generator ≠ verifier · stop 四键 · budget 可解析）；`sdlc_state.py graph check` 让 ORDER 与 graph.yaml 互相断言。
 - **上下文纪律（SKILL.state）。** 交给隔离子 agent 的只有：一张卡 + `sdlc_state.py show`
   的摘要 + 该卡的 AC 子集。不给整段对话历史，不给评审 skill 的提示词（实现者看不到评判者的
   小抄——训练期信息隔离在这里的形态）。
@@ -120,6 +127,12 @@ deletion 测试：撤掉本 skill，让引擎"把这个需求做完提 PR"。它
 | review | `pr-poll.sh done` exit 0 或 10；合法不收敛 = 有 REJECT 悬而未决时停在 20 并汇报 | 争议线程的对错 |
 | release | `verify_release.py` 过（changelog ↔ tag ↔ notes 一致、Rollback 非空、bump 与提交一致）；verify-cmd 绿 | 回滚方案是否真能执行 |
 | merge / archive | `merge.sha`；`release.done` 或 `skipped_reason`；归档目录结构固定、`metrics.py` 读得出 | — |
+
+**收敛检测（routing.yaml v2，`fail` 命令自动判）：** 每个 key 存最近 6 次指纹。同指纹连续 2 次 = repeat；周期 2–3 的往复
+（A B A B）= **oscillation** → 派生信号 `oscillation_detected`（R14，plan 层：在相似解之间震荡是方案层的权衡）；`--score` 连续 3 次
+不超过历史最佳 = **plateau** → R15（plan 层，允许一次探索性重写再升级）；评估者判"在当前契约下不可能" → `impossible_under_contract`
+（R16，task 层，走变更提案；只接受 `routing.impossible_reporters` 里的 `--by`，实现者报被拒）。任一升级都置 `pending.failure_report`，
+`check-clean` 与 Stop hook 模板据此拒绝结束 session，直到 `report --path` 清掉。
 
 **失败机制（触发 → 症状 → 分支）：**
 
@@ -153,8 +166,13 @@ deletion 测试：撤掉本 skill，让引擎"把这个需求做完提 PR"。它
 
 ## 原语（Π 的存在性——不叙述调用顺序）
 
-- `scripts/sdlc_state.py` — init / show / set / advance / gate / card / fail / ledger / archive（`--help`）。
+- `scripts/sdlc_state.py` — init / show / set / advance / gate / card / fail / report / check-clean / graph check|next|render /
+  loops / ledger / archive（`--help`）。`fail` 多了 `--score` 与 `--by`；`loops` 一屏看六个环的预算消耗；`check-clean --as-hook`
+  是 Stop hook 的出口（模板 `assets/hooks/stop-clean-state.json`，不自动安装）。
 - `scripts/lock_done_when.py` — `sign --stage g2|l5` / A 档 `verify`（exit 0 / 1 reject / 2 changed_with_proposal）。
+- `scripts/verify_graph.py` / `scripts/verify_loop.py` / `scripts/trace.py why|impact|render|lint` — 图 / 环 / 迹的 lint 与查询。
+- `assets/graph.yaml`（52 节点 · 67 边）· `assets/loops.yaml`（六个环）· `assets/triggers.yaml`（每个环绑到 `/goal` `/loop`
+  Stop hook `/schedule`）· `assets/routing.yaml` v2（R14–R16）。
 - `../plan-cards/scripts/lint_cards.py`（L4）、`../retro/scripts/metrics.py`（X3）、`../donewhen-extract/scripts/validate_done_when_v2.py`（契约 v2 校验，`advance g2` 自动调用）、`convert_v1_to_v2.py`（acceptance-spec v1 → v2 骨架）、`../release/scripts/verify_release.py`（L8）。
 - 子 skill 的原语各自在其目录：`issue/scripts/verify_issue.py`、`commit/scripts/verify_commit.py`、
   `pr/scripts/verify_pr.py`、`review-loop/scripts/pr-poll.sh`、`pr-review/scripts/post_review.py`；
@@ -166,7 +184,8 @@ deletion 测试：撤掉本 skill，让引擎"把这个需求做完提 PR"。它
   `spec-gaming-detector/scripts/compute_score.py`、`meta-judge/scripts/compute_confidence.py`。
   review 阶段**读 `../review-loop/SKILL.md` 并按其契约执行**（它 `disable-model-invocation`，
   用户显式启动 /sdlc 即视为授权跟进 review）。
-- 模板：`assets/`（卡、账本、G1/G3 记录、失败报告、变更提案、逃逸缺陷）。
+- 模板：`assets/`（卡、账本、G1/G3 记录、失败报告（含收敛证据段）、变更提案、逃逸缺陷、Stop hook）。
+- 邻居：`../tune/scripts/tune.py`（hill_climb 环：读归档与 pr-watch 出 harness 参数提案，`apply_proposal.py` 只出 diff）。
 
 `<skill_dir>` = 本文件所在目录的绝对路径；插件根 = `<skill_dir>/../..`。脚本一律 `python3`/`bash`
 显式调用，不 chmod（目录可能只读）。
@@ -174,6 +193,7 @@ deletion 测试：撤掉本 skill，让引擎"把这个需求做完提 PR"。它
 ## 高危黑名单（不可豁免）
 
 - **绝不手改 `state.json`**、绝不自行维护计数器——预算与终止由脚本强制，不依赖记忆。
+- **绝不以实现者身份报 `impossible_under_contract`**；绝不在 `pending.failure_report` 为真时结束 session 而不写报告。
 - **绝不删账本行**。回滚只回滚产物。
 - **绝不在 G2 之后改被锁文件而不附变更提案**；绝不用改测试的方式让测试过；绝不把 v1（测试名）契约当判据冻结。
 - **绝不代人签门**：G1/G2/G3 的 `--by` 必须是人名；`--autopilot` 也不代签。

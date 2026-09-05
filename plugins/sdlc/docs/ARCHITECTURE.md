@@ -9,6 +9,10 @@
 
 ## 1. 九环与一根脊柱
 
+> v0.6.0 起这张图是**数据**：`skills/sdlc/assets/graph.yaml`（52 节点 · 67 边：阶段 / skill / agent / 人；sequential · conditional ·
+> fan_out · fan_in · loop_back · interrupt · handoff）。`python3 skills/sdlc/scripts/sdlc_state.py graph render` 生成 mermaid；
+> `graph check` 让它与状态机的 ORDER 互相断言；`verify_graph.py` 检五条性质（见 §3.7）。下面的 ASCII 是给人读的摘要。
+
 ```
                        ┌──────────────────────── 脊柱 /sdlc ────────────────────────┐
                        │  state.json（脚本校验迁移） · ledger.md（只增） · routing.yaml（分层预算 · 指纹终止）  │
@@ -35,10 +39,10 @@
 | R5 实现 | 按卡做、按卡提交 | `implement`、`commit`、`ratchet` | diff、commit、卡状态 | `verify_commit.py`（白名单 · 锁 · secrets）、`sdlc_state.py fail`（指纹升级） |
 | R6 验收 | 三档验收，谁一票否决 | `acceptance-fleet` + `code-reviewer` `qa-reviewer` `pm-reviewer` `spec-drift-detector` `spec-gaming-detector` + `meta-judge`；`pr-review` | `ratchet-log/iteration-NNN/`、`final-state.json`、`findings.yaml` | A 档一票否决 / B 档告警 / C 档请求人；**G3** |
 | R7 交付 | 合入与发布 | `pr`、`review-loop`、`release` | PR、收敛证据日志、tag、`CHANGELOG`、`releases/vX.md` | `verify_pr.py`、`pr-poll.sh done`、`verify_release.py`；merge / push tag 是人类动作 |
-| R8 学习 | 流程病在哪层 | `issue --escape`、`retro` | `escape-defects.md`、`retro/retro-<date>.md`、`metrics.json` | `metrics.py`；提案不自动生效 |
+| R8 学习 | 流程病在哪层；环的参数该不该调 | `issue --escape`、`retro`、**`tune`** | `escape-defects.md`、`retro/retro-<date>.md`、`metrics.json`、`tune/harness-proposals-<date>.yaml` + patch | `metrics.py`、`tune.py`、`apply_proposal.py`（只出 diff）；提案不自动生效 |
 
-**脊柱 `/sdlc`** 不做任何一环的活，只做四件事：持有状态（`sdlc_state.py`）、记账（`ledger.md`）、路由失败（`routing.yaml`）、
-把三道门编译成"不跑就 advance 不了"。
+**脊柱 `/sdlc`** 不做任何一环的活，只做五件事：持有状态（`sdlc_state.py`）、记账（`ledger.md` + 类型边伴生 `trace.jsonl`）、路由失败
+（`routing.yaml` v2，含收敛检测）、把三道门编译成"不跑就 advance 不了"、把图与环声明成数据（`graph.yaml` / `loops.yaml` / `triggers.yaml`）。
 
 ---
 
@@ -134,6 +138,34 @@ intake → track → issue → branch → contract → g2 → cards → implemen
 产物（代码、卡、PR、契约版本）可以回滚；判据、失败记录、被拒的修复、路由决定、豁免**不回滚**（`ledger.md` 只增）。
 `/review-loop` 的证据日志同理：被 reviewer 推翻的 verdict 保留原记录。`/retro` 读这些账本，把"又栽在这儿了"变成提案。
 
+**决策迹（v0.6.0）。** `ledger.md` 每行同时写进 `trace.jsonl`，事件之间用封闭集的类型边相连：`caused_by`（回流 → 失败、
+失败报告 → 回流、逃逸缺陷 → AC 变更）、`decided_by`（→ 路由规则 / 签字人 / 门记录）、`supersedes`（新版 AC → 旧版）、
+`implements`（commit → 卡 → AC）、`references`、`depends_on`、`rejected_alternative`。只增日志只能向后指，所以因果边写成
+"效果指向原因"。`trace.py why AC-003` 走出"AC 为什么改：隐藏集失败 → R08 回流 → 变更提案 by 张三"；`impact` 走出改它波及的
+卡与 commit；`metrics.py` 从边算逃逸缺陷因果链深度与契约返工率——"为什么门没拦住"从考古变成一条查询。不上图数据库。
+
+### 3.7 图与环是数据（v0.6.0）
+
+- **`graph.yaml`** 节点带边界身份（`reads` / `must_not_read` / `writes` / `authority`），边带类型与守卫，回边带 `loop:`。
+  `verify_graph.py` 五条 lint，每条对应 graph engineering 点名的一种生产失败：① skill/agent 节点写范围有界；② 去掉 loop_back 后
+  必须是 DAG，且每条 loop_back 引用的环有预算和可测的成功谓词（"通过条件不可测的无界循环"）；③ 评估者 → 实现者的边只能携带
+  `fix_prompt` / `accepted_claim`（"执行顺序 ≠ 信息可见性"）；④ 人节点必须声明 `resume_binding`（"人工恢复绑到错误 checkpoint"）；
+  ⑤ fan_in 必须有 `merge`（"并发写无合并规则"）。实测：首版声明就被 lint ② 抓到两处未标环归属的圈（验收扇入回交、review 修复验证回交）。
+- **`loops.yaml`** 六个环同一契约：`card_retry` · `ratchet` · `acceptance_ratchet` · `review_loop` · `lifecycle` · `hill_climb`，
+  字段 level（LangChain 四层）/ timescale（Ng 三尺度）/ generator ≠ verifier / stop 四键（success · convergence · budget · impossible）/
+  memory / fresh_context / trigger / escalate_to。`verify_loop.py` 检；`sdlc_state.py loops` 一屏看每个环的预算消耗。
+- **`triggers.yaml`** 每个环绑到 Claude Code 原生原语：`/goal`（独立小模型判 Met / Not yet / Impossible，条件里的退出码必须回显）、
+  `/loop`、Stop hook（`check-clean --as-hook`，模板 `assets/hooks/stop-clean-state.json`，不自动安装）、`/schedule`。
+  `pr-poll.sh` 仍是谓词，只是不再是唯一的等待方式。
+
+### 3.8 收敛检测（routing.yaml v2）
+
+`fail` 命令每个 key 存最近 6 次指纹与 score：同指纹 ×2 = **repeat**；周期 2–3 往复 = **oscillation** → 派生 `oscillation_detected`
+（R14，plan 层：在相似解之间震荡是方案层的权衡）；`--score` 连续 3 次不超过最佳 = **plateau** → R15（plan 层，允许一次探索性重写
+再升级——ratchet 的做法提到路由表层面）；评估者判"在当前契约下不可能" = `impossible_under_contract` → R16（task 层，走变更提案；
+只接受 `impossible_reporters` 里的 `--by`，实现者报被拒——对应 `/goal` 的 Impossible 判决）。收敛 ≠ 正确：三个信号都稳但产物差，
+是换方案不是再迭代。任一升级置 `pending.failure_report`，`check-clean` 拒绝在没写报告时结束 session。
+
 ---
 
 ## 4. 五个闭环怎么闭
@@ -145,8 +177,9 @@ intake → track → issue → branch → contract → g2 → cards → implemen
 | 校准闭环 | 线上逃逸缺陷 → 世界 / 本体 / 契约 | `/issue --escape`（归因层 + 为什么门没拦住）→ `/invariant-extract`（从失败抽不变量）→ `/psl` Open Questions / 变更提案 |
 | 度量闭环 | 归档 → 流程改进 | `/retro`：基线 → 回流分布 → 提案落层（psl / dos / invariant / ac / routing / skill），提案经 G2/G3 生效 |
 | 标准闭环 | 判据 → 测试 → 尺子本身 | `/spec-compile` 编译、`/calibrate` 证明尺子承重（mutation / α / holdout / 隔离）；未校准的标准不当证据 |
+| **harness 闭环**（v0.6.0） | 六个环的 trace → 环自己的参数 | `/tune` 读归档 / pr-watch / results.tsv，按封闭 target 集出提案（routing 预算、指纹阈值、MAX_ROUNDS、隔离等级、fix_list），`apply_proposal.py` 只出 diff，人开 PR 合；样本 < 2 只记基线——LangChain 四层里的 Hill-Climbing Loop |
 
-skill 自身的进化（第六个闭环）不在本插件：`skill-evolve` 邻居读各 skill 的 `eval/gate.json` fix_list。
+skill 正文的进化（第七个闭环）不在本插件：`skill-evolve` 邻居读各 skill 的 `eval/gate.json` fix_list（`/tune` 会往里写）。
 
 ---
 
@@ -172,7 +205,10 @@ skill 自身的进化（第六个闭环）不在本插件：`skill-evolve` 邻�
 /review-loop 57                                      # 跟进 PR #57 直到收敛
 /pr-review 57 --focus security --post                # 审别人的 PR
 /dos-extract . ; /invariant-extract search           # 本体与不变量
-/retro --archive specs/                              # 复盘
+/retro --archive specs/                              # 复盘：判据与世界的提案
+/tune specs/ --pr-watch .sdlc/pr-watch               # 调参：环的参数提案（≥ 2 个归档）
+python3 skills/sdlc/scripts/sdlc_state.py loops      # 六个环的预算消耗
+python3 skills/sdlc/scripts/trace.py why AC-003      # 这条 AC 为什么改
 ```
 
 **入口 B · TASK 轨全流程**（形态已定的需求）
@@ -231,6 +267,9 @@ derived/ · PSL-<x>.md · dos.yaml          releases/vX.Y.Z.md · CHANGELOG.md �
 8. **失败归层再处理**；同指纹重复 = 无进展 = 升级，不是重试。
 9. **合入不是终点**：release 验证绿才交付；逃逸缺陷必须回到层。
 10. **静态过审 ≠ 有效**：所有 skill `static_only`，行为层未跑就不说"已验证"。
+11. **图与环是数据，不是散文**：节点有写范围，每个圈有环契约，评估者到实现者只带 fix_prompt，人节点有恢复绑定——`verify_graph.py` 检。
+12. **收敛 ≠ 正确**：repeat / oscillation / plateau 都是"换层"的信号，不是"再试一次"的理由；`impossible` 只能由评估者说。
+13. **harness 改动经人**：`/tune` 只出 diff；routing / 脚本默认值 / fix_list 的改动都是 PR。
 
 ---
 
@@ -249,7 +288,10 @@ derived/ · PSL-<x>.md · dos.yaml          releases/vX.Y.Z.md · CHANGELOG.md �
 | L8 合入 · 交付 · 逃逸 | pr · review-loop · release · issue --escape | 已有 |
 | X1 DOS 生命周期 | dos-extract · invariant-extract · dos-proposal | 部分：应然↔现状对账、candidate 命名空间、ontology-drift **空白** |
 | X2 路由 · 预算 | routing.yaml · sdlc_state fail | 已有 |
-| X3 度量 | retro · metrics.py | 已有 |
+| X3 度量 | retro · metrics.py（+ trace 指标）· **tune**（harness 闭环） | 已有 |
+| 环契约 / 图声明 / 触发绑定（loop & graph engineering） | loops.yaml · graph.yaml · triggers.yaml · verify_loop / verify_graph · check-clean | 已有（v0.6.0）；Stop hook 只有模板 |
+| 收敛检测（oscillation / plateau / impossible） | routing.yaml v2 R14–R16 · `fail --score --by` | 已有；阈值是文献先验，待真实运行校准 |
+| 决策迹 | trace.jsonl · trace.py · metrics 新指标 | 已有 |
 
 ---
 
@@ -267,3 +309,8 @@ derived/ · PSL-<x>.md · dos.yaml          releases/vX.Y.Z.md · CHANGELOG.md �
 | 隐藏集 | 冻结 AC 的变体，实现者不可读；calibrate 的 holdout |
 | 账本 | `ledger.md`，只增不删的失败与决定记录 |
 | static_only | 结构过审、脚本冒烟，但带/不带 skill 的行为对比未跑 |
+| 环契约 | `loops.yaml` 一条：generator ≠ verifier、stop 四键、budget.ref、memory、trigger |
+| 图 | `graph.yaml`：节点（边界身份）+ 边（类型 / 守卫 / 环归属）；每个圈必须归属一个环 |
+| 迹 | `trace.jsonl`：账本的类型边伴生；`caused_by` 由效果指向原因 |
+| oscillation / plateau / impossible | 三种"再试也没用"：往复 / 不涨 / 契约下不可能——分别归 plan / plan / task |
+| hill_climb | 环改环的外环：trace → 参数提案 → 人开 PR |

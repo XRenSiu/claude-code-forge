@@ -1,0 +1,34 @@
+# harness-proposals-<date>.yaml — tune.py 的产物形状（脚本生成，不手写；这里是给人读的字段说明）
+generated_at: 2026-09-05T00:00:00+00:00
+inputs: {archive_root: specs/, pr_watch: .sdlc/pr-watch, ratchet_logs: null, routing: sdlc/assets/routing.yaml, min_features: 2}
+stats:                      # 每个环的运行统计（原样进 retro 报告的"基线"，不手抄）
+  features: 2
+  layers: {task: {card_retries: {budget: 3, used: [2, 3], max_used: 3, features: 2, exhausted_in: 1, utilisation_pct: 83, convergence_escalations: 1}}}
+  rule_frequency: {R01: 5, R08: 1}
+  convergence_types: {none: 3, repeat: 1, budget: 1, handler=human: 1}
+  review: {prs: 2, max_rounds_param: 10, rounds: [2, 1], hit_round_budget: 0, sycophancy_suspects: [12], verdicts: {ACCEPT: 7, REJECT: 1, REPLY: 1, ESCALATE: 0, SKIPPED: 1}}
+proposals:                  # 每条：target ∈ 封闭集 · current → proposed · evidence（引用数据）· expected_delta · risk · verify_by · delivered_as · apply
+  - id: P-1
+    target: review-loop.MAX_ROUNDS          # 封闭集：routing.budgets.<track>.<key> · routing.fingerprint_repeat_limit · routing.plateau_rounds ·
+    current: 10                             #   review-loop.MAX_ROUNDS · review-loop.MAX_THREAD_STRIKES · acceptance-fleet.isolation_min ·
+    proposed: 3                             #   pr-review.b_tier_thresholds · code-reviewer.focus_allocation · <skill>.fix_list
+    evidence: ["2 PRs: rounds used [2, 1], max 2 ≤ 40% of MAX_ROUNDS=10"]
+    expected_delta: "exit 30 still never fires; runaway loops stop sooner"
+    risk: "low — a legitimately long review would need a manual MAX_ROUNDS override"
+    verify_by: "next tune: hit_round_budget stays 0"
+    delivered_as: PR                        # PR | gate.json fix_list
+    apply: {kind: pr_poll_env, var: MAX_ROUNDS, value: 3}   # apply_proposal.py 读它出 diff；永不直接改文件
+  - id: P-2
+    target: review-loop.fix_list
+    current: null
+    proposed: "L2: audit ACCEPT verdicts on PR #12"
+    evidence: ["PR #12: ACCEPT 6/6 judged threads (100%) — sycophancy proxy"]
+    expected_delta: "REJECT share > 0 on the next PR with ≥5 threads"
+    risk: none
+    verify_by: "review-loop gate.json fix_list carries the item until an L2 audit closes it"
+    delivered_as: gate.json fix_list
+    apply: {kind: gate_fix_list, skill: review-loop, item: "L2: audit ACCEPT verdicts on PR #12 …"}
+notes: []                   # 有数据但不提案的观察（如"预算耗尽但伴随收敛升级——不是预算问题"）
+rules:
+  - proposals never auto-apply — apply_proposal.py emits a diff / patch, a human opens the PR
+  - one proposal per target per run; opposite directions on two consecutive runs → stop proposing that target (hill_climb plateau)

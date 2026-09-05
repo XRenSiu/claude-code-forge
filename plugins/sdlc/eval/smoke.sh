@@ -73,6 +73,8 @@ expect "fail same fingerprint #2 → escalate" 0 bash -c "python3 '$SS' fail --s
 expect "fail whitelist_overflow → human" 0 bash -c "python3 '$SS' fail --signal whitelist_overflow --evidence 'src/x.ts' | grep -q '\"escalate_to\": \"human\"'"
 expect "unknown signal refused" 1 py "$SS" fail --signal nonsense
 expect "advance acceptance refused (card not done)" 1 py "$SS" advance acceptance
+echo "# failure report" > .sdlc/demo/failure-report-001.md
+expect "report clears pending.failure_report after the escalations above" 0 py "$SS" report --path .sdlc/demo/failure-report-001.md
 expect "card done" 0 py "$SS" card CARD-01 --status done --commit abc123
 expect "advance acceptance" 0 py "$SS" advance acceptance
 expect "advance pr refused (no evaluation/skip reason)" 1 py "$SS" advance pr
@@ -292,6 +294,108 @@ expect "bump mismatch rejected (patch version for a feat)" 1 bash -c "sed -i '' 
 sed -i '' 's/- how: redeploy previous tag v0.1.0/- how: <fill>/' releases/v0.2.0.md
 expect "empty rollback rejected" 1 py "$S/release/scripts/verify_release.py" --version 0.2.0
 popd >/dev/null
+
+echo "== sdlc / graph + loops as data (P1)"
+SSG="$S/sdlc/scripts"
+expect "verify_graph: shipped graph passes 5 lints" 0 py "$SSG/verify_graph.py" --stages "intake,track,issue,branch,contract,g2,cards,implement,acceptance,pr,review,g3,merge,release,archive"
+GB="$TMP/graph_bad"; mkdir -p "$GB"
+python3 - "$S/sdlc/assets/graph.yaml" "$GB" <<'PYEOF'
+import sys, yaml, copy
+g=yaml.safe_load(open(sys.argv[1])); out=sys.argv[2]
+def dump(name,doc): yaml.safe_dump(doc,open(f"{out}/{name}.yaml","w"),allow_unicode=True,sort_keys=False)
+b=copy.deepcopy(g); [n.update(writes=["**"]) for n in b["nodes"] if n["id"]=="implement"]; dump("unbounded_writes",b)
+b=copy.deepcopy(g); [e.pop("loop",None) for e in b["edges"] if e.get("type")=="loop_back" and e.get("signal")=="card_test_fail"]; dump("loop_without_contract",b)
+b=copy.deepcopy(g); b["edges"].append({"from":"acceptance-fleet","to":"stage.implement","type":"handoff","carries":["findings","verdict"]}); dump("evaluator_leaks",b)
+b=copy.deepcopy(g); [n.pop("resume_binding",None) for n in b["nodes"] if n["id"]=="human.g2"]; dump("human_no_resume",b)
+b=copy.deepcopy(g); [e.pop("merge",None) for e in b["edges"] if e.get("type")=="fan_in"]; dump("fanin_no_merge",b)
+b=copy.deepcopy(g); b["edges"].append({"from":"commit","to":"implement","type":"handoff"}); dump("unowned_cycle",b)
+PYEOF
+expect "verify_graph: unbounded writes rejected" 1 py "$SSG/verify_graph.py" "$GB/unbounded_writes.yaml" --loops "$S/sdlc/assets/loops.yaml"
+expect "verify_graph: loop_back without loop id rejected" 1 py "$SSG/verify_graph.py" "$GB/loop_without_contract.yaml" --loops "$S/sdlc/assets/loops.yaml"
+expect "verify_graph: evaluator→implementer carrying findings rejected" 1 py "$SSG/verify_graph.py" "$GB/evaluator_leaks.yaml" --loops "$S/sdlc/assets/loops.yaml"
+expect "verify_graph: human node without resume_binding rejected" 1 py "$SSG/verify_graph.py" "$GB/human_no_resume.yaml" --loops "$S/sdlc/assets/loops.yaml"
+expect "verify_graph: fan_in without merge rejected" 1 py "$SSG/verify_graph.py" "$GB/fanin_no_merge.yaml" --loops "$S/sdlc/assets/loops.yaml"
+expect "verify_graph: cycle without loop_back rejected (SCC named)" 0 bash -c "python3 '$SSG/verify_graph.py' '$GB/unowned_cycle.yaml' --loops '$S/sdlc/assets/loops.yaml' | grep -q 'cycle without a loop_back edge'"
+expect "verify_loop: shipped loops pass" 0 py "$SSG/verify_loop.py"
+LB="$TMP/loops_bad"; mkdir -p "$LB"
+python3 - "$S/sdlc/assets/loops.yaml" "$LB" <<'PYEOF'
+import sys, yaml, copy
+d=yaml.safe_load(open(sys.argv[1])); out=sys.argv[2]
+b=copy.deepcopy(d); b["loops"][0]["verifier"]=b["loops"][0]["generator"]; yaml.safe_dump(b,open(f"{out}/self_verify.yaml","w"),allow_unicode=True,sort_keys=False)
+b=copy.deepcopy(d); b["loops"][0]["stop"].pop("impossible"); yaml.safe_dump(b,open(f"{out}/missing_stop_key.yaml","w"),allow_unicode=True,sort_keys=False)
+b=copy.deepcopy(d); b["loops"][0]["stop"]["budget"]={"ref":"routing:budgets.<track>.nonexistent"}; yaml.safe_dump(b,open(f"{out}/bad_budget_ref.yaml","w"),allow_unicode=True,sort_keys=False)
+PYEOF
+expect "verify_loop: generator == verifier rejected" 1 py "$SSG/verify_loop.py" "$LB/self_verify.yaml" --routing "$S/sdlc/assets/routing.yaml"
+expect "verify_loop: missing stop key rejected" 1 py "$SSG/verify_loop.py" "$LB/missing_stop_key.yaml" --routing "$S/sdlc/assets/routing.yaml"
+expect "verify_loop: unresolvable budget.ref rejected" 1 py "$SSG/verify_loop.py" "$LB/bad_budget_ref.yaml" --routing "$S/sdlc/assets/routing.yaml"
+expect "graph check: ORDER == graph.yaml stages" 0 py "$SS" graph check
+expect "graph render emits mermaid with loop labels" 0 bash -c "python3 '$SS' graph render | grep -q 'flowchart TD' && python3 '$SS' graph render | grep -q 'card_retry'"
+expect "triggers.yaml: every trigger names a declared loop" 0 python3 -c "
+import yaml,sys
+L={l['id'] for l in yaml.safe_load(open('$S/sdlc/assets/loops.yaml'))['loops']}
+T=[t['loop'] for t in yaml.safe_load(open('$S/sdlc/assets/triggers.yaml'))['triggers']]
+missing=[t for t in T if t not in L]; assert not missing, missing"
+
+echo "== sdlc / convergence detection + clean state (P2)"
+ST3="$TMP/state-conv"; mkdir -p "$ST3"; pushd "$ST3" >/dev/null
+git init -q -b main . 2>/dev/null; git -c user.name=t -c user.email=t@t commit -q --allow-empty -m "chore: init"
+py "$SS" init --slug conv --title "convergence" --track task >/dev/null
+py "$SS" set track=task >/dev/null; py "$SS" card CARD-01 --status doing >/dev/null
+RB="$TMP/routing_big.yaml"; python3 -c "
+import yaml; d=yaml.safe_load(open('$S/sdlc/assets/routing.yaml'))
+for t in d['budgets']: d['budgets'][t]['card_retries']=10
+yaml.safe_dump(d,open('$RB','w'),allow_unicode=True,sort_keys=False)"
+expect "oscillation: A B A → not yet (budget 10 so convergence, not budget, decides)" 0 bash -c "python3 '$SS' fail --signal card_test_fail --card CARD-01 --fingerprint A --routing '$RB' >/dev/null; python3 '$SS' fail --signal card_test_fail --card CARD-01 --fingerprint B --routing '$RB' >/dev/null; python3 '$SS' fail --signal card_test_fail --card CARD-01 --fingerprint A --routing '$RB' | grep -q '\"escalate\": false'"
+expect "oscillation: A B A B → escalate with derived oscillation_detected → plan" 0 bash -c "python3 '$SS' fail --signal card_test_fail --card CARD-01 --fingerprint B --routing '$RB' | python3 -c \"import json,sys; d=json.load(sys.stdin); assert d['escalate'] and d['derived_signal']=='oscillation_detected' and d['layer']=='plan' and d['convergence']['type']=='oscillation', d\""
+expect "pending.failure_report set after escalation" 0 bash -c "python3 '$SS' show | grep -q '\"failure_report\": true'"
+expect "check-clean dirty (pending report) → exit 1" 1 py "$SS" check-clean
+expect "check-clean --as-hook emits block decision" 0 bash -c "python3 '$SS' check-clean --as-hook | grep -q '\"decision\": \"block\"'"
+echo "# report" > .sdlc/conv/failure-report-001.md
+expect "report clears pending" 0 py "$SS" report --path .sdlc/conv/failure-report-001.md
+expect "check-clean: doing card + dirty tree → exit 1" 1 bash -c "echo x > dirty.txt && python3 '$SS' check-clean"
+rm -f dirty.txt
+expect "check-clean clean → exit 0" 0 py "$SS" check-clean
+py "$SS" card CARD-02 --status doing >/dev/null
+expect "plateau: score 3× not above best → derived plateau → plan" 0 bash -c "for i in 1 2 3 4; do python3 '$SS' fail --signal card_test_fail --card CARD-02 --fingerprint p\$i --score 0.5 --routing '$RB' >'$TMP/last.json'; done; python3 -c \"import json; d=json.load(open('$TMP/last.json')); assert d['derived_signal']=='plateau' and d['layer']=='plan' and d['convergence']['type']=='plateau', d\""
+py "$SS" report --path .sdlc/conv/failure-report-001.md >/dev/null
+expect "impossible_under_contract by implementer rejected" 1 py "$SS" fail --signal impossible_under_contract --by implement
+expect "impossible_under_contract by acceptance-fleet → task, human" 0 bash -c "python3 '$SS' fail --signal impossible_under_contract --by acceptance-fleet --evidence 'AC-003 contradicts AC-001' | python3 -c \"import json,sys; d=json.load(sys.stdin); assert d['layer']=='task' and d['escalate_to']=='human' and d['rule']=='R16', d\""
+expect "trace.jsonl written with typed edges" 0 bash -c "test -s .sdlc/conv/trace.jsonl && grep -q '\"caused_by\"' .sdlc/conv/trace.jsonl"
+expect "trace lint on live run passes" 0 py "$SSG/trace.py" lint --root .sdlc --slug conv --routing "$S/sdlc/assets/routing.yaml"
+expect "trace why CARD-01 walks fail → reflow" 0 bash -c "python3 '$SSG/trace.py' why CARD-01 --root .sdlc --slug conv | grep -q 'reflow'"
+expect "loops: six rows with budget consumption" 0 bash -c "python3 '$SS' loops --slug conv --json | python3 -c \"import json,sys; d=json.load(sys.stdin); ids=[l['loop'] for l in d['loops']]; assert len(ids)==6 and 'card_retry' in ids and d['loops'][0]['used'] is not None, d\""
+expect "ledger --ref with unknown edge type rejected" 1 py "$SS" ledger --kind note --note x --ref bogus:CARD-01
+expect "archive copies trace.jsonl" 0 bash -c "python3 '$SS' archive --to specs/conv >/dev/null && test -f specs/conv/trace.jsonl"
+popd >/dev/null
+
+echo "== pr / --pre-review (P2)"
+pushd "$R" >/dev/null
+expect "pre-review: Known issues with file:line passes" 0 py "$VP" --body "$FXP/good_body_prereview.md" --base main --skip-preflight --allow-xl --pre-review
+expect "pre-review: missing Known issues rejected" 1 py "$VP" --body "$FXP/good_body.md" --base main --skip-preflight --allow-xl --pre-review
+expect "pre-review: P0 in Known issues rejected" 1 py "$VP" --body "$FXP/bad_prereview_p0.md" --base main --skip-preflight --allow-xl --pre-review
+expect "pre-review: item without file:line rejected" 1 py "$VP" --body "$FXP/bad_prereview_noanchor.md" --base main --skip-preflight --allow-xl --pre-review
+expect "without --pre-review the old good body still passes" 0 py "$VP" --body "$FXP/good_body.md" --base main --skip-preflight --allow-xl
+popd >/dev/null
+
+echo "== retro / trace metrics (P3)"
+expect "metrics: escape chain + contract rework from trace.jsonl" 0 bash -c "python3 '$S/retro/scripts/metrics.py' '$S/retro/eval/fixtures' --json '$TMP/m.json' >/dev/null && python3 -c \"import json; d=json.load(open('$TMP/m.json')); t=d['totals']; assert t['escape_chains']==1 and t['avg_escape_chain_depth']==3.0 and t['escape_root_layers']=={'task':1} and t['contract_rework_ratio']==0.25, t\""
+expect "trace why AC-003-a walks 3 hops to hidden_variant_fail" 0 bash -c "python3 '$SSG/trace.py' why AC-003-a --trace '$S/retro/eval/fixtures/feat-a/trace.jsonl' | grep -q 'hidden_variant_fail'"
+expect "trace impact AC-003-a reaches the escape" 0 bash -c "python3 '$SSG/trace.py' impact AC-003-a --trace '$S/retro/eval/fixtures/feat-a/trace.jsonl' | grep -q 'escape'"
+TB="$TMP/trace_bad.jsonl"; printf '%s\n' '{"id":"ev-0001","at":"t","kind":"fail","refs":[{"type":"related_to","target":"CARD-01"}]}' '{"id":"ev-0002","at":"t","kind":"reflow","refs":[{"type":"caused_by","target":"ev-0099"}]}' > "$TB"
+expect "trace lint: unknown edge type + dangling event rejected" 1 py "$SSG/trace.py" lint --trace "$TB"
+
+echo "== tune / tune.py + apply_proposal.py (P4)"
+TU="$S/tune/scripts"; FXT="$S/tune/eval/fixtures"
+expect "tune: 2 archives + pr-watch → ≥3 proposals, all fields present" 0 bash -c "python3 '$TU/tune.py' '$FXT/archive' --pr-watch '$FXT/pr-watch' --out '$TMP/tune.yaml' >/dev/null && python3 -c \"
+import yaml; d=yaml.safe_load(open('$TMP/tune.yaml')); ps=d['proposals']; assert len(ps)>=3, len(ps)
+need={'id','target','current','proposed','evidence','expected_delta','risk','verify_by','delivered_as','apply'}
+for p in ps: assert need<=set(p), p; assert p['evidence'], p
+assert any(p['target']=='review-loop.MAX_ROUNDS' for p in ps); assert any('audit ACCEPT' in str(p['proposed']) for p in ps)\""
+expect "tune: 1 archive → baseline only, insufficient_samples" 0 bash -c "python3 '$TU/tune.py' '$FXT/archive-single' | python3 -c \"import json,sys; d=json.load(sys.stdin); assert d['proposals']==[] and any('insufficient_samples' in n for n in d['notes']), d['notes']\""
+expect "apply_proposal --dry-run: MAX_ROUNDS diff against pr-poll.sh" 0 bash -c "python3 '$TU/apply_proposal.py' '$TMP/tune.yaml' --id P-1 --skills-root '$S' 2>/dev/null | grep -q '^-MAX_ROUNDS=\"\${MAX_ROUNDS:-10}\"'"
+expect "apply_proposal --patch writes patch, target untouched" 0 bash -c "before=\$(md5 -q '$S/review-loop/scripts/pr-poll.sh' 2>/dev/null || md5sum '$S/review-loop/scripts/pr-poll.sh' | cut -d' ' -f1); python3 '$TU/apply_proposal.py' '$TMP/tune.yaml' --id P-1 --skills-root '$S' --patch '$TMP/p1.patch' >/dev/null && test -s '$TMP/p1.patch' && after=\$(md5 -q '$S/review-loop/scripts/pr-poll.sh' 2>/dev/null || md5sum '$S/review-loop/scripts/pr-poll.sh' | cut -d' ' -f1) && [ \"\$before\" = \"\$after\" ]"
+expect "apply_proposal: gate_fix_list kind produces gate.json diff" 0 bash -c "python3 '$TU/apply_proposal.py' '$TMP/tune.yaml' --id P-2 --skills-root '$S' 2>/dev/null | grep -q 'audit ACCEPT'"
+expect "apply_proposal: unknown id rejected" 1 py "$TU/apply_proposal.py" "$TMP/tune.yaml" --id P-99 --skills-root "$S"
 
 echo
 echo "smoke: $pass passed, $fail failed  (tmp: $TMP)"

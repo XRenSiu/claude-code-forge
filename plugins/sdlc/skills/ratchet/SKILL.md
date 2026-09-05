@@ -13,7 +13,7 @@ description: >
   即使用户只是模糊地说"我想把这个做好"或"帮我优化这个",也应触发此 skill。
   与 autoresearch 的区别：ratchet 有独立评估者、自动杀死重启、明确的终止条件,
   适合更大规模、更长时间的自主任务。autoresearch 更适合单文件的轻量迭代。
-version: 1.1.0
+version: 1.1.1
 user-invocable: true
 # imported into sdlc 2026-09-05 from ratchet v1.1.0 (canonical copy in this repo; qanat holds an older copy); body kept, sdlc wiring section added
 ---
@@ -478,6 +478,15 @@ SkillLens 实测：让单个 AI 评委对"两份产物选更好的那份"做判�
 - **评估脚本 = 已校准的标准**：`evaluate.sh` 应引用 `/spec-compile` 产出、`/calibrate` 过门的 eval_case；未校准的
   标准只能当 P1/P2，不能当 P0 终止判据。
 - **frozen_files** 默认继承卡的 `forbidden_files` 与 `.done_when.lock` 清单。
+
+## 环契约（sdlc）
+
+`../sdlc/assets/loops.yaml#ratchet`：generator = worker subagent，verifier = master（本对话）；level verification；timescale hours；
+trigger turn_end；memory = results.tsv · learnings.md · dead-ends.md · ledger.md；fresh_context = true（kill & restart）。
+停止四键：success = P0 全过；convergence = `done_when.convergence` 连续 N 轮无改善（收敛前允许一次探索性重写——routing v2 把它提成了
+所有环共享的 R15 `plateau → explore_once_then_escalate`，master 每轮可 `sdlc_state.py fail --signal same_card_same_fingerprint --score <best>`
+让路由表替你记 stale）；budget = 该卡的 `card_retries`；impossible = `impossible_under_contract`（master 报，`--by ratchet.master`）。
+图上：`graph.yaml` 节点 `ratchet` 带自环 `ratchet_round`。本节是接线，Step 1–5 的六格归位仍是已登记的 TODO。
 
 ## 核心原则
 

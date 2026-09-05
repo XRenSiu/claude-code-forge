@@ -1,0 +1,7 @@
+{"pr":15,"scope_source":"pr-body:Scope","pending_replies":[],
+ "comments":[
+  {"id":1,"author":"alice","thread":"PRRT_x","verdict":"ACCEPT","commit":"b1","resolved":true,"round":1},
+  {"id":2,"author":"bob","thread":"PRRT_y","verdict":"REJECT","evidence":"guard exists utils.ts:42","resolved":false,"round":1},
+  {"id":3,"author":"bob","thread":"PRRT_z","verdict":"REPLY","resolved":true,"round":1}
+ ],
+ "rounds":[{"round":1,"accept":1,"reject":1,"reply":1,"escalate":0,"skipped":0,"commits":["b1"],"checks":"green"}]}

@@ -8,7 +8,7 @@ description: >-
   "开始写代码" 且已有卡与冻结契约时。NOT for: 拆卡（/plan-cards）、修 review 评论（/review-loop 的
   comment-fixer）、跑到达标为止的优化循环（/ratchet）、整体验收（/acceptance-fleet）。
 argument-hint: "<cards/CARD-xx.yaml> [--executor self|agent|ratchet|forge-teams] [--lock .done_when.lock]"
-version: 0.1.0
+version: 0.1.1
 user-invocable: true
 ---
 
@@ -77,6 +77,15 @@ deletion 测试：撤掉本 skill，引擎会把整个对话历史、评审 skil
 
 上游：`/plan-cards`（卡）、`/test-suite-generator`（红测试）。下游：`/commit`、`/acceptance-fleet`（整体验收）、
 `/pr`。状态：`sdlc_state.py card` / `fail`。
+
+## 环契约
+
+本 skill 是 `../sdlc/assets/loops.yaml#card_retry` 的 generator（verifier = acceptance-fleet；level agent；trigger turn_end；
+memory = state.json#cards.items · ledger.md · trace.jsonl）。停止四键：success = AC 子集绿 ∧ 每 commit 过闸 ∧ card done；
+convergence = 同指纹 ×2 / 周期 2–3 震荡（`fail` 自动派生 `oscillation_detected` → plan 层）；budget = routing `card_retries`；
+impossible = `impossible_under_contract`（只能由评估者报，实现者报被拒）。触发绑定见 `../sdlc/assets/triggers.yaml#card_retry`
+（`/goal` 条件里每轮回显测试与 verify_commit 输出）。图上：`graph.yaml` 节点 `implement` / `agent.card-implementer`，
+`must_not_read` 里列的东西就是隔离的编译态。
 
 ## 本 skill 自身的出口门
 

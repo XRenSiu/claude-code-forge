@@ -11,7 +11,7 @@ description: >-
   总结评论（gh pr view 即可）、你是 reviewer 一侧（/pr-review）、只回一条评论（gh api 即可）。
   前置：gh 已认证、jq 可用、当前目录是目标 git 仓库。改编自 vana-builder 的 pr-review-loop v0.4.0。
 argument-hint: "<PR number | 当前分支的 PR> [MAX_ROUNDS=10] [MAX_THREAD_STRIKES=3] [--interval 45] [--max-wait 480]"
-version: 0.1.0
+version: 0.2.0
 user-invocable: true
 # 只能由人显式调起。本 skill 会在公开 PR 上自动回帖、resolve 线程，并可能挂起数小时——发出去的
 # 评论撤不回，不能因为对话里出现「PR」「review」就被模型自行调起。/sdlc 在 review 阶段读本文件
@@ -98,6 +98,11 @@ commit 列表、CI 状态、剩余未解决线程（逐条注明为什么没收�
 - 处理评论前，先重试证据日志中的 `pending_replies`（每条最多再试 1 次，仍失败上报用户）。
 - 评论作者是 bot（`[bot]` 后缀 / 已知 CI 机器人）→ 按同样判据裁决，但 strike 上限对 bot 线程
   减半（bot 不会被说服，来回两次仍未收敛就冻结交人）。
+
+**早停**——连续两次 watch 有活动但零新线程、且所有线程已是终态（resolved / REJECT 已回帖 / ESCALATE / 冻结）→ 直接调
+`done`，不等 `MAX_EMPTY_WATCHES`（证据日志 `no_new_threads_streak`；"没有新发现"比"没有活动"更早地说明收敛）。每批处理完
+重算证据日志的 `verdict_distribution`；已裁决 ≥ 5 条且 ACCEPT 占比 ≥ 0.95 → `sycophancy_suspect: true`——REJECT 是合法且被期望的，
+一边倒的 ACCEPT 是 reviewer 被说服而不是代码没问题的信号（/tune 读它）。
 
 **裁决**——先验证事实：读评论指向的 path / line / diff_hunk，确认现象真实存在（reviewer 可能看的
 是旧 commit，也可能读错了代码），再归类。全部判定完成先于任何修复（见依赖事实）：
@@ -210,6 +215,15 @@ issue_comments 三数组，已滤掉你自己发的评论与 PENDING 草稿）�
 
 - `references/gh-commands.md` — 回帖、线程、CI 状态的 gh 命令速查。
 - `references/verdicts.md` — 裁决表的展开：每类的验证方法、回帖模板、常见误判。
+- `references/triggers.md` — 环的等待怎么交给 `/loop` `/goal` `/schedule`（谓词仍是 pr-poll.sh）；`/goal` 条件写法与 Impossible 的语义。
+
+## 环契约
+
+`../sdlc/assets/loops.yaml#review_loop`：generator = agent.comment-fixer（或 self），verifier = human_reviewer（fix-verifier 是可选的机器
+verifier）；level verification；trigger event；memory = `.sdlc/pr-watch/pr-N.{json,counters.json,watermark}`。停止四键：success =
+`done` exit 0 | 10（合法不收敛 = REJECT 悬而未决停在 20）；convergence = empty_watches 4 · no_new_threads_streak 2；budget = rounds 10 ·
+thread_strikes 3（bot 减半）；impossible = `review_thread_strike_limit`（exit 31）。图上：`graph.yaml` 里 review-triager → comment-fixer
+的边只携带 `accepted_claim`（不带 verifier 判据），fix-verifier → review-loop 是关闭一次迭代的 `loop_back`。
 
 ## 本 skill 自身的出口门
 

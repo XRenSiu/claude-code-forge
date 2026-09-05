@@ -48,6 +48,11 @@ npm test            # 128 passed
 - <最值得看的一处：file:line — 为什么>
 - <第二处>
 
+<!-- --pre-review 时必填：建 PR 前自审 ≤ 2 轮后仍存活的发现；每条带 file:line；没有就写 none。A 档 / P0 不许出现在这里——修掉它 -->
+## Known issues
+
+- none
+
 <!-- 可选 -->
 ## Notes
 

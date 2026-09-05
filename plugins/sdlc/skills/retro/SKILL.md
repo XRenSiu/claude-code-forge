@@ -8,7 +8,7 @@ description: >-
   出问题" / "度量" / 一个或多个 feature 归档之后。NOT for: 单次 bug 的根因（/adversarial-debugging 类）、
   改 skill 本身（skill-evolve 邻居）。前置：`specs/*/` 至少一个归档。
 argument-hint: "[--archive specs/] [--since YYYY-MM-DD] [--out retro/retro-<date>.md]"
-version: 0.1.0
+version: 0.2.0
 user-invocable: true
 ---
 
@@ -39,6 +39,8 @@ deletion 测试：撤掉本 skill，引擎会写"这次沟通不够充分，下�
   | 逃逸缺陷率 | escape-defects | 压住"切小任务刷首过率"；逐条看归因层 |
   | 豁免数 | waivers | 门被 --force 绕过的次数；> 0 就要问为什么 |
   | lead time | created_at → merged_at | 与轮次一起看，单看无意义 |
+  | 逃逸缺陷因果链（v0.6） | trace.jsonl：escape → caused_by* → 根 | 深度与根的层直接回答"为什么门没拦住"；根在 task = 契约；根在 gate = 人签时没看到 |
+  | 契约返工率（v0.6） | trace.jsonl：`supersedes done_when.yaml#AC-*` / AC 总数 | 高 = G2 之前判据写得太早或太松 |
 
 - **基线先于结论**：第一次跑只记基线（带日期），不下诊断；第二次起比差值。
 - **提案的去向是封闭集**：`psl`（改规律 / 补 Mental Model）、`dos`（本体修订 → 变更提案）、`invariant`（→ /invariant-extract）、
@@ -72,7 +74,7 @@ deletion 测试：撤掉本 skill，引擎会写"这次沟通不够充分，下�
 
 ## 接线
 
-上游：`/sdlc archive`、`/release`、`/issue --escape`、`/review-loop` 证据日志。下游：`/psl`（Open Questions）、
+上游：`/sdlc archive`（含 trace.jsonl）、`/release`、`/issue --escape`、`/review-loop` 证据日志。下游：`/tune`（harness 参数——retro 改判据与世界，tune 改环的参数；同一次复盘可两个都跑）、`/psl`（Open Questions）、
 `/dos-extract` / `/invariant-extract`（本体层）、`/donewhen-extract`（AC 收紧）、`routing.yaml`、各 skill `eval/gate.json`、
 skill-evolve（邻居，学习槽）。
 

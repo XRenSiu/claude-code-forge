@@ -1,4 +1,4 @@
-# sdlc (v0.2.0)
+# sdlc (v0.6.0)
 
 完整的软件开发生命周期：**上半段建世界**（PSL → 推导产物 → G1 人裁决）、**下半段收敛交付**（issue → 分支 →
 判据冻结 → 任务卡 → 按卡实现与提交 → PR → review 跟进 → 合入归档 → 逃逸缺陷登记）、**横切**（DOS 本体与不变量、
@@ -8,22 +8,25 @@
 运行时遵循 SKILL.state（状态文件是充分统计量，脚本校验迁移）与 WikiSkill（账本只增不删）。
 流程对齐 *Spec Loop v1.2 × done_when Pipeline*：U1–U3 / G1、L1–L8 / G2 / G3、X1–X3。
 
-## 二十七个 skill（九环 + 脊柱，见 [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)）
+## 二十八个 skill（九环 + 脊柱，见 [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)）
+
+> v0.6.0：按 loop engineering / graph engineering 的透镜重看（[`docs/proposals/loop-graph-engineering.md`](docs/proposals/loop-graph-engineering.md)）——图（`graph.yaml`）与六个环（`loops.yaml`）成为数据并被 lint；每个环绑到 `/goal` `/loop` Stop hook `/schedule`（`triggers.yaml`）；收敛检测加 oscillation / plateau / impossible（routing v2）；账本有了类型边伴生 `trace.jsonl`；`/pr --pre-review`；新 skill `/tune` 闭合 hill-climbing 环。
 
 ### 脊柱与交付主干（本插件原创）
 
 | skill | 一句话 | 机械预门 | 调起 |
 |---|---|---|---|
-| `/sdlc` | 生命周期编排：状态机 + 账本 + 路由表 + 三道人签的门 | `sdlc_state.py` `lint_cards.py` `lock_done_when.py` `metrics.py` | 仅人显式 |
+| `/sdlc` | 生命周期编排：状态机 + 账本（+ trace.jsonl）+ 路由表 v2（收敛检测）+ 三道人签的门 + 图 / 环 / 触发声明 | `sdlc_state.py`（graph · loops · check-clean · report）`verify_graph.py` `verify_loop.py` `trace.py` `lock_done_when.py` | 仅人显式 |
 | `/issue` | 需求 / bug / 逃逸缺陷 → 可证伪的 GitHub issue（AC v2 形状、双轨判据、DOS 闭包） | `verify_issue.py` | 模型可 |
 | `/commit` | 原子 Conventional Commit；白名单 / G2 锁 / secrets / 调试代码三道闸 | `verify_commit.py` | 模型可 |
-| `/pr` | PR body 产物序（范围声明 / Closes / 验证证据 / AC→证据 / 风险回滚）+ 体量分级 XL 必拆 | `verify_pr.py` | 模型可 |
-| `/review-loop` | 零 token 阻塞等待、评论当待验证主张、编译态终止绑定；ACCEPT / REJECT / REPLY / ESCALATE / SKIPPED | `pr-poll.sh` | 仅人显式 |
+| `/pr` | PR body 产物序（范围声明 / Closes / 验证证据 / AC→证据 / 风险回滚）+ 体量分级 XL 必拆 + `--pre-review`（≤ 2 轮隔离自审，存活写 Known issues） | `verify_pr.py` | 模型可 |
+| `/review-loop` | 零 token 阻塞等待（或 `/loop` `/goal` `/schedule` 触发）、评论当待验证主张、编译态终止绑定、早停与 sycophancy 代理；ACCEPT / REJECT / REPLY / ESCALATE / SKIPPED | `pr-poll.sh` | 仅人显式 |
 | `/pr-review` | 审查侧：Detective Loop、P0/P1 必带复现、5 条上限、三档归位、发成 GitHub review（永不 approve） | `post_review.py` | 模型可 |
 | `/plan-cards` | L4：契约 → 自包含任务卡；REQ 一卡一主、无写冲突、名词可解析、≤ 40k | `lint_cards.py` | 模型可 |
 | `/implement` | L6：按卡实现的隔离契约（实现者只见卡 + AC 子集 + 红基线）；白名单执行器；同指纹升级 | `verify_commit.py` · `sdlc_state.py` | 模型可 |
 | `/release` | L8 交付：SemVer 推导、changelog ↔ tag ↔ notes 一致、回滚先于部署、验证绿才完成 | `verify_release.py` | 模型可 |
-| `/retro` | X3 学习：基线 → 回流分布 → 提案落层（psl / dos / invariant / ac / routing / skill） | `metrics.py` | 模型可 |
+| `/retro` | X3 学习：基线 → 回流分布 + 逃逸缺陷因果链 + 契约返工率 → 提案落层（psl / dos / invariant / ac / routing / skill） | `metrics.py` | 模型可 |
+| `/tune`（新） | X3 harness 闭环：六个环的 trace → 环参数提案（routing 预算 / 指纹阈值 / MAX_ROUNDS / 隔离等级 / fix_list，封闭集）→ diff / patch → 人开 PR；样本 < 2 只记基线 | `tune.py` `apply_proposal.py`（只出 diff） | 模型可 |
 
 ### 上半段 · 建世界（引自 looper；加了 sdlc 接线）
 
@@ -119,5 +122,6 @@ specs/<slug>/               # 归档（metrics.py 的数据源）
 
 ## 诚实声明
 
-所有 27 个 skill 处于 `static_only`：结构过审、22 个脚本在 fixtures 上冒烟（`bash plugins/sdlc/eval/smoke.sh`）；带/不带 skill 的行为层对比未跑。
+所有 28 个 skill 处于 `static_only`：结构过审、27 个脚本在 fixtures 上冒烟（`bash plugins/sdlc/eval/smoke.sh`）；带/不带 skill 的行为层对比未跑。
+v0.6.0 的收敛阈值（指纹历史 6、震荡周期 2–3、plateau 3 轮、sycophancy 0.95）与 tune 的 40% / 50% 规则是文献先验，未在真实运行上校准。
 静态读不是裁决。各 skill 的 `eval/gate.json` 记录了冒烟结果与 fix_list。

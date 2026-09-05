@@ -20,7 +20,8 @@ G1 世界裁决     人 · gate g1     + 范围段             G2 签字冻结  
                                                       逃逸缺陷         /issue --escape
 横切  X1 DOS 生命周期 (/dos-extract + /invariant-extract；对账/候选态/drift 空白)
       X2 回流路由 + 终止预算 (routing.yaml + sdlc_state.py fail)
-      X3 度量 (/retro · metrics.py)
+      X3 度量 (/retro · metrics.py · trace 指标) + harness 闭环 (/tune · 只出 diff)
+      X4 环与图的声明 (loops.yaml · graph.yaml · triggers.yaml · routing v2 收敛检测 · trace.jsonl) —— v0.6.0
 ```
 
 ## 制品映射（v1.2 制品 → 本插件 / 邻居 → 状态）
@@ -44,7 +45,11 @@ G1 世界裁决     人 · gate g1     + 范围段             G2 签字冻结  
 | DOS 本体 + 闭包 | `/dos-extract` + `/invariant-extract`（本插件，引自 looper）+ `verify_issue.py --dos` / `lint_cards.py --dos` | 部分 | 应然↔现状对账 / candidate / ontology-drift **空白** |
 | 回流路由 | `routing.yaml` + `sdlc_state.py fail`；`/acceptance-fleet` 四态、`/ratchet` kill/restart 映射到它 | 已有 | 归因器是启发式，人确认 |
 | 终止预算 | 分层计数 + 指纹终止 | 已有 | 按轨道分预算 |
-| 度量 | `/retro`（`metrics.py`） | 已有 | 先记基线；提案落层 |
+| 度量 | `/retro`（`metrics.py`，+ 逃逸因果链 / 契约返工率） | 已有 | 先记基线；提案落层 |
+| harness 调参（Hill-Climbing Loop） | `/tune`（`tune.py` · `apply_proposal.py`） | 已有（v0.6.0） | 封闭 target 集；样本 < 2 不提案；只出 diff |
+| 环契约 / 执行图 / 触发绑定 | `loops.yaml` · `graph.yaml` · `triggers.yaml` · `verify_loop.py` · `verify_graph.py` | 已有（v0.6.0） | 数据与 ORDER 互相断言；Stop hook 只有模板 |
+| 收敛检测 | `routing.yaml` v2 R14–R16 · `sdlc_state.py fail --score --by` | 已有（v0.6.0） | 阈值为文献先验 |
+| 决策迹 | `trace.jsonl` · `trace.py` | 已有（v0.6.0） | `caused_by` 由效果指向原因 |
 
 ## 十个裁决在本插件里的落点
 

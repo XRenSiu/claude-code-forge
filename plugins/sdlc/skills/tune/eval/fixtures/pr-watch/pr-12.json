@@ -1,0 +1,12 @@
+{"pr":12,"scope_source":"pr-body:Scope","pending_replies":[],
+ "comments":[
+  {"id":1,"author":"alice","thread":"PRRT_a","verdict":"ACCEPT","commit":"a1","resolved":true,"round":1},
+  {"id":2,"author":"alice","thread":"PRRT_b","verdict":"ACCEPT","commit":"a2","resolved":true,"round":1},
+  {"id":3,"author":"bob","thread":"PRRT_c","verdict":"ACCEPT","commit":"a3","resolved":true,"round":1},
+  {"id":4,"author":"bob","thread":"PRRT_d","verdict":"ACCEPT","commit":"a4","resolved":true,"round":2},
+  {"id":5,"author":"carol","thread":"PRRT_e","verdict":"ACCEPT","commit":"a5","resolved":true,"round":2},
+  {"id":6,"author":"carol","thread":"PRRT_f","verdict":"ACCEPT","commit":"a6","resolved":true,"round":2},
+  {"id":7,"author":"bot[bot]","verdict":"SKIPPED","round":1}
+ ],
+ "rounds":[{"round":1,"accept":3,"reject":0,"reply":0,"escalate":0,"skipped":1,"commits":["a1","a2","a3"],"checks":"green"},
+           {"round":2,"accept":3,"reject":0,"reply":0,"escalate":0,"skipped":0,"commits":["a4","a5","a6"],"checks":"green"}]}

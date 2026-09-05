@@ -9,8 +9,8 @@ description: >-
   PR" / "open a pull request" / 引擎准备 `gh pr create --fill` 时。NOT for: 单次 commit
   （/commit）、跟进 PR 评论（/review-loop）、审别人的 PR（/pr-review）、直接合并（人类动作）。
   前置：gh 已认证、在目标仓库内、分支已有至少一个 commit。
-argument-hint: "[--base main] [--issue N] [--draft] [--done-when done_when.yaml] [--cards cards/] [--yes] [--dry-run]"
-version: 0.1.0
+argument-hint: "[--base main] [--issue N] [--draft] [--done-when done_when.yaml] [--cards cards/] [--pre-review [--rounds 2]] [--yes] [--dry-run]"
+version: 0.2.0
 user-invocable: true
 ---
 
@@ -52,14 +52,19 @@ deletion 测试：撤掉本 skill，引擎 `git push && gh pr create --fill`：�
 - **体量**：XL → 拒（除 `--allow-xl` 并在 body 写明为什么不能拆）；L → flag。
 - **锁**（`--lock` 或 `.done_when.lock` 存在）：范围 diff 触及锁文件且无变更提案 → 拒。
 - **标题**：`type(scope): subject` 同 commit 规则（≤ 72）。
+- **预审**（`--pre-review`）：建 PR 前用**新上下文**的 `agents/pr-reviewer.md`（跨供应商优先；同源则标 single-vendor caveat）审
+  base..head 的 diff，最多 `--rounds`（默认 2）轮"修复 → 再审"——业界数据：自审 2–3 轮后收益见顶，且约减少 1/3 的 review 往返。
+  两轮后仍存活的发现**写进 body 的 `## Known issues`**（每条带 file:line），不再迭代，留给人看；A 档 / P0 不许作为 known issue
+  出现——修掉它。`verify_pr.py --pre-review` 检该段存在、每条有锚点、无 A 档。预审不替代 reviewer：它减少的是 nit，不是判断。
 - 残差：Summary 是否诚实；Reviewer focus 是否指向真正的风险点。
 
 ## 原语（Π）
 
 - `scripts/verify_pr.py --body BODY.md [--base main] [--head HEAD] [--title T] [--done-when F]
-  [--lock L] [--allow-xl] [--skip-preflight]` —— exit 0 过 / 1 拒 / 2 IO；输出 size_class。
+  [--lock L] [--allow-xl] [--skip-preflight] [--pre-review]` —— exit 0 过 / 1 拒 / 2 IO；输出 size_class。
   **建 PR 前必须跑**。
-- `assets/pr_template.md` —— body 形状。
+- `assets/pr_template.md` —— body 形状（含 `## Known issues`，`--pre-review` 时必填）。
+- `../../agents/pr-reviewer.md` —— 预审用的只读审查 agent（新上下文；输出 findings.yaml，由你做修复与 Known issues）。
 - `references/size-and-split.md` —— 拆分策略、draft 判据、base 推断。
 - `gh pr create --title … --body-file … --base … [--draft]`；`gh pr edit` 更新 body。
 
@@ -68,8 +73,8 @@ deletion 测试：撤掉本 skill，引擎 `git push && gh pr create --fill`：�
 - **给人看先于建**：预门过后展示标题 + body + size_class，确认再 push + create；`--yes` / autopilot 免确认。
   `--dry-run` 不 push 不建。
 - **XL 停机**：不建，回报拆分建议（按卡 / 目录），让用户决定。
-- **done_when**：预门 exit 0 ∧ 确认 ∧ PR 已建 ∧ 回报 PR# / URL / size_class / draft 与否；
-  在 /sdlc 里 `sdlc_state.py set pr.number=N pr.url=… pr.size_class=…`。
+- **done_when**：预门 exit 0 ∧ 确认 ∧ PR 已建 ∧ 回报 PR# / URL / size_class / draft 与否（`--pre-review` 时另报预审轮数与存活发现数）；
+  在 /sdlc 里 `sdlc_state.py set pr.number=N pr.url=… pr.size_class=… [pr.pre_review_rounds=k]`。
 
 ## 失败机制
 

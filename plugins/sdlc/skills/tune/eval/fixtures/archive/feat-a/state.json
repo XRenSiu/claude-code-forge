@@ -1,0 +1,4 @@
+{"version":1,"slug":"feat-a","title":"a","track":"psl","stage":"archive","created_at":"2026-09-01T10:00:00+00:00","updated_at":"2026-09-03T10:00:00+00:00",
+ "gates":{"g1":{"required":true,"verdict":"reject","attribution":"rule_error"},"g2":{"required":true,"verdict":"pass"},"g3":{"required":true,"verdict":"pass"}},
+ "counters":{"card":2,"plan":1,"task":1,"ontology":0,"world":1,"last_fingerprints":{},"fingerprint_repeats":{}},
+ "review":{"done":true,"rounds":2},"merge":{"sha":"abc","merged_at":"2026-09-03T09:00:00+00:00"},"waivers":[],"assumptions":[],"artifacts":{}}

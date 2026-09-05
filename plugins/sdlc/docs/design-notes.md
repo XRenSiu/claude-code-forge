@@ -69,6 +69,28 @@
    状态机加 `release` 阶段。
 3. **命名**：保留导入 skill 的原名（与上游一致、内部互相引用不断），新 skill 按产物命名；用 `docs/ARCHITECTURE.md` 的"九环"组织，不用前缀重命名。
 
+## 2026-09-05 第三次整理：loop engineering / graph engineering 的透镜（v0.6.0）
+
+业界 2026-06/07 命名的两个词（Osmani / Cherny 的 loop engineering；Srinivasan / puppyone 的 graph engineering）对照 sdlc，结论写在
+`docs/proposals/loop-graph-engineering.md`：架构没错，缺口有五个，P1–P4 一次实施：
+
+- **借鉴**：LangChain 四层环（Agent / Verification / Event-Driven / Hill-Climbing）→ `loops.yaml.level`；Ng 三尺度 → `timescale`；
+  arXiv 2607.01641 的三种无限循环检测（fingerprinting / state repetition / progress metrics）→ routing v2 的 repeat / oscillation / plateau；
+  Claude Code `/goal` 的 Impossible 判决 → `impossible_under_contract`（R16，只能评估者报）；puppyone 的八种生产失败 → `verify_graph.py` 五条 lint
+  与 `resume_binding`；Flowtivity "the edge type IS the knowledge" → `trace.jsonl` 七种边；agentpatterns self-review loop（2–3 轮后见顶、剩余发现留给人）
+  → `/pr --pre-review` + Known issues；SWE-Review 的 reviewer sycophancy → 证据日志 `sycophancy_suspect` 与 `/tune` 的反向代理；
+  Anthropic 长跑 harness 的 clean-state → `check-clean --as-hook`。
+- **改编而非照搬**：因果边写成 `caused_by`（效果 → 原因）而不是文献的 `caused`——只增日志只能向后指，且省掉预取事件 id；
+  "context graph" 只取决策迹一义，不建知识图谱；graph.yaml 是声明不是运行时（skill 就是运行时）。
+- **数据与代码谁是源**：P1 让 `graph.yaml.stages` 与 `sdlc_state.py ORDER` 互相断言（`graph check`），P2 结束前拍板（倾向 graph.yaml 为源）。
+  已登记在 sdlc 的 gate.json fix_list。
+- **dogfooding 发现**：首版 graph.yaml 被自己的 lint ② 抓到两个未标环归属的圈（验收扇入回交 acceptance-fleet、fix-verifier 回交 review-loop）——
+  正是"通过条件不可测的无界循环"那一类失败；修法是把关闭一次迭代的边标成 `loop_back` 并挂环 id。
+- **不做**：不换 LangGraph 类运行时；不建图数据库；不重命名 skill；不新增节点（分叉 / 扇出 / 三道门是仅有的真实边界）；不让门或合并
+  自动化；不重写 pr-poll.sh；ratchet 的 Step 1–5 六格归位仍是独立 TODO。
+- **版本**：提案按期规划 0.3.0 → 0.6.0，实际一次实施直接到 0.6.0；`tune` 0.1.0 新增；sdlc / review-loop / pr / retro 0.2.0；
+  implement / ratchet / acceptance-fleet patch（加环契约段）。
+
 ## 有意不做的
 
 - 不做 hooks：把 `verify_*.py` 挂成 PreToolUse 会拦所有 git commit，对非 sdlc 场景过填；留给用户按仓库决定。

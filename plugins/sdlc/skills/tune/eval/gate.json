@@ -1,0 +1,27 @@
+{
+  "skill": "plugins/sdlc/skills/tune",
+  "tier": "production",
+  "evaluated_layers": ["structural"],
+  "gate_pass": "static_only",
+  "structural": {
+    "findings": [],
+    "failure_taxonomy": {"underfill": 0, "overfill": 0, "wrong-layer": 0, "wrong-route": 0, "no-exit": 0, "seam-misplacement": 0},
+    "waived_count": 0
+  },
+  "effect": null,
+  "discrimination": null,
+  "fix_list": [
+    "L2: run on ≥2 real archives + a real .sdlc/pr-watch and check every proposal's evidence points at data a human can find",
+    "the 40% / 50% / 0.95 thresholds are priors from the literature (agentpatterns convergence, SWE-Review sycophancy), not calibrated on this repo — calibrate after the first real run",
+    "acceptance-fleet.isolation_min / pr-review.b_tier_thresholds / code-reviewer.focus_allocation are in the closed target set but no rule emits them yet (needs ratchet-log isolation.json + findings inputs)"
+  ],
+  "provenance": {
+    "date": "2026-09-05",
+    "evaluator": "AUTHOR-RUN structural pass + plugins/sdlc/eval/smoke.sh. NOT a decorrelated read, NOT an L2 run.",
+    "scripts_run": {
+      "tune.py": "2-archive + 2-PR fixture → 5 proposals (MAX_ROUNDS tighten, sycophancy fix_list, escape→donewhen-extract fix_list, waiver→sdlc fix_list, G1 rule_error→psl fix_list) + 1 note (budget exhausted with convergence escalation → no change); 1-archive fixture → 0 proposals, insufficient_samples",
+      "apply_proposal.py": "--dry-run on MAX_ROUNDS proposal → correct unified diff against pr-poll.sh default line; --patch writes file, target untouched; gate_fix_list kind appends to fix_list"
+    },
+    "origin": "docs/proposals/loop-graph-engineering.md 方案 E (P4), 2026-09-05; LangChain 'Art of Loop Engineering' hill-climbing loop; harness changes flow through human review"
+  }
+}

@@ -205,6 +205,10 @@
             "L",
             "XL"
           ]
+        },
+        "pre_review_rounds": {
+          "type": "integer",
+          "description": "/pr --pre-review 建 PR 前的自审轮数（≤ 2）"
         }
       }
     },
@@ -249,7 +253,7 @@
     },
     "counters": {
       "type": "object",
-      "description": "分层计数：卡 / 方案 / 任务 / 本体 / 世界。世界层不设自动上限。",
+      "description": "分层计数：卡 / 方案 / 任务 / 本体 / 世界。世界层不设自动上限。v2 加指纹历史与 score 序列（收敛检测）。",
       "properties": {
         "card": {
           "type": "integer"
@@ -276,6 +280,40 @@
           "type": "object",
           "additionalProperties": {
             "type": "integer"
+          }
+        },
+        "fingerprint_history": {
+          "type": "object",
+          "description": "每个 key（<card|layer>:<layer>）最近 N 次指纹（N = routing.fingerprint_history）；oscillation 检测的窗口",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "scores": {
+          "type": "object",
+          "description": "`fail --score` 的历史：best / stale / history；plateau = stale ≥ routing.plateau_rounds",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "history": {
+                "type": "array",
+                "items": {
+                  "type": "number"
+                }
+              },
+              "best": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "stale": {
+                "type": "integer"
+              }
+            }
           }
         }
       }
@@ -376,6 +414,15 @@
         },
         "skipped_reason": {
           "type": "string"
+        }
+      }
+    },
+    "pending": {
+      "type": "object",
+      "description": "未收拾的事：fail 升级后 pending.failure_report=true，`report --path` 清；check-clean / Stop hook 模板据此拒绝结束 session",
+      "properties": {
+        "failure_report": {
+          "type": "boolean"
         }
       }
     }
