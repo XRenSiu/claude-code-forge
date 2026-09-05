@@ -132,6 +132,11 @@ echo "# tamper" >> done_when.yaml && git add done_when.yaml
 expect "locked file staged without proposal rejected" 1 py "$VC" --msg "chore(contract): tweak" --lock .done_when.lock
 echo "p" > change-proposal-001.md && git add change-proposal-001.md
 expect "locked file with proposal passes (flag)" 0 py "$VC" --msg "chore(contract): tweak per proposal" --lock .done_when.lock
+# dogfood 2026-09-05 (I-52): adding the frozen bytes themselves (content hash == lock) is not a locked-file change
+git reset -q . ; git checkout -q -- done_when.yaml; rm -f change-proposal-001.md
+git rm -q --cached done_when.yaml && git -c user.name=t -c user.email=t@t commit -q -m "chore(contract): untrack contract for lock test" && git add done_when.yaml
+expect "first add of the exact locked content passes the lock check (I-52)" 0 py "$VC" --msg "docs(contract): add frozen contract" --lock .done_when.lock
+git -c user.name=t -c user.email=t@t commit -q -m "docs(contract): add frozen contract"
 git reset -q . ; git checkout -q -- done_when.yaml; rm -f change-proposal-001.md
 popd >/dev/null
 

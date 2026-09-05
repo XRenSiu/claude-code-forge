@@ -26,6 +26,7 @@ on non-trivial diffs.
 """
 import argparse
 import fnmatch
+import hashlib
 import json
 import re
 import subprocess
@@ -190,7 +191,19 @@ def main():
         except Exception as e:
             sys.stderr.write(f"verify_commit: cannot read lock: {e}\n"); sys.exit(2)
         locked = {e["path"] for e in lock.get("files", [])}
-        touched = [f for f in files if f in locked or any(f.startswith(l.rstrip("/") + "/") for l in locked)]
+        locked_sha = {e["path"]: e.get("sha256") for e in lock.get("files", [])}
+
+        def staged_sha256(path):
+            # the content about to land: index blob in staged mode, the range head's blob in --range mode
+            ref = f"{a.range.split('..')[-1]}:{path}" if getattr(a, "range", None) else f":{path}"
+            r = subprocess.run(["git", "show", ref], capture_output=True)
+            return hashlib.sha256(r.stdout).hexdigest() if r.returncode == 0 else None
+
+        # committing the frozen bytes themselves (first add, or an unchanged file in a range) is not a change of a
+        # locked file — compare the landing content's hash with the lock (dogfood 2026-09-05, I-52)
+        touched = [f for f in files
+                   if (f in locked or any(f.startswith(l.rstrip("/") + "/") for l in locked))
+                   and not (f in locked_sha and locked_sha[f] and staged_sha256(f) == locked_sha[f])]
         proposals_staged = [f for f in files if fnmatch.fnmatch(f.split("/")[-1], a.proposal_glob)]
         if touched and not proposals_staged:
             rejects.append(f"locked file(s) in diff without a change proposal: {touched} (G2 lock; add {a.proposal_glob})")
