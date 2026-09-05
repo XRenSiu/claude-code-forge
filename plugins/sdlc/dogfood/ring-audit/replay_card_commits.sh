@@ -16,8 +16,11 @@
 # stdout is one JSON object; card_commits_touching_audited_dirs is the number REQ-007 reads.
 #
 # A commit WITHOUT a `Card:` footer is out of that replay's scope by contract, which would make it invisible.
-# A second, clearly separated pass therefore walks the footer-less commits since the first Card commit and
-# reports non_card_commits_touching_audited_dirs (count + shas).  It is recorded, never gated.
+# A second, clearly separated pass therefore walks EVERY footer-less commit on the branch — merge-base(main, HEAD)..HEAD,
+# falling back to origin/main and then to the replay range — and reports non_card_commits_touching_audited_dirs
+# (count + shas + paths).  Bounding that pass by the first Card commit hid everything that landed before the cards
+# began, which is exactly the blind spot it exists to close.  It is recorded, never gated: the exit code still counts
+# only the Card range.
 set -uo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -64,10 +67,18 @@ range_of() {                                     # the range that shows only thi
   else printf '%s..%s' "$EMPTY_TREE" "$1"; fi
 }
 
-audited_hits() {                                 # how many of the range's paths sit in the audited directories.
-  local n                                        # --no-renames is load-bearing: a file MOVED OUT of an audited
-  n="$(git diff --name-only --no-renames "$1" 2>/dev/null | grep -cE "$AUDITED_RE")"   # dir must still list its
-  [ -n "$n" ] || n=0                             # old path, and rename detection would show only the destination.
+audited_files() {                                # the range's paths that sit in the audited directories.
+  # --no-renames is load-bearing: a file MOVED OUT of an audited dir must still list its old path, and rename
+  # detection would show only the destination.  core.quotePath=false is load-bearing too: git's default C-quotes
+  # every path carrying a non-ASCII byte — plugins/sdlc/skills/中文/x.md comes back as
+  # "plugins/sdlc/skills/\344\270\255\346\226\207/x.md" — and the leading quote alone stops AUDITED_RE matching.
+  git -c core.quotePath=false diff --name-only --no-renames "$1" 2>/dev/null | grep -E "$AUDITED_RE"
+}
+
+audited_hits() {                                 # how many of them there are
+  local n
+  n="$(audited_files "$1" | wc -l | tr -d '[:space:]')"
+  [ -n "$n" ] || n=0
   printf '%s' "$n"
 }
 
@@ -79,12 +90,10 @@ while read -r sha; do
   cards+=("$(card_footer_of "$sha")")
 done < <(git log --format='%H' $RANGE_SPEC 2>/dev/null)
 
-oldest_card_idx=-1
-for i in $(seq 0 $(( ${#shas[@]} - 1 ))); do
-  sha="${shas[$i]}"
-  card="${cards[$i]}"
+for i in "${!shas[@]}"; do                       # "${!a[@]}" expands to nothing for an empty array, while
+  sha="${shas[$i]}"                              # `seq 0 -1` printed "0" and "-1" and ${shas[0]} then tripped
+  card="${cards[$i]}"                            # `set -u` — a branch with no commits of its own printed no JSON
   [ -n "$card" ] || continue
-  oldest_card_idx=$i                             # the log is newest-first, so the last one seen is the oldest
   card_commits=$((card_commits + 1))
 
   card_file=""
@@ -121,25 +130,43 @@ for i in $(seq 0 $(( ${#shas[@]} - 1 ))); do
 done
 
 # Second pass — RECORDED, NOT GATED.  AC-007-a scopes the replay above to commits carrying a `Card:` footer, so a
-# footer-less commit that touched the audited directories would leave no trace at all.  This pass walks every
-# commit in the range since the first Card commit that has no footer and reports the ones that did touch them.
-# It never feeds `touching` / `overflow` / `rejected`, so it cannot move the exit code.
+# footer-less commit that touched the audited directories would leave no trace at all.  This pass walks EVERY
+# footer-less commit on the branch and reports the ones that did touch them.  Its window is the branch, not the Card
+# era: bounding it by the oldest Card commit made the commits that landed before the cards began invisible to both
+# passes.  It never feeds `touching` / `overflow` / `rejected`, so it cannot move the exit code.
+NON_CARD_RANGE_SPEC="$RANGE_SPEC"                # the replay range is the last resort, for a tree with no main at all
+for base in main origin/main; do
+  if merge_base="$(git merge-base "$base" HEAD 2>/dev/null)" && [ -n "$merge_base" ]; then
+    NON_CARD_RANGE_SPEC="$merge_base..HEAD"
+    break
+  fi
+done
+
+has_card_footer() {                              # case-insensitive, so `card: CARD-01` still counts as a footer
+  git log -1 --format='%B' "$1" | grep -qiE '^Card:[[:space:]]*CARD-'
+}
+
 non_card_records=""
 non_card_scanned=0
 non_card_touching=0
-if [ "$oldest_card_idx" -ge 0 ]; then
-  for i in $(seq 0 "$oldest_card_idx"); do
-    [ -z "${cards[$i]}" ] || continue
-    sha="${shas[$i]}"
-    non_card_scanned=$((non_card_scanned + 1))
-    hits="$(audited_hits "$(range_of "$sha")")"
-    [ "$hits" -gt 0 ] || continue
-    non_card_touching=$((non_card_touching + 1))
-    [ -n "$non_card_records" ] && non_card_records="$non_card_records,"
-    non_card_records="$non_card_records
-    {\"sha\": \"$(json_escape "$sha")\", \"subject\": \"$(json_escape "$(git log -1 --format='%s' "$sha")")\", \"audited_paths\": $hits}"
-  done
-fi
+while read -r sha; do
+  [ -n "$sha" ] || continue
+  has_card_footer "$sha" && continue
+  non_card_scanned=$((non_card_scanned + 1))
+  nc_range="$(range_of "$sha")"
+  hits="$(audited_hits "$nc_range")"
+  [ "$hits" -gt 0 ] || continue
+  non_card_touching=$((non_card_touching + 1))
+  files_json=""
+  while IFS= read -r audited_path; do
+    [ -n "$audited_path" ] || continue
+    [ -n "$files_json" ] && files_json="$files_json, "
+    files_json="$files_json\"$(json_escape "$audited_path")\""
+  done < <(audited_files "$nc_range")
+  [ -n "$non_card_records" ] && non_card_records="$non_card_records,"
+  non_card_records="$non_card_records
+    {\"sha\": \"$(json_escape "$sha")\", \"subject\": \"$(json_escape "$(git log -1 --format='%s' "$sha")")\", \"audited_paths\": $hits, \"files\": [$files_json]}"
+done < <(git log --format='%H' $NON_CARD_RANGE_SPEC 2>/dev/null)
 
 errors=""
 if [ "$overflow" -gt 0 ]; then
@@ -164,6 +191,7 @@ cat <<JSON
   "card_commits_rejected": $rejected,
   "replays": [${records}
   ],
+  "non_card_range_spec": "$(json_escape "$NON_CARD_RANGE_SPEC")",
   "non_card_commits_scanned": $non_card_scanned,
   "non_card_commits_touching_audited_dirs": $non_card_touching,
   "non_card_commits_touching": [${non_card_records}
