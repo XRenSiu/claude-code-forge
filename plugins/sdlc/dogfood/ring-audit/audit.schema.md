@@ -220,7 +220,7 @@ run_evidence:
 ```
 
 `verdict` ∈ `pending | pass | reject | waived`（`gate_verdict_outside_enum`）。
-`pending` 允许三个 null；`pass` / `reject` / `waived` 必须有 `signer` 与 `signer_kind`
+`pending` 允许三个 null；**`pending` 之外的任何 verdict** 都必须有 `signer` 与 `signer_kind`
 （`human_gate_without_signer`）；`signer_kind: delegated_agent` 必须附 `authorization_ref`
 （`delegated_without_authorization_ref`）——代签须有授权记录（PSL-006）。
 

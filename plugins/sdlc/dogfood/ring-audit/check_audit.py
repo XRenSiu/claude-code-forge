@@ -37,7 +37,7 @@ Predicate → the token printed in `error` / `errors` / `failed_predicates`:
           harness-review are human_gate PARTS, not Gates
           no script Gate is rendered as a 门 (闸 is not a 门 — PSL-006)             script_gate_rendered_as_door
           run_evidence.gates[] verdict ∈ {pending, pass, reject, waived}          gate_verdict_outside_enum
-          pass/reject/waived need signer + signer_kind (pending may be null)      human_gate_without_signer
+          any verdict but pending needs signer + signer_kind (pending may be null) human_gate_without_signer
           a delegated_agent signer needs an authorization_ref (代签须有授权记录)     delegated_without_authorization_ref
   every Proposal names a source Assessment or Gap                                proposal_without_source
   with --required-parts: every named Part attends the selected Rings (F-17)      required_part_missing
@@ -63,7 +63,6 @@ EVIDENCE_KINDS = {"file", "gate_json", "smoke", "run_record"}
 IMPLEMENTED_VERDICTS = {"declared", "compiled", "verified"}
 HUMAN_GATES = {"G1", "G2", "G3"}                 # rule 3d — merge / harness-review are Parts, not Gates
 GATE_VERDICTS = {"pending", "pass", "reject", "waived"}
-SIGNED_VERDICTS = {"pass", "reject", "waived"}   # pending may still carry nulls
 DOOR = "门"                                       # the rendered word reserved for human gates
 PSL_ID_RE = re.compile(r"\bPSL-\d+\b")
 
@@ -380,7 +379,7 @@ def check_gates(doc, report):
         if verdict not in GATE_VERDICTS:
             report.bump("gate_verdict_outside_enum")
             report.fail("gate_verdict_outside_enum", f"run_evidence.gates[{gid}] verdict={verdict!r}")
-        if verdict in SIGNED_VERDICTS:
+        if verdict != "pending":                  # 未决之外的每一种结论都要有人认领，含枚举外的脏值
             absent = [f for f in ("signer", "signer_kind") if not nonempty_str(record.get(f))]
             if absent:
                 report.bump("human_gates_without_signer")
