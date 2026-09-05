@@ -1,0 +1,807 @@
+# audit.yaml 片段 —— Ring R3 标准 / R4 计划 / R5 实现（CARD-03）
+#
+# 形状见 ../audit.schema.md（CARD-01 产物），判定在 ../check_audit.py。
+# 顶层 psl / check 路径按装配后的 audit.yaml（ring-audit 根目录）写；本文件在 audit/ 下单独跑自检时
+# 命令行显式给 --psl，与这两个键无关。
+# 本片段不写 run_evidence —— 签字三元组与 check_runs 由 CARD-06 装配时填（G1 签字版解释规则 3）。
+#
+# 自检：
+#   python3 plugins/sdlc/dogfood/ring-audit/check_audit.py \
+#           plugins/sdlc/dogfood/ring-audit/audit/rings-R3-R5.yaml \
+#           --psl plugins/sdlc/dogfood/ring-audit/PSL-sdlc-ring-audit.md --rings R3,R4,R5 \
+#           --required-parts "test-suite-generator, spec-compile, calibrate, plan-cards, implement, commit, ratchet"
+
+schema: audit/1
+feature: sdlc-ring-audit
+psl: PSL-sdlc-ring-audit.md
+check: check_audit.py
+
+rings:
+
+# ===========================================================================
+- id: R3
+  question: 判据怎么被机器执行
+  parts:
+
+  - id: test-suite-generator
+    kind: skill
+    ring: R3
+    ring_evidence: 'plugins/sdlc/skills/sdlc/assets/graph.yaml#L110-L115（role: standard → R3）'
+    provenance: adopted
+    loop: null
+    artifact: tests/<f>/**
+    gates: [derive_counts.py, gen_existence.py, check_verbatim_names.py, lock_done_when.py]
+    fills: [R3/newly_identified/knowledge+capability/contract-to-test-pyramid]
+    assessment:
+      id: A-test-suite-generator
+      state: evidenced
+      needed:
+        verdict: necessary
+        psl_ids: [PSL-002, PSL-015]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/test-suite-generator/SKILL.md}
+        - {kind: file, ref: 'plugins/sdlc/docs/ARCHITECTURE.md#L37'}
+        - {kind: gate_json, ref: 'plugins/sdlc/skills/test-suite-generator/eval/gate.json#fix_list'}
+        deletion_test: >-
+          撤掉后引擎把整份冻结契约一次铺成测试：产出一批只覆盖 happy 路径、没有 based_on REQ-ID 标签、
+          没有 mutation 配置的测试文件，tests-manifest 里每条 AC 都对得上一个测试名却对不上一条失败过的断言；
+          REQ 与测试的一对一缺口要到 pm-reviewer 逐条比对时才暴露，而那时测试已经被 L5 二次锁冻住。
+      implemented:
+        verdict: compiled
+        psl_ids: [PSL-010, PSL-015]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/test-suite-generator/SKILL.md}
+        - {kind: gate_json, ref: 'plugins/sdlc/skills/test-suite-generator/eval/gate.json#gate_pass'}
+        - {kind: smoke, ref: 'plugins/sdlc/skills/test-suite-generator/eval/gate.json#provenance.scripts_run'}
+        not_reached:
+          verified: >-
+            gate_pass=static_only，且 gate.json 的 provenance 自记 NOT a decorrelated read, NOT an L2 run；
+            三个脚本只有作者本机冒烟，没有带 / 不带 skill 的行为对比。
+      naming:
+        verdict: fits
+        provenance: adopted
+        artifact_or_position: tests/<f>/** + tests-manifest.yaml
+        fit: fits
+        rename: false
+        psl_ids: [PSL-014]
+        evidence:
+        - {kind: gate_json, ref: 'plugins/sdlc/skills/test-suite-generator/eval/gate.json#imported_into_sdlc'}
+        - {kind: file, ref: 'plugins/sdlc/docs/design-notes.md#L39-L42'}
+        rename_reason: 不重命名；test-suite 与独占产物 tests/<f>/** 同词干（F-03），且收编自 done-when-pipeline v1.1.0，保留上游名。
+      disposition: none
+      adjudications: []
+
+  - id: spec-compile
+    kind: skill
+    ring: R3
+    ring_evidence: 'plugins/sdlc/skills/sdlc/assets/graph.yaml#L116-L121（role: standard → R3）'
+    provenance: adopted
+    loop: null
+    artifact: compile_manifest.yaml
+    gates: [verify_compile.py]
+    fills: [R3/newly_identified/judgment/decidability-ladder-routing]
+    assessment:
+      id: A-spec-compile
+      state: evidenced
+      needed:
+        verdict: necessary
+        psl_ids: [PSL-002, PSL-010]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/spec-compile/SKILL.md}
+        - {kind: file, ref: plugins/sdlc/skills/spec-compile/scripts/verify_compile.py}
+        deletion_test: >-
+          撤掉后每条判据都停在同一档：结构性子句（例如「每个 skill 目录必须有 eval/gate.json」）被写成
+          LLM rubric 的一个维度而不是 fitness function，行为子句只留几个 happy example，产出的
+          compile_manifest 里 decidability 一栏整列是 judgment。G2 冻结的于是是一把「看起来有判据」的尺子，
+          没有一条能被脚本跑；判据上移的方向错误要到 acceptance 全绿而隐藏变体一跑就红时才显形。
+      implemented:
+        verdict: compiled
+        psl_ids: [PSL-010, PSL-015]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/spec-compile/scripts/verify_compile.py}
+        - {kind: gate_json, ref: 'plugins/sdlc/skills/spec-compile/eval/gate.json#gate_pass'}
+        - {kind: smoke, ref: 'plugins/sdlc/skills/spec-compile/eval/gate.json#round2.scripts_run.verify_compile.py'}
+        not_reached:
+          verified: >-
+            gate.json 的 tier2_status 自记 NOT RUN —— no held-out spec set + executor available，
+            按 effect-gate.md 解到 static_only；行为层的带 / 不带对比未跑。
+      naming:
+        verdict: fits
+        provenance: adopted
+        artifact_or_position: compile_manifest.yaml + eval_cases/**
+        fit: fits
+        rename: false
+        psl_ids: [PSL-014]
+        evidence:
+        - {kind: gate_json, ref: 'plugins/sdlc/skills/spec-compile/eval/gate.json#imported_into_sdlc'}
+        - {kind: file, ref: 'plugins/sdlc/docs/design-notes.md#L36-L38'}
+        rename_reason: >-
+          不重命名；compile 与独占产物 compile_manifest.yaml 同词干（F-03）。收编自 qanat，正文保留 Territory / Run /
+          R001 的上游词，靠术语映射表读成 sdlc 的对象——名字贴合而词表不贴合，词表问题属 R1，不在本环判定。
+      disposition: none
+      adjudications: []
+
+  - id: calibrate
+    kind: skill
+    ring: R3
+    ring_evidence: 'plugins/sdlc/skills/sdlc/assets/graph.yaml#L122-L128（role: standard → R3）'
+    provenance: adopted
+    loop: null
+    artifact: calibration_report.yaml
+    gates: [verify_calibration.py]
+    fills: [R3/newly_identified/judgment+capability/ruler-itself-uncertified]
+    assessment:
+      id: A-calibrate
+      state: evidenced
+      needed:
+        verdict: necessary
+        psl_ids: [PSL-007, PSL-002]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/calibrate/SKILL.md}
+        - {kind: gate_json, ref: 'plugins/sdlc/skills/calibrate/eval/gate.json#round1.blocking'}
+        deletion_test: >-
+          撤掉后 spec-compile 出的 eval_case 集合与 rubric 直接上线当闸：一套杀不掉任何变异体的测试
+          （mutation_score 0.4）与一套评分者互不同意的 rubric（Krippendorff α 0.6）会给出全绿的
+          final-verdict.yaml，acceptance 把它写进 ratchet-log 当达标证据，holdout 从来没被隔离过。
+          gate.json round1 记下的正是这个洞的一个真实实例——阈值可以被 --min-mutation 0.3 调低到通过。
+      implemented:
+        verdict: compiled
+        psl_ids: [PSL-010, PSL-007]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/calibrate/scripts/verify_calibration.py}
+        - {kind: gate_json, ref: 'plugins/sdlc/skills/calibrate/eval/gate.json#gate_pass'}
+        - {kind: smoke, ref: 'plugins/sdlc/skills/calibrate/eval/gate.json#round2.scripts_run.verify_calibration.py'}
+        not_reached:
+          verified: >-
+            gate.json 的 tier2_status 自记 NOT RUN —— no held-out standard set + executor available；
+            本次审计也没有跑过任何一次真实校准。
+      naming:
+        verdict: fits
+        provenance: adopted
+        artifact_or_position: calibration_report.yaml
+        fit: fits
+        rename: false
+        psl_ids: [PSL-014]
+        evidence:
+        - {kind: gate_json, ref: 'plugins/sdlc/skills/calibrate/eval/gate.json#imported_into_sdlc'}
+        - {kind: gate_json, ref: 'plugins/sdlc/skills/calibrate/eval/gate.json#naming_collision_check'}
+        rename_reason: >-
+          不重命名；calibrate 与独占产物 calibration_report.yaml 同词干（F-03）。gate.json 的
+          naming_collision_check 已确认它与运行时 calibration.resolved 事件不是同一个东西。
+      disposition: none
+      adjudications: []
+
+  missing:
+  - R3/lifecycle_blank/control/red-green-evidence-script
+  - R3/unenforced_rule/control/uncalibrated-standard-used-as-evidence
+
+# ===========================================================================
+- id: R4
+  question: 怎么拆成无上下文可做的卡
+  parts:
+
+  - id: plan-cards
+    kind: skill
+    ring: R4
+    ring_evidence: 'plugins/sdlc/skills/sdlc/assets/graph.yaml#L131-L136（role: planner → R4）'
+    provenance: authored
+    loop: null
+    artifact: cards/CARD-*.yaml
+    gates: [lint_cards.py]
+    fills: [R4/newly_identified/knowledge+capability/context-free-card-split]
+    assessment:
+      id: A-plan-cards
+      state: evidenced
+      needed:
+        verdict: necessary
+        psl_ids: [PSL-002, PSL-003]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/plan-cards/SKILL.md}
+        - {kind: file, ref: 'plugins/sdlc/docs/design-notes.md#L67-L68'}
+        - {kind: file, ref: plugins/sdlc/skills/plan-cards/scripts/lint_cards.py}
+        deletion_test: >-
+          撤掉后拆卡回到 /sdlc 的散文里：产出的卡没有 allowed_files，两张卡同时把同一份路由表列进可改文件，
+          写冲突要到第二张卡的 verify_commit.py 白名单检查或 merge 冲突时才炸；某个 REQ 无人认领而没有任何一处报错，
+          某个 REQ 被两张卡同时认领而两份实现互相覆盖；context_estimate 超过 40k 的卡被照发，实现者中途丢上下文后
+          自行扩大范围，产出一个跨越两张卡边界的 diff。
+      implemented:
+        verdict: compiled
+        psl_ids: [PSL-010, PSL-015]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/plan-cards/scripts/lint_cards.py}
+        - {kind: gate_json, ref: 'plugins/sdlc/skills/plan-cards/eval/gate.json#gate_pass'}
+        - {kind: smoke, ref: 'plugins/sdlc/skills/plan-cards/eval/gate.json#provenance.scripts_run.lint_cards.py'}
+        not_reached:
+          verified: >-
+            gate_pass=static_only；fix_list 的 L2（把一份真实冻结契约拆成卡、交给全新会话的 card-implementer，
+            看它是否不再要上下文）仍未跑，没有带 / 不带的行为对比。
+      naming:
+        verdict: fits
+        provenance: authored
+        artifact_or_position: cards/CARD-*.yaml
+        fit: fits
+        rename: false
+        psl_ids: [PSL-014]
+        evidence:
+        - {kind: file, ref: 'plugins/sdlc/docs/design-notes.md#L67-L69'}
+        - {kind: gate_json, ref: 'plugins/sdlc/skills/plan-cards/eval/gate.json#provenance.why_it_exists'}
+        rename_reason: 不重命名；新写的 skill 按产物命名，cards 与 cards/CARD-*.yaml 同词干（F-03 / PSL-014）。
+      disposition: none
+      adjudications: []
+
+  missing:
+  - R4/newly_identified/control/card-depends-on-unchecked
+
+# ===========================================================================
+- id: R5
+  question: 按卡做、按卡提交
+  parts:
+
+  - id: implement
+    kind: skill
+    ring: R5
+    ring_evidence: 'plugins/sdlc/skills/sdlc/assets/graph.yaml#L139-L146（role: implementer → R5）'
+    provenance: authored
+    loop: loops.yaml#card_retry
+    artifact: card.allowed_files
+    gates: [verify_commit.py]
+    fills: [R5/newly_identified/control+judgment/implementer-sees-evaluator]
+    assessment:
+      id: A-implement
+      state: evidenced
+      needed:
+        verdict: merge_candidate
+        merge_candidate_with: agent.comment-fixer
+        psl_ids: [PSL-001, PSL-002]
+        evidence:
+        - {kind: file, ref: 'plugins/sdlc/skills/sdlc/assets/graph.yaml#L144'}
+        - {kind: file, ref: 'plugins/sdlc/skills/sdlc/assets/graph.yaml#L230'}
+        - {kind: file, ref: plugins/sdlc/skills/implement/SKILL.md}
+        - {kind: file, ref: 'plugins/sdlc/dogfood/ring-audit/dos.yaml#L677'}
+        deletion_test: >-
+          撤掉后没有一处规定实现者只看卡：引擎在同一上下文里先读 ratchet-log 的评审发现再改代码，产出的 diff
+          精确命中评审者列出的那几行、隐藏变体覆盖的分支留成占位，acceptance 全绿而隐藏集一跑就红；同时改动不再
+          被 allowed_files 约束，卡外文件被顺手改掉而不是停在 WHITELIST_OVERFLOW，一张卡的 diff 里混进另一张卡的实现。
+        merge_candidate_reason: >-
+          card.allowed_files 在 graph.yaml 里有三个 writer：implement（#L144）、agent.card-implementer（#L152）、
+          agent.comment-fixer（#L230）。前两者满足 F-05 同阶段条件替代三条件（同在 stage.implement 的 handled_by #L29；
+          #L320 有带 when 守卫的 conditional 边选执行者；同 schema 产物），记 alternatives_of 豁免；agent.comment-fixer
+          三条件只差得更远——它不在 stage.implement 的 handled_by 里，与 implement 之间也没有 conditional 边（#L349 是
+          handoff）——按规则 1 双方都记 merge_candidate，本审计不当场裁掉一个。
+      implemented:
+        verdict: compiled
+        psl_ids: [PSL-010, PSL-015]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/implement/SKILL.md}
+        - {kind: gate_json, ref: 'plugins/sdlc/skills/implement/eval/gate.json#fix_list'}
+        - {kind: smoke, ref: 'plugins/sdlc/skills/commit/eval/gate.json#provenance.scripts_run.verify_commit.py'}
+        not_reached:
+          verified: >-
+            gate_pass=static_only；implement 自身无 scripts/（gate.json fix_list 写 no own script by design —— 闸是
+            verify_commit.py 与 sdlc_state.py），compiled 靠被闸挡而不是靠自带脚本；fix_list 的 L2（真跑一张卡看它
+            是否在白名单溢出时停机而不是扩范围）未跑。
+      naming:
+        verdict: fits
+        provenance: authored
+        artifact_or_position: 'stage.implement（位置名，graph.yaml#L29）/ card.allowed_files'
+        fit: fits
+        rename: false
+        psl_ids: [PSL-014]
+        evidence:
+        - {kind: file, ref: 'plugins/sdlc/docs/design-notes.md#L67-L68'}
+        - {kind: file, ref: 'plugins/sdlc/skills/sdlc/assets/graph.yaml#L29'}
+        rename_reason: 不重命名；新写的 skill 按位置命名，implement 与 stage.implement 同词干（F-03 / PSL-014）。
+      disposition: issue
+      adjudications: []
+
+  - id: agent.card-implementer
+    kind: agent
+    ring: R5
+    ring_evidence: 'plugins/sdlc/skills/sdlc/assets/graph.yaml#L147-L154（role: implementer → R5）'
+    provenance: authored
+    loop: loops.yaml#card_retry
+    artifact: card.allowed_files
+    gates: [verify_commit.py]
+    fills:
+    - R5/newly_identified/capability/fresh-context-card-execution
+    - R5/newly_identified/control+judgment/implementer-sees-evaluator
+    assessment:
+      id: A-agent.card-implementer
+      state: evidenced
+      needed:
+        verdict: necessary
+        psl_ids: [PSL-002, PSL-003]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/agents/card-implementer.md}
+        - {kind: file, ref: 'plugins/sdlc/skills/sdlc/assets/graph.yaml#L320'}
+        - {kind: file, ref: 'plugins/sdlc/skills/sdlc/assets/loops.yaml#L32'}
+        deletion_test: >-
+          撤掉后 executor == agent 这条 conditional 分支没有承载者：卡只能在编排者自己的上下文里做，产出的 diff
+          带着编排者读过的评审发现、其他卡的实现与隐藏集线索。R005（实现者不读评估者输出）在 graph.yaml 的
+          must_not_read 里仍然写着、在实际执行里已经破了，而没有任何产物能显示这一点——隔离从此只是文档。
+      implemented:
+        verdict: compiled
+        psl_ids: [PSL-010, PSL-015]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/agents/card-implementer.md}
+        - {kind: gate_json, ref: 'plugins/sdlc/skills/commit/eval/gate.json#provenance.scripts_run.verify_commit.py'}
+        - {kind: file, ref: 'plugins/sdlc/skills/sdlc/assets/graph.yaml#L147-L154'}
+        not_reached:
+          verified: >-
+            plugins/sdlc/agents/ 下五个 agent 都没有 eval/gate.json，这个 Part 没有任何证据档；compiled 完全来自
+            它自己的判据「每个 commit 过 verify_commit.py exit 0 才 git commit」这道被闸挡的约束，没有行为层运行记录。
+      naming:
+        verdict: fits
+        provenance: authored
+        artifact_or_position: 'card.allowed_files / stage.implement 的执行器位置（graph.yaml#L320）'
+        fit: fits
+        rename: false
+        psl_ids: [PSL-014]
+        evidence:
+        - {kind: file, ref: 'plugins/sdlc/docs/design-notes.md#L68'}
+        - {kind: file, ref: plugins/sdlc/agents/card-implementer.md}
+        rename_reason: 不重命名；card-implementer 与它的输入（卡）和位置（stage.implement 的 agent 执行器）同词干（F-03）。
+      disposition: none
+      adjudications: []
+
+  - id: agent.comment-fixer
+    kind: agent
+    ring: R5
+    ring_evidence: >-
+      plugins/sdlc/skills/sdlc/assets/graph.yaml#L225-L231（role: implementer → R5）· role_conflict：
+      plugins/sdlc/docs/ARCHITECTURE.md#L41 的 R7 交付行把 review-loop 归 R7，而本 Part 是
+      loops.yaml#L71-L84 review_loop 的 generator、graph.yaml#L349 上 stage.review 的下游；§1 表不点名 agent，
+      comment-fixer 只经 review-loop 间接归 R7。两源并列，本审计不调和（F-08 / F-24）。
+    provenance: authored
+    loop: loops.yaml#review_loop
+    loop_reason: >-
+      graph.yaml#L225-L231 的节点没有 loop 键，但 loops.yaml#L75 把它写成 review_loop 的 generator；
+      本 Part 按 loops.yaml 记环归属，graph.yaml 的缺键作为一条源码问题记在 implemented.evidence 里。
+    artifact: card.allowed_files
+    gates: [verify_commit.py]
+    fills: [R5/newly_identified/control+judgment/implementer-sees-evaluator]
+    assessment:
+      id: A-agent.comment-fixer
+      state: evidenced
+      needed:
+        verdict: merge_candidate
+        merge_candidate_with: implement
+        psl_ids: [PSL-001, PSL-002]
+        evidence:
+        - {kind: file, ref: 'plugins/sdlc/skills/sdlc/assets/graph.yaml#L230'}
+        - {kind: file, ref: 'plugins/sdlc/skills/sdlc/assets/graph.yaml#L144'}
+        - {kind: file, ref: plugins/sdlc/agents/comment-fixer.md}
+        deletion_test: >-
+          撤掉后 review 环里「一条 ACCEPT 线程一个隔离修复者」没有承载者：修复在 review-loop 自己的上下文里做，
+          同一个上下文既持有 triage 的全部线程与评审者判据、又写代码，产出的 commit 一次扫掉多条线程且没有复现测试；
+          主张本来就不成立的那一类（UNEXPECTEDLY_PASSING）被静默改掉而不是停下回报，PR 上看到的是「都修了」，
+          实际是把评审者的措辞而不是缺陷改掉了。
+        merge_candidate_reason: >-
+          与 implement 并列生产 card.allowed_files 且不满足 F-05 同阶段条件替代三条件（不在 stage.implement 的
+          handled_by graph.yaml#L29 里；#L349 从 review-triager 过来的是 handoff 边而不是带 when 守卫的 conditional 边），
+          按规则 1 两个生产者都记 merge_candidate。这与 dos.yaml#L677 记的 R001 现状问题是同一件事的两个位置。
+      implemented:
+        verdict: compiled
+        psl_ids: [PSL-010, PSL-015]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/agents/comment-fixer.md}
+        - {kind: gate_json, ref: 'plugins/sdlc/skills/commit/eval/gate.json#provenance.scripts_run.verify_commit.py'}
+        - {kind: file, ref: 'plugins/sdlc/skills/sdlc/assets/loops.yaml#L75'}
+        not_reached:
+          verified: >-
+            无 eval/gate.json、无行为层运行记录；且 graph.yaml#L225-L231 的节点缺 loop 键而 loops.yaml#L75 已把它
+            当 review_loop 的 generator，两份数据对同一个 Part 的环归属不一致（源码问题，不在本审计里调和）。
+      naming:
+        verdict: fits
+        provenance: authored
+        artifact_or_position: 'loops.yaml#review_loop 的 generator（位置名，loops.yaml#L75）'
+        fit: fits
+        rename: false
+        psl_ids: [PSL-014]
+        evidence:
+        - {kind: file, ref: 'plugins/sdlc/docs/design-notes.md#L56'}
+        - {kind: file, ref: 'plugins/sdlc/skills/sdlc/assets/loops.yaml#L71-L84'}
+        rename_reason: >-
+          不重命名。fit 按位置名判：comment-fixer 与它在 review_loop 里的位置（修一条 PR 评论线程）同义 → fits。
+          注意它改编自 qanat 的 issue-fixer 而没有保留上游名（design-notes.md#L56），provenance 因此按 authored
+          的那条路记；provenance 不参与 fit 判定（F-03），只决定 misfit 的去向理由，此处无 misfit。
+      disposition: issue
+      adjudications: []
+
+  - id: commit
+    kind: skill
+    ring: R5
+    ring_evidence: 'plugins/sdlc/skills/sdlc/assets/graph.yaml#L163-L168（role: implementer → R5）'
+    provenance: authored
+    loop: null
+    artifact: git:commit
+    gates: [verify_commit.py]
+    fills: [R5/newly_identified/control/atomic-auditable-commit]
+    assessment:
+      id: A-commit
+      state: evidenced
+      needed:
+        verdict: necessary
+        psl_ids: [PSL-002, PSL-004]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/commit/SKILL.md}
+        - {kind: file, ref: plugins/sdlc/skills/commit/scripts/verify_commit.py}
+        - {kind: file, ref: 'plugins/sdlc/docs/ARCHITECTURE.md#L39'}
+        deletion_test: >-
+          撤掉后落地前的三道机械闸不存在，引擎按默认习惯 git add -A && git commit -m "update"：产出一条混了两个
+          关注点、把 .env 与一枚 AKIA 开头的 key 一起暂存、消息不带 Card footer 的提交。卡的白名单溢出与
+          .done_when.lock 命中都不会被拒——契约被改掉而同一 diff 里没有 change-proposal——之后
+          replay_card_commits.sh 无从按卡回放，PSL-003（审计者不改被审对象）这类性质失去机械证明。
+      implemented:
+        verdict: compiled
+        psl_ids: [PSL-010, PSL-015]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/commit/scripts/verify_commit.py}
+        - {kind: gate_json, ref: 'plugins/sdlc/skills/commit/eval/gate.json#gate_pass'}
+        - {kind: smoke, ref: 'plugins/sdlc/skills/commit/eval/gate.json#smoke（bash plugins/sdlc/eval/smoke.sh → 101 passed, 0 failed, 2026-09-05）'}
+        not_reached:
+          verified: >-
+            gate_pass=static_only；fix_list 自记两条未跑——L2（拿一份真实的多关注点 diff 看引擎是否真的拆成两条提交）
+            与「红-绿证据是手工的，没有脚本」；脚本冒烟在临时仓库里跑过，不等于 skill 的带 / 不带行为对比。
+      naming:
+        verdict: fits
+        provenance: authored
+        artifact_or_position: 'git:commit'
+        fit: fits
+        rename: false
+        psl_ids: [PSL-014]
+        evidence:
+        - {kind: file, ref: 'plugins/sdlc/docs/design-notes.md#L52-L53'}
+        - {kind: gate_json, ref: 'plugins/sdlc/skills/commit/eval/gate.json#provenance'}
+        rename_reason: >-
+          不重命名；commit 与独占产物 git:commit 同词干（F-03）。它改编自 pdforge 的 git-workflow 约定
+          （design-notes.md#L52，「直接改编」而非「直接收编」），正文重写成判据 + 预门形态、gate.json 没有
+          imported_into_sdlc 块，故 provenance 记 authored。
+      disposition: none
+      adjudications: []
+
+  - id: ratchet
+    kind: skill
+    ring: R5
+    ring_evidence: 'plugins/sdlc/skills/sdlc/assets/graph.yaml#L155-L162（role: implementer → R5）'
+    provenance: adopted
+    loop: loops.yaml#ratchet
+    artifact: experiment_dir/**
+    gates: []
+    fills: [R5/newly_identified/capability/run-until-criteria-met]
+    assessment:
+      id: A-ratchet
+      state: evidenced
+      needed:
+        verdict: necessary
+        psl_ids: [PSL-002, PSL-012]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/ratchet/SKILL.md}
+        - {kind: file, ref: 'plugins/sdlc/skills/sdlc/assets/loops.yaml#L37-L52'}
+        - {kind: file, ref: 'plugins/sdlc/skills/sdlc/assets/graph.yaml#L321'}
+        deletion_test: >-
+          撤掉后「跑到达标为止」的那一类卡只能靠引擎在同一会话里自评自改：没有独立评估者、没有杀死重启，产出的是
+          一串各自声称有改进的 diff 与一份由生成者本人写的通过结论。results.tsv / learnings.md / dead-ends.md 不存在，
+          同一条死路被反复走；plateau 与 oscillation 因为无人计数而永不触发升级，单卡预算 3 在实际上变成无上限。
+      implemented:
+        verdict: declared
+        psl_ids: [PSL-010, PSL-015]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/ratchet/SKILL.md}
+        - {kind: file, ref: plugins/sdlc/skills/ratchet}
+        - {kind: gate_json, ref: 'plugins/sdlc/skills/ratchet/eval/gate.json#gate_pass'}
+        not_reached:
+          compiled: >-
+            no_gate —— 无 scripts/，且独占产物 experiment_dir/** 的 checked_by 为空；按 F-06 生产者不得高于 declared，
+            审计者不得以「读了 SKILL.md 觉得能跑」抬到 compiled。它的 commit 走 /commit 的闸，但那道闸检的是
+            git:commit，不是 experiment_dir/**。
+          verified: gate_pass=static_only 且 gate.json 的 provenance.scripts_run 为空对象，没有任何脚本或行为层记录。
+      naming:
+        verdict: fits
+        provenance: adopted
+        artifact_or_position: 'loops.yaml#ratchet（位置名）/ experiment_dir/**'
+        fit: fits
+        rename: false
+        psl_ids: [PSL-014]
+        evidence:
+        - {kind: gate_json, ref: 'plugins/sdlc/skills/ratchet/eval/gate.json#imported_into_sdlc'}
+        - {kind: file, ref: 'plugins/sdlc/skills/sdlc/assets/loops.yaml#L37'}
+        rename_reason: >-
+          不重命名；ratchet 与它拥有的环 loops.yaml#ratchet 同词干（F-03），且收编自 ratchet v1.1.0，保留上游名。
+      disposition: issue
+      adjudications: []
+
+  missing:
+  - R5/newly_identified/control/experiment-dir-unchecked
+  - R5/unenforced_rule/control/one-producer-per-artifact-unlinted
+  - R5/newly_identified/control/agent-parts-without-gate-json
+
+# ===========================================================================
+gaps:
+
+- id: R3/newly_identified/knowledge+capability/contract-to-test-pyramid
+  ring: R3
+  atoms: [Knowledge, Capability]
+  source: newly_identified
+  necessity: necessary
+  deletion_test: >-
+    没有人把冻结契约翻成分批的测试金字塔，也没有人把 REQ-ID 钉在每个测试上：产出的是一批一次生成、
+    只覆盖 happy 路径、无 mutation 配置的测试，REQ 与测试的对应关系只存在于写测试那一刻的记忆里。
+  evidence:
+  - {kind: file, ref: plugins/sdlc/skills/test-suite-generator/SKILL.md}
+  - {kind: file, ref: 'plugins/sdlc/docs/ARCHITECTURE.md#L37'}
+  disposition: none
+
+- id: R3/newly_identified/judgment/decidability-ladder-routing
+  ring: R3
+  atoms: [Judgment]
+  source: newly_identified
+  necessity: necessary
+  deletion_test: >-
+    没有人判断一条判据该落在结构 / 行为 / 判断哪一档：全部塞进「几个 happy example + 一份自由文本 rubric」，
+    本可以被 grep 一次判掉的结构性子句被抬到模型手里，闸的成本与不确定性一起上升而覆盖率下降。
+  evidence:
+  - {kind: file, ref: plugins/sdlc/skills/spec-compile/SKILL.md}
+  - {kind: file, ref: plugins/sdlc/skills/spec-compile/scripts/verify_compile.py}
+  disposition: none
+
+- id: R3/newly_identified/judgment+capability/ruler-itself-uncertified
+  ring: R3
+  atoms: [Judgment, Capability]
+  source: newly_identified
+  necessity: necessary
+  deletion_test: >-
+    没有人证明尺子承重：eval_case 集合的 mutation score 与 rubric 的评分者一致度都不测，holdout 也不隔离，
+    上线的是一把「全绿但杀不掉变异体」的闸，它给出的每一份通过结论都不是证据。
+  evidence:
+  - {kind: file, ref: plugins/sdlc/skills/calibrate/SKILL.md}
+  - {kind: gate_json, ref: 'plugins/sdlc/skills/calibrate/eval/gate.json#round1.blocking'}
+  disposition: none
+
+- id: R3/lifecycle_blank/control/red-green-evidence-script
+  ring: R3
+  atoms: [Control]
+  source: lifecycle_blank
+  necessity: necessary
+  deletion_test: >-
+    没有红-绿证据脚本，「测试先红后绿」全靠实现者自述：一个从来没有红过的测试（断言恒真、或测的是与 AC 无关的东西）
+    照样被写进 tests-manifest、被 L5 二次锁冻住，并在 acceptance 里当作该 AC 已被机器判定的证据；
+    真正的漏检要到逃逸缺陷回来时才知道。
+  evidence:
+  - {kind: file, ref: 'plugins/sdlc/docs/ARCHITECTURE.md#L285'}
+  - {kind: file, ref: 'plugins/sdlc/docs/lifecycle.md#L40'}
+  disposition: issue
+
+- id: R3/unenforced_rule/control/uncalibrated-standard-used-as-evidence
+  ring: R3
+  atoms: [Control]
+  source: unenforced_rule
+  necessity: necessary
+  deletion_test: >-
+    dos.yaml 的 R010 记着「未过 calibrate 的标准不当证据」，enforced_by 却是 not_enforced：没有任何脚本在
+    下游读标准之前检查 calibration_report.yaml 存在且过线。产出的是一份 calibration_pending 的标准照常被
+    acceptance 当闸用、结论照常写进 ratchet-log，而 PSL-007 在文档里仍然写着。
+    （R010 的另一半——meets_done_when 比对脚本——落在 R6，不在本环。）
+  evidence:
+  - {kind: file, ref: 'plugins/sdlc/dogfood/ring-audit/dos.yaml#L412-L415'}
+  - {kind: file, ref: 'plugins/sdlc/docs/ARCHITECTURE.md#L287'}
+  disposition: issue
+
+- id: R4/newly_identified/knowledge+capability/context-free-card-split
+  ring: R4
+  atoms: [Knowledge, Capability]
+  source: newly_identified
+  necessity: necessary
+  deletion_test: >-
+    没有人把冻结契约拆成自包含的卡：产出的「卡」是一段任务描述，没有 REQ 归属、没有 AC 子集、没有可改文件白名单，
+    交给一个新会话的 agent 后它第一件事是回来要上下文，第二件事是改卡外的文件。
+  evidence:
+  - {kind: file, ref: plugins/sdlc/skills/plan-cards/SKILL.md}
+  - {kind: file, ref: 'plugins/sdlc/docs/design-notes.md#L67-L68'}
+  disposition: none
+
+- id: R4/newly_identified/control/card-depends-on-unchecked
+  ring: R4
+  atoms: [Control]
+  source: newly_identified
+  necessity: necessary
+  deletion_test: >-
+    卡的 depends_on 是 plan-cards 决定哪些卡可并行的依据（SKILL.md#L38：无依赖的卡可并行），但 lint_cards.py
+    的五项检查里没有一条读它——全文无 depends_on。产出的卡集可以含互相依赖的一对（CARD-A depends_on CARD-B、
+    CARD-B depends_on CARD-A）或指向一个已被合并掉、根本不存在的卡号，lint 全绿；实现阶段两张卡要么互等，
+    要么因为「看起来无依赖」被并行发出去，各自写出半个功能。
+  evidence:
+  - {kind: file, ref: plugins/sdlc/skills/plan-cards/scripts/lint_cards.py}
+  - {kind: file, ref: 'plugins/sdlc/skills/plan-cards/assets/card_template.yaml#L21'}
+  - {kind: file, ref: 'plugins/sdlc/skills/plan-cards/SKILL.md#L38'}
+  disposition: issue
+
+- id: R5/newly_identified/control+judgment/implementer-sees-evaluator
+  ring: R5
+  atoms: [Control, Judgment]
+  source: newly_identified
+  necessity: necessary
+  deletion_test: >-
+    没有一处规定实现者只拿到卡 + 状态摘要 + AC 子集 + 红基线：改代码的上下文同时持有评审发现、隐藏集与其他卡，
+    产出的 diff 恰好命中被列出的那几行而放过同类的其他实例，acceptance 全绿、隐藏变体一跑就红；
+    白名单也随之失效，卡外文件被顺手改掉而没有 WHITELIST_OVERFLOW 停机。
+  evidence:
+  - {kind: file, ref: plugins/sdlc/skills/implement/SKILL.md}
+  - {kind: file, ref: 'plugins/sdlc/skills/sdlc/assets/graph.yaml#L143'}
+  - {kind: file, ref: 'plugins/sdlc/dogfood/ring-audit/dos.yaml#L394-L397'}
+  disposition: none
+
+- id: R5/newly_identified/capability/fresh-context-card-execution
+  ring: R5
+  atoms: [Capability]
+  source: newly_identified
+  necessity: necessary
+  deletion_test: >-
+    没有全新上下文的单卡执行者：executor == agent 这条分支无处落地，卡只能在编排者已经污染的上下文里做，
+    产出的 diff 无法证明它没有读过评审判据——隔离退化成一句声明。
+  evidence:
+  - {kind: file, ref: plugins/sdlc/agents/card-implementer.md}
+  - {kind: file, ref: 'plugins/sdlc/skills/sdlc/assets/graph.yaml#L320'}
+  disposition: none
+
+- id: R5/newly_identified/control/atomic-auditable-commit
+  ring: R5
+  atoms: [Control]
+  source: newly_identified
+  necessity: necessary
+  deletion_test: >-
+    落地前没有机械闸：产出的提交混多个关注点、带 secrets 与调试代码、消息不带 Card footer；
+    白名单溢出与锁文件命中都不被拒，契约在没有 change-proposal 的情况下被改掉，事后无从按卡回放。
+  evidence:
+  - {kind: file, ref: plugins/sdlc/skills/commit/scripts/verify_commit.py}
+  - {kind: file, ref: 'plugins/sdlc/docs/ARCHITECTURE.md#L39'}
+  disposition: none
+
+- id: R5/newly_identified/capability/run-until-criteria-met
+  ring: R5
+  atoms: [Capability]
+  source: newly_identified
+  necessity: necessary
+  deletion_test: >-
+    没有「跑到达标为止」的承载者：需要多轮逼近的卡由引擎在同一会话里自评自改，产出一串自称有改进的 diff
+    和一份生成者自己写的通过结论；教训不落盘，同一条死路被反复走。
+  evidence:
+  - {kind: file, ref: plugins/sdlc/skills/ratchet/SKILL.md}
+  - {kind: file, ref: 'plugins/sdlc/skills/sdlc/assets/loops.yaml#L37-L52'}
+  disposition: none
+
+- id: R5/newly_identified/control/experiment-dir-unchecked
+  ring: R5
+  atoms: [Control]
+  source: newly_identified
+  necessity: necessary
+  deletion_test: >-
+    ratchet 的独占产物 experiment_dir/**（graph.yaml#L160）没有任何闸与门：results.tsv / learnings.md /
+    dead-ends.md 的形状、预算消耗、generator 与 verifier 是否真的不同，全都无人检。产出的是一个自称
+    「所有 P0 criteria 通过」的实验目录，而「通过」是由跑实验的那一方写下的；PSL-015（每个环节的产物要么被
+    脚本检、要么被门挡）在这一条上直接落空，ratchet 的 implemented 因此被 F-06 压在 declared。
+  evidence:
+  - {kind: file, ref: 'plugins/sdlc/skills/sdlc/assets/graph.yaml#L155-L162'}
+  - {kind: gate_json, ref: 'plugins/sdlc/skills/ratchet/eval/gate.json#provenance.scripts_run'}
+  disposition: issue
+
+- id: R5/unenforced_rule/control/one-producer-per-artifact-unlinted
+  ring: R5
+  atoms: [Control]
+  source: unenforced_rule
+  necessity: necessary
+  deletion_test: >-
+    dos.yaml 的 R001「一个产物只有一个生产者」enforced_by 是 user_workflow：verify_graph.py 的 lint 1 只检
+    写范围有界，不检某个产物是否只出现在一个 Node 的 writes 里。于是 card.allowed_files 在 graph.yaml 里
+    同时挂在 implement（#L144）、agent.card-implementer（#L152）、agent.comment-fixer（#L230）三个节点下，
+    图 lint 全绿。产出的后果是回滚与归因失去唯一落点：一次实现阶段的改动到底属于哪个执行者，只能靠 commit
+    footer 猜；而条件替代（合法）与真的在争（不合法）这两种情况在数据上长得一模一样。
+  evidence:
+  - {kind: file, ref: 'plugins/sdlc/dogfood/ring-audit/dos.yaml#L376-L379'}
+  - {kind: file, ref: 'plugins/sdlc/dogfood/ring-audit/dos.yaml#L677'}
+  - {kind: file, ref: 'plugins/sdlc/skills/sdlc/assets/graph.yaml#L144'}
+  disposition: issue
+
+- id: R5/newly_identified/control/agent-parts-without-gate-json
+  ring: R5
+  atoms: [Control]
+  source: newly_identified
+  necessity: necessary
+  deletion_test: >-
+    本环两个 kind=agent 的 Part（agent.card-implementer、agent.comment-fixer）在 plugins/sdlc/agents/ 下只有
+    一份 .md，没有 eval/gate.json——十三个 skill 每个都有的那份证据档，五个 agent 一个都没有。
+    产出的后果是这两个 Part 的效力档位没有任何记录可查：说它 static_only 还是 verified 都无从对账，
+    R017（效力声明不得超过证据档）对 agent 这一类节点在数据上不成立。
+  evidence:
+  - {kind: file, ref: plugins/sdlc/agents/card-implementer.md}
+  - {kind: file, ref: plugins/sdlc/agents/comment-fixer.md}
+  - {kind: file, ref: 'plugins/sdlc/dogfood/ring-audit/dos.yaml#L440-L443'}
+  disposition: issue
+
+# ===========================================================================
+artifacts:
+
+- {id: tests/<f>/**, producer: test-suite-generator, checked_by: [gen_existence.py, check_verbatim_names.py, lock_done_when.py]}
+- {id: tests-manifest.yaml, producer: test-suite-generator, checked_by: [derive_counts.py, lock_done_when.py]}
+- {id: compile_manifest.yaml, producer: spec-compile, checked_by: [verify_compile.py]}
+- {id: eval_cases/**, producer: spec-compile, checked_by: [verify_compile.py]}
+- {id: calibration_report.yaml, producer: calibrate, checked_by: [verify_calibration.py]}
+- {id: cards/CARD-*.yaml, producer: plan-cards, checked_by: [lint_cards.py]}
+- {id: card.allowed_files, producer: implement, checked_by: [verify_commit.py]}
+- {id: card.allowed_files, producer: agent.card-implementer, checked_by: [verify_commit.py], alternatives_of: stage.implement}
+- {id: card.allowed_files, producer: agent.comment-fixer, checked_by: [verify_commit.py]}
+- {id: 'git:commit', producer: commit, checked_by: [verify_commit.py]}
+- {id: experiment_dir/**, producer: ratchet, checked_by: []}
+
+# ===========================================================================
+gates:
+
+- {id: derive_counts.py, kind: script, label: 闸, ref: plugins/sdlc/skills/test-suite-generator/scripts/derive_counts.py}
+- {id: gen_existence.py, kind: script, label: 闸, ref: plugins/sdlc/skills/test-suite-generator/scripts/gen_existence.py}
+- {id: check_verbatim_names.py, kind: script, label: 闸, ref: plugins/sdlc/skills/test-suite-generator/scripts/check_verbatim_names.py}
+- {id: verify_compile.py, kind: script, label: 闸, ref: plugins/sdlc/skills/spec-compile/scripts/verify_compile.py}
+- {id: verify_calibration.py, kind: script, label: 闸, ref: plugins/sdlc/skills/calibrate/scripts/verify_calibration.py}
+- {id: lock_done_when.py, kind: script, label: 闸, ref: plugins/sdlc/skills/sdlc/scripts/lock_done_when.py}
+- {id: lint_cards.py, kind: script, label: 闸, ref: plugins/sdlc/skills/plan-cards/scripts/lint_cards.py}
+- {id: verify_commit.py, kind: script, label: 闸, ref: plugins/sdlc/skills/commit/scripts/verify_commit.py}
+
+# ===========================================================================
+proposals:
+
+- id: P-R3-01
+  source: R3/lifecycle_blank/control/red-green-evidence-script
+  destination: new_issue
+  text: >-
+    L5 的红-绿证据脚本在 ARCHITECTURE §7 与 lifecycle.md 制品映射表里都登记为空白。开一条 issue：
+    定义「一个测试在实现前红过」的机器可读证据形状，并把它编进 lock --stage l5 的前置条件。
+- id: P-R3-02
+  source: R3/unenforced_rule/control/uncalibrated-standard-used-as-evidence
+  destination: new_issue
+  text: >-
+    dos.yaml R010 的 calibrate 那一半 enforced_by=not_enforced。开一条 issue：在下游读标准之前加一道检查，
+    要求 calibration_report.yaml 存在且 mutation / agreement 双线过底线，否则标记 calibration_pending 并拒绝当证据。
+- id: P-R4-01
+  source: R4/newly_identified/control/card-depends-on-unchecked
+  destination: skill_fix_list
+  text: >-
+    lint_cards.py 加第六项：depends_on 里的每个卡号必须存在，且卡之间的 depends_on 图无环；违反 REJECT。
+    现状是 SKILL.md 用 depends_on 决定并行而 lint 完全不读它。
+- id: P-R5-01
+  source: A-implement
+  destination: new_issue
+  text: >-
+    card.allowed_files 有三个 writer，其中 implement 与 agent.comment-fixer 不构成 F-05 同阶段条件替代，
+    两者都记 merge_candidate。请人裁：是把 comment-fixer 的写范围改成一个独立的产物名（它写的是被接受线程的最小修复），
+    还是把 R001 降级为文档规则。审计不当场裁掉一个。
+- id: P-R5-02
+  source: A-agent.comment-fixer
+  destination: new_issue
+  text: >-
+    role_conflict：graph.yaml 的 Node.role=implementer 把 comment-fixer 推到 R5，而 ARCHITECTURE §1 表把它所属的
+    review-loop 归在 R7，loops.yaml 又把它写成 review_loop 的 generator（graph.yaml 那个节点却没有 loop 键）。
+    请人裁归属并让两份数据一致；本审计并列两源，不调和。
+- id: P-R5-03
+  source: R5/newly_identified/control/experiment-dir-unchecked
+  destination: skill_fix_list
+  text: >-
+    ratchet 的 experiment_dir/** 无闸无门，按 F-06 把 ratchet 的 implemented 压在 declared。
+    fix_list 加一条：给 experiment_dir 写一个形状 + 预算 + generator≠verifier 的 verify 脚本，或明确记为不检并说明理由。
+- id: P-R5-04
+  source: R5/unenforced_rule/control/one-producer-per-artifact-unlinted
+  destination: new_issue
+  text: >-
+    R001 无机械检查。开一条 issue：给 verify_graph.py 加一条唯一生产者 lint（同阶段条件替代显式豁免），
+    否则「条件替代」与「真的在争」在 graph.yaml 里长得一样。
+- id: P-R5-05
+  source: A-ratchet
+  destination: skill_fix_list
+  text: >-
+    loops.yaml#ratchet 的 generator 写 ratchet.worker、verifier 写 ratchet.master，这两个 id 在 graph.yaml 的
+    nodes 里都不存在（只有节点 ratchet）。verify_loop.py 只检 generator ≠ verifier，不检两者可解析成图节点，
+    所以这条悬空引用一直绿着。fix_list 加一条：环契约的 generator / verifier 必须解析到 graph.yaml 的节点 id。
+- id: P-R5-06
+  source: R5/newly_identified/control/agent-parts-without-gate-json
+  destination: skill_fix_list
+  text: >-
+    plugins/sdlc/agents/ 下五个 agent 都没有 eval/gate.json，效力档位无处可查。
+    fix_list 加一条：给 agent 定义与 skill 同形的证据档，或在 ARCHITECTURE 里明确写「agent 的效力随其宿主 skill 记」。
