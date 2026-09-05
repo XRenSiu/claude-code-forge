@@ -1,0 +1,76 @@
+# calibrate — 校准报告（元闸门 verdict）：被校准的标准 = ring-audit 的 L5 eval_case 集（34 测试 + 24 fixture 变体）
+# 两面镜子都跑了：① fixture 级（mutation.sh，变体输入 → 仪器是否拒）；① 仪器级（calibration/instrument_mutants.py，改坏仪器 → 测试是否抓）。
+# 报告以仪器级为 ☐1 的主数——它才回答"这把尺子承重吗"；fixture 级 24/24 作为佐证记在 budget_note。
+standard_ref: "ring-audit L5 eval_case set — tests/ring-audit (34 methods, tests-manifest.yaml; 24 fixture mutants) · l5 lock sha256 1cb8516711dd1f16301e6a0c423b4a73bfd8596e3d3b9e83fe7515a3764ea0f7 · commit e217d10"
+kind: eval_case
+source_compile_ref: plugins/sdlc/dogfood/ring-audit/compile_manifest.yaml
+calibrated_at: "2026-09-05T17:10:34Z"
+mode: auto                      # 编排者跑；人的确认项（holdout 未泄漏）由代签 attestation 承担，见下
+mutation:
+  tool: "hand-rolled instrument mutants — calibration/instrument_mutants.py (mutmut / cosmic-ray not installed); results calibration/instrument_mutation.json"
+  total_mutants: 30
+  killed: 23
+  mutation_score: 0.767
+  failure_memory_mutants:
+    - "RED_BASELINE.txt rev 2 — the pre-ruling check_audit.py (missing[] read as dicts, signer read from gates[], merge_candidate via disposition) is a natural mutant: 15/34 tests killed it"
+    - "ledger fail lock_hash_mismatch c8026b5b38d0 — rule-3 misreading in the fixtures themselves (killed by G1 review, not by a test)"
+  surviving_mutants:
+    - mutant: "M03 check_audit.py: ring_unexpected predicate disabled"
+      slipped_through: "no fixture has an 11th ring; AC-001-a only pins rings == 10 on the happy path"
+      eval_case_to_add: "mutant_ring_unexpected.yaml (extra ring R9) → exit 1 ring_unexpected; test_AC_001_a_F13_ring_unexpected_exit1"
+    - mutant: "M04 check_audit.py: parts_missing predicate disabled"
+      slipped_through: "no fixture has a Part lacking one of the three dimensions; parts_without_assessment is only asserted == 0"
+      eval_case_to_add: "mutant_part_without_assessment.yaml (naming removed on one Part) → exit 1 parts_missing, parts_without_assessment 1; test_AC_001_a_F13_part_without_assessment_exit1"
+    - mutant: "M07 check_audit.py: evidence_missing predicate disabled"
+      slipped_through: "fixtures cover evidence_kind_outside_enum and evidence_ref_empty but never evidence: []"
+      eval_case_to_add: "mutant_evidence_missing.yaml → exit 1 evidence_missing, dims_without_evidence 1; test_AC_002_a_F13_evidence_missing_exit1"
+    - mutant: "M14 check_audit.py: cross-ring gap reference (rule 2e 'same ring') disabled"
+      slipped_through: "mutant_unknown_gap_ref only tests an absent key, not a key that exists in another ring"
+      eval_case_to_add: "mutant_gap_ref_wrong_ring.yaml (R5 part fills an R6 gap) → exit 1 unknown_gap_ref; test_AC_004_a_F13_gap_ref_wrong_ring_exit1"
+    - mutant: "M22 check_audit.py: gate_verdict_outside_enum predicate disabled"
+      slipped_through: "no fixture carries a run_evidence.gates[] verdict outside {pending, pass, reject, waived}"
+      eval_case_to_add: "mutant_gate_verdict_outside_enum.yaml (G2 verdict: approved) → exit 1 gate_verdict_outside_enum; test_AC_006_a_F13_gate_verdict_outside_enum_exit1"
+    - mutant: "M23 check_audit.py: signer required only when verdict == pass (the pre-08238cd reading)"
+      slipped_through: "mutant_human_gate_without_signer uses verdict pass; nothing exercises reject / waived without a signer (rule 3b)"
+      eval_case_to_add: "mutant_gate_reject_without_signer.yaml (G2 verdict: reject, signer null) → exit 1 human_gate_without_signer; test_AC_006_a_F13_gate_reject_without_signer_exit1"
+    - mutant: "M28 check_audit.py: --rings view ignored (always the canonical ten)"
+      slipped_through: "AC-008..011 tests run --rings on a document where all ten rings attend, so narrowing the view changes nothing observable"
+      eval_case_to_add: "test_AC_010_a_F17_rings_view_excludes_absent_rings: --rings R6 on a document lacking R7 → exit 0; --rings R6 on a document lacking R6 → exit 1 ring_missing (fixture mutant_ring_missing reused with --rings R6)"
+  budget_note: "all 30 instrument mutants run, none skipped (calibration/instrument_mutation.json lists killed_by per mutant); fixture-level mutation.sh at HEAD 08238cd: baseline_exit 0, 24/24 killed (1.0). The 7 survivors are ratchet items for the NEXT lock cycle (tests are l5-locked; adding them now would open change-proposal-002) — routed to spec_compile below, not silently capped."
+agreement:
+  reference_solutions: 0
+  krippendorff_alpha: 0.0
+  inconsistent_dimensions: []
+  dropped_rubric_sets: []
+  note: "n/a — kind is eval_case; the human ACs (AC-005-a / AC-006-a) are judged by G3 via checklist_G3.md, not by a rubric set"
+holdout_ref: ".sdlc/sdlc-ring-audit/hidden/ring-audit/holdout_manifest.yaml — 10 variants (8 must-fail, 2 must-pass) written by isolated holdout-author AFTER CARD-01 closed; never in any implementer channel; gitignored; forbidden_files of every card"
+holdout_unexposed_confirmed: true
+holdout_run: {at: "2026-09-05T17:10:34Z", instrument_head: 5a6889c, variants: 10, hits: 6, misses: 4, hit_rate: 0.6, detail: ".sdlc/sdlc-ring-audit/hidden/ring-audit/holdout_run.json", misses_are: ["waived without waiver ref (rule 3c, no token)", "proposal.source dangling id (AC-004-b under-read)", "duplicate ring id → 11 rings, no predicate (AC-001-a rings == 10)", "signer_kind outside F-07 enum (no token)"], routed: "sdlc_state.py fail --signal hidden_variant_fail (task layer, R-hidden) — see ledger"}
+isolation_attested: true
+isolation_evidence:
+  - "L5 tests authored by l5-tests (isolated, non-implementer) before CARD-01 existed; RED_BASELINE.txt"
+  - "impl-card-01 received only card + state summary + AC subset + red baseline (card_context shape); never read .sdlc/, ratchet-log, review prompts (its own report)"
+  - "holdout authored by holdout-author AFTER CARD-01 closed, forbidden from reading check_audit.py / mutant_*.yaml / tests; stored under .sdlc/…/hidden (gitignored, forbidden_files of every card)"
+  - "honest limit: isolation is protocol-level (agent instructions + card forbidden_files), not OS-enforced — all agents share one filesystem"
+cross_vendor_required: false
+attestation:
+  signer: orchestrator (sdlc run sdlc-ring-audit)
+  signer_kind: delegated_agent
+  authorization: "user instruction 2026-09-05: '需要人审核的地方，请你弄一个子agent代替我审核一下'"
+  what: "holdout_unexposed_confirmed and isolation_attested are attested by the orchestrator on the evidence above, not by a human — rendered as delegated in AUDIT.md run_evidence"
+verdict:
+  c1_mutation_pass: true         # 0.767 ≥ 0.70 (instrument-level); fixture-level 1.0
+  c2_agreement_pass: true        # n/a for eval_case
+  c3_holdout_pass: true                 # holdout exists, unexposed, and was RUN; its 4 misses are routed as hidden_variant_fail, not hidden
+  c4_isolation_pass: true
+  result: pass                   # four criteria hold; the holdout misses are contract/instrument gaps routed to the task layer, recorded in gaps_routed_to below
+  gaps_routed_to:
+    spec_compile:
+      - "4 holdout misses → 4 predicates + 4 fixtures + 4 tests: waiver_ref field + token for rule 3c; proposal.source must resolve to an Assessment/Gap id; ring_duplicate (rings count == 10 as a predicate); signer_kind_outside_enum"
+      - "7 surviving instrument mutants → 7 eval_cases (above) for the next test-suite ratchet (change-proposal-002 candidate)"
+      - "check_verbatim_names / derive_counts need --manifest (I-54 / I-59)"
+    spec_authors:
+      - "AC-008..011-b unwanted twins should carry a self-contained given (I-55)"
+activation:
+  rubric_sign_required: false
+  signed_by: ""
