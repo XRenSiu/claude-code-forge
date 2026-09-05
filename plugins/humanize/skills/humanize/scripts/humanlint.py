@@ -12,7 +12,8 @@
   cat draft.md | python3 humanlint.py - --lang zh
 
 退出码：0 = pass / warn，1 = flag（有 ≥1 项进入 flag 带），2 = 用法错误。
---genre reference（API 文档、配置表、速查表）放宽 bullet / heading 密度阈值。
+--genre 三档：narrative（方案 / 设计 / 复盘 / 邮件，默认）· report（研究报告 / README 叙述段：列表、标题、加粗是扫读入口，阈值放宽一档）
+· reference（API 文档、配置表、速查表，最宽）。体裁只影响 bullet / heading / bold 三项阈值，其余指标不变。
 
 校准依据：fixtures/ 下四份样本（ai-zh / human-zh / ai-en / human-en）。改阈值或词表后必须重跑
 `python3 humanlint.py fixtures/<x>.md`：两份 ai-* 必须 FLAG 且指数 ≥50，两份 human-* 必须 ≤15。
@@ -142,7 +143,8 @@ CLOSER_EN = re.compile(r"^(in conclusion|in summary|to summarize|to sum up|overa
 # "**加粗标签**：空话" 式列表项
 BOLD_LABEL_BULLET = re.compile(r"^\s*(?:[-*+•]|\d+[.)、])\s+\*\*[^*]{1,30}\*\*\s*[:：]")
 
-EMOJI = re.compile("[\U0001F300-\U0001FAFF☀-➿⭐✅❌]")
+# ✓✔✗✘（U+2713–2718）与 ☐☑☒（U+2610–2612）是表格里的对勾/叉，不是 emoji；彩色 ✅❌ 仍算
+EMOJI = re.compile("[\U0001F300-\U0001FAFF⭐]|(?![✓✔✗✘☐☑☒])[☀-➿]")
 BOLD = re.compile(r"\*\*[^*]+\*\*")
 HEADING = re.compile(r"^\s{0,3}(#{1,6})\s+")
 BULLET = re.compile(r"^\s*(?:[-*+•]|\d+[.)、])\s+")
@@ -337,7 +339,7 @@ def analyze(text: str, lang: str, genre: str):
     # 3. 列表密度
     total_body = len(bullet_lines) + len(prose_lines)
     bullet_ratio = 0.0 if total_body == 0 else len(bullet_lines) / total_body
-    ok_b, warn_b = (0.40, 0.55) if genre == "narrative" else (0.65, 0.85)
+    ok_b, warn_b = {"narrative": (0.40, 0.55), "report": (0.55, 0.75), "reference": (0.65, 0.85)}[genre]
     metrics.append(Metric(
         "bullet_ratio", "列表行占比", round(bullet_ratio, 2), "ratio",
         band(bullet_ratio, ok_b, warn_b) if total_body >= 8 else "info",
@@ -356,7 +358,7 @@ def analyze(text: str, lang: str, genre: str):
 
     # 5. 标题密度（不含 H1；只拦极端情况）
     hpk = per_k(len(heading_lines), size)
-    ok_h, warn_h = (8 * k, 13 * k) if genre == "narrative" else (14 * k, 22 * k)
+    ok_h, warn_h = {"narrative": (8 * k, 13 * k), "report": (11 * k, 18 * k), "reference": (14 * k, 22 * k)}[genre]
     metrics.append(Metric(
         "headings_per_k", "标题密度", round(hpk, 1), "/1k",
         band(hpk, ok_h, warn_h) if size >= 400 else "info",
@@ -365,9 +367,10 @@ def analyze(text: str, lang: str, genre: str):
 
     # 6. 加粗密度
     bpk = per_k(len(BOLD.findall(prose_text)), size)
+    ok_bold, warn_bold = {"narrative": (3 * k, 6 * k), "report": (5 * k, 9 * k), "reference": (5 * k, 9 * k)}[genre]
     metrics.append(Metric(
         "bold_per_k", "加粗密度", round(bpk, 1), "/1k",
-        band(bpk, 3 * k, 6 * k) if size >= 300 else "info",
+        band(bpk, ok_bold, warn_bold) if size >= 300 else "info",
         "满篇加粗 = 没有重点",
     ))
 
@@ -398,8 +401,7 @@ def analyze(text: str, lang: str, genre: str):
     hits = count_phrases(low, STOCK_ZH if lang == "zh" else STOCK_EN, lang)
     if lang == "zh":
         for rx in FRAME_ZH:
-            found = rx.findall(prose_text)
-            n = len(re.findall(rx, prose_text))
+            n = len(rx.findall(prose_text))
             if n:
                 hits[f"[框架]{rx.pattern[:18]}…"] = n
     stock_total = sum(hits.values())
@@ -548,8 +550,8 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("path", help="文件路径，或 - 读 stdin")
     ap.add_argument("--lang", default="auto", choices=["auto", "zh", "en"])
-    ap.add_argument("--genre", default="narrative", choices=["narrative", "reference"],
-                    help="narrative=方案/设计/说明/邮件；reference=API/配置/速查表（放宽列表与标题阈值）")
+    ap.add_argument("--genre", default="narrative", choices=["narrative", "report", "reference"],
+                    help="narrative=方案/设计/说明/邮件；report=研究报告/README 叙述段（列表、标题、加粗阈值放宽一档）；reference=API/配置/速查表（最宽）")
     ap.add_argument("--json", action="store_true")
     args = ap.parse_args()
     try:

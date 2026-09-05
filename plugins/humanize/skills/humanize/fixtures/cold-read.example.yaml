@@ -1,0 +1,64 @@
+# cold-reader 输出样例（对应 fixtures/ai-zh.md 那种稿子），供 verify_coldread.py 冒烟。
+# 按 agents/cold-reader.md 的规则：R1 未触发，R2 lost_at ≥ 2 触发，R4 decision_buried ∧ proposal 触发 → needs_revision。
+doc: fixtures/ai-zh.md
+reader: 评审这个缓存方案的架构师
+genre: proposal
+lang: zh
+verdict: needs_revision
+contamination: []
+one_sentence: "给订单查询加缓存，但我不知道具体怎么加、为什么是这样加"
+decision_at_paragraph: 6
+flags: [decision_buried, generic_opening, no_alternatives_killed]
+paragraphs:
+  - n: 1
+    expected: "读完标题我以为会先看到触发这份方案的问题"
+    got: "行业背景与缓存的重要性"
+    lost_at: "值得注意的是，缓存作为一种"
+    told_not_shown: ["扮演着至关重要的角色", "行之有效的优化手段"]
+    new_first: true
+    list_replaces_argument: false
+    hedged_claim: false
+  - n: 2
+    expected: "现在该说出了什么事"
+    got: "四条加粗的目标，每条一句空话"
+    lost_at: null
+    told_not_shown: ["显著提升系统性能", "保障数据一致性"]
+    new_first: false
+    list_replaces_argument: true
+    hedged_claim: false
+  - n: 3
+    expected: "目标之后该说怎么做"
+    got: "多级缓存架构的通用介绍"
+    lost_at: "在此基础上，通过合理的缓存更新机制"
+    told_not_shown: ["合理的缓存更新机制"]
+    new_first: true
+    list_replaces_argument: false
+    hedged_claim: false
+  - n: 4
+    expected: "具体参数或取舍"
+    got: "首先其次最后三段式的实施步骤"
+    lost_at: null
+    told_not_shown: []
+    new_first: false
+    list_replaces_argument: true
+    hedged_claim: false
+  - n: 5
+    expected: "风险"
+    got: "可能面临一定的风险与挑战，将制定完善的应对策略"
+    lost_at: null
+    told_not_shown: ["一定的风险", "完善的应对策略"]
+    new_first: false
+    list_replaces_argument: false
+    hedged_claim: true
+  - n: 6
+    expected: "结尾该有下一步"
+    got: "综上所述，复述上文"
+    lost_at: null
+    told_not_shown: []
+    new_first: false
+    list_replaces_argument: false
+    hedged_claim: false
+worst_three:
+  - {n: 1, why: "开头两段没有任何一个具体事实，读者到第 3 段还不知道要解决什么"}
+  - {n: 2, why: "四个并列 bullet，实际上第 2 条是第 1 条的前提"}
+  - {n: 5, why: "'可能会带来一定风险'——作者自己信不信？"}
