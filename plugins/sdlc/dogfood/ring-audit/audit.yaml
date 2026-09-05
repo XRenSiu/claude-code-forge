@@ -3022,6 +3022,19 @@ gaps:
   disposition: issue
 
 # =============================================================================
+# dos.yaml 里 enforced_by 不是 system 的四条规则。id / name / enforced_by 取自 dos.yaml
+# 对应行（name 用该规则 rationale 里的中文短名）；dos_anchors 是这条规则在 gaps[] 的
+# evidence ref 里出现过的两种写法。
+# 哪些 Gap 归到哪条规则、落在哪几个环、共几条，一律由 render_audit.py 拿 dos_anchors 去
+# gaps[].evidence[].ref 现算——这张表只登记规则，不登记结论，写死结论就会过期。
+# =============================================================================
+unenforced_rules:
+- {id: R001, name: 一个产物只有一个生产者, enforced_by: user_workflow, dos_anchors: ['#R001', '#L376-L379']}
+- {id: R008, name: 三道门只能人签, enforced_by: user_workflow, dos_anchors: ['#R008', '#L404-L407']}
+- {id: R010, name: 未校准的标准不当证据, enforced_by: not_enforced, dos_anchors: ['#R010', '#L412-L415']}
+- {id: R017, name: 静态过审 ≠ 有效, enforced_by: user_workflow, dos_anchors: ['#R017', '#L440-L443']}
+
+# =============================================================================
 # 产物 → 生产者（一条 = 一个 (产物, 生产者) 对）
 # =============================================================================
 artifacts:
@@ -3398,24 +3411,36 @@ run_evidence:
   # PSL-003 审计者不改被审对象——由 replay_card_commits.sh 证明，不由记忆保证。
   audited_dirs_diff:
     instrument: plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh
-    snapshot_at: e5ffbbd
-    snapshot_note: 这是快照，不是恒等式：取于 e5ffbbd 之后，覆盖当时全部 8 个 Card 提交。一份记录不可能覆盖承载它自己的那个提交，所以重跑 replay_card_commits.sh 会看到更大的 card_commits——CARD-06 之后的每个提交都只改 audit.yaml / AUDIT.md / render_audit.py，三者都不在被审的三个目录里，touches 仍是 0。不随快照漂移的是下面的 git_diff_stat：它一路算到 HEAD，恒为空，那才是 PSL-003 的承重数字。
+    cmd: bash plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh
+    exit: 1
+    branch: fix/iter-002
+    head: '9ad5b9c'
+    range_spec: main..HEAD
+    sha_scope: branch-specific
+    snapshot_at: '9ad5b9c'
+    snapshot_note: 这是快照，不是恒等式，而且下面每个 sha 只在它所在的分支上成立：取于 fix/iter-002 的 9ad5b9c（range_spec main..HEAD），覆盖当时全部 12 个 Card 提交。上一版记的 e5ffbbd / 1f1916e 来自 CARD-06 的工作树，cherry-pick 重写提交之后在本分支上解析不出来——sha 随分支重写，换分支或 rebase 之后必须重跑 replay_card_commits.sh，不要照抄这张表。一份记录也不可能覆盖承载它自己的那个提交，所以重跑会看到更大的 card_commits；记录之后的每个提交都只改 audit.yaml / AUDIT.md / render_audit.py / replay_card_commits.sh，四者都不在被审的三个目录里，touches 仍是 0。non_card_commits_* 是同一次运行的第二遍（自第一个 Card 提交起、不带 Card footer 的提交），它只记录、不进判定。不随快照漂移的是下面的 git_diff_stat：它一路算到 HEAD，恒为空，那才是 PSL-003 的承重数字。
     ok: true
-    card_commits: 8
+    card_commits: 12
     card_commits_touching_audited_dirs: 0
     card_commits_rejected: 0
+    non_card_commits_scanned: 6
+    non_card_commits_touching_audited_dirs: 0
     touches_audited_dirs_per_commit:
-    - {sha: e5ffbbd, card: CARD-06, exit: 0, touches_audited_dirs: false}
-    - {sha: 1f1916e, card: CARD-06, exit: 0, touches_audited_dirs: false}
-    - {sha: eba9796, card: CARD-04, exit: 0, touches_audited_dirs: false}
-    - {sha: 419a364, card: CARD-02, exit: 0, touches_audited_dirs: false}
-    - {sha: f8ef234, card: CARD-05, exit: 0, touches_audited_dirs: false}
-    - {sha: 05963a5, card: CARD-03, exit: 0, touches_audited_dirs: false}
-    - {sha: 08238cd, card: CARD-01, exit: 0, touches_audited_dirs: false}
-    - {sha: 0be2770, card: CARD-01, exit: 0, touches_audited_dirs: false}
+    - {sha: '9ad5b9c', card: CARD-01, exit: 0, touches_audited_dirs: false}
+    - {sha: '843c3ee', card: CARD-06, exit: 0, touches_audited_dirs: false}
+    - {sha: '5c84a5a', card: CARD-06, exit: 0, touches_audited_dirs: false}
+    - {sha: 'b24243d', card: CARD-06, exit: 0, touches_audited_dirs: false}
+    - {sha: '6326123', card: CARD-06, exit: 0, touches_audited_dirs: false}
+    - {sha: '3441ba4', card: CARD-06, exit: 0, touches_audited_dirs: false}
+    - {sha: 'eba9796', card: CARD-04, exit: 0, touches_audited_dirs: false}
+    - {sha: '419a364', card: CARD-02, exit: 0, touches_audited_dirs: false}
+    - {sha: 'f8ef234', card: CARD-05, exit: 0, touches_audited_dirs: false}
+    - {sha: '05963a5', card: CARD-03, exit: 0, touches_audited_dirs: false}
+    - {sha: '08238cd', card: CARD-01, exit: 0, touches_audited_dirs: false}
+    - {sha: '0be2770', card: CARD-01, exit: 0, touches_audited_dirs: false}
     git_diff_stat:
       cmd: 'git diff --stat 0be2770^..HEAD -- plugins/sdlc/skills plugins/sdlc/agents plugins/sdlc/docs'
-      first_card_commit: 0be2770
+      first_card_commit: '0be2770'
       output: ''
       lines: 0
 
