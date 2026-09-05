@@ -1077,6 +1077,5 @@ CARD-06 只做装配。四个片段的正文逐字保留（同一段 YAML 在片
 
 ### 铁律
 
-check-audit 的 exit 0 说的是**这份文档的形状齐全**，不是「九环做到位了」。42 个配件里 16 个停在 `declared`、
-26 个停在 `compiled`，**没有一个到 `verified`**；三道门全是代签；外部证据是 substitute。
+check-audit 的 exit 0 说的是**这份文档的形状齐全**，不是「九环做到位了」。42 个配件里 16 个停在 `declared`、26 个停在 `compiled`，**没有一个到 `verified`**；三道门里 2 道代签（delegated）、1 道未决；外部证据是 `substitute`。
 这份报告能不能当结论，由 G3 的人看完上面这些标记之后决定。

@@ -598,13 +598,44 @@ def assembly_notes(d, source_files):
         "",
     ] + [f"- `{REL}/{f}`" for f in source_files] + [
         "",
-        f"### 铁律",
+        "### 铁律",
         "",
-        "check-audit 的 exit 0 说的是**这份文档的形状齐全**，不是「九环做到位了」。42 个配件里 16 个停在 `declared`、",
-        "26 个停在 `compiled`，**没有一个到 `verified`**；三道门全是代签；外部证据是 substitute。",
+        "check-audit 的 exit 0 说的是**这份文档的形状齐全**，不是「九环做到位了」。"
+        + tiers_sentence(d) + "；"
+        + gates_sentence(d) + "；外部证据是 "
+        + f"`{dct(d.run.get('external_evidence')).get('kind')}`。",
         "这份报告能不能当结论，由 G3 的人看完上面这些标记之后决定。",
         "",
     ]
+
+
+def tiers_sentence(d):
+    """The declared / compiled / verified split, counted from the document — never hand-written."""
+    tally = {"declared": 0, "compiled": 0, "verified": 0}
+    for _, part in d.parts:
+        v = dct(dct(part.get("assessment")).get("implemented")).get("verdict")
+        if v in tally:
+            tally[v] += 1
+    said = "、".join(f"{n} 个停在 `{state}`" for state, n in tally.items() if n)
+    zero = [f"`{state}`" for state, n in tally.items() if not n]
+    tail = f"，**没有一个到 {' / '.join(zero)}**" if zero else ""
+    return f"{len(d.parts)} 个配件里 {said}{tail}"
+
+
+def gates_sentence(d):
+    """How the three doors were actually signed, read off run_evidence."""
+    kinds = [dct(g).get("signer_kind") for g in lst(d.run.get("gates"))]
+    delegated = sum(1 for k in kinds if k == "delegated_agent")
+    human = sum(1 for k in kinds if k == "human")
+    pending = sum(1 for k in kinds if not k)
+    bits = []
+    if delegated:
+        bits.append(f"{delegated} 道代签（delegated）")
+    if human:
+        bits.append(f"{human} 道人签")
+    if pending:
+        bits.append(f"{pending} 道未决")
+    return "三道门里 " + "、".join(bits)
 
 
 # ---------------------------------------------------------------- main
@@ -616,7 +647,7 @@ def render(doc):
     for rid in RING_ORDER:
         ring = d.by_ring.get(rid)
         if ring is None:
-            out += [f"## {rid}", "", f"**该环不在 audit.yaml 里**（`ring_missing`）。", ""]
+            out += [f"## {rid}", "", "**该环不在 audit.yaml 里**（`ring_missing`）。", ""]
             continue
         out += ring_section(d, ring)
     out += duplicates_section(d)
