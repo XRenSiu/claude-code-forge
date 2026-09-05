@@ -1,0 +1,133 @@
+{
+  "deduplicated_findings": [
+    {
+      "merged_finding_id": "mf-001",
+      "synthesized_severity": "P1",
+      "file": "plugins/sdlc/dogfood/ring-audit/render_audit.py",
+      "line_range": [435, 441],
+      "sources": [
+        {"role": "code-reviewer", "finding_id": "security/cr-001", "vendor": "claude", "confidence": "high"}
+      ]
+    },
+    {
+      "merged_finding_id": "mf-002",
+      "synthesized_severity": "P1",
+      "file": "plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh",
+      "line_range": [53, 72],
+      "sources": [
+        {"role": "code-reviewer", "finding_id": "security/cr-002", "vendor": "claude", "confidence": "high"},
+        {"role": "spec-gaming-detector", "finding_id": "gd-003", "vendor": "claude", "confidence": "high"}
+      ]
+    },
+    {
+      "merged_finding_id": "mf-003",
+      "synthesized_severity": "P1",
+      "file": "plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh",
+      "line_range": [67, 67],
+      "sources": [
+        {"role": "code-reviewer", "finding_id": "security/cr-003", "vendor": "claude", "confidence": "high"}
+      ]
+    },
+    {
+      "merged_finding_id": "mf-004",
+      "synthesized_severity": "P1",
+      "file": "plugins/sdlc/dogfood/ring-audit/check_audit.py",
+      "line_range": [328, 343],
+      "sources": [
+        {"role": "code-reviewer", "finding_id": "security/cr-004", "vendor": "claude", "confidence": "high"},
+        {"role": "spec-gaming-detector", "finding_id": "srg-005(a)", "vendor": "claude"}
+      ]
+    },
+    {
+      "merged_finding_id": "mf-005",
+      "synthesized_severity": "P3",
+      "file": "plugins/sdlc/dogfood/ring-audit/render_audit.py",
+      "line_range": [429, 430],
+      "sources": [
+        {"role": "code-reviewer", "finding_id": "security/cr-005", "vendor": "claude", "confidence": "high"}
+      ]
+    },
+    {
+      "merged_finding_id": "mf-006",
+      "synthesized_severity": "P2",
+      "file": "plugins/sdlc/dogfood/ring-audit/render_audit.py",
+      "line_range": [512, 594],
+      "sources": [
+        {"role": "code-reviewer", "finding_id": "logic/cr-001", "vendor": "claude", "confidence": "high"}
+      ]
+    },
+    {
+      "merged_finding_id": "mf-007",
+      "synthesized_severity": "P2",
+      "file": "plugins/sdlc/dogfood/ring-audit/render_audit.py",
+      "line_range": [238, 239],
+      "sources": [
+        {"role": "code-reviewer", "finding_id": "logic/cr-002", "vendor": "claude", "confidence": "high"}
+      ]
+    },
+    {
+      "merged_finding_id": "mf-008",
+      "synthesized_severity": "P2",
+      "file": "plugins/sdlc/dogfood/ring-audit/check_audit.py",
+      "line_range": [265, 267],
+      "sources": [
+        {"role": "code-reviewer", "finding_id": "logic/cr-003", "vendor": "claude", "confidence": "high"}
+      ]
+    },
+    {
+      "merged_finding_id": "mf-009",
+      "synthesized_severity": "P3",
+      "file": "plugins/sdlc/dogfood/ring-audit/check_audit.py",
+      "line_range": [231, 238],
+      "sources": [
+        {"role": "code-reviewer", "finding_id": "logic/cr-004", "vendor": "claude", "confidence": "high"}
+      ]
+    },
+    {
+      "merged_finding_id": "mf-010",
+      "synthesized_severity": "P3",
+      "file": "plugins/sdlc/dogfood/ring-audit/render_audit.py",
+      "line_range": [201, 212],
+      "sources": [
+        {"role": "code-reviewer", "finding_id": "logic/cr-005", "vendor": "claude", "confidence": "high"}
+      ]
+    },
+    {
+      "merged_finding_id": "mf-011",
+      "synthesized_severity": "P2",
+      "file": "plugins/sdlc/dogfood/ring-audit/audit.yaml",
+      "line_range": [1831, 1880],
+      "sources": [
+        {"role": "spec-gaming-detector", "finding_id": "gd-001", "vendor": "claude", "confidence": "medium"}
+      ]
+    },
+    {
+      "merged_finding_id": "mf-012",
+      "synthesized_severity": "P2",
+      "file": "plugins/sdlc/dogfood/ring-audit/AUDIT.md",
+      "line_range": [969, 979],
+      "sources": [
+        {"role": "spec-gaming-detector", "finding_id": "gd-002", "vendor": "claude", "confidence": "high"},
+        {"role": "pm-reviewer", "finding_id": "REQ-006/out_of_scope_observations[0]", "vendor": "claude", "confidence": "high"}
+      ]
+    },
+    {
+      "merged_finding_id": "mf-013",
+      "synthesized_severity": "P3",
+      "file": "plugins/sdlc/dogfood/ring-audit/render_audit.py",
+      "line_range": [443, 457],
+      "sources": [
+        {"role": "spec-gaming-detector", "finding_id": "gd-004", "vendor": "claude", "confidence": "high"}
+      ]
+    },
+    {
+      "merged_finding_id": "mf-014",
+      "synthesized_severity": "P2",
+      "file": "plugins/sdlc/dogfood/ring-audit/check_audit.py",
+      "line_range": [394, 402],
+      "sources": [
+        {"role": "pm-reviewer", "finding_id": "REQ-004/partially_compliant", "vendor": "claude", "confidence": "high"}
+      ]
+    }
+  ]
+}

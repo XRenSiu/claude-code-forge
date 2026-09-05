@@ -1,0 +1,277 @@
+# code-reviewer --focus=security --adversarial — acceptance-fleet iteration-001 · sdlc-ring-audit
+# Shape: plugins/sdlc/skills/code-reviewer/references/finding-schema.yaml (+ fleet meta keys required by COMMON.md)
+code_review:
+  agent_role: security
+  model: claude-fable-5-1
+  vendor: claude
+  isolation: medium
+  inputs_read:
+    - plugins/sdlc/skills/code-reviewer/SKILL.md
+    - plugins/sdlc/skills/code-reviewer/references/finding-schema.yaml
+    - plugins/sdlc/skills/code-reviewer/references/focus-areas.md
+    - plugins/sdlc/dogfood/ring-audit/check_audit.py
+    - plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh
+    - plugins/sdlc/dogfood/ring-audit/render_audit.py
+    - plugins/sdlc/dogfood/ring-audit/audit.yaml            # run_evidence / gates / artifacts joins only
+    - plugins/sdlc/dogfood/ring-audit/audit.schema.md
+    - plugins/sdlc/dogfood/ring-audit/issue-body.md
+    - plugins/sdlc/dogfood/ring-audit/done_when.yaml
+    - plugins/sdlc/dogfood/ring-audit/g1-record.md#签字版解释规则
+    - plugins/sdlc/dogfood/ring-audit/derived/form-draft.md#F-05..F-07
+    - plugins/sdlc/dogfood/ring-audit/calibration/known_gaps.yaml
+    - plugins/sdlc/dogfood/ring-audit/cards/CARD-01.yaml
+    - plugins/sdlc/dogfood/ring-audit/cards/CARD-06.yaml
+    - plugins/sdlc/dogfood/ring-audit/.done_when.lock     # files[] list only
+    - plugins/sdlc/dogfood/ring-audit/tests/ring-audit/fixtures/complete.yaml   # as mutation base
+    - plugins/sdlc/skills/commit/scripts/verify_commit.py  # the replay's oracle (multi-hop, not part of the diff)
+    - git log / git diff main..HEAD and 57ebf2b..843c3ee (read-only)
+  adversarial_mode: true
+  diff_source: "57ebf2b..843c3ee -- plugins/sdlc/dogfood/ring-audit"
+  diff_total_hunks: 1955
+  diff_total_lines_changed: 26213          # 21572 insertions + 4641 deletions, 54 files
+  rules_loaded: []
+  repo_root: /Users/xrensiu/development/owner/claude-code-forge
+  iteration_seconds: 900
+  tool_calls_used: 21
+  tool_call_budget: 20
+
+  num_findings: 5
+  max_findings_limit: 5
+  findings:
+    - finding_id: cr-001
+      severity: P1
+      file: plugins/sdlc/dogfood/ring-audit/render_audit.py
+      line_range: [435, 441]
+      category: input_validation            # markdown table-cell injection → F-15 / PSL-010 rendering rules defeated
+      root_cause: >-
+        Free-text yaml values are interpolated into GFM table rows without escaping `|` (code() at L79-80 wraps in
+        backticks only; cell() escapes pipes but is not used for signer / at / part id / needed.verdict / naming
+        fields), and check_audit.py imposes no closed enum on needed.verdict, naming.verdict, naming.provenance or
+        any character constraint on id / signer strings — so a check-clean audit.yaml can shift columns and make
+        AUDIT.md display a delegated_agent gate as signer_kind `human` / 渲染为 人签, or an implemented cell
+        reading "已实现 ✓", the two outputs the module docstring (L10-16) says have no code path.
+      reproduction_scenario: >-
+        Take the real audit.yaml; set run_evidence.gates[G1].signer to
+        "g1-judge` | `human` | 人签 | user-approved | `2026-09-05` |<!-- " (signer_kind stays delegated_agent).
+        `check_audit.py ... --required-parts <AC-001-a list>` → exit 0, parts_total 42, failed_predicates [].
+        `render_audit.py` → the G1 row's first seven cells are
+        [`G1`, **pass**, `g1-judge`, `human`, 人签, user-approved, `2026-09-05`]; GFM drops the excess cells that
+        carry the real `delegated_agent` / 代签. Same trick via rings[R0].parts[psl].assessment.needed.verdict =
+        "necessary | 已实现 ✓ | authored → **fits** |<!-- " → exit 0, and the R0 table's implemented column reads
+        "已实现 ✓" while yaml says compiled.
+      confidence: high
+      evidence:
+        - kind: read
+          file: plugins/sdlc/dogfood/ring-audit/render_audit.py
+          lines: [79, 80]                   # code(): no escaping of | or backtick
+        - kind: read
+          file: plugins/sdlc/dogfood/ring-audit/render_audit.py
+          lines: [244, 258]                 # needed verdict / row emission, pid and aid unescaped
+        - kind: read
+          file: plugins/sdlc/dogfood/ring-audit/render_audit.py
+          lines: [435, 441]                 # signature row: code(signer), code(kind), code(at)
+        - kind: read
+          file: plugins/sdlc/dogfood/ring-audit/check_audit.py
+          lines: [193, 245]                 # check_dimensions: implemented enum + rename only; needed/naming verdict open
+        - kind: grep
+          query: "needed.*verdict.*(necessary|overfill|merge_candidate)"
+          matches: 0
+          match_files: []                   # no enum predicate for needed.verdict anywhere in check_audit.py
+        - kind: read
+          file: scratchpad/crsec/real_m1.md          # rendered from the mutated REAL audit.yaml
+          observation: "G1 row cells 1-7 = ['`G1`','**pass**','`g1-judge`','`human`','人签','user-approved','`2026-09-05`']; check_audit exit 0"
+        - kind: read
+          file: scratchpad/crsec/m2_needed_inject.md
+          observation: "R0 row for psl: needed='**necessary', implemented='已实现 ✓', naming='authored → **fits**'; check_audit exit 0"
+      needs_codebase_check: false
+      suggested_change: >-
+        In render_audit.py route every yaml-derived string (including inside code()) through one escaper that
+        replaces `|` with `\|`, strips newlines and `<br>`, and neutralises backticks; in check_audit.py add closed
+        enums for needed.verdict {necessary, overfill, merge_candidate}, naming.verdict {fits, misfit},
+        naming.provenance {authored, adopted}, signer_kind {human, delegated_agent} and reject `|` / newline in
+        id-like fields (part id, assessment id, gate, signer).
+      tags: ["cwe-74", "cwe-1236", "F-15", "PSL-006", "PSL-010", "AC-006-a"]
+
+    - finding_id: cr-002
+      severity: P1
+      file: plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh
+      line_range: [53, 57]
+      category: authorization               # REQ-007 / PSL-003 instrument is opt-in via self-declared commit footer
+      root_cause: >-
+        The only commits inspected are those whose message matches `^Card:[[:space:]]*CARD-…` (L55-56); a commit
+        without the footer, or with `card:` / `Card：` / an indented footer, hits `continue` at L57 and is never
+        diffed against AUDITED_RE nor replayed through verify_commit.py, so `card_commits_touching_audited_dirs`
+        counts only what the author chose to label. With zero footers the instrument is vacuously `ok: true`.
+        The range diff --stat that would close the gap is hand-typed into run_evidence.audited_dirs_diff, not
+        computed by this script.
+      reproduction_scenario: >-
+        On the feature branch: edit plugins/sdlc/skills/psl/SKILL.md, commit with message "fix(sdlc): tidy" (no
+        Card footer), run replay_card_commits.sh → JSON `ok: true`, `card_commits_touching_audited_dirs: 0`, exit 0.
+        Already exercised on this very branch: `git log main..HEAD` holds 4 footer-less commits (587f371, bf3f13e,
+        ebe270d, c729f76) that modify 7 files / 90 lines under plugins/sdlc/skills|agents|docs — c729f76 changes
+        plugins/sdlc/skills/commit/scripts/verify_commit.py, the oracle this replay calls — and the script run
+        today reports card_commits 11, touching 0, ok true. (These commits pre-date the Card range 57ebf2b..843c3ee
+        and the contract scopes REQ-007 to Card commits; whether that scoping is acceptable is a spec question —
+        this finding is that the instrument cannot see them at all.)
+      confidence: high
+      evidence:
+        - kind: read
+          file: plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh
+          lines: [53, 57]
+        - kind: read
+          file: plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh
+          lines: [94, 102]                  # status derives only from rejected/overflow over Card commits
+        - kind: git_log
+          file: plugins/sdlc/skills
+          observation: "main..HEAD: 587f371 (7 audited paths), bf3f13e (4), ebe270d (1), c729f76 (1 = verify_commit.py) carry no Card footer; `git diff --stat main..HEAD -- plugins/sdlc/skills plugins/sdlc/agents plugins/sdlc/docs` = 7 files, +90/-14; `git diff --stat 57ebf2b..843c3ee -- <same>` = empty"
+        - kind: read
+          file: plugins/sdlc/dogfood/ring-audit/audit.yaml
+          observation: "run_evidence.audited_dirs_diff.git_diff_stat.cmd is a hand-recorded string ('git diff --stat 0be2770^..HEAD -- …', lines: 0); render_audit.py L470-501 prints it verbatim, nothing recomputes it"
+        - kind: read
+          file: plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh
+          observation: "live run in IMPL_ROOT: {range_spec: main..HEAD, card_commits: 11, card_commits_touching_audited_dirs: 0, card_commits_rejected: 0, ok: true}"
+      needs_codebase_check: false
+      suggested_change: >-
+        In the same loop count footer-less commits whose diff matches AUDITED_RE into a new field
+        `non_card_commits_touching_audited_dirs` (list their shas) and fold it into `errors` / exit 1 (or, if the
+        contract really means Card commits only, at least emit it so G3 sees the blind spot); additionally compute
+        `git diff --stat --no-renames <first_card>^..HEAD -- plugins/sdlc/skills plugins/sdlc/agents
+        plugins/sdlc/docs` inside the script and put its line count in the JSON instead of hand-recording it.
+      tags: ["cwe-284", "cwe-807", "PSL-003", "REQ-007", "AC-007-a"]
+
+    - finding_id: cr-003
+      severity: P1
+      file: plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh
+      line_range: [67, 67]
+      category: input_validation            # path-forgery via git rename detection
+      root_cause: >-
+        `git diff --name-only <range>` (L67, and verify_commit.py L99 which the replay calls) runs with git's
+        default rename detection (diff.renames=true since 2.9), so a commit that moves a file out of
+        plugins/sdlc/skills|agents|docs with ≥50% similarity lists only the destination path; the source path
+        never reaches AUDITED_RE (hits=0) nor the card whitelist. The audited directory loses a file while the
+        REQ-007 counter stays 0.
+      reproduction_scenario: >-
+        Twin repo (scratchpad/crsec/twin): commit plugins/sdlc/skills/psl/SKILL.md; then `git mv` it to
+        plugins/sdlc/dogfood/ring-audit/moved.md with one edited line; commit. `git diff --name-only HEAD^..HEAD`
+        → only plugins/sdlc/dogfood/ring-audit/moved.md; `| grep -cE '^plugins/sdlc/(skills|agents|docs)/'` → 0;
+        `git diff --name-status` → R085; `verify_commit.py --range HEAD^..HEAD --allow-main` → files
+        ['plugins/sdlc/dogfood/ring-audit/moved.md'], verdict PASS. Adding a Card footer to that commit gives
+        touches_audited_dirs false in the replay. Backstop: the card whitelist still rejects unless the destination
+        is an allowed, not-yet-existing file, and a pathspec-limited `git diff --stat -- plugins/sdlc/skills` does
+        show the deletion — but that stat is hand-recorded (see cr-002), not computed.
+      confidence: high
+      evidence:
+        - kind: read
+          file: plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh
+          lines: [67, 72]
+        - kind: read
+          file: plugins/sdlc/skills/commit/scripts/verify_commit.py
+          lines: [98, 100]                  # files = git diff --name-only <range>
+        - kind: read
+          file: scratchpad/crsec/twin
+          observation: "git 2.45.2, diff.renames unset (default on): name-only → 1 path (destination), name-status → R085 old new, name-only --no-renames → 2 paths, hits vs AUDITED_RE = 0"
+      needs_codebase_check: false
+      suggested_change: >-
+        Use `git diff --name-only --no-renames "$range"` (or `--name-status -M0` and take both columns) at L67 so
+        both sides of a rename are matched against AUDITED_RE; the same `--no-renames` belongs in verify_commit.py
+        L99 but that file is under plugins/sdlc/skills (forbidden for Card commits) — route it through a separate
+        change, and until then let the replay compute the hits list itself rather than trusting verify_commit's.
+      tags: ["cwe-706", "cwe-22", "PSL-003", "REQ-007"]
+
+    - finding_id: cr-004
+      severity: P1
+      file: plugins/sdlc/dogfood/ring-audit/check_audit.py
+      line_range: [328, 343]
+      category: authorization               # G1 rule 1 is decided over a self-reported registry with an unverified exemption key
+      root_cause: >-
+        Rule 1 (double_producer) is computed only over the author-written top-level `artifacts[]`
+        (L328-330) and exempts any entry whose `alternatives_of` is a non-empty string (L334) — none of F-05's
+        three graph.yaml conditions is checked and the value is not even required to be a `stage.<x>` id. The
+        per-Part `artifact:` field (F-12 独占产物, what the ring table renders) is never joined, so a second
+        producer is hidden simply by not registering its row.
+      reproduction_scenario: >-
+        Real audit.yaml: delete the artifacts[] row {id: done_when.yaml, producer: acceptance-spec}; set both
+        donewhen-extract and acceptance-spec needed.verdict to necessary (drop merge_candidate_with). check_audit
+        with the AC-001-a arguments → exit 0, parts_total 42, failed_predicates []. render_audit → both Parts'
+        rows still show 独占产物 `done_when.yaml` (fixture render lines 129-130) while the duplicates table now
+        computes **distinct_exits** (it flags 登记≠现算 only because suspected_duplicate_pairs still says
+        merge_candidate — a field the same author controls). Variant: keep the row, add
+        `alternatives_of: not-a-stage` → exit 0 as well.
+      confidence: high
+      evidence:
+        - kind: read
+          file: plugins/sdlc/dogfood/ring-audit/check_audit.py
+          lines: [317, 354]
+        - kind: read
+          file: plugins/sdlc/dogfood/ring-audit/derived/form-draft.md
+          observation: "F-05: alternatives_of is legal only when (a) same stage.<x> handled_by, (b) a `when`-guarded conditional edge, (c) same-schema artifact — data source graph.yaml, 缺一不算; none of (a)(b)(c) is evaluated by the instrument"
+        - kind: grep
+          query: "part.get\\(\"artifact\"\\)|\\.get\\('artifact'\\)"
+          matches: 0
+          match_files: []                   # check_audit.py never reads parts[].artifact
+        - kind: read
+          file: scratchpad/crsec/real_m3.json
+          observation: "ok true, parts_total 42, failed_predicates [] for the real document with acceptance-spec's artifacts[] row removed"
+        - kind: read
+          file: scratchpad/crsec/m4_bogus_alternatives_of.out.json
+          observation: "ok true with alternatives_of: not-a-stage on acceptance-spec's done_when.yaml row and both verdicts necessary"
+      needs_codebase_check: false
+      suggested_change: >-
+        Build the producer map from parts[].artifact ∪ artifacts[] (fail `artifact_unregistered` when a Part
+        declares an artifact with no artifacts[] row naming it as producer, and vice-versa), and constrain
+        alternatives_of: value must match ^stage\.[a-z_-]+$, every exempt row of one artifact must share it, and
+        exactly one non-exempt primary must exist; optionally accept --graph graph.yaml and verify F-05 (a)(b).
+      tags: ["cwe-345", "cwe-807", "PSL-001", "F-05", "G1-rule-1", "AC-005-a"]
+
+    - finding_id: cr-005
+      severity: P3
+      file: plugins/sdlc/dogfood/ring-audit/render_audit.py
+      line_range: [429, 430]
+      category: secret_handling              # closest schema bucket: a signature-section fact asserted independent of data
+      root_cause: >-
+        The signature section's lead-in hard-codes "本次三道门没有一道是人签" as a literal string, although the
+        module contract (L5-8) says the renderer invents nothing and gates_sentence() (L625-638) already computes
+        that count from run_evidence; a future run with a human-signed gate renders a self-contradicting section,
+        and today the sentence is true by coincidence rather than by projection.
+      reproduction_scenario: >-
+        Set run_evidence.gates[G3] to {verdict: pass, signer: alice, signer_kind: human}; check_audit exit 0;
+        render_audit prints "本次三道门没有一道是人签" two lines above a row rendered as 人签.
+      confidence: high
+      evidence:
+        - kind: read
+          file: plugins/sdlc/dogfood/ring-audit/render_audit.py
+          lines: [427, 431]
+        - kind: read
+          file: plugins/sdlc/dogfood/ring-audit/render_audit.py
+          lines: [625, 638]                 # gates_sentence(): the same fact, computed
+      needs_codebase_check: false
+      suggested_change: "Replace the literal with gates_sentence(d) (or drop the clause) so the lead-in is derived from run_evidence like the 铁律 paragraph."
+      tags: ["F-12", "F-15"]
+
+  rationale: null
+
+  caveats:
+    adversarial_mode_caveat: >-
+      Single-vendor, single-size: reviewer is Claude (claude-fable-5-1) and the implementation was produced by
+      Claude sub-agents; expect a blind-spot to shared RLHF biases. No Codex / Gemini CLI was available in the
+      evaluator's toolset.
+    diff_truncation_caveat: >-
+      1955 hunks exceed the skill's ~500-hunk guidance; ~1700 of them are generated fixture YAML
+      (tests/ring-audit/fixtures/*) and content YAML (audit/rings-*.yaml, audit.yaml, AUDIT.md). Those were read
+      only through targeted joins (gates / artifacts / run_evidence); the three executable files, the schema doc and
+      the contract were read in full.
+    rules_conflict_caveat: null
+    cross_vendor_unavailable_caveat: "No non-Claude evaluator in this runtime; same-vendor caveat logged above."
+    known_gaps_not_duplicated: >-
+      calibration/known_gaps.yaml (KG-01 waived-without-waiver-ref, KG-02 proposal dangling source, KG-03 duplicate
+      ring id, KG-04 signer_kind outside enum, KG-05..11 surviving mutants) already records several bypasses; they
+      were re-confirmed but not re-reported. One consequence worth the meta-judge's attention beyond KG-04's wording:
+      because signer_kind is an open string, `signer_kind: delegated` (or `agent`) satisfies check_gates without an
+      authorization_ref (check_audit.py L388 compares only against the literal "delegated_agent") and render_audit's
+      gates_sentence() then counts that gate in neither 代签 nor 人签 nor 未决 — an authorization bypass, not just a
+      missing enum. Not counted against the 5-finding cap.
+    spec_robustness_missing: "spec-robustness.md is absent for this Run (recorded as missing, per COMMON.md)."
+    self_attestation_by_design: >-
+      run_evidence.check_runs (the F-14 calibration twin) and run_evidence.audited_dirs_diff are author-written and
+      only echoed by check_audit.py (calibration_twin_recorded) and render_audit.py; the schema states this is
+      reported-not-gated and left to G3. Not flagged as a finding, but G3 should independently re-run both commands.

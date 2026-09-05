@@ -1,0 +1,183 @@
+# code-reviewer --focus=logic — acceptance-fleet iteration-001 · sdlc-ring-audit
+# Shape: plugins/sdlc/skills/code-reviewer/references/finding-schema.yaml (+ the fleet's isolation / inputs_read header keys).
+code_review:
+  agent_role: logic
+  model: claude-fable-5-1
+  vendor: claude
+  isolation: medium
+  inputs_read:
+    - plugins/sdlc/skills/code-reviewer/SKILL.md
+    - plugins/sdlc/skills/code-reviewer/references/finding-schema.yaml
+    - plugins/sdlc/skills/code-reviewer/references/focus-areas.md
+    - "git diff 57ebf2b..843c3ee -- plugins/sdlc/dogfood/ring-audit (stat + hunk count)"
+    - plugins/sdlc/dogfood/ring-audit/check_audit.py
+    - plugins/sdlc/dogfood/ring-audit/render_audit.py
+    - plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh
+    - plugins/sdlc/dogfood/ring-audit/audit.schema.md
+    - plugins/sdlc/dogfood/ring-audit/audit.yaml
+    - plugins/sdlc/dogfood/ring-audit/AUDIT.md
+    - plugins/sdlc/dogfood/ring-audit/audit/rings-R0-R2-spine.yaml
+    - plugins/sdlc/dogfood/ring-audit/audit/rings-R3-R5.yaml
+    - plugins/sdlc/dogfood/ring-audit/audit/rings-R6.yaml
+    - plugins/sdlc/dogfood/ring-audit/audit/rings-R7-R8.yaml
+    - plugins/sdlc/dogfood/ring-audit/issue-body.md
+    - plugins/sdlc/dogfood/ring-audit/done_when.yaml
+    - "plugins/sdlc/dogfood/ring-audit/g1-record.md (## 签字版解释规则 1-3, F-17 追加记录)"
+    - "plugins/sdlc/dogfood/ring-audit/derived/form-draft.md (F-01..F-06, F-08, F-10..F-13, F-17, F-24)"
+    - "plugins/sdlc/dogfood/ring-audit/PSL-sdlc-ring-audit.md (domain model lines 39-71)"
+    - plugins/sdlc/dogfood/ring-audit/calibration/known_gaps.yaml
+    - "plugins/sdlc/dogfood/ring-audit/calibration/instrument_mutants.py (M12-M22)"
+    - "plugins/sdlc/dogfood/ring-audit/tests/ring-audit/test_check_audit.py (header + assert helpers)"
+    - plugins/sdlc/dogfood/ring-audit/tests/ring-audit/fixtures/mutant_boolean_implemented.yaml
+    - "plugins/sdlc/skills/commit/scripts/verify_commit.py (grep 'overflow' only)"
+    - "git show 5c84a5a (message + render_audit.py hunk)"
+  adversarial_mode: false
+  diff_source: "57ebf2b..843c3ee -- plugins/sdlc/dogfood/ring-audit"
+  diff_total_hunks: 1955
+  diff_total_lines_changed: 26213
+  rules_loaded: []
+  repo_root: /Users/xrensiu/development/owner/claude-code-forge
+  iteration_seconds: 900
+  tool_calls_used: 31
+  tool_call_budget: 20
+  num_findings: 5
+  max_findings_limit: 5
+
+  findings:
+    - finding_id: cr-001
+      severity: P2
+      file: plugins/sdlc/dogfood/ring-audit/render_audit.py
+      line_range: [512, 594]
+      category: projection_fidelity
+      root_cause: "assembly_notes() and the known-gaps lead-in hard-code document counts and content claims (11 已知空隙 at L512/L576, 31 条 Gate at L574, 73 Gap / 58 产物-生产者 / 39 提案 at L580, the four-row dos.yaml R001/R008/R010/R017 登记在 table at L589-592, the R017 sentence at L594) as string literals, so the projection carries numbers the source can move underneath it — the exact failure the same card's commit 5c84a5a says a projection must not have, and which F-12 (yaml wins on disagreement) exists to prevent."
+      reproduction_scenario: "Add one gap to gaps[] and to R0.missing, then run render_audit.py: the 规模 header row (computed) says 74 缺口 while the assembly section (literal) still says 73 个 Gap ... 两两不撞. Remove run_evidence.known_gaps and re-render: AUDIT.md still prints 本次的尺子有 11 项已知空隙，列在下面 with no #### 已知空隙 section following it. Both reproduced on copies of the current audit.yaml; check_audit.py stays exit 0 throughout."
+      confidence: high
+      evidence:
+        - kind: read
+          file: plugins/sdlc/dogfood/ring-audit/render_audit.py
+          lines: [564, 609]
+        - kind: grep
+          query: "11 项已知空隙|31 条 Gate|73 个 Gap|R001 一个产物|R008 门的判决|R010 未过|R017 效力|R017 落在"
+          matches: 9
+          match_files: ["plugins/sdlc/dogfood/ring-audit/render_audit.py"]
+        - kind: read
+          file: plugins/sdlc/dogfood/ring-audit/audit.yaml
+          observation: "Today the literals happen to match the data: 73 gaps, 58 artifacts, 39 proposals, 31 gates (32 in fragments, one exact lock_done_when.py duplicate), 11 known_gaps; the dos.yaml table rows also match the unenforced_rule gaps (R001 → spine/R5/R6, R008 → spine/R6/R7, R010 → R3/R6/R8, R017 → R6/R7). Nothing recomputes them; re-rendering a mutated copy (+1 gap; known_gaps removed) leaves every literal unchanged while the computed header moves."
+        - kind: git_log
+          file: plugins/sdlc/dogfood/ring-audit/render_audit.py
+          observation: "5c84a5a 'count the evidence tiers, don't hand-write them' converted two sentences (tier split, signer mix) to computed form citing 'a projection must not carry numbers the source can move underneath it'; the assembly-notes literals were left as they were."
+      needs_codebase_check: false
+      suggested_change: "Compute every number and the dos.yaml table from the document (len(d.gaps), len(d.artifacts), len(proposals), len(d.gates), len(known_gaps); rows from gaps with source == unenforced_rule joined on their dos.yaml evidence ref), and either drop the fragment-dedup claim or verify it by re-reading the four fragment files at render time."
+      tags: ["F-12", "PSL-015", "projection"]
+
+    - finding_id: cr-002
+      severity: P2
+      file: plugins/sdlc/dogfood/ring-audit/render_audit.py
+      line_range: [238, 239]
+      category: projection_information_loss
+      root_cause: "The 闸 · 门 column is built from part.gates only; artifacts[].checked_by — the field F-06 defines as 'which Gate checks this Artifact' and the one that caps a producer at declared when empty — is never rendered anywhere in AUDIT.md (Doc.artifacts is used solely by compare_pair), and the two disagree for 8 of 42 Parts, so the human half shows a gate for Parts whose artifact records say no gate checks them, and drops a gate the yaml does record."
+      reproduction_scenario: "Render the current audit.yaml. AUDIT.md L390 shows acceptance-fleet with 门 `G3` in 闸 · 门 while both of its artifacts (ratchet-log/iteration-NNN/**, ratchet-log/iteration-NNN/final-state.json) carry checked_by: [] — the reader cannot see why it sits at declared. AUDIT.md L749 shows sdlc with only 闸 `sdlc_state.py`, while artifacts[] says .sdlc/<slug>/trace.jsonl is checked_by trace.py — that gate is lost from the report. Same pattern for spec-gaming-detector, meta-judge, human_gate.G3, agent.pr-reviewer, retro, tune (part.gates non-empty, every artifact checked_by == [])."
+      confidence: high
+      evidence:
+        - kind: read
+          file: plugins/sdlc/dogfood/ring-audit/render_audit.py
+          lines: [94, 153]
+        - kind: read
+          file: plugins/sdlc/dogfood/ring-audit/audit.yaml
+          observation: "Programmatic join over audit.yaml: for each Part, set(part.gates) vs union(checked_by) over artifacts with producer == part.id differs for R6/acceptance-fleet, R6/spec-gaming-detector, R6/meta-judge, R6/human_gate.G3, R7/agent.pr-reviewer, R8/retro, R8/tune (gates listed, checked_by empty) and spine/sdlc (checked_by adds trace.py). A key-usage scan of render_audit.py shows 'checked_by' is never referenced; 58 artifact records are otherwise unprojected."
+        - kind: grep
+          query: "checked_by"
+          matches: 0
+          match_files: []
+        - kind: read
+          file: plugins/sdlc/dogfood/ring-audit/derived/form-draft.md
+          observation: "F-06: Artifact 记录 checked_by: [<Gate>...] ... checked_by 为空的 Artifact 有两个后果: producer 的 implemented 不得高于 declared 且一条 Control Gap 进该环 missing. F-08's Part record has no gates field; part.gates is introduced by audit.schema.md."
+      needs_codebase_check: false
+      suggested_change: "In part_detail (or the 闸 · 门 cell) render each artifact's checked_by from artifacts[] and, when it disagrees with part.gates, mark the row the way duplicates_section already does (登记 ≠ 现算) instead of silently choosing part.gates."
+      tags: ["F-06", "PSL-006", "AC-005-a evidence"]
+
+    - finding_id: cr-003
+      severity: P2
+      file: plugins/sdlc/dogfood/ring-audit/check_audit.py
+      line_range: [265, 267]
+      category: spec_divergence_false_reject
+      root_cause: "resolve() applies the same-ring clause to every gap reference and is called for parts[].fills[] at L278, but G1 签字版解释规则 2(e) states same-ring only for rings[].missing[] ('missing[] 里的每个键必在 gaps[] 且其 ring 一致；fills[] 里的每个键必在 gaps[]'), and neither F-04 nor the PSL domain model (Part 填 0..n Gap, N:N) ties a Part's ring to the Gap's ring; the docstring (L28-29), the resolve() docstring and audit.schema.md L80 all restate the tightened clause as if it were rule 2(e)."
+      reproduction_scenario: "Copy audit.yaml, append an existing R6 gap id (e.g. R6/newly_identified/control+judgment/six-evaluator-dispatch-and-ratchet) to spine/sdlc.fills, run check_audit.py --psl PSL-sdlc-ring-audit.md: exit 1 with unknown_gap_ref: spine/sdlc.fills references ..., whose ring is 'R6' although the id exists in gaps[] exactly as rule 2(e) requires for fills[]."
+      confidence: high
+      evidence:
+        - kind: read
+          file: plugins/sdlc/dogfood/ring-audit/check_audit.py
+          lines: [256, 284]
+        - kind: read
+          file: plugins/sdlc/dogfood/ring-audit/g1-record.md
+          observation: "规则 2 (e): gaps[] 中没有任何 parts[].fills 引用的 gap 必出现在其 ring 的 missing[]；missing[] 里的每个键必在 gaps[] 且其 ring 一致；fills[] 里的每个键必在 gaps[]。 — the ring-equality condition is attached to missing[] only."
+        - kind: read
+          file: plugins/sdlc/dogfood/ring-audit/PSL-sdlc-ring-audit.md
+          observation: "Line 49: Ring 含 1..n Part；Ring 暴露 0..n Gap；Part 填 0..n Gap，一个 Gap 可被多个 Part 填（N:N）. F-04: Gap 归属于恰一个 Ring. No statement that Part.ring == Gap.ring for a FILLS edge."
+        - kind: read
+          file: plugins/sdlc/dogfood/ring-audit/calibration/instrument_mutants.py
+          observation: "M14 'unknown_gap_ref (cross-ring) off' flips the single elif at L265, so KG-08 in known_gaps.yaml describes the surviving mutant as 'G1 rule 2e same-ring' for both edges; the fixture set contains no cross-ring fills case, so the tightening was never exercised against the rule text. Current audit.yaml has 0 cross-ring fills, so no content was rejected in this run."
+      needs_codebase_check: false
+      suggested_change: "Either call resolve() for fills[] with the ring check disabled (existence-only per rule 2(e)) or obtain a G1 interpretation line that adds same-ring to fills[]; in both cases correct the check_audit.py docstring (L28-29) and audit.schema.md L80 so they quote what the rule actually says."
+      tags: ["G1 rule 2e", "F-04", "unknown_gap_ref", "KG-08-adjacent"]
+
+    - finding_id: cr-004
+      severity: P3
+      file: plugins/sdlc/dogfood/ring-audit/check_audit.py
+      line_range: [231, 238]
+      category: misleading_diagnostic
+      root_cause: "boolean_implemented is only raised when assessment.implemented.verdict is a bool; when the whole dimension is the boolean (implemented: true, the most literal encoding of the forbidden 已实现 ✓ that F-02 bans from the entire yaml) as_dict() turns it into {} and the run reports parts_missing 'lacks implemented' (the key is present) plus implemented_outside_enum 'verdict=None' (the author wrote true), never the contract token boolean_implemented."
+      reproduction_scenario: "Copy audit.yaml, set rings[0].parts[0].assessment.implemented: true, run check_audit.py --psl PSL-sdlc-ring-audit.md: exit 1, failed_predicates [parts_missing, psl_id_missing, evidence_missing, implemented_outside_enum], error 'parts_missing: R0/psl lacks implemented'. With implemented: '已实现 ✓' the output is identical. The L5 fixture mutant_boolean_implemented.yaml only covers the verdict: true form, so this branch is untested."
+      confidence: high
+      evidence:
+        - kind: read
+          file: plugins/sdlc/dogfood/ring-audit/check_audit.py
+          lines: [184, 188]
+        - kind: read
+          file: plugins/sdlc/dogfood/ring-audit/tests/ring-audit/fixtures/mutant_boolean_implemented.yaml
+          observation: "diff against complete.yaml is a single line: verdict: compiled → verdict: true. No fixture sets the dimension itself to a boolean or to the string 已实现 ✓."
+        - kind: read
+          file: plugins/sdlc/dogfood/ring-audit/derived/form-draft.md
+          observation: "F-02: 整份 audit.yaml 不出现布尔型'已实现'. done_when.yaml AC-003-b given: 'audit.yaml with implemented set to a boolean on one part' → expect error boolean_implemented."
+      needs_codebase_check: false
+      suggested_change: "In check_dimensions, before as_dict(): if isinstance(assessment.get('implemented'), bool) or the raw value is a non-dict scalar, emit boolean_implemented with the raw value in the message; in check_parts, distinguish 'absent' from 'present but not a mapping' in the parts_missing location text."
+      tags: ["F-02", "PSL-010", "AC-003-b", "error-token"]
+
+    - finding_id: cr-005
+      severity: P3
+      file: plugins/sdlc/dogfood/ring-audit/render_audit.py
+      line_range: [201, 212]
+      category: spec_wording_divergence
+      root_cause: "ring_section() prints 'N 个配件 · M 处登记为缺少。' and an always-present table header, but never the two literal strings the signed form requires for the empty cases — F-10: 没有 Part 的 Ring 节仍出现并写'无 Part'; F-11: missing 空时写 [] 且报告写'本次无' — so a ring with zero Parts or zero missing renders as a bare '0 个配件' / '0 处登记为缺少' sentence followed by an empty table."
+      reproduction_scenario: "Copy audit.yaml, set R8.parts: [] (moving its filled gap ids into R8.missing so the checker still passes) and render: the R8 section reads '0 个配件 · 6 处登记为缺少。' with no 无 Part anywhere. Set R0.missing: [] and render: '3 个配件 · 0 处登记为缺少。' with no 本次无. Every ring in the current audit.yaml has ≥1 Part and ≥1 missing entry, so both branches are unexercised by the shipped AUDIT.md."
+      confidence: high
+      evidence:
+        - kind: read
+          file: plugins/sdlc/dogfood/ring-audit/render_audit.py
+          lines: [199, 281]
+        - kind: grep
+          query: "无 Part|本次无"
+          matches: 2
+          match_files: ["plugins/sdlc/dogfood/ring-audit/render_audit.py"]
+        - kind: read
+          file: plugins/sdlc/dogfood/ring-audit/derived/form-draft.md
+          observation: "The two grep hits in render_audit.py are the proposals_section '本次无。' (L397, per-destination) and nothing for rings; F-10 (L28) and F-11 (L29) require those words in the ring section for the empty-Part and empty-missing cases respectively."
+      needs_codebase_check: false
+      suggested_change: "In ring_section: when parts is empty emit '无 Part' in place of the table body, and when missing is empty append a '（缺少）本次无' row (or line) so the F-11 answer is visible, matching what proposals_section already does for empty groups."
+      tags: ["F-10", "F-11", "PSL-017"]
+
+  rationale: null
+
+  caveats:
+    adversarial_mode_caveat: null
+    diff_truncation_caveat: "The range contains 1955 hunks (over the 500-hunk guidance), dominated by regenerated fixture YAML; the review read the four scripts, the schema doc, audit.yaml and the fragments in full and treated fixture files as data, not as hunks to review."
+    rules_conflict_caveat: null
+    cross_vendor_unavailable_caveat: "Same-vendor review: Claude (fable-5-1) reviewing code written by Claude in this session's lineage; no Codex/Gemini pass was available to this evaluator."
+
+# Walked and deliberately NOT reported as findings (already registered as open in calibration/known_gaps.yaml, reproduced here only to confirm):
+#   KG-03 — duplicate ring entry (R6 twice) or an id-less ring entry: exit 0 with rings: 11 (parts_total 53 for the duplicate); rings count is reported, never gated.
+#   KG-01 — run_evidence.gates G3 verdict: waived with no waiver ref: exit 0 (rule 3c has no predicate).
+#   KG-02 — proposals[].source pointing at a non-existent Assessment/Gap id: exit 0 (non-empty check only).
+# Walked and dropped below the cap (P3, lower value than cr-005):
+#   --variant delete-ring:<id not in the document> is a silent no-op that exits 0 with variant echoed; a typo'd twin looks like a checker that failed to fail. Suggest die(2) when the id is absent.
+# Verified clean (no finding): assembly of the four fragments — all 10 rings parse byte-identical to their fragment, gaps 73/73 and artifacts 58/58 with no id collisions, proposals 39/39, gates 32→31 with exactly the one lock_done_when.py duplicate the assembly notes claim; rule-1 handling of card.allowed_files (1 alternatives_of + 2 merge_candidate) matches F-05's per-producer exemption; compare_pair verdicts agree with all 5 suspected_duplicate_pairs (0 登记 ≠ 现算 rows); the recorded F-14 twin (rings 9, parts_total 31, required_parts_missing 2, orphan_gaps 18) matches a live re-run; AUDIT.md is byte-identical to a fresh render; replay_card_commits.sh's 'whitelist overflow' grep matches verify_commit.py's actual reject wording.

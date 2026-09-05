@@ -1,0 +1,16 @@
+{
+  "iteration": 1,
+  "state_decision": "NEEDS_HUMAN",
+  "blocking_findings_count": 0,
+  "non_blocking_p1_warnings": 4,
+  "merged_findings": 14,
+  "gaming_risk_score": 3.5,
+  "spec_drift_counter": 0,
+  "qa_decision": "GO",
+  "pm_overall": "partially_compliant (REQ-004 = KG-02), block_merge false",
+  "isolation": "medium",
+  "duration_seconds_total": null,
+  "cost_usd_estimated": null,
+  "next_action": "nh-001/nh-002 → G3 (delegated g3-judge, after PR); nh-003 → g2-judge ruling; fix round on 6 in-contract findings (fix-prompt.md) then /pr --pre-review",
+  "written_at": "2026-09-05T18:21:24Z"
+}
