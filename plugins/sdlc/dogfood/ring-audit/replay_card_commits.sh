@@ -14,6 +14,10 @@
 # Runs git from the repository root of the CWD, so the twin repositories the L5 suite builds are inspected
 # instead of this one.  cards/<id>.yaml is resolved against the CWD first, then this script's directory.
 # stdout is one JSON object; card_commits_touching_audited_dirs is the number REQ-007 reads.
+#
+# A commit WITHOUT a `Card:` footer is out of that replay's scope by contract, which would make it invisible.
+# A second, clearly separated pass therefore walks the footer-less commits since the first Card commit and
+# reports non_card_commits_touching_audited_dirs (count + shas).  It is recorded, never gated.
 set -uo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -50,11 +54,37 @@ touching=0
 rejected=0
 overflow=0
 
+card_footer_of() {                               # the `Card: CARD-xx` footer of one commit, empty when it has none
+  git log -1 --format='%B' "$1" | grep -oE '^Card:[[:space:]]*CARD-[A-Za-z0-9_.-]+' | head -1 |
+    sed -E 's/^Card:[[:space:]]*//'
+}
+
+range_of() {                                     # the range that shows only this commit's own diff
+  if git rev-parse --verify --quiet "$1^" >/dev/null 2>&1; then printf '%s^..%s' "$1" "$1"
+  else printf '%s..%s' "$EMPTY_TREE" "$1"; fi
+}
+
+audited_hits() {                                 # how many of the range's paths sit in the audited directories.
+  local n                                        # --no-renames is load-bearing: a file MOVED OUT of an audited
+  n="$(git diff --name-only --no-renames "$1" 2>/dev/null | grep -cE "$AUDITED_RE")"   # dir must still list its
+  [ -n "$n" ] || n=0                             # old path, and rename detection would show only the destination.
+  printf '%s' "$n"
+}
+
+shas=()
+cards=()
 while read -r sha; do
   [ -n "$sha" ] || continue
-  card="$(git log -1 --format='%B' "$sha" | grep -oE '^Card:[[:space:]]*CARD-[A-Za-z0-9_.-]+' | head -1 |
-          sed -E 's/^Card:[[:space:]]*//')"
+  shas+=("$sha")
+  cards+=("$(card_footer_of "$sha")")
+done < <(git log --format='%H' $RANGE_SPEC 2>/dev/null)
+
+oldest_card_idx=-1
+for i in $(seq 0 $(( ${#shas[@]} - 1 ))); do
+  sha="${shas[$i]}"
+  card="${cards[$i]}"
   [ -n "$card" ] || continue
+  oldest_card_idx=$i                             # the log is newest-first, so the last one seen is the oldest
   card_commits=$((card_commits + 1))
 
   card_file=""
@@ -62,10 +92,9 @@ while read -r sha; do
     if [ -f "$candidate" ]; then card_file="$candidate"; break; fi
   done
 
-  if git rev-parse --verify --quiet "$sha^" >/dev/null 2>&1; then range="$sha^..$sha"; else range="$EMPTY_TREE..$sha"; fi
+  range="$(range_of "$sha")"
 
-  hits="$(git diff --name-only "$range" 2>/dev/null | grep -cE "$AUDITED_RE")"
-  [ -n "$hits" ] || hits=0
+  hits="$(audited_hits "$range")"
   if [ "$hits" -gt 0 ]; then
     touching=$((touching + 1))
     overflow=$((overflow + 1))
@@ -89,7 +118,28 @@ while read -r sha; do
   [ -n "$records" ] && records="$records,"
   records="$records
     {\"sha\": \"$(json_escape "$sha")\", \"card\": \"$(json_escape "$card")\", \"card_file\": \"$(json_escape "${card_file#$REPO_ROOT/}")\", \"range\": \"$(json_escape "$range")\", \"exit\": $rc, \"touches_audited_dirs\": $([ "$hits" -gt 0 ] && echo true || echo false)}"
-done < <(git log --format='%H' $RANGE_SPEC 2>/dev/null)
+done
+
+# Second pass — RECORDED, NOT GATED.  AC-007-a scopes the replay above to commits carrying a `Card:` footer, so a
+# footer-less commit that touched the audited directories would leave no trace at all.  This pass walks every
+# commit in the range since the first Card commit that has no footer and reports the ones that did touch them.
+# It never feeds `touching` / `overflow` / `rejected`, so it cannot move the exit code.
+non_card_records=""
+non_card_scanned=0
+non_card_touching=0
+if [ "$oldest_card_idx" -ge 0 ]; then
+  for i in $(seq 0 "$oldest_card_idx"); do
+    [ -z "${cards[$i]}" ] || continue
+    sha="${shas[$i]}"
+    non_card_scanned=$((non_card_scanned + 1))
+    hits="$(audited_hits "$(range_of "$sha")")"
+    [ "$hits" -gt 0 ] || continue
+    non_card_touching=$((non_card_touching + 1))
+    [ -n "$non_card_records" ] && non_card_records="$non_card_records,"
+    non_card_records="$non_card_records
+    {\"sha\": \"$(json_escape "$sha")\", \"subject\": \"$(json_escape "$(git log -1 --format='%s' "$sha")")\", \"audited_paths\": $hits}"
+  done
+fi
 
 errors=""
 if [ "$overflow" -gt 0 ]; then
@@ -113,6 +163,10 @@ cat <<JSON
   "card_commits_touching_audited_dirs": $touching,
   "card_commits_rejected": $rejected,
   "replays": [${records}
+  ],
+  "non_card_commits_scanned": $non_card_scanned,
+  "non_card_commits_touching_audited_dirs": $non_card_touching,
+  "non_card_commits_touching": [${non_card_records}
   ],
   "ok": $([ "$status" -eq 0 ] && echo true || echo false),
   "errors": [$errors]
