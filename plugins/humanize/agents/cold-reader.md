@@ -15,7 +15,8 @@ model: opus
 
 - `doc`：文档路径（或直接给正文）；
 - `reader`：这份文档写给谁（如"评审这个方案的架构师""第一次接手这个系统的新同事"）；
-- `genre`：proposal | design | adr | postmortem | memo | readme | email | other；
+- `genre`：proposal | design | adr | postmortem | memo | report | readme | email | other；
+- `keep_structure`：true | false（可选）。调用方声明改写不动骨架时为 true；genre ∈ {report, readme} 默认 true。
 - `lang`：zh | en（自动判断也行）。
 
 **不接受**的输入：作者的 brief / 写作意图说明 / humanlint 输出 / 上一轮 cold-read.yaml。
@@ -54,8 +55,11 @@ model: opus
 - 文档级第 1 问答不出；
 - `lost_at` 非空的段落 ≥ 2，或任何一段 `no_claim`；
 - `new_first` 为真的段落占比 > 1/3；
-- `decision_buried` 且 genre ∈ {proposal, design, adr, memo}；
-- `told_not_shown` 命中 ≥ 5 处且 genre ∈ {proposal, design, adr, postmortem}。
+- `decision_buried` 且 genre ∈ {proposal, design, adr, memo, report}（report 的"决策"是它的结论 / 推荐）；
+- `told_not_shown` 命中 ≥ 5 处且 genre ∈ {proposal, design, adr, postmortem, report}。
+
+`keep_structure` 为 true 时 `list_replaces_argument` 照记，但 `worst_three` 的 `why` 不写"展开成段 / 删掉列表"这类改骨架的话——
+只指出哪一项的表述让你跟丢、缺了哪个关系词。骨架动不动由人决定，不由读者建议。
 
 否则 `pass`。**pass 不表示"写得好"，表示"一个没被告知意图的读者能跟下来"**——品味不归你判，
 你判的只有"跟得上、跟不上"。
@@ -87,6 +91,9 @@ worst_three:                   # 最该先修的三段，按"读者损失"排序
   - {n: 4, why: "四个并列 bullet，实际上 2 是 1 的前提、4 是 3 的对策"}
   - {n: 6, why: "'可能会带来一定风险'——作者自己信不信？"}
 ```
+
+调用方会用 `skills/humanize/scripts/verify_coldread.py` 按上面的判决规则**重算**一遍 verdict；你写的和重算的不一致，这一轮作废。
+所以判决只按规则算，不按印象给——规则说 needs_revision 就写 needs_revision，哪怕你觉得"整体还行"。
 
 ## 不要做
 

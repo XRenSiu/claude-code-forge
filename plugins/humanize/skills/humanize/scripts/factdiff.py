@@ -10,6 +10,8 @@
   python3 factdiff.py <source.md> <rewrite.md> [--json] [--allow-drop "<锚点>" ...]
 
 退出码：0 = pass（无事实增删；确定性变化只 warn），1 = fail（有锚点被删除或新增），2 = 用法错误。
+比对前做排版归一：数字内部的空格与千分位逗号不算差异（"1.4 s" = "1.4s"，"1,000" = "1000"）；
+句末的句号不会吞掉单位（"10GB." 仍是 "10GB"）；x.y.z 或 v 前缀才算版本号，"1.4" 是数字。
 --allow-drop 用于显式放行"确实该删"的锚点（例如原文里错误的数字），放行必须由人给出。
 """
 
@@ -20,14 +22,14 @@ import json
 import re
 import sys
 
-NUMBER = re.compile(r"(?<![A-Za-z_/.\-])\d+(?:[.,]\d+)*\s?(?:%|ms|s|min|h|d|GB|MB|KB|TB|QPS|RPS|TPS|rps|qps|x|倍|万|亿|个|次|条|台|人|天|周|月|年|行|毫秒|秒|分钟|小时)?(?![A-Za-z_/.\-])")
+NUMBER = re.compile(r"(?<![A-Za-z_/\-])(?<!\d\.)\d+(?:[.,]\d+)*\s?(?:%|ms|s|min|h|d|GB|MB|KB|TB|QPS|RPS|TPS|rps|qps|x|倍|万|亿|个|次|条|台|人|天|周|月|年|行|毫秒|秒|分钟|小时)?(?![A-Za-z_/\-]|\.\d)")
 DATE = re.compile(r"\b\d{4}-\d{2}-\d{2}\b|\b\d{1,2}\s?(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec)[a-z]*\b|\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec)[a-z]*\s\d{1,2}\b|\d{1,2}月\d{1,2}日|\d{4}年\d{1,2}月")
 CODE = re.compile(r"`([^`\n]+)`")
 URL = re.compile(r"https?://[^\s)>\]]+")
 PATH = re.compile(r"(?<![\w`])(?:[A-Za-z_][\w\-]*/)+[\w\-.]+")
 PROPER = re.compile(r"\b(?:[A-Z][a-z]+(?:[A-Z][a-z]+)+|[A-Z]{2,}[A-Za-z0-9]*|[A-Z][a-z]{2,}(?=\s|[,.;:!?)]|$))\b")
 ZH_QUOTED = re.compile(r"[《「『“]([^》」』”]{1,20})[》」』”]")
-VERSION = re.compile(r"\bv?\d+\.\d+(?:\.\d+)?\b")
+VERSION = re.compile(r"\bv\d+\.\d+(?:\.\d+)?\b|\b\d+\.\d+\.\d+\b")
 
 CERTAINTY_UP = re.compile(r"\b(will|always|never|definitely|certainly|clearly|proven|guarantees?|ensures?)\b|一定|必然|肯定|确保|保证|显然|毫无疑问|从不|总是", re.IGNORECASE)
 CERTAINTY_DOWN = re.compile(r"\b(may|might|could|possibly|perhaps|likely|probably|seems?|appears?|arguably|somewhat)\b|可能|或许|也许|大概|似乎|应该|估计|一定程度上", re.IGNORECASE)
@@ -42,31 +44,43 @@ STOP_PROPER = {
     "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday", "Yes", "No", "Not", "First",
     "Second", "Third", "Finally", "However", "Overall", "Ultimately", "Additionally", "Moreover", "Furthermore",
     "I", "A", "An", "Of", "To", "By", "With", "From", "Into", "Over", "Under", "Also", "Just", "Even", "Only",
+    # 单位缩写跟着数字走（NUMBER 层已经计入），不算专名
+    "GB", "MB", "KB", "TB", "QPS", "RPS", "TPS", "MS",
 }
 
 
 def strip_code_blocks(text: str) -> str:
-    return re.sub(r"```.*?```", "", text, flags=re.S)
+    return re.sub(r"(```|~~~).*?\1", "", text, flags=re.S)
+
+
+def norm_number(s: str) -> str:
+    """'1.4 s' == '1.4s'，'1,000' == '1000'，'5 万' == '5万'：空格与千分位是排版，不是事实。"""
+    s = re.sub(r"\s+", "", s.strip())
+    return re.sub(r"(?<=\d),(?=\d{3}(?!\d))", "", s)
 
 
 def anchors(text: str):
     t = strip_code_blocks(text)
     out = {}
-    out["number"] = set(m.group(0).strip() for m in NUMBER.finditer(t))
+    out["number"] = set(norm_number(m.group(0)) for m in NUMBER.finditer(t))
     out["date"] = set(DATE.findall(t))
     out["code"] = set(CODE.findall(t))
     out["url"] = set(URL.findall(t))
     out["path"] = set(p for p in PATH.findall(t) if not p.startswith("http") and "/" in p and len(p) > 3)
     out["version"] = set(VERSION.findall(t))
     props = set()
+    lower_words = set(re.findall(r"(?<![A-Za-z])[a-z]{2,}(?![A-Za-z])", t))
     for m in PROPER.finditer(t):
         w = m.group(0)
         if w in STOP_PROPER or len(w) < 2:
             continue
+        # 同一篇里还以小写出现过的词（Two / two, Rollout / rollout）是句首大写，不是专名
+        if w.lower() in lower_words:
+            continue
         props.add(w)
     out["proper"] = props
     out["zh_quoted"] = set(ZH_QUOTED.findall(t))
-    # 数字里去掉年份日期重复
+    # x.y.z 形态的版本号不重复计入数字
     out["number"] = {n for n in out["number"] if n not in out["version"]}
     return out
 

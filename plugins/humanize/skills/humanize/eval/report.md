@@ -19,6 +19,32 @@ judge read and **not** a behavioral (with-skill vs no-skill) run. Machine-readab
 
 factdiff: clean paraphrase → pass; number/identifier tampering (en, zh) → FAIL with the exact anchors listed.
 
+## v0.2.0 (2026-09-05) — bugs found while dogfooding on a real report
+
+| what | before | after |
+|---|---|---|
+| factdiff on a rewrite that only changed spacing (`1.4 s` → `1.4s`, `1,000` → `1000`) | hard FAIL | PASS — number anchors compared after whitespace / thousands-comma normalisation |
+| factdiff on a number+unit at sentence end (`10GB.`) | anchor `1` (the `.` in the trailing lookahead class forced a backtrack) | anchor `10GB` |
+| factdiff on `1.4` | counted as a version, dropped from numbers | number; VERSION needs `v` or `x.y.z` |
+| factdiff on `~~~` fences | counted | stripped, same as ``` |
+| factdiff proper nouns | sentence-initial `Two`, `Rollout` flagged | excluded when the lowercase form also occurs |
+| humanlint emoji_count on ✓ / ✗ table marks | WARN | ok (colour ✅ ❌ still count) |
+| cold-reader verdict | declarative rules only | `verify_coldread.py` recomputes the verdict from the five rules, rejects mismatches, refuses `--round 3` |
+
+Calibration unchanged after the patch: ai-zh 60 FLAG · human-zh 2 · ai-en 63 FLAG · human-en 0.
+
+## v0.3.0 (2026-09-05) — genre decides whether structure may move
+
+Trigger: a research report humanized under the default (narrative) criteria came back as 40 paragraphs of ~200 characters; the reader
+could not scan it. The criteria were right for a proposal and wrong for a report.
+
+| change | evidence |
+|---|---|
+| humanlint `--genre report` (bullet 0.55/0.75 · headings 11k/18k · bold 5k/9k) | fixtures under report: ai-zh 54 FLAG · human-zh 2 · ai-en 60 FLAG · human-en 0 (direction holds; narrative unchanged) |
+| `--keep-structure` contract, default on for report / readme / reference | SKILL.md Σ/φ/γ/绝不 + human-voice.md + discourse.md §4 |
+| `structdiff.py` compiles it | rephrase-only copy PASS · one bullet removed FAIL · heading renamed WARN · paragraph split PASS · prose report vs restructured html FAIL |
+| cold-reader / verify_coldread: `report` joins the decision-buried and told-not-shown genre sets; keep_structure input | example fixture still consistent |
+
 ## Honest residuals
 
 - Calibration is circular: the fixtures and thresholds share an author. Add third-party samples before trusting the

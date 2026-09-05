@@ -1,8 +1,8 @@
 ---
 name: humanize
 description: "Use when a draft (yours or the model's) reads like AI — every word is clear but the reader loses the thread, hedges everywhere, bullets instead of argument, 首先/其次/最后, 值得注意的是, In today's landscape — and you need it rewritten so a competent human professional could have written it, without changing a single fact. 去AI味 / 人味 / 像人写的 / 改得自然点 / 太AI了 / 翻译腔 / 太别扭. Works on 技术方案、设计文档、ADR、复盘、README 叙述段、邮件、评审意见, Chinese or English. NOT for code, code comments, commit messages, API reference tables, or config docs (those should be tables); NOT for beating AI detectors; NOT for adding slang, jokes, typos, or emoji as 'texture'."
-argument-hint: "[文件路径 | 直接粘贴的文本 | 'last'（上一条回复）] [--reader <谁读>] [--genre proposal|design|adr|postmortem|memo|readme|email] [--voice <voice.md>] [--lang zh|en]"
-version: 0.1.1
+argument-hint: "[文件路径 | 直接粘贴的文本 | 'last'（上一条回复）] [--reader <谁读>] [--genre proposal|design|adr|postmortem|memo|report|readme|email] [--keep-structure] [--voice <voice.md>] [--lang zh|en]"
+version: 0.3.0
 user-invocable: true
 ---
 
@@ -40,6 +40,13 @@ user-invocable: true
 在这个语域里，口语词、情绪、人设、emoji 是**新的 AI 味**（研究里叫"AI 味 2.0"），不是解药。
 学术论文语域允许"进行 + 动词"与被动句。参考类文档（API / 配置表）不进本 skill（列表和表格本来就对）。
 
+**体裁决定动不动骨架。** 方案 / 设计 / ADR / 复盘 / 备忘录是一个人从头读到尾的东西，列表替代论证、标题当分类名都是病，
+改写可以重组结构。研究报告（`report`）、README 叙述段、参考文档是扫着看的，标题、列表、表格、加粗是读者的入口，
+改写**只动散文段里的句子**——这就是 `--keep-structure`（`--genre report|readme|reference` 时默认开，其他体裁可显式加）。
+骨架是否一致由 `structdiff.py` 判：标题层级序列、列表块与项数、表格行列、代码块内容一个都不能变；拆并段落、改标题文字合法。
+两种模式都可以把一段散文写得更像人；差别只在**能不能碰读者用来扫读的那层**。上一次的教训：一份要扫的报告被按方案体裁改成了
+40 段 200 字的散文，读者看不下去。
+
 **改的是表达，不是内容。** 改写只有一种合法的信息增量：把来源里已有的具体信息（数字、名字、
 例子）从被形容词遮住的地方**挖出来**。来源没有的，写 `[需核实：…]` / `[unverified: …]` 占位，
 不编。一份带占位的诚实稿好过一份填满编造数字的"像人"稿。
@@ -53,6 +60,7 @@ user-invocable: true
 - 删掉任何一段，结论都少一条支撑；删掉后无损的段是复述，不存在。
 - 列表只剩真并列、真无序的项；项间有因果 / 前提 / 取舍关系的已展开成段并写出关系词。
 - 标题是主张片段（"为什么不用 Kafka"），不是分类名（"技术选型"）。
+- `--keep-structure` 下上面两条让位：结构骨架与原文一致（`structdiff.py` verdict ≠ fail）；列表项之间的关系词写进各项自己的表述里，不展开；标题文字可改，层级 / 数量 / 顺序不可。
 
 **段落层**
 - 每段第一句是该段的主张；只读每段首句能跟上全文。
@@ -82,10 +90,18 @@ user-invocable: true
 
 - `scripts/humanlint.py <file> [--lang zh|en] [--genre narrative|reference] [--json]`：23 项表层指标 + AI 味指数（0-100）+ 先修三项。
   退出码 1 = 有 flag。**改前改后各跑一次**，两份输出都进工艺报告。校准样本在 `fixtures/`。
+  它的 `--genre` 是三档阈值，与本 skill 的 `--genre` 不是同一个参数：proposal / design / adr / postmortem / memo / email → `narrative`；
+  report / readme → `report`（列表、标题、加粗阈值放宽一档）；API / 配置 / 命令表 → `reference`（最宽）。
+- `scripts/structdiff.py <source> <rewrite> [--json]`：改写前后的结构骨架比对。硬：标题层级序列、列表块数与每块项数（有序 / 无序不互换）、表格行列、
+  代码块内容、块的顺序；软（warn）：标题文字、加粗总数 ±30%、段落串拆并超过一倍。退出码 1 = 骨架被动了。**`--keep-structure` 时必跑**；没有 `--allow`，
+  要动骨架就关掉开关并在报告里写明。
 - `scripts/factdiff.py <source> <rewrite> [--allow-drop …] [--allow-add …]`：事实锚点增删比对 + 确定性漂移。
   退出码 1 = 硬锚点有增删。放行参数只能由人给出，引擎不得自己 `--allow-*`。
-- `cold-reader` agent（`agents/cold-reader.md`）：`Agent(subagent_type="general-purpose", prompt=<cold-reader.md 全文 + 改写稿路径 + reader + genre>)`。
+- `cold-reader` agent（`agents/cold-reader.md`）：插件已安装时直接 `Agent(subagent_type="humanize:cold-reader", prompt=<改写稿路径 + reader + genre + 输出路径>)`
+  （模型、工具集、只读身份都在 agent 定义里）；从源码目录跑、没有注册 agent 时才退到 `Agent(subagent_type="general-purpose", prompt=<cold-reader.md 全文 + 同上>)`。
   **只给它改写稿、读者、体裁**；不给原稿、不给 brief、不给 humanlint 输出、不给上一轮 cold-read。它输出 `cold-read.yaml`：逐段 expected / got / lost_at / told_not_shown + 文档级四问 + pass | needs_revision。
+- `scripts/verify_coldread.py <cold-read.yaml> [--round N] [--json]`：cold-read.yaml 的形状检查 + 按 `cold-reader.md` 的五条规则**重算判决** + 轮数封顶。
+  退出码 1 = 缺字段 / agent 写的判决与重算不一致 / contamination 非空 / `--round 3`。判决不一致 = 这一轮冷读作废，重开干净上下文再读，不是"以脚本为准"。样例在 `fixtures/cold-read.example.yaml`。
 - 有实验证据的生成技巧（可用，非必须）：
   - 用户给了 3–5 篇自己的样文（`--voice` 或 `.humanize/voice.md`，由 `/voice-profile` 生成）→ 以 completion 方式"续写这个作者的稿"，比"模仿风格"有效 20 倍以上；样本要**不同主题、同体裁**。
   - 对开头段和承重段：生成 5 个候选并各标一个概率，**丢掉概率最高的那个**（典型性偏差），余下用 humanlint 与 φ 挑。
@@ -94,6 +110,8 @@ user-invocable: true
 ## γ：门（约束，不是流程；exit gate = humanlint + factdiff + cold-reader 三者都有输出才算过）
 
 - **隔离**：cold-reader 在独立 `Agent` 调用里跑；主对话里对自己稿子的"我觉得挺像人的"不算评审。
+- **结构门**：`--keep-structure`（`--genre report|readme|reference` 默认开）→ 改写稿对原稿跑 `structdiff.py`，fail 即定位到那一块回滚；骨架只能由人改，引擎不得为了过 cold-reader 去展开列表或删标题。
+- **冷读结果要过脚本**：每轮 `cold-read.yaml` 都跑 `verify_coldread.py --round N`；形状缺件或判决与规则不一致，这一轮不算数。轮数封顶由它机械执行。
 - **测量在前后**：humanlint 与 factdiff 在改写**前后**各有一份输出；没有"改前"数据的改写不能交付（无法证明改了什么）。
 - **事实门不可跳**：factdiff = fail → 定位增删处，回滚那几处改写，重跑；`--allow-*` 只在用户明确指定时使用。
 - **轮数封顶**：cold-reader `needs_revision` → 按 `worst_three` 修 → 再跑一次（新的隔离上下文）。最多 2 轮。
@@ -110,6 +128,7 @@ user-invocable: true
 | factdiff fail | 数字 / 标识符 DROPPED 或 ADDED | 逐条定位；ADDED 的一律回滚（编造）；DROPPED 的回滚（漏抄），除非用户放行 |
 | factdiff certainty warn | up 或 down 翻倍 | 逐句对照原稿：原稿说"会"的改成"可能"是扭曲，反之亦然；只保留原稿的确定性等级 |
 | cold-reader needs_revision 两轮 | 同一段反复 lost_at | 交付 + 附判决 + 指出该段可能需要**作者补内容**而不是改表达（表达改不掉内容缺环） |
+| 用户要保留排版，但某个列表是伪并列（项间有前提 / 因果） | `--keep-structure` 且 cold-reader 记 `list_replaces_argument` | 不展开。把关系词写进各项的表述（"前提是…""所以…"），报告里标"建议展开：第 N 个列表"，由人决定 |
 | 输入是参考类文档（API / 配置 / 命令表） | 列表 / 表格占比 > 60%、无论证段 | 改 `--genre reference`：只处理散文段，列表和表格不动；报告说明 |
 | 输入混有代码块 | fenced code | 代码块一字不动（脚本已跳过）；只改散文 |
 | 输入是英文但用户要中文（或反之） | `--lang` 与文本不符 | 这是翻译不是 humanize；先翻，再对译文跑本 skill；报告分两段 |
@@ -127,7 +146,8 @@ user-invocable: true
 - 推断值：reader = …；genre = …；lang = …；voice = 无 / <路径>
 - humanlint：改前 <指数>/100 (<verdict>) → 改后 <指数>/100 (<verdict>)；仍 flag 的指标：…
 - factdiff：<pass|warn|fail>；放行项：无
-- cold-reader：round 1 <verdict>（worst_three: …）→ round 2 <verdict>
+- structdiff：<pass|warn|fail|未开>（--keep-structure 时必有；warn 逐条说明）
+- cold-reader：round 1 <verdict>（worst_three: …；verify_coldread OK）→ round 2 <verdict>
 - 语篇层改动（每条：位置 → 机制 → 改法）
   - 第 1 段：套路化开头 → 用第 3 段里的"P99 1.4s"事件开头
   - 第 4 段：列表替代论证 → 展开，写出"2 是 1 的前提"
@@ -148,6 +168,7 @@ user-invocable: true
 - **绝不对代码、代码注释、commit message、API 参考表、配置说明跑本 skill**——那些本该是表和列表。
 - **绝不第 3 轮**——两轮 cold-reader 未过就交付并说明，把"该补内容"的判断还给作者。
 - **绝不擅自 `--allow-drop` / `--allow-add`**——放行是人的动作。
+- **绝不在 `--keep-structure` 下增删或移动标题、列表项、表格、代码块**——`structdiff.py` fail 即回滚；要动骨架就关掉开关并在报告里写明。
 
 ## 接线（可选邻居，缺席不阻塞）
 
@@ -157,5 +178,6 @@ user-invocable: true
 
 ## 本 skill 自身的出口门
 
-`eval/gate.json`：`static_only`——结构过审、脚本在 `fixtures/` 四份样本上冒烟（AI 样本 60/63 FLAG，人写样本 2/0）；
+`eval/gate.json`：`static_only`——结构过审、脚本在 `fixtures/` 四份样本上冒烟（AI 样本 60/63 FLAG，人写样本 2/0；
+`verify_coldread.py` 在 `cold-read.example.yaml` 上判决一致、篡改判决被拒、第 3 轮被拒；`structdiff.py` 对只改措辞的副本 pass、删一个列表项 fail、改标题文字 warn）；
 行为层（带 / 不带本 skill 在留出草稿上的 cold-reader 通过率差）未跑。静态读不是裁决。
