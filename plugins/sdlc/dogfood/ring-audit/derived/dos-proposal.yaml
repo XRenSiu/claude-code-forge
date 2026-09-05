@@ -1,0 +1,526 @@
+# dos-proposal.yaml — 应然本体（由 PSL-sdlc-ring-audit v2 推导；与 /dos-extract 的现状本体同 schema，供 G1 第二轮对账）
+# 0.2.0：G1 第一轮否决（g1-record.md，归因 rule_error）后的 n=1 定向重推。对象仍 7 个、全部是 PSL v2 Domain Model 的名字；
+# Finding → Assessment；"缺少"由 Ring.missing（Gap 列表）回答；Evidence 是值类型，记在使用它的属性上，不是第 8 个对象。
+# 0.2.1：G1 第二轮（derivation_error，PSL 不动）三处局部改写：裁决门只 G3（报告人审即 G3）；alternatives_of 三条件定义；human_gate 覆盖五个 kind=human 节点。
+
+meta:
+  dos_version: "0.2.1"
+  product: "sdlc ring audit（审计 sdlc 插件九环配件的世界）"
+  bounded_context: "lifecycle plugin audit"
+  owner: "XRenSiu"
+  status: "draft"
+  last_reviewed: "2026-09-05"
+  related_docs:
+    - "plugins/sdlc/dogfood/ring-audit/PSL-sdlc-ring-audit.md"
+    - "plugins/sdlc/dogfood/ring-audit/g1-record.md"
+    - "plugins/sdlc/dogfood/ring-audit/derived/form-draft.md"
+    - "plugins/sdlc/dogfood/ring-audit/derived/divergence.md"
+    - "plugins/sdlc/dogfood/ring-audit/dos.yaml"
+    - "plugins/sdlc/docs/ARCHITECTURE.md"
+
+scope:
+  in_scope: |
+    审计一个生命周期插件（sdlc）时世界里有什么：环、配件、缺口、产物、闸门、审计判定、环契约，
+    以及它们之间"谁填谁、谁产什么、谁检什么、谁裁谁"的关系。覆盖报告 / audit.yaml / 检查脚本的形态。
+  out_of_scope: |
+    不覆盖被审插件自身的运行时本体（那是 /dos-extract 抽出的现状本体 dos.yaml，本体只引用它的 Run / Node / Loop）；
+    不覆盖 GitHub issue / PR 的实体；不覆盖如何实现新配件；不建模 Proposal（留 open）。
+  audience:
+    - "plugin author (XRenSiu)"
+    - "AI agents running the audit (card-implementer / reviewers)"
+    - "G1 / G3 adjudicators（本次为用户授权的代签 agent）"
+  success_criteria: |
+    一个没读过 sdlc 的 agent 拿到这份本体 + PSL v2，能写出被 check_audit.py 接受、且被 G3（报告人审即 G3）认为"抓对了世界"的 audit.yaml；
+    其中每个 Part 的 Ring 归属可以从 graph.yaml 机械复算，每条 Gap 的"有没有 Part 填"可以从 FILLS 边机械复算。
+
+reuse:
+  internal_references:
+    - name: "sdlc ARCHITECTURE §6 自洽规则"
+      url: "plugins/sdlc/docs/ARCHITECTURE.md"
+      adopted_concepts: ["一产物一生产者", "三道门只能人签", "static_only 三态", "每个产物被脚本检或被门挡"]
+    - name: "skillwise 四原子"
+      url: "/Users/xrensiu/development/owner/skillwise/docs/THEORY.md"
+      adopted_concepts: ["Knowledge / Capability / Judgment / Control", "deletion 测试"]
+    - name: "sdlc 现状本体（/dos-extract）"
+      url: "plugins/sdlc/dogfood/ring-audit/dos.yaml"
+      adopted_concepts: ["Run（只引用）", "Node.role → Ring 映射（composition.Ring）", "Loop（loops.yaml）", "enforced_by ≠ system 的规则作为 Control 缺口来源"]
+  external_references:
+    - name: "LangChain four loops / graph engineering contracts"
+      url: "plugins/sdlc/docs/proposals/loop-graph-engineering.md"
+      adopted_concepts: ["Loop as contract with generator ≠ verifier"]
+  deliberate_divergence:
+    - from: "把 skill 文件当对象"
+      reason: "PSL Vision：配件是缺口的填充物不是文件；对象是 Part 而非 SkillFile"
+    - from: "把审计判定叫 Finding（PR-Agent / 六审查 skill 的用法）"
+      reason: "Finding 是 R6 的产物名（findings.yaml），本次审计要把它列为 Artifact；同一报告里一个词不能既是审计单位又是被审产物（G1 E-4）"
+    - from: "把脚本当独立配件（Part.kind=script）"
+      reason: "skill 目录下的脚本是该 skill 的 Gate 或 Capability；粒度按 ARCHITECTURE §1 表 + agents/*.md + 脊柱四个数据资产（G1 E-6）"
+
+# Evidence（值类型，不是对象）：{kind ∈ [file, gate_json, smoke, run_record], ref}
+#   file → 文件路径；gate_json → 路径#键；smoke → 冒烟记录行；run_record → Run 账本事件 id。
+#   Assessment 三维的 evidence[] 与 Gap.evidence[] 都是它的列表；检查脚本检 kind 在枚举内、ref 非空，不只检非空。
+objects:
+  Ring:
+    description: "生命周期的一段（R0…R8）或脊柱（id=spine）；每环回答一个问题"
+    type: "aggregate_root"
+    properties:
+      id:
+        type: "enum[R0, R1, R2, R3, R4, R5, R6, R7, R8, spine]"
+        required: true
+      question:
+        type: "string"
+        required: true
+        description: "这一环回答什么，取 ARCHITECTURE §1 表'问题'列"
+      missing:
+        type: "list[Gap]"
+        required: true
+        description: "派生视图的物化：该 Ring 暴露的、当前没有任何 Part FILLS 的 Gap；可为空数组，但键必须存在"
+    identity_rule: "由 id 唯一标识；脊柱按 id=spine 的一条 Ring 记录处理；三道人签门不归 spine（归其所检 Artifact 的环）"
+    lifecycle: "静态；环的增删是插件架构变更，不在审计内"
+  Part:
+    description: "环上的可命名单元：skill / agent / asset / human_gate"
+    type: "entity"
+    properties:
+      id:
+        type: "string"
+        required: true
+      kind:
+        type: "enum[skill, agent, asset, human_gate]"
+        required: true
+        description: "没有 script：skill 目录下的脚本是该 skill 的 Gate 或 Capability；stage 节点不是 Part。human_gate 覆盖 graph.yaml 全部五个 kind=human 节点（g1 / g2 / g3 / merge / harness-review），不只持有 Gate 对象的三道门；文档三道门 vs 数据五个人节点的出入是 merge / harness-review 两个 Part 的一条 Assessment（现状 Q004）"
+      ring:
+        type: "Ring.id"
+        required: true
+        description: "不手填。从 graph.yaml Node.role 经现状本体 composition.Ring 映射推出（world→R0 … learning→R8，orchestrator→spine）；human_gate：持有 Gate 对象的三个归其所检 Artifact 的环（G1→R0、G2→R2、G3→R6），human.merge → R7、human.harness-review → R8（ARCHITECTURE §1 表 R7 / R8 门闸列；ring_evidence = graph.yaml L239 / L269）"
+      ring_evidence:
+        type: "Evidence | no_node | role_conflict"
+        required: true
+        description: "graph.yaml 行号；无节点的 Part（agents/pr-reviewer.md、四个数据资产）写 no_node 并按 ARCHITECTURE §1 落环；§1 与 Node.role 不一致写 role_conflict 并列两源"
+      provenance:
+        type: "enum[authored, adopted]"
+        required: true
+        description: "新写 / 收编；只决定 misfit 的去向理由，不参与 fit 判定"
+      role:
+        type: "enum[producer, gate, orchestrator]"
+        required: false
+        description: "产物为 0 时说明为何不生产"
+      loop:
+        type: "Loop.id | null"
+        required: false
+        description: "loops.yaml#<id>；只写引用"
+      loop_reason:
+        type: "string"
+        required: false
+        description: "仅当 Part 是 graph.yaml loop_back 边端点或某 Loop 的 generator / verifier 而 loop 为 null 时必填；其余 Part 的 null 不需要理由"
+    identity_rule: "由 id 唯一标识；同名不同 kind 视为不同 Part（如 skill 与 agent 同名）"
+    lifecycle: "implemented 三态 declared → compiled → verified（verified 可附 calibrated）；逆向合法且留痕。'空白'不是 Part 的态——空白是 Ring.missing 里的 Gap"
+  Gap:
+    description: "引擎自己给不出的那部分；四原子之一或多；值对象"
+    type: "value_object"
+    properties:
+      atoms:
+        type: "set[Knowledge, Capability, Judgment, Control]"
+        required: true
+      source:
+        type: "enum[lifecycle_blank, newly_identified, unenforced_rule]"
+        required: true
+        description: "lifecycle_blank ← lifecycle.md 制品映射表 / ARCHITECTURE §7 空白行；newly_identified ← 本次审计（含无 Gate 的 Artifact 引出的 Control 缺口）；unenforced_rule ← dos.yaml enforced_by ∈ {user_workflow, not_enforced} 的规则（R001 / R008 / R010 / R017）"
+      necessity:
+        type: "enum[necessary, unnecessary, contested]"
+        required: true
+      deletion_test:
+        type: "string"
+        required: true
+        description: "撤掉它，这条流水线会产出 ___（在生命周期高度上读，不是'引擎会不会拒绝往下走'）"
+      evidence:
+        type: "list[Evidence]"
+        required: true
+        description: "≥ 1；lifecycle_blank 的 evidence 是那一行，unenforced_rule 的是规则 id，newly_identified 的是引出它的 Assessment 或 Artifact"
+      disposition:
+        type: "enum[fix_list, issue, none]"
+        required: true
+    identity_rule: "由 (ring, atoms, source, 描述) 定义；不可变——atoms 变了就是另一个 Gap。没有存储态：'有没有 Part 填它'由 Part FILLS Gap 边派生（见 composition.GapState），不是字段"
+  Artifact:
+    description: "配件独占生产的东西（一产物一生产者）"
+    type: "entity"
+    properties:
+      id:
+        type: "string"
+        required: true
+        description: "身份 = graph.yaml Node.writes 的路径模式 ∪ ARCHITECTURE §1 产物列（如 done_when.yaml、cards/CARD-xx.yaml、findings.yaml、github:pr）"
+      producer:
+        type: "Part"
+        required: true
+        description: "恰一个；第二个出现且非同阶段条件替代 = 两者 merge_candidate"
+      alternatives_of:
+        type: "stage | null"
+        required: false
+        description: "同阶段条件替代分支，三条件缺一不算、数据源 graph.yaml：(a) 两 Part 在同一 stage.<x> 节点的 handled_by 里；(b) 之间由带 when 守卫的 conditional 边选执行者；(c) 写同一 schema 的 Artifact。implement / card-implementer / ratchet 全满足（L29；L320–321）→ 豁免；donewhen-extract / acceptance-spec 只满足 (a)（L26，无 conditional 边，v1 ≠ v2）→ 触发 merge_candidate（现状 Q008）"
+      checked_by:
+        type: "list[Gate]"
+        required: true
+        description: "可为空；为空则 producer.implemented ≤ declared 且一条 Control Gap 进所在 Ring.missing"
+    identity_rule: "由 id 唯一标识"
+  Gate:
+    description: "检产物的机械闸（script）或只能人签的门（human：G1/G2/G3）"
+    type: "entity"
+    properties:
+      id:
+        type: "string"
+        required: true
+      kind:
+        type: "enum[script, human]"
+        required: true
+        description: "报告与 audit.yaml 把 script 渲染为'闸'，禁止渲染为'门'；human 仅 G1 / G2 / G3"
+      signer:
+        type: "string"
+        required: false
+        description: "kind=human 时必填"
+      signer_kind:
+        type: "enum[human, delegated_agent]"
+        required: false
+        description: "kind=human 时必填；delegated_agent 不得渲染为人签"
+      authorization_ref:
+        type: "string"
+        required: false
+        description: "signer_kind=delegated_agent 时必填：用户授权记录的引用"
+    identity_rule: "脚本以路径标识；人签门以 G1/G2/G3 标识。Loop.verifier 若恰是脚本，它同时也是一道闸——两个角色各自引用同一实体"
+  Assessment:
+    description: "对一个 Part 的三维审计判定：needed / implemented / naming"
+    type: "entity"
+    properties:
+      part:
+        type: "Part"
+        required: true
+      status:
+        type: "enum[candidate, evidenced, adjudicated]"
+        required: true
+      needed:
+        type: "dim{verdict ∈ [necessary, unnecessary, contested, overfill, merge_candidate, distinct_exits], psl_ids[≥1], evidence[≥1 Evidence], necessity_conflict?}"
+        required: true
+        description: "deletion 测试为唯一标准（生命周期高度）；'闭合所需'是 deletion 失败的一种 evidence；残余冲突写 contested + necessity_conflict"
+      implemented:
+        type: "dim{verdict ∈ [declared, compiled, verified], calibrated?: bool, not_reached: map, psl_ids[≥1], evidence[≥1 Evidence]}"
+        required: true
+        description: "三态各带 evidence（declared → file；compiled → gate_json 或被门挡；verified → run_record / smoke）；未达态显式 not_reached；不得为布尔"
+      naming:
+        type: "dim{provenance, artifact_or_position, fit ∈ [fits, misfit], suggested_name?, rename: false, psl_ids[≥1], evidence[≥1 Evidence]}"
+        required: true
+        description: "fit 对每个 Part 都判（收编不免检）：名字 = 产物名或位置名 → fits；provenance 只决定 misfit 的去向理由；rename 恒 false"
+      disposition:
+        type: "enum[fix_list, issue, none]"
+        required: true
+      adjudications:
+        type: "list[{gate: G3, signer, signer_kind, authorization_ref, supersedes?}]"
+        required: false
+        description: "只追加；仅 kind=human 的 G3——报告人审即 G3 的内容，不是第四道门；合入后的推翻是逃逸缺陷，喂下一次审计 Run 的新 Assessment 并以 supersedes 关联；G1 不出现（G1 裁形态草案，那时 Assessment 不存在）"
+    identity_rule: "由 part 唯一标识（一对一）"
+    lifecycle: "candidate → evidenced（三维证据齐）→ adjudicated（仅 G3；报告人审即 G3）；裁决只追加，不改写；无证据的不进报告"
+  Loop:
+    description: "配件所属的环契约（loops.yaml#id）：generator / verifier / stop"
+    type: "entity"
+    properties:
+      id:
+        type: "string"
+        required: true
+        description: "loops.yaml#<id>"
+    identity_rule: "由 loops.yaml 的 id 标识；本本体只引用不复述"
+
+relationships:
+  - subject: "Ring"
+    verb: "CONTAINS"
+    object: "Part"
+    cardinality: "1:N"
+    inverse: "BELONGS_TO"
+    description: "一个 Part 属于恰一个 Ring（脊柱是 id=spine 的 Ring）；归属从 graph.yaml Node.role 派生，不手填"
+  - subject: "Ring"
+    verb: "EXPOSES"
+    object: "Gap"
+    cardinality: "1:N"
+    inverse: "LOCATED_IN"
+    description: "Ring 暴露 0..n Gap；其中没有 FILLS 边的 Gap 物化为 Ring.missing（G1 D-2 / E-2）"
+  - subject: "Part"
+    verb: "FILLS"
+    object: "Gap"
+    cardinality: "N:N"
+    inverse: "FILLED_BY"
+    description: "0 个 = 过填；一个 Gap 可被多 Part 填（六个审查 skill 共填一个 Judgment 缺口是常态）；Gap 的'有没有 Part 填'由这条边派生"
+  - subject: "Part"
+    verb: "PRODUCES"
+    object: "Artifact"
+    cardinality: "1:1"
+    inverse: "PRODUCED_BY"
+    description: "0..1；第二个生产者 = 合并候选，除非 alternatives_of 标明是同阶段条件替代（G1 P-3）"
+  - subject: "Gate"
+    verb: "CHECKS"
+    object: "Artifact"
+    cardinality: "N:N"
+    inverse: "CHECKED_BY"
+    description: "无 Gate 的 Artifact：producer.implemented ≤ declared 且一条 Control Gap 进所在 Ring.missing（G1 D-3 双后果）"
+  - subject: "Gate"
+    verb: "ADJUDICATES"
+    object: "Assessment"
+    cardinality: "1:N"
+    inverse: "ADJUDICATED_AT"
+    description: "kind=human, G3 only；报告人审即 G3，不是第四道门；G1 裁形态不裁 Assessment（G1 D-8 / E-5；第二轮残余 1）"
+  - subject: "Loop"
+    verb: "GOVERNS"
+    object: "Part"
+    cardinality: "1:N"
+    inverse: "GOVERNED_BY"
+    description: "0..1；null 只在 Part 是 loop_back 端点或 Loop 的 generator / verifier 时需要理由（G1 P-4）"
+  - subject: "Assessment"
+    verb: "JUDGES"
+    object: "Part"
+    cardinality: "1:1"
+    inverse: "JUDGED_BY"
+    description: "一对一；三维各引用 ≥ 1 PSL 规律与 ≥ 1 Evidence"
+
+rules:
+  - id: "R001"
+    statement: "一个 Artifact 有且只有一个 producer Part；出现第二个且不是同阶段条件替代（alternatives_of）时，两者的 Assessment 都标 merge_candidate，审计者不裁"
+    rationale: "PSL-001；G1 P-3"
+    enforced_by: "system"
+  - id: "R002"
+    statement: "一个 Part 至少填一个 Gap 原子且附 deletion 测试一句话；空集判 overfill"
+    rationale: "PSL-002, PSL-016"
+    enforced_by: "system"
+  - id: "R003"
+    statement: "每个 Artifact 至少被一个 Gate 检（script 或 human）；否则其 producer 的 implemented 不得高于 declared，且一条 Control Gap（source=newly_identified）进所在 Ring.missing"
+    rationale: "PSL-015, PSL-010, PSL-016；G1 D-3"
+    enforced_by: "system"
+  - id: "R004"
+    statement: "Assessment.implemented 只取 declared / compiled / verified 之一并各附 Evidence；verified 附 calibrated: bool；不得为布尔；'空白'不是它的取值"
+    rationale: "PSL-010, PSL-007；G1 D-1 / E-1"
+    enforced_by: "system"
+  - id: "R005"
+    statement: "Assessment 三维各自 psl_ids 非空且每个 id 存在于 PSL 规律索引"
+    rationale: "PSL-003"
+    enforced_by: "system"
+  - id: "R006"
+    statement: "Assessment 三维各自 evidence 非空，每条 evidence 的 kind 在 {file, gate_json, smoke, run_record} 内且 ref 非空；不满足的 Assessment 停在 candidate，不进 audit.yaml 与报告，也不删除"
+    rationale: "PSL-010, PSL-005；G1 欠定 2（Evidence 值类型）"
+    enforced_by: "system"
+  - id: "R007"
+    statement: "naming.fit 对每个 Part 都有取值（收编不免检）；只产生 suggested_name；rename 恒为 false；改名走另一次 G2 变更提案"
+    rationale: "PSL-014, PSL-013；G1 P-1"
+    enforced_by: "system"
+  - id: "R008"
+    statement: "审计者不得修改任何被审 Part 的文件；被审目录（plugins/sdlc/skills、agents、docs）在卡提交里 git diff 为空；为过门而修的 verifier bug 记为账本 deviation 单独提交"
+    rationale: "PSL-003, PSL-005；A8"
+    enforced_by: "system"
+  - id: "R009"
+    statement: "kind=human 的 Gate 必有 signer 与 signer_kind；signer_kind=delegated_agent 时必附 authorization_ref 且不得渲染为人签；kind=script 的 Gate 不得渲染为'门'；脚本只核对存在性，不代签"
+    rationale: "PSL-006；G1 三问 1 Gate 行、欠定 3"
+    enforced_by: "system"
+  - id: "R010"
+    statement: "Assessment 的裁决只追加 adjudications，不覆盖、不删除；推翻以 supersedes 表达；裁决者只能是 kind=human 的 G3（报告人审即 G3），G1 不出现；合入后的推翻是逃逸缺陷，进下一次审计 Run"
+    rationale: "PSL-005, PSL-006；G1 D-8 / E-5"
+    enforced_by: "system"
+  - id: "R011"
+    statement: "audit.yaml 顶层是 rings 列表，Ring 集合恰为 {R0..R8, spine}，每 Ring 有 question 与 missing 键（missing 可为空数组）；缺任一即 exit 1"
+    rationale: "PSL-017；G1 D-7 / E-6"
+    enforced_by: "system"
+  - id: "R012"
+    statement: "每条提案指向一个 Assessment-id 或 Gap-id；以环上配件数量为理由的提案不得存在；提案在审计运行内不执行"
+    rationale: "PSL-002, PSL-013；DP-2"
+    enforced_by: "system"
+  - id: "R013"
+    statement: "Part.ring 不手填：从 graph.yaml Node.role 经现状本体 composition.Ring 映射推出并给 graph.yaml 行号；human_gate 归其所检 Artifact 的环；无节点的 Part 写 ring_evidence=no_node"
+    rationale: "PSL-011；G1 三问 1 Ring 行 / E-6"
+    enforced_by: "system"
+  - id: "R014"
+    statement: "Gap 不带存储态；'有没有 Part 填'= 是否存在 Part FILLS Gap 边；无边的 Gap 必出现在其 Ring.missing 中"
+    rationale: "PSL-017, PSL-016；G1 三问 1 Gap 行"
+    enforced_by: "system"
+  - id: "R015"
+    statement: "Part.loop 为 null 时只在该 Part 是 graph.yaml loop_back 边端点或某 Loop 的 generator / verifier 时要求 loop_reason"
+    rationale: "PSL-011；G1 P-4"
+    enforced_by: "system"
+  - id: "R016"
+    statement: "检查脚本的 exit 0 只有与同一运行里'删任一 Ring 的变体 exit 1'的记录成对出现才算证据；否则标 uncalibrated"
+    rationale: "PSL-007, PSL-010；G1 D-5"
+    enforced_by: "system"
+  - id: "R017"
+    statement: "Gap 的 source 只取 lifecycle_blank / newly_identified / unenforced_rule 之一，三种来源都登记且带标签，不装作已有"
+    rationale: "PSL-017；G1 D-4 / E-12"
+    enforced_by: "system"
+
+composition:
+  Report:
+    description: "按 Ring 分节的审计报告（人读版）"
+    derived_from:
+      - "audit.yaml 的 rings[].parts[].assessment 投影为表：一 Part 一行、三列判定、PSL-ID 做脚注"
+      - "rings[].missing 投影为每环表末尾带'（缺少）'标记与来源标签的 Gap 行"
+      - "Assessment.disposition 与 Gap.disposition 分组为提案清单"
+      - "run_evidence 节：状态机路径、门的签字人 / signer_kind / authorization_ref、substitute 标记、skill-issues.md 路径"
+    is_persistent: true
+  ProposalList:
+    description: "报告末尾的提案清单"
+    derived_from:
+      - "disposition ≠ none 的 Assessment"
+      - "disposition ≠ none 的 Gap（去向 issue 草稿，不实现）"
+    is_persistent: false
+  GapState:
+    description: "某 Gap 当前有没有 Part 填（identified_no_part | has_part）"
+    derived_from:
+      - "是否存在 Part FILLS Gap 边；无边 → 出现在 Ring.missing"
+    is_persistent: false
+  RingMembership:
+    description: "每个 Part 属于哪个 Ring"
+    derived_from:
+      - "graph.yaml Node.role 经现状本体 composition.Ring 映射（world→R0 … learning→R8，orchestrator→spine）"
+      - "human_gate（持有 Gate 对象的三个）→ 其所检 Artifact 所在 Ring（G1→R0、G2→R2、G3→R6）；human.merge → R7、human.harness-review → R8（graph.yaml L239 / L269；ARCHITECTURE §1）"
+      - "无节点的 Part → ARCHITECTURE §1 表，ring_evidence=no_node"
+    is_persistent: false
+
+behaviors:
+  - trigger: "审计者读一个 Ring"
+    effects:
+      - "该 Ring 每个 Part 的 ring 从 graph.yaml Node.role 复算并写 ring_evidence"
+      - "该 Ring 每个 Part 的 Assessment 从 candidate 变 evidenced（若三维证据齐）"
+      - "无 FILLS 边的 Gap 进该 Ring 的 missing（带 source 标签）"
+    notes: "PSL Workflow Σ 第一条；R013 / R014"
+  - trigger: "两个 Part 声明同一 Artifact"
+    effects:
+      - "若非同阶段条件替代：两者 Assessment.needed.verdict = merge_candidate，互相引用，审计者不裁"
+      - "若是同阶段条件替代：Artifact 记 alternatives_of，不触发"
+    notes: "R001；G1 P-3"
+  - trigger: "一个 Artifact 的 checked_by 为空"
+    effects:
+      - "producer 的 implemented 停在 declared，evidence 注 no_gate"
+      - "一条 Control Gap（source=newly_identified）进该 Artifact 所在 Ring.missing"
+    notes: "R003；G1 D-3 双后果"
+  - trigger: "G3 裁决一条 Assessment（报告人审即 G3）"
+    effects:
+      - "追加一条 adjudication（signer / signer_kind / authorization_ref）"
+      - "status → adjudicated"
+      - "被推翻的原判定保留，新判定带 supersedes"
+    notes: "R010；G1 不在此列"
+  - trigger: "检查脚本运行"
+    effects:
+      - "对完整 audit.yaml exit 0"
+      - "对删掉任一 Ring 的变体 exit 1"
+      - "run_evidence 记录两次运行；缺变体运行则 exit 0 标 uncalibrated"
+      - "审计完成与否由 exit 码给出，审计者不自宣"
+    notes: "R016；G1 D-5"
+  - trigger: "审计发现被审 skill 的源码问题"
+    effects:
+      - "写入 skill-issues.md（Run 账本事件的投影）并在 run_evidence 给路径"
+      - "被审文件不动；不算 Part 的 implemented 逆向流转"
+    notes: "R008；G1 欠定 5"
+
+bounded_contexts:
+  current_context: "lifecycle plugin audit"
+  upstream_contexts:
+    - name: "sdlc plugin as-is ontology（dos.yaml by /dos-extract）"
+      provides: ["Run（聚合根，只引用 slug / state.json / ledger）", "Node（kind skill / agent / human / stage）与 Node.role / Node.writes", "composition.Ring（Node.role 分组的 docs-only 视图）", "Gate（仅 g1/g2/g3 人签）与 verify_*.py 边守卫", "Loop（loops.yaml）", "rules R001..R017 的 enforced_by"]
+      translation_notes: |
+        按 g1-record.md 应然↔现状对账表逐对象翻译：
+        Ring ← composition.Ring：名异实同（对象 vs 视图）；graph.yaml 无 ring 字段，Part.ring 从 Node.role 派生并给证据行；
+          ARCHITECTURE §1 与 Node.role 已知不一致处（gate / orchestrator vs 脊柱，现状 Q002）直接成为 Assessment（ring_evidence=role_conflict），审计不调和。
+        Part ← Node：Part ⊋ Node∖stage。pr-reviewer.md 有文件无节点（现状 I-16）、四个数据资产无节点 → ring_evidence=no_node 且本身是一条 R6 / spine 的 Assessment；stage 节点不是 Part。
+        Gap ← 无对象：散在 ARCHITECTURE §7 / lifecycle 制品映射表的"空白"行（source=lifecycle_blank）、gate.json fix_list、
+          dos.yaml enforced_by ∈ {user_workflow, not_enforced} 的规则 R001 / R008 / R010 / R017（source=unenforced_rule，现状自己已诚实标出，审计照抄）。
+        Artifact ← Node.writes / Run.artifacts（属性，非对象）：身份取 writes 路径模式。现状 Q006：done_when.yaml ×2（donewhen-extract / acceptance-spec，形状不同，
+          对应 Q008 → 该触发 merge_candidate）；卡文件 ×3 与 github:pr ×2（implement / card-implementer / ratchet，同阶段条件替代 → alternatives_of，不触发）。
+        Gate ← Gate + 边守卫：现状明说 verify_*.py "不是 Gate 是边守卫"，应然合一为 kind=script，但报告禁止把脚本叫"门"。
+          现状 sdlc_state.py gate 只有 --by，无 signer_kind / authorization：本次代签会被记成 human:g1-judge → 现状缺口，进 skill-issues（G1 摩擦 1）。
+        Assessment ← 无：评估上下文的 Finding（findings.yaml：severity / tier / confidence）与之撞名，现状明说那个 Finding 不在本体里 → 本体改名 Assessment。
+        Loop ← Loop：一致。Part.loop = Node.loop（generator 侧）∪ Loop.verifier；null 无需理由除非是 loop_back 端点（P-4）。
+    - name: "world layer（PSL v2 + g1-record.md）"
+      provides: ["PSL-001…017 形态层 / 内容层规律", "G1 第一轮裁决 E-1…E-12 / P-1…P-6 / D-1…D-8", "签字版形态草案 sha256"]
+      translation_notes: "PSL 规律是元层，不建模；Assessment 三维的 psl_ids 引用它们；内容层规律（PSL-008 / 009 / 012）只出现在 Assessment.needed.psl_ids，不出现在形态草案"
+  downstream_contexts:
+    - name: "GitHub issues / skill fix_list"
+      consumes: ["Assessment.disposition = issue | fix_list 的投影", "Gap.disposition = issue 的草稿（不实现）", "naming misfit 的 suggested_name 表（一次决定是否开重命名变更提案）"]
+    - name: "skill-issues.md（Run 账本事件的投影）"
+      consumes: ["审计中发现的被审 skill 源码问题", "现状缺口：sdlc_state.py gate 无 signer_kind 槽"]
+
+agent_guidelines:
+  must:
+    - "每条 Assessment 三维各带 ≥1 PSL-ID 与 ≥1 Evidence{kind, ref}（R005, R006）"
+    - "implemented 只写三态之一并列出未达态 not_reached（R004）"
+    - "对每个 Part 都判 fit，收编不免检；misfit 只给 suggested_name（R007）"
+    - "Part.ring 从 graph.yaml Node.role 复算并写 ring_evidence，不手填（R013）"
+    - "每 Ring 的 missing 键存在，Gap 带 source 标签（R011, R017）"
+  should:
+    - "同一 Artifact 出现两个 producer 时先查是否同阶段条件替代，再并列两者不当场裁（R001）"
+    - "needed 冲突时写 contested 并列两句理由，留给 G3"
+    - "无 Gate 的 Artifact 同时写两个后果：producer ≤ declared 与 Control Gap（R003）"
+  must_not:
+    - "不得产出布尔型 implemented 或 ✓/✗ 清单（R004）"
+    - "不得修改被审 Part 的任何文件（R008）"
+    - "不得以环上配件数量少为理由提补件（R012）"
+    - "不得让脚本或 agent 代签人签门；delegated_agent 必附授权且不渲染为人签（R009）"
+    - "不得把 kind=script 的 Gate 写成'门'（R009）"
+    - "不得把审计判定叫 Finding（与 R6 产物 findings.yaml 撞名）"
+    - "不得给 Gap 存储 state 字段或给 Part 一个'空白'态（R014）"
+
+anti_patterns:
+  - pattern: "把 skill 的 README 表格'有 verify 脚本'读成'已实现 ✓'"
+    why_bad: "sdlc 全部 skill 处于 static_only：脚本在 fixture 上冒烟 ≠ 行为层验证；布尔化把三态压成一态，正是 PSL-010 反对的"
+    correct_approach: "implemented 三态各带 Evidence，未达态显式 not_reached"
+    historical_context: "2026-09-05 dogfood 起因：27 个 skill 的 gate.json 全部 static_only，但 README 表格读起来像'都实现了'"
+  - pattern: "圈没有环契约就上图"
+    why_bad: "无界循环 + 不可测通过条件是 graph engineering 点名的生产失败"
+    correct_approach: "每条 loop_back 边挂 loops.yaml#id；verify_graph.py lint 2"
+    historical_context: "2026-09-05 首版 graph.yaml 被自己的 lint 抓到两个未标环归属的圈"
+  - pattern: "审计判定叫 Finding"
+    why_bad: "sdlc R6 六审查 skill 与 pr-review 的产物就叫 findings.yaml；同一份报告里 Finding 既是审计单位又是被审产物名，必错"
+    correct_approach: "审计单位叫 Assessment；Finding 作为 Artifact 出现在 R6 行"
+    historical_context: "2026-09-05 G1 第一轮 E-4 / P-5"
+  - pattern: "收编（adopted）且与上游同名的 Part 直接判 fits"
+    why_bad: "16/28 个 skill 是收编的，这条把用户最想要的答案（哪些名字别扭）直接判合适；来路只决定改不改，不决定合不合适"
+    correct_approach: "fit 对每个 Part 都按'名字 = 产物名或位置名'判；provenance 只决定 misfit 的去向理由"
+    historical_context: "2026-09-05 G1 第一轮 P-1"
+  - pattern: "Gap 带 state 字段 + Part 有'空白'态"
+    why_bad: "同一个事实（这个缺口没有配件填）被双重表示，且带可变状态的不是值对象；missing 一维对 33 个真实 Part 恒为'不缺'"
+    correct_approach: "Gap 无存储态，由 FILLS 边派生；'缺少'是 Ring.missing，不是 Part 的维或态"
+    historical_context: "2026-09-05 G1 第一轮 三问 1 Gap 行 / P-2"
+  - pattern: "每个 loop 为 null 的 Part 都写 loop_reason"
+    why_bad: "六个环覆盖不到十个节点，二十多个 Part 都要写一句'不在任何圈里'；PSL-011 说每个圈有环契约，没说每个 Part"
+    correct_approach: "只在 loop_back 端点或 generator / verifier 而 loop 为 null 时要求理由"
+    historical_context: "2026-09-05 G1 第一轮 P-4"
+
+open_questions:
+  - id: "Q001"
+    question: "Proposal（提案）要不要成为实体？本体把它当 Assessment.disposition / Gap.disposition 的投影；跨 Part 的提案（合并两个 Part）目前以两个 source 表达"
+    raised_at: "2026-09-05"
+    raised_by: "psl-derive ×3 → G1 round 1 → 本轮"
+    owner: "XRenSiu"
+    deadline: "2026-09-30"
+    impact_if_unresolved: "提案没有 owner / 状态 / 生命周期（issue 已开 / 已关）；跨 Part 提案挂靠含糊"
+    candidates: ["留投影（现状）", "升实体 Proposal{source[], owner, state}"]
+  # Q002（报告人审是不是 Gate）与 Q003（同阶段判据）已由 G1 第二轮裁决，挪入 evolution_log 0.2.1；编号不复用。
+  - id: "Q004"
+    question: "psl-derive 的 verifier 只认 PSL-NNN 锚；UI-n / A-n / DP-n 承重但只能借最近规律并注 (via …)。放开锚格式还是让 /psl 把三层编号纳入规律索引？"
+    raised_at: "2026-09-05"
+    raised_by: "G1 round 1 三问 3 / 摩擦 5；skill-issues I-19"
+    owner: "XRenSiu"
+    deadline: "2026-09-30"
+    impact_if_unresolved: "装饰性引用无法彻底消失；G1 每轮都要人工分辨 via 注是否真"
+    candidates: ["verify_derived 接受 ← UI-1 / A3 / DP-2 锚", "/psl 给三层编号进规律索引"]
+
+evolution_log:
+  - version: "0.1.0"
+    date: "2026-09-05"
+    author: "psl-derive (merged from 3 isolated runs)"
+    change_type: "initial"
+    summary: "应然本体首版：7 对象、8 关系、12 规则、6 开放问题；7 处分歧待 G1"
+    rationale: "sdlc 九环配件审计需要一个与现状本体可对账的应然本体"
+    breaking: false
+  - version: "0.2.0"
+    date: "2026-09-05"
+    author: "psl-derive (targeted re-derivation, n=1, after G1 round 1)"
+    change_type: "refactor"
+    summary: "按 g1-record.md 的 E-1…E-12 / P-1…P-6 / D-1…D-8 重推：Finding → Assessment（三维 needed / implemented / naming）；'缺少'移到 Ring.missing；Gap 去存储态、加 source 三来源；Part.kind 去 script、ring 从 Node.role 派生；Gate 加 signer / signer_kind / authorization_ref；Evidence 值类型；Gate ADJUDICATES Assessment 仅 G3；规则 12 → 17；开放问题按 v2 收窄为 4"
+    rationale: "G1 第一轮 REJECT，归因 rule_error（PSL 自相矛盾一处、欠定四处、命名一处）；PSL 改至 v2 后按裁决定向重推，见 plugins/sdlc/dogfood/ring-audit/g1-record.md"
+    breaking: false
+  - version: "0.2.1"
+    date: "2026-09-05"
+    author: "psl-derive (targeted re-derivation, n=1, after G1 round 2)"
+    change_type: "refactor"
+    summary: "G1 第二轮三处局部改写（derivation_error，PSL 不动）：Assessment.adjudications 只 G3（报告人审即 G3，去 report_review；R010 / ADJUDICATES / lifecycle / behaviors 同步）；Artifact.alternatives_of 改为三条件定义（同 stage handled_by + conditional 边 + 同 schema），implement 组豁免、契约组触发；Part.kind human_gate 覆盖五个 kind=human 节点，merge → R7、harness-review → R8。Q002 / Q003 据此关闭：报告人审 = G3 的内容；同阶段以 graph.yaml stage 节点 + conditional 边为准"
+    rationale: "g1-record.md ## G1 第二轮：残余 1、残余 2、N-1；其余对象 / 关系 / 规则不动"
+    breaking: false

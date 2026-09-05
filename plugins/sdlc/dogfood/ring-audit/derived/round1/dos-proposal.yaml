@@ -1,0 +1,202 @@
+# dos-proposal.yaml — 应然本体（由 PSL-sdlc-ring-audit 推导；与 /dos-extract 的现状本体同 schema，供 G1 对账）
+# 三次隔离推导对象集合完全一致（7 个，全部来自 PSL Domain Model）；关系与规则取交集 + 标注分歧（见 divergence.md）。
+
+meta:
+  dos_version: "0.1.0"
+  product: "sdlc ring audit（审计 sdlc 插件九环配件的世界）"
+  bounded_context: "lifecycle plugin audit"
+  owner: "XRenSiu"
+  status: "draft"
+  last_reviewed: "2026-09-05"
+  related_docs:
+    - "plugins/sdlc/dogfood/ring-audit/PSL-sdlc-ring-audit.md"
+    - "plugins/sdlc/dogfood/ring-audit/derived/divergence.md"
+    - "plugins/sdlc/docs/ARCHITECTURE.md"
+
+scope:
+  in_scope: |
+    审计一个生命周期插件（sdlc）时世界里有什么：环、配件、缺口、产物、闸门、审计判定、环契约，
+    以及它们之间"谁填谁、谁产什么、谁检什么、谁裁谁"的关系。覆盖报告 / audit.yaml / 检查脚本的形态。
+  out_of_scope: |
+    不覆盖被审插件自身的运行时本体（那是 /dos-extract 抽出的现状本体 dos.yaml）；不覆盖 GitHub issue / PR
+    的实体；不覆盖如何实现新配件。
+  audience:
+    - "plugin author (XRenSiu)"
+    - "AI agents running the audit (card-implementer / reviewers)"
+    - "G1 / G3 adjudicators"
+  success_criteria: |
+    一个没读过 sdlc 的 agent 拿到这份本体 + PSL，能写出被 check_audit.py 接受且被 G1 认为"抓对了世界"的 audit.yaml。
+
+reuse:
+  internal_references:
+    - name: "sdlc ARCHITECTURE §6 自洽规则"
+      url: "plugins/sdlc/docs/ARCHITECTURE.md"
+      adopted_concepts: ["一产物一生产者", "三道门只能人签", "static_only 三态"]
+    - name: "skillwise 四原子"
+      url: "/Users/xrensiu/development/owner/skillwise/docs/THEORY.md"
+      adopted_concepts: ["Knowledge / Capability / Judgment / Control", "deletion 测试"]
+  external_references:
+    - name: "LangChain four loops / graph engineering contracts"
+      url: "plugins/sdlc/docs/proposals/loop-graph-engineering.md"
+      adopted_concepts: ["Loop as contract with generator ≠ verifier"]
+  deliberate_divergence:
+    - from: "把 skill 文件当对象"
+      reason: "PSL Vision：配件是缺口的填充物不是文件；对象是 Part 而非 SkillFile"
+
+objects:
+  Ring:
+    description: "生命周期的一段（R0 世界 … R8 学习）或脊柱；每环回答一个问题"
+    type: "aggregate_root"
+    properties:
+      id: { type: "string", required: true, description: "R0..R8 | spine" }
+      question: { type: "string", required: false, description: "这一环回答什么（PSL 欠定：字段名由 G1 定）" }
+    identity_rule: "由 id 唯一标识；脊柱按 id=spine 的一条 Ring 记录处理（PSL 欠定 D-8 相关）"
+    lifecycle: "静态；环的增删是插件架构变更，不在审计内"
+  Part:
+    description: "环上的可命名单元：skill / agent / script / asset / human gate / loop 的承载者"
+    type: "entity"
+    properties:
+      id: { type: "string", required: true }
+      kind: { type: "enum[skill, agent, script, asset, human_gate]", required: true }
+      provenance: { type: "enum[authored, adopted]", required: true, description: "新写 / 收编（决定命名判据）" }
+      role: { type: "enum[producer, gate, orchestrator]", required: false, description: "产物为 0 时说明为何不生产" }
+    identity_rule: "由 id 唯一标识；同名不同 kind 视为不同 Part（如 skill 与 agent 同名）"
+    lifecycle: "空白（lifecycle 登记）→ 已声明 → 已编译 → 已验证 → 已校准；逆向合法且留痕"
+  Gap:
+    description: "引擎自己给不出的那部分；四原子之一或多"
+    type: "value_object"
+    properties:
+      atoms: { type: "set[Knowledge, Capability, Judgment, Control]", required: true }
+      state: { type: "enum[identified_no_part, has_part]", required: true }
+      necessity: { type: "enum[necessary, unnecessary, contested]", required: true }
+      deletion_test: { type: "string", required: true, description: "撤掉它，引擎会 ___" }
+    identity_rule: "由 (ring, atoms, 描述) 定义；不可变——atoms 变了就是另一个 Gap"
+  Artifact:
+    description: "配件独占生产的东西（一产物一生产者）"
+    type: "entity"
+    properties:
+      id: { type: "string", required: true }
+      producer: { type: "Part", required: true, description: "恰一个；第二个出现 = 两者 merge_candidate" }
+    identity_rule: "由 id 唯一标识（如 done_when.yaml、cards/CARD-xx.yaml、findings.yaml）"
+  Gate:
+    description: "检产物的机械闸（脚本）或只能人签的门（G1/G2/G3）"
+    type: "entity"
+    properties:
+      id: { type: "string", required: true }
+      kind: { type: "enum[script, human]", required: true }
+      signer: { type: "string", required: false, description: "kind=human 时必填；代签 agent 必附 authorization_ref" }
+      signer_kind: { type: "enum[human, delegated_agent]", required: false }
+    identity_rule: "脚本以路径标识；人签门以 G1/G2/G3 标识"
+  Finding:
+    description: "对一个 Part 的四维审计判定（missing / needed / implemented / naming），每维带依据 PSL-ID 与证据"
+    type: "entity"
+    properties:
+      part: { type: "Part", required: true }
+      status: { type: "enum[candidate, evidenced, adjudicated]", required: true }
+      missing: { type: "dim{verdict, psl_ids[], evidence[]}", required: true }
+      needed: { type: "dim{verdict, psl_ids[], evidence[]}", required: true }
+      implemented: { type: "dim{verdict∈[declared,compiled,verified], psl_ids[], evidence[], calibrated?}", required: true }
+      naming: { type: "dim{provenance, fit, suggested_name?, rename=false, psl_ids[], evidence[]}", required: true }
+      disposition: { type: "enum[fix_list, issue, none]", required: true }
+      adjudications: { type: "list[{gate, signer, signer_kind, authorization_ref, supersedes?}]", required: false }
+    identity_rule: "由 part 唯一标识（一对一）"
+    lifecycle: "candidate → evidenced → adjudicated；裁决只追加，不改写"
+  Loop:
+    description: "配件所属的环契约（loops.yaml#id）：generator / verifier / stop"
+    type: "entity"
+    properties:
+      id: { type: "string", required: true, description: "loops.yaml#<id>" }
+    identity_rule: "由 loops.yaml 的 id 标识；本本体只引用不复述"
+
+relationships:
+  - { subject: "Ring", verb: "CONTAINS", object: "Part", cardinality: "1:N", inverse: "BELONGS_TO", description: "一个 Part 属于恰一个 Ring（脊柱视为 Ring）" }
+  - { subject: "Ring", verb: "EXPOSES", object: "Gap", cardinality: "1:N", inverse: "LOCATED_IN", description: "三版推导都自行补出的关系；PSL 欠定 D-2，建议进 PSL Domain Model" }
+  - { subject: "Part", verb: "FILLS", object: "Gap", cardinality: "N:N", inverse: "FILLED_BY", description: "0 个 = 过填；一个 Gap 可被多 Part 填（PSL 欠定：反向基数）" }
+  - { subject: "Part", verb: "PRODUCES", object: "Artifact", cardinality: "1:1", inverse: "PRODUCED_BY", description: "0..1；第二个生产者 = 合并候选" }
+  - { subject: "Gate", verb: "CHECKS", object: "Artifact", cardinality: "N:N", inverse: "CHECKED_BY", description: "无 Gate 的 Artifact 使 producer 的 implemented ≤ declared（D-3 临时取向）" }
+  - { subject: "Gate", verb: "ADJUDICATES", object: "Finding", cardinality: "1:N", inverse: "ADJUDICATED_AT", description: "仅 kind=human；D-8 临时取向，待 G1" }
+  - { subject: "Loop", verb: "GOVERNS", object: "Part", cardinality: "1:N", inverse: "GOVERNED_BY", description: "0..1；脊柱上的 Part 可无 Loop 但要写原因" }
+  - { subject: "Finding", verb: "JUDGES", object: "Part", cardinality: "1:1", inverse: "JUDGED_BY", description: "" }
+
+rules:
+  - { id: "R001", statement: "一个 Artifact 有且只有一个 producer Part；出现第二个时两者的 Finding 都标 merge_candidate，审计者不裁", rationale: "PSL-001", enforced_by: "system" }
+  - { id: "R002", statement: "一个 Part 至少填一个 Gap 原子且每个原子附 deletion 测试一句话；空集判 overfill", rationale: "PSL-002, PSL-016", enforced_by: "system" }
+  - { id: "R003", statement: "每个 Artifact 至少被一个 Gate 检（script 或 human）；否则其 producer 的 implemented 不得高于 declared", rationale: "PSL-015；D-3 临时取向", enforced_by: "system" }
+  - { id: "R004", statement: "Finding.implemented 只取 declared / compiled / verified 之一并各附证据；不得为布尔", rationale: "PSL-010, PSL-007；D-1 临时取向", enforced_by: "system" }
+  - { id: "R005", statement: "Finding 四维各自 psl_ids 非空且每个 id 存在于 PSL 规律索引", rationale: "PSL-003", enforced_by: "system" }
+  - { id: "R006", statement: "evidence 为空的 Finding 停在 candidate，不进 audit.yaml 与报告，也不删除", rationale: "PSL-010, PSL-005", enforced_by: "system" }
+  - { id: "R007", statement: "naming 只产生 suggested_name；rename 恒为 false；改名走另一次 G2 变更提案", rationale: "PSL-014, PSL-013", enforced_by: "system" }
+  - { id: "R008", statement: "审计者不得修改任何被审 Part 的文件；被审目录审计前后 git diff 为空", rationale: "PSL-003", enforced_by: "system" }
+  - { id: "R009", statement: "kind=human 的 Gate 必有 signer；signer_kind=delegated_agent 时必附 authorization_ref；脚本只核对存在性，不代签", rationale: "PSL-006", enforced_by: "system" }
+  - { id: "R010", statement: "Finding 的裁决只追加 adjudications，不覆盖、不删除；推翻以 supersedes 表达", rationale: "PSL-005", enforced_by: "system" }
+  - { id: "R011", statement: "audit.yaml 的 Ring 集合恰为 {R0..R8, spine}，每 Ring 有 missing 键（可为空数组）；缺任一即 exit 1", rationale: "PSL-011, PSL-017, PSL-004", enforced_by: "system" }
+  - { id: "R012", statement: "每条提案指向一个 Finding-id 或 Gap-id；以环上配件数量为理由的提案不得存在", rationale: "PSL-002", enforced_by: "system" }
+
+composition:
+  Report:
+    description: "按 Ring 分节的审计报告"
+    derived_from: ["audit.yaml 的 rings[].parts[].finding 投影为表", "rings[].missing 投影为'缺少'节", "Finding.disposition 分组为提案清单"]
+    is_persistent: true
+  ProposalList:
+    description: "报告末尾的提案清单"
+    derived_from: ["disposition ≠ none 的 Finding", "identified_no_part 的 Gap（去向 issue）"]
+    is_persistent: false
+
+behaviors:
+  - trigger: "审计者读一个 Ring"
+    effects: ["该 Ring 每个 Part 的 Finding 从 candidate 变 evidenced（若四维证据齐）", "无 Part 的 Gap 进该 Ring 的 missing"]
+    notes: "PSL Workflow Σ 第一条"
+  - trigger: "两个 Part 声明同一 Artifact"
+    effects: ["两者 Finding.needed.verdict = merge_candidate", "两者互相引用", "审计者不裁"]
+    notes: "R001"
+  - trigger: "G1 / G3 裁决一条 Finding"
+    effects: ["追加一条 adjudication", "status → adjudicated", "被推翻的原判定保留"]
+    notes: "R010"
+  - trigger: "检查脚本运行"
+    effects: ["对完整 audit.yaml exit 0", "对删掉任一 Ring 的变体 exit 1", "run_evidence 记录两次运行；缺变体运行则 exit 0 标 uncalibrated"]
+    notes: "D-5 临时取向"
+
+bounded_contexts:
+  current_context: "lifecycle plugin audit"
+  upstream_contexts:
+    - name: "sdlc plugin (as-is ontology, dos.yaml by /dos-extract)"
+      provides: ["Skill / Agent / Script / Gate / Loop / Layer 等现状对象"]
+      translation_notes: "现状本体的 Skill/Agent/Script 在本上下文里都是 Part.kind 的取值；现状的 Stage 对应本上下文的 Ring 的粒度更细（一环含多阶段）"
+  downstream_contexts:
+    - name: "GitHub issues / skill fix_list"
+      consumes: ["Finding.disposition = issue | fix_list 的投影"]
+
+agent_guidelines:
+  must:
+    - "每条 Finding 四维各带 ≥1 PSL-ID 与 ≥1 证据路径（R005, R006）"
+    - "implemented 只写三态之一并列出未达态（R004）"
+    - "先判 provenance 再判 fit；misfit 只给 suggested_name（R007）"
+  should:
+    - "同一 Artifact 出现两个 producer 时并列两者，不当场裁（R001）"
+    - "needed 冲突时写 contested 并列两句理由，留给 G1/G3"
+  must_not:
+    - "不得产出布尔型 implemented 或 ✓/✗ 清单（R004）"
+    - "不得修改被审 Part 的任何文件（R008）"
+    - "不得以环上配件数量少为理由提补件（R012）"
+    - "不得让脚本或 agent 代签人签门；delegated_agent 必附授权（R009）"
+
+anti_patterns:
+  - pattern: "把 skill 的 README 表格'有 verify 脚本'读成'已实现 ✓'"
+    why_bad: "sdlc 全部 skill 处于 static_only：脚本在 fixture 上冒烟 ≠ 行为层验证；布尔化把三态压成一态，正是 PSL-010 反对的"
+    correct_approach: "implemented 三态各带证据路径，未达态显式 not_reached"
+    historical_context: "2026-09-05 dogfood 起因：27 个 skill 的 gate.json 全部 static_only，但 README 表格读起来像'都实现了'"
+  - pattern: "圈没有环契约就上图"
+    why_bad: "无界循环 + 不可测通过条件是 graph engineering 点名的生产失败"
+    correct_approach: "每条 loop_back 边挂 loops.yaml#id；verify_graph.py lint 2"
+    historical_context: "2026-09-05 首版 graph.yaml 被自己的 lint 抓到两个未标环归属的圈（验收扇入回交、fix-verifier 回交）"
+
+open_questions:
+  - { id: "Q001", question: "implemented 是三态还是五态？Domain Model 与 State Machine 不一致（D-1）", raised_at: "2026-09-05", raised_by: "psl-derive ×3", owner: "XRenSiu", deadline: "2026-09-30", impact_if_unresolved: "audit.yaml schema 与检查脚本谓词定不下来", candidates: ["三态 + 两个边态（临时取向）", "五阶阶梯"] }
+  - { id: "Q002", question: "Gap 归属于 Ring 吗？PSL Domain Model 没写 Ring 与 Gap 的关系，三版都自己补了（D-2）", raised_at: "2026-09-05", raised_by: "psl-derive ×3", owner: "XRenSiu", deadline: "2026-09-30", impact_if_unresolved: "Gap 在 audit.yaml 的落位三种写法并存", candidates: ["Ring EXPOSES Gap 1:N（临时取向）", "Gap 一等顶层列表"] }
+  - { id: "Q003", question: "Proposal / Signer-Authorization / Run 要不要成为实体？三版都需要又都没有", raised_at: "2026-09-05", raised_by: "psl-derive ×3", owner: "XRenSiu", deadline: "2026-09-30", impact_if_unresolved: "提案没有 owner/状态；代签授权没有形状；跨运行 Finding 无法关联", candidates: ["Signer 进 Domain Model；Proposal / Run 留 open", "三者都进"] }
+  - { id: "Q004", question: "无 Gate 的 Artifact 的判定后果（D-3）", raised_at: "2026-09-05", raised_by: "psl-derive", owner: "XRenSiu", deadline: "2026-09-30", impact_if_unresolved: "implemented 上限规则不定", candidates: ["implemented ≤ declared（临时取向）", "生成一条 Gap 进 missing", "只记录"] }
+  - { id: "Q005", question: "脊柱是一条 Ring 还是跨环容器？（v3 欠定）", raised_at: "2026-09-05", raised_by: "psl-derive v3", owner: "XRenSiu", deadline: "2026-09-30", impact_if_unresolved: "Ring CONTAINS Part 1:N 可能不成立", candidates: ["按 id=spine 的 Ring 记录（临时取向）", "容器，Part 可多归属"] }
+  - { id: "Q006", question: "Gate 与 Loop.verifier 是否同一个东西？", raised_at: "2026-09-05", raised_by: "psl-derive v3", owner: "XRenSiu", deadline: "2026-09-30", impact_if_unresolved: "本体里两者无关系，审计可能重复计数", candidates: ["Loop.verifier 是 Gate 的一个角色", "两者独立"] }
+
+evolution_log:
+  - { version: "0.1.0", date: "2026-09-05", author: "psl-derive (merged from 3 isolated runs)", change_type: "initial", summary: "应然本体首版：7 对象、8 关系、12 规则、6 开放问题；7 处分歧待 G1", rationale: "sdlc 九环配件审计需要一个与现状本体可对账的应然本体", breaking: false }

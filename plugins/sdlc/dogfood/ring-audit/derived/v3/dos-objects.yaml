@@ -1,0 +1,177 @@
+# =============================================================================
+# DOS 提案（部分）— sdlc-ring-audit · derivation_run 3 of 3
+# 只含 objects / relationships / rules 三节；形状照 dos-extract/assets/dos_template.yaml。
+# 对象名只取 PSL Domain Model 的七个实体；不造 PSL 没有的实体（欠定项见 form-draft.md 末节）。
+# source_psl: plugins/sdlc/dogfood/ring-audit/PSL-sdlc-ring-audit.md
+# =============================================================================
+
+objects:
+  Ring:
+    description: "生命周期的一段（R0–R8）或脊柱，各回答一个问题"
+    type: "aggregate_root"
+    identity_rule: "由 id（R0…R8 | spine）唯一标识"
+    lifecycle: "静态；审计只读它，不改它的成员"
+
+  Part:
+    description: "环上一个可命名单元：skill / agent / script / asset / human-gate / loop"
+    type: "entity"
+    identity_rule: "由所在 Ring + 名字唯一标识；同名不同 Ring 视为不同 Part"
+    lifecycle: "blank → declared → compiled → verified → calibrated；逆向合法但须留痕"
+
+  Gap:
+    description: "引擎自己给不出的那部分，原子 ⊆ {Knowledge, Capability, Judgment, Control}"
+    type: "entity"
+    identity_rule: "由所在 Ring + 原子集合 + 一句缺口描述唯一标识"
+    lifecycle: "unidentified → identified_no_part → has_part；长期 identified_no_part 即 lifecycle 空白登记"
+
+  Artifact:
+    description: "某个 Part 独占生产的东西（一产物一生产者）"
+    type: "entity"
+    identity_rule: "由产物名（文件名 / 事件名）唯一标识"
+    lifecycle: "随 producer Part 存在；可回滚（PSL-005），判据与失败记录不在此类"
+
+  Gate:
+    description: "检产物的脚本（机械闸）或只能人签的门（G1 / G2 / G3）"
+    type: "entity"
+    identity_rule: "由脚本路径或门 id 唯一标识；kind ∈ {script, human}"
+    lifecycle: "静态；一次运行里被触发 0..n 次，每次有 signer"
+
+  Finding:
+    description: "对一个 Part 的四维判定（missing / needed / implemented / naming），每维带 PSL-ID"
+    type: "entity"
+    identity_rule: "由被判 Part 唯一标识（与 Part 一对一）"
+    lifecycle: "candidate → evidenced → adjudicated；只追加不改写"
+
+  Loop:
+    description: "Part 所属的环契约（loops.yaml#id），含 generator / verifier / stop"
+    type: "entity"
+    identity_rule: "由 loops.yaml 中的 id 唯一标识"
+    lifecycle: "数据，随 loops.yaml 版本演化；审计只引用不复述"
+
+relationships:
+  - subject: "Ring"
+    verb: "CONTAINS"
+    object: "Part"
+    cardinality: "1:N"
+    inverse: "BELONGS_TO"
+    description: "每 Ring 含 1..n Part；一个 Part 恰属一个 Ring（脊柱按一条 Ring 处理，见欠定项）"
+
+  - subject: "Part"
+    verb: "FILLS"
+    object: "Gap"
+    cardinality: "N:N"
+    inverse: "FILLED_BY"
+    description: "Part 填 0..n Gap；0 = 过填（PSL-002）；Gap 可被 0..n Part 声明填充，多于 1 时是合并信号"
+
+  - subject: "Part"
+    verb: "PRODUCES"
+    object: "Artifact"
+    cardinality: "1:1"
+    inverse: "PRODUCED_BY"
+    description: "Part 独占 0..1 Artifact（0 = 它是门或编排者）；一个 Artifact 恰有一个 producer（PSL-001）"
+
+  - subject: "Gate"
+    verb: "CHECKS"
+    object: "Artifact"
+    cardinality: "N:N"
+    inverse: "CHECKED_BY"
+    description: "Artifact 被 0..n Gate 检；0 即 PSL-015 违规信号"
+
+  - subject: "Loop"
+    verb: "GOVERNS"
+    object: "Part"
+    cardinality: "1:N"
+    inverse: "GOVERNED_BY"
+    description: "Part 属于 0..1 Loop；Loop 只以 loops.yaml#id 被引用（PSL-011）"
+
+  - subject: "Finding"
+    verb: "JUDGES"
+    object: "Part"
+    cardinality: "1:1"
+    inverse: "JUDGED_BY"
+    description: "每 Part 恰一条 Finding；四维各引用 ≥1 条 PSL 规律"
+
+  - subject: "Gate"
+    verb: "ADJUDICATES"
+    object: "Finding"
+    cardinality: "1:N"
+    inverse: "ADJUDICATED_AT"
+    description: "只有 kind=human 的 Gate（G1 / G3）能把 Finding 推到 adjudicated（PSL-006）；追加式，可多次"
+
+  - subject: "Ring"
+    verb: "EXPOSES"
+    object: "Gap"
+    cardinality: "1:N"
+    inverse: "LOCATED_IN"
+    description: "Gap 位于某 Ring；Ring 上 identified_no_part 的 Gap 集合即该 Ring 的 missing 节（PSL-017）"
+
+rules:
+  - id: "R001"
+    statement: "一个 Artifact 必须有且只有一个 producer Part；两个 Part 争同一 Artifact 时，两者的 Finding 都标 merge_candidate，审计者不得当场裁掉其一"
+    rationale: "PSL-001 一产物一生产者；争产物 = 合并候选，裁决属 G1/G3"
+    enforced_by: "system"
+
+  - id: "R002"
+    statement: "Part 的 needed 维必须带一句 deletion 测试证据；填零个 Gap 原子的 Part 判 overfill"
+    rationale: "PSL-002 存在理由是填缺口（deletion 测试）；PSL-016 缺口四原子"
+    enforced_by: "system"
+
+  - id: "R003"
+    statement: "Finding.implemented 只能取 declared | compiled | verified（可加 calibrated）；不得出现布尔值"
+    rationale: "PSL-010 '已实现'是三态；静态过审 ≠ 有效"
+    enforced_by: "system"
+
+  - id: "R004"
+    statement: "Finding 四维各自的 psl_ids 非空且每个 id 都在 PSL-001..PSL-017 内"
+    rationale: "四维分别由 PSL-017（missing）、PSL-002（needed）、PSL-010（implemented）、PSL-014（naming）奠基，无依据的维是装饰"
+    enforced_by: "system"
+
+  - id: "R005"
+    statement: "每个 Artifact 至少被一个 Gate 检；checked_by 为空时其 producer 的 implemented 不得高于 declared"
+    rationale: "PSL-015 每个环节的产物要么被脚本检，要么被门挡"
+    enforced_by: "system"
+
+  - id: "R006"
+    statement: "Finding.naming 必须先写 provenance ∈ {authored, adopted} 再写 fit；suggested_name 存在时 rename 恒为 false"
+    rationale: "PSL-014 命名两来路，建议不等于重命名；PSL-013 重命名是 harness 改动，须经人"
+    enforced_by: "user_workflow"
+
+  - id: "R007"
+    statement: "审计运行内不得修改任何被审 Part 的文件；发现的问题只落到 skill-issues 与 Finding.disposition"
+    rationale: "PSL-003 评估者与被评估者分离，审计者不改被审对象"
+    enforced_by: "user_workflow"
+
+  - id: "R008"
+    statement: "audit.yaml 的 Ring 集合必须恰为 {R0…R8, spine}，缺任一则检查脚本 exit 1"
+    rationale: "PSL-011 图与环是数据，每个环有契约；PSL-004 终止与阈值由脚本强制"
+    enforced_by: "system"
+
+  - id: "R009"
+    statement: "每个 Ring 必有 missing 键（可为空数组）；每个 identified_no_part 的 Gap 必出现在某 Ring 的 missing 中并带 necessity 判定"
+    rationale: "PSL-017 空白诚实登记；PSL-002 必要性只由 deletion 测试裁"
+    enforced_by: "system"
+
+  - id: "R010"
+    statement: "Finding 的 adjudications 只追加不改写；推翻以新条目 supersedes 前一条表达"
+    rationale: "PSL-005 账本只增，判据与失败记录不回滚"
+    enforced_by: "system"
+
+  - id: "R011"
+    statement: "每条 adjudication 必记 signer 与 signer_kind ∈ {human, delegated_agent}，delegated_agent 必附 authorization_ref，报告不得把代签渲染为人签"
+    rationale: "PSL-006 三道门只能人签；--autopilot 免逐步确认不免门；代签须留授权痕"
+    enforced_by: "user_workflow"
+
+  - id: "R012"
+    statement: "检查脚本的 exit 0 只有在同一运行里对删掉任一 Ring 的变体给出 exit 1 之后才能作为证据，否则标 uncalibrated"
+    rationale: "PSL-007 未校准的标准不当证据；PSL-010 静态过审 ≠ 有效"
+    enforced_by: "system"
+
+  - id: "R013"
+    statement: "evidence 为空的 Finding 停在 candidate，不进报告正文"
+    rationale: "PSL-010 判定要有行为层/文件层证据；PSL-003 判据先于结论"
+    enforced_by: "system"
+
+  - id: "R014"
+    statement: "两次运行间 fingerprint 相同且状态未变的 Finding 不重复进正文，记 no_progress 并升级 disposition 为 issue"
+    rationale: "PSL-008 同指纹重复 = 无进展 = 升级；PSL-012 repeat 是换层信号"
+    enforced_by: "not_enforced"

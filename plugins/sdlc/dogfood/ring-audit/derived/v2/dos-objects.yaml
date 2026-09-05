@@ -1,0 +1,164 @@
+# =============================================================================
+# DOS 部分提案 — sdlc-ring-audit（审计交付物的本体）
+# source_psl: plugins/sdlc/dogfood/ring-audit/PSL-sdlc-ring-audit.md
+# derivation_run: 2 of 3
+# 只含 objects / relationships / rules 三节。对象名全部取自 PSL Domain Model；
+# PSL 没有的实体（Proposal / Signer / Run / PSL 规律）不在此建对象，见 form-draft.md 的 "PSL 欠定"。
+# =============================================================================
+
+objects:
+  Ring:
+    description: "生命周期的一段（R0…R8）或脊柱；每环回答一个问题，是 Part 的分组键"
+    type: "entity"
+    identity_rule: "由环号 R0–R8 或 spine 唯一标识"
+
+  Part:
+    description: "环上的一个可命名单元：skill / agent / script / asset / human-gate / loop"
+    type: "aggregate_root"
+    identity_rule: "由 (ring, name) 唯一标识；同名跨环视为不同 Part"
+    lifecycle: "空白 → 已声明 → 已编译 → 已验证 → 已校准；逆向流转合法但必须留痕"
+
+  Gap:
+    description: "引擎自己给不出的那部分；原子 ∈ {Knowledge, Capability, Judgment, Control}"
+    type: "entity"
+    identity_rule: "由 (ring, 原子, 一句话描述) 标识；被多个 Part 填时仍是同一个 Gap"
+    lifecycle: "未识别 → 已识别无配件（= 缺少）→ 有配件"
+
+  Artifact:
+    description: "Part 独占生产的东西；一产物一生产者"
+    type: "entity"
+    identity_rule: "由产物路径或产物名唯一标识"
+
+  Gate:
+    description: "检产物的脚本（机械闸）或只能人签的门（G1 / G2 / G3）"
+    type: "entity"
+    identity_rule: "script 由脚本路径或 gate.json 标识；human_gate 由 G1 / G2 / G3 标识"
+
+  Finding:
+    description: "对一个 Part 的四维判定 missing / needed / implemented / naming，每维带 PSL-ID 与证据"
+    type: "entity"
+    identity_rule: "与 Part 一对一；id = finding:<ring>/<part>"
+    lifecycle: "候选 → 有证据 → 已裁决；候选不进报告，裁决只追加不改写"
+
+  Loop:
+    description: "Part 所属的环契约（loops.yaml#id），有 generator / verifier / stop"
+    type: "entity"
+    identity_rule: "由 loops.yaml 中的 id 唯一标识"
+
+relationships:
+  - subject: "Ring"
+    verb: "CONTAINS"
+    object: "Part"
+    cardinality: "1:N"
+    inverse: "BELONGS_TO"
+    description: "一环含 1..n Part；一个 Part 只属于一环（脊柱视为一环）"
+
+  - subject: "Ring"
+    verb: "HOSTS"
+    object: "Gap"
+    cardinality: "1:N"
+    inverse: "LOCATED_IN"
+    description: "每个 Gap 归属一环；该环无 Part 填它时它进该环的缺少列表（PSL-017）"
+
+  - subject: "Part"
+    verb: "FILLS"
+    object: "Gap"
+    cardinality: "N:N"
+    inverse: "FILLED_BY"
+    description: "Part 填 0..n Gap，0 = 过填（PSL-002）；一个 Gap 可被多个 Part 填"
+
+  - subject: "Part"
+    verb: "PRODUCES"
+    object: "Artifact"
+    cardinality: "1:1"
+    inverse: "PRODUCED_BY"
+    description: "Part 侧 0..1（0 = 门或编排者），Artifact 侧恰 1（PSL-001）"
+
+  - subject: "Part"
+    verb: "CARRIES"
+    object: "Gate"
+    cardinality: "1:1"
+    inverse: "CARRIED_BY"
+    description: "script 类 Gate 由 script 类 Part 承载；human_gate 由 human-gate 类 Part 承载"
+
+  - subject: "Gate"
+    verb: "CHECKS"
+    object: "Artifact"
+    cardinality: "N:N"
+    inverse: "CHECKED_BY"
+    description: "Artifact 被 0..n Gate 检；0 = unchecked，浮现为缺少（PSL-015）"
+
+  - subject: "Loop"
+    verb: "GOVERNS"
+    object: "Part"
+    cardinality: "1:N"
+    inverse: "RUNS_IN"
+    description: "Part 属于 0..1 Loop；null 要写原因（PSL-011）"
+
+  - subject: "Finding"
+    verb: "JUDGES"
+    object: "Part"
+    cardinality: "1:1"
+    inverse: "JUDGED_BY"
+    description: "每个 Part 恰有一条 Finding；四维各引用 ≥ 1 条 PSL 规律"
+
+rules:
+  - id: "R001"
+    statement: "一个 Artifact 有且只有一个生产 Part；出现第二个生产者时两者都判 merge_candidate"
+    rationale: "PSL-001 一个产物只有一个生产者；两个配件争同一产物 = 合并候选"
+    enforced_by: "system"
+
+  - id: "R002"
+    statement: "一个 Part 至少填一个 Gap 原子，且每个原子附 deletion 测试一句话；空集判 overfill"
+    rationale: "PSL-002 配件的存在理由是填引擎自己填不了的缺口；PSL-016 缺口四原子"
+    enforced_by: "system"
+
+  - id: "R003"
+    statement: "每个 Artifact 至少被一个 Gate 检（script 或 human_gate）；否则生成一条 Gap 进 missing"
+    rationale: "PSL-015 每个环节的产物要么被脚本检，要么被门挡"
+    enforced_by: "system"
+
+  - id: "R004"
+    statement: "Finding.implemented 只能取 declared / compiled / verified，每态附证据路径；不得为布尔"
+    rationale: "PSL-010 静态过审 ≠ 有效；已实现是声明 / 编译 / 验证三态"
+    enforced_by: "system"
+
+  - id: "R005"
+    statement: "Finding 每维的 psl_ids 非空，且每个 ID 存在于 PSL 规律索引"
+    rationale: "PSL-003 判据先于代码：没有判据的判定不是判定"
+    enforced_by: "system"
+
+  - id: "R006"
+    statement: "无 evidence 的 Finding 停在 candidate，不写入 audit.yaml 与报告"
+    rationale: "PSL-007 未校准的标准不当证据；PSL-010 静态过审 ≠ 有效"
+    enforced_by: "system"
+
+  - id: "R007"
+    statement: "naming 维只产生 suggested_name；renamed 恒为 false；改名走另一次 G2 变更提案"
+    rationale: "PSL-014 命名两来路；建议不等于重命名"
+    enforced_by: "system"
+
+  - id: "R008"
+    statement: "审计者不得修改被审 Part 的任何文件；发现进 skill-issues 与提案，被审文件审计前后 sha256 相同"
+    rationale: "PSL-003 评估者与被评估者分离；审计者不改被审对象"
+    enforced_by: "user_workflow"
+
+  - id: "R009"
+    statement: "G1 / G2 / G3 的 signer 非空；signer 为 proxy_agent 时必须附 authorization 记录"
+    rationale: "PSL-006 三道门只能人签；--autopilot 免逐步确认不免门"
+    enforced_by: "system"
+
+  - id: "R010"
+    statement: "Finding 一旦 evidenced 即入账，裁决以追加 adjudication 实现，不覆盖、不删除"
+    rationale: "PSL-005 账本只增；判据与失败记录不回滚"
+    enforced_by: "user_workflow"
+
+  - id: "R011"
+    statement: "audit.yaml 必含九环 + 脊柱全部键与 missing: 节（可为空数组）；缺任一键即 exit 1"
+    rationale: "PSL-011 图与环是数据；PSL-017 空白诚实登记，不装作已有"
+    enforced_by: "system"
+
+  - id: "R012"
+    statement: "每条提案必须指向一个 Finding-id 或 Gap-id；以环上配件数量为理由的提案不得存在"
+    rationale: "PSL-002 补的理由只能是一个已识别的 Gap，不以流程图上有格子裁"
+    enforced_by: "system"

@@ -1,0 +1,81 @@
+# L4 任务卡 — sdlc-ring-audit；合格标准：单独丢给一个没有任何上下文的 agent，它能干完。
+id: CARD-06
+title: 整体装配：合并四个片段为 audit.yaml，全局校验（含删环变体自校准），渲染 AUDIT.md（按环表 + missing 行 + 提案清单 + run_evidence）
+req_ids:
+- REQ-001
+- REQ-002
+- REQ-003
+- REQ-004
+- REQ-005
+- REQ-006
+ac_ids:
+- AC-001-a
+- AC-001-b
+- AC-002-a
+- AC-002-b
+- AC-003-a
+- AC-003-b
+- AC-004-a
+- AC-004-b
+- AC-005-a
+- AC-006-a
+dos_slice:
+  objects:
+  - Ring
+  - Part
+  - Gap
+  - Artifact
+  - Gate
+  - Assessment
+  - Loop
+  invariants:
+  - R001
+  - R004
+  - R005
+  - R008
+  - R009
+  - R010
+  - R011
+  - R012
+allowed_files:
+- plugins/sdlc/dogfood/ring-audit/audit.yaml
+- plugins/sdlc/dogfood/ring-audit/AUDIT.md
+- plugins/sdlc/dogfood/ring-audit/render_audit.py
+context_estimate_tokens: 28000
+depends_on:
+- CARD-01
+- CARD-02
+- CARD-03
+- CARD-04
+- CARD-05
+notes: '上下文自包含：只读 (1) 本卡；(2) sdlc_state.py show 的摘要；(3) 本卡 ac_ids 对应的 AC（done_when.yaml 只读）；(4) 形态草案 derived/form-draft.md（签字版 746c56ef…；F-13/F-17 是检查脚本接口，F-01…F-09 是记录形状）；(5) PSL-sdlc-ring-audit.md 的 Domain
+  Model / 规律索引；(6) allowed_files 内源码。不得读：ratchet-log/**、spec-robustness、评审 skill 的提示、其他卡、.sdlc/ 账本里评审者的发现。 交付：(1) audit.yaml = 四个片段的合并（rings 顺序 R0..R8, spine），顶层加 artifacts[]（每个 Artifact 一条 producer + alternatives_of?
+  + checked_by[]）、gates[]（10 道：5 human 带 signer/signer_kind/authorization_ref——本次 G1/G2/G3 的 signer 与授权从 g1-record.md / g2-record.md / .sdlc/sdlc-ring-audit/state.json 抄，merge / harness-review 本次未发生写 signer
+  null 且 not_exercised；script 闸按片段汇总）、proposals[]（{id, source: Assessment-id | Gap-id, destination: skill_fix_list|new_issue|no_action, text}，无 source 不许有；naming misfit 的 disposition 只能 issue|none）、run_evidence{run:
+  {slug: sdlc-ring-audit, state: .sdlc/sdlc-ring-audit/state.json, ledger: .sdlc/sdlc-ring-audit/ledger.md}, gates: [...], external_evidence: {kind: substitute, what: ''check-audit 机械检查 + 代签 agent 独立读'',
+  valid_for: ''this dogfood only''}, check_runs: [{cmd, exit} 对完整 audit.yaml exit 0；{cmd --variant delete-ring:R6, exit 1}——缺变体记录则标 uncalibrated], skill_issues: plugins/sdlc/dogfood/ring-audit/skill-issues.md,
+  audited_dirs_diff: ''git diff --stat 对 plugins/sdlc/skills agents docs 只看 Card 提交 → 为空''}。(2) render_audit.py audit.yaml → AUDIT.md：按 Ring 分节（R0..R8 + spine），每环一表、每 Part 一行、三列（needed / implemented / naming），PSL-ID
+  做脚注不挤格内；表末尾 missing 行标''（缺少）''带来源标签；implemented 只出现三态之一；script Gate 渲染''闸''，human 渲染''门''，delegated_agent 不渲染为''人签''；末尾 proposals 分组视图 + run_evidence 节；页首写 audit.yaml 与 check_audit.py 路径。(3) 自检：check_audit.py
+  audit.yaml --psl PSL --required-parts ''agent.card-implementer, agent.comment-fixer, agent.fix-verifier, agent.pr-reviewer, agent.review-triager'' exit 0 且 parts_total 42；--variant delete-ring:R6 exit
+  1；两次输出写进 run_evidence。AC-005-a / AC-006-a 是 human AC，由 G3 代签裁决，本卡只保证报告呈现其 statement 要求的内容。不得修改被审目录任何文件。'
+forbidden_files:
+- tests/**
+- '**/tests/**'
+- done_when.yaml
+- '**/done_when.yaml'
+- dos.yaml
+- '**/dos.yaml'
+- .done_when.lock
+- '**/.done_when.lock'
+- plugins/sdlc/skills/**
+- plugins/sdlc/agents/**
+- plugins/sdlc/docs/**
+- plugins/sdlc/dogfood/ring-audit/PSL-sdlc-ring-audit.md
+- plugins/sdlc/dogfood/ring-audit/derived/**
+- plugins/sdlc/dogfood/ring-audit/issue-body.md
+- plugins/sdlc/dogfood/ring-audit/g1-record.md
+- plugins/sdlc/dogfood/ring-audit/g2-record.md
+- .sdlc/**
+budget:
+  retries: 3
+mock_allowlist: []

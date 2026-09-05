@@ -1,0 +1,56 @@
+# L4 任务卡 — sdlc-ring-audit；合格标准：单独丢给一个没有任何上下文的 agent，它能干完。
+id: CARD-01
+title: check-audit CLI：按 F-13 / F-14 / F-17 实现 check_audit.py（含 --rings / --required-parts 视图与删环自校准）与 Card 提交回放脚本
+req_ids:
+- REQ-007
+ac_ids:
+- AC-007-a
+- AC-007-b
+dos_slice:
+  objects:
+  - Ring
+  - Part
+  - Gap
+  - Artifact
+  - Gate
+  - Assessment
+  invariants:
+  - R011
+  - R005
+  - R009
+allowed_files:
+- plugins/sdlc/dogfood/ring-audit/check_audit.py
+- plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh
+- plugins/sdlc/dogfood/ring-audit/audit.schema.md
+context_estimate_tokens: 16000
+depends_on: []
+notes: '上下文自包含：只读 (1) 本卡；(2) sdlc_state.py show 的摘要；(3) 本卡 ac_ids 对应的 AC（done_when.yaml 只读）；(4) 形态草案 derived/form-draft.md（签字版 746c56ef…；F-13/F-17 是检查脚本接口，F-01…F-09 是记录形状）；(5) PSL-sdlc-ring-audit.md 的 Domain
+  Model / 规律索引；(6) allowed_files 内源码。不得读：ratchet-log/**、spec-robustness、评审 skill 的提示、其他卡、.sdlc/ 账本里评审者的发现。 交付：check_audit.py <audit.yaml> [--psl PSL.md] [--rings R0,..] [--required-parts a,b,..] [--variant
+  delete-ring:<id>] —— exit 0 当且仅当 F-13 的全部谓词成立（Ring 集合 = {R0..R8, spine}（给 --rings 时只检所列 Ring 在场）∧ 每 Part 三维齐 ∧ psl_ids 非空且在 --psl 索引内 ∧ evidence 每条 kind∈{file,gate_json,smoke,run_record} 且 ref 非空 ∧ 每
+  Ring 有 missing 键 ∧ 无 FILLS 边的 Gap 出现在其 Ring 的 missing ∧ 无 Artifact 有两个非 alternatives_of 的 producer ∧ rename 全 false ∧ human Gate 有 signer 且 delegated_agent 附 authorization_ref ∧ 无 script Gate 渲染为''门''
+  ∧ （给 --required-parts 时）required_parts_missing = 0）；失败 exit 1 并打印失败谓词名（ring_missing / psl_id_missing / boolean_implemented / proposal_without_source / required_part_missing / parts_missing …）与定位；--variant
+  delete-ring:<id> 在内存里删掉一个 Ring 再检，必须 exit 1（F-14 自校准，输出写 run_evidence 用）；同时输出 JSON 计数字段 rings / parts_total / parts_without_assessment / dims_without_psl_id / dims_with_unknown_psl_id / dims_without_evidence
+  / boolean_implemented / implemented_outside_enum / rename_true / rings_without_missing_key / orphan_gaps / proposals_without_source / required_parts_missing。audit.yaml 形状按 F-12：rings[]{id, question, parts[]{id,
+  kind, ring_evidence, provenance, loop, artifact, assessment{needed, implemented, naming}}, missing[]}，外加顶层 artifacts[]、gates[]、proposals[]、run_evidence{}——把这份 schema 写成 audit.schema.md 供内容卡照抄。replay_card_commits.sh：对分支上每个带
+  ''Card: CARD-xx'' footer 的提交跑 verify_commit.py --range <sha>^..<sha> --card cards/<xx>.yaml，任一 exit 1 即 exit 1 并打印 whitelist_overflow（AC-007）。用标准库；不写测试（tests/** 禁改，测试由 L5 另写）。'
+forbidden_files:
+- tests/**
+- '**/tests/**'
+- done_when.yaml
+- '**/done_when.yaml'
+- dos.yaml
+- '**/dos.yaml'
+- .done_when.lock
+- '**/.done_when.lock'
+- plugins/sdlc/skills/**
+- plugins/sdlc/agents/**
+- plugins/sdlc/docs/**
+- plugins/sdlc/dogfood/ring-audit/PSL-sdlc-ring-audit.md
+- plugins/sdlc/dogfood/ring-audit/derived/**
+- plugins/sdlc/dogfood/ring-audit/issue-body.md
+- plugins/sdlc/dogfood/ring-audit/g1-record.md
+- plugins/sdlc/dogfood/ring-audit/g2-record.md
+- .sdlc/**
+budget:
+  retries: 3
+mock_allowlist: []
