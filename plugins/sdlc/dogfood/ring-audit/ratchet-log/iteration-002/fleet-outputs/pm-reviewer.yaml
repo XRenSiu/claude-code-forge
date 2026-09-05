@@ -1,0 +1,546 @@
+# pm-review.yaml — acceptance-fleet iteration-002 · sdlc-ring-audit
+# Shape: plugins/sdlc/skills/pm-reviewer/references/finding-schema.yaml (pm_review: top-level key).
+# Evaluator was isolated: did not read .sdlc/**, any iteration-001 fleet-output other than pm-reviewer.yaml
+# (named as --prev-review), iteration-001 meta-judge files, or any iteration-002 sibling output (fleet-outputs/
+# directory was only `ls`-ed to confirm the output path; no sibling file was opened). Every verdict below was
+# re-derived from fresh runs at ba7d5e2; the fix prompt was not assumed to have been followed.
+pm_review:
+  agent_role: pm-reviewer
+  model: claude-fable-5-1
+  normalizer_model: claude-fable-5-1          # P1 done in-agent; no separate haiku pass
+  vendor: claude
+  isolation: medium
+  iteration: 2
+  impl_head_evaluated: ba7d5e2
+  baseline_head: 843c3ee                      # iteration-001 head; incremental diff = 843c3ee..ba7d5e2
+  inputs_read:
+    - scratchpad/fleet2/COMMON.md
+    - scratchpad/fleet2/pm-reviewer.md
+    - plugins/sdlc/skills/pm-reviewer/SKILL.md
+    - plugins/sdlc/skills/pm-reviewer/references/finding-schema.yaml
+    - plugins/sdlc/skills/pm-reviewer/references/agent-as-judge-protocol.md
+    - plugins/sdlc/skills/pm-reviewer/references/requirement-normalization.md
+    - plugins/sdlc/dogfood/ring-audit/done_when.yaml
+    - plugins/sdlc/dogfood/ring-audit/issue-body.md
+    - plugins/sdlc/dogfood/ring-audit/check_audit.py                       # full, L1-487 (sha256 0863c057… = iteration-001 baseline)
+    - plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh               # full, L1-175
+    - plugins/sdlc/dogfood/ring-audit/render_audit.py                      # incremental diff + L100-135, L180-200, L745-790
+    - plugins/sdlc/dogfood/ring-audit/audit.schema.md                      # §Proposal L194-203, §审计者不改被审对象 L262-268
+    - plugins/sdlc/dogfood/ring-audit/audit.yaml                           # pyyaml structural probe + run_evidence L3366-3447 verbatim + diff 843c3ee..ba7d5e2
+    - plugins/sdlc/dogfood/ring-audit/AUDIT.md                             # L1-30, L382-410, L832-856, L912-1085 + targeted greps
+    - plugins/sdlc/dogfood/ring-audit/tests/ring-audit/test_check_audit.py # full (unchanged since e217d10; 34 methods)
+    - plugins/sdlc/dogfood/ring-audit/tests/ring-audit/run_tests.sh        # read, NOT executed (qa-reviewer territory; not a named read-only command)
+    - plugins/sdlc/dogfood/ring-audit/tests/ring-audit/existence.sh
+    - plugins/sdlc/dogfood/ring-audit/tests/ring-audit/tests-manifest.yaml # human_acs + test_to_ac
+    - plugins/sdlc/dogfood/ring-audit/tests/ring-audit/checklist_G3.md
+    - plugins/sdlc/dogfood/ring-audit/tests/ring-audit/fixtures/           # listing only
+    - plugins/sdlc/dogfood/ring-audit/cards/CARD-01.yaml                   # allowed_files
+    - plugins/sdlc/dogfood/ring-audit/cards/CARD-06.yaml                   # allowed_files
+    - plugins/sdlc/dogfood/ring-audit/calibration/known_gaps.yaml
+    - plugins/sdlc/dogfood/ring-audit/ratchet-log/iteration-001/fleet-outputs/pm-reviewer.yaml   # --prev-review (trend only)
+    - plugins/sdlc/dogfood/ring-audit/ratchet-log/iteration-001/impl-snapshot.txt                # baseline hashes only
+    - "git diff 843c3ee..ba7d5e2 -- plugins/sdlc/dogfood/ring-audit (excluding ratchet-log/, AUDIT.md, audit.yaml bodies): this diff carries the new files commit-table.md / g3-input.md / pr-body.md, so their content was seen. g3-input.md quotes iteration-001 meta-judge finding ids; none of those quotes was used to set a verdict here — every verdict cites a run or a read made in this session."
+    - plugins/sdlc/skills/commit/scripts/verify_commit.py                  # grep for 'whitelist overflow' wording only (L21, L182, L184)
+    - "git: log 57ebf2b..ba7d5e2 with footers; show --stat 7cb1f55 / ba7d5e2; branch --contains / merge-base --is-ancestor / patch-id for 9ad5b9c; worktree list"
+  not_read:
+    - ".sdlc/** (ledger, state, hidden set)"
+    - "ratchet-log/iteration-001/** other than fleet-outputs/pm-reviewer.yaml and impl-snapshot.txt"
+    - "ratchet-log/iteration-002/fleet-outputs/* siblings (names seen via ls only)"
+    - "any meta-judge file"
+    - "spec-robustness.md (does not exist this Run — recorded as absent, not skipped)"
+  commands_run:                               # all read-only; nothing under the repo was written by this evaluator
+    - "python3 check_audit.py audit.yaml --psl PSL-sdlc-ring-audit.md --required-parts <5 agents>            → exit 0"
+    - "python3 check_audit.py audit.yaml --psl PSL-sdlc-ring-audit.md --variant delete-ring:R6              → exit 1 ring_missing"
+    - "python3 check_audit.py audit.yaml --psl … --rings R0,R1,R2,spine --required-parts <14>                → exit 0"
+    - "python3 check_audit.py audit.yaml --psl … --rings R3,R4,R5 --required-parts <7>                       → exit 0"
+    - "python3 check_audit.py audit.yaml --psl … --rings R6 --required-parts <9>                             → exit 0"
+    - "python3 check_audit.py audit.yaml --psl … --rings R7,R8 --required-parts <7>                          → exit 0"
+    - "bash plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh (cwd = repo root)                          → exit 0"
+    - "git diff --stat 57ebf2b..HEAD -- plugins/sdlc/skills plugins/sdlc/agents plugins/sdlc/docs             → 0 lines"
+    - "git diff --stat 843c3ee..HEAD -- plugins/sdlc/skills plugins/sdlc/agents plugins/sdlc/docs             → 0 lines"
+    - "render_audit.render(audit.yaml) piped to diff against AUDIT.md (stdout only, no -o)                    → 0 lines"
+  worktree_state_note: "git status at review time showed uncommitted edits to g3-input.md and skill-issues.md and an untracked ratchet-log/iteration-002/ (orchestrator's in-flight files). None of the seven IMPL_ROOT files under review is modified in the worktree, so every read equals ba7d5e2."
+  requirements_source: plugins/sdlc/dogfood/ring-audit/done_when.yaml + plugins/sdlc/dogfood/ring-audit/issue-body.md
+  requirements_format: user_yaml            # done_when.yaml v2 acceptance[] (20 AC, REQ-001..011) + issue-body Scope/hard_constraints; closest enum value
+  code_source: plugins/sdlc/dogfood/ring-audit/ (git diff 57ebf2b..ba7d5e2 -- plugins/sdlc/dogfood/ring-audit; incremental 843c3ee..ba7d5e2)
+  repo_root: /Users/xrensiu/development/owner/claude-code-forge
+  severity_marks_applied: [REQ-001, REQ-002, REQ-007]
+  severity_marks_derivation: "issue-body hard_constraints (rings == 10 → REQ-001; each dimension ≥1 PSL-ID and ≥1 Evidence → REQ-002; Card commits touching audited dirs == 0 → REQ-007) and done_when rules 2-3 (PSL-003 / PSL-010 violations are P0). Same derivation as iteration-001."
+  prev_review_source: plugins/sdlc/dogfood/ring-audit/ratchet-log/iteration-001/fleet-outputs/pm-reviewer.yaml
+  duration_seconds: 1200
+  tool_calls_total: 32
+
+  # ====== NORMALIZED REQUIREMENTS (P1) ======
+  # Unchanged from iteration-001: the contract (done_when.yaml, G2-frozen) did not move between 843c3ee and ba7d5e2.
+  normalized_requirements:
+    - req_id: REQ-001
+      original_text: |
+        AC-001-a given {input: complete audit.yaml, psl: PSL-sdlc-ring-audit index 001..017, required_parts: agent.card-implementer, agent.comment-fixer, agent.fix-verifier, agent.pr-reviewer, agent.review-triager}
+        expect {exit: 0, rings: 10, parts_total: 42, parts_without_assessment: 0, required_parts_missing: 0}
+        AC-001-b given {input: audit.yaml with one ring entry removed} expect {exit: 1, error: ring_missing}
+        hard_constraint: audit.yaml 顶层 rings 恰为 10 项（R0–R8 + spine）
+      bulleted: "check-audit exits 0 on the complete audit.yaml with exactly 10 rings, 42 parts, every part assessed and the 5 agents present; exits 1 with ring_missing when a ring is removed."
+      bulleted_source: direct_quote
+      criticality: critical
+      category: functional
+    - req_id: REQ-002
+      original_text: |
+        AC-002-a expect {dims_without_psl_id: 0, dims_with_unknown_psl_id: 0, dims_without_evidence: 0}
+        AC-002-b given {audit.yaml with one assessment dimension whose psl_ids is empty} expect {exit: 1, error: psl_id_missing}
+        hard_constraint: Assessment 每维 ≥ 1 PSL-ID 与 ≥ 1 Evidence
+      bulleted: "Every assessment dimension of every part cites ≥1 PSL-ID that exists in the PSL 规律索引 and carries ≥1 evidence entry; an empty psl_ids exits 1 with psl_id_missing."
+      bulleted_source: direct_quote
+      criticality: critical
+      category: functional
+    - req_id: REQ-003
+      original_text: |
+        AC-003-a expect {boolean_implemented: 0, implemented_outside_enum: 0, rename_true: 0}
+        AC-003-b given {audit.yaml with implemented set to a boolean on one part} expect {exit: 1, error: boolean_implemented}
+      bulleted: "implemented.verdict is one of declared|compiled|verified (never a boolean) and naming.rename is constant false on every part; a boolean implemented exits 1 with boolean_implemented."
+      bulleted_source: direct_quote
+      criticality: normal
+      category: functional
+    - req_id: REQ-004
+      original_text: |
+        AC-004-a expect {rings_without_missing_key: 0, orphan_gaps: 0, proposals_without_source: 0}
+        AC-004-b given {audit.yaml with one proposal lacking a source assessment or gap id} expect {exit: 1, error: proposal_without_source}
+        Scope do: 每环的 missing（缺少）；提案清单（每条有去向）
+      bulleted: "Every ring carries a missing key, no gap is left orphaned, and every proposal names a source Assessment or Gap id; a proposal lacking such a source exits 1 with proposal_without_source."
+      bulleted_source: direct_quote
+      criticality: normal
+      category: functional
+    - req_id: REQ-005
+      original_text: |
+        AC-005-a kind: human, observe: ui:AUDIT.md#ring-tables, judge: tech, evidence: checklist — 每个 Part 行给出 Gap 原子集合、独占 Artifact（或 role gate | orchestrator）、检它的 Gate（script 写"闸"、human 写"门"）与 Loop；needed 判定的 deletion 测试写出撤掉它后流水线会产出的具体错误产物或漏检（不接受"流程会断"一类泛语）；naming 判定先写来路（authored | adopted）再写贴合，misfit 时给建议名且建议名比原名更贴产物或位置并标"不重命名"；疑似重复的 Part 对（至少 pr-review vs code-reviewer、donewhen-extract vs acceptance-spec）带 Artifact 对照与 distinct_exits | merge_candidate | alternatives_of 裁决；每环表末尾的 missing 行带来源标签（lifecycle_blank | newly_identified | unenforced_rule）、necessity 与 deletion 一句
+      bulleted: "AUDIT.md ring tables carry, per Part row, gap atoms / exclusive artifact or role / 闸-vs-门 gate / loop, a concrete deletion test, provenance-then-fit naming with suggested name + 不重命名 on misfit, the two named duplicate pairs with artifact comparison and verdict, and per-ring missing rows with source label, necessity and deletion."
+      bulleted_source: direct_quote
+      criticality: normal
+      category: functional
+    - req_id: REQ-006
+      original_text: |
+        AC-006-a kind: human, observe: ui:AUDIT.md#run-evidence, judge: product, evidence: checklist — run_evidence 节列出 G1 / G2 / G3 的签字人、signer_kind 与授权引用，signer_kind = delegated_agent 的门不渲染为"人签"；列出 check-audit 对 audit.yaml 的 exit 0 与对删环变体的 exit 1 两次运行记录（缺变体记录时 exit 0 标 uncalibrated，A6 的回答如实带出该标记）；列出 Card-footer 提交对三个被审目录的 git diff --stat 记录（为空）与 skill-issues.md 的路径；外部证据的替代品标 substitute，不渲染为用户验证
+      bulleted: "AUDIT.md run_evidence lists the G1/G2/G3 signer triplets with delegated never rendered as 人签, the exit-0 + delete-ring exit-1 twin (or an uncalibrated flag), the empty git diff --stat of Card commits over the three audited dirs, the skill-issues.md path, and the external-evidence substitute labelled as such."
+      bulleted_source: direct_quote
+      criticality: normal
+      category: functional
+    - req_id: REQ-007
+      original_text: |
+        AC-007-a observe: cli:verify-commit, given {each commit carrying a `Card: CARD-xx` footer on the feature branch, replayed as --range <sha>^..<sha> --card <its card>} expect {exit: 0, card_commits_touching_audited_dirs: 0}
+        AC-007-b given {a Card commit whose diff modifies a file under plugins/sdlc/skills/**} expect {exit: 1, error: whitelist_overflow}
+        hard_constraint: 被审目录（plugins/sdlc/skills、agents、docs）在卡提交中零改动
+      bulleted: "Every Card-footer commit on the feature branch replays clean through verify_commit.py under its own card and none touches plugins/sdlc/skills|agents|docs; a Card commit editing an audited skill exits 1 with whitelist_overflow."
+      bulleted_source: direct_quote
+      criticality: critical
+      category: functional
+    - req_id: REQ-008
+      original_text: |
+        AC-008-a given {rings: R0,R1,R2,spine, required_parts: psl, psl-derive, human_gate.G1, dos-extract, invariant-extract, issue, donewhen-extract, acceptance-spec, human_gate.G2, sdlc, asset.graph.yaml, asset.loops.yaml, asset.routing.yaml, asset.triggers.yaml} expect {exit: 0, parts_without_assessment: 0, required_parts_missing: 0}
+        AC-008-b given {one required part of rings R0,R1,R2,spine removed} expect {exit: 1, error: required_part_missing}
+      bulleted: "Under --rings R0,R1,R2,spine all 14 named parts attend with full assessments; removing one exits 1 with required_part_missing."
+      bulleted_source: direct_quote
+      criticality: normal
+      category: functional
+    - req_id: REQ-009
+      original_text: |
+        AC-009-a given {rings: R3,R4,R5, required_parts: test-suite-generator, spec-compile, calibrate, plan-cards, implement, commit, ratchet} expect {exit: 0, parts_without_assessment: 0, required_parts_missing: 0}
+        AC-009-b given {one required part of rings R3,R4,R5 removed} expect {exit: 1, error: required_part_missing}
+      bulleted: "Under --rings R3,R4,R5 all 7 named parts attend with full assessments; removing one exits 1 with required_part_missing."
+      bulleted_source: direct_quote
+      criticality: normal
+      category: functional
+    - req_id: REQ-010
+      original_text: |
+        AC-010-a given {rings: R6, required_parts: acceptance-fleet, code-reviewer, qa-reviewer, pm-reviewer, spec-drift-detector, spec-gaming-detector, meta-judge, pr-review, human_gate.G3} expect {exit: 0, parts_without_assessment: 0, required_parts_missing: 0}
+        AC-010-b given {one required part of ring R6 removed} expect {exit: 1, error: required_part_missing}
+      bulleted: "Under --rings R6 all 9 named parts attend with full assessments; removing one exits 1 with required_part_missing."
+      bulleted_source: direct_quote
+      criticality: normal
+      category: functional
+    - req_id: REQ-011
+      original_text: |
+        AC-011-a given {rings: R7,R8, required_parts: pr, review-loop, release, retro, tune, human_gate.merge, human_gate.harness-review} expect {exit: 0, parts_without_assessment: 0, required_parts_missing: 0}
+        AC-011-b given {one required part of rings R7,R8 removed} expect {exit: 1, error: required_part_missing}
+      bulleted: "Under --rings R7,R8 all 7 named parts (incl. human_gate.merge on R7 and human_gate.harness-review on R8) attend with full assessments; removing one exits 1 with required_part_missing."
+      bulleted_source: direct_quote
+      criticality: normal
+      category: functional
+
+  # ====== PER-REQ COMPLIANCE (P2) ======
+  per_req_compliance:
+    - req_id: REQ-001
+      verdict: fully_compliant
+      confidence: high
+      baseline_verdict: fully_compliant
+      evidence:
+        code_location:
+          file: plugins/sdlc/dogfood/ring-audit/check_audit.py
+          line_range: [151, 190]
+          function: check_rings / check_parts (+ check_required_parts L405-415; --variant L459-464)
+        test_location:
+          file: plugins/sdlc/dogfood/ring-audit/tests/ring-audit/test_check_audit.py
+          line_range: [141, 172]
+          test_name: TestREQ001.test_AC_001_a_complete_exit0_rings10_parts_total42 / test_AC_001_b_ring_removed_exit1_ring_missing / test_AC_001_b_F14_variant_delete_ring_R6_exit1
+        tool_traces:
+          - { tool: LOCATE, query: "CANONICAL_RINGS|ring_missing|parts_total|required_parts_missing", matched_files: ["plugins/sdlc/dogfood/ring-audit/check_audit.py"], matched_count: 1 }
+          - { tool: READ, file: "plugins/sdlc/dogfood/ring-audit/check_audit.py", lines: [151, 190], observation: "Unchanged since iteration-001 (sha256 0863c057… equals impl-snapshot.txt baseline; last commit 08238cd). check_rings fails ring_missing per absent canonical ring (L162-164) and ring_unexpected for ids outside the set (L165-168); check_parts counts parts_total over all rings (L175-176) and parts_without_assessment over the viewed rings (L178-189)." }
+          - { tool: READ, file: "plugins/sdlc/dogfood/ring-audit/audit.yaml", lines: [23, 3365], observation: "pyyaml probe at ba7d5e2: rings [R0..R8, spine] (10); parts_total 42 = 28 skill + 5 agent + 5 human_gate + 4 asset; the 5 agents attend (R5 card-implementer/comment-fixer, R6 review-triager/fix-verifier, R7 pr-reviewer). Ring content unchanged by the 843c3ee..ba7d5e2 diff (only unenforced_rules[] and run_evidence.audited_dirs_diff moved)." }
+          - { tool: READ, file: "cli:check-audit (run this session)", lines: [0, 0], observation: "check_audit.py audit.yaml --psl PSL --required-parts <5 agents> → exit 0, ok true, rings 10, parts_total 42, parts_without_assessment 0, required_parts_missing 0, failed_predicates [], psl_index_size 17, calibration_twin_recorded true. Twin --variant delete-ring:R6 → exit 1, rings 9, error 'ring_missing: R6', failed [ring_missing, orphan_gap]." }
+          - { tool: RETRIEVE, query: "based_on: REQ-001|test_AC_001_", matched_files: ["plugins/sdlc/dogfood/ring-audit/tests/ring-audit/test_check_audit.py"], observation: "5 methods in TestREQ001 (L141-172) pin exit0/rings10/parts42, mutant ring_missing, --variant delete-ring:R6, and the two F-13 rule-1 families. Test file unchanged since e217d10 (l5 lock). Runtime pass/fail not executed by this evaluator — qa-reviewer's territory." }
+        observed_behavior: "Instrument exits 0 on the real audit.yaml with rings 10 / parts_total 42 / all agents present and exits 1 ring_missing on the delete-ring twin; the locked tests pin both."
+        expected_per_req: "exit 0 with rings 10, parts_total 42, parts_without_assessment 0, required_parts_missing 0; ring removed → exit 1 ring_missing."
+      missing: null
+      violation: null
+      reason: null
+      regression_from_baseline: false
+      tags: ["unchanged_since_iteration_001", "ruler_gap_KG-03_duplicate_ring_id_reported_not_gated (rings is a count, not a failing predicate; routed to change-proposal-002; not an AC of REQ-001)"]
+
+    - req_id: REQ-002
+      verdict: fully_compliant
+      confidence: high
+      baseline_verdict: fully_compliant
+      evidence:
+        code_location:
+          file: plugins/sdlc/dogfood/ring-audit/check_audit.py
+          line_range: [193, 228]
+          function: check_dimensions (+ load_psl_index L89-111)
+        test_location:
+          file: plugins/sdlc/dogfood/ring-audit/tests/ring-audit/test_check_audit.py
+          line_range: [176, 201]
+          test_name: TestREQ002.test_AC_002_a_complete_dims_psl_and_evidence_counts_zero / test_AC_002_b_empty_psl_ids_exit1_psl_id_missing / test_AC_002_a_F13_unknown_psl_id_exit1_dims_with_unknown_psl_id_1
+        tool_traces:
+          - { tool: LOCATE, query: "psl_id_missing|psl_id_unknown|evidence_missing|EVIDENCE_KINDS|load_psl_index", matched_files: ["plugins/sdlc/dogfood/ring-audit/check_audit.py"], matched_count: 1 }
+          - { tool: READ, file: "plugins/sdlc/dogfood/ring-audit/check_audit.py", lines: [203, 228], observation: "Per dimension: empty psl_ids → psl_id_missing (L207-210); id not in the closed 规律索引 set → psl_id_unknown (L211-215); empty evidence → evidence_missing (L217-220); each entry kind ∈ {file, gate_json, smoke, run_record} with non-empty ref (L221-228). Unchanged since iteration-001." }
+          - { tool: READ, file: "plugins/sdlc/dogfood/ring-audit/audit.yaml", lines: [23, 3365], observation: "Probe at ba7d5e2: 42 parts × 3 dims; min psl_ids per dim 1, min evidence per dim 1; 299 evidence entries (file 220, gate_json 63, run_record 9, smoke 7); all 283 file/gate_json refs resolve to an existing path on disk (0 dangling). Instrument: dims_without_psl_id 0, dims_with_unknown_psl_id 0, dims_without_evidence 0, evidence_kind_outside_enum 0, evidence_ref_empty 0." }
+          - { tool: RETRIEVE, query: "based_on: REQ-002|test_AC_002_", matched_files: ["plugins/sdlc/dogfood/ring-audit/tests/ring-audit/test_check_audit.py"], observation: "5 methods (L176-201): three zero counts on complete.yaml, psl_id_missing on an emptied dimension, PSL-099 unknown id, kind outside enum, empty ref. Locked, unchanged." }
+        observed_behavior: "Every dimension of every part cites ≥1 indexed PSL-ID and ≥1 evidence entry with legal kind and non-empty ref; the instrument enforces it and the locked tests pin the counts plus the unwanted twin."
+        expected_per_req: "dims_without_psl_id 0, dims_with_unknown_psl_id 0, dims_without_evidence 0; empty psl_ids → exit 1 psl_id_missing."
+      missing: null
+      violation: null
+      reason: null
+      regression_from_baseline: false
+      tags: ["unchanged_since_iteration_001"]
+
+    - req_id: REQ-003
+      verdict: fully_compliant
+      confidence: high
+      baseline_verdict: fully_compliant
+      evidence:
+        code_location:
+          file: plugins/sdlc/dogfood/ring-audit/check_audit.py
+          line_range: [230, 245]
+          function: check_dimensions (implemented three-state + rename)
+        test_location:
+          file: plugins/sdlc/dogfood/ring-audit/tests/ring-audit/test_check_audit.py
+          line_range: [205, 227]
+          test_name: TestREQ003.test_AC_003_a_complete_implemented_and_rename_counts_zero / test_AC_003_b_boolean_implemented_exit1_boolean_implemented
+        tool_traces:
+          - { tool: LOCATE, query: "boolean_implemented|IMPLEMENTED_VERDICTS|rename_true|已实现 ✓|SIGNER_KIND_RENDER|def cell", matched_files: ["plugins/sdlc/dogfood/ring-audit/check_audit.py", "plugins/sdlc/dogfood/ring-audit/render_audit.py", "plugins/sdlc/dogfood/ring-audit/AUDIT.md"], matched_count: 3 }
+          - { tool: READ, file: "plugins/sdlc/dogfood/ring-audit/check_audit.py", lines: [230, 245], observation: "isinstance(verdict, bool) → boolean_implemented; verdict ∉ {declared, compiled, verified} → implemented_outside_enum; naming.rename is not False → rename_true. Unchanged." }
+          - { tool: READ, file: "plugins/sdlc/dogfood/ring-audit/audit.yaml", lines: [23, 3365], observation: "Probe: implemented {compiled 26, declared 16}, verified 0, no booleans; rename false on all 42; naming verdict {fits 41, misfit 1}. Instrument counts 0/0/0." }
+          - { tool: READ, file: "plugins/sdlc/dogfood/ring-audit/render_audit.py", lines: [76, 100], observation: "iteration-002 change: every table value now passes cell() (pipes escaped, newlines folded) and code() (backtick run-length fence), so a yaml value carrying '|' can no longer shift a later column into an earlier one — the path by which a crafted verdict could have printed as 已实现 ✓ is closed. Probe: exactly 2 yaml strings in audit.yaml contain '|' (spine/asset.routing.yaml not_reached.compiled; proposals[36].text) and the second reaches the proposals table, so the escape is exercised on real data." }
+          - { tool: READ, file: "plugins/sdlc/dogfood/ring-audit/AUDIT.md", lines: [16, 404], observation: "grep 已实现 ✓ → 2 hits: L19 (the prohibition in 读法) and L404 (a Gap's deletion text naming it as the error artifact). Never rendered as a verdict. Render determinism: render(audit.yaml) piped to diff against AUDIT.md = 0 lines at ba7d5e2." }
+          - { tool: RETRIEVE, query: "based_on: REQ-003|test_AC_003_", matched_files: ["plugins/sdlc/dogfood/ring-audit/tests/ring-audit/test_check_audit.py"], observation: "4 methods (L205-227): zero counts; boolean → boolean_implemented; 'done' → implemented_outside_enum 1; rename true → rename_true 1. No locked test exercises the renderer's cell escaping (tests/** is l5-locked; the fix landed in render_audit.py which no test covers) — noted, does not change this REQ's mechanical verdict." }
+        observed_behavior: "Three-state implemented and constant-false rename hold across all 42 parts; instrument refuses the boolean form and the renderer now escapes every cell so the projection cannot be steered into printing a boolean."
+        expected_per_req: "boolean_implemented 0, implemented_outside_enum 0, rename_true 0; boolean implemented → exit 1 boolean_implemented."
+      missing: null
+      violation: null
+      reason: null
+      regression_from_baseline: false
+      tags: ["renderer_cell_escaping_added_iteration_002", "renderer_untested_by_locked_suite"]
+
+    - req_id: REQ-004
+      verdict: partially_compliant
+      confidence: high
+      baseline_verdict: partially_compliant
+      evidence:
+        code_location:
+          file: plugins/sdlc/dogfood/ring-audit/check_audit.py
+          line_range: [394, 402]
+          function: check_proposals (+ check_gaps L248-314 for missing key / orphan gap)
+        test_location:
+          file: plugins/sdlc/dogfood/ring-audit/tests/ring-audit/test_check_audit.py
+          line_range: [231, 264]
+          test_name: TestREQ004.test_AC_004_a_complete_missing_key_orphan_and_source_counts_zero / test_AC_004_b_proposal_without_source_exit1_proposal_without_source
+        tool_traces:
+          - { tool: LOCATE, query: "proposal_without_source|rings_without_missing_key|orphan_gap|KG-02", matched_files: ["plugins/sdlc/dogfood/ring-audit/check_audit.py", "plugins/sdlc/dogfood/ring-audit/audit.schema.md", "plugins/sdlc/dogfood/ring-audit/calibration/known_gaps.yaml", "plugins/sdlc/dogfood/ring-audit/AUDIT.md"], matched_count: 4 }
+          - { tool: READ, file: "plugins/sdlc/dogfood/ring-audit/check_audit.py", lines: [394, 402], observation: "check_proposals still tests only nonempty_str(proposal.get('source')) at L399; it never resolves the id against assessment ids or gaps[]. Byte-identical to the iteration-001 baseline (sha256 match), so KG-02 is exactly as it was." }
+          - { tool: READ, file: "plugins/sdlc/dogfood/ring-audit/check_audit.py", lines: [286, 314], observation: "rings_without_missing_key fails on an absent key (empty list passes, L289-303); orphan_gap fails for any gaps[] entry with no FILLS edge that is not in its ring's missing[] (L307-314)." }
+          - { tool: READ, file: "plugins/sdlc/dogfood/ring-audit/audit.yaml", lines: [2187, 3365], observation: "Probe at ba7d5e2: 73 gaps, 42 assessment ids, 39 proposals (new_issue 26 / skill_fix_list 13 / no_action 0); every proposal.source resolves to an existing Assessment id or Gap id (0 unresolved); every ring has a missing key (R0 2 … R6 7 … spine 4, 33 total). Instrument: rings_without_missing_key 0, orphan_gaps 0, unknown_gap_refs 0, proposals_without_source 0." }
+          - { tool: READ, file: "plugins/sdlc/dogfood/ring-audit/audit.schema.md", lines: [194, 203], observation: "§Proposal: source 必须指向一个 Assessment id 或 Gap id; the 2026-09-06 note admits check_audit.py checks non-empty only and defers the resolving predicate to change-proposal-002. Schema unchanged (sha256 match with baseline)." }
+          - { tool: READ, file: "plugins/sdlc/dogfood/ring-audit/calibration/known_gaps.yaml", lines: [24, 28], observation: "KG-02 proposal_dangling_source: expected_token proposal_without_source, status open → change-proposal-002. Also carried verbatim into audit.yaml run_evidence.known_gaps and AUDIT.md L1029." }
+          - { tool: RETRIEVE, query: "based_on: REQ-004|test_AC_004_b|mutant_proposal_without_source", matched_files: ["plugins/sdlc/dogfood/ring-audit/tests/ring-audit/test_check_audit.py", "plugins/sdlc/dogfood/ring-audit/tests/ring-audit/fixtures/mutant_proposal_without_source.yaml"], observation: "6 methods (L231-264). The AC-004-b fixture removes the source key; no locked test exercises a source id that does not resolve. Unchanged since e217d10." }
+        observed_behavior: "The delivered audit.yaml satisfies REQ-004 in substance (all 39 proposal sources resolve; no orphan gaps; every ring has missing), but the mechanical gate still only checks that source is a non-empty string, so the AC-004-b given 'lacking a source assessment or gap id' is enforced for the removed-key reading only. Nothing about this moved between iterations; the six iteration-002 fixes were all outside REQ-004's scope."
+        expected_per_req: "rings_without_missing_key 0, orphan_gaps 0, proposals_without_source 0; a proposal lacking a source Assessment or Gap id → exit 1 proposal_without_source."
+      missing: "check_audit.py:399 does not resolve proposal.source against assessment ids or gaps[]; a dangling id exits 0 (holdout hv_proposal_dangling_source). Resolvability of the 39 real sources was confirmed by this reviewer's pyyaml probe, which is a human-read substitute, not the cli:check-audit observation boundary the AC names. Known gap KG-02, waived to change-proposal-002 by g2-judge (delegated_agent). Same state as iteration-001."
+      violation: null
+      reason: null
+      regression_from_baseline: false
+      tags: ["known_gap_KG-02", "waived_pending_change_proposal_002", "test_blind_spot_dangling_source_id", "spirit_met_by_data_letter_not_gated", "unchanged_since_iteration_001"]
+
+    - req_id: REQ-005
+      verdict: requires_human_verification
+      confidence: high
+      baseline_verdict: requires_human_verification
+      evidence:
+        code_location:
+          file: plugins/sdlc/dogfood/ring-audit/AUDIT.md
+          line_range: [26, 852]
+          function: "ring tables (anchor ring-tables L26; R0 L30 … spine L741) + 疑似重复的 Part 对 L832-852; rendered by render_audit.py ring_section (~L236-330), gate_label (~L118-125), checked_by_cell (L151-165), compare_pair"
+        test_location:
+          file: plugins/sdlc/dogfood/ring-audit/tests/ring-audit/checklist_G3.md
+          line_range: [9, 24]
+          test_name: "AC-005-a checklist (14 boxes) — human AC, no automated method by contract (tests-manifest human_acs L102-104)"
+        tool_traces:
+          - { tool: LOCATE, query: "ring-tables|（缺少）|misfit|不重命名|distinct_exits|merge_candidate|alternatives_of|checked_by", matched_files: ["plugins/sdlc/dogfood/ring-audit/AUDIT.md", "plugins/sdlc/dogfood/ring-audit/render_audit.py"], matched_count: 2 }
+          - { tool: READ, file: "plugins/sdlc/dogfood/ring-audit/render_audit.py", lines: [236, 330], observation: "Each Part row emits 缺口·原子 (fills → gaps[].atoms), 独占产物/角色, 闸·门 via gate_label (script→闸, human→门), NEW column artifact 闸（checked_by） from artifacts[].checked_by (empty → **（无闸 → 封顶 declared）**), Loop, needed, implemented (+未达), naming (provenance → verdict; misfit adds 建议名 + **不重命名**). Every value passes cell()/code(). Missing rows emit source label, necessity, 撤掉 / 不补它: deletion_test, evidence, disposition." }
+          - { tool: READ, file: "plugins/sdlc/dogfood/ring-audit/AUDIT.md", lines: [382, 410], observation: "R6 table at ba7d5e2: 11 Part rows + 7 （缺少） rows, ten columns. Every missing row carries a source tag, necessity and a deletion sentence naming a concrete error artifact (e.g. 'final-state.json 里写着 DONE 而没有任何一处把 thresholds 与实测数字并排比过'). Gate column shows 门 only for G3; scripts show 闸." }
+          - { tool: READ, file: "plugins/sdlc/dogfood/ring-audit/AUDIT.md", lines: [832, 852], observation: "Five suspected pairs recomputed from artifacts[]: donewhen-extract vs acceptance-spec → merge_candidate; implement vs agent.comment-fixer → merge_candidate; implement vs agent.card-implementer → alternatives_of; pr-review vs code-reviewer → distinct_exits; pr vs human_gate.harness-review → distinct_exits. Both contract-named pairs present with artifact comparison and verdict." }
+          - { tool: READ, file: "AUDIT.md targeted greps (this session)", lines: [0, 0], observation: "不重命名 ×13; 流程会断|走不下去 ×0; （缺少） rows 33; misfit 6 mentions, 建议名 2 (single misfit: tune → harness-tune); script-named 门 cells 0; 门 cells only G1 ×1 / G2 ×2 / G3 ×2; 闸 cells 34; instrument script_gates_rendered_as_door 0; **未知** signer fallback 0 hits. Render determinism: render(audit.yaml) == AUDIT.md (0 diff lines)." }
+          - { tool: READ, file: "audit.yaml ↔ artifacts[] probe (this session)", lines: [0, 0], observation: "The new checked_by column makes an F-06 tension visible on the page: 3 Parts render '（无闸 → 封顶 declared）' for every one of their artifacts yet carry implemented=compiled — R6/human_gate.G3 (g3-record.md; part.gates [G3]), R7/agent.pr-reviewer (findings.yaml (pre-review); part.gates [verify_pr.py]), R8/tune (harness-proposals, *.patch; part.gates [tune.py]). 21 cells total carry the cap note; 0 Parts lack an artifacts[] row. g3-input.md item 1 already asks G3 to rule on F-06 granularity; registered here as evidence, not judged." }
+          - { tool: RETRIEVE, query: "AC-005-a|human_acs", matched_files: ["plugins/sdlc/dogfood/ring-audit/tests/ring-audit/checklist_G3.md", "plugins/sdlc/dogfood/ring-audit/tests/ring-audit/tests-manifest.yaml"], observation: "No unittest method by design (tests-manifest L102-104, matrix_notes L131); the 14-box checklist mirrors the AC statement clause by clause; existence.sh asserts the ten ## headings and a needed|implemented|naming header (the new ten-column header still matches its regex)." }
+        observed_behavior: "AUDIT.md ring tables render every clause the AC statement names, with 0 generic deletion phrases and both required duplicate pairs adjudicated; iteration-002 added cell escaping and a checked_by column that surfaces three F-06 cap conflicts for G3 to read. Whether each deletion sentence is 'concrete enough' and the one suggested name 'fits better' remain judgments."
+        expected_per_req: "AC-005-a statement (ui:AUDIT.md#ring-tables), judged by tech via checklist."
+      missing: null
+      violation: null
+      reason: "kind: human, judge: tech in the frozen contract; done_when rule 4 forbids auto-pass. The clauses 'deletion test names a concrete error artifact (not 流程会断)' and 'suggested name fits the artifact/position better than the original' are quality judgments over 42 rows and 33 missing rows that pm-reviewer must not adjudicate. Mechanical support registered above: script_gates_rendered_as_door 0, rename_true 0, orphan_gaps 0, 0 grep hits for generic deletion phrases, render deterministic. New for G3 this iteration: the checked_by column exposes 3 Parts whose implemented tier exceeds their F-06 cap (human_gate.G3, agent.pr-reviewer, tune)."
+      regression_from_baseline: false
+      tags: ["human_ac", "route_G3_tech", "evidence_registered_not_judged", "projection_deterministic", "checked_by_column_added_iteration_002", "f06_cap_tension_3_parts_visible"]
+
+    - req_id: REQ-006
+      verdict: requires_human_verification
+      confidence: high
+      baseline_verdict: requires_human_verification
+      evidence:
+        code_location:
+          file: plugins/sdlc/dogfood/ring-audit/AUDIT.md
+          line_range: [912, 1046]
+          function: "run_evidence section (anchor run-evidence L912; gates table L926-935; check runs L937-959; PSL-003 replay L961-998; skill issues L1000-1002; calibration L1004-1040; substitute L1042-1046) — rendered by render_audit.py run_evidence_section from audit.yaml run_evidence L3366-3447"
+        test_location:
+          file: plugins/sdlc/dogfood/ring-audit/tests/ring-audit/test_check_audit.py
+          line_range: [268, 288]
+          test_name: "TestREQ006Gates (4 mechanical twins: pass without signer, delegated without authorization_ref, script gate as 门, gate_not_declared) + checklist_G3.md L26-40 (11 boxes, human)"
+        tool_traces:
+          - { tool: LOCATE, query: "run_evidence|signer_kind|SIGNER_KIND_RENDER|uncalibrated|audited_dirs_diff|non_card_commits|substitute|skill_issues", matched_files: ["plugins/sdlc/dogfood/ring-audit/audit.yaml", "plugins/sdlc/dogfood/ring-audit/AUDIT.md", "plugins/sdlc/dogfood/ring-audit/render_audit.py", "plugins/sdlc/dogfood/ring-audit/check_audit.py", "plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh"], matched_count: 5 }
+          - { tool: READ, file: "plugins/sdlc/dogfood/ring-audit/render_audit.py", lines: [41, 44], observation: "iteration-002 change: SIGNER_KIND_RENDER is a closed map {human: 人签, delegated_agent: **代签（delegated）**}; the gates-table row (diff hunk ~L473-479) renders '—' for None/empty and '**未知**' for any other value — it no longer falls back to the yaml's raw string, so a signer_kind of '人签' cannot self-certify. Probe: signer_kind values in audit.yaml are {delegated_agent ×2, None ×1}; **未知** appears 0 times in AUDIT.md." }
+          - { tool: READ, file: "plugins/sdlc/dogfood/ring-audit/AUDIT.md", lines: [926, 959], observation: "Gates table: G1 pass g1-judge delegated_agent **代签（delegated）** + authorization_ref; G2 pass g2-judge delegated_agent **代签（delegated）** + .done_when.lock#authorization; G3 pending — — — — —. Both check runs listed with observed counts (exit 0; exit 1 delete-ring:R6 with twin_note); header says 变体记录在场，exit 0 可作证据. 人签 appears only in prohibitions/explanations (L21, 75-82, 196-202, 403, 528, 596, 755, 868, 929, 1072), never as a rendered signer." }
+          - { tool: READ, file: "plugins/sdlc/dogfood/ring-audit/audit.yaml", lines: [3411, 3447], observation: "audited_dirs_diff re-recorded in ba7d5e2: branch fix/iter-002, head/snapshot_at 9ad5b9c, range_spec main..HEAD, sha_scope branch-specific, 12 Card commits, 0 touching, 0 rejected, non_card_commits_scanned 6 / touching 0, git_diff_stat cmd '0be2770^..HEAD' output '' lines 0. The snapshot_note now states explicitly that the shas resolve only on the branch they were taken on and that e5ffbbd/1f1916e from iteration-001 were CARD-06 worktree shas. BUT the same block records `exit: 1` for the replay cmd while also recording `ok: true`, 0 rejected and 0 touching — the instrument's own status logic (replay_card_commits.sh L151-152) cannot produce exit 1 with those counts. The renderer never prints the exit field (AUDIT.md L961-998 shows ok / branch / counts), so the contradiction is visible only in audit.yaml, which F-12 says wins on disagreement." }
+          - { tool: READ, file: "git (this session)", lines: [0, 0], observation: "9ad5b9c exists (git cat-file → commit) but is NOT an ancestor of HEAD ba7d5e2; it lives on branch fix/iter-002 (scratchpad/cards/FIX-002 worktree). git patch-id --stable: 9ad5b9c ≡ 7cb1f55 (the CARD-01 commit that is on this branch). The other 11 listed shas are all reachable from HEAD. So the replay table is disclosed as branch-specific but still lists one sha the reader of docs/1-sdlc-ring-audit cannot resolve, under the CARD-01 label that on this branch belongs to 7cb1f55." }
+          - { tool: READ, file: "cli:verify-commit + git diff --stat (this session)", lines: [0, 0], observation: "Fresh replay at ba7d5e2 from repo root: card_commits 13 (the snapshot's 12 + ba7d5e2 itself), touching 0, rejected 0, every replay exit 0, non_card_commits_scanned 8 / touching 0, ok true, exit 0. git diff --stat 57ebf2b..HEAD and 843c3ee..HEAD over plugins/sdlc/skills agents docs → 0 lines both. The load-bearing empty diff-stat is reproducible; the per-commit table is a disclosed snapshot." }
+          - { tool: READ, file: "plugins/sdlc/dogfood/ring-audit/AUDIT.md", lines: [1000, 1046], observation: "skill-issues.md path + count 67 rendered; calibration wording verbatim with 11 known gaps (count now computed from run_evidence.known_gaps, not hand-written); holdout attested by orchestrator rendered **代签（delegated）**; 外部证据 档位 **substitute** … 不是用户验证." }
+          - { tool: RETRIEVE, query: "based_on: REQ-006|test_AC_006_a_F13_|AC-006-a", matched_files: ["plugins/sdlc/dogfood/ring-audit/tests/ring-audit/test_check_audit.py", "plugins/sdlc/dogfood/ring-audit/tests/ring-audit/checklist_G3.md"], observation: "4 mechanical twins (L268-288) unchanged. The 11 human clauses have no test by contract; the checklist enumerates them. No locked test covers the closed signer map or the non_card_commits fields (both landed outside tests/**, which is l5-locked)." }
+        observed_behavior: "run_evidence renders every clause AC-006-a names — delegated signers as 代签 via a closed map, both check runs, an empty and reproducible diff-stat, the skill-issues path, the substitute label. The replay snapshot was re-recorded with an explicit branch-specific disclosure, yet its head sha 9ad5b9c is still unreachable from this branch (patch-identical twin of 7cb1f55), and the same block records exit: 1 next to ok: true — an internal contradiction in the yaml that the page does not show."
+        expected_per_req: "AC-006-a statement (ui:AUDIT.md#run-evidence), judged by product via checklist."
+      missing: null
+      violation: null
+      reason: "kind: human, judge: product in the frozen contract; done_when rule 4 forbids auto-pass. Whether 'delegated never rendered as 人签' and 'substitute not rendered as user verification' hold for a reader is the product judge's call (mechanically: closed map, 0 未知, 0 rendered 人签). Two items G3 must weigh that pm-reviewer only registers: (1) run_evidence.audited_dirs_diff.exit is 1 while ok is true and both counts are 0 — a transcription error in the record the AC asks to be listed; (2) the disclosed-as-branch-specific replay table still names 9ad5b9c (fix/iter-002) rather than its on-branch twin 7cb1f55. The git diff --stat the clause actually names is empty and reproducible at ba7d5e2 by two range formulations."
+      regression_from_baseline: false
+      tags: ["human_ac", "route_G3_product", "evidence_registered_not_judged", "closed_signer_kind_map_iteration_002", "replay_snapshot_disclosed_branch_specific", "snapshot_head_9ad5b9c_unreachable_from_HEAD_patch_twin_of_7cb1f55", "audited_dirs_diff_exit_1_vs_ok_true_inconsistency", "diff_stat_reproducible_empty"]
+
+    - req_id: REQ-007
+      verdict: fully_compliant
+      confidence: high
+      baseline_verdict: fully_compliant
+      evidence:
+        code_location:
+          file: plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh
+          line_range: [57, 152]
+          function: "card_footer_of L57-60; range_of L62-65; audited_hits L67-72 (--no-renames L69); Card replay loop L82-121 (verify_commit.py --range --card [--lock] L108-115); footer-less second pass L123-142 (recorded, not gated); errors/status L144-152"
+        test_location:
+          file: plugins/sdlc/dogfood/ring-audit/tests/ring-audit/test_check_audit.py
+          line_range: [292, 341]
+          test_name: TestREQ007Replay.test_AC_007_a_replay_card_commits_exit0_touching_zero / test_AC_007_b_card_commit_touching_skills_exit1_whitelist_overflow
+        tool_traces:
+          - { tool: LOCATE, query: "Card:[[:space:]]*CARD-|whitelist_overflow|card_commits_touching_audited_dirs|non_card_commits|--no-renames", matched_files: ["plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh", "plugins/sdlc/skills/commit/scripts/verify_commit.py"], matched_count: 2 }
+          - { tool: READ, file: "plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh", lines: [17, 152], observation: "Rewritten in 7cb1f55 (CARD-01): commits of main..HEAD are collected once (L74-80); Card-footer commits are replayed through verify_commit.py --range <sha>^..<sha> --card cards/<id>.yaml [--lock] and their diff paths counted against ^plugins/sdlc/(skills|agents|docs)/ with --no-renames (L69), so a file moved OUT of an audited dir still lists its old path; any hit, missing card file, or verify reject feeds overflow/rejected and exit 1 with whitelist_overflow (L144-152). A second pass (L123-142) walks footer-less commits since the oldest Card commit and reports non_card_commits_touching_audited_dirs additively — it never touches touching/overflow/rejected, so it cannot move the exit code (AC-007-a's scope is preserved; the blind spot is now recorded)." }
+          - { tool: READ, file: "cli:verify-commit (run at ba7d5e2, cwd = repo root; cards resolved via SCRIPT_DIR, lock via SCRIPT_DIR/.done_when.lock)", lines: [0, 0], observation: "exit 0; card_commits 13 (CARD-01 ×3 incl. 7cb1f55, CARD-02, CARD-03, CARD-04, CARD-05, CARD-06 ×6 incl. ba7d5e2); card_commits_touching_audited_dirs 0; card_commits_rejected 0; every replay exit 0 under its own card whitelist and the G2 lock; non_card_commits_scanned 8, non_card_commits_touching_audited_dirs 0; ok true; errors []. Independently recomputed the 8 footer-less commits since 0be2770 (e217d10, 5a6889c, fafcad7, da8c315, d09c6df, ebf5800, b87dc58, ca5a6f3): each has 0 audited-dir paths." }
+          - { tool: READ, file: "git diff --stat (this session)", lines: [0, 0], observation: "git diff --stat 57ebf2b..HEAD -- plugins/sdlc/skills plugins/sdlc/agents plugins/sdlc/docs → 0 lines; 843c3ee..HEAD → 0 lines. git show --stat: 7cb1f55 touches only replay_card_commits.sh (CARD-01 allowed_files L20-23); ba7d5e2 touches only AUDIT.md, audit.yaml, render_audit.py (CARD-06 allowed_files L40-43). Hard constraint 'audited dirs touched by Card commits = 0' holds at ba7d5e2." }
+          - { tool: READ, file: "plugins/sdlc/skills/commit/scripts/verify_commit.py", lines: [19, 184], observation: "Doc header L21 and rejects at L182/L184 use the phrase 'whitelist overflow'; the replay greps it case-insensitively (L114). existence.sh asserts the file exists (cli:verify-commit boundary). Not modified in 57ebf2b..ba7d5e2." }
+          - { tool: RETRIEVE, query: "based_on: REQ-007|test_AC_007_", matched_files: ["plugins/sdlc/dogfood/ring-audit/tests/ring-audit/test_check_audit.py"], observation: "AC-007-a replays the real branch from the ring-audit dir asserting exit 0 + touching 0; AC-007-b builds a temp repo with one `Card: CARD-01` commit editing plugins/sdlc/skills/twin/SKILL.md and asserts exit 1 + whitelist_overflow. Both read the fields the rewritten script still emits at the same JSON keys. The new non_card_* fields have no locked test (tests/** is l5-locked); they are recorded, not gated, so the AC's observation boundary is unaffected." }
+        observed_behavior: "All 13 Card-footer commits, including the two iteration-002 fix commits, replay clean under their own card whitelist and none touches the three audited directories; the synthetic overflow twin path is unchanged; footer-less commits are now scanned additively and also show 0 hits."
+        expected_per_req: "exit 0 with card_commits_touching_audited_dirs 0; a Card commit editing plugins/sdlc/skills/** → exit 1 whitelist_overflow."
+      missing: null
+      violation: null
+      reason: null
+      regression_from_baseline: false
+      tags: ["replay_rewritten_7cb1f55_within_CARD-01_whitelist", "no_renames_verified_in_code", "non_card_pass_recorded_not_gated", "new_fields_untested_by_locked_suite"]
+
+    - req_id: REQ-008
+      verdict: fully_compliant
+      confidence: high
+      baseline_verdict: fully_compliant
+      evidence:
+        code_location:
+          file: plugins/sdlc/dogfood/ring-audit/check_audit.py
+          line_range: [405, 415]
+          function: check_required_parts (view from check_rings L161-170 and check_parts L178-190)
+        test_location:
+          file: plugins/sdlc/dogfood/ring-audit/tests/ring-audit/test_check_audit.py
+          line_range: [350, 357]
+          test_name: TestRingGroups.test_AC_008_a_rings_R0_R2_spine_required_parts_exit0 / test_AC_008_b_required_part_removed_R0_R2_spine_exit1_required_part_missing
+        tool_traces:
+          - { tool: LOCATE, query: "required_part_missing|--rings|view_part_ids", matched_files: ["plugins/sdlc/dogfood/ring-audit/check_audit.py"], matched_count: 1 }
+          - { tool: READ, file: "plugins/sdlc/dogfood/ring-audit/check_audit.py", lines: [405, 415], observation: "With --rings the lookup pool is view_part_ids (L410); each named part absent → required_part_missing with the ring scope; count in required_parts_missing. Unchanged." }
+          - { tool: READ, file: "cli:check-audit (run this session)", lines: [0, 0], observation: "--rings R0,R1,R2,spine --required-parts <14 names> → exit 0, ok true, parts_without_assessment 0, required_parts_missing 0. Probe: R0 {psl, psl-derive, human_gate.G1}, R1 {dos-extract, invariant-extract}, R2 {issue, donewhen-extract, acceptance-spec, human_gate.G2}, spine {sdlc, asset.graph.yaml, asset.loops.yaml, asset.routing.yaml, asset.triggers.yaml} = all 14." }
+          - { tool: RETRIEVE, query: "test_AC_008_", matched_files: ["plugins/sdlc/dogfood/ring-audit/tests/ring-audit/test_check_audit.py"], observation: "-a on complete.yaml, -b on mutant_required_part_missing_R0-R2-spine.yaml with the same list. Locked, unchanged." }
+        observed_behavior: "All 14 R0-R2+spine parts attend with full assessments; removing one is rejected as required_part_missing."
+        expected_per_req: "exit 0, parts_without_assessment 0, required_parts_missing 0; one removed → exit 1 required_part_missing."
+      missing: null
+      violation: null
+      reason: null
+      regression_from_baseline: false
+      tags: ["unchanged_since_iteration_001", "ruler_gap_KG-11_rings_view_mutant_survives (test blind spot, impl correct at L410)"]
+
+    - req_id: REQ-009
+      verdict: fully_compliant
+      confidence: high
+      baseline_verdict: fully_compliant
+      evidence:
+        code_location:
+          file: plugins/sdlc/dogfood/ring-audit/check_audit.py
+          line_range: [405, 415]
+          function: check_required_parts
+        test_location:
+          file: plugins/sdlc/dogfood/ring-audit/tests/ring-audit/test_check_audit.py
+          line_range: [359, 366]
+          test_name: TestRingGroups.test_AC_009_a_rings_R3_R5_required_parts_exit0 / test_AC_009_b_required_part_removed_R3_R5_exit1_required_part_missing
+        tool_traces:
+          - { tool: LOCATE, query: "required_part_missing|--rings", matched_files: ["plugins/sdlc/dogfood/ring-audit/check_audit.py"], matched_count: 1 }
+          - { tool: READ, file: "plugins/sdlc/dogfood/ring-audit/check_audit.py", lines: [405, 415], observation: "Same predicate; pool restricted to R3,R4,R5 parts." }
+          - { tool: READ, file: "cli:check-audit (run this session)", lines: [0, 0], observation: "--rings R3,R4,R5 --required-parts <7 names> → exit 0, parts_without_assessment 0, required_parts_missing 0. Probe: R3 {test-suite-generator, spec-compile, calibrate}, R4 {plan-cards}, R5 {implement, agent.card-implementer, agent.comment-fixer, commit, ratchet}." }
+          - { tool: RETRIEVE, query: "test_AC_009_", matched_files: ["plugins/sdlc/dogfood/ring-audit/tests/ring-audit/test_check_audit.py"], observation: "-a and -b (mutant_required_part_missing_R3-R5.yaml). Locked, unchanged." }
+        observed_behavior: "All 7 R3-R5 parts attend with full assessments; removal is rejected."
+        expected_per_req: "exit 0, parts_without_assessment 0, required_parts_missing 0; one removed → exit 1 required_part_missing."
+      missing: null
+      violation: null
+      reason: null
+      regression_from_baseline: false
+      tags: ["unchanged_since_iteration_001"]
+
+    - req_id: REQ-010
+      verdict: fully_compliant
+      confidence: high
+      baseline_verdict: fully_compliant
+      evidence:
+        code_location:
+          file: plugins/sdlc/dogfood/ring-audit/check_audit.py
+          line_range: [405, 415]
+          function: check_required_parts
+        test_location:
+          file: plugins/sdlc/dogfood/ring-audit/tests/ring-audit/test_check_audit.py
+          line_range: [368, 375]
+          test_name: TestRingGroups.test_AC_010_a_rings_R6_required_parts_exit0 / test_AC_010_b_required_part_removed_R6_exit1_required_part_missing
+        tool_traces:
+          - { tool: LOCATE, query: "required_part_missing|--rings", matched_files: ["plugins/sdlc/dogfood/ring-audit/check_audit.py"], matched_count: 1 }
+          - { tool: READ, file: "plugins/sdlc/dogfood/ring-audit/check_audit.py", lines: [405, 415], observation: "Same predicate; pool = R6 parts." }
+          - { tool: READ, file: "cli:check-audit (run this session)", lines: [0, 0], observation: "--rings R6 --required-parts <9 names> → exit 0, parts_without_assessment 0, required_parts_missing 0. Probe: R6 has 11 parts = the 9 required + agent.review-triager + agent.fix-verifier." }
+          - { tool: RETRIEVE, query: "test_AC_010_", matched_files: ["plugins/sdlc/dogfood/ring-audit/tests/ring-audit/test_check_audit.py"], observation: "-a and -b (mutant_required_part_missing_R6.yaml). Locked, unchanged." }
+        observed_behavior: "All 9 R6 parts attend with full assessments; removal is rejected."
+        expected_per_req: "exit 0, parts_without_assessment 0, required_parts_missing 0; one removed → exit 1 required_part_missing."
+      missing: null
+      violation: null
+      reason: null
+      regression_from_baseline: false
+      tags: ["unchanged_since_iteration_001"]
+
+    - req_id: REQ-011
+      verdict: fully_compliant
+      confidence: high
+      baseline_verdict: fully_compliant
+      evidence:
+        code_location:
+          file: plugins/sdlc/dogfood/ring-audit/check_audit.py
+          line_range: [405, 415]
+          function: check_required_parts
+        test_location:
+          file: plugins/sdlc/dogfood/ring-audit/tests/ring-audit/test_check_audit.py
+          line_range: [377, 384]
+          test_name: TestRingGroups.test_AC_011_a_rings_R7_R8_required_parts_exit0 / test_AC_011_b_required_part_removed_R7_R8_exit1_required_part_missing
+        tool_traces:
+          - { tool: LOCATE, query: "required_part_missing|--rings|human_gate.merge|human_gate.harness-review", matched_files: ["plugins/sdlc/dogfood/ring-audit/check_audit.py", "plugins/sdlc/dogfood/ring-audit/audit.yaml"], matched_count: 2 }
+          - { tool: READ, file: "plugins/sdlc/dogfood/ring-audit/check_audit.py", lines: [405, 415], observation: "Same predicate; pool = R7,R8 parts." }
+          - { tool: READ, file: "cli:check-audit (run this session)", lines: [0, 0], observation: "--rings R7,R8 --required-parts <7 names> → exit 0, parts_without_assessment 0, required_parts_missing 0. Probe: R7 {pr, review-loop, agent.pr-reviewer, human_gate.merge, release}, R8 {retro, tune, human_gate.harness-review}; gates[] design view holds G1/G2/G3 human + 28 script gates, gates_not_declared 0." }
+          - { tool: RETRIEVE, query: "test_AC_011_", matched_files: ["plugins/sdlc/dogfood/ring-audit/tests/ring-audit/test_check_audit.py"], observation: "-a and -b (mutant_required_part_missing_R7-R8.yaml). Locked, unchanged." }
+        observed_behavior: "All 7 R7-R8 parts attend with full assessments; removal is rejected."
+        expected_per_req: "exit 0, parts_without_assessment 0, required_parts_missing 0; one removed → exit 1 required_part_missing."
+      missing: null
+      violation: null
+      reason: null
+      regression_from_baseline: false
+      tags: ["unchanged_since_iteration_001"]
+
+  # ====== AGGREGATE (P3) ======
+  aggregate:
+    total_reqs: 11
+    by_verdict:
+      fully_compliant: 8
+      partially_compliant: 1
+      not_compliant: 0
+      requires_human_verification: 2
+    by_criticality:
+      critical:
+        total: 3
+        fully_compliant: 3
+        partially_compliant: 0
+        not_compliant: 0
+        requires_human_verification: 0
+      normal:
+        total: 8
+        fully_compliant: 5
+        partially_compliant: 1
+        not_compliant: 0
+        requires_human_verification: 2
+    fully_compliant_reqs: [REQ-001, REQ-002, REQ-003, REQ-007, REQ-008, REQ-009, REQ-010, REQ-011]
+    partially_compliant_reqs: [REQ-004]
+    requires_human_verification_reqs: [REQ-005, REQ-006]
+    hard_constraints_check:
+      rings_exactly_10: true                          # instrument rings 10; probe [R0..R8, spine]
+      every_dimension_psl_id_and_evidence: true       # min 1 / min 1 over 42×3; 283 file/gate_json refs resolve
+      card_commits_touching_audited_dirs_zero: true   # replay 13/0/0 at ba7d5e2; diff --stat 57ebf2b..HEAD and 843c3ee..HEAD both empty
+    l5_suite: "NOT executed by this evaluator (iteration-002 constraint limits runs to the named replay / diff commands and the cli:check-audit boundary; runtime pass/fail is qa-reviewer's). Static RETRIEVE: 34 methods, file unchanged since e217d10, every AC id has its method; pr-body.md claims 34/34 at HEAD — unverified here."
+    trend_vs_iteration_001:
+      verdict_changes: none                            # 8 / 1 / 0 / 2 → 8 / 1 / 0 / 2; per-REQ verdicts identical
+      regressions: 0
+      evidence_changes:
+        - "REQ-003/005: renderer now escapes every table cell (cell/code) and adds an artifact 闸（checked_by） column; render still deterministic (0 diff lines)."
+        - "REQ-006: signer_kind rendering is a closed map (未知 fallback, 0 hits); replay snapshot re-recorded with sha_scope: branch-specific — but head 9ad5b9c is on fix/iter-002, not this branch (patch-twin of 7cb1f55), and the block records exit: 1 beside ok: true."
+        - "REQ-007: replay rewritten with --no-renames and an additive footer-less pass (8 scanned / 0 touching at ba7d5e2); 13 Card commits replay clean vs 11 at 843c3ee."
+        - "REQ-004: no change — check_audit.py and audit.schema.md are byte-identical to the iteration-001 baseline; KG-02 stands."
+      prev_out_of_scope_status:
+        - "iteration-001 obs[0] (stale shas e5ffbbd/1f1916e): addressed by disclosure + re-record; a new branch-foreign sha (9ad5b9c) replaces them — see REQ-006 tags."
+        - "iteration-001 obs[1]/[2] (footer-less commits touching audited dirs / forbidden_paths): the instrument now records footer-less commits since the first Card commit (0 touching); the pre-Card fix commits (587f371, ebe270d, c729f76) predate 0be2770 and are outside both REQ-007 and the new pass — commit-table.md (new in ca5a6f3) classifies them as PSL L122-123 deviation commits; process question, not a REQ verdict."
+        - "iteration-001 obs[3] (11 known gaps): unchanged, still carried verbatim into run_evidence and AUDIT.md."
+
+  overall_label: partially_compliant
+  block_merge: false
+  block_merge_reasons: []
+  block_merge_note: "No not_compliant; the single partially_compliant (REQ-004, KG-02) is on a normal REQ with a recorded g2-judge waiver; both requires_human_verification REQs are normal-criticality human ACs that route to G3 by contract rule 4 and are not auto-passed here. Meta-judge should treat REQ-005/006 as pending G3, not as pass. The audited_dirs_diff exit/ok contradiction (REQ-006 evidence) is a record defect inside a human AC's evidence, not a mechanical AC failure; it is the one item in this review that a CARD-06 doc-only refresh could remove before G3 reads the page."
+
+  # ====== OUT-OF-SCOPE OBSERVATIONS ======
+  out_of_scope_observations:
+    - location: plugins/sdlc/dogfood/ring-audit/audit.yaml:3414-3415
+      observation: "run_evidence.audited_dirs_diff records `exit: 1` for `bash replay_card_commits.sh` while the same block records ok: true, card_commits_touching_audited_dirs 0 and card_commits_rejected 0. replay_card_commits.sh L151-152 sets exit 1 only when rejected > 0 or overflow > 0, so this combination cannot come from one run — the exit field is a transcription error. render_audit.py never prints it, so AUDIT.md readers do not see it; audit.yaml readers do, and F-12 makes the yaml authoritative. Fix is one character inside CARD-06's allowed_files (audit.yaml) plus a re-render."
+      category: bug-likely
+      route_to: "G3 product judge (AC-006-a) / CARD-06 follow-up commit"
+    - location: plugins/sdlc/dogfood/ring-audit/audit.yaml:3416-3425
+      observation: "The re-recorded replay snapshot names branch fix/iter-002 @ 9ad5b9c and lists 9ad5b9c as a CARD-01 commit. 9ad5b9c is not reachable from docs/1-sdlc-ring-audit HEAD; it is the pre-cherry-pick twin (identical patch-id) of 7cb1f55. The snapshot_note now discloses sha_scope: branch-specific, which is the honest framing, but a reader on this branch still cannot resolve the head sha. Re-running the instrument on this branch (13 Card commits, 0 touching) and pasting that output would make the table self-consistent; the load-bearing git_diff_stat is unaffected."
+      category: other
+      route_to: "G3 product judge (AC-006-a) / CARD-06 follow-up commit"
+    - location: plugins/sdlc/dogfood/ring-audit/AUDIT.md (R6 L391, R7 agent.pr-reviewer row, R8 tune row)
+      observation: "The new checked_by column renders '（无闸 → 封顶 declared）' for every artifact of 3 Parts whose implemented verdict is compiled: R6/human_gate.G3 (part.gates [G3]), R7/agent.pr-reviewer (part.gates [verify_pr.py]), R8/tune (part.gates [tune.py]). The column's docstring says it exists to expose exactly this disagreement between part.gates and artifacts[].checked_by; audit.schema.md L121 states the F-06 cap. This is the F-06 granularity question already raised for G3 in g3-input.md item 1; pm-reviewer does not adjudicate it and it does not touch any mechanical AC."
+      category: other
+      route_to: "G3 tech judge (AC-005-a) / change-proposal-002 (F-06 predicate)"
+    - location: plugins/sdlc/dogfood/ring-audit/render_audit.py + replay_card_commits.sh (iteration-002 fixes)
+      observation: "None of the six in-contract fixes has a locked test: cell()/code() escaping, the closed SIGNER_KIND_RENDER map, the checked_by column, --no-renames, the non_card_commits_* fields, and the computed assembly-note counts all live outside tests/** (l5-locked). They were verified here by reading the code and by re-running the instruments on real data. If a later change-proposal reopens the l5 lock, these are natural additions (a mutant with signer_kind: '人签'; a fixture value containing '|'; a twin repo with a file renamed out of plugins/sdlc/skills/)."
+      category: other
+      route_to: "/test-suite-generator via change-proposal-002; /qa-reviewer"
+
+  # ====== CAVEATS ======
+  caveats:
+    scope_mismatch: false
+    non_functional_heavy: false
+    incomplete_normalization: false
+    requirements_source_open_questions:
+      - "spec-robustness.md does not exist for this Run (not produced); no self-adversarial companion was available to pm-reviewer."
+      - "AC-004-b given 'lacking a source assessment or gap id' admits two readings (source key absent vs source id unresolvable); the instrument, fixture and locked test compile only the first. Recorded upstream as KG-02 → change-proposal-002. Unchanged since iteration-001."
+      - "REQ-001..011 have no prose statement of their own in done_when.yaml; they were normalized from their AC given/expect blocks plus issue-body Scope/hard_constraints."
+    cross_vendor_unavailable: true

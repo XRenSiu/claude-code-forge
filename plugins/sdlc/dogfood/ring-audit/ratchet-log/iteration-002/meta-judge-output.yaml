@@ -1,0 +1,652 @@
+# meta-judge-output.yaml — acceptance-fleet iteration-002 · sdlc-ring-audit (impl head ba7d5e2, branch docs/1-sdlc-ring-audit)
+# Shape: plugins/sdlc/skills/meta-judge/references/finding-schema.yaml (final_verdict: top-level key). Extra audit keys beyond
+# the strict schema are marked "# extra".
+# Hard wall honoured: no implementation file (check_audit.py / render_audit.py / replay_card_commits.sh / audit.yaml / AUDIT.md /
+# audit/rings-*.yaml / tests/**) was read; every statement below is derived from the seven iteration-002 review files plus the rules
+# source. M2 arithmetic came from scripts/compute_confidence.py --json over meta-judge-merged.json (same directory); confidence /
+# confidence_boost / weight_terms are pasted verbatim. M3 evidence-verification reads used: 0 of 5.
+# iteration-001/meta-judge-output.yaml was read ONLY to mark recurrence_of (same file + same mechanism); its verdict, weights and
+# needs_human items were not inherited — the state below is re-derived from iteration-002 outputs alone.
+final_verdict:
+  # ====== META BLOCK ======
+  agent_role: meta-judge
+  model: claude-fable-5-1                          # per task brief (schema example names claude-opus-4-7; fable-5-1 sits above the Opus tier — iron rule "never weaker" met)
+  vendor: claude
+  isolation: medium                                # extra (fleet COMMON.md header key)
+  iteration: 2                                     # extra
+  reviews_source: plugins/sdlc/dogfood/ring-audit/ratchet-log/iteration-002/fleet-outputs/
+  rules_source: plugins/sdlc/dogfood/ring-audit/done_when.yaml
+  inputs_read:                                     # extra (fleet COMMON.md header key)
+    - plugins/sdlc/skills/meta-judge/SKILL.md
+    - plugins/sdlc/skills/meta-judge/references/finding-schema.yaml
+    - plugins/sdlc/skills/meta-judge/references/synthesis-protocol.md
+    - plugins/sdlc/skills/meta-judge/references/rules-source-formats.md
+    - plugins/sdlc/skills/meta-judge/scripts/compute_confidence.py          # skill primitive, read for its input contract only
+    - plugins/sdlc/dogfood/ring-audit/done_when.yaml
+    - plugins/sdlc/dogfood/ring-audit/ratchet-log/iteration-002/fleet-outputs/code-reviewer-security.yaml
+    - plugins/sdlc/dogfood/ring-audit/ratchet-log/iteration-002/fleet-outputs/code-reviewer-logic.yaml
+    - plugins/sdlc/dogfood/ring-audit/ratchet-log/iteration-002/fleet-outputs/code-reviewer-perf.yaml
+    - plugins/sdlc/dogfood/ring-audit/ratchet-log/iteration-002/fleet-outputs/qa-reviewer.yaml
+    - plugins/sdlc/dogfood/ring-audit/ratchet-log/iteration-002/fleet-outputs/pm-reviewer.yaml
+    - plugins/sdlc/dogfood/ring-audit/ratchet-log/iteration-002/fleet-outputs/spec-drift-detector.yaml
+    - plugins/sdlc/dogfood/ring-audit/ratchet-log/iteration-002/fleet-outputs/spec-gaming-detector.yaml
+    - "plugins/sdlc/dogfood/ring-audit/ratchet-log/iteration-001/meta-judge-output.yaml (recurrence marking ONLY — see header)"
+  not_read: [".sdlc/**", "plugins/sdlc/dogfood/ring-audit/*.py", "plugins/sdlc/dogfood/ring-audit/*.sh", "plugins/sdlc/dogfood/ring-audit/audit.yaml", "plugins/sdlc/dogfood/ring-audit/AUDIT.md", "plugins/sdlc/dogfood/ring-audit/audit/**", "plugins/sdlc/dogfood/ring-audit/tests/**", "ratchet-log/iteration-001/fleet-outputs/**", "ratchet-log/iteration-002/impl-diff.patch"]   # extra
+  reviews_loaded:
+    - { role: code-reviewer, focus: security, file: code-reviewer-security.yaml, vendor: claude, model: claude-fable-5-1, finding_count: 5, schema_valid: true, note: "adversarial_mode true; every candidate executed on crafted variants / twin repos; tool_calls_used 33 vs budget 20 (self-reported)" }
+    - { role: code-reviewer, focus: logic,    file: code-reviewer-logic.yaml,    vendor: claude, model: claude-fable-5-1, finding_count: 5, schema_valid: true, note: "tool_calls_used 18/20; 8 walked-but-not-emitted candidates listed in its footer" }
+    - { role: code-reviewer, focus: perf,     file: code-reviewer-perf.yaml,     vendor: claude, model: claude-sonnet-5,  finding_count: 0, schema_valid: true, note: "rationale: no perceptible trigger at measured scale (42 parts / 58 artifacts / ~13 commits); check_audit.py unchanged in the incremental diff" }
+    - { role: qa-reviewer,           file: qa-reviewer.yaml,           vendor: claude, model: claude-sonnet-5,  finding_count: 0, schema_valid: true, decision: GO, note: "existence 4/4; 34/34 unit+integration; fixture mutation 24/24 = 1.0; instrument mirror 23/30 = 0.767 self-consistent; AUDIT.md byte-identical to a fresh render; no regression vs iteration-001 baseline; 2 non-finding caveats (render_audit.py untested; audited_dirs_diff exit/ok inconsistency)" }
+    - { role: pm-reviewer,           file: pm-reviewer.yaml,           vendor: claude, model: claude-fable-5-1, finding_count: 3, schema_valid: true, note: "11 REQs: 8 fully_compliant / 1 partially_compliant (REQ-004) / 2 requires_human_verification (REQ-005, REQ-006); all 3 critical REQs fully_compliant; block_merge false; 4 out_of_scope_observations (2 counted as finding sources: obs[0], obs[1])" }
+    - { role: spec-drift-detector,   file: spec-drift-detector.yaml,   vendor: claude, model: claude-fable-5-1, finding_count: 11, schema_valid: true, note: "first real run (iteration-001 was a placeholder); 11 signals (0 timing / 8 behavior / 3 contract; 4 medium, 7 low); recommendations update_spec 4 / fix_code 1 / needs_human 6; 9 of 11 born in commit 0be2770" }
+    - { role: spec-gaming-detector,  file: spec-gaming-detector.yaml,  vendor: claude, model: claude-fable-5-1, finding_count: 3, schema_valid: true, note: "gaming_risk_score 4.0 (trajectory [3.5, 4.0], trend up, delta +0.5, no trend_warning); detected_patterns [] — all 3 findings under unclassified_patterns (P1 ×1, P2 ×2); 6 spec_robustness_gaps; spec-robustness.md absent (maximum-suspicion mode)" }
+  rules_loaded:
+    - { rule_index: 0, condition: "any P0 finding blocks merge", severity: blocking, applies_to: any-reviewer,
+        parsed_predicate: { field: severity, op: "==", value: P0, action: block }, source: "done_when.yaml rules[0]" }
+    - { rule_index: 1, condition: "any card commit touching plugins/sdlc/skills, plugins/sdlc/agents or plugins/sdlc/docs is a P0 (PSL-003)", severity: blocking, applies_to: any-reviewer,
+        parsed_predicate: { field: card_commits_touching_audited_dirs, op: ">", value: 0, action: escalate_to_P0, heuristic: true }, source: "done_when.yaml rules[1]" }
+    - { rule_index: 2, condition: "an Assessment dimension without a PSL-ID or without Evidence is a P0 (PSL-010)", severity: blocking, applies_to: any-reviewer,
+        parsed_predicate: { fields: [dims_without_psl_id, dims_without_evidence], op: ">", value: 0, action: escalate_to_P0, heuristic: true }, source: "done_when.yaml rules[2]" }
+    - { rule_index: 3, condition: "human ACs AC-005-a / AC-006-a route to G3; they are never auto-passed", severity: needs-human, applies_to: pm-reviewer,
+        parsed_predicate: { field: pm_verdict, reqs: [REQ-005, REQ-006], op: "==", value: requires_human_verification, action: needs_human }, source: "done_when.yaml rules[3]" }
+    - { rule_index: 4, condition: "rings == 10", severity: blocking, applies_to: any-reviewer,
+        parsed_predicate: { field: rings, op: "==", value: 10 }, source: "done_when.yaml behavior.thresholds.rings (auto-added, format 1)" }
+    - { rule_index: 5, condition: "dims_with_psl_id_ratio >= 1.0", severity: blocking, applies_to: any-reviewer,
+        parsed_predicate: { field: dims_with_psl_id_ratio, op: ">=", value: 1.0 }, source: "done_when.yaml behavior.thresholds.dims_with_psl_id_ratio" }
+    - { rule_index: 6, condition: "card_commits_touching_audited_dirs == 0", severity: blocking, applies_to: any-reviewer,
+        parsed_predicate: { field: card_commits_touching_audited_dirs, op: "==", value: 0 }, source: "done_when.yaml behavior.thresholds.card_commits_touching_audited_dirs" }
+    - { rule_index: 7, condition: "parts_total == 42", severity: blocking, applies_to: any-reviewer,
+        parsed_predicate: { field: parts_total, op: "==", value: 42 }, source: "done_when.yaml behavior.thresholds.parts_total" }
+    - { rule_index: 8, condition: "required_parts_by_ring_group: R0-R2+spine 14 names; R3-R5 7; R6 9; R7-R8 7; agents 5 (AC-001-a) — required_parts_missing 0 for every group", severity: blocking, applies_to: pm-reviewer,
+        parsed_predicate: { field: required_parts_missing, op: "==", value: 0, per_group: ["R0,R1,R2,spine (14)", "R3,R4,R5 (7)", "R6 (9)", "R7,R8 (7)", "agents (5, AC-001-a)"], heuristic: true }, source: "done_when.yaml behavior.thresholds.required_parts_by_ring_group (descriptive string; predicate reconstructed from AC-001/008..011-a expect)" }
+    - { rule_index: 9, condition: "mutation_kill_rate >= 0.70", severity: blocking, applies_to: qa-reviewer,
+        parsed_predicate: { field: mutation_kill_rate, op: ">=", value: 0.70 }, source: "done_when.yaml behavior.thresholds.mutation_kill_rate" }
+  context_provided: { feature: sdlc-ring-audit, iteration: 2, is_hotfix: false }
+  duration_seconds: 600
+  tool_calls_used: 0                               # M3 evidence-verification reads (max 5): none needed — the one contested claim resolved on evidence asymmetry
+
+  # ====== THE DECISION ======
+  state_decision: NEEDS_HUMAN
+  decision_reasons:
+    - "NEEDS_HUMAN (classifier step A): rule 3 fired. pm-reviewer returned requires_human_verification for REQ-005 (AC-005-a, kind human, judge tech, ui:AUDIT.md#ring-tables) and REQ-006 (AC-006-a, kind human, judge product, ui:AUDIT.md#run-evidence); the contract's own rule 4 forbids auto-passing them and pm-reviewer's block_merge_note says verbatim 'Meta-judge should treat REQ-005/006 as pending G3, not as pass.' qa-reviewer and spec-gaming-detector both state independently that they report evidence, not a verdict, for these two ACs. Two blocking needs_human items (nh-001, nh-002) go to G3."
+    - "No BLOCK_MERGE condition (classifier step B): no reviewer reported a P0 — max synthesized severity across 20 merged findings is P1 (rule 0 passed). Rule 1's escalation predicate evaluates to 0 on four independent live runs at ba7d5e2 (qa-reviewer replay 13 Card commits / 0 touching / 0 rejected; pm-reviewer same + git diff --stat 57ebf2b..HEAD and 843c3ee..HEAD over the three dirs = 0 lines; spec-gaming-detector same + diff-stat 0be2770^..HEAD 0 lines; spec-drift-detector verified_no_drift same diff-stat empty). Rule 2's predicate evaluates to 0 on pm-reviewer REQ-002 (dims_without_psl_id 0 / dims_with_unknown_psl_id 0 / dims_without_evidence 0 over 42×3 dims) corroborated by qa-reviewer's check_audit exit 0 on the real audit.yaml and spec-gaming-detector's evidence-ref resolution (415 of 444 resolve, 29 not machine-checkable, 1 glued path). All six threshold rules (4-9) pass on reviewer-reported numbers."
+    - "Task-brief blocking test (violation of a locked mechanical AC, or fabricated evidence): no reviewer reports either. Every mechanical AC re-ran green at ba7d5e2 (pm-reviewer: all 20 AC given/expect re-derived from fresh runs; qa-reviewer 34/34 on the l5-locked suite; spec-gaming-detector l5_lock 43/43 sha match). On the evidence-record defects: spec-gaming-detector gd-unc-001 direction_note says 'the wrong value points AGAINST the implementer … sloppiness in an evidence block rather than a faked success'; gd-unc-002 what_is_actually_true says the PSL-003 property holds and only 'the record that is supposed to prove it' does not; pm-reviewer calls it 'a record defect inside a human AC's evidence, not a mechanical AC failure'; spec-drift-detector SD-01 says 'the divergence is in the record, not in the property'. These are AC-006-a evidence → nh-002, not BLOCK."
+    - "Six P1 findings survive as NON-blocking (the rules source blocks only P0): mf-001 replay record head/branch/first-row sha 9ad5b9c unreachable from the reviewed branch, disclosed by a disclaimer instead of re-recorded (confidence 0.8, spec-gaming-detector + pm-reviewer; recurrence of the iteration-001 stale-sha class after a fix that claimed to cure it); mf-003 replay script aborts with zero-byte stdout on an empty main..HEAD range — a regression introduced by the iteration-002 fix commit 7cb1f55 (0.4, code-reviewer-logic, executed); mf-004 core.quotePath C-quoting lets a non-ASCII filename under an audited dir evade AUDITED_RE (0.4, code-reviewer-security, twin repo); mf-005 the new footer-less pass starts at the oldest Card commit, so pre-Card commits and non-canonical footers stay invisible (0.4, security; same mechanism class as iteration-001 mf-002, residual after the partial fix); mf-006 residual table-row interpolations (gaps[].atoms and 9 other sites) still bypass cell()/code() and reproduce 已实现 ✓ on a crafted copy (0.4, security; residual of iteration-001 mf-001); mf-007 signer_kind enum not closed by the checker — known gap KG-04 (0.4, security). Every reviewer's live run confirms the delivered content does not exploit mf-004..007; mf-001/002/003 are defects IN the delivered artefacts (record) or the fixed instrument."
+    - "Eight P2 and six P3 findings are non-blocking: mf-002 audited_dirs_diff records exit: 1 beside ok: true — a combination the instrument cannot emit (confidence 1.0, the only three-role agreement in this fleet: spec-drift-detector + spec-gaming-detector + pm-reviewer, plus qa-reviewer's non-finding caveat); mf-008 --rings silently disables ring_unexpected and narrows ring_missing, contrary to F-17 (0.8, code-reviewer-logic + spec-drift-detector; new, unregistered); mf-009 F-06 cap — 3 Parts with every artifact checked_by [] recorded compiled, 5 with any (0.8, gaming + drift; recurrence of iteration-001 mf-011, broadened); mf-010 fills[] same-ring over-strict (0.8; recurrence of mf-008); mf-011 proposal.source resolvability KG-02 (0.8; recurrence of mf-014; waived to change-proposal-002); mf-012 renderer never projects the record's exit field (0.4); mf-013 alternatives_of exemption unverified (0.4; recurrence of iteration-001 mf-004, reviewer-downgraded P1→P2); mf-014 gates[].kind enum not enforced (0.4); mf-015..020 six low spec↔code disagreements from spec-drift-detector (0.4 each), five of them born in the same commit as the code (0be2770)."
+    - "Recurrence accounting (recurrence_of fields below, same file + same mechanism vs iteration-001 merged findings): 7 of 20 are recurrences (mf-001, mf-005, mf-006, mf-009, mf-010, mf-011, mf-013), 13 are new. Of the new, two were introduced by the iteration-002 fix commits themselves (mf-002 by ba7d5e2, mf-003 by 7cb1f55) — spec-gaming-detector tags both 'fix-pressure-induced'. Iteration-002 reviewers independently re-verified the six named fixes: five as stated (cell escaping + closed signer map, computed counts, checked_by column, --no-renames, additive footer-less pass — spec-gaming-detector reverified block; pm-reviewer REQ-003/006/007 tool traces; qa-reviewer spot-checks) and one NOT as stated ('run_evidence replay re-recorded on the branch' — re-recorded on worktree branch fix/iter-002 @ 9ad5b9c and cherry-picked; gaming reverified.fix_run_evidence_replay_re_recorded_on_the_branch, pm REQ-006, drift SD-01)."
+    - "Known gaps: mf-007 (KG-04), mf-011 (KG-02) are Run-disclosed known gaps routed by G2 to change-proposal-002 — per task brief not BLOCK reasons; spec-drift-detector and spec-gaming-detector each re-confirmed KG-01..04 and deliberately did not re-file them (drift dropped_candidates; gaming srg-004). code-reviewer-security filed KG-04 as a P1 finding anyway; it is recorded with the known-gap tag and does not change the state."
+    - "Confidence threshold: no merged finding fell below 0.3 (minimum 0.4 — single-source, self-confidence high). All 20 retained."
+    - "Informational, NOT rules (not in the rules source; recorded so /acceptance-fleet has them for its own four-state decode): qa-reviewer decision GO with 0 regressions vs baseline; spec-gaming-detector gaming_risk_score 4.0 (six-pattern detected_patterns empty; score is the sum of three unclassified evidence-record-integrity findings), trajectory [3.5, 4.0], trend up (+0.5, below the ≥2 single-step alarm), and its trend_note verbatim: 'A third iteration that answers this with more prose instead of a resolving record should be read as convergence on gaming even if the number stays under 7'; spec-drift-detector 11 signals, 9 of which trace to commit 0be2770 (doc written with code), none older than 3 hours; spec-robustness.md does not exist for this Run (all seven reviewers record it as absent)."
+    - "Cross-vendor: all seven reviews are vendor claude (models fable-5-1 ×5, sonnet-5 ×2). Cross-vendor weighting added 0.0 to every merged finding; the 0.8 / 1.0 values owe their boost to cross-ROLE agreement within one vendor. spec-gaming-detector notes a codex binary is present but was not invoked (not authorized). The same-vendor blind-spot caveat applies symmetrically to pass-side evidence (qa GO, pm fully_compliant) and to the findings."
+
+  # ====== M1 — DEDUPE LOG ======
+  # 27 raw source records -> 20 merged findings; 6 merges absorbing 7 records. Bucket by file, cluster by line_range overlap, split by root_cause.
+  # Severity mapping applied where a source carries no P-level: spec-drift-detector divergence_severity medium -> P2, low -> P3; pm-reviewer
+  # partially_compliant on a normal REQ with a recorded waiver -> P2; pm out_of_scope_observations carry no P-level (cluster takes the max of the others).
+  # Cluster notes:
+  #  - audit.yaml [3412..3440]: SD-01 [3412,3427], gd-unc-001 [3412,3424], pm obs[0] [3414,3415], gd-unc-002 [3416,3440], pm obs[1] [3416,3425] fall in ONE
+  #    line-overlap cluster. Root-cause comparison splits it into two mechanisms: exit:1-vs-ok:true (SD-01 primary clause + gd-unc-001 + pm obs[0]) -> mf-002;
+  #    branch-foreign head/sha 9ad5b9c (gd-unc-002 + pm obs[1]) -> mf-001. SD-01 also states the 9ad5b9c fact in its code_does (folded there per its own
+  #    dropped_candidates); it is counted as a source ONCE (mf-002) and listed under mf-001 as a non-source corroboration to avoid double-counting.
+  #  - check_audit.py: eight records on non-overlapping or overlapping ranges with distinct mechanisms — L/cr-002+SD-02 [161,168] merged; L/cr-004+SD-05
+  #    [258..278] merged; pm REQ-004+SD-04 [394,402] merged; S/cr-005 [334,336], L/cr-003 [364,374], S/cr-004 [388,391], SD-08 [70,72] kept separate;
+  #    SD-06 spans [153..429] (scattered registry reads) and overlaps several, but its root cause (registry presence) is distinct -> separate.
+  #  - audit.yaml [1348,1860]: gd-unc-003 + SD-03 (no explicit line range; same file, same Parts, same F-06 mechanism) merged -> mf-009. pm obs[2] states the
+  #    same fact at AUDIT.md rows (different file) -> non-source corroboration per the "different file:line is NOT a duplicate" rule.
+  #  - replay_card_commits.sh: L/cr-001 [82,84], S/cr-002 [69,69], S/cr-003 [130,131], SD-09 [112,149] — SD-09 overlaps S/cr-003 by line but reports a different
+  #    mechanism (two error tokens vs window bound) -> all four separate. gaming srg-005 describes S/cr-003's mechanism but carries no file:line and was
+  #    explicitly dropped as a finding by the detector -> non-source corroboration of mf-005.
+  #  - render_audit.py: S/cr-001 [259,259] and L/cr-005 [509,533] — different lines, different mechanisms -> separate. L/cr-005 is cross-referenced to mf-002
+  #    (record defect) as related_to; not merged (different file).
+  #  - Non-finding records NOT counted as sources (consistent with iteration-001 practice): qa-reviewer caveats.other[0]/[1], pm obs[2]/[3], code-reviewer-logic
+  #    footer candidates, spec-drift-detector dropped_candidates / CLAIM-022 / CLAIM-025, spec-gaming-detector srg-* and dropped_after_self_refutation.
+  deduplicated_findings:
+    - merged_finding_id: mf-001
+      sources:
+        - { role: spec-gaming-detector, finding_id: gd-unc-002, vendor: claude, file: plugins/sdlc/dogfood/ring-audit/audit.yaml, line_range: [3416, 3440], self_confidence: high, severity: P1, pattern: "unclassified → disclaimer_in_place_of_fix", mode: diff }
+        - { role: pm-reviewer, finding_id: "out_of_scope_observations[1]", vendor: claude, file: plugins/sdlc/dogfood/ring-audit/audit.yaml, line_range: [3416, 3425], self_confidence: null, severity: null, origin: "out_of_scope_observations (category other) + REQ-006 tag snapshot_head_9ad5b9c_unreachable_from_HEAD_patch_twin_of_7cb1f55; REQ-006 verdict confidence high" }
+      synthesized_severity: P1
+      synthesized_root_cause: >-
+        Iteration-001 recorded replay shas (e5ffbbd / 1f1916e) that did not resolve on the shipped branch. The iteration-002 fix commit says 'Re-ran replay_card_commits.sh here and recorded the branch, HEAD' — 'here' was worktree branch fix/iter-002 @ 9ad5b9c; the commits were then cherry-picked onto docs/1-sdlc-ring-audit as 7cb1f55 / ba7d5e2, so the shipped record's branch, head and first table row again do not exist on the branch under review (`git branch --contains 9ad5b9c` → fix/iter-002 only). Instead of producing a record that resolves, the snapshot_note grew a paragraph telling the reader the shas will not resolve and 'do not copy this table' — the claim was made unfalsifiable rather than correct, and this happened against the g2-judge ruling quoted in pr-body.md L116 ('不 rebase / cherry-pick，否则 run_evidence 与账本引用的 sha 全部失效').
+      dedupe_rationale: "Same file, overlapping lines [3416,3440]∩[3416,3425], identical fact (head 9ad5b9c on fix/iter-002, not reachable from ba7d5e2, patch-id twin of 7cb1f55). gd-unc-002's root_cause is the longer text and is used verbatim. The two sources differ in characterization — pm calls the sha_scope: branch-specific disclosure 'the honest framing' and routes it to G3 / a CARD-06 follow-up; gaming calls it 'disclaimer_in_place_of_fix', tags recurrence + process-ruling-violated — but not in fact; both state the load-bearing empty diff-stat IS reproducible at ba7d5e2 by live run. Severity = max(P1, none) = P1."   # extra
+      corroborated_by_non_source_records: ["spec-drift-detector SD-01 code_does: '9ad5b9c is not an ancestor of ba7d5e2 (git merge-base --is-ancestor fails; only branch fix/iter-002 contains it), and the reviewed branch has 13 Card-footer commits … not the recorded 12' — folded into SD-01 per its dropped_candidates; counted as a source under mf-002 only", "spec-gaming-detector srg-002 (contract weakness: nothing requires the replay record to resolve in the repository that ships it)"]   # extra
+      file: plugins/sdlc/dogfood/ring-audit/audit.yaml
+      line_range: [3416, 3440]
+      confidence: 0.8
+      confidence_boost: 0.3
+      weight_terms: { distinct_roles: 2, distinct_vendors: 1, role_bonus: 0.2, vendor_bonus: 0.0, single_source_single_vendor_penalty: 0.0, self_confidence_adj: 0.1 }   # extra
+      blocking: false
+      rules_triggered: []
+      recurrence_of: "iteration-001/mf-012"       # extra — same file (audit.yaml run_evidence.audited_dirs_diff) + same mechanism (replay record shas unreachable from the branch under review); the identifiers changed (e5ffbbd/1f1916e → 9ad5b9c), the mechanism did not
+      recurrence_kind: "recurred_after_fix_claimed_to_cure_it"   # extra
+      bears_on: [nh-002]                           # extra
+
+    - merged_finding_id: mf-002
+      sources:
+        - { role: spec-drift-detector, finding_id: SD-01, vendor: claude, file: plugins/sdlc/dogfood/ring-audit/audit.yaml, line_range: [3412, 3427], self_confidence: high, severity: "medium → P2", divergence_type: behavior_mismatch, recommendation: fix_code }
+        - { role: spec-gaming-detector, finding_id: gd-unc-001, vendor: claude, file: plugins/sdlc/dogfood/ring-audit/audit.yaml, line_range: [3412, 3424], self_confidence: high, severity: P2, pattern: "unclassified → hand_assembled_run_record", mode: diff }
+        - { role: pm-reviewer, finding_id: "out_of_scope_observations[0]", vendor: claude, file: plugins/sdlc/dogfood/ring-audit/audit.yaml, line_range: [3414, 3415], self_confidence: null, severity: null, origin: "out_of_scope_observations (category bug-likely) + REQ-006 tag audited_dirs_diff_exit_1_vs_ok_true_inconsistency; REQ-006 verdict confidence high" }
+      synthesized_severity: P2
+      synthesized_root_cause: >-
+        `status=1` only when `rejected>0` or `overflow>0`; `ok` is printed as `status -eq 0`; the script exits `$status`. So `exit` and `ok` are the same bit in every real invocation — `exit: 1` together with `ok: true`, 0 rejected and 0 touching cannot come out of one run of this instrument. Live run at HEAD ba7d5e2 on docs/1-sdlc-ring-audit: exit 0, ok true, card_commits 13, card_commits_touching_audited_dirs 0, card_commits_rejected 0, non_card_commits_scanned 8, non_card_commits_touching_audited_dirs 0. Additionally, 9ad5b9c is not an ancestor of ba7d5e2 (`git merge-base --is-ancestor` fails; only branch fix/iter-002 contains it), and the reviewed branch has 13 Card-footer commits (7cb1f55 CARD-01 and ba7d5e2 CARD-06 both carry footers), not the recorded 12. render_audit.py:509-537 never prints the `exit` field, so AUDIT.md shows only `ok: true` and a reader of the projection cannot see the contradiction; audit.yaml is the side that wins on disagreement (F-12).
+      dedupe_rationale: "Same file, overlapping lines [3412,3427]∩[3412,3424]∩[3414,3415], same mechanism (recorded exit 1 cannot co-occur with ok true / 0 rejected / 0 touching under replay_card_commits.sh:151-152). SD-01's code_does is the longest text and is used verbatim (its 'Additionally' clause about 9ad5b9c is the folded secondary fact — see mf-001). All three sources independently re-ran the instrument on the branch and got exit 0 / ok true / 13 Card commits. Severity: gd-unc-001 P2, SD-01 medium→P2 → P2. spec-drift-detector git-blame: the exit key did not exist at 843c3ee / b24243d / 3441ba4; introduced by ba7d5e2 (fix commit), likely_intentional false, drift_age 11 minutes."   # extra
+      corroborated_by_non_source_records: ["qa-reviewer caveats.other[1] (DATA-INTEGRITY OBSERVATION — not filed as a finding; independently re-ran the replay: ok true / exit 0 / 13 / 8 / 0 / 0; 'most likely a stale value carried over from an earlier run on the fix/iter-002 branch')", "spec-gaming-detector srg-001 (contract weakness: run_evidence is free-form hand-typed YAML; proposes AC-006-b run_record_inconsistent)"]   # extra
+      file: plugins/sdlc/dogfood/ring-audit/audit.yaml
+      line_range: [3412, 3427]
+      confidence: 1.0
+      confidence_boost: 0.5
+      weight_terms: { distinct_roles: 3, distinct_vendors: 1, role_bonus: 0.4, vendor_bonus: 0.0, single_source_single_vendor_penalty: 0.0, self_confidence_adj: 0.1 }   # extra
+      blocking: false
+      rules_triggered: []
+      recurrence_of: null                          # extra — new: the exit key was introduced by the iteration-002 fix commit ba7d5e2 (spec-drift-detector blame)
+      recurrence_kind: "fix_induced"               # extra
+      related_to: [mf-012]                         # extra — renderer side of the same fact (different file, not merged)
+      bears_on: [nh-002]                           # extra
+
+    - merged_finding_id: mf-003
+      sources:
+        - { role: code-reviewer, finding_id: logic/cr-001, vendor: claude, file: plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh, line_range: [82, 84], self_confidence: high, severity: P1, category: boundary_condition_empty_input }
+      synthesized_severity: P1
+      synthesized_root_cause: >-
+        The iteration-002 refactor collects commits into the bash array `shas` and then iterates `for i in $(seq 0 $(( ${#shas[@]} - 1 )))`. When the range `main..HEAD` is empty the array is empty, macOS/BSD `seq 0 -1` emits `0` and `-1`, and `${shas[$i]}` under `set -u` aborts with "shas[$i]: unbound variable". The script exits 1 with ZERO bytes on stdout — violating its own contract ("stdout is one JSON object"; exit 1 means a failed predicate, exit 2 means unreadable input) and making the PSL-003 instrument unreadable exactly where AUDIT.md tells readers to re-run it ("换分支或 rebase 之后必须重跑"). The pre-fix version at 843c3ee (a plain `while read` loop) printed `{"card_commits": 0, ..., "ok": true}` and exited 0 on the same input, so this is a regression introduced by commit 7cb1f55.
+      file: plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh
+      line_range: [82, 84]
+      confidence: 0.4
+      confidence_boost: -0.1
+      weight_terms: { distinct_roles: 1, distinct_vendors: 1, role_bonus: 0.0, vendor_bonus: 0.0, single_source_single_vendor_penalty: -0.2, self_confidence_adj: 0.1 }   # extra
+      blocking: false
+      rules_triggered: []
+      recurrence_of: null                          # extra — new: regression introduced by iteration-002 fix commit 7cb1f55 (reviewer diffed against 843c3ee's script and executed both)
+      recurrence_kind: "fix_induced"               # extra
+      note: "Not a violation of locked AC-007-a as written: on the feature branch main..HEAD is non-empty and four reviewers ran the script to exit 0 / 13 Card commits. The only L5 test (test_AC_007_a) runs in a twin repo with RANGE_SPEC=HEAD, so the regression is uncovered (reviewer grep). Reviewer's executed reproduction: fresh repo with one commit → stderr 'shas[$i]: unbound variable', stdout empty, exit 1; same input on 843c3ee's script → JSON, exit 0; bash 3.2.57."   # extra
+      bears_on: [nh-002, nh-004]                   # extra
+
+    - merged_finding_id: mf-004
+      sources:
+        - { role: code-reviewer, finding_id: security/cr-002, vendor: claude, file: plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh, line_range: [69, 69], self_confidence: high, severity: P1, category: path_matching_bypass }
+      synthesized_severity: P1
+      synthesized_root_cause: >-
+        audited_hits() greps `git diff --name-only --no-renames` output with '^plugins/sdlc/(skills|agents|docs)/'. With git's default core.quotePath=true, any path containing non-ASCII bytes (or a quote/backslash/control char) is printed C-quoted with a leading '"' — e.g. "plugins/sdlc/skills/x/\344\270\255.md" — so the anchored regex never matches and the commit is counted as not touching the audited directories. The same blindness applies to the second (footer-less) pass at L135, which has no other backstop.
+      file: plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh
+      line_range: [69, 69]
+      confidence: 0.4
+      confidence_boost: -0.1
+      weight_terms: { distinct_roles: 1, distinct_vendors: 1, role_bonus: 0.0, vendor_bonus: 0.0, single_source_single_vendor_penalty: -0.2, self_confidence_adj: 0.1 }   # extra
+      blocking: false
+      rules_triggered: []
+      recurrence_of: null                          # extra — new mechanism (quotePath) at the same function whose rename-detection hole (iteration-001 mf-003) was closed by --no-renames; not the same mechanism
+      note: "Reviewer's self-rebuttal: the shipped branch has 0 non-ASCII paths under the three audited dirs, so this Run's recorded zeros are not caused by it. Twin-repo run: touching 0 for a Card commit adding a 中文 filename under plugins/sdlc/skills/; composite exit 1 only because verify_commit.py (same unquoted output, outside IMPL_ROOT) rejected it for the wrong reason ('not in allowed_files'); footer-less twin: non_card_commits_touching 0 with no backstop. Half of the suggested fix lands in verify_commit.py under plugins/sdlc/skills (forbidden for Card commits) — reviewer routes it separately."   # extra
+      bears_on: [nh-004]                           # extra
+
+    - merged_finding_id: mf-005
+      sources:
+        - { role: code-reviewer, finding_id: security/cr-003, vendor: claude, file: plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh, line_range: [130, 131], self_confidence: high, severity: P1, category: scope_bypass_auditor_edits_audited_object }
+      synthesized_severity: P1
+      synthesized_root_cause: >-
+        Both passes derive their window from Card footers. The first pass replays only commits whose body has a line matching '^Card:[[:space:]]*CARD-…' (L58, case-sensitive); the second pass (added in iteration-002 to make footer-less commits visible) iterates indices 0..oldest_card_idx of the newest-first log (L131), i.e. only commits at or after the OLDEST Card commit, and does not run at all when card_commits == 0 (L130). A footer-less commit that precedes the first Card commit on the branch, or a commit whose footer is spelled 'card:' / 'CARD:' / 'Card - ', is in neither pass. audit.yaml's "load-bearing" git_diff_stat has the same window (0be2770^..HEAD, L3450), so the three numbers AUDIT.md prints for PSL-003 (touching 0 / non-card touching 0 / diff-stat empty) can all be zero while the branch modifies the audited directories.
+      file: plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh
+      line_range: [130, 131]
+      confidence: 0.4
+      confidence_boost: -0.1
+      weight_terms: { distinct_roles: 1, distinct_vendors: 1, role_bonus: 0.0, vendor_bonus: 0.0, single_source_single_vendor_penalty: -0.2, self_confidence_adj: 0.1 }   # extra
+      blocking: false
+      rules_triggered: []
+      recurrence_of: "iteration-001/mf-002"       # extra — same file + same mechanism class (footer-derived window makes commits invisible to the PSL-003 instrument); the iteration-002 second pass narrowed the hole to the pre-Card window and non-canonical footers
+      recurrence_kind: "residual_after_partial_fix"   # extra
+      corroborated_by_non_source_records: ["spec-gaming-detector srg-005 (same mechanism, no file:line; detector DROPPED it as a finding because PSL γ L122-L123 sanctions in-run verifier deviations and commit-table.md / pr-body.md disclose 587f371, ebe270d, c729f76 — kept only as a contract weakness)", "pm-reviewer prev_out_of_scope_status: 'the pre-Card fix commits (587f371, ebe270d, c729f76) predate 0be2770 and are outside both REQ-007 and the new pass — commit-table.md (new in ca5a6f3) classifies them as PSL L122-123 deviation commits; process question, not a REQ verdict'"]   # extra
+      note: "Reviewer's own scoping: 'AC-007-a is contract-scoped to Card commits, so exit 0 is in-contract' and 'Whether these are legitimate pre-audit fixes or PSL-003 violations is a G3 question; the finding is that the instrument and AUDIT.md cannot show them at all.' Live-branch evidence in the finding: git diff --stat merge-base..HEAD over the three dirs → 11 files / +1199 −14; the recorded 0be2770^..HEAD → empty. Rule 1 / rule 6 are evaluated on the contract's own 'Card commit' definition (footer-carrying, AC-007-a) → not in their domain; surfaced under nh-002."   # extra
+      bears_on: [nh-002]                           # extra
+
+    - merged_finding_id: mf-006
+      sources:
+        - { role: code-reviewer, finding_id: security/cr-001, vendor: claude, file: plugins/sdlc/dogfood/ring-audit/render_audit.py, line_range: [259, 259], self_confidence: high, severity: P1, category: output_encoding_markdown_table_injection }
+      synthesized_severity: P1
+      synthesized_root_cause: >-
+        The iteration-002 fix routes verdict/signer/kind cells through cell()/code(), but several values that land in table rows still bypass both: gaps[].atoms joined raw inside backticks at L259 (gapcol), the gate id inside gate_label() at L133-136, SOURCE_LABEL's raw fallback plus necessity/disposition at L306-308, run_evidence.run.* at L459-463, touches_audited_dirs_per_commit sha/card/exit at L536-537, the whole holdout block at L570-577 (attested_by_kind is echoed raw when it is not the literal delegated_agent, contrary to the closed-map rule stated for SIGNER_KIND_RENDER at L41), known_gaps id at L593, duplicates_section names/ids/verdicts at L399-413, and refs() at L109. None of these fields is validated by check_audit.py, so a pipe in gaps[].atoms shifts every later column of a Part row. The docstring claims "there is no code path here that can print 已实现 ✓" (L12-13) and "every value that reaches a table row goes through [cell()]" (L79); both are false.
+      file: plugins/sdlc/dogfood/ring-audit/render_audit.py
+      line_range: [259, 259]
+      confidence: 0.4
+      confidence_boost: -0.1
+      weight_terms: { distinct_roles: 1, distinct_vendors: 1, role_bonus: 0.0, vendor_bonus: 0.0, single_source_single_vendor_penalty: -0.2, self_confidence_adj: 0.1 }   # extra
+      blocking: false
+      rules_triggered: [ ]
+      recurrence_of: "iteration-001/mf-001"       # extra — same file + same mechanism (unescaped interpolation into GFM table rows); the fix closed the signer / verdict / kind paths that iteration-001 named, these are the residual sites
+      recurrence_kind: "residual_after_partial_fix"   # extra
+      arbitrated: true                             # extra — see conflict_arbitration[0]: pm-reviewer's REQ-003 tool trace claimed every table value now passes cell(); resolved for this finding on evidence strength
+      note: "Executed reproduction on a crafted copy (variant v1_atoms_pipe through cmark-gfm): check_audit exit 0, failed_predicates []; R6 acceptance-fleet row's implemented column reads '已实现 ✓` six-evaluator-dispatch-and-ratchet'. Reviewer's self-rebuttal verified a raw pipe inside backticks does NOT protect a GFM cell, and separately refuted a backslash-pipe candidate (not filed). Delivered content is not affected (pm-reviewer grep: 已实现 ✓ appears only in the 读法 prohibition and one deletion text). spec-gaming-detector's reverified block confirms the signer/verdict paths the fix targeted are closed — consistent, not contradictory."   # extra
+      bears_on: [nh-001, nh-004]                   # extra
+
+    - merged_finding_id: mf-007
+      sources:
+        - { role: code-reviewer, finding_id: security/cr-004, vendor: claude, file: plugins/sdlc/dogfood/ring-audit/check_audit.py, line_range: [388, 391], self_confidence: high, severity: P1, category: authorization_enum_not_closed }
+      synthesized_severity: P1
+      synthesized_root_cause: >-
+        check_gates() enforces the authorization_ref requirement only when signer_kind is the exact literal "delegated_agent" (L388). F-07 (form-draft.md) defines signer_kind as the closed set {human, delegated_agent}, but no predicate rejects other values, so any non-human signer that writes signer_kind: agent / delegated / Delegated_Agent / bot satisfies human_gate_without_signer (non-empty string, L383) and skips delegated_without_authorization_ref. A human gate can therefore be recorded as pass by an agent with no authorization record and exit 0. Downstream, gates_sentence() (render L731-744) counts only the two literals, so the 铁律 line under-reports how the doors were signed.
+      file: plugins/sdlc/dogfood/ring-audit/check_audit.py
+      line_range: [388, 391]
+      confidence: 0.4
+      confidence_boost: -0.1
+      weight_terms: { distinct_roles: 1, distinct_vendors: 1, role_bonus: 0.0, vendor_bonus: 0.0, single_source_single_vendor_penalty: -0.2, self_confidence_adj: 0.1 }   # extra
+      blocking: false
+      rules_triggered: []
+      recurrence_of: null                          # extra — not a merged finding in iteration-001 (it was known gap KG-04, re-confirmed and deliberately not re-filed there); first time filed as a finding
+      known_gap: KG-04                             # extra — per task brief known_gaps KG-01..11 are not BLOCK reasons (routed by G2 to change-proposal-002)
+      corroborated_by_non_source_records: ["spec-drift-detector dropped_candidates: 'F-07 signer_kind ∈ {human, delegated_agent} not enforced by check_audit.py (signer_kind: robot → exit 0) … Already known_gaps KG-04' and CLAIM-022 note", "spec-gaming-detector srg-004 (KG-04 re-confirmed: crafted variant exits 0; check_audit.py byte-identical to iteration-001)"]   # extra
+      note: "check_audit.py is byte-identical to the iteration-001 baseline (pm-reviewer sha256, spec-gaming-detector reverified). Renderer side: the closed SIGNER_KIND_RENDER map prints **未知** for any value other than the two literals (pm REQ-006, gaming reverified on a '人签' variant), so the page signals it; the checker does not reject it. Reviewer's self-rebuttal: G1 rule 3(b) as worded names only the delegated_agent literal — the gap is between F-07's closed enum and the compiled predicate."   # extra
+      bears_on: [nh-002]                           # extra
+
+    - merged_finding_id: mf-008
+      sources:
+        - { role: code-reviewer, finding_id: logic/cr-002, vendor: claude, file: plugins/sdlc/dogfood/ring-audit/check_audit.py, line_range: [161, 168], self_confidence: high, severity: P2, category: spec_text_mismatch_view_narrowing }
+        - { role: spec-drift-detector, finding_id: SD-02, vendor: claude, file: plugins/sdlc/dogfood/ring-audit/check_audit.py, line_range: [161, 168], self_confidence: high, severity: "medium → P2", divergence_type: behavior_mismatch, recommendation: needs_human, likely_intentional: unclear }
+      synthesized_severity: P2
+      synthesized_root_cause: >-
+        With `--rings`, `wanted` becomes the listed rings only, so `ring_missing` is checked only for those rings and the `ring_unexpected` loop is skipped entirely (`if selected_rings is None`). F-17 says `--rings` limits ONLY `parts_without_assessment` (and where `--required-parts` is looked up) and "不改任何既有谓词"; F-13's first predicate "Ring 集合 = {R0…R8, spine}" is an existing predicate and is silently disabled under the view. The module docstring (line 15) and audit.schema.md document the narrowing as intended, but that is the implementation describing itself, not the signed form. Consequence: every AC-008..011-a invocation (all use `--rings`) returns exit 0 on a document that is missing a ring or carries a ring outside the canonical ten; an F-14 twin run under a view that excludes the deleted ring reports no `ring_missing` at all (only an incidental `orphan_gap`, and only when that ring owns gaps).
+      dedupe_rationale: "Same file, identical lines [161,168], same mechanism (ring predicates narrowed/skipped under --rings against F-17 / schema.md:26-28). logic/cr-002's root_cause is the longer text and is used verbatim; both reviewers executed the same reproductions (R9 appended → --rings R6 exit 0; R7 deleted → --rings R6 exit 0). Intent: logic notes the docstring documents it as intended; drift records likely_intentional unclear because audit.schema.md (same commit 0be2770, same author) says the opposite — not a conflict, both agree on the behaviour. spec-drift-detector: 'new and unregistered anywhere in the Run'; not KG-03 or KG-05."   # extra
+      file: plugins/sdlc/dogfood/ring-audit/check_audit.py
+      line_range: [161, 168]
+      confidence: 0.8
+      confidence_boost: 0.3
+      weight_terms: { distinct_roles: 2, distinct_vendors: 1, role_bonus: 0.2, vendor_bonus: 0.0, single_source_single_vendor_penalty: 0.0, self_confidence_adj: 0.1 }   # extra
+      blocking: false
+      rules_triggered: []
+      recurrence_of: null                          # extra — new (iteration-001 logic findings did not cover check_rings; spec-drift-detector was a placeholder)
+      note: "Not a violation of a locked AC: AC-008..011-a/b pass as compiled (pm-reviewer REQ-008..011 fully_compliant; qa 34/34) and no AC requires ring_missing / ring_unexpected under --rings. The recorded AC-001-a run (no --rings) does exercise both predicates (drift drift_notes). Contract/interpretation question → nh-003."   # extra
+      bears_on: [nh-003]                           # extra
+
+    - merged_finding_id: mf-009
+      sources:
+        - { role: spec-gaming-detector, finding_id: gd-unc-003, vendor: claude, file: plugins/sdlc/dogfood/ring-audit/audit.yaml, line_range: [1348, 1860], self_confidence: medium, severity: P2, pattern: "unclassified → tier_overclaim_where_ruler_is_silent", mode: absolute }
+        - { role: spec-drift-detector, finding_id: SD-03, vendor: claude, file: plugins/sdlc/dogfood/ring-audit/audit.yaml, line_range: null, self_confidence: high, severity: "medium → P2", divergence_type: behavior_mismatch, recommendation: needs_human, likely_intentional: unclear, note: "code_location 'audit.yaml (5 Parts); fragments audit/rings-R0-R2-spine.yaml:205, audit/rings-R7-R8.yaml:179 and :415; render_audit.py:151-163' — no explicit audit.yaml line range; the three Parts gd-unc-003 names (human_gate.G3, agent.pr-reviewer, tune) are among SD-03's five" }
+      synthesized_severity: P2
+      synthesized_root_cause: >-
+        F-06 (derived/form-draft.md L21, G1-signed): an Artifact with `checked_by: []` caps its producer's implemented at `declared`, and the auditor may not lift it to compiled by reading code. Three Parts whose EVERY registered Artifact has checked_by [] are recorded as `compiled`: R6/human_gate.G3 (verdict L1348; artifacts L3081 g3-record.md checked_by []), R7/agent.pr-reviewer (L1624; L3088 'findings.yaml (pre-review)' checked_by []), R8/tune (L1860; L3096 two artifacts checked_by []). check_audit.py has no F-06 predicate (F-13 list, check_audit.py:12-43), so exit 0 stands. The iteration-002 fix added a checked_by column that now prints '（无闸 → 封顶 declared）' in the same row as '**compiled**' (AUDIT.md L398 / L593 / L686) — the contradiction is displayed, not resolved. The related g3-input.md item 1 argues F-06 granularity only for dos-extract (partial checked_by); these three are the all-empty case F-06 states without ambiguity.
+      dedupe_rationale: "Same file (audit.yaml), same F-06 mechanism (producer above declared while artifacts[].checked_by is empty; no predicate). gd-unc-003's root_cause is the longer text (all-empty case, 3 Parts) and is used verbatim; SD-03 is the broader statement — five producers with at least one empty-checked_by artifact: dos-extract (decisions.md), human_gate.G3, review-loop (github:reply, github:resolve), agent.pr-reviewer, tune — of which three record an explicit deviating reading (dos-extract, agent.pr-reviewer, tune) and two (human_gate.G3, review-loop) record none; commits eba9796 / f8ef234 / 419a364 (content cards). Self-confidence: gaming medium ('part.gates names a gate for each of the three, so the document is internally ambiguous about which registry is authoritative'), drift high → highest high → +0.1. Severity P2 / medium→P2 → P2."   # extra
+      corroborated_by_non_source_records: ["pm-reviewer out_of_scope_observations[2] at AUDIT.md rows (R6 L391 / R7 agent.pr-reviewer / R8 tune): '（无闸 → 封顶 declared）' rendered for every artifact of 3 Parts whose implemented verdict is compiled — different file, not merged; routed to G3 tech / change-proposal-002", "pm-reviewer REQ-005 tool trace: 21 cells carry the cap note; 0 Parts lack an artifacts[] row; tag f06_cap_tension_3_parts_visible", "spec-gaming-detector srg-003 (proposes implemented_above_cap + gates_registry_mismatch predicates; registry disagreement part.gates ≠ ∪ checked_by for 8/42 Parts)"]   # extra
+      file: plugins/sdlc/dogfood/ring-audit/audit.yaml
+      line_range: [1348, 1860]
+      confidence: 0.8
+      confidence_boost: 0.3
+      weight_terms: { distinct_roles: 2, distinct_vendors: 1, role_bonus: 0.2, vendor_bonus: 0.0, single_source_single_vendor_penalty: 0.0, self_confidence_adj: 0.1 }   # extra
+      blocking: false
+      rules_triggered: []
+      recurrence_of: "iteration-001/mf-011"       # extra — same file + same mechanism (F-06 cap not enforced; tune compiled with every artifact checked_by []); broadened this iteration from tune alone to 3 all-empty / 5 any-empty Parts, and now visible on the page via the new checked_by column
+      recurrence_kind: "recurred_unchanged_content_now_visible"   # extra
+      bears_on: [nh-001]                           # extra
+
+    - merged_finding_id: mf-010
+      sources:
+        - { role: code-reviewer, finding_id: logic/cr-004, vendor: claude, file: plugins/sdlc/dogfood/ring-audit/check_audit.py, line_range: [258, 278], self_confidence: medium, severity: P2, category: spec_text_mismatch_over_strict_predicate }
+        - { role: spec-drift-detector, finding_id: SD-05, vendor: claude, file: plugins/sdlc/dogfood/ring-audit/check_audit.py, line_range: [258, 268], self_confidence: high, severity: "low → P3", divergence_type: behavior_mismatch, recommendation: update_spec, likely_intentional: true }
+      synthesized_severity: P2
+      synthesized_root_cause: >-
+        `resolve()` fails `unknown_gap_ref` when `gap.ring != ring_id`, and it is applied to BOTH `rings[].missing[]` (line 301) and `parts[].fills[]` (line 278). G1 rule 2(e) is deliberately asymmetric: "`missing[]` 里的每个键必在 `gaps[]` 且其 `ring` 一致；`fills[]` 里的每个键必在 `gaps[]`" — the FILLS edge only requires existence. F-04 says a Gap is owned by exactly one Ring and may be filled by many Parts, and says nothing about the fillers' rings. The code therefore forbids any cross-ring FILLS edge (e.g. spine/`sdlc` filling a Control gap in R4, or R6/`human_gate.G3` filling a Judgment gap in R7): the auditor's only ways round it are to leave the gap orphaned (`orphan_gap`), list it in `missing[]` while a Part fills it (semantically false), or re-register the same value object under the filler's ring (a different Gap per rule 2b). The message "unknown_gap_ref … whose ring is 'R7'" also misnames a known gap as unknown. The docstring (lines 28-29) and audit.schema.md line 80 assert the stricter reading; g1-record.md does not.
+      dedupe_rationale: "Same file, overlapping lines [258,278]∩[258,268], same mechanism (same-ring clause applied to fills[] against rule 2(e)'s asymmetric wording). logic/cr-004's root_cause is the longer text and is used verbatim. Severity = max(P2, low→P3) = P2. Self-confidence: logic medium, drift high → +0.1. Both note 0 cross-ring fills in the delivered audit.yaml (latent, no live false exit 1). Drift adds that the L5 test author (e217d10, a different actor) encoded the same stricter reading and recommends update_spec (likely_intentional true); logic offers either a code flag or an explicit g1-record.md amendment."   # extra
+      file: plugins/sdlc/dogfood/ring-audit/check_audit.py
+      line_range: [258, 278]
+      confidence: 0.8
+      confidence_boost: 0.3
+      weight_terms: { distinct_roles: 2, distinct_vendors: 1, role_bonus: 0.2, vendor_bonus: 0.0, single_source_single_vendor_penalty: 0.0, self_confidence_adj: 0.1 }   # extra
+      blocking: false
+      rules_triggered: []
+      recurrence_of: "iteration-001/mf-008"       # extra — same file + same mechanism (resolve() same-ring clause on fills[]); check_audit.py unchanged since iteration-001
+      recurrence_kind: "recurred_unchanged"        # extra
+      note: "Spec side (g1-record.md, form-draft.md) is in done_when.yaml constraints.forbidden_paths for this Run (drift recommendation_basis) → change-proposal-002 material."   # extra
+      bears_on: [nh-001, nh-003]                   # extra
+
+    - merged_finding_id: mf-011
+      sources:
+        - { role: pm-reviewer, finding_id: "REQ-004/partially_compliant", vendor: claude, file: plugins/sdlc/dogfood/ring-audit/check_audit.py, line_range: [394, 402], self_confidence: high, severity: null, verdict: partially_compliant, criticality: normal }
+        - { role: spec-drift-detector, finding_id: SD-04, vendor: claude, file: plugins/sdlc/dogfood/ring-audit/check_audit.py, line_range: [394, 402], self_confidence: high, severity: "medium → P2", divergence_type: behavior_mismatch, recommendation: needs_human, likely_intentional: unclear, already_registered: ["audit.schema.md:203 已知空隙", "run_evidence.known_gaps KG-02"] }
+      synthesized_severity: P2                     # mapping: pm-reviewer emits compliance verdicts, not P-levels; partially_compliant on a normal REQ with a recorded G2 waiver; drift medium → P2
+      synthesized_root_cause: >-
+        check_audit.py:399 does not resolve proposal.source against assessment ids or gaps[]; a dangling id exits 0 (holdout hv_proposal_dangling_source). Resolvability of the 39 real sources was confirmed by this reviewer's pyyaml probe, which is a human-read substitute, not the cli:check-audit observation boundary the AC names. Known gap KG-02, waived to change-proposal-002 by g2-judge (delegated_agent). Same state as iteration-001.
+      dedupe_rationale: "Same file, identical lines [394,402], same mechanism (proposal.source tested for non-empty only). pm-reviewer's `missing` text is the longer and is used verbatim; SD-04 adds the executed mutation (proposals[0].source: A-does-not-exist → exit 0) and the three-sentence spec disagreement (F-16 'no source' vs AC-004-b 'lacking a source assessment or gap id' vs schema.md:200 '必须指向'). Both mark it already registered (KG-02 → change-proposal-002). check_audit.py byte-identical to iteration-001."   # extra
+      corroborated_by_non_source_records: ["spec-gaming-detector srg-004 (KG-02 re-confirmed, dropped as a finding: 'the Run's own disclosed known_gaps')", "pm-reviewer caveats.requirements_source_open_questions[1] (AC-004-b admits two readings)"]   # extra
+      file: plugins/sdlc/dogfood/ring-audit/check_audit.py
+      line_range: [394, 402]
+      confidence: 0.8
+      confidence_boost: 0.3
+      weight_terms: { distinct_roles: 2, distinct_vendors: 1, role_bonus: 0.2, vendor_bonus: 0.0, single_source_single_vendor_penalty: 0.0, self_confidence_adj: 0.1 }   # extra
+      blocking: false
+      rules_triggered: []
+      recurrence_of: "iteration-001/mf-014"       # extra — same file + same mechanism (KG-02); unchanged
+      recurrence_kind: "recurred_unchanged_known_gap"   # extra
+      known_gap: KG-02                             # extra
+      bears_on: [nh-003]                           # extra
+
+    - merged_finding_id: mf-012
+      sources:
+        - { role: code-reviewer, finding_id: logic/cr-005, vendor: claude, file: plugins/sdlc/dogfood/ring-audit/render_audit.py, line_range: [509, 533], self_confidence: high, severity: P2, category: projection_drops_contradicting_field }
+      synthesized_severity: P2
+      synthesized_root_cause: >-
+        `run_evidence.audited_dirs_diff` in audit.yaml records `exit: 1` (line 3415) together with `ok: true`, `card_commits_touching_audited_dirs: 0`, `card_commits_rejected: 0`. By the script's own logic (`status=1` iff rejected>0 or overflow>0; `ok` = status==0) that combination cannot come from one run, so the record is internally inconsistent — the field was already `exit: 1` at the recording commit 9ad5b9c, and re-running the instrument at ba7d5e2 gives exit 0 / ok true, so `exit` is the wrong field. The renderer's PSL-003 table projects `ok`, branch, head, range_spec, snapshot_at, the four counts, and the per-commit rows, but neither `cmd` nor `exit`; AUDIT.md therefore shows "回放结论 `ok: true`" with no trace of the recorded exit 1 (grep 'exit: 1' AUDIT.md → 0). F-12 says the yaml wins on disagreement, but here the yaml disagrees with itself and the human half (AC-006-a's `#run-evidence`) cannot reveal it. This is the same class the iteration-002 fix addressed for check_runs (which DO render exit per run) — the replay record was left without the same treatment.
+      file: plugins/sdlc/dogfood/ring-audit/render_audit.py
+      line_range: [509, 533]
+      confidence: 0.4
+      confidence_boost: -0.1
+      weight_terms: { distinct_roles: 1, distinct_vendors: 1, role_bonus: 0.0, vendor_bonus: 0.0, single_source_single_vendor_penalty: -0.2, self_confidence_adj: 0.1 }   # extra
+      blocking: false
+      rules_triggered: []
+      recurrence_of: null                          # extra — new (the exit key it fails to project was introduced at ba7d5e2)
+      related_to: [mf-002]                         # extra — record side of the same fact (audit.yaml); not merged because the file differs. Three other roles state the renderer omission inside mf-002's sources, which is why this single-source finding sits at 0.4 while the fact itself is at 1.0
+      bears_on: [nh-002]                           # extra
+
+    - merged_finding_id: mf-013
+      sources:
+        - { role: code-reviewer, finding_id: security/cr-005, vendor: claude, file: plugins/sdlc/dogfood/ring-audit/check_audit.py, line_range: [334, 336], self_confidence: high, severity: P2, category: exemption_not_validated }
+      synthesized_severity: P2
+      synthesized_root_cause: >-
+        check_artifacts() treats any non-empty alternatives_of string as the F-05 exemption (L334) and drops the entry from the double-producer count. G1 rule 1 legalises a second producer only under F-05's three conditions (same stage.<x> handled_by, a conditional edge, same schema); none is checked even minimally — no format check (stage.<x>), no requirement that the value be shared by another producer of the same Artifact, no cross-check against the artifact's stage. render_audit.compare_pair() mirrors the same test (L173), so the projection agrees with the forged yaml; the only flag it can raise is '登记 ≠ 现算' against suspected_duplicate_pairs[].verdict, which the same author controls.
+      file: plugins/sdlc/dogfood/ring-audit/check_audit.py
+      line_range: [334, 336]
+      confidence: 0.4
+      confidence_boost: -0.1
+      weight_terms: { distinct_roles: 1, distinct_vendors: 1, role_bonus: 0.0, vendor_bonus: 0.0, single_source_single_vendor_penalty: -0.2, self_confidence_adj: 0.1 }   # extra
+      blocking: false
+      rules_triggered: []
+      recurrence_of: "iteration-001/mf-004"       # extra — same file + same mechanism (unverified alternatives_of exempts a second producer); check_audit.py unchanged; reviewer downgraded P1 → P2 this iteration ('gap between G1 rule 1's intent and the compiled predicate rather than a coding slip')
+      recurrence_kind: "recurred_unchanged"        # extra
+      note: "code-reviewer-logic's footer independently verified the delivered document's rule-1 data (card.allowed_files: 1 alternatives_of + 2 merge_candidate pointing at each other; done_when.yaml pair likewise) as legal per G1 rule 1 — data-correctness claim vs instrument-robustness claim, both true (see non_conflicts_considered)."   # extra
+      bears_on: [nh-001]                           # extra
+
+    - merged_finding_id: mf-014
+      sources:
+        - { role: code-reviewer, finding_id: logic/cr-003, vendor: claude, file: plugins/sdlc/dogfood/ring-audit/check_audit.py, line_range: [364, 374], self_confidence: high, severity: P2, category: enum_not_enforced_predicate_bypass }
+      synthesized_severity: P2
+      synthesized_root_cause: >-
+        Rule 3 is dispatched as `if kind == "script": … elif kind == "human" and gid not in HUMAN_GATES: …`. A gates[] entry whose `kind` is anything else — `human_gate` (the natural copy of the Part kind), a typo, or absent — falls through both branches and is never examined, so neither `gate_not_declared` (G1 rule 3d / F-06 "human 仅 G1 / G2 / G3") nor `script_gate_rendered_as_door` can fire for it, even when it carries `label: 门`. F-06 fixes Gate.kind to `script | human`, but that enum is the one enum the script does not enforce (evidence.kind, implemented.verdict, run_evidence verdict all are). The mutant fixture uses `kind: human`, so the L5 suite never exercises the bypass. The renderer compounds it: `gate_label('merge')` for such an entry prints "`merge`（未在 gates[] 登记）" although the id IS in gates[].
+      file: plugins/sdlc/dogfood/ring-audit/check_audit.py
+      line_range: [364, 374]
+      confidence: 0.4
+      confidence_boost: -0.1
+      weight_terms: { distinct_roles: 1, distinct_vendors: 1, role_bonus: 0.0, vendor_bonus: 0.0, single_source_single_vendor_penalty: -0.2, self_confidence_adj: 0.1 }   # extra
+      blocking: false
+      rules_triggered: []
+      recurrence_of: null                          # extra — new (different mechanism from mf-007's signer_kind enum at [388,391]; both in check_gates, no line overlap)
+      note: "Delivered gates[] is clean (spec-drift-detector verified_no_drift: 3 human G1/G2/G3 + 28 script; no script labelled 门). Executed reproduction: {id: merge, kind: human_gate, label: 门} → exit 0; same with kind: human → exit 1 gate_not_declared."   # extra
+      bears_on: [nh-001, nh-004]                   # extra
+
+    - merged_finding_id: mf-015
+      sources:
+        - { role: spec-drift-detector, finding_id: SD-06, vendor: claude, file: plugins/sdlc/dogfood/ring-audit/check_audit.py, line_range: [153, 429], self_confidence: high, severity: "low → P3", divergence_type: behavior_mismatch, recommendation: needs_human, likely_intentional: unclear, note: "scattered code_location lines 153, 251, 328, 364, 376, 397, 429 (the as_list/as_dict registry reads); spec side audit.schema.md:36 / g1-record.md:363 rule 2(a)" }
+      synthesized_severity: P3
+      synthesized_root_cause: >-
+        Every registry is read as `as_list(doc.get(...))` / `as_dict(doc.get(...))`; an absent key is an empty registry with no predicate of its own. Deleting `gates` → exit 0. Deleting `proposals` → exit 0. Deleting `run_evidence` → exit 0 (calibration_twin_recorded false, gate checks vacuous). Deleting `gaps` fails only through 76 unknown_gap_ref; deleting `artifacts` fails only through spurious_merge_candidate — and only because this document has 4 merge_candidate Parts (a document with none would pass).
+      file: plugins/sdlc/dogfood/ring-audit/check_audit.py
+      line_range: [153, 429]
+      confidence: 0.4
+      confidence_boost: -0.1
+      weight_terms: { distinct_roles: 1, distinct_vendors: 1, role_bonus: 0.0, vendor_bonus: 0.0, single_source_single_vendor_penalty: -0.2, self_confidence_adj: 0.1 }   # extra
+      blocking: false
+      rules_triggered: []
+      recurrence_of: null                          # extra — new (first real spec-drift-detector run)
+      note: "Executed: all five single-key deletions this session. Drift notes F-13's exit-0 conjunction does not include registry presence either, so the schema sentence '缺一不可' is stricter than both F-13 and the code (doc and code from one commit, 0be2770)."   # extra
+      bears_on: [nh-003]                           # extra
+
+    - merged_finding_id: mf-016
+      sources:
+        - { role: spec-drift-detector, finding_id: SD-08, vendor: claude, file: plugins/sdlc/dogfood/ring-audit/check_audit.py, line_range: [70, 72], self_confidence: high, severity: "low → P3", divergence_type: contract_mismatch, recommendation: needs_human, likely_intentional: unclear, note: "also L452-453, L460-461; spec side audit.schema.md:22-24" }
+      synthesized_severity: P3
+      synthesized_root_cause: >-
+        die() writes one line to stderr and exits 2; nothing is written to stdout on any exit-2 path (missing file, unparseable YAML, non-mapping document, unknown --variant, missing pyyaml). argparse errors behave the same. By contrast replay_card_commits.sh:31-34 (fail_hard) does emit a JSON object on its exit 2.
+      file: plugins/sdlc/dogfood/ring-audit/check_audit.py
+      line_range: [70, 72]
+      confidence: 0.4
+      confidence_boost: -0.1
+      weight_terms: { distinct_roles: 1, distinct_vendors: 1, role_bonus: 0.0, vendor_bonus: 0.0, single_source_single_vendor_penalty: -0.2, self_confidence_adj: 0.1 }   # extra
+      blocking: false
+      rules_triggered: []
+      recurrence_of: null                          # extra — new
+      note: "Drift: 'Low stakes: exit 2 is unreadable input, outside every AC. Recorded because the sentence says 恒 (always).' Executed reproduction: nonexistent path → exit 2, 0 bytes stdout."   # extra
+      bears_on: [nh-003]                           # extra
+
+    - merged_finding_id: mf-017
+      sources:
+        - { role: spec-drift-detector, finding_id: SD-07, vendor: claude, file: plugins/sdlc/dogfood/ring-audit/audit.schema.md, line_range: [33, 44], self_confidence: high, severity: "low → P3", divergence_type: contract_mismatch, recommendation: update_spec, likely_intentional: true, note: "code side: audit.yaml top-level keys (8 registries), render_audit.py:374 and :667; AUDIT.md:1048-1060 assembly notes omit unenforced_rules[]" }
+      synthesized_severity: P3
+      synthesized_root_cause: >-
+        audit.yaml carries eight registries: the six plus `suspected_duplicate_pairs` (5 entries, added 3441ba4) and `unenforced_rules` (4 entries, added ba7d5e2). render_audit.py consumes both — suspected_duplicate_pairs for the 疑似重复 section (L374), unenforced_rules[].dos_anchors for the PSL-017 装配核对 table (L667, AUDIT.md:1066-1080). check_audit.py ignores unknown top-level keys (adding `totally_unknown_registry: [1,2]` → exit 0). The assembly-notes list that claims exhaustiveness omits `unenforced_rules[]`.
+      file: plugins/sdlc/dogfood/ring-audit/audit.schema.md
+      line_range: [33, 44]
+      confidence: 0.4
+      confidence_boost: -0.1
+      weight_terms: { distinct_roles: 1, distinct_vendors: 1, role_bonus: 0.0, vendor_bonus: 0.0, single_source_single_vendor_penalty: -0.2, self_confidence_adj: 0.1 }   # extra
+      blocking: false
+      rules_triggered: []
+      recurrence_of: null                          # extra — new (unenforced_rules[] added by ba7d5e2)
+      note: "Shape-only per drift ('no behaviour of check_audit.py depends on either key'); the assembly-notes claim '一处不漏' is the part that is now false."   # extra
+      bears_on: [nh-003]                           # extra
+
+    - merged_finding_id: mf-018
+      sources:
+        - { role: spec-drift-detector, finding_id: SD-09, vendor: claude, file: plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh, line_range: [112, 149], self_confidence: high, severity: "low → P3", divergence_type: behavior_mismatch, recommendation: update_spec, likely_intentional: true, note: "code_location L112-115, L144-149; spec side audit.schema.md:266, cards/CARD-01.yaml:34, script header L9-10; reproduction by code reading only (not executed against a synthetic rejected commit)" }
+      synthesized_severity: P3
+      synthesized_root_cause: >-
+        Two tokens, not one. `whitelist_overflow` is emitted only when overflow>0 — an audited-dir hit (L98-101), a Card footer naming a card file this tree lacks (L103-106), or verify_commit.py output matching 'whitelist overflow' (L114). A verify_commit.py rejection for any other reason (lock hash, secret/debug scan, message format) increments `rejected` only and the script emits `replay_reject: N Card commit(s) were rejected by verify_commit.py` (L147-148). Exit is 1 in both cases (L152).
+      file: plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh
+      line_range: [112, 149]
+      confidence: 0.4
+      confidence_boost: -0.1
+      weight_terms: { distinct_roles: 1, distinct_vendors: 1, role_bonus: 0.0, vendor_bonus: 0.0, single_source_single_vendor_penalty: -0.2, self_confidence_adj: 0.1 }   # extra
+      blocking: false
+      rules_triggered: []
+      recurrence_of: null                          # extra — new
+      note: "AC-007-b's given (a Card commit modifying plugins/sdlc/skills/**) still yields whitelist_overflow via the L98-101 path, so the locked AC is unaffected (drift evidence); only the doc's '任一回放被拒' clause diverges. Line range overlaps mf-005 [130,131] but the mechanism differs (error tokens vs window bound) → not merged."   # extra
+      bears_on: [nh-003]                           # extra
+
+    - merged_finding_id: mf-019
+      sources:
+        - { role: spec-drift-detector, finding_id: SD-10, vendor: claude, file: plugins/sdlc/dogfood/ring-audit/audit.schema.md, line_range: [11, 14], self_confidence: high, severity: "low → P3", divergence_type: behavior_mismatch, recommendation: update_spec, likely_intentional: true, note: "code side cards/CARD-01.yaml:26-40 (notes) at HEAD, rewritten by 5a6889c" }
+      synthesized_severity: P3
+      synthesized_root_cause: >-
+        The card at HEAD already states all three G1 readings itself: "…无 exercised 标志）；签字人三元组随 verdict ∈ {pending, pass, reject, waived} 放在 run_evidence.gates[]…（G1 解释规则 3，已裁）", "每个的 Assessment.needed.verdict 都是 merge_candidate…（G1 解释规则 1，已裁）", "parts[].fills[] 与 rings[].missing[] 都放 gap key…（G1 解释规则 2，已裁）". The three "差异" the schema doc claims to supersede existed in the card at 0be2770 (it then said "human Gate 可带 exercised: false" and "两者 Assessment 都标 merge_candidate", and did not say what missing[] holds) and were removed 13 minutes later by 5a6889c. At HEAD the doc describes a card state that no longer exists, and its "以本文件为准" precedence clause has nothing left to override.
+      file: plugins/sdlc/dogfood/ring-audit/audit.schema.md
+      line_range: [11, 14]
+      confidence: 0.4
+      confidence_boost: -0.1
+      weight_terms: { distinct_roles: 1, distinct_vendors: 1, role_bonus: 0.0, vendor_bonus: 0.0, single_source_single_vendor_penalty: -0.2, self_confidence_adj: 0.1 }   # extra
+      blocking: false
+      rules_triggered: []
+      recurrence_of: null                          # extra — new
+      bears_on: [nh-003]                           # extra
+
+    - merged_finding_id: mf-020
+      sources:
+        - { role: spec-drift-detector, finding_id: SD-11, vendor: claude, file: plugins/sdlc/dogfood/ring-audit/audit.schema.md, line_range: [115, 149], self_confidence: high, severity: "low → P3", divergence_type: contract_mismatch, recommendation: needs_human, likely_intentional: unclear, note: "spec side derived/form-draft.md:34 (F-16); code side audit.yaml disposition values, check_audit.py (no disposition predicate), render_audit.py:308, :368; lines 115 and 149 are the two enum comments" }
+      synthesized_severity: P3
+      synthesized_root_cause: >-
+        check_audit.py has no predicate on disposition (setting one to 'bogus' → exit 0). audit.yaml uses only none (22 assessments / 40 gaps) and issue (20 / 33); no fix_list. The fix-list destination lives instead on proposals[].destination = skill_fix_list (13 of 39), matching schema.md:201's destination enum. The renderer prints disposition verbatim.
+      file: plugins/sdlc/dogfood/ring-audit/audit.schema.md
+      line_range: [115, 149]
+      confidence: 0.4
+      confidence_boost: -0.1
+      weight_terms: { distinct_roles: 1, distinct_vendors: 1, role_bonus: 0.0, vendor_bonus: 0.0, single_source_single_vendor_penalty: -0.2, self_confidence_adj: 0.1 }   # extra
+      blocking: false
+      rules_triggered: []
+      recurrence_of: null                          # extra — new
+      note: "Drift: F-16's other constraint ('naming.fit = misfit 的 disposition 只能是 issue 或 none') holds — tune, the only misfit, has disposition issue."   # extra
+      bears_on: [nh-003]                           # extra
+
+  # ====== M3 — ARBITRATION LOG ======
+  conflict_arbitration:
+    - between: ["mf-006 (code-reviewer-security cr-001)", "pm-reviewer REQ-003 tool trace (READ render_audit.py [76,100]): 'every table value now passes cell() … and code() …, so a yaml value carrying | can no longer shift a later column into an earlier one — the path by which a crafted verdict could have printed as 已实现 ✓ is closed'"]
+      on: "plugins/sdlc/dogfood/ring-audit/render_audit.py:76-100 (pm) vs :259 and 9 other row-interpolation sites (security)"
+      verdict: mf-006
+      reasoning: >-
+        Contested CLAIM, not contested verdict: pm-reviewer's statement is a tool-trace observation supporting REQ-003, not a finding, and REQ-003's
+        ACs are check_audit.py predicates (boolean_implemented / implemented_outside_enum / rename_true) whose verdict does not depend on the renderer.
+        On the narrow claim 'every table value passes cell()/code()', the evidence is asymmetric per synthesis-protocol §Action 3: security executed
+        a concrete reproduction (crafted audit.yaml variant v1_atoms_pipe → check_audit exit 0 → render → cmark-gfm parse shows the R6 acceptance-fleet
+        row's implemented column reading '已实现 ✓` six-evaluator-dispatch-and-ratchet'), enumerated 12 unwrapped interpolation sites by grep, and
+        self-rebutted (verified a raw pipe inside backticks does not protect a GFM cell; separately refuted and dropped a backslash-pipe candidate);
+        pm read the cell()/code() definitions statically and confirmed the delivered AUDIT.md has no 已实现 ✓ verdict cell and renders deterministically.
+        Reproduction with concrete inputs > static read; the two are also compatible on the delivered content (security's variant is a mutated copy).
+        Resolution: mf-006 stands at its M2 confidence (0.4, single source); pm's general clause is over-broad for the instrument; pm's REQ-003
+        verdict (fully_compliant, high) is untouched — pm's own tag 'renderer_untested_by_locked_suite' already scopes it. No rebutted finding.
+      evidence_strength_winner: "executed reproduction on a crafted variant through the real GFM parser + grep enumeration of call sites + explicit self-rebuttal, vs a static read of the escaping helpers and a grep of the delivered output"
+      tool_call_used: false
+      cross_vendor: false                          # extra — both sides vendor claude; not a cross-vendor P1 disagreement (classifier step A third bullet does not fire)
+
+  non_conflicts_considered:                        # extra — pairs that looked like disagreements and were checked against the protocol's conflict definition
+    - between: ["pm-reviewer REQ-007 fully_compliant (high) + qa-reviewer GO (replay 13/0/0) + spec-gaming-detector / spec-drift-detector live replay exit 0", "mf-003 / mf-004 / mf-005 (replay_card_commits.sh)"]
+      resolution: "Not a conflict. pm/qa/gaming/drift verify AC-007-a as written (footer-scoped given, non-empty range, ASCII paths) passes at ba7d5e2; the three findings are instrument-robustness / regression claims on inputs the AC and the L5 suite never exercise (empty range, non-ASCII filename, pre-Card commits). Same facts, different object (AC compliance vs instrument coverage). code-reviewer-security states this scoping itself in cr-003."
+    - between: ["qa-reviewer regressions: [] ('no test that passed at baseline now fails')", "mf-003 (logic/cr-001: 'regression introduced by commit 7cb1f55')"]
+      resolution: "Not a conflict. qa's regression axis is the locked suite's results (34/34 both iterations); logic's regression is in behaviour the suite does not cover — qa itself records that replay_card_commits.sh's new paths have no locked test and that the AC-007-a test runs in a twin repo (RANGE_SPEC=HEAD, never empty). Both true."
+    - between: ["spec-gaming-detector dropped_after_self_refutation: pre_card_audited_dir_edits (587f371, ebe270d, c729f76) 'PSL γ L122-L123 explicitly carves out in-run verifier fixes as ledger deviations, and commit-table.md / pr-body.md L102 disclose them' + pm-reviewer prev_out_of_scope_status ('process question, not a REQ verdict')", "mf-005 (security/cr-003: 'the instrument and AUDIT.md cannot show them at all')"]
+      resolution: "Not a conflict. gaming/pm judge whether the commits are violations (sanctioned + disclosed elsewhere); security's finding is that the PSL-003 instrument and the AUDIT.md section cannot see them — security explicitly leaves the violation question to G3. Rule 1 / rule 6 evaluated on the contract's own definition of 'Card commit'; the disclosure-vs-visibility question is carried into nh-002."
+    - between: ["code-reviewer-logic cr-002 ('the deviation is deliberate and documented')", "spec-drift-detector SD-02 (likely_intentional: unclear)"]
+      resolution: "Agreement on behaviour, merged as mf-008. Logic's 'deliberate' refers to the docstring; drift withholds the intent call because audit.schema.md from the same commit says the opposite. Neither claims the code is correct; the contract question goes to nh-003."
+    - between: ["spec-gaming-detector reverified.fix_renderer_escaping_and_closed_signer_map ('| in signer/verdict is escaped; no column shift')", "mf-006 (security/cr-001 residual bypass sites)"]
+      resolution: "Not a conflict. gaming tested the signer / verdict paths the fix targeted and found them closed; security agrees those are closed and reports ten OTHER interpolation sites. Complementary."
+    - between: ["spec-gaming-detector gd-unc-003 confidence medium ('the document is internally ambiguous about which registry is authoritative')", "spec-drift-detector SD-03 confidence high"]
+      resolution: "Same direction, different self-confidence; merged as mf-009 with the script's rule (highest high → +0.1). The ambiguity gaming names (part.gates vs artifacts[].checked_by) is itself part of the finding (srg-003 gates_registry_mismatch) and is put to G3 in nh-001."
+    - between: ["pm-reviewer out_of_scope_observations[1] ('sha_scope: branch-specific … the honest framing')", "spec-gaming-detector gd-unc-002 ('disclaimer_in_place_of_fix … unfalsifiable rather than correct … process-ruling-violated')"]
+      resolution: "Merged as mf-001, not arbitrated: the two agree on every fact (9ad5b9c on fix/iter-002 only; patch-twin of 7cb1f55; load-bearing diff-stat reproducible; fix = re-run on the shipping branch and paste). They differ in characterization of the disclosure paragraph, which is exactly the AC-006-a product judgment G3 owns (nh-002)."
+    - between: ["code-reviewer-logic footer: rule-1 data on card.allowed_files / done_when.yaml pairs verified legal per G1 rule 1", "mf-013 (security/cr-005 alternatives_of exemption unverified)"]
+      resolution: "Not a conflict (same pattern as iteration-001): data-correctness of the delivered document vs robustness of the instrument on a forged copy. Both reviewers say both."
+  four_eyes_check: "No finding carries a rebutter: field; no flagger appears as its own confirmer; no circular rebuttal chain. The one arbitration pits a security finding against a pm observation (different roles). Passed."   # extra
+
+  # ====== REBUTTED FINDINGS ======
+  rebutted_findings: []                            # dedupe absorbed 7 raw records as sources (see deduplicated_findings); nothing was dropped or rebutted; the arbitration's losing side was a tool-trace clause, not a finding record
+
+  # ====== M4 — RULE EVALUATION LOG ======
+  rules_evaluation:
+    - { rule_index: 0, condition: "any P0 finding blocks merge", outcome: passed, triggered_by: null, cannot_evaluate_reason: null, effect_applied: none,
+        evidence: "Severity histogram over 20 merged findings: P1 ×6 (mf-001, 003, 004, 005, 006, 007), P2 ×8 (mf-002, 008, 009, 010, 011, 012, 013, 014), P3 ×6 (mf-015..020). No P0 in any source review (code-reviewer-security/logic: P1/P2 only; spec-gaming-detector severity_counts P0: 0; qa/perf: no findings; drift: medium/low; pm: no not_compliant). Rules 1 and 2 (escalators) did not fire." }
+    - { rule_index: 1, condition: "any card commit touching plugins/sdlc/skills, plugins/sdlc/agents or plugins/sdlc/docs is a P0 (PSL-003)", outcome: passed, triggered_by: null, cannot_evaluate_reason: null, effect_applied: none,
+        evidence: "card_commits_touching_audited_dirs = 0 reported by four independent live runs at ba7d5e2: qa-reviewer (13 replayed / 0 touching / 0 rejected / non_card 8 scanned 0 touching); pm-reviewer (same 13/0/0 + git diff --stat 57ebf2b..HEAD and 843c3ee..HEAD over the three dirs = 0 lines + hard_constraints_check.card_commits_touching_audited_dirs_zero true; the two iteration-002 fix commits 7cb1f55 / ba7d5e2 touch only CARD-01 / CARD-06 allowed_files); spec-gaming-detector reverified (13/0/0; git_diff_stat_audited_dirs_from_first_card_commit_to_HEAD 0 lines); spec-drift-detector verified_no_drift (diff-stat 0be2770^..HEAD empty; replay ran clean). 'Card commit' is read per the contract's own AC-007-a definition (footer-carrying commit on the feature branch). Footer-less commits before the first Card commit that edited plugins/sdlc/skills/** (587f371, ebe270d, c729f76 — code-reviewer-security cr-003, spec-gaming-detector srg-005, pm prev_out_of_scope_status) are outside this rule's domain and are disclosed in commit-table.md / pr-body.md as PSL γ L122-123 deviation commits per gaming and pm → carried into nh-002 alongside mf-005.",
+        heuristic_parse: true }
+    - { rule_index: 2, condition: "an Assessment dimension without a PSL-ID or without Evidence is a P0 (PSL-010)", outcome: passed, triggered_by: null, cannot_evaluate_reason: null, effect_applied: none,
+        evidence: "pm-reviewer REQ-002 fully_compliant (high): dims_without_psl_id 0, dims_with_unknown_psl_id 0, dims_without_evidence 0 over 42 parts × 3 dims; min psl_ids per dim 1, min evidence per dim 1; 299 evidence entries; all 283 file/gate_json refs resolve. qa-reviewer: check_audit exit 0 on the real audit.yaml, every *_missing / *_without_* count 0. spec-gaming-detector evidence_ref_resolution: 444 refs checked, 415 resolve, 29 not machine-checkable, 1 does not resolve as written (spine/sdlc implemented smoke ref with a parenthetical glued onto the path — the dimension still HAS evidence with a non-empty ref, so the rule's predicate is 0; the relevance/resolvability gap is gaming's srg-006, spec-robustness material). spec-drift-detector CLAIM-003 agree.",
+        heuristic_parse: true }
+    - { rule_index: 3, condition: "human ACs AC-005-a / AC-006-a route to G3; they are never auto-passed", outcome: triggered, triggered_by: "pm-reviewer REQ-005 + REQ-006 (requires_human_verification)", cannot_evaluate_reason: null, effect_applied: needs-human,
+        evidence: "pm-reviewer per_req_compliance REQ-005 verdict requires_human_verification (reason: kind human, judge tech; quality judgments over 42 rows + 33 missing rows must not be adjudicated by pm-reviewer; new for G3: the checked_by column exposes 3 Parts whose implemented tier exceeds their F-06 cap) and REQ-006 verdict requires_human_verification (kind human, judge product; two items G3 must weigh: audited_dirs_diff exit 1 vs ok true, and the branch-foreign head 9ad5b9c). qa-reviewer caveats.other[3] and spec-gaming-detector human_ac_evidence_for_G3 independently state they report evidence, not a verdict. → nh-001, nh-002 (blocking)." }
+    - { rule_index: 4, condition: "rings == 10", outcome: passed, triggered_by: null, cannot_evaluate_reason: null, effect_applied: none,
+        evidence: "rings 10: qa-reviewer (check_audit on real audit.yaml), pm-reviewer REQ-001 (instrument + pyyaml probe [R0..R8, spine]), spec-gaming-detector reverified (rings 10), spec-drift-detector CLAIM-023 agree. KG-03 (duplicate ring id reported-not-gated) re-confirmed by gaming srg-004 and drift dropped_candidates and by code-reviewer-security's caveat (a proven candidate left out by the 5-finding cap: two id: R6 entries → --rings R6 exits 0, rings reported 11); known gap, routed." }
+    - { rule_index: 5, condition: "dims_with_psl_id_ratio >= 1.0", outcome: passed, triggered_by: null, cannot_evaluate_reason: null, effect_applied: none,
+        evidence: "pm-reviewer REQ-002: dims_without_psl_id 0 over 42×3 dims → ratio 1.0; psl_index_size 17 (closed 规律索引 set); spec-gaming-detector reverified 'all 22 count fields 0 (--psl index 17)'." }
+    - { rule_index: 6, condition: "card_commits_touching_audited_dirs == 0", outcome: passed, triggered_by: null, cannot_evaluate_reason: null, effect_applied: none,
+        evidence: "Same four reproductions as rule 1: 0 / 0 / 0 / 0. Instrument caveats that do NOT change the delivered number but bound what it can see: mf-004 (non-ASCII paths; 0 exist under the audited dirs on this branch per security's self-rebuttal), mf-005 (pre-Card window), mf-003 (empty-range crash after merge). The independent range diff-stats (pm, gaming, drift, security) cover every commit in the Card range footer or not, so the fact does not rest on the footer-gated instrument alone." }
+    - { rule_index: 7, condition: "parts_total == 42", outcome: passed, triggered_by: null, cannot_evaluate_reason: null, effect_applied: none,
+        evidence: "parts_total 42: qa-reviewer, pm-reviewer REQ-001 (28 skill + 5 agent + 5 human_gate + 4 asset), spec-gaming-detector reverified, spec-drift-detector verified_no_drift (scale line recomputed: 10 环 · 42 配件 · 73 缺口 · 33 缺少 · 58 产物-生产者 · 39 提案)." }
+    - { rule_index: 8, condition: "required_parts_by_ring_group — required_parts_missing 0 for R0-R2+spine (14), R3-R5 (7), R6 (9), R7-R8 (7), agents (5)", outcome: passed, triggered_by: null, cannot_evaluate_reason: null, effect_applied: none,
+        evidence: "pm-reviewer REQ-008 / 009 / 010 / 011 fully_compliant (high) with required_parts_missing 0 under each --rings view (probe lists all 14 / 7 / 9 / 7 names present) and REQ-001 fully_compliant with the 5 agents present; qa-reviewer 34/34 includes test_AC_008..011_a/b; spec-drift-detector CLAIM-010 agree ('all four exit 0 with required_parts_missing 0'). KG-11 (--rings view mutant survives) tagged by pm-reviewer as a test blind spot with impl correct; known gap, routed. mf-008 (ring predicates narrowed under --rings) does not affect the required_parts lookup this rule reads.",
+        heuristic_parse: true }
+    - { rule_index: 9, condition: "mutation_kill_rate >= 0.70", outcome: passed, triggered_by: null, cannot_evaluate_reason: null, effect_applied: none,
+        evidence: "qa-reviewer mutation: fixture-level 24/24 = 1.0 (executed, identical to baseline); instrument-level mirror 23/30 = 0.767 (self-consistency of calibration/instrument_mutation.json re-verified: 23 killed + 7 survived [M03, M04, M07, M14, M22, M23, M28] = 30; not re-executed — unsafe on the primary checkout). spec-gaming-detector reverified mutation_sh killed 24/24, kill_rate 1.0. spec-drift-detector CLAIM-024 agree (non-functional, measured from --qa-report)." }
+
+  severity_policy_check: "No aggregate severity policy in the rules source beyond rule 0; none violated. The six P1 and eight P2 findings are non-blocking under the rules as written."   # extra
+
+  # ====== NEEDS_HUMAN ITEMS ======
+  needs_human_items:
+    - item_id: nh-001
+      question: >-
+        AC-005-a (REQ-005, kind human, judge tech, ui:AUDIT.md#ring-tables): do the ring tables satisfy the statement — per-Part Gap atoms / exclusive
+        Artifact or role / 闸-vs-门 / Loop; deletion tests naming a concrete error artifact (not 流程会断); provenance-then-fit naming with 建议名 + 不重命名 on
+        misfit; the two named duplicate pairs adjudicated; per-ring missing rows with source / necessity / deletion? Mechanical support registered by pm-reviewer
+        (script_gates_rendered_as_door 0, rename_true 0, orphan_gaps 0, 0 grep hits for generic deletion phrases, 不重命名 ×13, 33 missing rows with source tag +
+        necessity + deletion sentence, both contract-named pairs present among five recomputed pairs, 门 cells only for G1/G2/G3, AUDIT.md byte-identical to a
+        fresh render) and by spec-gaming-detector (deletion_test: 0 empty / 0 banned phrases / 0 near-duplicates, min length 102 chars; naming 41 fits / 1
+        misfit tune → harness-tune rename false; provenance 23 authored / 19 adopted; 41/42 written fit_reason; 18/42 naming dims cite only provenance-type
+        evidence) — but the quality judgment is G3's. NEW this iteration and squarely inside this AC: mf-009 (confidence 0.8) — the checked_by column the
+        fix added now prints '（无闸 → 封顶 declared）' beside **compiled** for R6/human_gate.G3, R7/agent.pr-reviewer, R8/tune (every artifact checked_by
+        []) and for 21 cells in total across 5 producers; spec-drift-detector notes human_gate.G3 and review-loop record no deviating reading at all; the
+        registries part.gates and artifacts[].checked_by disagree for 8/42 Parts. G3 must rule whether F-06's 'any artifact' wording or the fragments'
+        'exclusive/primary artifact' reading governs (g3-input.md item 1 covers only the dos-extract partial case). Also read: mf-013 (duplicates table is
+        author-controlled: any non-empty alternatives_of exempts a producer), mf-006 (the 缺口·原子 column is an unescaped interpolation site — delivered
+        content clean), mf-014 (a gates[] entry with kind outside script|human renders '未在 gates[] 登记' though registered — delivered gates[] clean),
+        mf-010 (the checker forbids cross-ring fills, so no Part in another ring can be recorded as filling a Gap — 0 such edges today).
+      surfaced_by: "rule_index 3 / pm-reviewer REQ-005; mf-009 (confidence 0.8)"
+      blocking: true
+      suggested_resolver: "G3 tech judge — checklist: plugins/sdlc/dogfood/ring-audit/tests/ring-audit/checklist_G3.md L9-24 (14 boxes); evidence: AUDIT.md L26-852 (ring tables; R6 L382-410, tune L686), L832-852 (疑似重复的 Part 对); g3-input.md item 1 (F-06 granularity); audit.yaml L1348 / L1624 / L1860 + artifacts L3081 / L3088 / L3096"
+    - item_id: nh-002
+      question: >-
+        AC-006-a (REQ-006, kind human, judge product, ui:AUDIT.md#run-evidence): (1) mf-001 (0.8) — the re-recorded replay snapshot names branch fix/iter-002
+        @ 9ad5b9c and lists 9ad5b9c as CARD-01; that sha is not reachable from docs/1-sdlc-ring-audit (patch-id twin of 7cb1f55) and the record says 12 Card
+        commits where the branch has 13. The snapshot_note discloses sha_scope: branch-specific and says 'do not copy this table'. pm-reviewer calls the
+        disclosure honest and says re-running on this branch and pasting the output would make the table self-consistent (CARD-06 doc-only); spec-gaming-
+        detector calls it disclaimer_in_place_of_fix, a recurrence of the iteration-001 stale-sha class after a fix that claimed to cure it, and a breach of
+        the g2-judge no-cherry-pick ruling quoted in pr-body.md L116. Does a disclosed-but-unresolvable table satisfy '列出 Card-footer 提交对三个被审目录的 git
+        diff --stat 记录（为空）'? All reviewers agree the load-bearing empty diff-stat reproduces at ba7d5e2. (2) mf-002 (1.0, three roles + qa caveat) —
+        the same block records exit: 1 beside ok: true / 0 touching / 0 rejected, a combination replay_card_commits.sh cannot emit; the exit key was
+        introduced by the fix commit ba7d5e2 and F-12 makes the yaml authoritative, so the truth source contradicts itself; mf-012 shows the renderer never
+        projects cmd/exit, so the page shows only ok: true. pm-reviewer: 'the one item in this review that a CARD-06 doc-only refresh could remove before G3
+        reads the page.' (3) 'signer_kind = delegated_agent 的门不渲染为人签': the closed SIGNER_KIND_RENDER map renders 代签（delegated） for G1/G2, — for
+        pending G3, **未知** for anything else (pm, gaming verified on a '人签' variant); mf-007 shows the checker still accepts signer_kind values outside
+        {human, delegated_agent} without authorization_ref (KG-04). (4) mf-005 — AUDIT.md's PSL-003 section answers A8 '审计动过被审目录吗' only for the Card
+        window (自第一个 Card 提交起); three footer-less same-Run commits before it (587f371, ebe270d, c729f76 — c729f76 edited verify_commit.py, the replay's
+        oracle) touched plugins/sdlc/skills/** and are visible only in commit-table.md / pr-body.md, which classify them as PSL γ L122-123 deviation commits.
+        (5) mf-003 — AUDIT.md tells readers '换分支或 rebase 之后必须重跑'; on an empty main..HEAD range (after merge) the fixed script aborts with no JSON.
+        (6) substitute-tier external evidence: pm and gaming both report it rendered as substitute, never as user verification; calibration wording never says
+        unqualified 'calibrated'; 0 **verified** cells. Reviewer-derived recommendation: G3 should re-run check_audit.py, the delete-ring variant and
+        replay_card_commits.sh on the shipped branch rather than trust the typed record (gaming, pm, drift, qa all did: exit 0 / 13 / 0 / 0; twin exit 1
+        ring_missing: R6).
+      surfaced_by: "rule_index 3 / pm-reviewer REQ-006; mf-001 (0.8), mf-002 (1.0)"
+      blocking: true
+      suggested_resolver: "G3 product judge — checklist: tests/ring-audit/checklist_G3.md L26-40 (11 boxes); evidence: AUDIT.md L912-1046 (run_evidence; gates table L926-935, PSL-003 replay L961-998), audit.yaml L3366-3447 (run_evidence; audited_dirs_diff L3412-3440); independent re-run of check_audit.py (exit 0) + --variant delete-ring:R6 (exit 1) + replay_card_commits.sh on docs/1-sdlc-ring-audit. Orchestrator option before G3 reads: regenerate run_evidence.audited_dirs_diff on the shipping branch as the last commit (pm-reviewer / spec-gaming-detector suggested fix) — note gaming's warning that another disclaimer instead of a resolving record 'should be read as convergence on gaming'."
+    - item_id: nh-003
+      question: >-
+        Contract / interpretation questions the spec-drift-detector (first real run) routes needs_human because likely_intentional is unclear and both sides
+        were written in the same commit (0be2770): mf-008 (0.8, new, unregistered) — does --rings legitimately disable ring_unexpected and narrow
+        ring_missing, or does F-17 '不改任何既有谓词' bind (check_audit.py docstring says one thing, audit.schema.md:26-28 the other)? mf-015 — must the six
+        registries be present (schema.md '缺一不可') when neither F-13 nor the code requires it? mf-016 — must exit-2 paths emit a JSON object (schema.md
+        '恒为一个 JSON 对象')? mf-020 — is the disposition enum {fix_list, issue, none} (F-16) or {none, issue} (schema.md)? mf-011 (KG-02) — which of the three
+        readings of 'lacking a source' does AC-004-b compile (already routed to change-proposal-002). Plus the four update_spec recommendations for the same
+        proposal: mf-010 (rule 2(e) fills[] same-ring — three downstream readers agree against the signed sentence), mf-017 (eight registries vs six; assembly
+        notes omit unenforced_rules), mf-018 (whitelist_overflow vs replay_reject tokens), mf-019 (schema.md:11-14 describes a CARD-01 state 5a6889c removed).
+        The spec-side files (g1-record.md, derived/form-draft.md, done_when.yaml) are constraints.forbidden_paths for this Run, so none of these can be
+        settled inside the Card range.
+      surfaced_by: "mf-008; spec-drift-detector recommendations (needs_human ×6 incl. SD-03 → nh-001 and SD-01 → nh-002; update_spec ×4)"
+      blocking: false
+      suggested_resolver: "contract author via change-proposal-002 (+ G1 interpretation line where the signed form is the side to change); /spec-drift-detector at iteration 3 to confirm closure"
+    - item_id: nh-004
+      question: >-
+        Test-coverage of the iteration-002 fixes: none of the six in-contract fixes has a locked test — cell()/code() escaping, the closed SIGNER_KIND_RENDER
+        map, the checked_by column, --no-renames, the non_card_commits_* fields, the computed assembly-note counts all live outside tests/** (pm-reviewer
+        out_of_scope_observations[3]); render_audit.py has no test at all and existence.sh checks structure only (qa-reviewer caveats.other[0], who closed the
+        gap by hand this iteration with a byte-diff of a fresh render). mf-003 (regression in the fixed replay script) sits exactly in that untested surface,
+        and mf-004 / mf-006 / mf-014 each name a fixture that would pin them. Should change-proposal-002 reopen the l5 lock to add: a golden-file byte-diff
+        for AUDIT.md; fixture values containing '|' (atoms, ids); signer_kind '人签' / 'agent' mutants; a twin repo with a file renamed out of and a non-ASCII
+        file added under plugins/sdlc/skills/; an empty main..HEAD range expecting exit 0 + card_commits 0; a gates[] entry with kind: human_gate?
+      surfaced_by: "pm-reviewer out_of_scope_observations[3]; qa-reviewer caveats.other[0]; mf-003, mf-004, mf-006, mf-014"
+      blocking: false
+      suggested_resolver: "/test-suite-generator + /calibrate via change-proposal-002 (l5 lock re-sign); /qa-reviewer at iteration 3"
+
+  # ====== CROSS-MODEL AGREEMENT ANALYSIS ======
+  cross_model_agreement:
+    claude_findings: 27                            # raw source records: 10 code-reviewer findings (security 5 + logic 5) + 11 spec-drift-detector signals + 3 spec-gaming-detector unclassified findings + 1 pm partially_compliant REQ + 2 pm out_of_scope_observations counted as sources (obs[0], obs[1])
+    openai_findings: 0
+    google_findings: 0
+    cross_vendor_overlap: 0
+    claude_only: 27
+    openai_only: 0
+    google_only: 0
+    note: "No cross-vendor evaluator in this fleet (spec-gaming-detector: codex binary present at ~/.nvm/versions/node/v25.0.0/bin/codex, gemini absent; not invoked — the task fixed vendor: claude and did not authorize sending repository content to an external service). Cross-vendor weighting contributed 0.0 to every merged finding; the 1.0 (mf-002) and five 0.8 findings owe their boost to cross-ROLE agreement within one vendor. Same-vendor caveat applies symmetrically to pass-side evidence. Orchestrator may run a codex pass over the reviewers' inputs_read for a cross-vendor check (gaming's suggestion)."
+
+  # ====== CAVEATS ======
+  caveats:
+    single_reviewer: false
+    rules_source_unrecognized: false
+    heuristic_extracted_rules:
+      - "rules[1] 'any card commit touching plugins/sdlc/skills, plugins/sdlc/agents or plugins/sdlc/docs is a P0 (PSL-003)' — no canonical regex matched; parsed as card_commits_touching_audited_dirs > 0 → escalate to P0. Evaluated on reviewer-reproduced counts; 'card commit' read as footer-carrying per AC-007-a (the contract's own definition) — user should confirm, given mf-005 / srg-005 show footer-less pre-Card commits edited the audited dirs."
+      - "rules[2] 'an Assessment dimension without a PSL-ID or without Evidence is a P0 (PSL-010)' — parsed as dims_without_psl_id + dims_without_evidence > 0 → escalate to P0."
+      - "behavior.thresholds.required_parts_by_ring_group is a descriptive string, not an operator expression; parsed as required_parts_missing == 0 per group using the AC-001/008..011-a given lists."
+    cross_vendor_unavailable: true
+    tool_call_limit_warned: false
+    schema_violations:
+      - "non-fatal: code-reviewer-security.yaml / -logic.yaml / -perf.yaml set agent_role to the focus name (security / logic / perf) rather than code-reviewer; mapped to role code-reviewer by filename + schema shape."
+      - "non-fatal: code-reviewer-security.yaml repeats the meta keys (agent_role, model, vendor, isolation, inputs_read) at top level as well as inside code_review:; parsed once."
+      - "non-fatal: spec-drift-detector.yaml reports (schema_note) that its skill's references/finding-schema.yaml does not exist in plugins/sdlc/skills/spec-drift-detector/references/; output follows SKILL.md §D5–D7 field names (divergence_type / spec_says / code_does / commit_introducing_drift / drift_age / likely_intentional / recommendation). Accepted; meta-judge mapped divergence_severity medium → P2, low → P3 and used code_does as the root-cause text. This is a skill-source gap worth a skill-issue entry, not a reviewer fault."
+      - "non-fatal: spec-gaming-detector.yaml puts all three findings under unclassified_patterns with detected_patterns: [] (declared in score_composition_note); severity_counts {P0: 0, P1: 1, P2: 2, P3: 0} consistent with the findings; gaming_risk_score 4.0 pasted from compute_score.py."
+      - "non-fatal: pm-reviewer.yaml requirements_format: user_yaml labelled 'closest enum value'; out_of_scope_observations carry no severity/confidence fields (null in sources)."
+      - "non-fatal: self-reported tool budget overrun — code-reviewer-security tool_calls_used 33 vs budget 20 (logic 18/20, perf 11/20). Recorded, not penalized (no rule in the source addresses it)."
+    spec_robustness_missing: true                  # extra — every reviewer recorded spec-robustness.md as absent for this Run; spec-gaming-detector ran in maximum-suspicion mode and its 6 spec_robustness_gaps (srg-001..006) are the substitute input for the contract author
+    corroboration_sources_from_non_finding_sections:   # extra — transparency on records outside a findings[] / drift_signals[] / unclassified_patterns[] list
+      - "COUNTED as sources: pm-reviewer out_of_scope_observations[0] (→ mf-002) and [1] (→ mf-001) — same file:line as the gaming/drift findings they merge with, each independently verified by pm with git and a fresh replay (same practice as iteration-001's mf-012)."
+      - "NOT counted as sources (listed under corroborated_by_non_source_records): qa-reviewer caveats.other[1] (mf-002), spec-drift-detector SD-01 secondary clause (mf-001), spec-gaming-detector srg-001/002/003/004/005 and dropped_after_self_refutation, spec-drift-detector dropped_candidates + CLAIM-022 (mf-007), pm-reviewer out_of_scope_observations[2] (mf-009, different file) and [3] (nh-004), qa-reviewer caveats.other[0] (nh-004), code-reviewer-security's capped-out KG-03 duplicate-ring candidate (rule 4 evidence)."
+    severity_mapping_note: "spec-drift-detector medium → P2, low → P3; pm-reviewer partially_compliant (normal REQ, recorded G2 waiver) → P2. These are meta-judge mappings, not source values; they affect no rule (only P0 blocks)."   # extra
+    weighting_primitive: "plugins/sdlc/skills/meta-judge/scripts/compute_confidence.py --json over meta-judge-merged.json (same directory as this file); confidence / confidence_boost / weight_terms copied verbatim from its output."   # extra
+    model_note: "Task brief fixes model: claude-fable-5-1; finding-schema.yaml's example names claude-opus-4-7 ('never weaker'). fable-5-1 is above the Opus tier, so the iron rule's intent is met."   # extra
+    iteration_001_usage: "iteration-001/meta-judge-output.yaml was read for recurrence_of marking only (same file + same mechanism). Its state, weights, needs_human items and rule outcomes were not inherited; every number and verdict above is re-derived from iteration-002 review files. Recurrences: 7 (mf-001 ← mf-012, mf-005 ← mf-002, mf-006 ← mf-001, mf-009 ← mf-011, mf-010 ← mf-008, mf-011 ← mf-014, mf-013 ← mf-004). New: 13, of which fix-induced: 2 (mf-002, mf-003)."   # extra
+    acceptance_fleet_decode_hint: "state NEEDS_HUMAN with two blocking G3 items (human ACs, never auto-passed) and zero blocking rule fires — same state as iteration-001, but with a changed profile: qa GO / pm 8-1-0-2 unchanged; gaming_risk_score 3.5 → 4.0 (trend up, below the 7 ceiling) with the detector's explicit warning that gd-unc-002 (mf-001) is a recurrence after a fix that claimed to cure it and that both mf-001 and mf-002 were introduced by the fix commit ba7d5e2; spec-drift-detector's first real run adds 11 signals (2 medium new + unregistered: mf-008, mf-002); one fix regression (mf-003). Six P1 + eight P2 + six P3 non-blocking findings are fix-prompt / change-proposal-002 material under the rules source as written. The evidence-record items (mf-001, mf-002, mf-012) are the ones a doc-only CARD-06 commit on the shipping branch could clear before G3 reads AUDIT.md; the orchestrator should weigh that against gaming's 'more prose = convergence on gaming' warning by producing a resolving record, not another disclaimer."   # extra
