@@ -1,10 +1,10 @@
 {
   "version": 1,
-  "stage": "g2",
+  "stage": "l5",
   "signed_by": "g2-judge",
   "signer_kind": "delegated_agent",
-  "authorization": "user instruction 2026-09-05: '需要人审核的地方，请你弄一个子agent代替我审核一下' — G2 delegated to g2-judge (g2-record.md FREEZE at contract sha fb5af3f0…, confirm 42)",
-  "signed_at": "2026-09-05T14:58:30+00:00",
+  "authorization": "user instruction 2026-09-05: '需要人审核的地方，请你弄一个子agent代替我审核一下' — L5 tests written by isolated non-implementer agent l5-tests; lock re-signed at l5 over g2-judge's frozen set + tests",
+  "signed_at": "2026-09-05T15:17:28+00:00",
   "files": [
     {
       "path": "plugins/sdlc/dogfood/ring-audit/done_when.yaml",
@@ -39,9 +39,129 @@
       "sha256": "4cd4cfb4411f8bcbe14c21518c6fe618f6e80980b5be84cb37f96b5496d3c1f6"
     },
     {
+      "path": "plugins/sdlc/dogfood/ring-audit/compile_manifest.yaml",
+      "sha256": "ce4db5ffbade8f05a7fed34395241c3e0970b271a5adea629c60f0a488631955"
+    },
+    {
+      "path": "plugins/sdlc/dogfood/ring-audit/tests/ring-audit/RED_BASELINE.txt",
+      "sha256": "f0265c4d825f6ff8fc80144da116d546128ca2610fe95118c7f2f39e841767c0"
+    },
+    {
+      "path": "plugins/sdlc/dogfood/ring-audit/tests/ring-audit/checklist_G3.md",
+      "sha256": "0bdf476f58d3412aca69e62eaf40cf717aa6927bbb7074791e32b5af674b6a9c"
+    },
+    {
+      "path": "plugins/sdlc/dogfood/ring-audit/tests/ring-audit/existence.sh",
+      "sha256": "2b3d954ae1d2d164b6d4c0703288d77c69ceaac8b40312fa06f5adb2c48e396b"
+    },
+    {
+      "path": "plugins/sdlc/dogfood/ring-audit/tests/ring-audit/fixtures/MUTANTS.md",
+      "sha256": "3755b4702e3e1ba03f97afb3b2c7f44b9245c85c7defb877bb9f34247c45cd1e"
+    },
+    {
+      "path": "plugins/sdlc/dogfood/ring-audit/tests/ring-audit/fixtures/complete.yaml",
+      "sha256": "784bb6e72e2b3b95da6329c0812a5e2a44b1cf9cfea5749467da8cbdca70cc96"
+    },
+    {
+      "path": "plugins/sdlc/dogfood/ring-audit/tests/ring-audit/fixtures/mutant_boolean_implemented.yaml",
+      "sha256": "c65cebb3f3eaf0a494e336d1f8fd6bb7788824f2fefd2c5844d3426f1ed0f98b"
+    },
+    {
+      "path": "plugins/sdlc/dogfood/ring-audit/tests/ring-audit/fixtures/mutant_delegated_without_authorization_ref.yaml",
+      "sha256": "419420e5ec091c29551bd03d6453748be2c095e4ddc92056ebe58b705f2218d2"
+    },
+    {
+      "path": "plugins/sdlc/dogfood/ring-audit/tests/ring-audit/fixtures/mutant_double_producer.yaml",
+      "sha256": "a84ba5e27155d83626615320a2abea4b87157c9bc0f299ba3e2cdf6d9ae37925"
+    },
+    {
+      "path": "plugins/sdlc/dogfood/ring-audit/tests/ring-audit/fixtures/mutant_evidence_kind_outside_enum.yaml",
+      "sha256": "a64c5668c36184afa75931e06eb21700b96782543db4afb5119d6948dc3c404e"
+    },
+    {
+      "path": "plugins/sdlc/dogfood/ring-audit/tests/ring-audit/fixtures/mutant_evidence_ref_empty.yaml",
+      "sha256": "9f1cd0d9280251e91d8c7471ad4835b86005e34d2eef12a3a4941c6a6046293e"
+    },
+    {
+      "path": "plugins/sdlc/dogfood/ring-audit/tests/ring-audit/fixtures/mutant_human_gate_without_signer.yaml",
+      "sha256": "36a45a3eeefadad28c0c84d560b096b730b7b1a202db98cee77eb390b6c62854"
+    },
+    {
+      "path": "plugins/sdlc/dogfood/ring-audit/tests/ring-audit/fixtures/mutant_implemented_outside_enum.yaml",
+      "sha256": "96318766f4045e9ff5e21454050d61ad7c07b7c660f7424cc4367bd6ef23a292"
+    },
+    {
+      "path": "plugins/sdlc/dogfood/ring-audit/tests/ring-audit/fixtures/mutant_orphan_gap.yaml",
+      "sha256": "ac47c35e6751606592d402a6bc9a02a2211ff53025c3d755368d36ea450b78cc"
+    },
+    {
+      "path": "plugins/sdlc/dogfood/ring-audit/tests/ring-audit/fixtures/mutant_proposal_without_source.yaml",
+      "sha256": "cb7f77cba278b749cc8f51326b2a62e190e3df0bbf659b9732e9949d8c8462b3"
+    },
+    {
+      "path": "plugins/sdlc/dogfood/ring-audit/tests/ring-audit/fixtures/mutant_psl_id_missing.yaml",
+      "sha256": "ed4be17ffc60f3cf334f71d7482f7f87f2677768968ac383d2bf39e793d4bac9"
+    },
+    {
+      "path": "plugins/sdlc/dogfood/ring-audit/tests/ring-audit/fixtures/mutant_psl_id_unknown.yaml",
+      "sha256": "3f0e982c1892f27a0d0049d055c607ea4ea59b8f6f568dad0f9d1ead9e930f27"
+    },
+    {
+      "path": "plugins/sdlc/dogfood/ring-audit/tests/ring-audit/fixtures/mutant_rename_true.yaml",
+      "sha256": "76e58a6c8447ad8a70fe6d77adad2b06dc4d20bc057e2fe6bb390578166da7ef"
+    },
+    {
+      "path": "plugins/sdlc/dogfood/ring-audit/tests/ring-audit/fixtures/mutant_required_part_missing_R0-R2-spine.yaml",
+      "sha256": "13837442ad2a4f3fc545fbf8e57d8c3b2cfe351a7b20fd7f1e05d24bf0958d60"
+    },
+    {
+      "path": "plugins/sdlc/dogfood/ring-audit/tests/ring-audit/fixtures/mutant_required_part_missing_R3-R5.yaml",
+      "sha256": "c8cdc2ab7d4fbceceb91a13f9a4c434c8fa779e910250de61061e4c5b2a68211"
+    },
+    {
+      "path": "plugins/sdlc/dogfood/ring-audit/tests/ring-audit/fixtures/mutant_required_part_missing_R6.yaml",
+      "sha256": "442ee58f6125c87af0354edfde170a1484a6e990ac285f2d6cdb3de76d16a720"
+    },
+    {
+      "path": "plugins/sdlc/dogfood/ring-audit/tests/ring-audit/fixtures/mutant_required_part_missing_R7-R8.yaml",
+      "sha256": "8503ef91353002bc2a59fbb81c8ac9670a915c65cbd1a5d3fb36464e7f52660c"
+    },
+    {
+      "path": "plugins/sdlc/dogfood/ring-audit/tests/ring-audit/fixtures/mutant_ring_missing.yaml",
+      "sha256": "941c31182a24665ece24063f3b9bbb26b320b1b31555bd2844014d8341116618"
+    },
+    {
+      "path": "plugins/sdlc/dogfood/ring-audit/tests/ring-audit/fixtures/mutant_rings_without_missing_key.yaml",
+      "sha256": "951404e82e57cf16d78035016b76adeb3ca6974d322384d30a8330caca9c267f"
+    },
+    {
+      "path": "plugins/sdlc/dogfood/ring-audit/tests/ring-audit/fixtures/mutant_script_gate_rendered_as_door.yaml",
+      "sha256": "57b19130c137302cb25cd46566c28287f682c03b4c4f5fc43ae11f5e7e2d2097"
+    },
+    {
+      "path": "plugins/sdlc/dogfood/ring-audit/tests/ring-audit/mutation.config.yaml",
+      "sha256": "3a8c7ef0df9e6acb99fe1899d15219d99308898390485979ff9e4f779e5c01c5"
+    },
+    {
+      "path": "plugins/sdlc/dogfood/ring-audit/tests/ring-audit/mutation.sh",
+      "sha256": "979b512b559f4d9c3380692bfe6fb1db67f3af7789286ceef9a800f2dab57942"
+    },
+    {
+      "path": "plugins/sdlc/dogfood/ring-audit/tests/ring-audit/run_tests.sh",
+      "sha256": "9d885343124e9cc407d14dd58dffb9825a3d71fd3a4cb724f3309ae250fe0828"
+    },
+    {
+      "path": "plugins/sdlc/dogfood/ring-audit/tests/ring-audit/test_check_audit.py",
+      "sha256": "822203e21a182bea6dc6b976bf6fb7f6aaf9856bf0e37d0160c0a47499823481"
+    },
+    {
+      "path": "plugins/sdlc/dogfood/ring-audit/tests/ring-audit/tests-manifest.yaml",
+      "sha256": "cc3d580997a94674c45edac4466559a93029a2f5a68f6281dcf49eed6d9c4d99"
+    },
+    {
       "path": "plugins/sdlc/dogfood/ring-audit/g2-record.md",
       "sha256": "0c04b10bd468c87336817c1183622e99886d155834ad806066b5e489d931703b"
     }
   ],
-  "note": "G2 freeze: acceptance/existence/thresholds/rules/constraints signed. Changing a listed file requires a change-proposal-*.md in the same diff."
+  "note": "L5 freeze: tests/** + behavior manifest signed (written by a non-implementer). Changing a listed file requires a change-proposal-*.md in the same diff."
 }

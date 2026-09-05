@@ -1,4 +1,3 @@
-# L4 任务卡 — sdlc-ring-audit；合格标准：单独丢给一个没有任何上下文的 agent，它能干完。
 id: CARD-01
 title: check-audit CLI：按 F-13 / F-14 / F-17 实现 check_audit.py（含 --rings / --required-parts 视图与删环自校准）与 Card 提交回放脚本
 req_ids:
@@ -22,7 +21,7 @@ allowed_files:
 - plugins/sdlc/dogfood/ring-audit/check_audit.py
 - plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh
 - plugins/sdlc/dogfood/ring-audit/audit.schema.md
-context_estimate_tokens: 16000
+context_estimate_tokens: 22000
 depends_on: []
 notes: '上下文自包含：只读 (1) 本卡；(2) sdlc_state.py show 的摘要；(3) 本卡 ac_ids 对应的 AC（done_when.yaml 只读）；(4) 形态草案 derived/form-draft.md（签字版 746c56ef…；F-13/F-17 是检查脚本接口，F-01…F-09 是记录形状）；(5) PSL-sdlc-ring-audit.md 的 Domain
   Model / 规律索引；(6) allowed_files 内源码。不得读：ratchet-log/**、spec-robustness、评审 skill 的提示、其他卡、.sdlc/ 账本里评审者的发现。 交付：check_audit.py <audit.yaml> [--psl PSL.md] [--rings R0,..] [--required-parts a,b,..] [--variant
@@ -32,7 +31,11 @@ notes: '上下文自包含：只读 (1) 本卡；(2) sdlc_state.py show 的摘�
   delete-ring:<id> 在内存里删掉一个 Ring 再检，必须 exit 1（F-14 自校准，输出写 run_evidence 用）；同时输出 JSON 计数字段 rings / parts_total / parts_without_assessment / dims_without_psl_id / dims_with_unknown_psl_id / dims_without_evidence
   / boolean_implemented / implemented_outside_enum / rename_true / rings_without_missing_key / orphan_gaps / proposals_without_source / required_parts_missing。audit.yaml 形状按 F-12：rings[]{id, question, parts[]{id,
   kind, ring_evidence, provenance, loop, artifact, assessment{needed, implemented, naming}}, missing[]}，外加顶层 artifacts[]、gates[]、proposals[]、run_evidence{}——把这份 schema 写成 audit.schema.md 供内容卡照抄。replay_card_commits.sh：对分支上每个带
-  ''Card: CARD-xx'' footer 的提交跑 verify_commit.py --range <sha>^..<sha> --card cards/<xx>.yaml，任一 exit 1 即 exit 1 并打印 whitelist_overflow（AC-007）。用标准库；不写测试（tests/** 禁改，测试由 L5 另写）。'
+  ''Card: CARD-xx'' footer 的提交跑 verify_commit.py --range <sha>^..<sha> --card cards/<xx>.yaml，任一 exit 1 即 exit 1 并打印 whitelist_overflow（AC-007）。用标准库；不写测试（tests/** 禁改，测试由 L5 另写）。 接口以 L5 测试为准（tests/ring-audit/test_check_audit.py
+  头部 INTERFACE PINNED + fixtures/complete.yaml 头注释）：stdout 一个 JSON 对象，计数在顶层（或 counts 下），失败谓词名在 error（字符串，可带定位后缀）或 errors/failed_predicates 列表；audit.yaml 另有顶层 gaps[]（每条带 ring）与 parts[].fills[]（gap id）——这是
+  F-04 ''Gap 状态由 FILLS 边派生'' 的物化，orphan_gaps 据此算；human Gate 可带 exercised: false（本次未行使的 merge / harness-review），此时 signer 可空，exercised 的必须有 signer 且 delegated_agent 必带 authorization_ref；双生产者谓词读作''未被认领的双生产者''：两个非
+  alternatives_of 的 producer 且两者 Assessment 都标 merge_candidate 时合法，否则 exit 1 double_producer（G1 解释规则待确认，先按测试）。允许使用 pyyaml（仓库已依赖，verify_commit.py 亦 import yaml）；replay_card_commits.sh 在仓库根运行 git，cards/<id>.yaml
+  相对 cwd 或脚本目录解析，输出 JSON 含 card_commits_touching_audited_dirs；分支为 docs/1-sdlc-ring-audit（不在 main），不必 --allow-main。'
 forbidden_files:
 - tests/**
 - '**/tests/**'

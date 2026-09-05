@@ -1,0 +1,2065 @@
+# based_on: REQ-001 (F-13 无双生产者; thresholds.mutation_kill_rate family) — MUTANT of complete.yaml: artifacts[] gains a second producer (implement) for cards/CARD-*.yaml without alternatives_of
+schema: audit/1
+feature: sdlc-ring-audit
+psl: PSL-sdlc-ring-audit.md
+check: check_audit.py
+rings:
+- id: R0
+  question: 这个产品的世界是什么样的、它的规律是什么？
+  parts:
+  - id: psl
+    kind: skill
+    ring: R0
+    ring_evidence: graph.yaml#L12
+    provenance: authored
+    loop: null
+    artifact: PSL-<feature>.md
+    gates: [verify_psl.py]
+    fills: [G-R0-01]
+    assessment:
+      id: A-psl
+      state: evidenced
+      needed:
+        verdict: necessary
+        psl_ids: [PSL-002, PSL-016]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/psl/SKILL.md}
+        deletion_test: 撤掉后引擎从一句需求直接推形态，世界层错误延迟到 R6 才暴露
+      implemented:
+        verdict: compiled
+        psl_ids: [PSL-010, PSL-015]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/psl/SKILL.md}
+        - {kind: gate_json, ref: plugins/sdlc/skills/psl/gate.json#static_only}
+        not_reached: {verified: 无行为层运行记录}
+      naming:
+        verdict: fits
+        provenance: authored
+        artifact_or_position: PSL-<feature>.md
+        fit: fits
+        rename: false
+        psl_ids: [PSL-014]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/psl/SKILL.md}
+      disposition: none
+      adjudications: []
+  - id: psl-derive
+    kind: skill
+    ring: R0
+    ring_evidence: graph.yaml#L14
+    provenance: authored
+    loop: null
+    artifact: derived/form-draft.md
+    gates: [verify_form.py, G1]
+    fills: [G-R0-02]
+    assessment:
+      id: A-psl-derive
+      state: evidenced
+      needed:
+        verdict: necessary
+        psl_ids: [PSL-002, PSL-016]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/psl-derive/SKILL.md}
+        deletion_test: 撤掉后 G1 无形态草案可裁，签字落空
+      implemented:
+        verdict: compiled
+        psl_ids: [PSL-010, PSL-015]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/psl-derive/SKILL.md}
+        - {kind: gate_json, ref: plugins/sdlc/skills/psl-derive/gate.json#static_only}
+        not_reached: {verified: 无行为层运行记录}
+      naming:
+        verdict: fits
+        provenance: authored
+        artifact_or_position: derived/form-draft.md
+        fit: fits
+        rename: false
+        psl_ids: [PSL-014]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/psl-derive/SKILL.md}
+      disposition: none
+      adjudications: []
+  - id: human_gate.G1
+    kind: human_gate
+    ring: R0
+    ring_evidence: graph.yaml#L239
+    provenance: authored
+    loop: null
+    artifact: null
+    role: gate
+    gates: [G1]
+    fills: [G-R0-03]
+    assessment:
+      id: A-human_gate.G1
+      state: evidenced
+      needed:
+        verdict: necessary
+        psl_ids: [PSL-002, PSL-016]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/graph.yaml#kind=human}
+        deletion_test: 撤掉后形态草案无人签，错误世界进入契约
+      implemented:
+        verdict: compiled
+        psl_ids: [PSL-010, PSL-015]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/graph.yaml#kind=human}
+        - {kind: gate_json, ref: plugins/sdlc/gate.json#static_only}
+        not_reached: {verified: 无行为层运行记录}
+      naming:
+        verdict: fits
+        provenance: authored
+        artifact_or_position: R0 gate
+        fit: fits
+        rename: false
+        psl_ids: [PSL-014]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/graph.yaml#kind=human}
+      disposition: none
+      adjudications: []
+  missing: []
+- id: R1
+  question: 系统的本体与常驻不变量是什么？
+  parts:
+  - id: dos-extract
+    kind: skill
+    ring: R1
+    ring_evidence: graph.yaml#L18
+    provenance: authored
+    loop: null
+    artifact: dos.yaml
+    gates: [verify_dos.py]
+    fills: [G-R1-01]
+    assessment:
+      id: A-dos-extract
+      state: evidenced
+      needed:
+        verdict: necessary
+        psl_ids: [PSL-002, PSL-016]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/dos-extract/SKILL.md}
+        deletion_test: 撤掉后卡的名词无本体可解析，lint_cards 第三项校验空转
+      implemented:
+        verdict: compiled
+        psl_ids: [PSL-010, PSL-015]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/dos-extract/SKILL.md}
+        - {kind: gate_json, ref: plugins/sdlc/skills/dos-extract/gate.json#static_only}
+        not_reached: {verified: 无行为层运行记录}
+      naming:
+        verdict: fits
+        provenance: authored
+        artifact_or_position: dos.yaml
+        fit: fits
+        rename: false
+        psl_ids: [PSL-014]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/dos-extract/SKILL.md}
+      disposition: none
+      adjudications: []
+  - id: invariant-extract
+    kind: skill
+    ring: R1
+    ring_evidence: graph.yaml#L20
+    provenance: authored
+    loop: null
+    artifact: invariants/<territory>.card.yaml
+    gates: [verify_invariants.py]
+    fills: [G-R1-02]
+    assessment:
+      id: A-invariant-extract
+      state: evidenced
+      needed:
+        verdict: necessary
+        psl_ids: [PSL-002, PSL-016]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/invariant-extract/SKILL.md}
+        deletion_test: 撤掉后领地常驻不变量只在人脑里，失败重复出现
+      implemented:
+        verdict: compiled
+        psl_ids: [PSL-010, PSL-015]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/invariant-extract/SKILL.md}
+        - {kind: gate_json, ref: plugins/sdlc/skills/invariant-extract/gate.json#static_only}
+        not_reached: {verified: 无行为层运行记录}
+      naming:
+        verdict: fits
+        provenance: authored
+        artifact_or_position: invariants/<territory>.card.yaml
+        fit: fits
+        rename: false
+        psl_ids: [PSL-014]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/invariant-extract/SKILL.md}
+      disposition: none
+      adjudications: []
+  missing:
+  - id: G-R1-03
+    ring: R1
+    atoms: [Control]
+    source: lifecycle_blank
+    necessity: necessary
+    deletion_test: 无 DOS 对账 / drift 检查：本体与代码分叉不被发现
+    evidence:
+    - {kind: file, ref: docs/lifecycle.md#制品映射表}
+    disposition: issue
+- id: R2
+  question: 这次要达成什么、如何证伪？
+  parts:
+  - id: issue
+    kind: skill
+    ring: R2
+    ring_evidence: graph.yaml#L23
+    provenance: authored
+    loop: null
+    artifact: issue-body.md
+    gates: [verify_issue.py]
+    fills: [G-R2-01]
+    assessment:
+      id: A-issue
+      state: evidenced
+      needed:
+        verdict: necessary
+        psl_ids: [PSL-002, PSL-016]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/issue/SKILL.md}
+        deletion_test: 撤掉后 Run 的本次验收只剩一句愿望，无法证伪
+      implemented:
+        verdict: compiled
+        psl_ids: [PSL-010, PSL-015]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/issue/SKILL.md}
+        - {kind: gate_json, ref: plugins/sdlc/skills/issue/gate.json#static_only}
+        not_reached: {verified: 无行为层运行记录}
+      naming:
+        verdict: fits
+        provenance: authored
+        artifact_or_position: issue-body.md
+        fit: fits
+        rename: false
+        psl_ids: [PSL-014]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/issue/SKILL.md}
+      disposition: none
+      adjudications: []
+  - id: donewhen-extract
+    kind: skill
+    ring: R2
+    ring_evidence: graph.yaml#L26
+    provenance: adopted
+    loop: null
+    artifact: done_when.yaml
+    gates: [verify_donewhen.py, G2]
+    fills: [G-R2-01, G-R2-02]
+    assessment:
+      id: A-donewhen-extract
+      state: evidenced
+      needed:
+        verdict: necessary
+        psl_ids: [PSL-002, PSL-016]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/donewhen-extract/SKILL.md}
+        deletion_test: 撤掉后 Run 的本次验收只剩一句愿望，无法证伪
+      implemented:
+        verdict: compiled
+        psl_ids: [PSL-010, PSL-015]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/donewhen-extract/SKILL.md}
+        - {kind: gate_json, ref: plugins/sdlc/skills/donewhen-extract/gate.json#static_only}
+        not_reached: {verified: 无行为层运行记录}
+      naming:
+        verdict: fits
+        provenance: adopted
+        artifact_or_position: done_when.yaml
+        fit: fits
+        rename: false
+        psl_ids: [PSL-014]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/donewhen-extract/SKILL.md}
+      disposition: none
+      adjudications: []
+  - id: acceptance-spec
+    kind: skill
+    ring: R2
+    ring_evidence: graph.yaml#L26
+    provenance: adopted
+    loop: null
+    artifact: specs/<feature>/ (v1 bundle)
+    gates: [G2]
+    fills: [G-R2-02]
+    assessment:
+      id: A-acceptance-spec
+      state: evidenced
+      needed:
+        verdict: necessary
+        psl_ids: [PSL-002, PSL-016]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/acceptance-spec/SKILL.md}
+        deletion_test: 撤掉后 AC 无 happy/unhappy 孪生，闸门只能检 happy 路径
+      implemented:
+        verdict: compiled
+        psl_ids: [PSL-010, PSL-015]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/acceptance-spec/SKILL.md}
+        - {kind: gate_json, ref: plugins/sdlc/skills/acceptance-spec/gate.json#static_only}
+        not_reached: {verified: 无行为层运行记录}
+      naming:
+        verdict: fits
+        provenance: adopted
+        artifact_or_position: specs/<feature>/ (v1 bundle)
+        fit: fits
+        rename: false
+        psl_ids: [PSL-014]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/acceptance-spec/SKILL.md}
+      disposition: none
+      adjudications: []
+  - id: human_gate.G2
+    kind: human_gate
+    ring: R2
+    ring_evidence: graph.yaml#L240
+    provenance: authored
+    loop: null
+    artifact: null
+    role: gate
+    gates: [G2]
+    fills: [G-R2-03]
+    assessment:
+      id: A-human_gate.G2
+      state: evidenced
+      needed:
+        verdict: necessary
+        psl_ids: [PSL-002, PSL-016]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/graph.yaml#kind=human}
+        deletion_test: 撤掉后契约未冻结即实现，判据与代码同源
+      implemented:
+        verdict: compiled
+        psl_ids: [PSL-010, PSL-015]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/graph.yaml#kind=human}
+        - {kind: gate_json, ref: plugins/sdlc/gate.json#static_only}
+        not_reached: {verified: 无行为层运行记录}
+      naming:
+        verdict: fits
+        provenance: authored
+        artifact_or_position: R2 gate
+        fit: fits
+        rename: false
+        psl_ids: [PSL-014]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/graph.yaml#kind=human}
+      disposition: none
+      adjudications: []
+  missing:
+  - id: G-R2-04
+    ring: R2
+    atoms: [Control]
+    source: lifecycle_blank
+    necessity: necessary
+    deletion_test: 无接口契约制品：卡间接口漂移到 R6 才被发现
+    evidence:
+    - {kind: file, ref: docs/lifecycle.md#制品映射表}
+    disposition: issue
+- id: R3
+  question: 判据怎么编译成可跑的尺子、尺子本身对不对？
+  parts:
+  - id: test-suite-generator
+    kind: skill
+    ring: R3
+    ring_evidence: graph.yaml#L31
+    provenance: adopted
+    loop: null
+    artifact: tests/<feature>/**
+    gates: [check_verbatim_names.py]
+    fills: [G-R3-01]
+    assessment:
+      id: A-test-suite-generator
+      state: evidenced
+      needed:
+        verdict: necessary
+        psl_ids: [PSL-002, PSL-016]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/test-suite-generator/SKILL.md}
+        deletion_test: 撤掉后测试由实现者自写，assert True 通过覆盖率门
+      implemented:
+        verdict: compiled
+        psl_ids: [PSL-010, PSL-015]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/test-suite-generator/SKILL.md}
+        - {kind: gate_json, ref: plugins/sdlc/skills/test-suite-generator/gate.json#static_only}
+        not_reached: {verified: 无行为层运行记录}
+      naming:
+        verdict: fits
+        provenance: adopted
+        artifact_or_position: tests/<feature>/**
+        fit: fits
+        rename: false
+        psl_ids: [PSL-014]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/test-suite-generator/SKILL.md}
+      disposition: none
+      adjudications: []
+  - id: spec-compile
+    kind: skill
+    ring: R3
+    ring_evidence: graph.yaml#L33
+    provenance: authored
+    loop: null
+    artifact: eval_cases/ + rubric_version
+    gates: [verify_compile.py]
+    fills: [G-R3-02]
+    assessment:
+      id: A-spec-compile
+      state: evidenced
+      needed:
+        verdict: necessary
+        psl_ids: [PSL-002, PSL-016]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/spec-compile/SKILL.md}
+        deletion_test: 撤掉后未校准的尺子直接上岗，mutation 缺口不可见
+      implemented:
+        verdict: compiled
+        psl_ids: [PSL-010, PSL-015]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/spec-compile/SKILL.md}
+        - {kind: gate_json, ref: plugins/sdlc/skills/spec-compile/gate.json#static_only}
+        not_reached: {verified: 无行为层运行记录}
+      naming:
+        verdict: fits
+        provenance: authored
+        artifact_or_position: eval_cases/ + rubric_version
+        fit: fits
+        rename: false
+        psl_ids: [PSL-014]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/spec-compile/SKILL.md}
+      disposition: none
+      adjudications: []
+  - id: calibrate
+    kind: skill
+    ring: R3
+    ring_evidence: graph.yaml#L35
+    provenance: authored
+    loop: null
+    artifact: calibration-report.yaml
+    gates: [verify_calibrate.py]
+    fills: [G-R3-02]
+    assessment:
+      id: A-calibrate
+      state: evidenced
+      needed:
+        verdict: necessary
+        psl_ids: [PSL-002, PSL-016]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/calibrate/SKILL.md}
+        deletion_test: 撤掉后未校准的尺子直接上岗，mutation 缺口不可见
+      implemented:
+        verdict: compiled
+        psl_ids: [PSL-010, PSL-015]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/calibrate/SKILL.md}
+        - {kind: gate_json, ref: plugins/sdlc/skills/calibrate/gate.json#static_only}
+        not_reached: {verified: 无行为层运行记录}
+      naming:
+        verdict: fits
+        provenance: authored
+        artifact_or_position: calibration-report.yaml
+        fit: fits
+        rename: false
+        psl_ids: [PSL-014]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/calibrate/SKILL.md}
+      disposition: none
+      adjudications: []
+  missing:
+  - id: G-R3-03
+    ring: R3
+    atoms: [Control]
+    source: lifecycle_blank
+    necessity: necessary
+    deletion_test: 无红-绿脚本：测试在实现前是否为红只靠自述
+    evidence:
+    - {kind: file, ref: docs/lifecycle.md#制品映射表}
+    disposition: issue
+- id: R4
+  question: 怎么拆、怎么做、怎么原子地落地？
+  parts:
+  - id: plan-cards
+    kind: skill
+    ring: R4
+    ring_evidence: graph.yaml#L27
+    provenance: authored
+    loop: null
+    artifact: cards/CARD-*.yaml
+    gates: [lint_cards.py]
+    fills: [G-R4-01]
+    assessment:
+      id: A-plan-cards
+      state: evidenced
+      needed:
+        verdict: necessary
+        psl_ids: [PSL-002, PSL-016]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/plan-cards/SKILL.md}
+        deletion_test: 撤掉后一个无上下文 agent 拿到的是整份契约而不是一张卡，超 40k 上下文
+      implemented:
+        verdict: compiled
+        psl_ids: [PSL-010, PSL-015]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/plan-cards/SKILL.md}
+        - {kind: gate_json, ref: plugins/sdlc/skills/plan-cards/gate.json#static_only}
+        not_reached: {verified: 无行为层运行记录}
+      naming:
+        verdict: fits
+        provenance: authored
+        artifact_or_position: cards/CARD-*.yaml
+        fit: fits
+        rename: false
+        psl_ids: [PSL-014]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/plan-cards/SKILL.md}
+      disposition: none
+      adjudications: []
+  - id: implement
+    kind: skill
+    ring: R4
+    ring_evidence: graph.yaml#L29
+    provenance: authored
+    loop: loops.yaml#card
+    artifact: card diff + commits
+    gates: [verify_commit.py]
+    fills: [G-R4-02]
+    assessment:
+      id: A-implement
+      state: evidenced
+      needed:
+        verdict: necessary
+        psl_ids: [PSL-002, PSL-016]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/implement/SKILL.md}
+        deletion_test: 撤掉后实现者可读评审判据与隐藏集，评估者与被评估者不分离
+      implemented:
+        verdict: compiled
+        psl_ids: [PSL-010, PSL-015]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/implement/SKILL.md}
+        - {kind: gate_json, ref: plugins/sdlc/skills/implement/gate.json#static_only}
+        not_reached: {verified: 无行为层运行记录}
+      naming:
+        verdict: fits
+        provenance: authored
+        artifact_or_position: card diff + commits
+        fit: fits
+        rename: false
+        psl_ids: [PSL-014]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/implement/SKILL.md}
+      disposition: none
+      adjudications: []
+  - id: commit
+    kind: skill
+    ring: R4
+    ring_evidence: graph.yaml#L37
+    provenance: authored
+    loop: null
+    artifact: atomic commit
+    gates: [verify_commit.py]
+    fills: [G-R4-03]
+    assessment:
+      id: A-commit
+      state: evidenced
+      needed:
+        verdict: necessary
+        psl_ids: [PSL-002, PSL-016]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/commit/SKILL.md}
+        deletion_test: 撤掉后 diff 越白名单、改锁文件、带 secret 都能落地
+      implemented:
+        verdict: verified
+        psl_ids: [PSL-010, PSL-007]
+        evidence:
+        - {kind: run_record, ref: .sdlc/sdlc-ring-audit/ledger.md#ev-012}
+        - {kind: smoke, ref: skill-issues.md#smoke-verify_commit}
+        calibrated: false
+      naming:
+        verdict: fits
+        provenance: authored
+        artifact_or_position: atomic commit
+        fit: fits
+        rename: false
+        psl_ids: [PSL-014]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/commit/SKILL.md}
+      disposition: none
+      adjudications: []
+  - id: agent.card-implementer
+    kind: agent
+    ring: R4
+    ring_evidence: graph.yaml#L29
+    provenance: authored
+    loop: loops.yaml#card
+    artifact: card diff + commits
+    gates: [verify_commit.py]
+    fills: [G-R4-02]
+    assessment:
+      id: A-agent.card-implementer
+      state: evidenced
+      needed:
+        verdict: necessary
+        psl_ids: [PSL-002, PSL-016]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/agents/card-implementer.md}
+        deletion_test: 撤掉后实现者可读评审判据与隐藏集，评估者与被评估者不分离
+      implemented:
+        verdict: compiled
+        psl_ids: [PSL-010, PSL-015]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/agents/card-implementer.md}
+        - {kind: gate_json, ref: plugins/sdlc/agents/gate.json#static_only}
+        not_reached: {verified: 无行为层运行记录}
+      naming:
+        verdict: fits
+        provenance: authored
+        artifact_or_position: card diff + commits
+        fit: fits
+        rename: false
+        psl_ids: [PSL-014]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/agents/card-implementer.md}
+      disposition: none
+      adjudications: []
+  missing: []
+- id: R5
+  question: 怎么跑到达标为止而不原地打转？
+  parts:
+  - id: ratchet
+    kind: skill
+    ring: R5
+    ring_evidence: graph.yaml#L29
+    provenance: adopted
+    loop: loops.yaml#ratchet
+    artifact: card diff + commits
+    gates: [verify_commit.py]
+    fills: [G-R5-01]
+    assessment:
+      id: A-ratchet
+      state: evidenced
+      needed:
+        verdict: necessary
+        psl_ids: [PSL-002, PSL-016]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/ratchet/SKILL.md}
+        deletion_test: 撤掉后同指纹失败原地重试，预算靠引擎记忆
+      implemented:
+        verdict: compiled
+        psl_ids: [PSL-010, PSL-015]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/ratchet/SKILL.md}
+        - {kind: gate_json, ref: plugins/sdlc/skills/ratchet/gate.json#static_only}
+        not_reached: {verified: 无行为层运行记录}
+      naming:
+        verdict: fits
+        provenance: adopted
+        artifact_or_position: card diff + commits
+        fit: fits
+        rename: false
+        psl_ids: [PSL-014]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/ratchet/SKILL.md}
+      disposition: none
+      adjudications: []
+  missing: []
+- id: R6
+  question: 做出来的东西对不对、谁裁？
+  parts:
+  - id: code-reviewer
+    kind: skill
+    ring: R6
+    ring_evidence: graph.yaml#L44
+    provenance: adopted
+    loop: null
+    artifact: ratchet-log/**/code-reviewer.yaml
+    gates: [meta-judge]
+    fills: [G-R6-01]
+    assessment:
+      id: A-code-reviewer
+      state: evidenced
+      needed:
+        verdict: necessary
+        psl_ids: [PSL-002, PSL-016]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/code-reviewer/SKILL.md}
+        deletion_test: 撤掉后实现由写它的同一个上下文自评，sycophancy 循环
+      implemented:
+        verdict: compiled
+        psl_ids: [PSL-010, PSL-015]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/code-reviewer/SKILL.md}
+        - {kind: gate_json, ref: plugins/sdlc/skills/code-reviewer/gate.json#static_only}
+        not_reached: {verified: 无行为层运行记录}
+      naming:
+        verdict: fits
+        provenance: adopted
+        artifact_or_position: ratchet-log/**/code-reviewer.yaml
+        fit: fits
+        rename: false
+        psl_ids: [PSL-014]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/code-reviewer/SKILL.md}
+      disposition: none
+      adjudications: []
+  - id: qa-reviewer
+    kind: skill
+    ring: R6
+    ring_evidence: graph.yaml#L44
+    provenance: adopted
+    loop: null
+    artifact: ratchet-log/**/qa-reviewer.yaml
+    gates: [meta-judge]
+    fills: [G-R6-01]
+    assessment:
+      id: A-qa-reviewer
+      state: evidenced
+      needed:
+        verdict: necessary
+        psl_ids: [PSL-002, PSL-016]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/qa-reviewer/SKILL.md}
+        deletion_test: 撤掉后实现由写它的同一个上下文自评，sycophancy 循环
+      implemented:
+        verdict: compiled
+        psl_ids: [PSL-010, PSL-015]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/qa-reviewer/SKILL.md}
+        - {kind: gate_json, ref: plugins/sdlc/skills/qa-reviewer/gate.json#static_only}
+        not_reached: {verified: 无行为层运行记录}
+      naming:
+        verdict: fits
+        provenance: adopted
+        artifact_or_position: ratchet-log/**/qa-reviewer.yaml
+        fit: fits
+        rename: false
+        psl_ids: [PSL-014]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/qa-reviewer/SKILL.md}
+      disposition: none
+      adjudications: []
+  - id: pm-reviewer
+    kind: skill
+    ring: R6
+    ring_evidence: graph.yaml#L44
+    provenance: adopted
+    loop: null
+    artifact: ratchet-log/**/pm-reviewer.yaml
+    gates: [meta-judge]
+    fills: [G-R6-01]
+    assessment:
+      id: A-pm-reviewer
+      state: evidenced
+      needed:
+        verdict: necessary
+        psl_ids: [PSL-002, PSL-016]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/pm-reviewer/SKILL.md}
+        deletion_test: 撤掉后实现由写它的同一个上下文自评，sycophancy 循环
+      implemented:
+        verdict: compiled
+        psl_ids: [PSL-010, PSL-015]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/pm-reviewer/SKILL.md}
+        - {kind: gate_json, ref: plugins/sdlc/skills/pm-reviewer/gate.json#static_only}
+        not_reached: {verified: 无行为层运行记录}
+      naming:
+        verdict: fits
+        provenance: adopted
+        artifact_or_position: ratchet-log/**/pm-reviewer.yaml
+        fit: fits
+        rename: false
+        psl_ids: [PSL-014]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/pm-reviewer/SKILL.md}
+      disposition: none
+      adjudications: []
+  - id: spec-drift-detector
+    kind: skill
+    ring: R6
+    ring_evidence: graph.yaml#L44
+    provenance: adopted
+    loop: null
+    artifact: ratchet-log/**/spec-drift-detector.yaml
+    gates: [meta-judge]
+    fills: [G-R6-01]
+    assessment:
+      id: A-spec-drift-detector
+      state: evidenced
+      needed:
+        verdict: necessary
+        psl_ids: [PSL-002, PSL-016]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/spec-drift-detector/SKILL.md}
+        deletion_test: 撤掉后实现由写它的同一个上下文自评，sycophancy 循环
+      implemented:
+        verdict: compiled
+        psl_ids: [PSL-010, PSL-015]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/spec-drift-detector/SKILL.md}
+        - {kind: gate_json, ref: plugins/sdlc/skills/spec-drift-detector/gate.json#static_only}
+        not_reached: {verified: 无行为层运行记录}
+      naming:
+        verdict: fits
+        provenance: adopted
+        artifact_or_position: ratchet-log/**/spec-drift-detector.yaml
+        fit: fits
+        rename: false
+        psl_ids: [PSL-014]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/spec-drift-detector/SKILL.md}
+      disposition: none
+      adjudications: []
+  - id: spec-gaming-detector
+    kind: skill
+    ring: R6
+    ring_evidence: graph.yaml#L44
+    provenance: adopted
+    loop: null
+    artifact: ratchet-log/**/spec-gaming-detector.yaml
+    gates: [meta-judge]
+    fills: [G-R6-01]
+    assessment:
+      id: A-spec-gaming-detector
+      state: evidenced
+      needed:
+        verdict: necessary
+        psl_ids: [PSL-002, PSL-016]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/spec-gaming-detector/SKILL.md}
+        deletion_test: 撤掉后实现由写它的同一个上下文自评，sycophancy 循环
+      implemented:
+        verdict: compiled
+        psl_ids: [PSL-010, PSL-015]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/spec-gaming-detector/SKILL.md}
+        - {kind: gate_json, ref: plugins/sdlc/skills/spec-gaming-detector/gate.json#static_only}
+        not_reached: {verified: 无行为层运行记录}
+      naming:
+        verdict: fits
+        provenance: adopted
+        artifact_or_position: ratchet-log/**/spec-gaming-detector.yaml
+        fit: fits
+        rename: false
+        psl_ids: [PSL-014]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/spec-gaming-detector/SKILL.md}
+      disposition: none
+      adjudications: []
+  - id: meta-judge
+    kind: skill
+    ring: R6
+    ring_evidence: graph.yaml#L46
+    provenance: adopted
+    loop: null
+    artifact: final-verdict.yaml
+    gates: [G3]
+    fills: [G-R6-01, G-R6-02]
+    assessment:
+      id: A-meta-judge
+      state: evidenced
+      needed:
+        verdict: necessary
+        psl_ids: [PSL-002, PSL-016]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/meta-judge/SKILL.md}
+        deletion_test: 撤掉后实现由写它的同一个上下文自评，sycophancy 循环
+      implemented:
+        verdict: compiled
+        psl_ids: [PSL-010, PSL-015]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/meta-judge/SKILL.md}
+        - {kind: gate_json, ref: plugins/sdlc/skills/meta-judge/gate.json#static_only}
+        not_reached: {verified: 无行为层运行记录}
+      naming:
+        verdict: fits
+        provenance: adopted
+        artifact_or_position: final-verdict.yaml
+        fit: fits
+        rename: false
+        psl_ids: [PSL-014]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/meta-judge/SKILL.md}
+      disposition: none
+      adjudications: []
+  - id: acceptance-fleet
+    kind: skill
+    ring: R6
+    ring_evidence: graph.yaml#L42
+    provenance: adopted
+    loop: loops.yaml#acceptance
+    artifact: ratchet-log/iteration-NNN/
+    gates: [G3]
+    fills: [G-R6-02]
+    assessment:
+      id: A-acceptance-fleet
+      state: evidenced
+      needed:
+        verdict: necessary
+        psl_ids: [PSL-002, PSL-016]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/acceptance-fleet/SKILL.md}
+        deletion_test: 撤掉后六份发现无人综合，四态 ratchet 无输入
+      implemented:
+        verdict: compiled
+        psl_ids: [PSL-010, PSL-015]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/acceptance-fleet/SKILL.md}
+        - {kind: gate_json, ref: plugins/sdlc/skills/acceptance-fleet/gate.json#static_only}
+        not_reached: {verified: 无行为层运行记录}
+      naming:
+        verdict: fits
+        provenance: adopted
+        artifact_or_position: ratchet-log/iteration-NNN/
+        fit: fits
+        rename: false
+        psl_ids: [PSL-014]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/acceptance-fleet/SKILL.md}
+      disposition: none
+      adjudications: []
+  - id: pr-review
+    kind: skill
+    ring: R6
+    ring_evidence: graph.yaml#L48
+    provenance: authored
+    loop: null
+    artifact: GitHub review (findings.yaml projection)
+    gates: [human_gate.merge]
+    fills: [G-R6-01]
+    assessment:
+      id: A-pr-review
+      state: evidenced
+      needed:
+        verdict: necessary
+        psl_ids: [PSL-002, PSL-016]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/pr-review/SKILL.md}
+        deletion_test: 撤掉后实现由写它的同一个上下文自评，sycophancy 循环
+      implemented:
+        verdict: declared
+        psl_ids: [PSL-010]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/pr-review/SKILL.md}
+        not_reached: {compiled: 无 verify 脚本、无门, verified: 无行为层运行}
+      naming:
+        verdict: fits
+        provenance: authored
+        artifact_or_position: GitHub review (findings.yaml projection)
+        fit: fits
+        rename: false
+        psl_ids: [PSL-014]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/pr-review/SKILL.md}
+      disposition: none
+      adjudications: []
+  - id: human_gate.G3
+    kind: human_gate
+    ring: R6
+    ring_evidence: graph.yaml#L241
+    provenance: authored
+    loop: null
+    artifact: null
+    role: gate
+    gates: [G3]
+    fills: [G-R6-03]
+    assessment:
+      id: A-human_gate.G3
+      state: evidenced
+      needed:
+        verdict: necessary
+        psl_ids: [PSL-002, PSL-016]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/graph.yaml#kind=human}
+        deletion_test: 撤掉后 human AC 被自动通过，报告自宣完成
+      implemented:
+        verdict: compiled
+        psl_ids: [PSL-010, PSL-015]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/graph.yaml#kind=human}
+        - {kind: gate_json, ref: plugins/sdlc/gate.json#static_only}
+        not_reached: {verified: 无行为层运行记录}
+      naming:
+        verdict: fits
+        provenance: authored
+        artifact_or_position: R6 gate
+        fit: fits
+        rename: false
+        psl_ids: [PSL-014]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/graph.yaml#kind=human}
+      disposition: none
+      adjudications: []
+  - id: agent.pr-reviewer
+    kind: agent
+    ring: R6
+    ring_evidence: no_node
+    provenance: authored
+    loop: null
+    artifact: findings.yaml
+    gates: [review-triager]
+    fills: [G-R6-01]
+    assessment:
+      id: A-agent.pr-reviewer
+      state: evidenced
+      needed:
+        verdict: necessary
+        psl_ids: [PSL-002, PSL-016]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/agents/pr-reviewer.md}
+        deletion_test: 撤掉后实现由写它的同一个上下文自评，sycophancy 循环
+      implemented:
+        verdict: compiled
+        psl_ids: [PSL-010, PSL-015]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/agents/pr-reviewer.md}
+        - {kind: gate_json, ref: plugins/sdlc/agents/gate.json#static_only}
+        not_reached: {verified: 无行为层运行记录}
+      naming:
+        verdict: fits
+        provenance: authored
+        artifact_or_position: findings.yaml
+        fit: fits
+        rename: false
+        psl_ids: [PSL-014]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/agents/pr-reviewer.md}
+      disposition: none
+      adjudications: []
+  missing:
+  - id: G-R6-04
+    ring: R6
+    atoms: [Control]
+    source: lifecycle_blank
+    necessity: necessary
+    deletion_test: 无 meets_done_when 比对：验收结论与契约条目无逐条对账
+    evidence:
+    - {kind: file, ref: docs/lifecycle.md#制品映射表}
+    disposition: issue
+- id: R7
+  question: 怎么合入与交付？
+  parts:
+  - id: pr
+    kind: skill
+    ring: R7
+    ring_evidence: graph.yaml#L52
+    provenance: authored
+    loop: null
+    artifact: pull request
+    gates: [verify_pr.py]
+    fills: [G-R7-01]
+    assessment:
+      id: A-pr
+      state: evidenced
+      needed:
+        verdict: necessary
+        psl_ids: [PSL-002, PSL-016]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/pr/SKILL.md}
+        deletion_test: 撤掉后 PR 描述与卡/契约脱钩，评审无上下文
+      implemented:
+        verdict: compiled
+        psl_ids: [PSL-010, PSL-015]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/pr/SKILL.md}
+        - {kind: gate_json, ref: plugins/sdlc/skills/pr/gate.json#static_only}
+        not_reached: {verified: 无行为层运行记录}
+      naming:
+        verdict: fits
+        provenance: authored
+        artifact_or_position: pull request
+        fit: fits
+        rename: false
+        psl_ids: [PSL-014]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/pr/SKILL.md}
+      disposition: none
+      adjudications: []
+  - id: review-loop
+    kind: skill
+    ring: R7
+    ring_evidence: graph.yaml#L54
+    provenance: adopted
+    loop: loops.yaml#review
+    artifact: review thread verdicts
+    gates: [fix-verifier]
+    fills: [G-R7-02]
+    assessment:
+      id: A-review-loop
+      state: evidenced
+      needed:
+        verdict: necessary
+        psl_ids: [PSL-002, PSL-016]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/review-loop/SKILL.md}
+        deletion_test: 撤掉后评论直接改代码，无裁决、无独立验证
+      implemented:
+        verdict: compiled
+        psl_ids: [PSL-010, PSL-015]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/review-loop/SKILL.md}
+        - {kind: gate_json, ref: plugins/sdlc/skills/review-loop/gate.json#static_only}
+        not_reached: {verified: 无行为层运行记录}
+      naming:
+        verdict: fits
+        provenance: adopted
+        artifact_or_position: review thread verdicts
+        fit: fits
+        rename: false
+        psl_ids: [PSL-014]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/review-loop/SKILL.md}
+      disposition: none
+      adjudications: []
+  - id: release
+    kind: skill
+    ring: R7
+    ring_evidence: graph.yaml#L58
+    provenance: authored
+    loop: null
+    artifact: release tag + notes
+    gates: [verify_release.py]
+    fills: [G-R7-03]
+    assessment:
+      id: A-release
+      state: evidenced
+      needed:
+        verdict: necessary
+        psl_ids: [PSL-002, PSL-016]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/release/SKILL.md}
+        deletion_test: 撤掉后合入即视为交付，release 验证缺席
+      implemented:
+        verdict: compiled
+        psl_ids: [PSL-010, PSL-015]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/release/SKILL.md}
+        - {kind: gate_json, ref: plugins/sdlc/skills/release/gate.json#static_only}
+        not_reached: {verified: 无行为层运行记录}
+      naming:
+        verdict: fits
+        provenance: authored
+        artifact_or_position: release tag + notes
+        fit: fits
+        rename: false
+        psl_ids: [PSL-014]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/release/SKILL.md}
+      disposition: none
+      adjudications: []
+  - id: human_gate.merge
+    kind: human_gate
+    ring: R7
+    ring_evidence: graph.yaml#L242
+    provenance: authored
+    loop: null
+    artifact: null
+    role: gate
+    gates: [merge]
+    fills: [G-R7-04]
+    assessment:
+      id: A-human_gate.merge
+      state: evidenced
+      needed:
+        verdict: necessary
+        psl_ids: [PSL-002, PSL-016]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/graph.yaml#kind=human}
+        deletion_test: 撤掉后合入无人签，PSL-006 三门变两门
+      implemented:
+        verdict: compiled
+        psl_ids: [PSL-010, PSL-015]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/graph.yaml#kind=human}
+        - {kind: gate_json, ref: plugins/sdlc/gate.json#static_only}
+        not_reached: {verified: 无行为层运行记录}
+      naming:
+        verdict: fits
+        provenance: authored
+        artifact_or_position: R7 gate
+        fit: fits
+        rename: false
+        psl_ids: [PSL-014]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/graph.yaml#kind=human}
+      disposition: none
+      adjudications: []
+  - id: agent.comment-fixer
+    kind: agent
+    ring: R7
+    ring_evidence: no_node
+    provenance: authored
+    loop: loops.yaml#review
+    artifact: fix commit
+    gates: [verify_commit.py]
+    fills: [G-R7-02]
+    assessment:
+      id: A-agent.comment-fixer
+      state: evidenced
+      needed:
+        verdict: necessary
+        psl_ids: [PSL-002, PSL-016]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/agents/comment-fixer.md}
+        deletion_test: 撤掉后评论直接改代码，无裁决、无独立验证
+      implemented:
+        verdict: compiled
+        psl_ids: [PSL-010, PSL-015]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/agents/comment-fixer.md}
+        - {kind: gate_json, ref: plugins/sdlc/agents/gate.json#static_only}
+        not_reached: {verified: 无行为层运行记录}
+      naming:
+        verdict: fits
+        provenance: authored
+        artifact_or_position: fix commit
+        fit: fits
+        rename: false
+        psl_ids: [PSL-014]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/agents/comment-fixer.md}
+      disposition: none
+      adjudications: []
+  - id: agent.fix-verifier
+    kind: agent
+    ring: R7
+    ring_evidence: no_node
+    provenance: authored
+    loop: loops.yaml#review
+    artifact: fix-verdict.yaml
+    gates: [human_gate.merge]
+    fills: [G-R7-02]
+    assessment:
+      id: A-agent.fix-verifier
+      state: evidenced
+      needed:
+        verdict: necessary
+        psl_ids: [PSL-002, PSL-016]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/agents/fix-verifier.md}
+        deletion_test: 撤掉后评论直接改代码，无裁决、无独立验证
+      implemented:
+        verdict: compiled
+        psl_ids: [PSL-010, PSL-015]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/agents/fix-verifier.md}
+        - {kind: gate_json, ref: plugins/sdlc/agents/gate.json#static_only}
+        not_reached: {verified: 无行为层运行记录}
+      naming:
+        verdict: fits
+        provenance: authored
+        artifact_or_position: fix-verdict.yaml
+        fit: fits
+        rename: false
+        psl_ids: [PSL-014]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/agents/fix-verifier.md}
+      disposition: none
+      adjudications: []
+  - id: agent.review-triager
+    kind: agent
+    ring: R7
+    ring_evidence: no_node
+    provenance: authored
+    loop: null
+    artifact: triage.yaml
+    gates: [human_gate.merge]
+    fills: [G-R7-02]
+    assessment:
+      id: A-agent.review-triager
+      state: evidenced
+      needed:
+        verdict: necessary
+        psl_ids: [PSL-002, PSL-016]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/agents/review-triager.md}
+        deletion_test: 撤掉后评论直接改代码，无裁决、无独立验证
+      implemented:
+        verdict: declared
+        psl_ids: [PSL-010]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/agents/review-triager.md}
+        not_reached: {compiled: 无 verify 脚本、无门, verified: 无行为层运行}
+      naming:
+        verdict: fits
+        provenance: authored
+        artifact_or_position: triage.yaml
+        fit: fits
+        rename: false
+        psl_ids: [PSL-014]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/agents/review-triager.md}
+      disposition: none
+      adjudications: []
+  missing: []
+- id: R8
+  question: 学到了什么、harness 改什么？
+  parts:
+  - id: retro
+    kind: skill
+    ring: R8
+    ring_evidence: graph.yaml#L62
+    provenance: authored
+    loop: null
+    artifact: retro.md
+    gates: [harness-review]
+    fills: [G-R8-01]
+    assessment:
+      id: A-retro
+      state: evidenced
+      needed:
+        verdict: necessary
+        psl_ids: [PSL-002, PSL-016]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/retro/SKILL.md}
+        deletion_test: 撤掉后逃逸缺陷不回流为规则，同类失败重复
+      implemented:
+        verdict: declared
+        psl_ids: [PSL-010]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/retro/SKILL.md}
+        not_reached: {compiled: 无 verify 脚本、无门, verified: 无行为层运行}
+      naming:
+        verdict: fits
+        provenance: authored
+        artifact_or_position: retro.md
+        fit: fits
+        rename: false
+        psl_ids: [PSL-014]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/retro/SKILL.md}
+      disposition: none
+      adjudications: []
+  - id: tune
+    kind: skill
+    ring: R8
+    ring_evidence: graph.yaml#L64
+    provenance: authored
+    loop: null
+    artifact: harness change proposal
+    gates: [harness-review]
+    fills: [G-R8-01]
+    assessment:
+      id: A-tune
+      state: evidenced
+      needed:
+        verdict: necessary
+        psl_ids: [PSL-002, PSL-016]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/tune/SKILL.md}
+        deletion_test: 撤掉后逃逸缺陷不回流为规则，同类失败重复
+      implemented:
+        verdict: declared
+        psl_ids: [PSL-010]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/tune/SKILL.md}
+        not_reached: {compiled: 无 verify 脚本、无门, verified: 无行为层运行}
+      naming:
+        verdict: misfit
+        provenance: authored
+        artifact_or_position: harness change proposal
+        fit: misfit
+        rename: false
+        psl_ids: [PSL-014]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/tune/SKILL.md}
+        suggested_name: harness-tune
+        rename_reason: 不重命名：另开 G2 变更提案
+      disposition: issue
+      adjudications: []
+  - id: human_gate.harness-review
+    kind: human_gate
+    ring: R8
+    ring_evidence: graph.yaml#L243
+    provenance: authored
+    loop: null
+    artifact: null
+    role: gate
+    gates: [harness-review]
+    fills: [G-R8-02]
+    assessment:
+      id: A-human_gate.harness-review
+      state: evidenced
+      needed:
+        verdict: necessary
+        psl_ids: [PSL-002, PSL-016]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/graph.yaml#kind=human}
+        deletion_test: 撤掉后 harness 改动不经人，PSL-013 失守
+      implemented:
+        verdict: compiled
+        psl_ids: [PSL-010, PSL-015]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/graph.yaml#kind=human}
+        - {kind: gate_json, ref: plugins/sdlc/gate.json#static_only}
+        not_reached: {verified: 无行为层运行记录}
+      naming:
+        verdict: fits
+        provenance: authored
+        artifact_or_position: R8 gate
+        fit: fits
+        rename: false
+        psl_ids: [PSL-014]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/graph.yaml#kind=human}
+      disposition: none
+      adjudications: []
+  missing: []
+- id: spine
+  question: 谁在编排这一切、图与环的数据在哪？
+  parts:
+  - id: sdlc
+    kind: skill
+    ring: spine
+    ring_evidence: graph.yaml#L8
+    provenance: authored
+    loop: null
+    artifact: null
+    role: orchestrator
+    gates: [sdlc_state.py]
+    fills: [G-S-01]
+    assessment:
+      id: A-sdlc
+      state: evidenced
+      needed:
+        verdict: necessary
+        psl_ids: [PSL-002, PSL-016]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/sdlc/SKILL.md}
+        deletion_test: 撤掉后状态机路径由引擎记忆维护，预算与终止不可强制
+      implemented:
+        verdict: verified
+        psl_ids: [PSL-010, PSL-007]
+        evidence:
+        - {kind: run_record, ref: .sdlc/sdlc-ring-audit/ledger.md#ev-012}
+        - {kind: smoke, ref: skill-issues.md#smoke-verify_commit}
+        calibrated: false
+      naming:
+        verdict: fits
+        provenance: authored
+        artifact_or_position: spine orchestrator
+        fit: fits
+        rename: false
+        psl_ids: [PSL-014]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/sdlc/SKILL.md}
+      disposition: none
+      adjudications: []
+  - id: asset.graph.yaml
+    kind: asset
+    ring: spine
+    ring_evidence: no_node
+    provenance: authored
+    loop: null
+    artifact: graph.yaml
+    gates: [sdlc_state.py]
+    fills: [G-S-02]
+    assessment:
+      id: A-asset.graph.yaml
+      state: evidenced
+      needed:
+        verdict: necessary
+        psl_ids: [PSL-002, PSL-016]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/graph.yaml}
+        deletion_test: 撤掉后图与环是散文不是数据，路由不可机检
+      implemented:
+        verdict: compiled
+        psl_ids: [PSL-010, PSL-015]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/graph.yaml}
+        - {kind: gate_json, ref: plugins/sdlc/gate.json#static_only}
+        not_reached: {verified: 无行为层运行记录}
+      naming:
+        verdict: fits
+        provenance: authored
+        artifact_or_position: graph.yaml
+        fit: fits
+        rename: false
+        psl_ids: [PSL-014]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/graph.yaml}
+      disposition: none
+      adjudications: []
+  - id: asset.loops.yaml
+    kind: asset
+    ring: spine
+    ring_evidence: no_node
+    provenance: authored
+    loop: null
+    artifact: loops.yaml
+    gates: [sdlc_state.py]
+    fills: [G-S-02]
+    assessment:
+      id: A-asset.loops.yaml
+      state: evidenced
+      needed:
+        verdict: necessary
+        psl_ids: [PSL-002, PSL-016]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/loops.yaml}
+        deletion_test: 撤掉后图与环是散文不是数据，路由不可机检
+      implemented:
+        verdict: compiled
+        psl_ids: [PSL-010, PSL-015]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/loops.yaml}
+        - {kind: gate_json, ref: plugins/sdlc/gate.json#static_only}
+        not_reached: {verified: 无行为层运行记录}
+      naming:
+        verdict: fits
+        provenance: authored
+        artifact_or_position: loops.yaml
+        fit: fits
+        rename: false
+        psl_ids: [PSL-014]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/loops.yaml}
+      disposition: none
+      adjudications: []
+  - id: asset.routing.yaml
+    kind: asset
+    ring: spine
+    ring_evidence: no_node
+    provenance: authored
+    loop: null
+    artifact: routing.yaml
+    gates: [sdlc_state.py]
+    fills: [G-S-02]
+    assessment:
+      id: A-asset.routing.yaml
+      state: evidenced
+      needed:
+        verdict: necessary
+        psl_ids: [PSL-002, PSL-016]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/routing.yaml}
+        deletion_test: 撤掉后图与环是散文不是数据，路由不可机检
+      implemented:
+        verdict: compiled
+        psl_ids: [PSL-010, PSL-015]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/routing.yaml}
+        - {kind: gate_json, ref: plugins/sdlc/gate.json#static_only}
+        not_reached: {verified: 无行为层运行记录}
+      naming:
+        verdict: fits
+        provenance: authored
+        artifact_or_position: routing.yaml
+        fit: fits
+        rename: false
+        psl_ids: [PSL-014]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/routing.yaml}
+      disposition: none
+      adjudications: []
+  - id: asset.triggers.yaml
+    kind: asset
+    ring: spine
+    ring_evidence: no_node
+    provenance: authored
+    loop: null
+    artifact: triggers.yaml
+    gates: [sdlc_state.py]
+    fills: [G-S-02]
+    assessment:
+      id: A-asset.triggers.yaml
+      state: evidenced
+      needed:
+        verdict: necessary
+        psl_ids: [PSL-002, PSL-016]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/triggers.yaml}
+        deletion_test: 撤掉后图与环是散文不是数据，路由不可机检
+      implemented:
+        verdict: declared
+        psl_ids: [PSL-010]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/triggers.yaml}
+        not_reached: {compiled: 无 verify 脚本、无门, verified: 无行为层运行}
+      naming:
+        verdict: fits
+        provenance: authored
+        artifact_or_position: triggers.yaml
+        fit: fits
+        rename: false
+        psl_ids: [PSL-014]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/triggers.yaml}
+      disposition: none
+      adjudications: []
+  missing:
+  - id: G-S-03
+    ring: spine
+    atoms: [Control]
+    source: unenforced_rule
+    necessity: necessary
+    deletion_test: R001 评估者/执行者隔离只由 user_workflow 保证，无闸检
+    evidence:
+    - {kind: file, ref: dos.yaml#R001}
+    disposition: issue
+gaps:
+- id: G-R0-01
+  ring: R0
+  atoms: [Knowledge]
+  source: newly_identified
+  necessity: necessary
+  deletion_test: 撤掉后引擎从一句需求直接推形态，世界层错误延迟到 R6 才暴露
+  evidence:
+  - {kind: file, ref: ARCHITECTURE.md#§1}
+  disposition: none
+- id: G-R0-02
+  ring: R0
+  atoms: [Capability]
+  source: newly_identified
+  necessity: necessary
+  deletion_test: 撤掉后 G1 无形态草案可裁，签字落空
+  evidence:
+  - {kind: file, ref: ARCHITECTURE.md#§1}
+  disposition: none
+- id: G-R0-03
+  ring: R0
+  atoms: [Judgment]
+  source: newly_identified
+  necessity: necessary
+  deletion_test: 撤掉后形态草案无人签，错误世界进入契约
+  evidence:
+  - {kind: file, ref: ARCHITECTURE.md#§6.6}
+  disposition: none
+- id: G-R1-01
+  ring: R1
+  atoms: [Knowledge]
+  source: newly_identified
+  necessity: necessary
+  deletion_test: 撤掉后卡的名词无本体可解析，lint_cards 第三项校验空转
+  evidence:
+  - {kind: file, ref: ARCHITECTURE.md#§1}
+  disposition: none
+- id: G-R1-02
+  ring: R1
+  atoms: [Knowledge, Control]
+  source: newly_identified
+  necessity: necessary
+  deletion_test: 撤掉后领地常驻不变量只在人脑里，失败重复出现
+  evidence:
+  - {kind: file, ref: ARCHITECTURE.md#§1}
+  disposition: none
+- id: G-R1-03
+  ring: R1
+  atoms: [Control]
+  source: lifecycle_blank
+  necessity: necessary
+  deletion_test: 无 DOS 对账 / drift 检查：本体与代码分叉不被发现
+  evidence:
+  - {kind: file, ref: docs/lifecycle.md#制品映射表}
+  disposition: issue
+- id: G-R2-01
+  ring: R2
+  atoms: [Knowledge]
+  source: newly_identified
+  necessity: necessary
+  deletion_test: 撤掉后 Run 的本次验收只剩一句愿望，无法证伪
+  evidence:
+  - {kind: file, ref: ARCHITECTURE.md#§1}
+  disposition: none
+- id: G-R2-02
+  ring: R2
+  atoms: [Judgment]
+  source: newly_identified
+  necessity: necessary
+  deletion_test: 撤掉后 AC 无 happy/unhappy 孪生，闸门只能检 happy 路径
+  evidence:
+  - {kind: file, ref: ARCHITECTURE.md#§1}
+  disposition: none
+- id: G-R2-03
+  ring: R2
+  atoms: [Judgment]
+  source: newly_identified
+  necessity: necessary
+  deletion_test: 撤掉后契约未冻结即实现，判据与代码同源
+  evidence:
+  - {kind: file, ref: ARCHITECTURE.md#§6.2}
+  disposition: none
+- id: G-R2-04
+  ring: R2
+  atoms: [Control]
+  source: lifecycle_blank
+  necessity: necessary
+  deletion_test: 无接口契约制品：卡间接口漂移到 R6 才被发现
+  evidence:
+  - {kind: file, ref: docs/lifecycle.md#制品映射表}
+  disposition: issue
+- id: G-R3-01
+  ring: R3
+  atoms: [Capability]
+  source: newly_identified
+  necessity: necessary
+  deletion_test: 撤掉后测试由实现者自写，assert True 通过覆盖率门
+  evidence:
+  - {kind: file, ref: ARCHITECTURE.md#§6.7}
+  disposition: none
+- id: G-R3-02
+  ring: R3
+  atoms: [Judgment, Control]
+  source: newly_identified
+  necessity: necessary
+  deletion_test: 撤掉后未校准的尺子直接上岗，mutation 缺口不可见
+  evidence:
+  - {kind: file, ref: ARCHITECTURE.md#§6.7}
+  disposition: none
+- id: G-R3-03
+  ring: R3
+  atoms: [Control]
+  source: lifecycle_blank
+  necessity: necessary
+  deletion_test: 无红-绿脚本：测试在实现前是否为红只靠自述
+  evidence:
+  - {kind: file, ref: docs/lifecycle.md#制品映射表}
+  disposition: issue
+- id: G-R4-01
+  ring: R4
+  atoms: [Knowledge]
+  source: newly_identified
+  necessity: necessary
+  deletion_test: 撤掉后一个无上下文 agent 拿到的是整份契约而不是一张卡，超 40k 上下文
+  evidence:
+  - {kind: file, ref: ARCHITECTURE.md#§1}
+  disposition: none
+- id: G-R4-02
+  ring: R4
+  atoms: [Capability, Control]
+  source: newly_identified
+  necessity: necessary
+  deletion_test: 撤掉后实现者可读评审判据与隐藏集，评估者与被评估者不分离
+  evidence:
+  - {kind: file, ref: ARCHITECTURE.md#§6.3}
+  disposition: none
+- id: G-R4-03
+  ring: R4
+  atoms: [Control]
+  source: newly_identified
+  necessity: necessary
+  deletion_test: 撤掉后 diff 越白名单、改锁文件、带 secret 都能落地
+  evidence:
+  - {kind: file, ref: ARCHITECTURE.md#§6.4}
+  disposition: none
+- id: G-R5-01
+  ring: R5
+  atoms: [Control]
+  source: newly_identified
+  necessity: necessary
+  deletion_test: 撤掉后同指纹失败原地重试，预算靠引擎记忆
+  evidence:
+  - {kind: file, ref: ARCHITECTURE.md#§6.8}
+  disposition: none
+- id: G-R6-01
+  ring: R6
+  atoms: [Judgment]
+  source: newly_identified
+  necessity: necessary
+  deletion_test: 撤掉后实现由写它的同一个上下文自评，sycophancy 循环
+  evidence:
+  - {kind: file, ref: ARCHITECTURE.md#§6.3}
+  disposition: none
+- id: G-R6-02
+  ring: R6
+  atoms: [Judgment, Control]
+  source: newly_identified
+  necessity: necessary
+  deletion_test: 撤掉后六份发现无人综合，四态 ratchet 无输入
+  evidence:
+  - {kind: file, ref: ARCHITECTURE.md#§6.12}
+  disposition: none
+- id: G-R6-03
+  ring: R6
+  atoms: [Judgment]
+  source: newly_identified
+  necessity: necessary
+  deletion_test: 撤掉后 human AC 被自动通过，报告自宣完成
+  evidence:
+  - {kind: file, ref: ARCHITECTURE.md#§6.6}
+  disposition: none
+- id: G-R6-04
+  ring: R6
+  atoms: [Control]
+  source: lifecycle_blank
+  necessity: necessary
+  deletion_test: 无 meets_done_when 比对：验收结论与契约条目无逐条对账
+  evidence:
+  - {kind: file, ref: docs/lifecycle.md#制品映射表}
+  disposition: issue
+- id: G-R7-01
+  ring: R7
+  atoms: [Capability]
+  source: newly_identified
+  necessity: necessary
+  deletion_test: 撤掉后 PR 描述与卡/契约脱钩，评审无上下文
+  evidence:
+  - {kind: file, ref: ARCHITECTURE.md#§1}
+  disposition: none
+- id: G-R7-02
+  ring: R7
+  atoms: [Judgment, Control]
+  source: newly_identified
+  necessity: necessary
+  deletion_test: 撤掉后评论直接改代码，无裁决、无独立验证
+  evidence:
+  - {kind: file, ref: ARCHITECTURE.md#§6.3}
+  disposition: none
+- id: G-R7-03
+  ring: R7
+  atoms: [Control]
+  source: newly_identified
+  necessity: necessary
+  deletion_test: 撤掉后合入即视为交付，release 验证缺席
+  evidence:
+  - {kind: file, ref: ARCHITECTURE.md#§6.9}
+  disposition: none
+- id: G-R7-04
+  ring: R7
+  atoms: [Judgment]
+  source: newly_identified
+  necessity: necessary
+  deletion_test: 撤掉后合入无人签，PSL-006 三门变两门
+  evidence:
+  - {kind: file, ref: ARCHITECTURE.md#§6.6}
+  disposition: none
+- id: G-R8-01
+  ring: R8
+  atoms: [Knowledge]
+  source: newly_identified
+  necessity: necessary
+  deletion_test: 撤掉后逃逸缺陷不回流为规则，同类失败重复
+  evidence:
+  - {kind: file, ref: ARCHITECTURE.md#§6.12}
+  disposition: none
+- id: G-R8-02
+  ring: R8
+  atoms: [Judgment]
+  source: newly_identified
+  necessity: necessary
+  deletion_test: 撤掉后 harness 改动不经人，PSL-013 失守
+  evidence:
+  - {kind: file, ref: ARCHITECTURE.md#§6.13}
+  disposition: none
+- id: G-S-01
+  ring: spine
+  atoms: [Control]
+  source: newly_identified
+  necessity: necessary
+  deletion_test: 撤掉后状态机路径由引擎记忆维护，预算与终止不可强制
+  evidence:
+  - {kind: file, ref: ARCHITECTURE.md#§6.4}
+  disposition: none
+- id: G-S-02
+  ring: spine
+  atoms: [Knowledge]
+  source: newly_identified
+  necessity: necessary
+  deletion_test: 撤掉后图与环是散文不是数据，路由不可机检
+  evidence:
+  - {kind: file, ref: ARCHITECTURE.md#§6.11}
+  disposition: none
+- id: G-S-03
+  ring: spine
+  atoms: [Control]
+  source: unenforced_rule
+  necessity: necessary
+  deletion_test: R001 评估者/执行者隔离只由 user_workflow 保证，无闸检
+  evidence:
+  - {kind: file, ref: dos.yaml#R001}
+  disposition: issue
+artifacts:
+- id: PSL-<feature>.md
+  producer: psl
+  checked_by: [verify_psl.py]
+- id: derived/form-draft.md
+  producer: psl-derive
+  checked_by: [verify_form.py, G1]
+- id: dos.yaml
+  producer: dos-extract
+  checked_by: [verify_dos.py]
+- id: invariants/<territory>.card.yaml
+  producer: invariant-extract
+  checked_by: [verify_invariants.py]
+- id: issue-body.md
+  producer: issue
+  checked_by: [verify_issue.py]
+- id: done_when.yaml
+  producer: donewhen-extract
+  checked_by: [verify_donewhen.py, G2]
+- id: specs/<feature>/ (v1 bundle)
+  producer: acceptance-spec
+  checked_by: [G2]
+- id: tests/<feature>/**
+  producer: test-suite-generator
+  checked_by: [check_verbatim_names.py]
+- id: eval_cases/ + rubric_version
+  producer: spec-compile
+  checked_by: [verify_compile.py]
+- id: calibration-report.yaml
+  producer: calibrate
+  checked_by: [verify_calibrate.py]
+- id: cards/CARD-*.yaml
+  producer: plan-cards
+  checked_by: [lint_cards.py]
+- id: card diff + commits
+  producer: implement
+  checked_by: [verify_commit.py]
+- id: atomic commit
+  producer: commit
+  checked_by: [verify_commit.py]
+- id: card diff + commits
+  producer: agent.card-implementer
+  checked_by: [verify_commit.py]
+  alternatives_of: stage.implement
+- id: card diff + commits
+  producer: ratchet
+  checked_by: [verify_commit.py]
+  alternatives_of: stage.implement
+- id: ratchet-log/**/code-reviewer.yaml
+  producer: code-reviewer
+  checked_by: [meta-judge]
+- id: ratchet-log/**/qa-reviewer.yaml
+  producer: qa-reviewer
+  checked_by: [meta-judge]
+- id: ratchet-log/**/pm-reviewer.yaml
+  producer: pm-reviewer
+  checked_by: [meta-judge]
+- id: ratchet-log/**/spec-drift-detector.yaml
+  producer: spec-drift-detector
+  checked_by: [meta-judge]
+- id: ratchet-log/**/spec-gaming-detector.yaml
+  producer: spec-gaming-detector
+  checked_by: [meta-judge]
+- id: final-verdict.yaml
+  producer: meta-judge
+  checked_by: [G3]
+- id: ratchet-log/iteration-NNN/
+  producer: acceptance-fleet
+  checked_by: [G3]
+- id: GitHub review (findings.yaml projection)
+  producer: pr-review
+  checked_by: [human_gate.merge]
+- id: findings.yaml
+  producer: agent.pr-reviewer
+  checked_by: [review-triager]
+- id: pull request
+  producer: pr
+  checked_by: [verify_pr.py]
+- id: review thread verdicts
+  producer: review-loop
+  checked_by: [fix-verifier]
+- id: release tag + notes
+  producer: release
+  checked_by: [verify_release.py]
+- id: fix commit
+  producer: agent.comment-fixer
+  checked_by: [verify_commit.py]
+- id: fix-verdict.yaml
+  producer: agent.fix-verifier
+  checked_by: [human_gate.merge]
+- id: triage.yaml
+  producer: agent.review-triager
+  checked_by: [human_gate.merge]
+- id: retro.md
+  producer: retro
+  checked_by: [harness-review]
+- id: harness change proposal
+  producer: tune
+  checked_by: [harness-review]
+- id: graph.yaml
+  producer: asset.graph.yaml
+  checked_by: [sdlc_state.py]
+- id: loops.yaml
+  producer: asset.loops.yaml
+  checked_by: [sdlc_state.py]
+- id: routing.yaml
+  producer: asset.routing.yaml
+  checked_by: [sdlc_state.py]
+- id: triggers.yaml
+  producer: asset.triggers.yaml
+  checked_by: [sdlc_state.py]
+- id: cards/CARD-*.yaml
+  producer: implement
+  checked_by: [lint_cards.py]
+gates:
+- id: G1
+  kind: human
+  label: 门
+  checks: [derived/form-draft.md]
+  signer: g1-judge
+  signer_kind: delegated_agent
+  authorization_ref: 'g1-record.md#authorization (user instruction 2026-09-05: ''需要人审核的地方，请你弄一个子agent代替我审核一下'')'
+- id: G2
+  kind: human
+  label: 门
+  checks: [done_when.yaml]
+  signer: g2-judge
+  signer_kind: delegated_agent
+  authorization_ref: .done_when.lock#authorization
+- id: G3
+  kind: human
+  label: 门
+  checks: [final-verdict.yaml, AUDIT.md]
+  signer: g3-judge
+  signer_kind: delegated_agent
+  authorization_ref: .sdlc/sdlc-ring-audit/state.json#g3.authorization
+- id: merge
+  kind: human
+  label: 门
+  checks: [pull request]
+  signer: null
+  signer_kind: null
+  authorization_ref: null
+  not_exercised: true
+- id: harness-review
+  kind: human
+  label: 门
+  checks: [harness change proposal]
+  signer: null
+  signer_kind: null
+  authorization_ref: null
+  not_exercised: true
+- {id: verify_psl.py, kind: script, label: 闸, ref: plugins/sdlc/skills/psl/scripts/verify_psl.py}
+- {id: verify_form.py, kind: script, label: 闸, ref: plugins/sdlc/skills/psl-derive/scripts/verify_form.py}
+- {id: verify_dos.py, kind: script, label: 闸, ref: plugins/sdlc/skills/dos-extract/scripts/verify_dos.py}
+- {id: verify_invariants.py, kind: script, label: 闸, ref: plugins/sdlc/skills/invariant-extract/scripts/verify_invariants.py}
+- {id: verify_issue.py, kind: script, label: 闸, ref: plugins/sdlc/skills/issue/scripts/verify_issue.py}
+- {id: verify_donewhen.py, kind: script, label: 闸, ref: plugins/sdlc/skills/donewhen-extract/scripts/verify_donewhen.py}
+- {id: check_verbatim_names.py, kind: script, label: 闸, ref: plugins/sdlc/skills/test-suite-generator/scripts/check_verbatim_names.py}
+- {id: verify_compile.py, kind: script, label: 闸, ref: plugins/sdlc/skills/spec-compile/scripts/verify_compile.py}
+- {id: verify_calibrate.py, kind: script, label: 闸, ref: plugins/sdlc/skills/calibrate/scripts/verify_calibrate.py}
+- {id: lint_cards.py, kind: script, label: 闸, ref: plugins/sdlc/skills/plan-cards/scripts/lint_cards.py}
+- {id: verify_commit.py, kind: script, label: 闸, ref: plugins/sdlc/skills/commit/scripts/verify_commit.py}
+- {id: verify_pr.py, kind: script, label: 闸, ref: plugins/sdlc/skills/pr/scripts/verify_pr.py}
+- {id: verify_release.py, kind: script, label: 闸, ref: plugins/sdlc/skills/release/scripts/verify_release.py}
+- {id: sdlc_state.py, kind: script, label: 闸, ref: plugins/sdlc/skills/sdlc/scripts/sdlc_state.py}
+- {id: check_audit.py, kind: script, label: 闸, ref: plugins/sdlc/dogfood/ring-audit/check_audit.py}
+proposals:
+- {id: P-01, source: A-tune, destination: new_issue, text: 'naming misfit: tune → suggested_name harness-tune；不重命名，另开 G2 变更提案'}
+- {id: P-02, source: G-R2-04, destination: new_issue, text: R2 缺接口契约制品（lifecycle_blank）}
+- {id: P-03, source: G-R3-03, destination: new_issue, text: R3 缺红-绿脚本（lifecycle_blank）}
+- {id: P-04, source: G-S-03, destination: skill_fix_list, text: R001 隔离规则无闸检（unenforced_rule）}
+- {id: P-05, source: A-pr-review, destination: no_action, text: pr-review vs code-reviewer：Artifact 不同（GitHub review vs findings.yaml）→ distinct_exits}
+run_evidence:
+  run: {slug: sdlc-ring-audit, state: .sdlc/sdlc-ring-audit/state.json, ledger: .sdlc/sdlc-ring-audit/ledger.md}
+  gates:
+  - {id: G1, signer: g1-judge, signer_kind: delegated_agent, authorization_ref: 'g1-record.md#authorization (user instruction 2026-09-05: ''需要人审核的地方，请你弄一个子agent代替我审核一下'')'}
+  - {id: G2, signer: g2-judge, signer_kind: delegated_agent, authorization_ref: .done_when.lock#authorization}
+  - {id: G3, signer: g3-judge, signer_kind: delegated_agent, authorization_ref: .sdlc/sdlc-ring-audit/state.json#g3.authorization}
+  - {id: merge, signer: null, signer_kind: null, authorization_ref: null}
+  - {id: harness-review, signer: null, signer_kind: null, authorization_ref: null}
+  external_evidence: {kind: substitute, what: check-audit 机械检查 + 代签 agent 独立读, valid_for: this dogfood only}
+  check_runs:
+  - {cmd: python3 check_audit.py audit.yaml --psl PSL-sdlc-ring-audit.md, exit: 0}
+  - {cmd: 'python3 check_audit.py audit.yaml --psl PSL-sdlc-ring-audit.md --variant delete-ring:R6', exit: 1}
+  calibrated: true
+  skill_issues: plugins/sdlc/dogfood/ring-audit/skill-issues.md
+  audited_dirs_diff: git diff --stat (Card commits only) plugins/sdlc/skills plugins/sdlc/agents plugins/sdlc/docs → empty

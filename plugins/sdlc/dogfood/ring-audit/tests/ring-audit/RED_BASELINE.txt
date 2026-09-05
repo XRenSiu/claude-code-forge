@@ -1,0 +1,53 @@
+# based_on: REQ-001..011 — RED baseline for tests/ring-audit (instrument absent by design; L5 written before CARD-01/CARD-06)
+git HEAD: c729f7621d4fe347f3b7bb21933d124221a2ccad
+date: 2026-09-05T15:14:09Z
+command: bash plugins/sdlc/dogfood/ring-audit/tests/ring-audit/run_tests.sh
+runner exit: 1
+
+## summary line
+ring-audit L5: existence=FAIL unittest=FAIL | Ran 30 tests in 0.583s | FAILED (failures=30) | HEAD=c729f76
+
+## existence.sh (fail-fast: stopped at the first missing boundary)
+existence: cli: check-audit  -> /Users/xrensiu/development/owner/claude-code-forge/plugins/sdlc/dogfood/ring-audit/check_audit.py
+
+## unittest (30 methods, all FAIL — check_audit.py / replay_card_commits.sh do not exist yet)
+test_AC_001_a_complete_exit0_rings10_parts_total42 (test_check_audit.TestREQ001.test_AC_001_a_complete_exit0_rings10_parts_total42) ... FAIL
+test_AC_001_b_F14_variant_delete_ring_R6_exit1 (test_check_audit.TestREQ001.test_AC_001_b_F14_variant_delete_ring_R6_exit1) ... FAIL
+test_AC_001_b_ring_removed_exit1_ring_missing (test_check_audit.TestREQ001.test_AC_001_b_ring_removed_exit1_ring_missing) ... FAIL
+test_AC_002_a_complete_dims_psl_and_evidence_counts_zero (test_check_audit.TestREQ002.test_AC_002_a_complete_dims_psl_and_evidence_counts_zero) ... FAIL
+test_AC_002_a_F13_evidence_kind_outside_enum_exit1 (test_check_audit.TestREQ002.test_AC_002_a_F13_evidence_kind_outside_enum_exit1) ... FAIL
+test_AC_002_a_F13_evidence_ref_empty_exit1 (test_check_audit.TestREQ002.test_AC_002_a_F13_evidence_ref_empty_exit1) ... FAIL
+test_AC_002_a_F13_unknown_psl_id_exit1_dims_with_unknown_psl_id_1 (test_check_audit.TestREQ002.test_AC_002_a_F13_unknown_psl_id_exit1_dims_with_unknown_psl_id_1) ... FAIL
+test_AC_002_b_empty_psl_ids_exit1_psl_id_missing (test_check_audit.TestREQ002.test_AC_002_b_empty_psl_ids_exit1_psl_id_missing) ... FAIL
+test_AC_003_a_complete_implemented_and_rename_counts_zero (test_check_audit.TestREQ003.test_AC_003_a_complete_implemented_and_rename_counts_zero) ... FAIL
+test_AC_003_a_F13_implemented_outside_enum_exit1_count1 (test_check_audit.TestREQ003.test_AC_003_a_F13_implemented_outside_enum_exit1_count1) ... FAIL
+test_AC_003_a_F13_rename_true_exit1_count1 (test_check_audit.TestREQ003.test_AC_003_a_F13_rename_true_exit1_count1) ... FAIL
+test_AC_003_b_boolean_implemented_exit1_boolean_implemented (test_check_audit.TestREQ003.test_AC_003_b_boolean_implemented_exit1_boolean_implemented) ... FAIL
+test_AC_004_a_complete_missing_key_orphan_and_source_counts_zero (test_check_audit.TestREQ004.test_AC_004_a_complete_missing_key_orphan_and_source_counts_zero) ... FAIL
+test_AC_004_a_F13_orphan_gap_exit1_orphan_gaps_1 (test_check_audit.TestREQ004.test_AC_004_a_F13_orphan_gap_exit1_orphan_gaps_1) ... FAIL
+test_AC_004_a_F13_ring_without_missing_key_exit1_count1 (test_check_audit.TestREQ004.test_AC_004_a_F13_ring_without_missing_key_exit1_count1) ... FAIL
+test_AC_004_b_proposal_without_source_exit1_proposal_without_source (test_check_audit.TestREQ004.test_AC_004_b_proposal_without_source_exit1_proposal_without_source) ... FAIL
+test_AC_007_a_replay_card_commits_exit0_touching_zero (test_check_audit.TestREQ007Replay.test_AC_007_a_replay_card_commits_exit0_touching_zero) ... FAIL
+test_AC_007_b_card_commit_touching_skills_exit1_whitelist_overflow (test_check_audit.TestREQ007Replay.test_AC_007_b_card_commit_touching_skills_exit1_whitelist_overflow) ... FAIL
+test_AC_008_a_rings_R0_R2_spine_required_parts_exit0 (test_check_audit.TestRingGroups.test_AC_008_a_rings_R0_R2_spine_required_parts_exit0) ... FAIL
+test_AC_008_b_required_part_removed_R0_R2_spine_exit1_required_part_missing (test_check_audit.TestRingGroups.test_AC_008_b_required_part_removed_R0_R2_spine_exit1_required_part_missing) ... FAIL
+test_AC_009_a_rings_R3_R5_required_parts_exit0 (test_check_audit.TestRingGroups.test_AC_009_a_rings_R3_R5_required_parts_exit0) ... FAIL
+test_AC_009_b_required_part_removed_R3_R5_exit1_required_part_missing (test_check_audit.TestRingGroups.test_AC_009_b_required_part_removed_R3_R5_exit1_required_part_missing) ... FAIL
+test_AC_010_a_rings_R6_required_parts_exit0 (test_check_audit.TestRingGroups.test_AC_010_a_rings_R6_required_parts_exit0) ... FAIL
+test_AC_010_b_required_part_removed_R6_exit1_required_part_missing (test_check_audit.TestRingGroups.test_AC_010_b_required_part_removed_R6_exit1_required_part_missing) ... FAIL
+test_AC_011_a_rings_R7_R8_required_parts_exit0 (test_check_audit.TestRingGroups.test_AC_011_a_rings_R7_R8_required_parts_exit0) ... FAIL
+test_AC_011_b_required_part_removed_R7_R8_exit1_required_part_missing (test_check_audit.TestRingGroups.test_AC_011_b_required_part_removed_R7_R8_exit1_required_part_missing) ... FAIL
+test_F13_delegated_agent_without_authorization_ref_exit1 (test_check_audit.TestREQ006Gates.test_F13_delegated_agent_without_authorization_ref_exit1) ... FAIL
+test_F13_double_producer_without_alternatives_of_exit1 (test_check_audit.TestREQ001.test_F13_double_producer_without_alternatives_of_exit1) ... FAIL
+test_F13_human_gate_without_signer_exit1 (test_check_audit.TestREQ006Gates.test_F13_human_gate_without_signer_exit1) ... FAIL
+test_F13_script_gate_rendered_as_door_exit1 (test_check_audit.TestREQ006Gates.test_F13_script_gate_rendered_as_door_exit1) ... FAIL
+
+## representative failure cause
+/Library/Frameworks/Python.framework/Versions/3.11/Resources/Python.app/Contents/MacOS/Python: can't open file '/Users/xrensiu/development/owner/claude-code-forge/plugins/sdlc/dogfood/ring-audit/check_audit.py': [Errno 2] No such file or directory
+
+## mutation.sh at baseline (expected: baseline_exit 2, 0/20 killed, exit 1)
+{'baseline_exit': 2, 'killed': 0, 'total': 20, 'kill_rate': 0.0, 'threshold': 0.7}
+
+## gates run on the suite itself
+check_verbatim_names.py tests-manifest.yaml tests/ring-audit --check → 30/30 found, exit 0
+derive_counts.py tests-manifest.yaml → 4 existence checks · 28 unit tests (28 example / 0 PBT) · 2 integration tests · 0 e2e tests
