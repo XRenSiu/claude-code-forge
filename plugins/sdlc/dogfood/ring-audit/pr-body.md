@@ -77,12 +77,40 @@ bash plugins/sdlc/eval/smoke.sh                                             # 19
 
 ## Known issues
 
-__KNOWN_ISSUES__
+> 依 g2-judge 对 iteration-001 的裁决列全；AC-005-a / AC-006-a **待 G3 代签，未通过**。校准措辞：**instrument mutation 0.767; holdout 6/10 with 4 known gaps**（不写无限定的 calibrated）。
+
+**A. known_gaps（11 项，`calibration/known_gaps.yaml`，状态 open → change-proposal-002）**
+- KG-01 `check_audit.py:376-391` waived 无 waiver_ref（G1 规则 3c 未命名 token）
+- KG-02 `check_audit.py:399` proposal.source 只检非空、不解析（AC-004-b 读法）——39 条 source 已人工核对可解析
+- KG-03 `check_audit.py:151-170` 重复环 id → rings 11 无谓词（AC-001-a rings == 10）
+- KG-04 `check_audit.py:376-391` signer_kind 超 F-07 枚举无 token
+- KG-05..KG-11 `check_audit.py` 7 个存活仪器变体 M03/M04/M07/M14/M22/M23/M28（ring_unexpected / parts_missing / evidence_missing / 跨环 gap 引用 / gate_verdict_outside_enum / reject-waived 无 signer / --rings 视图）
+
+**B. 契约层延后项（change-proposal-002；先开一轮 G1 解释）**
+- mf-004 `check_audit.py:328-343` 规则 1 信任自报的 artifacts[] 且任意非空 alternatives_of 即豁免（F-05 三条件未检；srg-005）
+- mf-008 `check_audit.py:265-267` 规则 2e 同环子句被用于 fills[]（G1 文本只对 missing[]）
+- mf-009 `check_audit.py:231-238` 维度级 `implemented: true` 的 token 编码
+- F-16 vs `audit.schema.md#Assessment` disposition 枚举不一致（g3-input #2）
+- srg-003 → AC-007-c：无 footer 提交触碰被审目录作为**记录字段**（不门控；PSL L122-123 偏差提交合法）
+- srg-006 → 实现期间重签者规则（本次重签者与实现者同厂商同会话族，用户授权下允许）
+- I-68 acceptance-fleet S3 对 3 ≤ gaming_risk_score < 7 无规则（本次先例：见 ledger decision）
+
+**C. iteration-002 存活的 P1 / P2（按 finding id）**
+__ITER2_SURVIVORS__
+
+**D. nh-003 裁决摘要（无 footer 提交的合法性）**
+- 587f371 / ebe270d / c729f76：PSL L122-123 偏差提交（in-run verifier 修复，账本 deviation 行），早于首个 Card 提交；c729f76 改了回放所调用的 oracle verify_commit.py，run_evidence 的门/锁签字由修复后版本产生
+- e217d10：change-proposal-001 的 l5 重锁（R04，g2-judge 9/9 确认）
+- fafcad7 / 5a6889c：cards/*.yaml + skill-issues.md，不在 forbidden_paths（评审前提有误）
+- 逐提交表（footer / 被审目录 / forbidden 三列）：`plugins/sdlc/dogfood/ring-audit/commit-table.md`
+
+**E. 随行的非 run 提交**：100aa12 · df48739 · bf3f13e（peer session；内容已在 main，PR diff 不含，见 Notes）
+
+链接：`plugins/sdlc/dogfood/ring-audit/failure-report-002-holdout.md` · `calibration_report.yaml` · `ratchet-log/iteration-001/` · `ratchet-log/iteration-002/`
 
 ## Notes
 
 - size: XL（fixtures 23 × ~2k 行为生成数据；--allow-xl 理由：dogfood 产物不可拆，拆开会让 l5 锁与 Card 回放失去同一分支的可证性）· cards: CARD-01..06 · lock: changed_with_proposal (change-proposal-001; l5 re-signed, 43 files)
 - gates: G1 pass (g1-judge, delegated_agent) · G2 pass (g2-judge, delegated_agent) · G3 pending → 代签裁决见 g3-record.md；所有代签均在用户 2026-09-05 "需要人审核的地方，请你弄一个子agent代替我审核一下" 的授权下，报告里一律渲染为 delegated
 - task reflows 2/2 exhausted (change-proposal-001; hidden_variant_fail → failure-report-002, fallback A by g2-judge)
-- 本 PR 分支只含本 run 的提交；同一工作区的另一 session 的 humanize 提交（100aa12 / df48739 / bf3f13e）不在此 PR
-- 本 PR 分支 `pr/1-sdlc-ring-audit` 是 run 分支 `docs/1-sdlc-ring-audit` 的 cherry-pick 镜像：`audit.yaml#run_evidence` 与 `.sdlc/` 账本里引用的 commit sha（0be2770 / 08238cd / e217d10 …）是 run 分支上的；本分支同一提交 sha 不同。`replay_card_commits.sh` 按 Card footer 在任意分支重算，不依赖 sha
+- 本 PR 直接从 run 分支 `docs/1-sdlc-ring-audit` 发出（g2-judge 裁决：不 rebase / cherry-pick，否则 run_evidence 与账本引用的 sha 全部失效）。因此**同一工作区另一 session 的三条提交随行**：100aa12 feat(humanize)、df48739 chore bump humanize v0.3.0、bf3f13e docs(sdlc) report——三条都已以内容相同的 cherry-pick 落在 main（eab072b / 1b07bb2 / fbc6a3c），`git diff origin/main HEAD -- plugins/humanize .claude-plugin plugins/sdlc/docs/reports` 为空，本 PR 的内容 diff 不含它们；它们不是本 run 的编辑，逐提交分类见 `plugins/sdlc/dogfood/ring-audit/commit-table.md`（28 条：Card 11 · deviation 3 · docs/test/chore 11 · peer 3）

@@ -31,3 +31,9 @@
 16. KG-02（proposal source 解析无闸）：装配者手工核对 39 条 source 全部可解析——这是人读替代，不是机械证据。
 17. run_evidence 的 replay 计数是快照（记录时 8 条 Card 提交，现已更多；不漂移的是三个被审目录的 diff --stat = 0）。
 18. 一条 adjudication `resolved_by: pending_G3`（agent.pr-reviewer 的 implemented 档位，见第 7 项）。
+
+## g2-judge 对 nh-003 的裁决与对 G3 的额外必读（2026-09-06）
+- nh-003：全部无 footer 提交合法——587f371 / ebe270d / c729f76 是 PSL L122-123 允许的偏差提交（账本 deviation 行，含 2026-09-06 补录）；e217d10 是 change-proposal-001 的重锁（合法性来自锁机制）；fafcad7 / 5a6889c 只碰 cards/*.yaml 与 skill-issues.md，**不在** forbidden_paths（评审前提有误）。逐提交表：`commit-table.md`。
+- 记录义务：AC-007 回放与 run_evidence 的门/锁签字由**修复后**的验证器版本（587f371 / ebe270d / c729f76）产生；重签者 g2-judge 与实现者同厂商同会话族（用户授权下允许；srg-006 规则进 change-proposal-002）。
+- 解码先例（I-68 的 3 ≤ score < 7 带）：iteration-002 若 NEEDS_HUMAN 仅因 human AC、0 blocking、score ≤ 3.5、P1 全修或入 Known issues → PASS-pending-G3；G3 裁的是 iteration-002 的字节，iteration-001 是历史。
+- G3 额外必读：`ratchet-log/iteration-002/` 全部；meta-judge 的 14 条 deduplicated_findings 全表（不止 nh 点名的四条：mf-011 tune 的 F-06 封顶；mf-004；mf-010 F-10/F-11 空态措辞；mf-013 "exit 0 可作证据" 来自自报——G3 应自己重跑 check_audit.py、--variant delete-ring:R6、replay_card_commits.sh；mf-002/003；mf-006/008/009/014）；spec-gaming-detector 的 srg-001..007（尤其 srg-005 F-05 三条件未检、srg-006）；pm-reviewer out_of_scope_observations[0..3]；qa caveats；PSL L122-124（偏差豁免与"报告人审即 G3"）；isolation.json 与 calibration_report 的 isolation_evidence（协议级隔离，非 OS 级）；修复后 AUDIT.md 的 checked_by 列与所有 pending_G3 的 adjudication；报告底线 "0 verified / 26 compiled / 16 declared，三门两代签，G3 待定"。
