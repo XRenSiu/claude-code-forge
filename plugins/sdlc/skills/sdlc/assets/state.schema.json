@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "sdlc state.json — 生命周期的充分统计量（SKILL.state 式：只留状态，不留历史）",
+  "description": "脚本（scripts/sdlc_state.py）拥有它：迁移经校验后合并，引擎只提议。历史不在这里——历史在 ledger.md（只增不删）。",
+  "type": "object",
+  "required": ["version", "slug", "title", "track", "stage", "created_at", "updated_at", "counters", "gates", "artifacts"],
+  "properties": {
+    "version": { "const": 1 },
+    "slug": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]{1,63}$" },
+    "title": { "type": "string" },
+    "track": { "enum": ["psl", "task", "unset"] },
+    "stage": { "enum": ["intake", "track", "issue", "branch", "contract", "g2", "cards", "implement", "acceptance", "pr", "review", "g3", "merge", "archive"] },
+    "created_at": { "type": "string" },
+    "updated_at": { "type": "string" },
+    "issue": { "type": "object", "properties": { "number": { "type": "integer" }, "url": { "type": "string" }, "kind": { "enum": ["feature", "bug", "escape"] } } },
+    "branch": { "type": "object", "properties": { "name": { "type": "string" }, "base": { "type": "string" } } },
+    "contract": { "type": "object", "properties": { "done_when": { "type": "string" }, "contract_yaml": { "type": "string" }, "source": { "enum": ["acceptance-spec", "issue-inline", "manual"] } } },
+    "lock": { "type": "object", "properties": { "path": { "type": "string" }, "signed_by": { "type": "string" }, "signed_at": { "type": "string" } } },
+    "cards": { "type": "object", "properties": { "dir": { "type": "string" }, "lint_passed": { "type": "boolean" }, "items": { "type": "object", "additionalProperties": { "type": "object", "properties": { "status": { "enum": ["todo", "doing", "done", "blocked"] }, "retries": { "type": "integer" }, "last_fingerprint": { "type": "string" }, "commits": { "type": "array", "items": { "type": "string" } } } } } } },
+    "acceptance": { "type": "object", "properties": { "evaluation_result": { "type": "string" }, "meets_done_when": { "type": "boolean" }, "skipped_reason": { "type": "string" } } },
+    "pr": { "type": "object", "properties": { "number": { "type": "integer" }, "url": { "type": "string" }, "size_class": { "enum": ["XS", "S", "M", "L", "XL"] } } },
+    "review": { "type": "object", "properties": { "done": { "type": "boolean" }, "exit_reason": { "type": "string" }, "rounds": { "type": "integer" } } },
+    "merge": { "type": "object", "properties": { "sha": { "type": "string" }, "merged_at": { "type": "string" } } },
+    "gates": {
+      "type": "object",
+      "properties": {
+        "g1": { "$ref": "#/$defs/gate" },
+        "g2": { "$ref": "#/$defs/gate" },
+        "g3": { "$ref": "#/$defs/gate" }
+      }
+    },
+    "counters": {
+      "type": "object",
+      "description": "分层计数：卡 / 方案 / 任务 / 本体 / 世界。世界层不设自动上限。",
+      "properties": {
+        "card": { "type": "integer" }, "plan": { "type": "integer" }, "task": { "type": "integer" },
+        "ontology": { "type": "integer" }, "world": { "type": "integer" },
+        "last_fingerprints": { "type": "object", "additionalProperties": { "type": "string" } },
+        "fingerprint_repeats": { "type": "object", "additionalProperties": { "type": "integer" } }
+      }
+    },
+    "waivers": { "type": "array", "items": { "type": "object", "required": ["stage", "reason", "at"], "properties": { "stage": { "type": "string" }, "reason": { "type": "string" }, "at": { "type": "string" } } } },
+    "assumptions": { "type": "array", "items": { "type": "object", "properties": { "id": { "type": "string" }, "req": { "type": "string" }, "risk": { "type": "string" }, "signed_by": { "type": "string" }, "verify_at": { "type": "string" }, "status": { "enum": ["open", "verified", "accepted_risk"] } } } },
+    "artifacts": { "type": "object", "additionalProperties": { "type": "string" } }
+  },
+  "$defs": {
+    "gate": {
+      "type": "object",
+      "properties": {
+        "required": { "type": "boolean" },
+        "verdict": { "enum": ["pending", "pass", "reject", "waived"] },
+        "by": { "type": "string" },
+        "at": { "type": "string" },
+        "record": { "type": "string" },
+        "attribution": { "enum": ["derivation_error", "rule_error", "none"] }
+      }
+    }
+  }
+}

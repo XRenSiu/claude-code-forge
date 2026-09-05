@@ -1,0 +1,52 @@
+# calibrate 输出:一个标准的校准报告(元闸门 verdict)
+# 这是元闸门的主产物。它不判产出,判"判产出的东西"够不够格上线。
+# 四不可破判据全过才 verdict: pass;缺一即 fail = 禁止该标准上线。
+# 落点:MemoryAsset.calibration(dos.yaml 0.1.15 已落字段);pass 后交签字/激活 seam。
+
+standard_ref: ""                 # 被校准的标准:eval_case 集 id | rubric_version id
+kind: ""                         # eval_case | rubric —— 决定走哪面镜子
+source_compile_ref: ""           # 产出该标准的 spec-compile manifest(calibration_pending 来源)
+calibrated_at: ""                # 由 skill 运行时间戳回填
+mode: interactive                # interactive | auto
+
+# —— 镜面①: eval_case → mutation score(kind=eval_case 必填) ——
+mutation:
+  tool: ""                       # PIT | Stryker | mutmut | cosmic-ray
+  total_mutants: 0
+  killed: 0
+  mutation_score: 0.0            # killed / total —— 必须 ≥ min_mutation(默认 0.7,硬线只许收紧)
+  failure_memory_mutants: []     # 纳入的天然 mutant(failure_memory id —— 真实坏样本)
+  surviving_mutants:             # 杀不掉的逐个落账(no silent caps),每个 = 一道闸门空隙 + 一条待写 eval_case
+    - mutant: ""                 # 注入的故障描述(如 evalcase.ts:31 == → !=)
+      slipped_through: ""        # 它溜过了哪些用例 / 哪段行为
+      eval_case_to_add: ""       # 该补的 eval_case(棘轮:黄金集只增)
+  budget_note: ""                # 若只跑了一部分 mutant,显式记跑了多少/漏了多少(禁止静默截断)
+
+# —— 镜面②: rubric → agreement matrix(kind=rubric 必填) ——
+agreement:
+  reference_solutions: 0         # 参考解(已知裁决的黄金样本)数,应 ≥ config.evaluator_exam.min_cases
+  krippendorff_alpha: 0.0        # 必须 ≥ min_alpha(默认 0.80,硬线只许收紧)
+  inconsistent_dimensions: []    # 拉低 α 的维度(退回 spec-compile 重编:多半非二元或证据绑定太松)
+  dropped_rubric_sets: []        # CDRRM:与参考解不一致、被丢弃的 rubric 集
+
+# —— 两条非协商项 ——
+holdout_ref: ""                  # ☐3:执行者永远看不见的那一块黄金集引用(必填非空,否则 fail)
+holdout_unexposed_confirmed: false  # 人确认 holdout 从未进任何 executor 通道(未当 few-shot/未注入 prompt)
+isolation_attested: false        # ☐4:G2 独立进程/只读快照/输入只含产出+rubric;领地开则 cross-vendor
+cross_vendor_required: false     # 领地 cross_vendor_review 是否开
+
+# —— 元闸门 verdict(四判据合议) ——
+verdict:
+  c1_mutation_pass: false        # ☐1 mutation_score ≥ 阈值(kind=rubric 时 n/a→true)
+  c2_agreement_pass: false       # ☐2 α ≥ 0.80(kind=eval_case 时 n/a→true)
+  c3_holdout_pass: false         # ☐3 holdout_ref 非空 + 未泄漏
+  c4_isolation_pass: false       # ☐4 隔离 attested
+  result: fail                   # pass(四条全过) | fail(缺任一 = 禁止上线)
+  gaps_routed_to:                # fail 时,gap 退回去向
+    spec_compile: []             # 待重编的电池/rubric 维
+    spec_authors: []             # 待收紧的 done_when / 不变量
+
+# —— 签字/激活(pass 后) ——
+activation:
+  rubric_sign_required: false    # kind=rubric:必须人签(R002),元闸门 verdict 是签字前置不是替代
+  signed_by: ""                  # 人签事件引用(rubric 专用)

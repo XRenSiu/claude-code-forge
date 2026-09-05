@@ -1,0 +1,43 @@
+{
+  "skill": ".claude/skills/calibrate",
+  "tier": "production",
+  "evaluated_layers": ["structural"],
+  "gate_pass": "static_only",
+  "structural": {
+    "findings": [],
+    "failure_taxonomy": {
+      "underfill": 0, "overfill": 0, "wrong-layer": 0,
+      "wrong-route": 0, "no-exit": 0, "seam-misplacement": 0
+    },
+    "waived_count": 0
+  },
+  "effect": null,
+  "discrimination": null,
+  "fix_list": [],
+  "provenance": {
+    "date": "2026-06-24",
+    "evaluator": "EMULATED — independent general-purpose judges applying skillwise docs/THEORY.md §1-4 + write-skill construction invariants + shared/effect-gate.md. NOT a run of the installed evaluate-skill skill (it is not installed in this project). Do not read this as an official skillwise certification.",
+    "rounds": 2,
+    "round1": {
+      "judges": 1,
+      "blocking": ["no-exit: verify_calibration.py hard-pinned the agreement floor (HARD_ALPHA_FLOOR=0.80, rejecting --min-alpha 0.7) but the MUTATION threshold had NO hard floor — --min-mutation 0.3 was accepted, letting mutation_score 0.4 PASS (activation ALLOWED). Exactly the 'lower the line to pass the standard' reward-hack the skill forbids in 3 places. Asymmetric ratchet hole."],
+      "non_blocking": [
+        "SKILL.md called MemoryAsset.calibration 'proposed' / 'until that field lands' — but it landed in dos 0.1.15",
+        "☐3 exit bullet listed only holdout_ref empty, not holdout_unexposed_confirmed",
+        "field-name drift: SKILL prose 'agreement_alpha' vs report 'agreement.krippendorff_alpha'"
+      ],
+      "verdict": "fail (structural)"
+    },
+    "round2": {
+      "judges": "1 fresh (4-eyes: confirmer != original flagger)",
+      "blocking_closure": "closed — HARD_MUTATION_FLOOR=0.70 added and enforced symmetrically with the alpha floor (reject + clamp); --min-mutation below 0.70 now fails-closed on every malformed input (default, at-floor, 0, garbage)",
+      "non_blocking_closure": "SKILL.md says 'Schema (landed, dos 0.1.15)' + 'landed MemoryAsset.calibration field'; ☐3 bullet adds holdout_unexposed_confirmed; field-name map (dos agreement_alpha = report krippendorff_alpha) noted in SKILL.md + the asset template's stale '拟增字段' comment fixed to '已落'",
+      "scripts_run": {
+        "verify_calibration.py": "exit 1 (FORBIDDEN) on empty template; exit 1 on gamed eval_case (mutation 0.4 via --min-mutation 0.3); exit 0 (ALLOWED) on a valid eval_case (mutation 0.9, holdout set+confirmed, isolation true); exit 1 on rubric with alpha 0.6; exit 1 on --min-alpha 0.7 (below floor); exit 1 on a surviving mutant not logged with eval_case_to_add (no silent caps)."
+      },
+      "verdict": "pass (structural / Tier-1)"
+    },
+    "naming_collision_check": "CONFIRMED distinct from the runtime calibration.resolved event (evaluator_fault | standard_unclear, packages/core/test/calibration.test.ts). The skill is the offline META-GATE; the runtime question is a SIGNAL into it (standard_unclear → recalibrate). No collision/contradiction.",
+    "tier2_status": "NOT RUN — no held-out standard set + executor available. Per effect-gate.md resolves to static_only: structurally sound, effectiveness unverified. To finish: run with/without delta_exist on held-out standards (does the skill catch decorative rulers — uncalibrated eval_case / low-agreement rubric — the engine would have shipped?)."
+  }
+}

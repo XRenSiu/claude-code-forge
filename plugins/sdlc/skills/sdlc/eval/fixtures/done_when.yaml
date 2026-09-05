@@ -1,0 +1,8 @@
+feature: memory-time-search
+acceptance:
+  - { id: AC-001-a, req: REQ-001, kind: mechanical, observe: "route:POST /search/time", given: {input: "上个月"}, expect: {candidates: ">= 2"} }
+  - { id: AC-001-b, req: REQ-001, kind: mechanical, ears_type: unwanted, observe: "route:POST /search/time", given: {input: ""}, expect: {status: 400}, paired_with: AC-001-a }
+  - { id: AC-002-a, req: REQ-002, kind: human, observe: "ui:data-test=era-result", statement: "period with scenes", judge: product, evidence: demo }
+  - { id: AC-003-a, req: REQ-003, kind: mechanical, observe: "route:POST /search/time", given: {input: ""}, expect: {status: 400} }
+constraints:
+  forbidden_paths: [tests/**, done_when.yaml]

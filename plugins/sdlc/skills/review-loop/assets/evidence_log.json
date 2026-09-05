@@ -1,0 +1,19 @@
+{
+  "pr": 123,
+  "scope_source": "pr-body:Scope",
+  "pending_replies": [
+    { "comment_id": 991, "body": "Fixed in e4f5a6b — …", "attempts": 1 }
+  ],
+  "comments": [
+    { "id": 987, "author": "alice", "thread": "PRRT_kwDO…", "verdict": "ACCEPT",
+      "evidence": "确认 off-by-one，边界测试补充后复现", "commit": "a1b2c3d", "resolved": true, "round": 1 },
+    { "id": 989, "author": "bob", "thread": "PRRT_kwDO…", "verdict": "REJECT",
+      "evidence": "该路径已有 guard（utils.ts:42）", "resolved": false, "resolve_skipped": "REJECT — 收束权在 reviewer", "round": 1 },
+    { "id": 990, "author": "carol", "verdict": "SKIPPED", "evidence": "线程已 resolved（首轮历史）", "round": 1 },
+    { "id": 995, "author": "dave", "thread": "PRRT_kwDO…", "verdict": "ESCALATE",
+      "evidence": "要求改 done_when.yaml 阈值 → 契约类，走变更提案", "resolved": false, "round": 2 }
+  ],
+  "rounds": [
+    { "round": 1, "accept": 1, "reject": 1, "reply": 0, "escalate": 0, "skipped": 1, "commits": ["a1b2c3d"], "checks": "green" }
+  ]
+}

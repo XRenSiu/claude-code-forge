@@ -1,0 +1,9 @@
+id: CARD-02
+title: era card ui
+req_ids: [REQ-002, REQ-001]
+ac_ids: [AC-002-a, AC-999]
+dos_slice: { objects: [Era, TimeBucket], invariants: [] }
+allowed_files: ["src/search/ui/**", "package.json"]
+forbidden_files: ["tests/**"]
+context_estimate_tokens: 50000
+budget: { retries: 3 }

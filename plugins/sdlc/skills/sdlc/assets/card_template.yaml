@@ -1,0 +1,23 @@
+# CARD-xx.yaml — L4 任务卡。合格标准只有一条：单独丢给一个没有任何上下文的 agent，它能干完。
+# 卡就是子 agent 的 prompt 载荷（SKILL.state：只给卡 + 状态摘要，不给整段历史）。
+# 三项机器校验（scripts/lint_cards.py）：REQ 全覆盖且无重复归属 · 卡间无文件写冲突 · 卡内名词能被所带 DOS 切片解析。
+id: CARD-01
+title: ""                       # 一句话：这张卡交付什么可观测行为
+req_ids: []                     # 覆盖的 REQ-ID（来自 spec.md / issue 的 AC.req）。每个 REQ 只能归一张卡。
+ac_ids: []                      # 本卡要跑的 AC 子集（done_when.acceptance[].id）。卡级验收 ≠ 需求级验收：所有卡完成后必须整体跑一次。
+dos_slice:                      # 本卡用到的领域名词（结构化字段，闭包检查只查这里，不查自由文本）
+  objects: []
+  invariants: []
+allowed_files: []               # 可改文件 glob。文件级存在性由这里承担，不写进 done_when.existence（C2）。
+forbidden_files:                # 禁改。默认继承 done_when.constraints.forbidden_paths；共享文件（lockfile/配置/路由表）要么归一张卡，要么全部禁改。
+  - "tests/**"
+  - "done_when.yaml"
+  - "dos.yaml"
+  - "contract.yaml"
+  - ".done_when.lock"
+context_estimate_tokens: 0      # 超 40000 必须再拆（lint 项，不是备注）
+budget:
+  retries: 3                    # 单卡预算；同指纹重复 = 无进展，不等 3 次直接升级（routing.yaml R02）
+depends_on: []                  # 其他 CARD-id；只表示依赖顺序（Σ 第 1 格），不是执行脚本
+mock_allowlist: []              # 允许 mock 的外部边界（继承 done_when.constraints.mock_allowlist）
+notes: ""                       # 给无上下文 agent 的必要背景（自包含；不引用对话）

@@ -1,0 +1,41 @@
+{
+  "skill": ".claude/skills/spec-compile",
+  "tier": "production",
+  "evaluated_layers": ["structural"],
+  "gate_pass": "static_only",
+  "structural": {
+    "findings": [],
+    "failure_taxonomy": {
+      "underfill": 0, "overfill": 0, "wrong-layer": 0,
+      "wrong-route": 0, "no-exit": 0, "seam-misplacement": 0
+    },
+    "waived_count": 0
+  },
+  "effect": null,
+  "discrimination": null,
+  "fix_list": [],
+  "provenance": {
+    "date": "2026-06-24",
+    "evaluator": "EMULATED — independent general-purpose judges applying skillwise docs/THEORY.md §1-4 + write-skill construction invariants + shared/effect-gate.md. NOT a run of the installed evaluate-skill skill (it is not installed in this project). Do not read this as an official skillwise certification.",
+    "rounds": 2,
+    "round1": {
+      "judges": 1,
+      "blocking": [],
+      "non_blocking": [
+        "SKILL.md said 'every emitted standard names its gate' but verify_compile.py only checked gate consistency WHEN present (an omitted gate passed clean)",
+        "high-risk list omitted the inverse gaming vector — a false decidability label (mislabel judgment as structural) to dodge G2"
+      ],
+      "verdict": "pass (structural) with 2 non-blocking",
+      "note": "the load-bearing altitude discipline was confirmed enforced: a structural-decidability clause routed to line 2 or 3 rejects as 'routed UP the ladder — keyline violated'; example-only behavioral battery rejects; free-form/non-binary/no-evidence G2 dimension rejects; calibration_pending mandatory."
+    },
+    "round2": {
+      "judges": "1 fresh (4-eyes)",
+      "closure": "both non-blocking addressed — verify_compile.py now REJECTS a routed clause with no gate (robust to missing key AND empty value), keeping the present-but-inconsistent reject; SKILL.md high-risk list adds the false-decidability-label item",
+      "scripts_run": {
+        "verify_compile.py": "exit 1 on empty template; exit 1 on gate-omitted; exit 1 on routing-up (structural→line 3); exit 0 on a valid behavioral example+property manifest (no regression); exit 1 on free-form/non-binary/no-evidence G2 dimension."
+      },
+      "verdict": "pass (structural / Tier-1)"
+    },
+    "tier2_status": "NOT RUN — no held-out spec set + executor available. Per effect-gate.md resolves to static_only: structurally sound, effectiveness unverified. To finish: run with/without delta_exist on held-out specs (does the skill route DOWN the ladder more, and emit non-example-only batteries, vs the engine alone?)."
+  }
+}

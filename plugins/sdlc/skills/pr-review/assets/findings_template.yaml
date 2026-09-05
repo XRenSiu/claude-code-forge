@@ -1,0 +1,49 @@
+# findings.yaml — pr-review 的产物形状。严格：缺字段的 P0/P1 会被 post_review.py 拒发。
+review:
+  target: "#123"                     # PR# | A..B | path
+  focus: logic                       # security | logic | perf | style | all
+  model: claude-fable-5-1
+  vendor: claude                     # claude | openai | google
+  adversarial_mode: false
+  rules_loaded: ["CLAUDE.md"]
+  hunks: 7
+  lines_changed: 142
+  tool_calls_used: 12
+  max_findings: 5
+  mergeable: "no (A-tier)"           # yes | no (A-tier) | with-warnings (B-tier)
+  tier_summary: { A: 1, B: 1, C: 0 }
+  findings:
+    - id: cr-001
+      tier: A                        # A mechanical (一票否决) | B structural (告警) | C judgment (请求人工)
+      severity: P0                   # P0 | P1 | P2 | P3
+      file: src/billing/cancel.ts    # 新文件坐标
+      line_range: [47, 49]
+      category: authorization
+      root_cause: "sub_id 来自请求体，未校验 current_user 拥有该订阅即执行取消。"
+      reproduction_scenario: "用户 A 登录后 POST /api/cancel {sub_id: <B 的 sub_id>}，取消成功。"
+      confidence: high               # high | medium | low（P2/P3 的 low 不报）
+      evidence:
+        - { kind: read, file: src/billing/cancel.ts, lines: [40, 60] }
+        - { kind: grep, query: "verifyOwnership|assertOwner", matches: 0 }
+      needs_codebase_check: false
+      suggested_change: "在第 47 行前加 `if (sub.user_id !== currentUser.id) throw new ForbiddenError()`。"
+      tags: ["owasp:A01", "cwe-639"]
+    - id: cr-002
+      tier: B
+      severity: P2
+      file: src/billing/cancel.ts
+      line_range: [12, 88]
+      category: complexity
+      root_cause: "cancel() 76 行、嵌套 5 层，超过 B 档阈值（50 行 / 4 层）。"
+      reproduction_scenario: null    # B/C 档可空
+      confidence: high
+      evidence:
+        - { kind: read, file: src/billing/cancel.ts, lines: [12, 88] }
+      needs_codebase_check: false
+      suggested_change: "抽出 loadAndAuthorize() 与 applyRefundPolicy()。"
+  # findings 为空时必填：
+  rationale: null
+  caveats:
+    adversarial_mode_caveat: null
+    diff_truncation_caveat: null
+    single_vendor_caveat: null

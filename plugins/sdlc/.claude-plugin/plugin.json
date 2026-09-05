@@ -1,0 +1,34 @@
+{
+  "name": "sdlc",
+  "description": "SDLC — the delivery spine of the software development lifecycle, written as gaps the engine cannot fill on its own (skillwise four-atom discipline: Knowledge / Capability / Judgment / Control, no step-marches). Six skills: `/sdlc` (lifecycle orchestrator: SKILL.state-style state file whose transitions are validated by a script, WikiSkill-style append-only ledger that never rolls back, layered failure-routing table routing.yaml with per-layer budgets + fingerprint termination, and three human-only gates G1 world-adjudication / G2 done_when hash-freeze / G3 exception review), `/issue` (requirement or bug → falsifiable GitHub issue: dual-track PSL-vs-TASK judgment, DOS vocabulary closure, acceptance in done_when-v2 shape — kind mechanical|human, observe boundary not file path, adjectives→thresholds, happy/unhappy twin — gated by verify_issue.py), `/commit` (atomic Conventional Commit gated by verify_commit.py: message grammar, card whitelist / forbidden paths, G2 lock hash check, secret + debug-code scan on staged hunks), `/pr` (PR whose body must exhibit a product order — scope declaration, Closes #N, verification evidence, AC→evidence mapping, risk & rollback — gated by verify_pr.py with size classes and must-split), `/review-loop` (zero-token blocking wait via pr-poll.sh, reviewer comments treated as claims to verify not commands, ACCEPT/REJECT/REPLY/ESCALATE/SKIPPED verdicts with evidence, reply-before-resolve, per-thread strikes, compiled termination binding with exit codes and env-var budgets; adapted from vana-builder's pr-review-loop), `/pr-review` (reviewer side: Detective Loop, reproduction required for P0/P1, 5-finding cap, self-rebuttal pass, findings mapped to A mechanical / B structural / C judgment tiers, posted as a GitHub review via post_review.py; never approves — approval is a human act). Reconciles Spec Loop v1.2 × done_when Pipeline: the lower half L1–L8 + gates G2/G3 + cross-cutting X2 routing / X3 metrics live here; the upper half (PSL/DOS) and contract/test generation are optional neighbors (looper, done-when-pipeline) — absent neighbors never block. All skills static_only tier (scripts smoke-tested on fixtures; behavioral delta on held-out tasks unverified).",
+  "version": "0.1.0",
+  "author": {
+    "name": "XRenSiu",
+    "email": "xrensiu@gmail.com"
+  },
+  "homepage": "https://github.com/XRenSiu/claude-code-forge/tree/main/plugins/sdlc",
+  "repository": "https://github.com/XRenSiu/claude-code-forge",
+  "license": "MIT",
+  "keywords": [
+    "sdlc",
+    "software-development-lifecycle",
+    "github-issue",
+    "conventional-commits",
+    "pull-request",
+    "pr-review-loop",
+    "code-review",
+    "review-autopilot",
+    "done-when",
+    "hash-lock",
+    "task-cards",
+    "failure-routing",
+    "layered-budgets",
+    "fingerprint-termination",
+    "human-gates",
+    "append-only-ledger",
+    "skill-state",
+    "wikiskill",
+    "spec-loop",
+    "static-only"
+  ]
+}

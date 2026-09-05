@@ -1,0 +1,17 @@
+diff --git a/src/billing/cancel.ts b/src/billing/cancel.ts
+index 1111111..2222222 100644
+--- a/src/billing/cancel.ts
++++ b/src/billing/cancel.ts
+@@ -40,8 +40,12 @@ export async function cancel(req, currentUser) {
+   const sub_id = req.body.sub_id;
+   const sub = await db.subscriptions.find(sub_id);
+-  if (!sub) throw new NotFound();
++  if (!sub) {
++    throw new NotFound();
++  }
++  const reason = req.body.reason;
++  await db.query(`SELECT * FROM cancellations WHERE reason LIKE '%${reason}%'`);
+   sub.status = "cancelled";
+   await sub.save();
+   return sub;
+ }

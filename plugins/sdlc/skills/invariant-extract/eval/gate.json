@@ -1,0 +1,38 @@
+{
+  "skill": ".claude/skills/invariant-extract",
+  "tier": "production",
+  "evaluated_layers": ["structural"],
+  "gate_pass": "static_only",
+  "structural": {
+    "findings": [],
+    "failure_taxonomy": {
+      "underfill": 0, "overfill": 0, "wrong-layer": 0,
+      "wrong-route": 0, "no-exit": 0, "seam-misplacement": 0
+    },
+    "waived_count": 0
+  },
+  "effect": null,
+  "discrimination": null,
+  "fix_list": [],
+  "provenance": {
+    "date": "2026-06-24",
+    "evaluator": "EMULATED — 2 independent general-purpose judges applying skillwise docs/THEORY.md §1-4 + skills/write-skill construction invariants + shared/effect-gate.md. NOT a run of the installed evaluate-skill skill (it is not installed in this project). Do not read this as an official skillwise certification.",
+    "rounds": 2,
+    "round1": {
+      "judges": 2,
+      "blocking": ["exit section overstated verify_card.py as 'the only guarantee' (semantic half is flagged, not verified)"],
+      "verdict": "fail (structural)"
+    },
+    "round2": {
+      "judges": "2 fresh (4-eyes: confirmers != original flaggers)",
+      "blocking_closure": "all closed",
+      "abduction_operator_order": "independently confirmed §8-exempt (project→negate→narrow is intrinsic epistemic order, not task orchestration)",
+      "scripts_run": {
+        "verify_card.py": "exit 1 on empty template; exit 0 on valid card; rejects confirmed product-level (auto-installed hard invariant / no provenance / ◊-also-carded), not mere well-formedness"
+      },
+      "verdict": "pass (structural / Tier-1)"
+    },
+    "post_re_judge_fixes": ["moved 'EARS-shaped' out of the mechanical-reject list into a judge-call flag (verify_card.py only checks non-empty)"],
+    "tier2_status": "NOT RUN — no held-out Territory set + executor available. Per effect-gate.md a production-tier skill with the effect layer required-but-unrun resolves to static_only: structurally sound, effectiveness unverified. To finish: run with/without delta_exist on >=1 Territory carrying real failure.memory."
+  }
+}

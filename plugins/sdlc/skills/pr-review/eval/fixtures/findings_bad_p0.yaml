@@ -1,0 +1,34 @@
+review:
+  target: "#1"
+  focus: security
+  model: test
+  vendor: claude
+  mergeable: "no (A-tier)"
+  tier_summary: { A: 1, B: 1, C: 0 }
+  findings:
+    - id: cr-001
+      tier: A
+      severity: P0
+      file: src/billing/cancel.ts
+      line_range: [47, 47]
+      category: injection
+      root_cause: "reason concatenated into SQL LIKE without parameterization"
+      reproduction_scenario: null
+      confidence: high
+      evidence: [{ kind: read, file: src/billing/cancel.ts, lines: [40, 52] }]
+      needs_codebase_check: false
+      suggested_change: "use parameterized query"
+    - id: cr-002
+      tier: B
+      severity: P2
+      file: src/billing/other.ts
+      line_range: [10, 20]
+      category: complexity
+      root_cause: "function too long"
+      reproduction_scenario: null
+      confidence: high
+      evidence: []
+      needs_codebase_check: false
+      suggested_change: "split"
+  rationale: null
+  caveats: {}

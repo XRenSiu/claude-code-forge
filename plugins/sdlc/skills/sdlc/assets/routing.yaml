@@ -1,0 +1,130 @@
+# routing.yaml — X2 回流路由表（数据，不是 prompt 里的一段话）
+#
+# 谁读它：scripts/sdlc_state.py fail --signal <signal>  → 输出路由决定 + 更新分层计数。
+# 为什么存在：默认行为是灾难性的——任何失败都塞回实现层再试一次。路由表的意义
+# 就是不让世界层的错误在实现层被重试二十次。归因器（把失败分到哪一行）先是启发式：
+# 脚本给候选层 + 证据，人只做确认或改判（G3 的输入是失败报告，不是原始日志）。
+#
+# 来源：Spec Loop v1.2 §7/§9 路由表八行 + done_when Step 6 的 N=3 规则并入（C8 裁决），
+#       加两行（隐藏变体集失败 / 合后逃逸缺陷），加指纹终止（同错重复 = 无进展，立即升级）。
+
+version: 1
+
+# 回流的坐标。从内到外：卡 → 方案 → 任务 → 本体 → 世界。越外层越贵、越该交人。
+layers: [card, plan, task, ontology, world]
+
+# 预算按轨道分（D10）：PSL 轨的需求形态未定，AC 在实现中被修正是常态，任务级回流放宽到 2。
+# world 不设自动上限——它本来就该停下来交人。
+budgets:
+  psl:  { card_retries: 3, plan_reflows: 2, task_reflows: 2, ontology_reflows: 1, world_reflows: null }
+  task: { card_retries: 3, plan_reflows: 2, task_reflows: 1, ontology_reflows: 1, world_reflows: null }
+
+# 指纹终止：同一层、同一指纹连续出现 N 次 = 无进展 → 立即升级到上一层，不等预算烧完。
+fingerprint_repeat_limit: 2
+
+# 每一行：signal（脚本/引擎报的失败信号）→ layer（候选归因层）→ handler（谁处理）→ action。
+# handler = engine：引擎可自动重试；human：必须停机交人；engine_then_human：引擎先做一次，再交人确认。
+rules:
+  - id: R01
+    signal: card_test_fail
+    description: 单卡 AC 子集 / 测试未过，且指纹与上次不同
+    layer: card
+    handler: engine
+    action: retry_card
+    note: 计入 card_retries；同指纹重复见 fingerprint_repeat_limit
+
+  - id: R02
+    signal: same_card_same_fingerprint
+    description: 同一张卡、同一失败指纹再次出现
+    layer: plan
+    handler: engine_then_human
+    action: replan_card
+    note: 无进展不是"再试一次"的理由；卡切错了或方案错了，先改卡
+
+  - id: R03
+    signal: whitelist_overflow
+    description: diff 溢出卡的可改文件白名单
+    layer: exception
+    handler: human
+    action: halt_and_review
+    note: v1.2 §7 例外行；在 diff 落地前由 verify_commit.py 拦
+
+  - id: R04
+    signal: lock_hash_mismatch
+    description: 被 G2 锁定的文件出现在 diff / 哈希不匹配，且同一 diff 无变更提案
+    layer: task
+    handler: human
+    action: reject_diff_unless_change_proposal
+    note: 附合法变更提案（change-proposal-*.md：改哪条 AC / 为什么 / 归因层）→ 放行并计入 task_reflows
+
+  - id: R05
+    signal: pbt_fail_n3_consistent_with_req
+    description: PBT / 测试连续 3 次以与 REQ 文本一致的反例失败
+    layer: task
+    handler: human
+    action: narrow_req
+    note: done_when §8.4 的 N=3 规则；默认归任务层（改 EARS / AC）
+
+  - id: R06
+    signal: counterexample_cites_dos_invariant
+    description: 最小反例引用了某条 DOS 不变量
+    layer: ontology
+    handler: human
+    action: reconcile_dos
+    note: 本体层回流；dos-extract / invariant-extract 是邻居
+
+  - id: R07
+    signal: counterexample_cites_psl_rule
+    description: 最小反例与某条 PSL 规律冲突
+    layer: world
+    handler: human
+    action: reopen_g1
+    note: 世界层回流；先判"推错了"还是"规律错了"（G1 归因）
+
+  - id: R08
+    signal: hidden_variant_fail
+    description: 隐藏变体集（冻结 AC 的变体）失败
+    layer: task
+    handler: human
+    action: ac_incomplete
+    note: 若隐藏集含 AC 没覆盖的行为，失败是规格缺陷，不是实现缺陷
+
+  - id: R09
+    signal: review_thread_strike_limit
+    description: PR 某条 review 线程往返达上限仍未收敛
+    layer: task
+    handler: human
+    action: freeze_thread
+    note: /review-loop 的 strike 到 31；冻结该线程，其余照常
+
+  - id: R10
+    signal: human_ac_pending
+    description: "存在 kind: human 的 AC 未裁决"
+    layer: g3
+    handler: human
+    action: request_judge
+    note: 产品需求默认触发 G3；judge 角色取值封闭（product | design | tech）
+
+  - id: R11
+    signal: b_tier_warning_over_threshold
+    description: B 结构档告警超阈值（圈复杂度 / 重复率 / 公共 API 变更 / diff 体量）
+    layer: g3
+    handler: human
+    action: request_review
+    note: 有界可进——人决定带告警合入还是回卡
+
+  - id: R12
+    signal: escape_defect
+    description: 合入后发现的缺陷
+    layer: human_attribution
+    handler: human
+    action: attribute_then_route
+    note: 人归因到层后，按该层的行再路由；同时喂 X3 度量
+
+  - id: R13
+    signal: budget_exhausted
+    description: 某层预算耗尽
+    layer: next_outer
+    handler: human
+    action: escalate_with_failure_report
+    note: 失败报告：当前状态 · 候选归因层 · 证据 · 建议回退目标 · 已排除的可能

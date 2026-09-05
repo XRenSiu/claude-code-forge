@@ -1,0 +1,59 @@
+# spec-compile 输出:一份规约的编译清单(把规约按可判性下推到三产线)
+# 这是编译阶段的主产物。每条源规约带可判性裁断、落哪条线、产出什么标准、进哪道闸。
+# 注意:每个标准 calibration_pending: true —— 编译 ≠ 认证;承重由 calibrate 证明。
+# 落点:① fitness fn / ② eval_case → verify_g1 commands + MemoryAsset:eval_case;
+#       ③ rubric → MemoryAsset:rubric_version(人签 R002)+ Verdict.review_rubric_ref。
+
+source_ref: ""                   # 被编译的规约来源:R00x id | done_when 卡 | contract id
+source_level: ""                 # responsibility(常驻不变量) | task(本次验收) —— 只作标注,不决定产线(产线按可判性)
+compiled_at: ""                  # 由 skill 运行时间戳回填
+mode: interactive                # interactive | auto
+
+# —— 每条源规约的路由 ——
+routed:
+  - clause_ref: ""               # 源规约条目(R00x 子句 / done_when REQ-ID)
+    statement: ""                # 原规约陈述
+    decidability: structural     # structural | behavioral | judgment —— 可判性裁断(决定产线)
+    line: 1                      # 1 结构 | 2 行为 | 3 判断 —— 必须与 decidability 一致,往上路由=reject
+    gate: g1                     # g1(线①②)| g2(线③)
+
+    # 产线① 结构判 → fitness function
+    fitness_function:
+      tool: ""                   # ArchUnit | dependency-cruiser | ts-arch | OPA-Conftest | Semgrep
+      principle: ""              # 原则先于工具:这条 fitness fn 在保/禁什么(溯到规则,非工具功能)
+      ratchet_threshold: ""      # 当前容差(只许单调收紧,接 ratchet)
+
+    # 产线② 行为判 → eval_case
+    eval_case_battery:
+      example: []                # 例子型:固定输入→期望
+      property: []               # 属性型(PBT 子层,Hypothesis/fast-check):一族输入恒成立的不变式
+      metamorphic: []            # 变形型(无 oracle):输入变换 X ⇒ 输出变换 Y
+      examples_only_justification: ""  # 若只有例子,必须写明"为什么此处无可表达属性"(否则 reject)
+      assured_filters:           # Assured 三过滤:每条候选过三道才入集
+        compiles: false
+        passes_stably: false
+        catches_injected_fault: false   # 生成期目标;真咬住由 calibrate mutation score 证明
+      ach_mutant_families: []    # ACH 变异引导:从"担心哪类故障"反向造的 mutant 族(含 failure_memory 天然 mutant)
+
+    # 产线③ 判断判 → 评判程序(PAJAMA)
+    judge_program:
+      dimensions:                # 拆正交维,每维二元 + 证据绑定(RRD)
+        - name: ""
+          binary: true           # 必须二元(非连续分)
+          evidence_ref: ""       # 判定引用的可定位证据(file:line / 测试名 / diff 片段);无证据=非判定
+          pajama_probe: ""       # 编译成的可执行判定子程序(grep/AST/断言/查证据存在)
+      free_form: false           # 必须 false —— 留自由 LLM-judge prose = reject
+      isolation_ok: true         # R001:独立进程/只读快照/输入只含产出+rubric/(领地开则)cross-vendor
+
+    calibration_pending: true    # 恒 true,直到 calibrate 门住(mutation score/agreement)才承重
+
+# —— 退回上游的项(规约本身不可编译,需补) ——
+sent_back_to_spec:
+  - clause_ref: ""
+    why: ""                      # 例:陈述含未消的形容词(退 donewhen-extract)/ 无溯源(退 invariant-extract)
+    handoff_to: ""               # donewhen-extract | invariant-extract
+
+# —— 交给 calibrate 的清单(本次编译产出的待校准标准) ——
+handoff_to_calibrate:
+  eval_case_sets: []             # 待跑 mutation score 的 eval_case 集
+  rubric_versions: []            # 待跑 agreement 的 rubric 版本

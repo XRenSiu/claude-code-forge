@@ -1,0 +1,35 @@
+{
+  "skill": "plugins/sdlc/skills/issue",
+  "tier": "production",
+  "evaluated_layers": [
+    "structural"
+  ],
+  "gate_pass": "static_only",
+  "structural": {
+    "findings": [],
+    "failure_taxonomy": {
+      "underfill": 0,
+      "overfill": 0,
+      "wrong-layer": 0,
+      "wrong-route": 0,
+      "no-exit": 0,
+      "seam-misplacement": 0
+    },
+    "waived_count": 0
+  },
+  "effect": null,
+  "discrimination": null,
+  "fix_list": [
+    "L2: create one real issue via /issue in a repo with dos.yaml and check the DOS-closure trigger actually forces the PSL track in conversation",
+    "gh issue create / edit path not exercised (needs a live repo)"
+  ],
+  "provenance": {
+    "date": "2026-09-05",
+    "evaluator": "AUTHOR-RUN structural pass: (a) skillwise evaluate-skill/scripts/lint_skill.py L0 (0 blocking on every skill; the two '▲ description' items are a linter artifact — it reads only the first line of a folded `>-` description, the full text carries 'Use when:'), (b) plugins/sdlc/eval/smoke.sh — 77 expectations, 77 pass on fixtures. NOT a decorrelated 2-judge read, NOT an L2 with/without run. Do not read this as certification.",
+    "smoke": "bash plugins/sdlc/eval/smoke.sh → 77 passed, 0 failed (2026-09-05)",
+    "harness_note": "scripts exercised in temp git repos / temp dirs; gh-networked paths (issue create, pr create, pr-poll watch/threads/resolve/done, post_review real post) NOT exercised — they need a live repo/PR",
+    "scripts_run": {
+      "verify_issue.py": "good body 0 rejects (with --dos closure ok); vague expect → reject; missing unhappy twin → reject; file-path observe → reject; DOS closure failure → reject + force_track: psl; --kind bug good passes, missing Repro rejected"
+    }
+  }
+}
