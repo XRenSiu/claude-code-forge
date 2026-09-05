@@ -1,0 +1,80 @@
+# known_gaps — the 11 items every downstream view must carry (g2-judge conditions 3 & 5, failure-report-002-holdout.md).
+# Copy verbatim into audit.yaml#run_evidence.known_gaps and the PR "Known issues" section. Source: calibration_report.yaml.
+# This is an ACCEPTED CLAIM from the calibrate stage (carries_allowed_to_implementer: accepted_claim); it contains no hidden-variant content.
+schema: ring-audit-known-gaps/1
+recorded_at: 2026-09-06
+status_legend: "open → change-proposal-002 (G1 interpretation round first, then l5-tests, then a NEW holdout)"
+holdout:
+  ref: .sdlc/sdlc-ring-audit/hidden/ring-audit/holdout_run.json
+  manifest: .sdlc/sdlc-ring-audit/hidden/ring-audit/holdout_manifest.yaml
+  instrument_head: 5a6889c
+  variants: 10
+  hits: 6
+  misses: 4
+  hit_rate: 0.6
+  attested_by: orchestrator
+  attested_by_kind: delegated_agent
+  authorization: "user instruction 2026-09-05: '需要人审核的地方，请你弄一个子agent代替我审核一下'"
+  render_as: delegated          # F-15: never render as human verification
+calibration_wording: "instrument mutation 0.767 (23/30); fixture mutation 24/24; holdout 6/10 with 4 known gaps — never the unqualified word 'calibrated'"
+known_gaps:
+  # — 4 holdout misses (predicates the spec names; neither locked tests nor instrument compile them) —
+  - id: KG-01
+    name: waived_without_waiver_ref
+    spec_source: "g1-record.md 签字版解释规则 3c — waived 只能引用 state.json 的 waiver 记录"
+    expected_token: unspecified
+    status: open → change-proposal-002 (needs waiver_ref field + token)
+  - id: KG-02
+    name: proposal_dangling_source
+    spec_source: "done_when.yaml AC-004-b given 'lacking a source assessment or gap id'; audit.schema.md §Proposal"
+    expected_token: proposal_without_source
+    status: open → change-proposal-002 (instrument checks non-empty key only)
+  - id: KG-03
+    name: duplicate_ring_id
+    spec_source: "done_when.yaml AC-001-a expect rings: 10; thresholds rings == 10 (count) vs F-13 ring SET"
+    expected_token: unspecified (ring_unexpected checks id membership, not count)
+    status: open → change-proposal-002 (ring_duplicate predicate)
+  - id: KG-04
+    name: signer_kind_outside_enum
+    spec_source: "derived/form-draft.md F-07 signer_kind ∈ {human, delegated_agent}"
+    expected_token: unspecified
+    status: open → change-proposal-002
+  # — 7 surviving instrument mutants (calibration_report.yaml#surviving_mutants) —
+  - id: KG-05
+    name: M03 ring_unexpected predicate disabled → undetected
+    spec_source: "F-13 ring set; AC-001-a"
+    expected_token: ring_unexpected
+    status: open → change-proposal-002 (mutant_ring_unexpected.yaml)
+  - id: KG-06
+    name: M04 parts_missing predicate disabled → undetected
+    spec_source: "F-13 three dimensions per Part; AC-001-a parts_without_assessment"
+    expected_token: parts_missing
+    status: open → change-proposal-002 (mutant_part_without_assessment.yaml)
+  - id: KG-07
+    name: M07 evidence_missing predicate disabled → undetected
+    spec_source: "F-13 evidence ≥ 1 per dimension; AC-002-a dims_without_evidence"
+    expected_token: evidence_missing
+    status: open → change-proposal-002 (mutant_evidence_missing.yaml)
+  - id: KG-08
+    name: M14 cross-ring gap reference check disabled → undetected
+    spec_source: "G1 rule 2e same-ring; AC-004-a"
+    expected_token: unknown_gap_ref
+    status: open → change-proposal-002 (mutant_gap_ref_wrong_ring.yaml)
+  - id: KG-09
+    name: M22 gate_verdict_outside_enum predicate disabled → undetected
+    spec_source: "G1 rule 3b verdict ∈ {pending, pass, reject, waived}; AC-006-a"
+    expected_token: gate_verdict_outside_enum
+    status: open → change-proposal-002 (mutant_gate_verdict_outside_enum.yaml)
+  - id: KG-10
+    name: M23 signer required only on pass (reject / waived without signer undetected)
+    spec_source: "G1 rule 3b; AC-006-a"
+    expected_token: human_gate_without_signer
+    status: open → change-proposal-002 (mutant_gate_reject_without_signer.yaml)
+  - id: KG-11
+    name: M28 --rings view ignored → undetected
+    spec_source: "F-17 view narrowing; AC-008..011-a"
+    expected_token: ring_missing (twin) / exit 0 (narrowed view)
+    status: open → change-proposal-002 (test_AC_010_a_F17_rings_view_excludes_absent_rings)
+links:
+  - plugins/sdlc/dogfood/ring-audit/failure-report-002-holdout.md
+  - plugins/sdlc/dogfood/ring-audit/calibration_report.yaml
