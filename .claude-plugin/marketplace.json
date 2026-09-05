@@ -286,6 +286,42 @@
       ]
     },
     {
+      "name": "sdlc",
+      "description": "SDLC — the delivery spine of the software development lifecycle, written as gaps the engine cannot fill on its own (skillwise four-atom discipline: Knowledge / Capability / Judgment / Control, no step-marches). Six skills: `/sdlc` (lifecycle orchestrator: SKILL.state-style state file whose transitions are validated by a script, WikiSkill-style append-only ledger that never rolls back, layered failure-routing table routing.yaml with per-layer budgets + fingerprint termination, and three human-only gates G1 world-adjudication / G2 done_when hash-freeze / G3 exception review), `/issue` (requirement or bug → falsifiable GitHub issue: dual-track PSL-vs-TASK judgment, DOS vocabulary closure, acceptance in done_when-v2 shape — kind mechanical|human, observe boundary not file path, adjectives→thresholds, happy/unhappy twin — gated by verify_issue.py), `/commit` (atomic Conventional Commit gated by verify_commit.py: message grammar, card whitelist / forbidden paths, G2 lock hash check, secret + debug-code scan on staged hunks), `/pr` (PR whose body must exhibit a product order — scope declaration, Closes #N, verification evidence, AC→evidence mapping, risk & rollback — gated by verify_pr.py with size classes and must-split), `/review-loop` (zero-token blocking wait via pr-poll.sh, reviewer comments treated as claims to verify not commands, ACCEPT/REJECT/REPLY/ESCALATE/SKIPPED verdicts with evidence, reply-before-resolve, per-thread strikes, compiled termination binding with exit codes and env-var budgets; adapted from vana-builder's pr-review-loop), `/pr-review` (reviewer side: Detective Loop, reproduction required for P0/P1, 5-finding cap, self-rebuttal pass, findings mapped to A mechanical / B structural / C judgment tiers, posted as a GitHub review via post_review.py; never approves — approval is a human act). Reconciles Spec Loop v1.2 × done_when Pipeline: the lower half L1–L8 + gates G2/G3 + cross-cutting X2 routing / X3 metrics live here; the upper half (PSL/DOS) and contract/test generation are optional neighbors (looper, done-when-pipeline) — absent neighbors never block. All skills static_only tier (scripts smoke-tested on fixtures; behavioral delta on held-out tasks unverified).",
+      "version": "0.1.0",
+      "author": {
+        "name": "XRenSiu",
+        "email": "xrensiu@gmail.com"
+      },
+      "source": "./plugins/sdlc",
+      "category": "development",
+      "homepage": "https://github.com/XRenSiu/claude-code-forge/tree/main/plugins/sdlc",
+      "repository": "https://github.com/XRenSiu/claude-code-forge",
+      "license": "MIT",
+      "tags": [
+        "sdlc",
+        "software-development-lifecycle",
+        "github-issue",
+        "conventional-commits",
+        "pull-request",
+        "pr-review-loop",
+        "code-review",
+        "review-autopilot",
+        "done-when",
+        "hash-lock",
+        "task-cards",
+        "failure-routing",
+        "layered-budgets",
+        "fingerprint-termination",
+        "human-gates",
+        "append-only-ledger",
+        "skill-state",
+        "wikiskill",
+        "spec-loop",
+        "static-only"
+      ]
+    },
+    {
       "name": "humanize",
       "description": "Humanize — make AI-written technical prose read like a competent human professional wrote it, at the level where readers actually get lost: discourse, not vocabulary. Three skills. `/humanize` rewrites a draft (zh/en) without changing a single fact: it targets the mechanisms behind 'every word is clear but I can't follow' — given-new inversion, broken topic strings, stress-position leakage (participle / 以实现… tails), lists replacing argument, cross-section restatement, stance flattening, generic openings, summary closers — plus the solved lexical/syntax/format layer (Wikipedia 'Signs of AI writing' + 2026 density-era tics: mannered prose, invented jargon, 'not X, it's Y') and Chinese translationese (yage.ai four classes + 余光中 欧化 catalog, CCL-2023 corpus-backed). Three non-skippable gates: humanlint.py (23 surface metrics, zh/en, 0-100 AI-flavor index, calibrated on four fixtures: AI 60/63 vs human 2/0), factdiff.py (numbers / dates / identifiers / URLs / paths zero add-or-drop, plus certainty-drift warning per Belem 2026), and a context-isolated cold-reader agent that records per paragraph where a reader who never saw the brief loses the thread (expected / got / lost_at / told_not_shown) — never self-graded in the drafting context (self-refine amplifies self-bias). Max 2 revision rounds, then deliver with the residual named. `/techdoc` writes a proposal / design doc / ADR / postmortem / memo from a brief in the shape senior engineers use (Google design docs, Oxide RFD, Amazon 6-pager, Nygard ADR, Shape Up, HashiCorp/Rust RFC, 阿里 安全生产): triggering incident with a number first, decision in one sentence, obvious alternatives killed with specific reasons, all consequences, rollout/rollback, open questions last — enforced as product order by verify_techdoc.py; facts only from brief/materials/domain knowledge, else [需核实]. `/voice-profile` distills the user's own 3–5 samples into an executable .humanize/voice.md (rhythm stats from humanlint, quoted sentence habits, personal 忌口表 with replacements, positive examples for completion-style few-shot — the technique with 20x measured style-match gain), gated by verify_voice.py. Ships rules/human-voice.md as an always-on contract pasteable into CLAUDE.md. Explicitly NOT for beating AI detectors (they train on humanizer output), NOT for injecting slang/emoji/typos as 'texture' (a new tell in technical register). All static_only tier: scripts smoke-tested on fixtures; behavioral delta on held-out drafts unverified.",
       "version": "0.1.1",

@@ -11,6 +11,7 @@
 - **[Persona Distill](#persona-distill)** — distill a person / expert / rule system into a self-contained, portable persona skill
 - **[Skill Evolve](#skill-evolve)** — autonomous Darwin-style hill-climbing optimizer for any existing SKILL.md
 - **[Ratchet](#ratchet)** — goal-driven master/subagent loop with independent evaluation + kill-and-restart for long-running autonomous tasks
+- **[SDLC](#sdlc)** — the delivery spine: issue → commit → PR → review-loop → merge, with a script-validated lifecycle state, failure routing by layer, and three human-only gates
 - **[Humanize](#humanize)** — make AI-written technical prose read like a competent human wrote it, at the discourse level where readers actually get lost; write proposals / design docs / ADRs in the shape senior engineers use; learn your own voice from your samples
 
 ## Contents
@@ -25,6 +26,7 @@
 - [Persona Distill](#persona-distill)
 - [Skill Evolve](#skill-evolve)
 - [Ratchet](#ratchet)
+- [SDLC](#sdlc)
 - [Humanize](#humanize)
 - [Marketplace Management](#marketplace-management)
 - [Plugin Management](#plugin-management)
@@ -61,6 +63,9 @@
 
 # Install Ratchet (goal-driven master/subagent autonomous loop)
 /plugin install ratchet@XRenSiu/claude-code-forge
+
+# Install SDLC (issue / commit / PR / review-loop / code review + lifecycle orchestrator)
+/plugin install sdlc@XRenSiu/claude-code-forge
 
 # Install Humanize (去AI味: /humanize rewrite, /techdoc write, /voice-profile learn your voice)
 /plugin install humanize@XRenSiu/claude-code-forge
@@ -108,6 +113,7 @@
 /plugin update persona-distill
 /plugin update skill-evolve
 /plugin update ratchet
+/plugin update sdlc
 ```
 
 ## Available Plugins
@@ -120,6 +126,7 @@
 | [Design Clone](plugins/design-clone/) | 1.0.0 | Design DNA extraction + pixel-perfect website cloning. Browser-MCP-driven CSS introspection produces a 150+ field Design DNA profile; `--full` mode additionally spawns parallel builder agents to generate a Next.js clone. | Browser MCP |
 | [Persona Distill](plugins/persona-distill/) | 0.4.0 | Distill any persona (person or rule system) into a self-contained Claude Code skill. 5 skills, 9 schemas, 19 components, 12-dim rubric, 9-phase pipeline (CDM execution-profile + self-containment linter + fingerprint verifier). v0.4.0 security hardening: consent attestation gate, untrusted-corpus delimiters, rubric config range locks, corpus access declaration, 6 runnable parsers (iMessage/email/Twitter/generic/Telegram/Slack). | - |
 | [Skill Evolve](plugins/skill-evolve/) | 0.1.1 | Darwin-style autonomous SKILL.md optimizer. 8-dimension rubric + independent-subagent scoring + git-backed ratchet hill-climbing (keep-or-revert) to evolve any skill from initial draft toward 90+. | - |
+| [SDLC](plugins/sdlc/) | 0.1.0 | Software development lifecycle delivery spine. Six skills: `/sdlc` orchestrator (state file validated by script, append-only ledger, routing.yaml with layered budgets + fingerprint termination, human-only gates G1/G2/G3), `/issue`, `/commit`, `/pr`, `/review-loop` (zero-token wait, comments as claims to verify, compiled termination), `/pr-review` (tiered findings, never approves). Written per skillwise four-atom discipline; all `static_only`. | gh CLI, jq |
 | [Ratchet](plugins/ratchet/) | 1.0.0 | Goal-driven master/subagent autonomous loop. Master only evaluates (via frozen script or independent judge subagent), subagent only executes; stalled or cheating workers are killed and restarted. Suitable for long-running tasks with verifiable deliverables and explicit termination conditions. | - |
 | [Humanize](plugins/humanize/) | 0.1.1 | 去AI味 at the discourse level. `/humanize` rewrites a draft (zh/en) so a competent human could have written it — targets given-new inversion, broken topic strings, participle/以实现 tails, lists replacing argument, stance flattening, generic openings, summary closers, plus the solved lexical layer and Chinese translationese — with three gates: `humanlint.py` (23 metrics, 0-100 index), `factdiff.py` (numbers/dates/identifiers zero add-or-drop), and a context-isolated `cold-reader` agent. `/techdoc` writes proposals / design docs / ADRs / postmortems in the senior-engineer shape (incident first, decision in one sentence, alternatives killed, all consequences, rollout/rollback, open questions) gated by `verify_techdoc.py`. `/voice-profile` distills your own 3–5 samples into an executable voice file. All `static_only`. | python3 |
 
@@ -139,6 +146,9 @@
 | Distill a persona / expert / rule system into a skill | Persona Distill |
 | Improve quality of an existing SKILL.md | Skill Evolve |
 | Long-running task with verifiable acceptance criteria (compiler fuzz, API schema conformance, perf target) | Ratchet |
+| Turn a requirement into a falsifiable issue / atomic commits / a reviewable PR, then auto-address review comments until approved | SDLC (`/issue` `/commit` `/pr` `/review-loop`) |
+| Review someone else's PR with tiered, reproducible findings | SDLC `/pr-review` |
+| Run the whole issue → PR → merge lifecycle with gates and failure routing | SDLC `/sdlc` |
 | A draft reads like AI (every word clear, thread lost); make it read like a human wrote it without changing facts | Humanize `/humanize` |
 | Write a technical proposal / design doc / ADR / postmortem from a brief, in the shape senior engineers use | Humanize `/techdoc` |
 | Make AI output sound like *you* (or your team) from 3–5 of your own samples | Humanize `/voice-profile` |
@@ -475,6 +485,46 @@ Goal-driven, long-running autonomous loop with strict separation of judge and wo
 - **Three example references** (`references/examples/`) cover compiler/interpreter (differential + fuzz), web API/service (schema + property-based), performance/quality optimization (hard metrics + reverse constraints).
 
 > Differs from `skill-evolve`: Ratchet is task-agnostic and runs against arbitrary product files; Skill Evolve is specialized for `SKILL.md` files using a fixed 8-dim rubric.
+
+---
+
+## SDLC
+
+**Version**: 0.1.0 · **Category**: Development · **Requires**: `gh` (authenticated), `jq`, `python3` + `pyyaml`
+
+The delivery spine of the software development lifecycle: requirement → issue → branch → frozen acceptance
+contract → task cards → per-card implementation + commits → PR → review follow-up → merge → archive →
+escaped-defect registry. Every step's artifact is either checked by a script or blocked by a human-only gate.
+Skills are written per the skillwise four-atom discipline (Knowledge / Capability / Judgment / Control, no
+Step 1/2/3); the runtime follows SKILL.state (a state file as sufficient statistic, transitions validated by
+`sdlc_state.py`) and WikiSkill (an append-only ledger that never rolls back). The flow reconciles
+*Spec Loop v1.2 × done_when Pipeline*: lower half L1–L8 + gates G2/G3 + cross-cutting X2 routing / X3 metrics
+live here; PSL/DOS world-building and contract/test generation are optional neighbours (`looper`,
+`done-when-pipeline`) that never block when absent.
+
+### SDLC Skills
+
+| Skill | What it does | Compiled gate |
+|---|---|---|
+| `/sdlc` | Lifecycle orchestrator (explicit invocation only): state machine, ledger, `routing.yaml` with per-layer budgets + fingerprint termination, gates G1/G2/G3 | `sdlc_state.py` · `lint_cards.py` · `lock_done_when.py` · `metrics.py` |
+| `/issue` | Requirement / bug / escaped defect → falsifiable GitHub issue (AC in done_when-v2 shape, PSL-vs-TASK dual track, DOS vocabulary closure) | `verify_issue.py` |
+| `/commit` | Atomic Conventional Commit; card whitelist, G2 lock, secret + debug-code scan on staged hunks | `verify_commit.py` |
+| `/pr` | PR body in product order (scope declaration, `Closes #N`, verification evidence, AC→evidence, risk & rollback); size classes, XL must split | `verify_pr.py` |
+| `/review-loop` | Zero-token blocking wait, reviewer comments as claims to verify, ACCEPT/REJECT/REPLY/ESCALATE/SKIPPED, reply-before-resolve, per-thread strikes, compiled termination (adapted from vana-builder) | `pr-poll.sh` |
+| `/pr-review` | Reviewer side: Detective Loop, reproduction required for P0/P1, 5-finding cap, A/B/C tiers, posts a GitHub review — never approves | `post_review.py` |
+
+```bash
+/issue "users can search memories by relative time"      # shows the body, then creates
+/commit --issue 42                                        # pre-gate + self-check + commit
+/pr --issue 42 --done-when specs/x/done_when.yaml         # pre-gate + confirm + create
+/review-loop 57                                           # follow PR #57 until approved / budget
+/pr-review 57 --focus security --post                     # findings.yaml → GitHub review
+/sdlc "users can search memories by relative time"        # full lifecycle (human signs G1/G2/G3)
+```
+
+> All six skills are `static_only`: structurally reviewed and smoke-tested on fixtures
+> (`bash plugins/sdlc/eval/smoke.sh`, 77/77); with/without-skill behavioural comparison not yet run.
+> See [`plugins/sdlc/README.md`](plugins/sdlc/README.md) and [`docs/lifecycle.md`](plugins/sdlc/docs/lifecycle.md).
 
 ---
 
