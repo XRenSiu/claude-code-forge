@@ -477,10 +477,12 @@ def run_evidence_section(d):
         "",
         "| 项 | 值 |", "|---|---|",
         f"| 回放结论 | `ok: {str(diff.get('ok')).lower()}` |",
+        f"| 快照取于 | `{diff.get('snapshot_at')}` |",
         f"| Card-footer 提交数 | {diff.get('card_commits')} |",
         f"| **碰了被审目录的提交数** | **{diff.get('card_commits_touching_audited_dirs')}** |",
         f"| 回放被拒的提交数 | {diff.get('card_commits_rejected')} |",
         "",
+    ] + ([f"> {para(diff.get('snapshot_note'))}", ""] if diff.get("snapshot_note") else []) + [
         "| 提交 | 卡 | 回放 exit | 碰被审目录 |",
         "|---|---|---|---|",
     ]

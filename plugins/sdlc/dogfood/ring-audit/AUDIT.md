@@ -966,12 +966,17 @@ python3 plugins/sdlc/dogfood/ring-audit/check_audit.py plugins/sdlc/dogfood/ring
 | 项 | 值 |
 |---|---|
 | 回放结论 | `ok: true` |
-| Card-footer 提交数 | 6 |
+| 快照取于 | `e5ffbbd` |
+| Card-footer 提交数 | 8 |
 | **碰了被审目录的提交数** | **0** |
 | 回放被拒的提交数 | 0 |
 
+> 快照取于 e5ffbbd（CARD-06 的第二个提交）之后，覆盖当时全部 8 个 Card 提交。承载这份记录的第三个提交必然落在自己的快照之外——它只改 audit.yaml 与 AUDIT.md，两者都不在被审的三个目录里，重跑一次 replay_card_commits.sh 即可自证。
+
 | 提交 | 卡 | 回放 exit | 碰被审目录 |
 |---|---|---|---|
+| `e5ffbbd` | `CARD-06` | 0 | `false` |
+| `1f1916e` | `CARD-06` | 0 | `false` |
 | `eba9796` | `CARD-04` | 0 | `false` |
 | `419a364` | `CARD-02` | 0 | `false` |
 | `f8ef234` | `CARD-05` | 0 | `false` |
