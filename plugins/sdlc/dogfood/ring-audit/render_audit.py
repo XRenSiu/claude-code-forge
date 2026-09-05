@@ -130,10 +130,10 @@ class Doc:
         gate = dct(self.gates.get(gid))
         kind = gate.get("kind")
         if kind == "script":
-            return f"闸 `{gid}`"
+            return f"闸 {code(gid)}"
         if kind == "human":
-            return f"门 `{gid}`"
-        return f"`{gid}`（未在 gates[] 登记）"
+            return f"门 {code(gid)}"
+        return f"{code(gid)}（未在 gates[] 登记）"
 
     # -- a Part's Gap atoms ---------------------------------------------------
     def fills_of(self, part):
@@ -256,7 +256,7 @@ def ring_section(d, ring):
 
         fills = d.fills_of(part)
         if fills:
-            gapcol = "<br>".join(f"`{atoms}` {cell(gid.rsplit('/', 1)[-1])}" for gid, atoms, _ in fills)
+            gapcol = "<br>".join(f"{code(atoms)} {cell(gid.rsplit('/', 1)[-1])}" for gid, atoms, _ in fills)
         else:
             gapcol = "**不填任何缺口 → overfill**"
 
@@ -303,9 +303,9 @@ def ring_section(d, ring):
     for gid in missing:
         gap = dct(d.gaps.get(gid))
         atoms = "+".join(lst(gap.get("atoms"))) or "?"
-        source = SOURCE_LABEL.get(gap.get("source"), str(gap.get("source")))
-        ncell = (f"necessity **{gap.get('necessity')}**<br>撤掉 / 不补它：{cell(gap.get('deletion_test'))}"
-                 f"<br>证据：{cell(refs(gap.get('evidence')))}<br>disposition `{gap.get('disposition')}`")
+        source = SOURCE_LABEL.get(gap.get("source"), cell(gap.get("source")))
+        ncell = (f"necessity **{cell(gap.get('necessity'))}**<br>撤掉 / 不补它：{cell(gap.get('deletion_test'))}"
+                 f"<br>证据：{cell(refs(gap.get('evidence')))}<br>disposition {code(gap.get('disposition'))}")
         out.append(f"| **（缺少）** {code(gid.rsplit('/', 1)[-1])} | — | {code(atoms)}<br>**{source}** | "
                    f"— | — | — | — | {ncell} | — | — |")
 
@@ -456,11 +456,11 @@ def run_evidence_section(d):
     meta = dct(run.get("run"))
     out += [
         "| 项 | 值 |", "|---|---|",
-        f"| slug | `{meta.get('slug')}` |",
-        f"| 状态机 | `{meta.get('state')}` |",
-        f"| 账本 | `{meta.get('ledger')}` |",
-        f"| 分支 | `{meta.get('branch')}` |",
-        f"| issue | `#{meta.get('issue')}` |",
+        f"| slug | {code(meta.get('slug'))} |",
+        f"| 状态机 | {code(meta.get('state'))} |",
+        f"| 账本 | {code(meta.get('ledger'))} |",
+        f"| 分支 | {code(meta.get('branch'))} |",
+        f"| issue | {code('#' + str(meta.get('issue')))} |",
         "",
         "### 三道门的签字（F-07 三元组）",
         "",
@@ -508,6 +508,11 @@ def run_evidence_section(d):
 
     diff = dct(run.get("audited_dirs_diff"))
     stat = dct(diff.get("git_diff_stat"))
+    # 登记的 exit 与登记的 ok 必须同号（`exit: 0` 当且仅当 `ok: true`）。不同号说明这两行不是同一次运行
+    # 留下的，记录自己就不自洽——当场标出来，不要让读者自己去对，也不要让它冒充证据。
+    replay_exit, replay_ok = diff.get("exit"), diff.get("ok")
+    mismatch = (replay_exit == 0) != (replay_ok is True)
+    flag = " · **登记 ≠ 现算**" if mismatch else ""
     out += [
         "### 审计者不改被审对象（PSL-003）",
         "",
@@ -515,10 +520,12 @@ def run_evidence_section(d):
         "白名单回放一遍 `verify_commit.py`，并检查它有没有碰被审的三个目录。",
         "",
         "| 项 | 值 |", "|---|---|",
-        f"| 回放结论 | `ok: {str(diff.get('ok')).lower()}` |",
-        f"| 分支 · HEAD | {code(diff.get('branch'))} @ {code(diff.get('head'))} · "
+        f"| 回放命令 | {code(diff.get('cmd'))} |",
+        f"| 回放 exit | **{cell(replay_exit)}**{flag} |",
+        f"| 回放结论 | `ok: {str(replay_ok).lower()}`{flag} |",
+        f"| 分支 · HEAD | {code(diff.get('branch'))} @ {code(diff.get('recorded_at_head'))} · "
         f"`range_spec: {cell(diff.get('range_spec'))}` |",
-        f"| 快照取于 | {code(diff.get('snapshot_at'))}（`sha_scope: {cell(diff.get('sha_scope'))}` — "
+        f"| 重新求证 | {code(diff.get('re-derive'))}（`sha_scope: {cell(diff.get('sha_scope'))}` — "
         "下表的 sha 只在这个分支上解析得出，换分支或 rebase 后必须重跑） |",
         f"| Card-footer 提交数 | {diff.get('card_commits')} |",
         f"| **碰了被审目录的提交数** | **{diff.get('card_commits_touching_audited_dirs')}** |",
@@ -527,13 +534,15 @@ def run_evidence_section(d):
         f"{diff.get('non_card_commits_scanned')} 个，其中 "
         f"**{diff.get('non_card_commits_touching_audited_dirs')}** 个碰了被审目录 |",
         "",
-    ] + ([f"> {para(diff.get('snapshot_note'))}", ""] if diff.get("snapshot_note") else []) + [
+    ] + ([f"> **登记 ≠ 现算**：记录里 `exit: {cell(replay_exit)}` 与 `ok: "
+          f"{str(replay_ok).lower()}` 不同号（`exit: 0` 当且仅当 `ok: true`）。这两行不是同一次运行"
+          "留下的，这块 PSL-003 证据在重跑之前不作数。", ""] if mismatch else []) + [
         "| 提交 | 卡 | 回放 exit | 碰被审目录 |",
         "|---|---|---|---|",
     ]
     for c in lst(diff.get("touches_audited_dirs_per_commit")):
         c = dct(c)
-        out.append(f"| `{c.get('sha')}` | `{c.get('card')}` | {c.get('exit')} | "
+        out.append(f"| {code(c.get('sha'))} | {code(c.get('card'))} | {cell(c.get('exit'))} | "
                    f"`{str(c.get('touches_audited_dirs')).lower()}` |")
     out += [
         "",

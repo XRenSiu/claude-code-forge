@@ -3411,39 +3411,50 @@ run_evidence:
   # PSL-003 审计者不改被审对象——由 replay_card_commits.sh 证明，不由记忆保证。
   audited_dirs_diff:
     instrument: plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh
-    cmd: bash plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh
-    exit: 1
-    branch: fix/iter-002
-    head: '9ad5b9c'
+    cmd: "bash plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh"
+    exit: 0
+    branch: docs/1-sdlc-ring-audit
+    recorded_at_head: "a2deb83"
     range_spec: main..HEAD
     sha_scope: branch-specific
-    snapshot_at: '9ad5b9c'
-    snapshot_note: 这是快照，不是恒等式，而且下面每个 sha 只在它所在的分支上成立：取于 fix/iter-002 的 9ad5b9c（range_spec main..HEAD），覆盖当时全部 12 个 Card 提交。上一版记的 e5ffbbd / 1f1916e 来自 CARD-06 的工作树，cherry-pick 重写提交之后在本分支上解析不出来——sha 随分支重写，换分支或 rebase 之后必须重跑 replay_card_commits.sh，不要照抄这张表。一份记录也不可能覆盖承载它自己的那个提交，所以重跑会看到更大的 card_commits；记录之后的每个提交都只改 audit.yaml / AUDIT.md / render_audit.py / replay_card_commits.sh，四者都不在被审的三个目录里，touches 仍是 0。non_card_commits_* 是同一次运行的第二遍（自第一个 Card 提交起、不带 Card footer 的提交），它只记录、不进判定。不随快照漂移的是下面的 git_diff_stat：它一路算到 HEAD，恒为空，那才是 PSL-003 的承重数字。
+    re-derive: "bash plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh at a2deb83 on docs/1-sdlc-ring-audit"
     ok: true
-    card_commits: 12
+    card_commits: 14
     card_commits_touching_audited_dirs: 0
     card_commits_rejected: 0
-    non_card_commits_scanned: 6
-    non_card_commits_touching_audited_dirs: 0
+    non_card_range_spec: "4d3057a..HEAD"
+    non_card_commits_scanned: 20
+    non_card_commits_touching_audited_dirs: 4
+    # 无 Card footer 的提交（只记录、不进判定）——sha 与它们碰到的被审路径分类列出。
+    non_card_commits_touching:
+    - {sha: "c729f76", subject: "fix(sdlc): lock check compares landing content hash, not paths (I-52)", audited_paths: 1,
+       files: ["plugins/sdlc/skills/commit/scripts/verify_commit.py"]}
+    - {sha: "ebe270d", subject: "fix(sdlc): gate pass clears a stale reject attribution (I-51)", audited_paths: 1,
+       files: ["plugins/sdlc/skills/sdlc/scripts/sdlc_state.py"]}
+    - {sha: "bf3f13e", subject: "docs(sdlc): add \"raising the floor\" report (2026-09-05)", audited_paths: 4,
+       files: ["plugins/sdlc/docs/reports/raising-the-floor-2026-09-05.cold-read-1.yaml", "plugins/sdlc/docs/reports/raising-the-floor-2026-09-05.cold-read-2.yaml", "plugins/sdlc/docs/reports/raising-the-floor-2026-09-05.html", "plugins/sdlc/docs/reports/raising-the-floor-2026-09-05.md"]}
+    - {sha: "587f371", subject: "fix(sdlc): verifier and gate defects found by the ring-audit dogfood run", audited_paths: 7,
+       files: ["plugins/sdlc/skills/commit/scripts/verify_commit.py", "plugins/sdlc/skills/issue/scripts/verify_issue.py", "plugins/sdlc/skills/psl-derive/scripts/verify_derived.py", "plugins/sdlc/skills/sdlc/assets/g1_record.md", "plugins/sdlc/skills/sdlc/assets/state.schema.json", "plugins/sdlc/skills/sdlc/scripts/lock_done_when.py", "plugins/sdlc/skills/sdlc/scripts/sdlc_state.py"]}
     touches_audited_dirs_per_commit:
-    - {sha: '9ad5b9c', card: CARD-01, exit: 0, touches_audited_dirs: false}
-    - {sha: '843c3ee', card: CARD-06, exit: 0, touches_audited_dirs: false}
-    - {sha: '5c84a5a', card: CARD-06, exit: 0, touches_audited_dirs: false}
-    - {sha: 'b24243d', card: CARD-06, exit: 0, touches_audited_dirs: false}
-    - {sha: '6326123', card: CARD-06, exit: 0, touches_audited_dirs: false}
-    - {sha: '3441ba4', card: CARD-06, exit: 0, touches_audited_dirs: false}
-    - {sha: 'eba9796', card: CARD-04, exit: 0, touches_audited_dirs: false}
-    - {sha: '419a364', card: CARD-02, exit: 0, touches_audited_dirs: false}
-    - {sha: 'f8ef234', card: CARD-05, exit: 0, touches_audited_dirs: false}
-    - {sha: '05963a5', card: CARD-03, exit: 0, touches_audited_dirs: false}
-    - {sha: '08238cd', card: CARD-01, exit: 0, touches_audited_dirs: false}
-    - {sha: '0be2770', card: CARD-01, exit: 0, touches_audited_dirs: false}
+    - {sha: "a2deb83", card: CARD-01, exit: 0, touches_audited_dirs: false}
+    - {sha: "ba7d5e2", card: CARD-06, exit: 0, touches_audited_dirs: false}
+    - {sha: "7cb1f55", card: CARD-01, exit: 0, touches_audited_dirs: false}
+    - {sha: "843c3ee", card: CARD-06, exit: 0, touches_audited_dirs: false}
+    - {sha: "5c84a5a", card: CARD-06, exit: 0, touches_audited_dirs: false}
+    - {sha: "b24243d", card: CARD-06, exit: 0, touches_audited_dirs: false}
+    - {sha: "6326123", card: CARD-06, exit: 0, touches_audited_dirs: false}
+    - {sha: "3441ba4", card: CARD-06, exit: 0, touches_audited_dirs: false}
+    - {sha: "eba9796", card: CARD-04, exit: 0, touches_audited_dirs: false}
+    - {sha: "419a364", card: CARD-02, exit: 0, touches_audited_dirs: false}
+    - {sha: "f8ef234", card: CARD-05, exit: 0, touches_audited_dirs: false}
+    - {sha: "05963a5", card: CARD-03, exit: 0, touches_audited_dirs: false}
+    - {sha: "08238cd", card: CARD-01, exit: 0, touches_audited_dirs: false}
+    - {sha: "0be2770", card: CARD-01, exit: 0, touches_audited_dirs: false}
     git_diff_stat:
-      cmd: 'git diff --stat 0be2770^..HEAD -- plugins/sdlc/skills plugins/sdlc/agents plugins/sdlc/docs'
-      first_card_commit: '0be2770'
+      cmd: "git diff --stat 0be2770^..HEAD -- plugins/sdlc/skills plugins/sdlc/agents plugins/sdlc/docs"
+      first_card_commit: "0be2770"
       output: ''
       lines: 0
-
   skill_issues: plugins/sdlc/dogfood/ring-audit/skill-issues.md
   skill_issues_count: 67          # grep -c '^| I-' plugins/sdlc/dogfood/ring-audit/skill-issues.md
 

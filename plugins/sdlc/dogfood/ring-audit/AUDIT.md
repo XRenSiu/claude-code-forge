@@ -965,19 +965,21 @@ python3 plugins/sdlc/dogfood/ring-audit/check_audit.py plugins/sdlc/dogfood/ring
 
 | 项 | 值 |
 |---|---|
+| 回放命令 | `bash plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh` |
+| 回放 exit | **0** |
 | 回放结论 | `ok: true` |
-| 分支 · HEAD | `fix/iter-002` @ `9ad5b9c` · `range_spec: main..HEAD` |
-| 快照取于 | `9ad5b9c`（`sha_scope: branch-specific` — 下表的 sha 只在这个分支上解析得出，换分支或 rebase 后必须重跑） |
-| Card-footer 提交数 | 12 |
+| 分支 · HEAD | `docs/1-sdlc-ring-audit` @ `a2deb83` · `range_spec: main..HEAD` |
+| 重新求证 | `bash plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh at a2deb83 on docs/1-sdlc-ring-audit`（`sha_scope: branch-specific` — 下表的 sha 只在这个分支上解析得出，换分支或 rebase 后必须重跑） |
+| Card-footer 提交数 | 14 |
 | **碰了被审目录的提交数** | **0** |
 | 回放被拒的提交数 | 0 |
-| 无 Card footer 的提交（只记录，不进判定） | 自第一个 Card 提交起扫了 6 个，其中 **0** 个碰了被审目录 |
-
-> 这是快照，不是恒等式，而且下面每个 sha 只在它所在的分支上成立：取于 fix/iter-002 的 9ad5b9c（range_spec main..HEAD），覆盖当时全部 12 个 Card 提交。上一版记的 e5ffbbd / 1f1916e 来自 CARD-06 的工作树，cherry-pick 重写提交之后在本分支上解析不出来——sha 随分支重写，换分支或 rebase 之后必须重跑 replay_card_commits.sh，不要照抄这张表。一份记录也不可能覆盖承载它自己的那个提交，所以重跑会看到更大的 card_commits；记录之后的每个提交都只改 audit.yaml / AUDIT.md / render_audit.py / replay_card_commits.sh，四者都不在被审的三个目录里，touches 仍是 0。non_card_commits_* 是同一次运行的第二遍（自第一个 Card 提交起、不带 Card footer 的提交），它只记录、不进判定。不随快照漂移的是下面的 git_diff_stat：它一路算到 HEAD，恒为空，那才是 PSL-003 的承重数字。
+| 无 Card footer 的提交（只记录，不进判定） | 自第一个 Card 提交起扫了 20 个，其中 **4** 个碰了被审目录 |
 
 | 提交 | 卡 | 回放 exit | 碰被审目录 |
 |---|---|---|---|
-| `9ad5b9c` | `CARD-01` | 0 | `false` |
+| `a2deb83` | `CARD-01` | 0 | `false` |
+| `ba7d5e2` | `CARD-06` | 0 | `false` |
+| `7cb1f55` | `CARD-01` | 0 | `false` |
 | `843c3ee` | `CARD-06` | 0 | `false` |
 | `5c84a5a` | `CARD-06` | 0 | `false` |
 | `b24243d` | `CARD-06` | 0 | `false` |
