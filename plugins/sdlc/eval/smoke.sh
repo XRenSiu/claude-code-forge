@@ -24,6 +24,9 @@ expect "DOS closure failure rejected (force psl)" 1 py "$S/issue/scripts/verify_
 expect "closure fail output carries force_track psl" 0 bash -c "python3 '$S/issue/scripts/verify_issue.py' '$FX/closure_fail.md' --dos '$FX/dos.yaml' | grep -q '\"force_track\": \"psl\"'"
 expect "bug kind good passes" 0 py "$S/issue/scripts/verify_issue.py" "$FX/good_bug.md" --kind bug
 expect "bug kind without Repro rejected" 1 py "$S/issue/scripts/verify_issue.py" "$FX/good_issue.md" --kind bug
+# dogfood 2026-09-05 (I-07): one-line Links (template shape) with a G1 path must not flag "without a G1 record path"
+PSLI="$TMP/psl_issue.md"; sed -e 's/- track: task/- track: psl/' -e 's|G1: none|G1: g1-record.md|' "$FX/good_issue.md" > "$PSLI"
+expect "psl-track issue with G1 path on the one-line Links carries no G1 flag (I-07)" 0 bash -c "python3 '$S/issue/scripts/verify_issue.py' '$PSLI' --dos '$FX/dos.yaml' | python3 -c \"import json,sys; d=json.load(sys.stdin); assert d['verdict']=='PASS' and not any('G1 record path' in f for f in d['flags']), d['flags']\""
 
 echo "== plan-cards / lint_cards.py"
 FX="$S/sdlc/eval/fixtures"
@@ -33,6 +36,8 @@ expect "good cards pass" 0 py "$S/plan-cards/scripts/lint_cards.py" "$S/plan-car
 echo "== sdlc / lock_done_when.py"
 L="$TMP/lock"; mkdir -p "$L"; cp "$FX/done_when.yaml" "$L/"; pushd "$L" >/dev/null
 expect "sign writes lock" 0 py "$S/sdlc/scripts/lock_done_when.py" sign --by tester done_when.yaml
+expect "lock sign: delegated_agent without authorization refused (I-39)" 1 py "$S/sdlc/scripts/lock_done_when.py" sign --by proxy --signer-kind delegated_agent --out .dl.lock done_when.yaml
+expect "lock sign: delegated_agent with authorization records signer_kind (I-39)" 0 bash -c "python3 '$S/sdlc/scripts/lock_done_when.py' sign --by proxy --signer-kind delegated_agent --authorization 'user said so' --out .dl.lock done_when.yaml >/dev/null && grep -q '\"signer_kind\": \"delegated_agent\"' .dl.lock"
 expect "verify unchanged ok" 0 py "$S/sdlc/scripts/lock_done_when.py" verify
 echo "# tampered" >> done_when.yaml
 expect "tampered AC without proposal rejected" 1 py "$S/sdlc/scripts/lock_done_when.py" verify
@@ -116,6 +121,10 @@ cp "$S/plan-cards/eval/fixtures/cards_good/CARD-01.yaml" card.yaml
 expect "card whitelist: in-list file passes" 0 py "$VC" --msg "feat(search): parser" --card card.yaml
 mkdir -p src/search/ui && echo "x" > src/search/ui/oops.ts && git add src/search/ui/oops.ts
 expect "card whitelist overflow rejected" 1 py "$VC" --msg "feat(search): parser" --card card.yaml
+# dogfood 2026-09-05 (I-38): a bare forbidden name and **/dir/** must match at any depth
+expect "verify_commit glob: bare done_when.yaml matches nested path (I-38)" 0 python3 -c "
+import importlib.util; spec=importlib.util.spec_from_file_location('vc','$VC'); vc=importlib.util.module_from_spec(spec); spec.loader.exec_module(vc)
+assert vc.glob_match('plugins/x/dogfood/done_when.yaml','done_when.yaml'); assert vc.glob_match('a/b/tests/c.py','**/tests/**'); assert not vc.glob_match('a/b/src/c.py','**/tests/**'); assert not vc.glob_match('a/done_when.yaml.bak','done_when.yaml')"
 git reset -q src/search/ui/oops.ts && rm -rf src/search/ui
 cp "$FX/done_when.yaml" done_when.yaml && git add done_when.yaml && git -c user.name=t -c user.email=t@t commit -q -m "chore(contract): add done_when"
 py "$S/sdlc/scripts/lock_done_when.py" sign --by human done_when.yaml >/dev/null
@@ -170,6 +179,17 @@ echo "== psl-derive / verify_derived.py"
 expect "good derived dir passes" 0 py "$S/psl-derive/scripts/verify_derived.py" "$FXD/derived_good" --psl "$FXD/PSL-memory-time-search.md"
 expect "bad derived dir rejected (no ref, fake id, Step, invented entity)" 1 py "$S/psl-derive/scripts/verify_derived.py" "$FXD/derived_bad" --psl "$FXD/PSL-memory-time-search.md"
 expect "bad derived reports all four breaches" 0 bash -c "python3 '$S/psl-derive/scripts/verify_derived.py' '$FXD/derived_bad' --psl '$FXD/PSL-memory-time-search.md' | grep -c 'without PSL-ID\|does not exist\|named steps\|not in PSL Domain' | grep -q '^4$'"
+# dogfood 2026-09-05 (I-04 / I-05): template guidance in blockquotes must not count as steps; vocab regex must not
+# swallow the Domain Model body when the body mentions "Domain Model" again
+expect "verify_derived: Domain Model body mentioning 'Domain Model' again still yields vocabulary (I-05)" 0 python3 -c "
+import importlib.util,sys
+spec=importlib.util.spec_from_file_location('vd','$S/psl-derive/scripts/verify_derived.py'); vd=importlib.util.module_from_spec(spec); spec.loader.exec_module(vd)
+psl='# PSL-x\n\n## Domain Model [Σ]\n\n| Ring | x | y |\n| Part | x | y |\n\n（Domain Model 推翻测试：照此建库）\n\n## State Machine\n\n- Era: a → b\n\nPSL-001 rule\n'
+ids,vocab=vd.psl_ids_and_vocab(psl); assert 'Ring' in vocab and 'Part' in vocab, vocab"
+DG2="$TMP/derived_good_bq"; cp -R "$FXD/derived_good" "$DG2"; printf '%s\n%s\n' '> 禁止 Step 1/2/3、步骤 N、阶段 N、首先/然后/接着/最后 串。' "$(cat "$DG2/workflow.md")" > "$DG2/workflow.md"
+expect "verify_derived: template guidance blockquote quoting banned tokens is not a violation (I-04)" 0 py "$S/psl-derive/scripts/verify_derived.py" "$DG2" --psl "$FXD/PSL-memory-time-search.md"
+DG3="$TMP/derived_badid"; cp -R "$FXD/derived_good" "$DG3"; printf '\n- [F-13a] a suffixed id that the old regex skipped ← PSL-001\n' >> "$DG3/form-draft.md"
+expect "verify_derived: suffixed decision id (F-13a) rejected instead of silently skipped (I-47)" 1 py "$S/psl-derive/scripts/verify_derived.py" "$DG3" --psl "$FXD/PSL-memory-time-search.md"
 
 echo "== dos-extract / verify_dos.py (imported from looper)"
 FXO="$S/dos-extract/eval/fixtures"
@@ -208,6 +228,10 @@ expect "set world.* paths" 0 py "$SS" set world.psl=PSL.md world.derived_dir=der
 expect "gate g1 pass with derived products" 0 py "$SS" gate g1 --verdict pass --by human --record g1-record.md
 expect "advance issue ok after G1" 0 py "$SS" advance issue
 expect "gate g1 reject with attribution bumps world counter" 0 bash -c "python3 '$SS' gate g1 --verdict reject --by human --attribution rule_error >/dev/null && python3 '$SS' show | grep -q '\"world\": 1'"
+expect "gate g1 reject with derivation_error does NOT bump world (I-34)" 0 bash -c "python3 '$SS' gate g1 --verdict reject --by human --attribution derivation_error >/dev/null && python3 '$SS' show | grep -q '\"world\": 1'"
+# dogfood 2026-09-05 (I-17): a delegated signature needs an authorization on record and is traced as agent:, not human:
+expect "gate: delegated_agent without --authorization refused" 1 py "$SS" gate g3 --verdict pass --by proxy-bot --signer-kind delegated_agent
+expect "gate: delegated_agent with authorization recorded as agent:<by> + [delegated]" 0 bash -c "python3 '$SS' gate g3 --verdict pass --by proxy-bot --signer-kind delegated_agent --authorization 'user said so' >/dev/null && grep -q 'agent:proxy-bot' .sdlc/demo-psl/trace.jsonl && grep -q '\[delegated\]' .sdlc/demo-psl/ledger.md"
 popd >/dev/null
 
 echo "== acceptance-spec / validate_done_when.py (imported from done-when-pipeline)"

@@ -41,6 +41,11 @@ def sha256(path):
     return h.hexdigest()
 
 
+def die(msg, code=2):
+    sys.stderr.write(f"lock_done_when: {msg}\n")
+    sys.exit(code)
+
+
 def now():
     return _dt.datetime.now(_dt.timezone.utc).replace(microsecond=0).isoformat()
 
@@ -51,7 +56,10 @@ def cmd_sign(a):
         if not os.path.isfile(p):
             sys.stderr.write(f"lock: not a file: {p}\n"); sys.exit(2)
         files.append({"path": p, "sha256": sha256(p)})
-    lock = {"version": 1, "stage": a.stage, "signed_by": a.by, "signed_at": now(), "files": files,
+    if a.signer_kind == "delegated_agent" and not a.authorization:
+        die("--signer-kind delegated_agent requires --authorization (who / when / what allowed the delegation)", 1)
+    lock = {"version": 1, "stage": a.stage, "signed_by": a.by, "signer_kind": a.signer_kind,
+            **({"authorization": a.authorization} if a.authorization else {}), "signed_at": now(), "files": files,
             "note": ("G2 freeze: acceptance/existence/thresholds/rules/constraints signed. " if a.stage == "g2" else
                      "L5 freeze: tests/** + behavior manifest signed (written by a non-implementer). ")
                     + "Changing a listed file requires a change-proposal-*.md in the same diff."}
@@ -91,7 +99,7 @@ def cmd_verify(a):
     else:
         proposals = glob.glob(a.proposal_glob) + glob.glob(os.path.join("**", a.proposal_glob), recursive=True)
     proposals = sorted(set(proposals))
-    result = {"lock": a.lock, "stage": lock.get("stage", "g2"), "signed_by": lock.get("signed_by"), "signed_at": lock.get("signed_at"),
+    result = {"lock": a.lock, "stage": lock.get("stage", "g2"), "signed_by": lock.get("signed_by"), "signer_kind": lock.get("signer_kind", "human"), "signed_at": lock.get("signed_at"),
               "changed": changed, "missing": missing, "proposals": proposals}
     if not changed and not missing:
         result["status"] = "ok"; print(json.dumps(result, ensure_ascii=False, indent=2)); sys.exit(0)
@@ -107,7 +115,8 @@ def cmd_verify(a):
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)
-    s = sub.add_parser("sign"); s.add_argument("--by", required=True); s.add_argument("--out", default=".done_when.lock"); s.add_argument("--stage", choices=["g2", "l5"], default="g2"); s.add_argument("files", nargs="+")
+    s = sub.add_parser("sign"); s.add_argument("--by", required=True); s.add_argument("--out", default=".done_when.lock"); s.add_argument("--stage", choices=["g2", "l5"], default="g2")
+    s.add_argument("--signer-kind", choices=["human", "delegated_agent"], default="human"); s.add_argument("--authorization"); s.add_argument("files", nargs="+")
     s = sub.add_parser("verify"); s.add_argument("--lock", default=".done_when.lock"); s.add_argument("--proposal-glob", default="change-proposal-*.md"); s.add_argument("--staged", action="store_true")
     a = ap.parse_args()
     {"sign": cmd_sign, "verify": cmd_verify}[a.cmd](a)

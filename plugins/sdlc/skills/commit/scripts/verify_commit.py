@@ -66,9 +66,17 @@ def matches_any(path, patterns):
 
 def glob_match(path, pat):
     if pat.endswith("/**"):
-        return path == pat[:-3] or path.startswith(pat[:-3] + "/")
+        base = pat[:-3]
+        if base.startswith("**/"):          # "**/tests/**": any directory named tests at any depth
+            seg = base[3:]
+            return ("/" + path).find("/" + seg + "/") >= 0
+        return path == base or path.startswith(base + "/")
     if "**" in pat:
         return fnmatch.fnmatch(path, pat) or fnmatch.fnmatch(path, pat.replace("**/", "")) or fnmatch.fnmatch(path, pat.replace("**", "*"))
+    if "/" not in pat:
+        # a bare name (done_when.yaml, .done_when.lock) means "that file wherever it lives" — the contract validator
+        # demands the bare form, so without this fallback a nested contract's forbidden set matched nothing (dogfood 2026-09-05, I-38)
+        return fnmatch.fnmatch(path, pat) or fnmatch.fnmatch(path.rsplit("/", 1)[-1], pat)
     return fnmatch.fnmatch(path, pat)
 
 

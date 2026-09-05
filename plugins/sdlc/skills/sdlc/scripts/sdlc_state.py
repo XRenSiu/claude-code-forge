@@ -16,6 +16,7 @@ Usage:
   sdlc_state.py advance [--slug S] <stage> [--force --reason R]
   sdlc_state.py gate    [--slug S] <g1|g2|g3> --verdict pass|reject|waived --by NAME
                         [--record PATH] [--attribution derivation_error|rule_error|none]
+                        [--signer-kind human|delegated_agent] [--authorization TEXT]   # delegated requires authorization
   sdlc_state.py card    [--slug S] CARD-xx --status todo|doing|done|blocked [--commit SHA] [--ac AC-id ...]
   sdlc_state.py fail    [--slug S] --signal SIG [--card CARD-xx] [--fingerprint FP | --evidence TEXT]
                         [--score X] [--by REPORTER] [--routing PATH]   # -> route decision JSON + counters + ledger
@@ -389,22 +390,31 @@ def cmd_gate(a):
         if not (dd and os.path.isdir(dd)):
             die("G1 pass requires world.derived_dir pointing at an existing derived/ directory (psl-derive output: "
                 "dos-proposal.yaml / workflow.md / form-draft.md / divergence.md) — G1 adjudicates derivation products, not vibes", 1)
-    g.update({"verdict": a.verdict, "by": a.by, "at": now()})
+    # a gate is human-only; a delegated signature is legal only with an authorization on record (dogfood 2026-09-05, I-17)
+    if a.signer_kind == "delegated_agent" and not a.authorization:
+        die("--signer-kind delegated_agent requires --authorization <who/when/what allowed the delegation>", 1)
+    g.update({"verdict": a.verdict, "by": a.by, "at": now(), "signer_kind": a.signer_kind})
+    if a.authorization:
+        g["authorization"] = a.authorization
     if a.record:
         g["record"] = a.record
     if a.attribution:
         g["attribution"] = a.attribution
-    if a.gate == "g1" and a.verdict == "reject":
+    # only a rule_error is a world-layer error (the PSL itself was wrong); a derivation_error re-derives with the
+    # same PSL and must not inflate the world counter (dogfood 2026-09-05, I-34)
+    if a.gate == "g1" and a.verdict == "reject" and a.attribution == "rule_error":
         st["counters"]["world"] += 1
     save(a.root, a.slug, st)
-    refs = [{"type": "decided_by", "target": f"human:{a.by}"}]
+    signer_ref = f"human:{a.by}" if a.signer_kind == "human" else f"agent:{a.by}"
+    refs = [{"type": "decided_by", "target": signer_ref}]
     if a.record:
         refs.append({"type": "references", "target": a.record})
     if a.gate == "g2" and a.verdict == "pass" and get_path(st, "lock.path"):
         refs.append({"type": "references", "target": get_path(st, "lock.path")})
     ledger_append(a.root, a.slug, "gate", a.record or "", stage=st["stage"], signal=a.gate,
                   layer=("world" if a.gate == "g1" else ""), decision=f"{a.verdict}"
-                  + (f" ({a.attribution})" if a.attribution else ""), by=a.by, refs=refs)
+                  + (f" ({a.attribution})" if a.attribution else "") + (" [delegated]" if a.signer_kind != "human" else ""),
+                  by=a.by, refs=refs, extra={"signer_kind": a.signer_kind, **({"authorization": a.authorization} if a.authorization else {})})
     print(json.dumps({"ok": True, "gate": a.gate, "verdict": a.verdict}, ensure_ascii=False))
 
 
@@ -798,6 +808,7 @@ def main():
     s = P("advance"); s.add_argument("stage"); s.add_argument("--force", action="store_true"); s.add_argument("--reason")
     s = P("gate"); s.add_argument("gate", choices=["g1", "g2", "g3"]); s.add_argument("--verdict", required=True, choices=["pass", "reject", "waived"])
     s.add_argument("--by", required=True); s.add_argument("--record"); s.add_argument("--attribution", choices=["derivation_error", "rule_error", "none"])
+    s.add_argument("--signer-kind", choices=["human", "delegated_agent"], default="human"); s.add_argument("--authorization")
     s = P("card"); s.add_argument("card"); s.add_argument("--status", required=True, choices=["todo", "doing", "done", "blocked"]); s.add_argument("--commit"); s.add_argument("--ac", action="append")
     s = P("fail"); s.add_argument("--signal", required=True); s.add_argument("--card"); s.add_argument("--fingerprint"); s.add_argument("--evidence")
     s.add_argument("--score", type=float); s.add_argument("--by"); s.add_argument("--routing")
