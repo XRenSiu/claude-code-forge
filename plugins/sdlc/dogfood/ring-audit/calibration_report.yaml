@@ -68,6 +68,7 @@ verdict:
     spec_compile:
       - "4 holdout misses → 4 predicates + 4 fixtures + 4 tests: waiver_ref field + token for rule 3c; proposal.source must resolve to an Assessment/Gap id; ring_duplicate (rings count == 10 as a predicate); signer_kind_outside_enum"
       - "7 surviving instrument mutants → 7 eval_cases (above) for the next test-suite ratchet (change-proposal-002 candidate)"
+      - "change-proposal-002 ordering (g2-judge condition 7, failure-report-002): FIRST a G1 interpretation round (waiver_ref field + token; signer_kind_outside_enum token; ring count vs ring set; dangling-source reading of AC-004-b), THEN l5-tests encodes the 4 + 7 eval_cases and re-signs l5, THEN a NEW holdout — the 4 current misses are burned by the report. No task budget was granted this run (2/2 exhausted)."
       - "check_verbatim_names / derive_counts need --manifest (I-54 / I-59)"
     spec_authors:
       - "AC-008..011-b unwanted twins should carry a self-contained given (I-55)"

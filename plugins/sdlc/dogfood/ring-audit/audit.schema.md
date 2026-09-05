@@ -200,6 +200,8 @@ run_evidence: {}                 # 本次运行的行为层证据
 `source` 必须指向一个 Assessment id 或 Gap id（`proposal_without_source`）——补的理由只能是一个已识别的
 Gap，不能因为「这环显得单薄」就提（DP-2）。`destination` ∈ `new_issue | skill_fix_list | no_action`。
 
+**已知空隙（2026-09-06，failure-report-002）**：check_audit.py 08238cd 只检 `source` 非空，**不**解析该 id 是否存在（holdout hv_proposal_dangling_source 未命中）；解析谓词随 change-proposal-002 加入。写 audit.yaml 时仍应让 source 可解析——这是规格要求，只是本轮无机械闸。
+
 ## run_evidence
 
 行为层证据 + F-07 签字三元组。**签字三元组住在这里，不在 `gates[]`**（rule 3b）。
