@@ -1,0 +1,333 @@
+doc: /private/tmp/claude-501/-Users-xrensiu-development-owner-claude-code-forge/f56b9a3f-2a7a-492a-9421-0011776ea21f/scratchpad/report/draft-v3.md
+reader: 第一次听说 sdlc 插件、正在评估要不要给团队的 coding agent 上一套流程的技术负责人（懂工程，不懂这个插件的内部术语）
+genre: memo
+lang: zh
+verdict: needs_revision
+contamination: []
+one_sentence: "sdlc 靠把「需求写成可判真假的条件」和「验收交给不是作者的东西」编译成不跑就走不下去的门来抬高团队用 coding agent 的下限；值得上，但要先补两个洞：它自己从没做过带与不带的对照，也不检查代码结构退化。"
+decision_at_paragraph: 3
+flags: []
+paragraphs:
+  - n: 1
+    expected: "读完标题「sdlc 如何抬高下限」我以为会先看到下限低成什么样、谁为它付过代价"
+    got: "同一模型下两个人交出的两份实现，一份技术对产品错；差别在喂给 agent 的东西，并给出两个解释"
+    lost_at: "2026-09-05 提出的这个观察给"
+    told_not_shown: []
+    new_first: false
+    list_replaces_argument: false
+    hedged_claim: false
+  - n: 2
+    expected: "我以为会开始检验刚给出的两个解释哪个成立"
+    got: "报告的三项任务、读者是谁、承诺内部名字出现时先解释一句"
+    lost_at: null
+    told_not_shown: []
+    new_first: false
+    list_replaces_argument: false
+    hedged_claim: false
+  - n: 3
+    expected: "我以为会开始做第一件事：查业界"
+    got: "提前给结论：解释一成立、解释二只对一半；真起作用的是可判真假的条件加非作者验收；28 个 skill 里 20 个在做这两件事；缺口是全部未验证且无结构性质量闸"
+    lost_at: "它的机制目前全是「编译了、没验证"
+    told_not_shown:
+      - "第一个解释有直接的实验证据支持"
+      - "这 20 个就是它抬高下限的地方"
+    new_first: false
+    list_replaces_argument: false
+    hedged_claim: false
+  - n: 4
+    expected: "我以为会直接给数字"
+    got: "预告四组数字分别回答哪四个问题"
+    lost_at: null
+    told_not_shown: []
+    new_first: false
+    list_replaces_argument: false
+    hedged_claim: false
+  - n: 5
+    expected: "第一组数字：补足信息有多大用"
+    got: "Ambig-SWE 允许提问后解决率最高 +74%；Ask or Assume 69.40% 对完整 issue 的 70.80%"
+    lost_at: null
+    told_not_shown: []
+    new_first: false
+    list_replaces_argument: false
+    hedged_claim: false
+  - n: 6
+    expected: "第二组数字：上下文文件有多大用"
+    got: "288 次运行下有无 AGENTS.md 差别不可测量；但提交配置文件的团队认知复杂度增长 27% 对 53%"
+    lost_at: null
+    told_not_shown: []
+    new_first: false
+    list_replaces_argument: false
+    hedged_claim: false
+  - n: 7
+    expected: "第三组数字：agent 代码在哪个维度退化"
+    got: "复制粘贴 9.4% 涨到 15.7%、重构 21% 跌到 3.8%、跨文件调用少 35%；结论是没人拦"
+    lost_at: null
+    told_not_shown: []
+    new_first: false
+    list_replaces_argument: false
+    hedged_claim: false
+  - n: 8
+    expected: "第四组数字：作者自己验自己靠不靠得住"
+    got: "ImpossibleBench 里模型改测试作弊；METR 里人慢了 19% 却以为快 20%；Greptile 召回 82% 但精确率 36.5%"
+    lost_at: null
+    told_not_shown: []
+    new_first: false
+    list_replaces_argument: false
+    hedged_claim: false
+  - n: 9
+    expected: "四组数字收束成一个判断"
+    got: "真正的三个变量：动手前有无可判真假的条件、实现者能看到什么、验收是否由非作者做；上下文的量排最后"
+    lost_at: null
+    told_not_shown: []
+    new_first: false
+    list_replaces_argument: false
+    hedged_claim: false
+  - n: 10
+    expected: "我以为会讲这三个变量业界各自怎么解"
+    got: "四条路线的名字与预告，各说一段"
+    lost_at: null
+    told_not_shown: []
+    new_first: false
+    list_replaces_argument: false
+    hedged_claim: false
+  - n: 11
+    expected: "展开第一条路线"
+    got: "spec-driven 的四个工具、Böckeler 的三档分类与三条批评"
+    lost_at: null
+    told_not_shown: []
+    new_first: false
+    list_replaces_argument: false
+    hedged_claim: false
+  - n: 12
+    expected: "展开第二条路线"
+    got: "context engineering 是最小高信号 token 集；指导文件该从失败里调而不是手写"
+    lost_at: null
+    told_not_shown: []
+    new_first: false
+    list_replaces_argument: false
+    hedged_claim: false
+  - n: 13
+    expected: "展开第三条路线"
+    got: "OpenAI 用 Codex 生成约 100 万行、人只设计环境；架构约束写成 linter 和结构测试而不是文档"
+    lost_at: null
+    told_not_shown: []
+    new_first: false
+    list_replaces_argument: false
+    hedged_claim: false
+  - n: 14
+    expected: "展开第四条路线"
+    got: "审查放进只看 diff 的新子 agent；生成者与验证者必须分离、循环要有可测停止条件、失败回到对的层"
+    lost_at: null
+    told_not_shown: []
+    new_first: false
+    list_replaces_argument: false
+    hedged_claim: false
+  - n: 15
+    expected: "读完小标题我以为会讲 sdlc 怎么把一句愿望变成契约"
+    got: "愿望到代码之间的四道东西的清单与顺序，预告各说一段"
+    lost_at: null
+    told_not_shown: []
+    new_first: false
+    list_replaces_argument: false
+    hedged_claim: false
+  - n: 16
+    expected: "展开第一道"
+    got: "/psl 判语义主导还是确定性主导；产品世界六层；世界内容只有三种来路，不许拿默认值糊"
+    lost_at: null
+    told_not_shown: []
+    new_first: false
+    list_replaces_argument: true
+    hedged_claim: false
+  - n: 17
+    expected: "展开第二道"
+    got: "/issue 把需求写成可证伪条目：阈值要有来源、正向配反向孪生、验收只写观察边界；verify_issue.py 建 issue 前机械拒"
+    lost_at: null
+    told_not_shown: []
+    new_first: false
+    list_replaces_argument: false
+    hedged_claim: false
+  - n: 18
+    expected: "展开第三道"
+    got: "done_when.yaml v2 分机器可判与人判；G2 是人签的冻结门，签完实现者改不了判据；顺带说 sdlc 一共三道人签门"
+    lost_at: "sdlc 一共三道人签的门：G1 在建"
+    told_not_shown: []
+    new_first: false
+    list_replaces_argument: false
+    hedged_claim: false
+  - n: 19
+    expected: "展开第四道"
+    got: "/dos-extract 反抽本体；issue 里出现本体解析不了的名词就判词表闭包失败，强制转去建产品世界"
+    lost_at: null
+    told_not_shown: []
+    new_first: false
+    list_replaces_argument: false
+    hedged_claim: false
+  - n: 20
+    expected: "读完小标题我以为会讲上下文该怎么给"
+    got: "回答不是喂整个仓库，而是切成无上下文 agent 也能做完的卡；预告三件东西"
+    lost_at: null
+    told_not_shown: []
+    new_first: false
+    list_replaces_argument: false
+    hedged_claim: false
+  - n: 21
+    expected: "展开卡怎么切"
+    got: "/plan-cards 的卡内容、三项机器校验、超 4 万 token 必拆"
+    lost_at: null
+    told_not_shown: []
+    new_first: false
+    list_replaces_argument: false
+    hedged_claim: false
+  - n: 22
+    expected: "展开实现者拿到什么"
+    got: "拿到卡、状态摘要、验收子集、红基线、白名单源码；must_not_read 里是评审提示与隐藏集；改动进仓库前三道闸"
+    lost_at: null
+    told_not_shown: []
+    new_first: false
+    list_replaces_argument: false
+    hedged_claim: false
+  - n: 23
+    expected: "展开测试由谁写"
+    got: "测试由非实现者先写并签锁，实现者禁改 tests/**，直接堵 ImpossibleBench 的三种作弊"
+    lost_at: null
+    told_not_shown: []
+    new_first: false
+    list_replaces_argument: false
+    hedged_claim: false
+  - n: 24
+    expected: "我以为会继续讲 sdlc 的第四件东西"
+    got: "把这一角度对回业界两条主张，并承认白名单与锁只覆盖文件级、结构级没有"
+    lost_at: null
+    told_not_shown: []
+    new_first: false
+    list_replaces_argument: false
+    hedged_claim: false
+  - n: 25
+    expected: "读完小标题我以为会讲验收怎么做到不由作者做"
+    got: "六个独立审查 skill 并行加 meta-judge 只综合；产出分三档；/calibrate 要求标准本身先过 mutation score 与 α ≥ 0.80"
+    lost_at: null
+    told_not_shown: []
+    new_first: false
+    list_replaces_argument: false
+    hedged_claim: false
+  - n: 26
+    expected: "读完小标题我以为会讲失败往哪回"
+    got: "routing.yaml 分五层归因、每层有预算、三种收敛信号、账本只增不删、trace 与 retro 与 tune；并宣称 loop engineering 的七个部件都有对应物"
+    lost_at: null
+    told_not_shown:
+      - "这一层每个都有对应物"
+    new_first: false
+    list_replaces_argument: false
+    hedged_claim: false
+  - n: 27
+    expected: "我以为会直接开始走查一个真实需求"
+    got: "宣布用导出报表加 CSV 六列这个小需求走一遍，并标明它走 TASK 轨"
+    lost_at: "用一个小需求走一遍。TASK 轨"
+    told_not_shown: []
+    new_first: false
+    list_replaces_argument: false
+    hedged_claim: false
+  - n: 28
+    expected: "逐步走查"
+    got: "从 /issue 到 /release 的完整链路，含 gaming-detector 抓到 10 万行样本特判后路由回任务层收紧契约"
+    lost_at: null
+    told_not_shown: []
+    new_first: false
+    list_replaces_argument: false
+    hedged_claim: false
+  - n: 29
+    expected: "收束这次走查"
+    got: "人的水平差异被压在写需求、切卡、验收三处；抬高下限就是把资深工程师会做的三次核对编译成门"
+    lost_at: null
+    told_not_shown: []
+    new_first: false
+    list_replaces_argument: false
+    hedged_claim: false
+  - n: 30
+    expected: "读完小标题我以为会给缺口清单"
+    got: "先列 sdlc 自己已登记的空白与本次实测的三条接缝问题，再预告作者排序的五条"
+    lost_at: null
+    told_not_shown: []
+    new_first: false
+    list_replaces_argument: false
+    hedged_claim: false
+  - n: 31
+    expected: "第一条缺口"
+    got: "28 个 skill 全是 static_only，闸门阈值抄自文献，从没测过带与不带的差别；补法是 10 任务三组对照基线，设计已写好只是没人跑"
+    lost_at: null
+    told_not_shown:
+      - "这是最大的不完备"
+    new_first: false
+    list_replaces_argument: false
+    hedged_claim: false
+  - n: 32
+    expected: "第二条缺口"
+    got: "A 档不检圈复杂度增量、重复行、依赖方向；补法是 constraints 加 structure 一节并用 verify_structure.py 包现成工具进 A 档"
+    lost_at: null
+    told_not_shown: []
+    new_first: false
+    list_replaces_argument: false
+    hedged_claim: false
+  - n: 33
+    expected: "第三条缺口"
+    got: "card_context.md 没给测试怎么跑、构建怎么起、模块地图；这部分知识回流到每个人自己的 CLAUDE.md，正是差异来源；补法是仓库级 agent-map.md 加从失败里调"
+    lost_at: null
+    told_not_shown: []
+    new_first: false
+    list_replaces_argument: false
+    hedged_claim: false
+  - n: 34
+    expected: "第四条缺口"
+    got: "模糊检测只有本体闭包一条客观触发，槽判断仍是自评；补法是把 psl-derive 的隔离推导分歧集移植到 TASK 轨"
+    lost_at: null
+    told_not_shown: []
+    new_first: false
+    list_replaces_argument: false
+    hedged_claim: false
+  - n: 35
+    expected: "第五条缺口"
+    got: "流程不分大小，三行 bug 也走全程；补法是加体量门 S/M/L 并由 retro 按体量分桶验证分法"
+    lost_at: null
+    told_not_shown: []
+    new_first: false
+    list_replaces_argument: false
+    hedged_claim: false
+  - n: 36
+    expected: "我以为五条讲完就收尾"
+    got: "补两条未排进前五：跨供应商评估没接线，review 精确率没进 /tune"
+    lost_at: null
+    told_not_shown: []
+    new_first: false
+    list_replaces_argument: false
+    hedged_claim: false
+  - n: 37
+    expected: "读完小标题我以为会看到补齐后的完整链路"
+    got: "五处改动后的路径，以及人的差异在这五处各被压掉哪一部分"
+    lost_at: null
+    told_not_shown: []
+    new_first: false
+    list_replaces_argument: false
+    hedged_claim: false
+  - n: 38
+    expected: "我以为报告要收尾了"
+    got: "留一个未决问题：评审 agent 若仍是 Claude，它对 sdlc 产出的偏好本身可能就是 sycophancy，基线跑前得先定用哪家模型"
+    lost_at: null
+    told_not_shown: []
+    new_first: false
+    list_replaces_argument: false
+    hedged_claim: false
+  - n: 39
+    expected: "读完小标题我以为是一段可跳过的附录说明"
+    got: "另一个插件 humanize 的四个 bug 修复、版本从 0.1.1 升到 0.2.0、校准样本数字，并指向一份文末工艺表"
+    lost_at: "报告正文用仓库里的 humanize 插件过闸"
+    told_not_shown: []
+    new_first: true
+    list_replaces_argument: false
+    hedged_claim: false
+worst_three:
+  - n: 39
+    why: "整份文档的最后一段留给了另一个插件的 bug 修复清单——factdiff、围栏、humanlint 指数全无解释，且指向的「文末工艺表」在文档里不存在。要决定上不上流程的读者，最后带走的是一段与决策无关的内部维护记录。"
+  - n: 18
+    why: "G1 在讲 G2 的段落里被回填出现。上一段讲建产品世界时只字未提 G1，读者读到「一共三道人签的门」会先怀疑自己漏读，再回头翻——而三道人签门恰恰是这套流程最需要人点头的成本项。"
+  - n: 3
+    why: "第 2 段刚承诺内部名字出现时先解释一句，紧接着的结论段就用「编译了、没验证」下了全文最重的指控，而「编译」在这里指什么始终没说。第 27 段的「TASK 轨」是同一个毛病的第二次发作。"
