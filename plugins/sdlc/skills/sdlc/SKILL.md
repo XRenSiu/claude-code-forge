@@ -150,6 +150,12 @@ deletion 测试：撤掉本 skill，让引擎"把这个需求做完提 PR"。它
 - **G1**（PSL 轨必过）：三问 checklist（实体对不对 / 有无技术对产品错 / 每条决策从哪条规律推出）
   写进 `g1-record.md`；否决必须归因 `derivation_error | rule_error`（脚本拒绝无归因的 reject）；
   PSL 轨至少一项外部证据（原型走查 / 用户验证）。
+  **解释规则可追加、不触发变更提案**：裁决之后出的解释写进 `g1-interpretations.md`
+  （模板 `assets/g1_interpretations.md`），该文件**不进 G2 锁**——解释自己的裁决是 G1 的合法职能，
+  它不改签字版形态草案的任何一个字节（`lock_done_when.py sign` 直接拒绝把它锁进去，I-60）。
+  锁的是签字版 `form-draft.md` 与记着它 sha256 的 `g1-record.md`；要改结论就是新的一次 G1，不是解释。
+  分界线是**签字版有没有变**：补签（G2 回流引发的形态追加）改了签字版，写在 `g1-record.md` 的补签节里，
+  该撞锁、该走变更提案；解释一个字节都没改，不该。
 - **G2**（必过）：人确认判据、指派 human AC 的裁决人（`judge ∈ {product, design, tech}`），
   `lock_done_when.py sign --by <人>`。之后锁定检查进 A 档。
 - **G3**（默认触发）：产品需求默认触发；纯内部质量需求且 B 档无告警时不请求人（`gates.g3.required=false`

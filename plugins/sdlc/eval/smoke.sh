@@ -667,6 +667,11 @@ import json
 d=json.load(open('$TMP/gate-verify.json'))
 assert d['changed_gates']==['verify_thing.py'] and d['changed']==[], d
 assert 'deviation' in d['why'], d['why']\" || exit 9; exit \$rc"
+# dogfood 2026-09-06 (I-60): interpreting a G1 ruling changes no signed byte and must not need a proposal
+printf '# G1 interpretations\n' > g1-interpretations.md
+expect "sign refuses to lock a g1-interpretations file (I-60)" 2 py "$S/sdlc/scripts/lock_done_when.py" sign --by human --out .g1.lock done_when.yaml g1-interpretations.md
+printf '# G1 record\n- form draft sha256: deadbeef\n' > g1-record.md
+expect "the signed record itself is still lockable (I-60)" 0 py "$S/sdlc/scripts/lock_done_when.py" sign --by human --out .g1.lock done_when.yaml g1-record.md
 popd >/dev/null
 
 echo "== release / verify_release.py"

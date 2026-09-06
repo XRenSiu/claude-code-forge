@@ -15,8 +15,12 @@ Usage:
       deviation to record in the ledger, not a change of the criteria (dogfood 2026-09-06, I-30).
   lock_done_when.py verify [--lock .done_when.lock] [--proposal-glob 'change-proposal-*.md'] [--staged]
 
+Not lockable: g1-interpretations*.md. A G1 record's adjudication is frozen at signature, but interpreting
+its own ruling is a legitimate G1 function; freezing the interpretations file would make every clarification
+a contract change (dogfood 2026-09-06, I-60). Lock the signed form draft and the record instead.
+
 Exit codes:
-  sign:   0 written · 2 IO error
+  sign:   0 written · 1 bad signature (delegated without authorization) · 2 IO error / refused lock set
   verify: 0 all locked files unchanged
           1 REJECT — a locked file changed/missing and no change proposal accompanies it
           2 CHANGED_WITH_PROPOSAL — a locked file changed AND a change proposal is present
@@ -53,11 +57,21 @@ def now():
     return _dt.datetime.now(_dt.timezone.utc).replace(microsecond=0).isoformat()
 
 
+def unlockable(path):
+    """Files whose whole point is to be appended to after the signature (I-60)."""
+    return glob.fnmatch.fnmatch(os.path.basename(path).lower(), "g1-interpretations*.md") or \
+        glob.fnmatch.fnmatch(os.path.basename(path).lower(), "g1_interpretations*.md")
+
+
 def cmd_sign(a):
     files = []
     for p, role in [(p, "contract") for p in a.files] + [(p, "gate") for p in (a.gate or [])]:
         if not os.path.isfile(p):
             sys.stderr.write(f"lock: not a file: {p}\n"); sys.exit(2)
+        if unlockable(p):
+            die(f"refusing to lock {p}: a G1 interpretation is appended after the signature and must not need a "
+                "change proposal to land (I-60). Lock the signed form draft and the g1-record that carries its "
+                "sha256; interpretation rules go in g1-interpretations.md, outside the lock", 2)
         files.append({"path": p, "sha256": sha256(p), "role": role})
     if a.signer_kind == "delegated_agent" and not a.authorization:
         die("--signer-kind delegated_agent requires --authorization (who / when / what allowed the delegation)", 1)
