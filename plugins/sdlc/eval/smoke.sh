@@ -85,15 +85,29 @@ expect "bug kind without Repro rejected" 1 py "$S/issue/scripts/verify_issue.py"
 # dogfood 2026-09-05 (I-07): one-line Links (template shape) with a G1 path must not flag "without a G1 record path"
 PSLI="$TMP/psl_issue.md"; sed -e 's/- track: task/- track: psl/' -e 's|G1: none|G1: g1-record.md|' "$FX/good_issue.md" > "$PSLI"
 expect "psl-track issue with G1 path on the one-line Links carries no G1 flag (I-07)" 0 bash -c "python3 '$S/issue/scripts/verify_issue.py' '$PSLI' --dos '$FX/dos.yaml' | python3 -c \"import json,sys; d=json.load(sys.stdin); assert d['verdict']=='PASS' and not any('G1 record path' in f for f in d['flags']), d['flags']\""
-# dogfood 2026-09-06 (I-45): the issue restates the signed form in prose and prose drifts — three G1
-# rounds caught the body reusing wording the form had refused, with nothing mechanical watching. The
-# refusals are read from a DECLARED section, never parsed out of prose.
-G1REC="$TMP/g1_negations.md"
-printf '# G1\n\n## 明确不做\n\n- `%s` — 本次否决该说法\n- adopted ⇒ fits\n\n## 其他\n' "vague-term-xyz" > "$G1REC"
-BODYN="$TMP/issue_uses_refused.md"; sed 's|## Intent|## Intent\n\nvague-term-xyz 是本次的判定单位。|' "$PSLI" > "$BODYN"
-expect "issue reusing a word the G1 record refused is flagged (I-45)" 0 bash -c "python3 '$S/issue/scripts/verify_issue.py' '$BODYN' --dos '$FX/dos.yaml' --g1 '$G1REC' | python3 -c \"import json,sys; d=json.load(sys.stdin); assert any('明确不做' in f and 'vague-term-xyz' in f for f in d['flags']), d['flags']\""
-expect "a G1 record with no 明确不做 section says so, rather than passing silently (I-45)" 0 bash -c "printf '# G1\n\n## 四问\n' > '$TMP/g1_bare.md'; python3 '$S/issue/scripts/verify_issue.py' '$PSLI' --dos '$FX/dos.yaml' --g1 '$TMP/g1_bare.md' | python3 -c \"import json,sys; d=json.load(sys.stdin); assert any('no machine-readable' in f for f in d['flags']), d['flags']\""
-expect "the shipped g1_record template carries the section the check reads (I-45)" 0 bash -c "grep -q '^## 明确不做' '$S/sdlc/assets/g1_record.md'"
+# dogfood 2026-09-05 (I-45): the negation cross-check only works if the G1 template's documented shape
+# is the shape verify_issue.py reads. Derive the record from the template itself so the two cannot drift:
+# un-blockquoting the template's worked example is exactly what an author does when filling it in.
+G1T="$S/sdlc/assets/g1_record.md"
+G1F="$TMP/g1_filled.md"; sed 's|^> - |- |' "$G1T" > "$G1F"
+PSLI2="$TMP/psl_issue_banned.md"; sed 's|^- do: |- do: report each finding once; |' "$PSLI" > "$PSLI2"
+expect "G1 record written to the template's 明确不做 shape arms the issue cross-check (I-45)" 0 bash -c "python3 '$S/issue/scripts/verify_issue.py' '$PSLI2' --dos '$FX/dos.yaml' --g1 '$G1F' | grep -q 'uses \`finding\`, which the G1 record lists under 明确不做'"
+# I-22: the record's primary attribution is what the operator types into `gate --attribution`. If the
+# template names a value the script does not accept, the record and the counter disagree silently.
+cat > "$TMP/attr_agree.py" <<'ATTREOF'
+import re, sys
+tpl = open(sys.argv[1], encoding='utf-8').read()
+sec = re.search(r'^## 归因.*?(?=^## )', tpl, re.S | re.M).group(0)
+named = set(re.findall(r'`([a-z_]+_error)`', sec))
+script = open(sys.argv[2], encoding='utf-8').read()
+ok = set(re.findall(r'[\x27\x22]([a-z_]+_error)[\x27\x22]',
+                    re.search(r'--attribution.{0,12}choices=\[([^\]]*)\]', script).group(1)))
+# both directions: nothing named that the script rejects, and nothing the script accepts left
+# unoffered — a template that lists only one cause is the single-value design I-22 is about
+assert named == ok, (sorted(named), sorted(ok))
+ATTREOF
+expect "the G1 template and sdlc_state.py name the same attribution values (I-22)" 0 py "$TMP/attr_agree.py" "$S/sdlc/assets/g1_record.md" "$S/sdlc/scripts/sdlc_state.py"
+expect "an unfilled G1 template yields no terms and says the wording cannot be checked (I-45)" 0 bash -c "python3 '$S/issue/scripts/verify_issue.py' '$PSLI2' --dos '$FX/dos.yaml' --g1 '$G1T' | grep -q 'no machine-readable'"
 
 echo "== plan-cards / lint_cards.py"
 FX="$S/sdlc/eval/fixtures"
