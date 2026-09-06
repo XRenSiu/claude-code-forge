@@ -395,7 +395,7 @@
 | `spec-gaming-detector` [^A-spec-gaming-detector] | `skill` | `Judgment` contract-gaming-detection | `ratchet-log/iteration-NNN/gaming.yaml` | 闸 `compute_score.py` | `ratchet-log/iteration-NNN/gaming.yaml` → **（无闸 → 封顶 declared）** | `null` | **necessary** | **declared**<br>未达：`compiled` / `verified` | adopted → **fits** |
 | `meta-judge` [^A-meta-judge] | `skill` | `Judgment` finding-synthesis-without-re-review | `ratchet-log/iteration-NNN/final-verdict.yaml` | 闸 `compute_confidence.py` | `ratchet-log/iteration-NNN/final-verdict.yaml` → **（无闸 → 封顶 declared）** | `loops.yaml#acceptance_ratchet` | **necessary** | **declared**<br>未达：`compiled` / `verified` | adopted → **fits** |
 | `pr-review` [^A-pr-review] | `skill` | `Judgment` single-pr-finding-tiering | `.sdlc/review/*.yaml` | 闸 `post_review.py` | `.sdlc/review/*.yaml` → `post_review.py`<br>`github:review` → `post_review.py` | `null` | **necessary** | **compiled**<br>未达：`verified`<br>`calibrated: false` | authored → **fits** |
-| `human_gate.G3` [^A-G3] | `human_gate` | `Judgment` exception-review-before-merge | `g3-record.md`<br>role `gate` | 门 `G3` | `g3-record.md` → **（无闸 → 封顶 declared）** | `loops.yaml#lifecycle` | **necessary** | **compiled**<br>未达：`verified` | authored → **fits** |
+| `human_gate.G3` [^A-G3] | `human_gate` | `Judgment` exception-review-before-merge | `g3-record.md`<br>role `gate` | 门 `G3` | `g3-record.md` → **（无闸 → 封顶 declared）** | `loops.yaml#lifecycle` | **necessary** | **declared**<br>未达：`compiled` / `verified` | authored → **fits** |
 | `agent.review-triager` [^A-review-triager] | `agent` | `Judgment` review-comment-as-claim-verification | `triage.yaml` | **无闸无门** | `triage.yaml` → **（无闸 → 封顶 declared）** | `loops.yaml#review_loop` | **necessary** | **declared**<br>未达：`compiled` / `verified` | authored → **fits** |
 | `agent.fix-verifier` [^A-fix-verifier] | `agent` | `Control+Judgment` isolated-fix-verification | `verify.yaml` | **无闸无门** | `verify.yaml` → **（无闸 → 封顶 declared）** | `loops.yaml#review_loop` | **necessary** | **declared**<br>未达：`compiled` / `verified` | adopted → **fits** |
 | **（缺少）** `meets-done-when-compare-script` | — | `Capability+Control`<br>**lifecycle_blank（生命周期自列的空白）** | — | — | — | — | necessity **necessary**<br>撤掉 / 不补它：没有脚本按契约阈值算 meets_done_when：这一栏只能由评估 agent 用自然语言宣布"达标了"。错误产物是一份 final-state.json 里写着 DONE、而没有任何一处把 done_when.yaml 的 thresholds 与实测数字并排比过——ARCHITECTURE §6.7 那句「meets_done_when 由脚本比对，不由评估 agent 宣布」在 R6 没有执行处。<br>证据：`file:plugins/sdlc/docs/ARCHITECTURE.md#L287` · `file:plugins/sdlc/docs/lifecycle.md#L42` · `file:plugins/sdlc/docs/design-notes.md#L31`<br>disposition `issue` | — | — |
@@ -524,7 +524,8 @@
 
 - **needed `necessary`** — 撤掉后：撤掉后四态里的 NEEDS_HUMAN 无处落地。human AC（UI/UX 意图、架构取舍）、pm-reviewer 的 requires_human_verification 清单、以及"在当前契约下不可能"的升级报告都没有收件人，acceptance-fleet 只能把它们降级成 FIX 发回实现者——实现者拿到一个他判不了的判断题，于是猜一个改法，猜错的那一次以全绿合入。这就是"机器判不了的地方"被机器判了：三道门存在的位置，正是机器判断不被信任的位置。
     - 证据：`file:plugins/sdlc/skills/sdlc/assets/graph.yaml#L197-L203` · `file:plugins/sdlc/docs/ARCHITECTURE.md#L40` · `file:plugins/sdlc/skills/sdlc/scripts/sdlc_state.py#L279-L280`
-- **implemented `compiled`** — compiled（有 verify 脚本或被门挡）
+- **implemented `declared`** — declared（只有 SKILL.md / 提示）
+    - 未达 `compiled`：F-06 封顶（G3 裁定，mf-009）：本 Part 登记的每一个 Artifact 的 checked_by 都为空——g3-record.md 没有任何脚本检其形状，cmd_gate 对 G3 的 pass 也不检任何输入。既然产物无闸，producer 不得高于 declared。原记 compiled 系按"有 sdlc_state.py gate 这条命令"读，G3 裁定该读法把"有命令"当成了"有闸"。
     - 未达 `verified`：本次 Run 的 G3 还没到（卡面状态摘要：stage = implement），没有真人签过。而且即便签了也不构成对 R6 产物的行为层校验：cmd_gate 对 G3 pass 不检任何输入——对比 G1 pass 要求 world.derived_dir 是个存在的目录、G2 pass 要求 lock.path 是个存在的文件（sdlc_state.py#L384-L392），G3 那一支是空的。见 gap R6/newly_identified/control/g3-pass-has-no-input-precondition。
     - 证据：`file:plugins/sdlc/skills/sdlc/scripts/sdlc_state.py#L278-L281` · `file:plugins/sdlc/skills/sdlc/scripts/sdlc_state.py#L394-L395` · `file:plugins/sdlc/skills/sdlc/scripts/sdlc_state.py#L297-L298`
 - **naming authored → `fits`** — 位置 / 产物：`g3-record.md / 例外复核门（验收之后、合入之前）`
@@ -590,7 +591,7 @@
 |---|---|---|---|---|---|---|---|---|---|
 | `pr` [^A-pr] | `skill` | `Judgment+Control` pr-body-product-order | `github:pr` | 闸 `verify_pr.py` | `github:pr` → `verify_pr.py` | `null` | **necessary** | **compiled**<br>未达：`verified`<br>`calibrated: false` | authored → **fits** |
 | `review-loop` [^A-review-loop] | `skill` | `Capability+Judgment+Control` review-convergence-binding | `.sdlc/pr-watch/pr-N.json` | 闸 `pr-poll.sh` | `.sdlc/pr-watch/pr-N.json` → `pr-poll.sh`<br>`github:reply` → **（无闸 → 封顶 declared）**<br>`github:resolve` → **（无闸 → 封顶 declared）** | `loops.yaml#review_loop` | **necessary** | **compiled**<br>未达：`verified`<br>`calibrated: false` | adopted → **fits** |
-| `agent.pr-reviewer` [^A-agent.pr-reviewer] | `agent` | `Judgment` pre-review-isolated-second-read | `findings.yaml (pre-review)` | 闸 `verify_pr.py` | `findings.yaml (pre-review)` → **（无闸 → 封顶 declared）** | `null` | **necessary** | **compiled**<br>未达：`verified`<br>`calibrated: false` | adopted → **fits** |
+| `agent.pr-reviewer` [^A-agent.pr-reviewer] | `agent` | `Judgment` pre-review-isolated-second-read | `findings.yaml (pre-review)` | 闸 `verify_pr.py` | `findings.yaml (pre-review)` → **（无闸 → 封顶 declared）** | `null` | **necessary** | **declared**<br>未达：`compiled` / `verified`<br>`calibrated: false` | adopted → **fits** |
 | `human_gate.merge` [^A-human_gate.merge] | `human_gate` | `Judgment+Control` merge-is-a-human-act | `github:merge`<br>role `gate` | **无闸无门** | `github:merge` → **（无闸 → 封顶 declared）** | `null` | **necessary** | **declared**<br>未达：`compiled` / `verified` | authored → **fits** |
 | `release` [^A-release] | `skill` | `Judgment+Control` post-merge-delivery-order | `releases/vX.Y.Z.md` | 闸 `verify_release.py` | `git:tag vX.Y.Z` → `verify_release.py`<br>`CHANGELOG.md` → `verify_release.py`<br>`releases/vX.Y.Z.md` → `verify_release.py` | `null` | **necessary** | **compiled**<br>未达：`verified`<br>`calibrated: false` | authored → **fits** |
 | **（缺少）** `merge-signer-not-enforced` | — | `Control`<br>**unenforced_rule（宪法有规则、机器无闸）** | — | — | — | — | necessity **necessary**<br>撤掉 / 不补它：dos.yaml R008「Gate 的裁决带人类签字人，skill / agent 节点不得记录它」的 enforced_by 是 user_workflow —— 没有脚本阻止一个 agent 记下 merge 这道人门的结论。具体漏检：一次由 agent 代记的合入裁决与人签的合入裁决在 state.json 里长得一模一样，事后无法分辨。<br>证据：`file:plugins/sdlc/dogfood/ring-audit/dos.yaml#L404-L407` · `file:plugins/sdlc/skills/sdlc/assets/graph.yaml#L239-L245`<br>disposition `issue` | — | — |
@@ -631,7 +632,8 @@
 
 - **needed `necessary`** — 撤掉后：撤掉后 `/pr --pre-review` 只能由写这个 PR 的同一上下文自审 —— 自审读不出自己的盲点 （PSL-003 评估者与被评估者分离）。具体错误产物 —— 一个 `## Known issues` 段没有来源、 条目无 file:line 锚点的 PR body（verify_pr.py --pre-review 会拒，于是 --pre-review 这条路直接不可用）； 具体漏检 —— 本可在 push 前修掉的 P0 全部推到 reviewer 侧，review 轮次上移。
     - 证据：`file:plugins/sdlc/agents/pr-reviewer.md#L10-L11` · `file:plugins/sdlc/skills/pr/SKILL.md#L55-L58` · `file:plugins/sdlc/docs/design-notes.md#L80-L81`
-- **implemented `compiled`** — compiled（有 verify 脚本或被门挡）
+- **implemented `declared`** — declared（只有 SKILL.md / 提示）
+    - 未达 `compiled`：F-06 封顶（G3 裁定，mf-009）：其独占产物 findings.yaml（pre-review）的 checked_by 为空——verify_pr.py --pre-review 检的是下游 PR 正文的 Known issues 段，不是本 agent 的 findings 文件本身。原记 compiled 的理由（下游有闸）被 G3 裁为不成立：封顶看的是本产物有没有闸。
     - 未达 `verified`：gate.json fix_list 第 3 条 "L2: run /pr --pre-review once with agents/pr-reviewer.md in a fresh context and check survivors land in Known issues" 未做 —— 隔离预审从未真跑过。
     - 备注：判 compiled 有争议、并列记下：被 verify_pr.py --pre-review 挡住的是**下游投影**（PR body 的 Known issues 段：段存在 / 每条有锚点 / 无 A 档），不是本 agent 自己的 findings.yaml。取 compiled 的理由是这条闸真的会拒（verify_pr.py#L194 exit 1），产不出合格 findings 就发不出 PR； 取 declared 的理由是 agents/*.md 没有自己的 eval/gate.json，产物本身无检。留给 G3 的人定。
     - 这把尺子本身校准了没有（PSL-007）：`calibrated: false`
@@ -683,7 +685,7 @@
 | 配件 / 缺少 | kind | 缺口 · 原子 | 独占产物 / 角色 | 闸 · 门 | artifact 闸（checked_by） | Loop | needed | implemented | naming |
 |---|---|---|---|---|---|---|---|---|---|
 | `retro` [^A-retro] | `skill` | `Knowledge+Judgment` process-illness-baseline | `retro/retro-<date>.md` | 闸 `metrics.py` | `retro/retro-<date>.md` → **（无闸 → 封顶 declared）**<br>`metrics.json` → **（无闸 → 封顶 declared）**<br>`change-proposal-*.md` → **（无闸 → 封顶 declared）** | `loops.yaml#lifecycle` | **necessary** | **declared**<br>未达：`compiled` / `verified` | authored → **fits** |
-| `tune` [^A-tune] | `skill` | `Knowledge+Judgment+Control` harness-param-from-evidence | `tune/harness-proposals-<date>.yaml` | 闸 `tune.py` | `tune/harness-proposals-<date>.yaml` → **（无闸 → 封顶 declared）**<br>`tune/*.patch` → **（无闸 → 封顶 declared）** | `loops.yaml#hill_climb` | **necessary** | **compiled**<br>未达：`verified`<br>`calibrated: false` | authored → **misfit**<br>建议名 `harness-tune`<br>**不重命名** |
+| `tune` [^A-tune] | `skill` | `Knowledge+Judgment+Control` harness-param-from-evidence | `tune/harness-proposals-<date>.yaml` | 闸 `tune.py` | `tune/harness-proposals-<date>.yaml` → **（无闸 → 封顶 declared）**<br>`tune/*.patch` → **（无闸 → 封顶 declared）** | `loops.yaml#hill_climb` | **necessary** | **declared**<br>未达：`compiled` / `verified`<br>`calibrated: false` | authored → **misfit**<br>建议名 `harness-tune`<br>**不重命名** |
 | `human_gate.harness-review` [^A-human_gate.harness-review] | `human_gate` | `Judgment+Control` harness-change-through-human | `github:pr (harness 提案)`<br>role `gate` | **无闸无门** | `github:pr (harness 提案)` → **（无闸 → 封顶 declared）** | `loops.yaml#hill_climb` | **necessary** | **declared**<br>未达：`compiled` / `verified` | authored → **fits** |
 | **（缺少）** `retro-output-no-rejecting-gate` | — | `Control`<br>**newly_identified（本次审计新识别）** | — | — | — | — | necessity **necessary**<br>撤掉 / 不补它：retro 的产物（retro/retro-<date>.md、metrics.json）既没有会拒绝的脚本、也不被任何门挡： metrics.py 只导出，全文无非零退出路径。ARCHITECTURE.md#L42 §1 R8 的「门 / 闸」列却把它列成闸。 具体错误产物：一份提案没有 target / verify_by、数字手抄自记忆的复盘报告照样通过 archive， "每个环节的产物要么被脚本检要么被门挡"（PSL-015）在 R8 断掉。<br>证据：`file:plugins/sdlc/skills/retro/scripts/metrics.py#L108-L109` · `file:plugins/sdlc/docs/ARCHITECTURE.md#L42` · `gate_json:plugins/sdlc/skills/retro/eval/gate.json#gate_pass=static_only`<br>disposition `issue` | — | — |
 | **（缺少）** `harness-change-effect-unmeasured` | — | `Knowledge+Judgment`<br>**newly_identified（本次审计新识别）** | — | — | — | — | necessity **necessary**<br>撤掉 / 不补它：hill_climb 的成功谓词是 harness_proposal_merged_or_rejected（loops.yaml#L109）—— 只问提案有没有被处置，不问指标有没有动。没有"上一期的 harness 改动之后 expected_delta 是否兑现"的回读者。具体漏检：一条把 MAX_ROUNDS 收紧的提案合入后 review 反而更常撞顶， 下一期只会看到"撞顶率高 → 再放宽"，爬山环在原地来回而 plateau 检测（同一 target 连续两期 方向相反）要到第三期才可能触发。<br>证据：`file:plugins/sdlc/skills/sdlc/assets/loops.yaml#L109-L114` · `file:plugins/sdlc/skills/tune/SKILL.md#L59-L61`<br>disposition `issue` | — | — |
@@ -708,7 +710,8 @@
 
 - **needed `necessary`** — 撤掉后：撤掉后引擎在某次 review 跑到 exit 30 之后会说"MAX_ROUNDS 太小，改成 20"并直接 sed 改脚本。 具体错误产物 —— 一个没有跨 PR 数据支撑、没有 expected_delta / verify_by、也没经过人审的 harness 参数改动直接落进 pr-poll.sh / routing.yaml；具体漏检 —— "预算耗尽且伴随收敛升级" （层错了，不是预算不够，SKILL.md#L46）这一类会被读成预算问题，环的参数朝错误方向爬山， 且 harness 改动绕过人（PSL-013）。
     - 证据：`file:plugins/sdlc/skills/tune/SKILL.md#L23-L27` · `file:plugins/sdlc/skills/tune/SKILL.md#L36-L38` · `file:plugins/sdlc/skills/sdlc/assets/loops.yaml#L106-L121`
-- **implemented `compiled`** — compiled（有 verify 脚本或被门挡）
+- **implemented `declared`** — declared（只有 SKILL.md / 提示）
+    - 未达 `compiled`：F-06 封顶（G3 裁定，mf-009）：harness-proposals.yaml 与 *.patch 的 checked_by 均为空；tune.py 自身除 IO 错误外恒 exit 0（SKILL.md 自陈是报告工具），apply_proposal.py 只出 diff 不写目标文件。无非零退出路径即无闸，故封顶 declared。
     - 未达 `verified`：gate.json fix_list 第 1 条 "run on ≥2 real archives + a real .sdlc/pr-watch" 未做； 只在 2 归档 + 2 PR 的 fixture 上跑过。
     - 备注：判 compiled 的承重点是 apply_proposal.py 的结构性控制：它只出 unified diff / patch，从不写目标文件 （SKILL.md#L70-L71），未知 apply.kind 直接 exit 1；tune.py#L302 对封闭 target 集外的 target exit 2。 但 tune.py 自身 exit 0 恒成立（SKILL.md#L69 自述"报告工具"），所以"每条提案 9 项齐"这条判据 没有编译态出口 —— 登记为 R8 的 Gap，不抬高本维判定。
     - 这把尺子本身校准了没有（PSL-007）：`calibrated: false`
@@ -1089,5 +1092,5 @@ R017 归到的两个环不是装配当时预判的 R3 / R8（上表现算的结�
 
 ### 铁律
 
-check-audit 的 exit 0 说的是**这份文档的形状齐全**，不是「九环做到位了」。42 个配件里 16 个停在 `declared`、26 个停在 `compiled`，**没有一个到 `verified`**；三道门里 3 道代签（delegated）；外部证据是 `substitute`。
+check-audit 的 exit 0 说的是**这份文档的形状齐全**，不是「九环做到位了」。42 个配件里 19 个停在 `declared`、23 个停在 `compiled`，**没有一个到 `verified`**；三道门里 3 道代签（delegated）；外部证据是 `substitute`。
 这份报告能不能当结论，由 G3 的人看完上面这些标记之后决定。

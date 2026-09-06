@@ -100,6 +100,10 @@ HTML disciplines are the load-bearing three; full procedures in `references/give
   "稳定" → "在 1000 次并发下 0 报错"; "大部分" → a number. **A clause you cannot point an instrument
   at is boilerplate, not an acceptance condition.** Every surviving clause must name a value a gate
   can read. This is the line between a recovered 本次验收 and an LLM inventing plausible-sounding wishes.
+- **Every happy path carries an unhappy twin, and the twin stands alone.** A `given` that states only
+  the difference forces the reader to inherit the rest from its sibling, so a checker handed just the
+  twin cannot tell what was removed — restate the happy `given`, then write the difference.
+  `validate_done_when_v2.py` rejects a twin whose `given` does not cover its pair's (dogfood I-55).
 - **Every happy path carries an unhappy twin.** A clause that only says what should succeed leaves
   the failure semantics undefined — exactly the seam an agent games (pass the example, ignore the
   edge). For each `WHEN <happy> THE SYSTEM SHALL <succeed>`, draft the paired

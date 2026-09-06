@@ -17,7 +17,7 @@ description: >-
   test suite" / "build verification battery" / "/test-suite-generator" /
   pointing at any specs/<feature>/ directory.
 argument-hint: "<path to specs/<feature>/ or path to done_when.yaml>"
-version: 1.1.0
+version: 1.2.0
 user-invocable: true
 # imported into sdlc 2026-09-05 from done-when-pipeline v1.1.0 (canonical copy in this repo; qanat holds an older copy); body kept, sdlc wiring section added
 ---
@@ -54,6 +54,10 @@ Do not narrate further — just walk the sub-steps.
     - **If the YAML already lists tests** for a layer the matrix marks `–` (e.g. an e2e test for a State-driven or Unwanted REQ), generate it but flag the deviation in the file header comment (`# matrix-deviation: REQ-XXX State-driven gets e2e per Step 3 contract`).
     - **If the YAML omits tests** for a layer the matrix marks `✓`, do NOT invent them — that's iron rule 7 ("No inventing requirements"). Just note the omission in the manifest.
     The matrix is a *sanity-check on the contract*, not an override of it. But the deviations need to be visible so Step 5/6 reviewers can decide whether to push back on Step 3 or accept the choice.
+
+14. **A check over an empty set never passes.** Under `schema: 2` the contract's `behavior:` is an empty seed and the test list lives in `tests/<feature>/tests-manifest.yaml`; `--manifest` is a first-class input to `check_verbatim_names.py` and `derive_counts.py`. Pointed at the contract alone, both exit 2 rather than printing `0/0 ✓` or `0 unit tests` — a success report over an empty set is a claim of coverage nobody verified, and it arrives in the shape of evidence. Same rule for any gate you write: if it cannot fail, it is not a gate. See §4-A for the matching `existence:` change (v2 `cli:` / `ui:` boundaries).
+
+15. **A test that cannot tell the two implementations apart is worse than no test.** It claims coverage nobody has. Two mechanical consequences: the RED baseline is captured in a clean checkout of HEAD (`scripts/capture_red_baseline.py`), never in a working tree a parallel implementer is writing into; and every regression test for a fail-open bug ships with the mutation output that proves it goes red against the old code (`smoke.sh --mutate`). See §4-E.
 
 ---
 
@@ -106,7 +110,16 @@ Read `references/sub-modules/existence-extractor.md` for the full grammar.
 python scripts/gen_existence.py <done_when.yaml> --src src --version <this SKILL's frontmatter version> > tests/<feature>/existence.sh
 ```
 
-`scripts/gen_existence.py` is the existence-script primitive. It seals the mechanical correctness so it is never re-improvised each run: `set -euo pipefail` is always line 1, every check runs through a no-`if` helper (so `errexit` can never be silently swallowed), and the `function:` check always uses the broad export-matching regex (direct / `export default` / barrel re-export) — a too-narrow regex that false-negatives on the latter two now has no slot to slip into. It maps the five v1 kinds (`file` / `function` / `route` / `db_field` / `frontend_component`) per `references/sub-modules/existence-extractor.md`; v0.x kinds like `env_var:` / `cli_command:` are not v1 and should already have been rejected by the validator.
+`scripts/gen_existence.py` is the existence-script primitive. It seals the mechanical correctness so it is never re-improvised each run: `set -euo pipefail` is always line 1, every check runs through a no-`if` helper (so `errexit` can never be silently swallowed), and the `function:` check always uses the broad export-matching regex (direct / `export default` / barrel re-export) — a too-narrow regex that false-negatives on the latter two now has no slot to slip into.
+
+**Both contract generations map.** v1 (Appendix C) kinds: `file` / `function` / `route` / `db_field` / `frontend_component`, per `references/sub-modules/existence-extractor.md`. v2 (`schema: 2`) drops `file:` / `function:` — a v2 `existence:` block carries **observation boundaries** (`validate_done_when_v2.py` `EXIST_KEYS`: `route` / `db_field` / `ui` / `cli` / `event` / `frontend_component` / `api` / `topic` / `queue`), and file-level existence lives in the cards' `allowed_files` instead. The two v2 boundaries with real resolvers here:
+
+| Boundary | What the generated check asserts | Flags |
+|---|---|---|
+| `cli: <name>` | the command is reachable — on `PATH`, or a script under `$SRC` / `$DOCS` named `<name>` / `<name>.py` / `<name>.sh` (and the underscore spelling) | `--cli NAME=PATH` pins it to one file instead |
+| `ui: <surface>#<anchor>` | the surface file exists under `$DOCS`, **and** carries the anchor — a heading whose slug matches (separators interchangeable, so `#run-evidence` matches `## run_evidence`), or an explicit `id=` / `name=` / `{#anchor}` target | `--ui SURFACE=PATH` pins the surface; `--ui-anchor 'SURFACE#ANCHOR=EREGEX'` (repeatable) supplies extra patterns |
+
+`--docs` defaults to the contract's own directory; `--ui-anchor` is how domain knowledge the contract string cannot carry gets in as **data**. A `ui: AUDIT.md#ring-tables` anchor that really means "nine `## R0`…`## R8` sections plus a `needed|implemented|naming` table header" is eleven `--ui-anchor` flags, not eleven hand-written `grep` lines — the bash stays generated. Hand-writing `existence.sh` because the contract is v2 is the bug this closes (I-54); if a kind still has no mapping, say so and push back on the contract, do not open an editor.
 
 **Why a primitive, not prose (skillwise THEORY.md §3).** Fail-fast (per `done-when-pipeline.md` §6.2) means stop on the **first** missing symbol — surfacing one immediately beats a 20-line tally. The forbidden anti-pattern is a count-all-then-exit tally, because an `if`/`||`-with-assignment wrapper disables `errexit` and swallows the failure. Hand-writing the bash is exactly where that bug crept back in before; the generator is the guarantee. If a user *insists* on a count-all diagnostic mode, that is a separate file (`existence-diag.sh`) and a SKILL-level discussion — do not silently switch the default.
 
@@ -226,6 +239,26 @@ The script must exit nonzero on kill-rate under threshold; this is the signal `r
 
 Do NOT run the mutation suite right now — it takes minutes-to-hours. Just emit and document.
 
+### A regression test for a fail-open must come with a mutation proof
+
+Mutation is not only the implementer's gate at 4-E. It is **your** gate on any test you write to close a bug — above all a *fail-open* bug, where the buggy code returns the same visible outcome as the fixed code for the wrong reason.
+
+The recorded case (I-80): two regression twins were written for a fail-open in a commit-range resolver. The fixture committed the tamper, which left the git index equal to `HEAD`, so the **buggy** resolver read the tampered index and rejected — the right-looking verdict from the wrong state. Both twins passed against the buggy implementation. Nobody noticed until an isolated verifier put the old code back and the whole suite stayed green.
+
+The rule:
+
+1. **Construct state that separates the two implementations**, not just the outcome that both produce. Reproducing the external symptom (`REJECT`) is not a regression test; the fixture has to make the buggy read and the fixed read disagree (there: the frozen bytes staged, the tamper left in the range head).
+2. **Put the old implementation back and watch the test go red.** In this plugin that is one command:
+
+   ```
+   bash plugins/sdlc/eval/smoke.sh --mutate <file> '<old-string>' '<new-string>'
+   ```
+
+   It copies the plugin to a scratch dir, applies the string mutation there, runs the suite against the copy, and prints the expectations that went red. Exit 0 = killed (they are named); exit 1 = **MUTANT SURVIVED**. Add `--only <ERE>` to run just the labels you care about while iterating.
+3. **Paste the killed-by list into the commit or the PR body.** A twin with no mutation proof is an unverified claim.
+
+> A test that passes against both implementations is worse than no test, because it claims coverage that nobody has. This is `/calibrate` mirror ① (mutation score) applied one test at a time: a gate nothing can fail is not a gate.
+
 ---
 
 ## 4-F — Removed in v1.0.0
@@ -252,10 +285,14 @@ Re-routing reference (for users migrating from v0.x contracts):
 **First, run the traceability exit gate (bundled primitive):**
 
 ```
-python scripts/check_verbatim_names.py <done_when.yaml> tests/<feature>/ --check
+python scripts/check_verbatim_names.py <done_when.yaml> tests/<feature>/ --check                  # v1 contract
+python scripts/check_verbatim_names.py <done_when.yaml> tests/<feature>/ \
+       --manifest tests/<feature>/tests-manifest.yaml --check                                     # v2 contract
 ```
 
 It asserts every contract test name appears in the generated files character-for-character. Any `MISSING (verbatim)` line means a name was paraphrased (the TS/JS `test('humanized title')` trap — iron rule 9), which silently breaks the downstream `grep`-based contract↔impl traceability. Fix the offending file before reporting to the user. This is the *product* check skillwise THEORY.md §4 asks for — a rule the author "should follow" is not a guarantee; a runnable check of the emitted files is.
+
+**Under v2 the names are not in the contract.** A `schema: 2` `done_when.yaml` keeps `behavior:` as an empty seed — the real list is the `tests-manifest.yaml` this skill fills and L5 locks. `--manifest` is therefore a first-class input, not a workaround; the manifest may also be passed as the positional argument on its own. Point the check at the contract alone and there is nothing to check, which is now an **error, not a pass**: an empty contract-name set exits 2 and tells you to pass `--manifest` (I-59). `0/0 contract names found ✓ every contract test name appears` was a success report over an empty set — traceability nobody verified, printed in the shape of evidence.
 
 Then tell the user, in short bullets:
 
@@ -271,7 +308,10 @@ Both the counts line above AND the same counts in the generated `tests/<feature>
 ```
 python scripts/derive_counts.py <done_when.yaml>          # human line + table
 python scripts/derive_counts.py <done_when.yaml> --json    # machine
+python scripts/derive_counts.py <done_when.yaml> --manifest tests/<feature>/tests-manifest.yaml   # v2
 ```
+
+Same v2 rule as the traceability gate above: behaviour counts come from the manifest, the `existence:` count from whichever document declares one. An empty `behavior:` with no `--manifest` exits 2 rather than reporting `0 unit tests` — a zero pasted into a README is a fabricated count, not a small one.
 
 `scripts/derive_counts.py` derives every number straight from the contract (`<N>`=`len(existence)`; `<M>`=`E+P` where `<E>`=`len(unit_tests.example_based)`, `<P>`=`len(unit_tests.property_based)`; `<I>`=integration example+PBT; `<K>`=`len(e2e_tests)`). Paste its output line verbatim into both surfaces. The relationship `M = E + P` is arithmetic done once by the script, not narrative re-counted by hand — which is the whole point: the divergence bug (iter-2 step2 P2-4: README said 16, YAML listed 14) had no named slot to land in once a primitive owns the count. **Never emit two contradicting numbers in the same artifact.** If the generated files end up with more/fewer tests than the script's count, that is a skill bug to surface upstream (push back per iron rule 7 "No inventing requirements" / iron rule 9 "Verbatim test names") — not papered over by inflating the README.
 
@@ -302,17 +342,35 @@ The test files this skill emits become the **acceptance contract** that Step 5 (
 
 Per skillwise THEORY.md §3, the mechanical sub-parts ship as runnable primitives, not prose the agent re-improvises each run:
 
-- `scripts/gen_existence.py` — emits the fail-fast `existence.sh` (4-A); forces `set -euo pipefail`, the no-`if` helper, and the broad export regex.
-- `scripts/derive_counts.py` — derives the canonical test counts from `done_when.yaml` (kills the headline/README count-divergence bug).
-- `scripts/check_verbatim_names.py` — asserts every contract test name appears verbatim in the generated files (iron rule 9 traceability gate).
+- `scripts/gen_existence.py` — emits the fail-fast `existence.sh` (4-A); forces `set -euo pipefail`, the no-`if` helper, and the broad export regex. Maps v1 kinds and the v2 `cli:` / `ui:` observation boundaries (`--cli` / `--ui` / `--ui-anchor`).
+- `scripts/derive_counts.py` — derives the canonical test counts from `done_when.yaml` or, under v2, `--manifest tests-manifest.yaml` (kills the headline/README count-divergence bug).
+- `scripts/check_verbatim_names.py` — asserts every contract test name appears verbatim in the generated files (iron rule 9 traceability gate); `--manifest` for v2, and an empty name set is a failure.
+- `scripts/capture_red_baseline.py` — captures the RED baseline in a `git worktree` checkout of HEAD and writes the clean-tree evidence into the file; `--verify` re-checks a recorded baseline for that evidence.
 
 ## Wiring in sdlc
 
 - **L5 test implementation, after PLAN, batch-by-card.** Run it per `cards/CARD-xx.yaml` (`ac_ids` is the batch);
   generated files go under `tests/<feature>/` which every card's `forbidden_files` already lists — implementers cannot
   edit them, `verify_commit.py --card` enforces it.
-- **Red-green evidence.** Each new test must fail on the base commit before the implementation commit; record it in
-  the commit body (`/commit` references/conventions.md). No script yet (registered blank).
+- **A v2 contract carries no test list.** `schema: 2` keeps `behavior:` as an empty seed; the list this skill produces
+  lives in `tests/<feature>/tests-manifest.yaml` and is locked with `tests/**`. So `--manifest` is a legal, expected
+  input to both `check_verbatim_names.py` and `derive_counts.py`, and `gen_existence.py` reads the v2 `existence:`
+  block of observation boundaries (`cli:` / `ui:` / `route:` / …), never `file:` / `function:`.
+- **Red-green evidence, captured in a clean checkout.** Each new test must fail on the base commit before the
+  implementation commit. Capture it with the primitive, never by running the suite in the working tree:
+
+  ```
+  python scripts/capture_red_baseline.py tests/<feature>/run_tests.sh \
+      --out tests/<feature>/RED_BASELINE.txt --version <this SKILL's frontmatter version>
+  python scripts/capture_red_baseline.py --verify tests/<feature>/RED_BASELINE.txt
+  ```
+
+  It runs the suite inside `git worktree add --detach <tmp> HEAD`, asserts `git status --porcelain` is empty **there**,
+  and records both that evidence and what the outer working tree had that was excluded. A baseline taken in the working
+  tree measures files no commit contains: in the ring-audit run a parallel implementer's untracked `check_audit.py`
+  turned the instrument-absent truth of `34 FAIL` into a recorded `19 ok / 15 FAIL`, and nothing in the artefact said
+  which tree it had measured (I-62). Record the baseline in the commit body (`/commit` references/conventions.md);
+  `--verify` is what makes "captured clean" checkable instead of claimed.
 - **Merges with `/spec-compile`.** spec-compile routes clauses by decidability (fitness fn / property / judge program);
   this skill derives the pyramid from `done_when.yaml`. Both write into `tests-manifest.yaml` (test → AC map, never frozen).
 - **Not load-bearing until `/calibrate`.** Mutation-config output (4-E) is the input to calibrate's mirror ①.
