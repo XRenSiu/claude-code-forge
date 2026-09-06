@@ -331,14 +331,17 @@ expect "verify_derived: the uncited-rule flag names the G1 agenda (I-06)" 0 bash
 expect "verify_derived: round 2 with round1/ archive + round-diff passes (I-21)" 0 py "$S/psl-derive/scripts/verify_derived.py" "$FXD/derived_round2" --psl "$FXD/PSL-memory-time-search.md" --round 2
 R2A="$TMP/r2_noarchive"; cp -R "$FXD/derived_round2" "$R2A"; rm -rf "$R2A/round1"
 expect "verify_derived: round 2 without the round1/ archive rejected (I-44)" 1 py "$S/psl-derive/scripts/verify_derived.py" "$R2A" --psl "$FXD/PSL-memory-time-search.md" --round 2
+expect "verify_derived: the missing-archive rejection says so (I-44)" 0 bash -c "python3 '$S/psl-derive/scripts/verify_derived.py' '$R2A' --psl '$FXD/PSL-memory-time-search.md' --round 2 | grep -q 'previous round not archived at round1/'"
 R2B="$TMP/r2_partialarchive"; cp -R "$FXD/derived_round2" "$R2B"; rm -f "$R2B/round1/workflow.md"
-expect "verify_derived: round 2 whose archive is missing a file rejected (I-44)" 1 py "$S/psl-derive/scripts/verify_derived.py" "$R2B" --psl "$FXD/PSL-memory-time-search.md" --round 2
+expect "verify_derived: round 2 whose archive is missing a file rejected (I-44)" 0 bash -c "python3 '$S/psl-derive/scripts/verify_derived.py' '$R2B' --psl '$FXD/PSL-memory-time-search.md' --round 2 | grep -q \"round1/ is missing \\['workflow.md'\\]\""
 R2C="$TMP/r2_nodiff"; cp -R "$FXD/derived_round2" "$R2C"; rm -f "$R2C/round-diff.md"
-expect "verify_derived: round 2 without round-diff.md rejected (I-35)" 1 py "$S/psl-derive/scripts/verify_derived.py" "$R2C" --psl "$FXD/PSL-memory-time-search.md" --round 2
+expect "verify_derived: round 2 without round-diff.md rejected (I-35)" 0 bash -c "python3 '$S/psl-derive/scripts/verify_derived.py' '$R2C' --psl '$FXD/PSL-memory-time-search.md' --round 2 | grep -q 'missing round-diff.md'"
 R2D="$TMP/r2_diff_no_archive_ref"; cp -R "$FXD/derived_round2" "$R2D"; sed -i.bak 's|`round1/form-draft.md`|上一轮|g' "$R2D/round-diff.md"
 expect "verify_derived: a round-diff whose left side names no archive rejected (I-35)" 1 py "$S/psl-derive/scripts/verify_derived.py" "$R2D" --psl "$FXD/PSL-memory-time-search.md" --round 2
 R2E="$TMP/r2_noround"; cp -R "$FXD/derived_round2" "$R2E"; sed -i.bak '/^round: 2$/d' "$R2E/divergence.md"
-expect "verify_derived: round 2 divergence.md not declaring round: 2 rejected (I-32)" 1 py "$S/psl-derive/scripts/verify_derived.py" "$R2E" --psl "$FXD/PSL-memory-time-search.md" --round 2
+expect "verify_derived: round 2 divergence.md not declaring round: 2 rejected (I-32)" 0 bash -c "python3 '$S/psl-derive/scripts/verify_derived.py' '$R2E' --psl '$FXD/PSL-memory-time-search.md' --round 2 | grep -q 'must declare .round: 2.'"
+R2G="$TMP/r2_wronground"; cp -R "$FXD/derived_round2" "$R2G"; sed -i.bak 's|^round: 2$|round: 5|' "$R2G/divergence.md"
+expect "verify_derived: divergence.md declaring a different round than --round rejected (I-32)" 0 bash -c "python3 '$S/psl-derive/scripts/verify_derived.py' '$R2G' --psl '$FXD/PSL-memory-time-search.md' --round 2 | grep -q 'declares round: 5 — mismatch'"
 R2F="$TMP/r2_noruling"; cp -R "$FXD/derived_round2" "$R2F"; sed -i.bak 's|^## G1 裁决 → 落点$|## 备注|' "$R2F/divergence.md"
 expect "verify_derived: round 2 divergence.md without a 裁决 → 落点 table rejected (I-32)" 1 py "$S/psl-derive/scripts/verify_derived.py" "$R2F" --psl "$FXD/PSL-memory-time-search.md" --round 2
 

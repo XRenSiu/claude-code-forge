@@ -69,8 +69,8 @@
     "date": "2026-09-06",
     "source": "dogfood 2026-09-05 ring-audit self-audit — skill-issues.md rows I-02 I-03 I-06 I-19 I-20 I-21 I-23 I-32 I-35 I-36 I-44 I-48 I-56 I-58 I-77",
     "still": "static_only — every added guarantee is L0 mechanical; the behavioural layer (a real N=3 derivation + a real human G1) is still unrun",
-    "smoke": "plugins/sdlc/eval/smoke.sh 196 → 225 expectations, 0 failed",
-    "mutation_tested": "yes — each new expectation was replayed against a scratch copy with the old behaviour reinstated (24 mutants); every mutant is killed by at least one expectation",
+    "smoke": "plugins/sdlc/eval/smoke.sh +31 expectations from this round (196 → 225 on its own; 246 with the merged base), 0 failed",
+    "mutation_tested": "yes — 27 mutants replayed through the repo's own `smoke.sh --mutate <file> <old> <new>` harness; 0 survived. That harness caught four expectations of this round passing for the wrong reason (exit 1 came from the next check, or from an unguarded read raising); they now assert the reject text.",
     "changes": [
       "verify_psl.py REJECTs a PSL with no PSL-NNN rule id, and one that defines the same id twice — closing the seam where verify_derived.py refused a product this gate had passed (I-02)",
       "rule index gained a form/content layer marker, reported as INFO so a mis-typed marker is visible (I-20)",

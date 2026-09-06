@@ -81,4 +81,5 @@ repeated regressions. Then update `gate.json`.
 - `references/EXAMPLE.md` 的示例 PSL 补齐了 `PSL-NNN` / `UI-n` / `A-n` / `DP-n` 编号与一条内容层规律，
   并由冒烟钉住——作者照抄示例产出的 PSL 必须能过它自己教的那道闸。
 
-冒烟：196 → 225 条期望，0 失败；每条新期望都杀掉了还原旧行为的变异体。
+冒烟：本轮 +31 条期望（单独看 196 → 225；并入已推进的基线后 246），0 失败。
+27 个变异体全部经仓库自带的 `smoke.sh --mutate` 复核，无一存活。
