@@ -4,7 +4,19 @@
 > 触发：产品需求默认触发（有 kind: human 的 AC）；B 档告警超阈值；某层预算耗尽。
 > 输入：evaluation_result + 失败报告（含候选归因层）+ 未验证假设清单。人只确认候选归因，不从头看日志。
 
-**日期**: <YYYY-MM-DD>　**复核人**: <name>　**PR**: #<N>　**触发原因**: <human_ac | b_tier_warning | budget_exhausted>
+**日期**: <YYYY-MM-DD>　**复核人**: <name>　**signer_kind**: <human | delegated_agent>　**PR**: #<N>
+**授权**（delegated_agent 时必填，写原文）: <…>　**触发原因**: <human_ac | b_tier_warning | budget_exhausted>
+
+## 判读的是哪份字节
+
+> 门必须钉住它读的那一版，否则"我看过了"指向一个会漂移的目标。审阅期间被审文件不改，改动排队到裁决后（I-46）。
+
+| 项 | 值 |
+|---|---|
+| 判读时的 head | <short sha> |
+| 关键产物 sha256 | <file: sha256 …> |
+| 判读后按条件回写的 head / sha256（若有） | <…；回写结果须由本判官复核，不是采信> |
+| 审阅期间是否有并发改动 | <无 / 有：…> |
 
 ## human AC 裁决（每条 kind: human 的 AC）
 

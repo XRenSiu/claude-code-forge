@@ -53,5 +53,24 @@
     "from": "looper v0.2.0",
     "changes": "body kept; added 术语映射 (qanat-derived only) + 接线（在 sdlc 里的位置）; support files: 立法收件箱/daemon wording mapped to sdlc change proposal / local tests+CI",
     "smoke_2026_09_05": "verify_dos.py: clean 3-object dos pass; UI-suffixed object reject"
-  }
+  },
+  "dogfood_fixes": [
+    {
+      "date": "2026-09-06",
+      "source": "plugins/sdlc/dogfood/ring-audit/skill-issues.md",
+      "issues_closed": [
+        "I-09",
+        "I-10",
+        "I-11",
+        "I-12",
+        "I-13",
+        "I-14",
+        "I-15",
+        "I-37",
+        "I-49"
+      ],
+      "changes": "inventory.py: YAML/JSON structured channel ($defs / schema-property / enum-value / kind-value / key), declarations-before-keys report, --exclude semantics documented; new count_terms.py (reproducible docs counts), reconcile_dos.py (dos-reconciled.yaml), dos_closure.py (one synonym-aware resolver, imported by verify_issue.py and lint_cards.py); verify_dos.py: whole-word waiver via decisions.md `## Naming waivers`, compounds stay non-waivable, derived_from check, size and description warnings; templates: synonyms / aliases / translation_notes / derived_from, zero-noun guidance, waiver section",
+      "smoke": "24 new expectations, each proven to kill a mutant that reinstates the pre-fix behaviour"
+    }
+  ]
 }

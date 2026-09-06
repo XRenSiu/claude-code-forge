@@ -59,3 +59,9 @@ spec_drift_threshold:
   # GUIDANCE FIELD — ratchet does not auto-read this. See INTEGRATION.md
   # for how to translate into ratchet's `convergence` value when chaining.
   max_fix_loops_before_escalation: 3
+
+gaming_risk_threshold:
+  # OPTIONAL. Where /acceptance-fleet's S3 bands sit on gaming_risk_score.
+  # Omit the block to take these same defaults. done_below <= block_at_or_above.
+  done_below: 3            # below this, a meta-judge PASS means DONE
+  block_at_or_above: 7     # at or above this, GAMING_RISK — hand the contract back, don't patch code

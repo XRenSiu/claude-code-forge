@@ -11,7 +11,7 @@ description: >-
   总结评论（gh pr view 即可）、你是 reviewer 一侧（/pr-review）、只回一条评论（gh api 即可）。
   前置：gh 已认证、jq 可用、当前目录是目标 git 仓库。改编自 vana-builder 的 pr-review-loop v0.4.0。
 argument-hint: "<PR number | 当前分支的 PR> [MAX_ROUNDS=10] [MAX_THREAD_STRIKES=3] [--interval 45] [--max-wait 480]"
-version: 0.2.0
+version: 0.4.1
 user-invocable: true
 # 只能由人显式调起。本 skill 会在公开 PR 上自动回帖、resolve 线程，并可能挂起数小时——发出去的
 # 评论撤不回，不能因为对话里出现「PR」「review」就被模型自行调起。/sdlc 在 review 阶段读本文件
@@ -31,7 +31,8 @@ disable-model-invocation: true
 | 信号 | 含义 | 动作 |
 |---|---|---|
 | `done` → exit 10（或 `watch` → 10） | PR merged / closed | 汇报最终状态，结束 |
-| `done` → exit 0 | APPROVED ∧ 未解决线程 = 0 ∧ checks 绿 ∧ **线程列表未截断** | 汇报"已获批准，等待合并"；merge 是人类动作 |
+| `done` → exit 0 | APPROVED ∧ 未解决线程 = 0 ∧ checks 非红非未知 ∧ **线程列表未截断** | 汇报"已获批准，等待合并"；merge 是人类动作 |
+| `done --solo` → exit 0 | 单人仓库替代谓词（见下节，**更严**，必须显式开启） | 同上，且汇报预审轮次与 A 档存活数 |
 | `watch` → exit 21 | 连续空轮询达上限（默认约 30 分钟无活动） | 暂停，问用户"继续挂起还是收工" |
 | `round` → exit 30 | 全局轮次预算耗尽 | 硬停，汇报全部未收敛项；在 /sdlc 里 `fail --signal budget_exhausted` |
 | `strike` → exit 31 | 该线程往返达上限 | 冻结该线程：回一条"来回几轮未收敛，交给 @<user> 定夺"，其余照常；/sdlc 里 `fail --signal review_thread_strike_limit` |
@@ -41,14 +42,43 @@ disable-model-invocation: true
 - 每完成一批「修复 + push + 回帖 + 收束」，调用一次 `round <PR>`——轮次由脚本记账，你不自行
   维护任何计数器。
 - exit 0 里的「未解决线程 = 0」靠收束推进：你修好的线程自己 resolve，剩下的未解决线程只有真正
-  待人类定夺的（REJECT / ESCALATE / 冻结）。**存在合法的不收敛**——有 REJECT 悬而未决时，循环
-  该停在 exit 20 并汇报，而不是为了凑 exit 0 去 resolve 一个未达成一致的线程。
+  待人类定夺的（REJECT / ESCALATE / 冻结）。**存在合法的不收敛**，见下面两节：单维护者仓库
+  （谓词上不可能）与 REJECT 悬而未决（谓词上不该）。
 - reviewer 在你已回复过的线程再次表达异议或提出新要求 → 对该线程 `strike <PR> <thread_id>`；
   曾返回 31 的线程不再自动回帖。
 - 每轮活动处理完，用 `done <PR>` 判收敛，exit 20 时 stdout 说明还缺哪条。
 
 结束汇报：处理评论数、ACCEPT / REJECT / REPLY / ESCALATE / SKIPPED 各计数、已收束线程数、
-commit 列表、CI 状态、剩余未解决线程（逐条注明为什么没收束）。
+commit 列表、CI 状态（**照抄 `checks` 三态字符串，不要写"检查通过"**）、剩余未解决线程（逐条注明为什么没收束）。
+
+### 合法的不收敛（一）：单维护者仓库
+
+GitHub **禁止 PR 作者 approve 自己的 PR**。仓库只有一个维护者时 `reviewDecision` 永远到不了
+`APPROVED`，默认谓词因此**在机械上不可能收敛**——这不是代码不好，是谓词把"有第二个人"当成了
+必要条件（dogfood 2026-09-06，I-69：本仓库的 review 阶段只能靠 waiver 记账收场）。
+
+这种仓库用 `SELF_REVIEW=1` / `done <PR> --solo` 换一组**更严**的替代条件（缺一不可）：
+
+| 条件 | 为什么它比 APPROVED 严 |
+|---|---|
+| 无 `CHANGES_REQUESTED` | 与原谓词同 |
+| 未解决线程 = 0 ∧ 线程列表未截断 | 与原谓词同 |
+| `checks` 非 `red` 非 `unknown` | 与原谓词同（`none_configured` 会被显式标注，见下） |
+| ≥ 1 轮 `selfreview` 记录 | APPROVED 不要求任何人真的读过 diff；这里要求一轮**隔离上下文**的对抗式预审留下机械记录 |
+| 该轮 A 档存活 = 0 | approve 可以带着未处理的 A 档发生；这里不行 |
+| 该轮记录的 `head_sha` == 当前 HEAD | **approve 不会因为你又推了提交而失效**（除非仓库配了 dismiss）；这里会：预审必须是对正在收敛的这份代码做的 |
+
+`selfreview` 记录由脚本写进 counters（`.self_review.rounds / last.a_tier / last.head_sha`），
+findings 文件来自 `agents/pr-reviewer.md` 的隔离预审（或 `/pr --pre-review` 的产出）；A 档存活数取
+文件里显式的 `a_tier_survivors: N`，没有就数 `tier: A` / `severity: P0` 的条目。
+
+**solo 模式绝不自动打开**：不设 `SELF_REVIEW=1` 也不给 `--solo` 时，谓词照旧要 APPROVED。
+"仓库看起来只有我一个人"不是脚本该替你下的判断——多维护者仓库里悄悄降级成自审，等于把
+review 这道闸拆了。
+
+### 合法的不收敛（二）：REJECT 悬而未决
+
+有 REJECT 悬而未决时，循环该停在 exit 20 并汇报，而不是为了凑 exit 0 去 resolve 一个未达成一致的线程。
 
 ## 预算（编译在脚本，环境变量覆盖）
 
@@ -58,6 +88,7 @@ commit 列表、CI 状态、剩余未解决线程（逐条注明为什么没收�
 | MAX_ROUNDS | 10 | 「修复→push→再监听」全局轮次 |
 | MAX_EMPTY_WATCHES | 4 | 连续空轮询阈值（watch 内部统计与清零） |
 | MAX_THREAD_STRIKES | 3 | 单线程往返上限 |
+| SELF_REVIEW | 未设 | `=1` 打开单维护者替代谓词（等价于 `done --solo`）；**不会自动打开** |
 
 用户在对话中给出的参数 → 以环境变量传入（`MAX_ROUNDS=20 bash …`），不改脚本。
 超时事实：MAX_WAIT 必须小于 Bash 工具超时——调用 watch 时给 bash 工具设 timeout ≥ 600000ms；
@@ -125,6 +156,12 @@ REJECT 合法且必须带证据（代码行、文档链接、测试结果），�
 回帖注明、不强修；取不到失败信息 → **ESCALATE**。checks 是 A 档的机械部分：红 = 一票否决，
 不存在"带红合入"。
 
+**checks 三态**——`done` 输出的 `checks` 是 `green` / `none_configured` / `red` / `unknown`，
+不是布尔（I-82）。`none_configured` = 这个仓库**一个 check 都没配**：终止谓词不因此卡住，但
+`checks_green` 为 `false`，输出带 `checks_note`，`reason` 是 `…_no_checks` 而不是 `…_green`。
+**汇报、PR 正文、G3 材料里一律不得把它写成"检查通过"**——那是把"没人检查"说成"检查了都过"。
+`unknown`（取不到 rollup）同样不算满足，按取数失败处理，别当绿。
+
 **修复合格**——只动评论涉及的范围；每次 commit 过 `/commit` 的预门（`verify_commit.py`，在 /sdlc 里
 带 `--card` 与 `--lock`）；仓库测试 / lint 通过（入口推断同 /commit；推断不出 → 照常提交，回帖注明
 `untested — 未找到测试入口`）。修复引入测试失败 → 最多再修 1 次，仍红 → revert 该修复
@@ -169,6 +206,10 @@ thread id 取自最近一次 `threads <PR>` 的 `.threads[].id`（GraphQL node i
 - 过滤判据依赖线程 resolved 状态 → 每次收到活动后取一次 `threads <PR>`。
 - `unresolved_count` 只覆盖取到的那一页（GraphQL 单页 100 条）→ 线程被截断时它是**下界而非总数**，
   `done` 因此在截断时拒绝返回 0。「零未解决」这个结论不能从残缺数据里得出。
+- **GitHub 不允许 PR 作者 approve 自己的 PR** → 单维护者仓库里 `reviewDecision` 永远不是 `APPROVED`，
+  默认谓词机械上不可能收敛。这是平台的性质，不是流程规定；对策是显式的 solo 谓词，不是 waiver。
+- **`statusCheckRollup` 为空 ≠ 全绿** → 它同样是"这个仓库没配 check"的样子。用一个布尔承载这两件事，
+  终止谓词的第三项在无 CI 的仓库里恒真（I-82）；所以 `checks` 是三态字符串而不是 `checks_green`。
 - force-push / rebase 使行内评论锚点失效（不可逆）→ push 被拒（non-fast-forward）时
   `git pull --no-rebase` 合并后重推；合并冲突 → ESCALATE。
 - 首轮 watch 的水位线 = PR 创建时间 → 对已存在的 PR，历史评论会一次性全部吐出，必须先过「过滤」判据。
@@ -183,7 +224,10 @@ bash <skill_dir>/scripts/pr-poll.sh threads  <PR>          # 线程 + resolved �
 bash <skill_dir>/scripts/pr-poll.sh resolve  <PR> <tid>    # 收束线程（回帖之后）
 bash <skill_dir>/scripts/pr-poll.sh round    <PR>          # 轮次记账（离线）
 bash <skill_dir>/scripts/pr-poll.sh strike   <PR> <tid>    # 线程往返记账（离线）
-bash <skill_dir>/scripts/pr-poll.sh done     <PR>          # 编译态终止谓词
+bash <skill_dir>/scripts/pr-poll.sh selfreview <PR> <findings.yaml> [reviewer]   # 记一轮隔离预审（离线）
+bash <skill_dir>/scripts/pr-poll.sh done     <PR> [--solo] # 编译态终止谓词
+bash <skill_dir>/scripts/pr-poll.sh predicate <PR> <decision> <unresolved> <checks_state> <count> <truncated> [--solo]
+                                                           # 同一谓词，事实由参数给（离线，供自检 / 冒烟）
 ```
 
 watch / snapshot 退出码：**0** 有新活动——stdout 为 delta JSON（reviews / inline_comments /
@@ -221,11 +265,13 @@ issue_comments 三数组，已滤掉你自己发的评论与 PENDING 草稿）�
 
 `../sdlc/assets/loops.yaml#review_loop`：generator = agent.comment-fixer（或 self），verifier = human_reviewer（fix-verifier 是可选的机器
 verifier）；level verification；trigger event；memory = `.sdlc/pr-watch/pr-N.{json,counters.json,watermark}`。停止四键：success =
-`done` exit 0 | 10（合法不收敛 = REJECT 悬而未决停在 20）；convergence = empty_watches 4 · no_new_threads_streak 2；budget = rounds 10 ·
+`done` exit 0 | 10（单维护者仓库走 `--solo` 的替代谓词；合法不收敛 = REJECT 悬而未决停在 20）；convergence = empty_watches 4 · no_new_threads_streak 2；budget = rounds 10 ·
 thread_strikes 3（bot 减半）；impossible = `review_thread_strike_limit`（exit 31）。图上：`graph.yaml` 里 review-triager → comment-fixer
 的边只携带 `accepted_claim`（不带 verifier 判据），fix-verifier → review-loop 是关闭一次迭代的 `loop_back`。
 
 ## 本 skill 自身的出口门
 
-`eval/gate.json`：`static_only`——结构过审；`pr-poll.sh` 的离线子命令（round / strike）在临时目录
-冒烟；联网子命令未在本会话实跑（需要真实 PR）。改编自已在 vana-builder 实跑过的 v0.4.0。
+`eval/gate.json`：`static_only`——结构过审；`pr-poll.sh` 的离线子命令（round / strike / selfreview /
+predicate，含 solo 谓词六项条件与 checks 三态）在临时目录冒烟；联网子命令（watch / snapshot /
+threads / resolve，以及 `done` 的取数半边）未在本会话实跑（需要真实 PR + gh auth）。
+改编自已在 vana-builder 实跑过的 v0.4.0。

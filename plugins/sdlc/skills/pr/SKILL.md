@@ -10,7 +10,7 @@ description: >-
   （/commit）、跟进 PR 评论（/review-loop）、审别人的 PR（/pr-review）、直接合并（人类动作）。
   前置：gh 已认证、在目标仓库内、分支已有至少一个 commit。
 argument-hint: "[--base main] [--issue N] [--draft] [--done-when done_when.yaml] [--cards cards/] [--pre-review [--rounds 2]] [--yes] [--dry-run]"
-version: 0.2.0
+version: 0.3.0
 user-invocable: true
 ---
 
@@ -32,6 +32,12 @@ deletion 测试：撤掉本 skill，引擎 `git push && gh pr create --fill`：�
   "公共 API 变更"对照它。写得越具体，后面判定越省力。
 - **AC → 证据映射是 A 档验收的输入**：每条 mechanical AC 对应一个可复现的证据（测试名 + 命令 +
   结果、或 evaluation_result 路径）；human AC 标 `judge: <角色>` 等 G3。
+- **证据会随分支增长而失效**：`git diff --stat <首个卡提交>^..HEAD -- <目录>` 这类**开放端点**的
+  原始命令，写下时为真，此后任何**非卡的提交**落在首个卡提交之后就让它变假——同一条命令，同样的
+  断言，第二天再跑结果不同（dogfood 2026-09-06，I-79：两条修复提交把"空"变成 5 files / 11 insertions）。
+  "某类提交没碰某些目录"的承重证据是**卡范围的回放仪器**（按卡的 commit 列表逐个 replay，如
+  `dogfood/ring-audit/replay_card_commits.sh` 的 `card_commits_touching_audited_dirs`），它只看卡的提交，
+  分支后续怎么长都不改变结论。原始 diff 只能当补充，且必须钉死两端 + 标记录时刻。
 - **体量**（按 diff 行数）：XS < 50 · S < 200 · M < 500 · L < 1000 · XL ≥ 1000。L 建议拆，
   **XL 必拆**（按卡 / 按目录 / 先重构后功能）——long-context 下 review 质量崩，这是经验事实不是偏好。
 - **push 不可逆、PR 公开**：push 之前该确认的都在预检里；PR 建了之后改 body 可以，但已通知的
@@ -44,11 +50,19 @@ deletion 测试：撤掉本 skill，引擎 `git push && gh pr create --fill`：�
 ## 判据（φ）
 
 - **预检**（拒）：当前分支 ≠ base；`git status` 干净；与 `origin/<base>` 无落后（有则 merge——
-  **不 rebase 已推送分支**）；范围内每条 commit 消息合规（Conventional Commits）；自检绿
-  （入口推断同 /commit）或 body 注明 `untested`。
+  **不 rebase 已推送分支**）；范围内每条**非 merge** commit 消息合规（Conventional Commits）；自检绿
+  （入口推断同 /commit）或 body 注明 `untested`。merge 提交的主题由 git 生成，而"落后就 merge"正是
+  本预检自己的要求——把它按 Conventional Commits 判拒等于照做就过不了（I-74）；按 parent 数放行，
+  非 merge 提交照判不误。
+- **插件版本同步**（拒）：范围 diff 触及 `plugins/<p>/skills/**` 而 `plugins/<p>/.claude-plugin/plugin.json`
+  的 version 未变（或 `marketplace.json` 与它不一致）→ 拒（`--no-version-sync` 显式豁免）。
+  PR 范围看得见整个交付，版本 bump 就该在里面；插件缓存按版本号取目录，不 bump 的修复等于没发。
 - **body 段落**（拒）：Summary / Scope（do / dont）/ Linked issue（`Closes #N` 或 `Refs #N`）/
   Changes / Verification（至少一条命令或测试证据）/ Acceptance mapping（有 `--done-when` 时每条
   mechanical AC 都出现）/ Risk & rollback / Reviewer focus。
+- **Verification 里的证据形态**：命令要么**两端钉死**（`<sha>^..<记录时的 sha>`，并注明记录时刻），
+  要么用**卡范围的回放仪器**——以 `..HEAD` 收尾的原始 diff 不能承载"某些提交没碰某些目录"这种
+  否定断言（见 Σ / I-79）。断言在 PR 正文里必须**此刻仍为真**，不是记录当时为真。
 - **体量**：XL → 拒（除 `--allow-xl` 并在 body 写明为什么不能拆）；L → flag。
 - **锁**（`--lock` 或 `.done_when.lock` 存在）：范围 diff 触及锁文件且无变更提案 → 拒。
 - **标题**：`type(scope): subject` 同 commit 规则（≤ 72）。
@@ -61,8 +75,8 @@ deletion 测试：撤掉本 skill，引擎 `git push && gh pr create --fill`：�
 ## 原语（Π）
 
 - `scripts/verify_pr.py --body BODY.md [--base main] [--head HEAD] [--title T] [--done-when F]
-  [--lock L] [--allow-xl] [--skip-preflight] [--pre-review]` —— exit 0 过 / 1 拒 / 2 IO；输出 size_class。
-  **建 PR 前必须跑**。
+  [--lock L] [--allow-xl] [--skip-preflight] [--pre-review] [--no-version-sync]` —— exit 0 过 / 1 拒 /
+  2 IO；输出 size_class。**建 PR 前必须跑**。
 - `assets/pr_template.md` —— body 形状（含 `## Known issues`，`--pre-review` 时必填）。
 - `../../agents/pr-reviewer.md` —— 预审用的只读审查 agent（新上下文；输出 findings.yaml，由你做修复与 Known issues）。
 - `references/size-and-split.md` —— 拆分策略、draft 判据、base 推断。
@@ -78,7 +92,8 @@ deletion 测试：撤掉本 skill，引擎 `git push && gh pr create --fill`：�
 
 ## 失败机制
 
-- 落后 base 且 merge 冲突 → 停，回报冲突文件，交人（不自动解决语义冲突）。
+- 落后 base → `git merge origin/<base>`（不 rebase）；git 生成的 merge 主题**不需要**改写成
+  Conventional Commits，预检按 parent 数放行它。merge 冲突 → 停，回报冲突文件，交人（不自动解决语义冲突）。
 - push 被拒（non-fast-forward）→ `git pull --no-rebase` 后重推；再拒 → 交人。
 - gh 建 PR 403（fork / 无权限）→ 落盘 body 到 `.sdlc/<slug>/pr-body.md`，给出手动链接。
 - 预门拒 body 段落 → 补段落，不删段落标题。
@@ -95,4 +110,4 @@ deletion 测试：撤掉本 skill，引擎 `git push && gh pr create --fill`：�
 ## 本 skill 自身的出口门
 
 `eval/gate.json`：`static_only`——`verify_pr.py` 在 fixtures 上冒烟（合法 body 0 拒；缺段落 / 无 Closes /
-XL / 缺 AC 映射 各被拒；体量分级正确）。行为层未跑。
+XL / 缺 AC 映射 / 未同步的插件版本 各被拒；merge 提交主题放行而普通坏主题仍拒；体量分级正确）。行为层未跑。

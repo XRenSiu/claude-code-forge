@@ -1,0 +1,4 @@
+qa_report:
+  agent_role: qa-reviewer
+  decision: GO
+  num_findings: 0

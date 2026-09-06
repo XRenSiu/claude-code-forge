@@ -1,0 +1,4 @@
+{"version":1,"slug":"feat-c","title":"c — no ledger, no trace: only the final verdict is knowable","track":"task","stage":"archive","created_at":"2026-09-04T10:00:00+00:00","updated_at":"2026-09-04T20:00:00+00:00",
+ "gates":{"g1":{"required":false,"verdict":"pending"},"g2":{"required":true,"verdict":"pass"},"g3":{"required":true,"verdict":"waived"}},
+ "counters":{"card":0,"plan":0,"task":0,"ontology":0,"world":0,"last_fingerprints":{},"fingerprint_repeats":{}},
+ "review":{"done":true,"rounds":0},"merge":{"sha":"ccc","merged_at":"2026-09-04T19:00:00+00:00"},"waivers":[],"assumptions":[],"artifacts":{}}

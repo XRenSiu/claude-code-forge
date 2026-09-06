@@ -1,0 +1,240 @@
+review:
+  target: PR#3 (fix/sdlc-issues-002)
+  head_sha: 2eeb14a932748cb3ab285ddf6a4eab8b665ddb50
+  reviewer: agents/pr-reviewer.md（隔离上下文，只读）
+  round: 4
+  scope: >-
+    确认 round-3 的 F-6；首次审阅 change-proposal-003 的四处被锁文件改动；
+    专打 2eeb14a 新加的「原始 #L 对账」层。
+  mergeable: "with_fixes"
+  a_tier_survivors: 0
+  tier_summary: { A: 0, B: 3, C: 0 }
+
+  rationale: >-
+    没有 A 档。对账层能绕——两条构造出来的旁路，都不是现存锚点正在利用的，所以判 B 不判 A。
+    全部变异在 git archive 出来的独立镜像里做；锁的洞另建一次性 git 仓库复现，
+    没有在被审仓库里造过任何提交。每次注入前先断言注入落地才跑（这一轮我自己也差点栽在这上面，见下）。
+
+  # ---------------------------------------------------------------- 判定基准
+  measured_against: >-
+    一律测**提交** 2eeb14a，不测工作树。本轮期间工作树两度是脏的：
+    先是 check_anchors.py（我因此读到过一个中间态输出），后是 replay_card_commits.sh
+    （正在改 F-7，注释里叫 I-104）。工作树里的 lock verify 因此报 exit 2 /
+    changed_gates[replay_card_commits.sh]；同一条命令在 2eeb14a 的干净镜像上是 status ok。
+    下面所有数字取自干净镜像。未提交的改动不是证据，落地后请以复跑为准。
+
+  verification:
+    at_head: 2eeb14a932748cb3ab285ddf6a4eab8b665ddb50
+    commands:
+      - {cmd: "bash plugins/sdlc/eval/smoke.sh", exit: 0, output: "393 passed, 0 failed"}
+      - {cmd: "python3 -m pytest .../tests/ring-audit/ -q", exit: 0, output: "54 passed in 12.74s"}
+      - {cmd: "check_audit.py 主臂", exit: 0, output: "ok true · parts 42 · psl_index_size 17"}
+      - {cmd: "check_audit.py --variant delete-ring:R6", exit: 1, output: "ok false · ring_missing R6"}
+      - {cmd: "check_anchors.py verify", exit: 0, output: "走到 505 · 锁里比对了 505 · SAME 505"}
+      - {cmd: "replay_card_commits.sh", exit: 0, output: "ok true · card_commits_rejected 0"}
+      - {cmd: "lock_done_when.py verify（干净镜像）", exit: 0, output: "status ok"}
+      - cmd: "bash plugins/sdlc/eval/smoke.sh --mutate"
+        exit: not_run
+        output: >-
+          两次拉起都超出我这一轮的时间预算、未产出汇总行，输出文件始终 0 字节。
+          按「标 not_run 好过填猜测」处理：你报的 36-36 我既不确认也不否认。
+    my_numbers_vs_yours: >-
+      你报 393-0 / 54 / 36-36 / 0 / 1 / 505-505 / ok / ok。
+      我独立跑出 393-0 · 54 · not_run · 0 · 1 · 505-505 · ok · ok。除 mutation 外逐项吻合。
+
+  # ---------------------------------------------------------------- 确认
+  disposition_confirmed:
+
+    - id: F-6
+      verdict: 确认已修
+      result: |
+        四个串联成员全部入锁（含 SKILL.md#L311 与 sdlc_state.py#L988，round-3 时缺）。
+        变异（acceptance-fleet/SKILL.md 顶部插一行）：EXIT=1 · SAME 497 · MOVED 8，
+        其中点名 SKILL.md#L311 —— 那正是只被串联写法引用的那个锚点。
+
+    - id: 第五种写法
+      verdict: 没找到
+      result: |
+        把 HEAD 版的 FILE_RE / SCAN / NOT_A_REFERENCE 直接 exec 出来逐行扫，
+        再用一条**独立于 SCAN** 的粗正则找落在所有已走区间之外的位置：
+        scanner walks 505 · unwalked line-number references 0。
+        另扫非 hash 写法：`第 N 行` 1 处（是 I-93 的叙述本身，非锚点）、`line N` 0 处。
+
+    - id: 502-vs-501 差额
+      verdict: 确认闭合
+      result: "506 − 4（dos_anchors 模式）= 502，加 3 个冒号式 = 505，与走到的 505 逐个对上。"
+
+    - id: remapped_caveat
+      verdict: 确认已补
+      result: >-
+        过程数字（112 / 7 / 3）已标注为过程叙述而非证据。这与 I-94 撤回同一条教训，处理一致。
+
+  # ---------------------------------------------------------------- 对账层：能绕
+  reconciliation_attack:
+    verdict: 能绕
+    summary: >-
+      这一层确实堵死了它要堵的那个失效模式——**新增一种 #L 写法而没人认领**，我用一条
+      谁都不解析的 `[[#L4242]]` 试过，它会被走到并报 UNLOCKED。但它的不变量写的是
+      「每个 `#L` 都得有人认领」，于是留下两条旁路：凡是能让**两边同时不计**的东西，
+      对账恒等式照样平，而锚点从未入锁。下面两条都是构造出来的，现存锚点没有在用它们。
+    bypass_a:
+      name: dos_anchors 排除规则可被借用
+      mechanism: >-
+        `NOT_A_REFERENCE = ^\s*(?:-\s+)?.*\bdos_anchors:` 匹配**任何含有 `dos_anchors:` 的行**，
+        而这条规则同时作用于两侧：walk_anchors 里 `continue` 跳过整行，
+        raw_hash_l_count 里把该行的 `#L` 计进 raw_patterns 一并减掉。
+        两边同时 −1，恒等式平，锚点从不入锁、从不校验。
+        这是一个**自洽的盲区**：排除规则本身成了藏东西的地方。
+      reproduction: |
+        # 在 audit.yaml 里插一行，既带一个唯一的真锚点，又含 dos_anchors: 这个词
+        L.insert(1, "smuggled: '证据见 plugins/sdlc/skills/sdlc/assets/graph.yaml#L142-L146 —— 另见 dos_anchors: 排除规则'")
+        assert s.count('#L142-L146')==1     # 先断言注入落地
+        python3 check_anchors.py verify
+        python3 -c "...'graph.yaml#L142-L146' in lock..."
+        # 再给 graph.yaml 顶部插一行，让该锚点指向别处，看有没有人喊
+      evidence: |
+        EXIT=0
+        走到 505 个行号锚点 · 锁里比对了 505 个 · SAME 505      <-- 数字与未注入时完全一致
+        graph.yaml#L142-L146 in lock: False                      <-- 从未入锁
+        # 把 graph.yaml 整体下移一行后重跑：EXIT=1，但输出里提到该锚点的次数 = 0
+        # （exit 1 来自其他合法的 graph.yaml 锚点；被走私的这个自始至终无人过问）
+      fix: >-
+        把排除做成**按 token 而不是按整行**：只跳过 `dos_anchors:` 这个键的值里的锚点，
+        行内其余部分照常扫。最省事的实现是把 NOT_A_REFERENCE 从"整行跳过"改成
+        "先切掉 `dos_anchors:` 到该值结束的片段，再扫剩下的"。
+        并加一条孪生：同一行里既有 dos_anchors 模式又有真锚点时，真锚点必须入锁。
+    bypass_b:
+      name: 对账只覆盖 hash 一族，冒号一族没有对账
+      mechanism: >-
+        `expected_hash = raw_total − raw_patterns` 只数 `#L\d+`；
+        `walked_hash = total − colon_style` 又把冒号式从走到数里减掉。
+        也就是说冒号一族被**刻意排除在恒等式之外**——它对两边的贡献都是 0。
+        于是任何一种冒号族的写法变体，扫描器不认得时，两边同时不计，对账照样平。
+        代码注释诚实地写了不变量是「每个 #L 都得有人认领」，所以这不算文不对题；
+        但扫描器支持两族，对账只护住一族，被护住的恰好是已经栽过四次那一族，
+        另一族则处在四次之前的状态。
+      reproduction: |
+        # 三个冒号族变体，都不含 #L，扫描器的冒号分支也都不匹配
+        "见 .../verify_dos.py 第 169 行"
+        "见 .../sdlc_state.py :486"
+        "见 .../metrics.py L197"
+      evidence: |
+        EXIT=0
+        走到 505 个行号锚点 · 锁里比对了 505 个 · SAME 505      <-- 与未注入时完全一致
+        # 三处引用全部隐形：不入扫描、不入对账、不入锁
+      fix: >-
+        给冒号族配一条对称的粗对账：数 `\.(py|sh|yaml|json|md):\d+` 的原始出现次数，
+        必须等于扫描器走到的 colon_style 数。两族各一条恒等式，
+        不变量升级成「每个**行引用**都得有人认领」。
+
+  # ---------------------------------------------------------------- 发现
+  findings:
+
+    - id: F-7
+      tier: B
+      file: plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh
+      line: 125
+      claim: >-
+        cp-003 改用「那条提交当时的锁」，但取的是**提交自己树里**的锁。
+        一条在同一 diff 里删掉 .done_when.lock 的提交因此免检——
+        它同一次提交里对锁内文件做的任何改动都不再被拒。
+      mechanism: >-
+        `git cat-file -e "$sha:$lock_rel"` 问的是「这条提交**之后**锁在不在」。
+        提交若删除锁则判为不存在 → commit_lock 为空 → 不传 --lock →
+        verify_commit.py 的 `if a.lock:` 整段跳过。判据的来源被交给了受审对象自己，
+        正是 cp-003 给 I-100 写下的那句话的另一次发作。正确来源是**父提交**的锁——
+        那才是「动手时生效的规则」，且同样是历史锁，I-101 的修复完全不受影响。
+      reproduction: |
+        # 一次性 git 仓库，不碰被审仓库
+        git init -q lockhole && cd lockhole && git checkout -q -b feat/test
+        # gate.py 登记为 role=gate 的锁 + base 提交
+        # 受测提交：改写锁内文件，并在同一 diff 里删掉锁，不带提案
+        SHA=$(git rev-parse HEAD)
+        git cat-file -e "$SHA:.done_when.lock" || echo "ABSENT -> replay 不传 --lock"
+        python3 verify_commit.py --range "$SHA^..$SHA" --card cards.yaml --msg x            # A
+        git show "$SHA^:.done_when.lock" > /tmp/parent.lock
+        python3 verify_commit.py --range "$SHA^..$SHA" --card cards.yaml --lock /tmp/parent.lock --msg x   # B
+      evidence: |
+        ABSENT -> replay 不传 --lock
+        # A) 回放现在的取法：
+        rejects: ["subject not Conventional Commits ..."]
+        lock-related reject? False        <-- 锁内文件被改写，无任何锁相关拒绝
+        # B) 父提交的锁：
+        rejects: [..., "locked file(s) in diff without a change proposal: ['gate.py'] (G2 lock; add change-proposal-*.md)"]
+        lock-related reject? True
+        # 两臂唯一差别就是锁从哪儿取；Conventional Commits 那条两臂都在，是常量。
+      fix: >-
+        取锁的 sha 从 `$sha` 改成 `$sha^`；父提交没有锁才不传 --lock（那是真早期提交）；
+        首条提交无父则保持不传。配孪生：删锁提交必须被拒 / 早期无锁提交仍放行。
+      status_at_head: >-
+        2eeb14a 上仍在。工作树里有一处未提交的相关改动（注释称 I-104），方向是解决
+        「分支尖删锁就短路」，但那是**外层**的 LOCK_REL 解析；内层每条提交仍取 `$sha:`。
+        我不据未提交改动调整判定，落地后请复跑上面 A/B 两臂。
+      why_not_a: >-
+        触发要求同一 diff 里删掉 .done_when.lock，在 diff 里极显眼，
+        且 card_commits_touching_audited_dirs 那一路不受影响会独立报警。不是能悄悄用的洞。
+
+    - id: F-8
+      tier: B
+      file: plugins/sdlc/dogfood/ring-audit/check_anchors.py
+      line: 121
+      claim: 对账层旁路 A —— 借 dos_anchors 排除规则把真锚点从两侧同时抹掉。
+      mechanism: 见 reconciliation_attack.bypass_a。
+      reproduction: 见 reconciliation_attack.bypass_a.reproduction。
+      evidence: >-
+        见 reconciliation_attack.bypass_a.evidence —— 走到数与未注入时逐字相同，
+        而该锚点查锁的结果是 False（从未入锁）。
+      fix: 见 reconciliation_attack.bypass_a.fix —— 按 token 排除，不按整行。
+      why_not_a: 现存 4 条 dos_anchors 行确实全是匹配模式、不含真锚点（round-3 已核）；这是潜伏结构洞，不是活跃误判。
+
+    - id: F-9
+      tier: B
+      file: plugins/sdlc/dogfood/ring-audit/check_anchors.py
+      line: 300
+      claim: 对账层旁路 B —— 恒等式只覆盖 hash 一族，扫描器支持的冒号一族完全没有对账。
+      mechanism: 见 reconciliation_attack.bypass_b。
+      reproduction: 见 reconciliation_attack.bypass_b.reproduction。
+      evidence: 见 reconciliation_attack.bypass_b.evidence（三处冒号族变体注入后，走到数不变、exit 0）。
+      fix: 见 reconciliation_attack.bypass_b.fix —— 给冒号族配一条对称恒等式。
+      why_not_a: >-
+        冒号族现存仅 3 处且都被正确解析；代码注释也如实写明不变量只管 #L。
+        它是覆盖面缺口，不是错误读数。
+
+  # ---------------------------------------------------------------- cp-003
+  cp003_review:
+    overall: 有异议（F-7；另有一条对 I-100 理由的限定，不是反对）
+    empty_psl: >-
+      属实且做对了。空 PSL → exit 2 并点名 `规律索引`；不传 --psl → exit 0 且
+      psl_index_size 为 null（不是 0）；坏 PSL（只含 PSL-999）→ exit 1 且
+      dims_with_unknown_psl_id 126。「没给尺子」与「给了把坏尺子」确实被分开了，
+      这正是这个 fail-open 的形状，抓得准。
+    replay_historical_lock: 方向对，取点错。见 F-7。
+    i100_deferral: >-
+      站得住，但理由只对一半。站得住的一半：lock_done_when.py 的提案判据正是 cp-003
+      赖以生效的机制，同一提交里既改判据又用它放行自己，确实没有独立担保；而且你记了台账、
+      给了两条具体改法、路由到 P-RA-08，不是含糊带过。不成立的一半：这个循环论证**对任何时候都成立**，
+      下一轮代签的编排者面对同样的循环会做同样的判断，于是它永远不到期。
+      循环的出口不是「等下一个提案」，而是**换一个签字人**——按 PSL-006 / R008 三道门本就该人签，
+      而本 PR 从头到尾是 delegated_agent 代签。建议 I-100 与 P-RA-08 标注
+      「requires human signer」，而不是「本次不改」。
+    contract_sync: pytest 54（round-3 时 52，+2 即新增孪生），与清单一致，smoke 全绿。
+
+  # ---------------------------------------------------------------- 自曝
+  self_disclosure: >-
+    这一轮我自己也踩了一次「注入没落地却看起来没问题」：第一次打对账层时，我的控制样本
+    `[[#L4242]]` 我以为它没被走到、误以为对账漏了它；实际它被走到了并报 UNLOCKED，
+    是我 grep 的模式太窄没显示出来。改成打印完整输出才看清。
+    与你在提交信息里记的那次是同一个坑：**输出「看起来没发现问题」与「探针根本没生效」长得一样**。
+    此后每次注入都先 assert 落地、再看完整输出。
+    另：`graph.yaml#L4242` 这类越界锚点会永远停在 UNLOCKED（snapshot 因越界跳过它，
+    verify 只 warn 且 exit 0）——不构成本轮发现，但如果哪天有人写错行号，
+    它会安静地永远绿着，值得顺手看一眼。
+
+  # ---------------------------------------------------------------- 本轮记录的效力
+  self_attestation_caveat: >-
+    A=0，登记这一轮会让 solo 谓词在 A 档那一项放行。仍要说清它不是合入凭证：
+    I-95 未修（计数器任何进程可加）；审查者与作者同模型同 session 世系，
+    隔离的是上下文不是先验；我审的仍包含登记我的那条路径；本轮还有一项 not_run
+    （smoke --mutate），所以连「所有命令都跑过」都不成立。
+    若要合，建议把 F-7 / F-8 / F-9、I-95、以及 I-100 的人签限定一起写进 PR 的已知问题段，
+    而不是让它们随绿灯消失。

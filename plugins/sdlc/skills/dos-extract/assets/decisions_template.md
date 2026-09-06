@@ -25,16 +25,34 @@ The judgments themselves are documented in the skill's `references/judgments.md`
 
 - **Project root**: `<path>`
 - **Languages detected**: `<e.g. TypeScript, Python>`
-- **Files scanned**: `<count>`
-- **Distinct nouns from code**: `<count>` (after framework-noise pruning of `<count>` terms)
+- **Files scanned**: `<count>` (code `<count>`, structured YAML/JSON `<count>`)
+- **Distinct nouns from code declarations**: `<count>` (after framework-noise pruning of `<count>` terms)
+- **Distinct nouns from structured data**: `<count>` (`$defs` / schema-property / enum-value / kind-value / key)
 - **Distinct verbs from code**: `<count>`
 
 Full code inventory: `01_inventory.md` in the workspace.
+
+**If the code channel returned zero nouns**, say so here in one line and say what
+carried the weight instead — do not leave this section reading as though a pruning
+table exists. A repository whose objects live in YAML/JSON schemas, in Markdown
+tables, or in prose scores zero on class-declaration scanning and that is a fact
+about the repository, not a failed run. Template:
+
+> Code channel: 0 nouns from class/type declarations over `<count>` source files —
+> this repository declares nothing in classes. `<count>` nouns came from the
+> structured-data channel (`$defs`, schema properties, enum members), and the docs
+> channel below is the primary source. Nothing was pruned, so there is no pruning
+> table.
+
+Whenever the docs channel is primary, the counts below must be reproducible: run
+`scripts/count_terms.py --terms <terms file> --group ...` and cite the command, not
+a hand-tallied number.
 
 ### Docs-side inventory
 
 - **Doc files scanned**: `<count>` (`<paths>`)
 - **Distinct nouns from docs**: `<count>`
+- **Counting command**: `<the count_terms.py invocation, so the table is rerunnable>`
 - **Definitions found**: `<count>` explicit term definitions
 - **Cross-references found**: `<count>` "we use X not Y" statements
 - **Bounded Context hints**: `<count>`
@@ -97,6 +115,27 @@ For each ambiguous term, document the alternatives and the choice.
   - Evidence for each interpretation: `<...>`
   - **Resolution**: `<chosen interpretation>`
   - Reasoning: `<...>`
+
+## Naming waivers
+
+**Read by a script.** `verify_dos.py --decisions <this file>` parses the bullets under
+this exact heading: the first backticked token on a bullet is the waived object name,
+the rest is the justification a judge reads. Delete the heading if there are none.
+
+A waiver clears exactly one thing: an object name that IS a whole UI/impl primitive
+(`Card`, `Modal`, `Panel`, `Service`) and that Judgment 1 says is nonetheless a real
+domain object. It does NOT clear a compound (`TopicCard`, `UserRepository`) — the
+high-risk list forbids promoting those, full stop, and the script will not take a
+waiver for one.
+
+Use it instead of renaming. Renaming a legitimate domain word to satisfy the heuristic
+looks free and is not: every downstream closure check (`/issue --dos`,
+`lint_cards.py --dos`) resolves the operator's actual vocabulary against this DOS, so
+the rename either breaks closure or forces a `synonyms:` entry anyway.
+
+- `<Name>` — Judgment 1 step 1 result and why: `<it is describable without a screen;
+  the docs define it as …>`. Whole word, not a `*<Name>` compound. Docs/code evidence:
+  `<counts + paths>`.
 
 ---
 

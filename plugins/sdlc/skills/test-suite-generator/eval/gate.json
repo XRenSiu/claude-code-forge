@@ -33,10 +33,12 @@
     "date": "2026-09-05",
     "evaluator": "AUTHOR-RUN structural pass: skillwise lint_skill.py L0 (0 blocking; step-order/persona items are inherited 'to confirm' findings) + plugins/sdlc/eval/smoke.sh on bundled scripts. NOT a decorrelated read, NOT an L2 run.",
     "scripts_run": {
-      "derive_counts.py": "counts derived from the example contract (--json)",
-      "gen_existence.py": "emits a fail-fast existence script (set -euo pipefail, no if-wrapped checks)",
-      "check_verbatim_names.py": "all contract names present → 0; a tests dir missing names → 1 under --check"
+      "derive_counts.py": "counts derived from the v1 example contract (--json); v2 contract + --manifest tests-manifest.yaml → 4/32/2/0; empty behavior seed alone → exit 2",
+      "gen_existence.py": "emits a fail-fast existence script (set -euo pipefail, no if-wrapped checks); v1 kinds and the v2 cli:/ui: boundaries, generated script run green against the ring-audit tree",
+      "check_verbatim_names.py": "all contract names present → 0; a tests dir missing names → 1 under --check; v2 contract alone (empty name set) → 2; --manifest → 34/34",
+      "capture_red_baseline.py": "captures in a git worktree checkout of HEAD (untracked instrument excluded, clean-tree evidence written); --verify rejects a baseline without that evidence"
     },
-    "residual": "sub-steps 4-A…4-E (12 linter step-hits) inherited; six-cell classification pending"
+    "residual": "sub-steps 4-A…4-E (12 linter step-hits) inherited; six-cell classification pending",
+    "mutation_proof": "2026-09-06: each new smoke expectation proved to kill its mutant via `bash plugins/sdlc/eval/smoke.sh --mutate <file> <old> <new>` (10 mutants, all killed; see the I-54/I-59/I-62/I-80 labels)"
   }
 }

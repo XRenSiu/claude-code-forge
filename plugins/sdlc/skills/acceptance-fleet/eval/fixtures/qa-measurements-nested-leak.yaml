@@ -1,0 +1,14 @@
+# The subtler leak: nothing forbidden at the top level, a findings list buried inside a measurement subtree.
+# A check that only looks at the first level of keys waves this through.
+qa_measurements:
+  agent_role: qa-reviewer
+  scope: { tests_executed: 245, tests_passed: 232 }
+  results:
+    integration:
+      passed: 4
+      failed: 1
+      duration_seconds: 145
+      findings:
+        - severity: P0
+          test_name: test_cancel_with_concurrent_retry_is_atomic
+          assertion_message: "expected snapshot_before == snapshot_after"

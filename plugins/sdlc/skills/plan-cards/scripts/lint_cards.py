@@ -21,6 +21,10 @@ Mechanical guarantees (REJECT on breach — the non-waivable half):
      dos_slice.invariants id is a declared rule — structured fields only, never free text
   4. context_estimate_tokens ≤ --max-context (else split — this is a lint, not a remark)
   5. (with --done-when) every ac_ids entry exists in done_when.acceptance[].id
+  6. projection ↔ data source: a card that owns a rendering / reporting script must declare `reads_from:`,
+     and every declared source that ANOTHER card owns needs `depends_on` on that card plus a seam note in
+     `notes`. With --repo-root the script is also read: a path literal in its source that another card owns
+     but the card did not declare is an undeclared seam. Rationale in references/splitting.md.
 Semantic half (FLAGGED as needs_semantic_review): is the card self-contained? are allowed_files the
 minimal set? is context_estimate honest? — a judge / human reads the card for those.
 """
@@ -29,6 +33,7 @@ import fnmatch
 import glob
 import json
 import os
+import pathlib
 import re
 import sys
 
@@ -38,10 +43,27 @@ except ImportError:
     sys.stderr.write("lint_cards.py needs PyYAML: pip install pyyaml\n")
     sys.exit(2)
 
+# DOS closure means the same thing here and in verify_issue.py: one resolver, owned by
+# dos-extract (the skill that writes dos.yaml). See dos-extract/scripts/dos_closure.py.
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[2] / "dos-extract" / "scripts"))
+try:
+    import dos_closure
+except ImportError:  # a neighbour skill may be absent; that is not this script's failure
+    # Cross-skill code is an OPTIONAL dependency: this script belongs to its own skill and must run
+    # when a neighbour is missing. Hard-exiting at import time killed runs that never passed --dos
+    # (PR pre-review, B-tier). Absent, closure checking degrades to a flag where it is asked for.
+    dos_closure = None
+
 SHARED_BASENAMES = {"package.json", "package-lock.json", "pnpm-lock.yaml", "yarn.lock", "Cargo.lock",
                     "Cargo.toml", "go.mod", "go.sum", "requirements.txt", "pyproject.toml", "poetry.lock",
                     "tsconfig.json", "Gemfile.lock", "composer.lock", ".env", "schema.prisma"}
 REQ_RE = re.compile(r"\bREQ-\d{3,}\b")
+# A projection is code whose whole job is to present someone else's data. Matched on the basename of a
+# literal script path only, so `src/views/**` (a UI directory) never trips it.
+PROJECTION_DEFAULT = r"render|report|dashboard|chart|plot|summary|digest"
+SCRIPT_EXTS = (".py", ".sh", ".bash", ".js", ".mjs", ".ts", ".tsx", ".jsx", ".rb", ".go", ".rs", ".pl", ".php")
+# quoted path-like literals inside a projection script: has a dot-extension, no spaces
+PATH_LITERAL_RE = re.compile(r"""["'`]([A-Za-z0-9_./\-]+\.[A-Za-z0-9]{1,6})["'`]""")
 
 
 def load_yaml(p):
@@ -88,6 +110,38 @@ def patterns_overlap(a, b):
     return pa.startswith(pb + "/") or pb.startswith(pa + "/") or pa == "" or pb == ""
 
 
+def is_projection(pattern, projection_re):
+    """True when the pattern names a literal script file whose basename reads as a projection."""
+    base = pattern.split("/")[-1]
+    if any(ch in base for ch in "*?["):
+        return False
+    if not base.lower().endswith(SCRIPT_EXTS):
+        return False
+    return bool(projection_re.search(base))
+
+
+def owner_of(path, cards, exclude=None):
+    """Which card's allowed_files cover this path (first match; None when nobody owns it)."""
+    for cid, c in cards.items():
+        if cid == exclude:
+            continue
+        for pat in c.get("allowed_files") or []:
+            if path == pat or path_glob_match(path, pat):
+                return cid
+    return None
+
+
+def read_path_literals(repo_root, script_path):
+    p = os.path.join(repo_root, script_path) if repo_root else script_path
+    if not os.path.isfile(p):
+        return None
+    try:
+        with open(p, encoding="utf-8", errors="replace") as f:
+            return sorted(set(PATH_LITERAL_RE.findall(f.read())))
+    except OSError:
+        return None
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("cards_dir")
@@ -95,7 +149,11 @@ def main():
     ap.add_argument("--done-when")
     ap.add_argument("--dos")
     ap.add_argument("--max-context", type=int, default=40000)
+    ap.add_argument("--repo-root", help="resolve allowed_files against this root to read projection scripts")
+    ap.add_argument("--projection-pattern", default=PROJECTION_DEFAULT,
+                    help="basename regex that marks a script as a projection (default: %(default)s)")
     a = ap.parse_args()
+    projection_re = re.compile(a.projection_pattern, re.IGNORECASE)
 
     files = sorted(glob.glob(os.path.join(a.cards_dir, "CARD-*.y*ml")))
     if not files:
@@ -167,21 +225,31 @@ def main():
                 if not any(path_glob_match(sb, f) for f in forb):
                     flags.append(f"{cid} neither owns nor forbids shared file {sb}")
 
-    # 3. DOS closure
+    # 3. DOS closure — resolved through dos-extract's shared closure module, so a term
+    #    recorded as an object `synonyms:` / rule `aliases:` entry closes (dogfood I-15/I-49:
+    #    the cards spoke the docs' vocabulary, the DOS keyed the objects differently, and the
+    #    linter had to be pointed at a hand-picked proposal file instead).
     if a.dos:
-        dos = load_yaml(a.dos)
-        objs = set((dos.get("objects") or {}).keys()) if isinstance(dos.get("objects"), dict) else \
-            {o.get("name") for o in (dos.get("objects") or []) if isinstance(o, dict)}
-        rules = dos.get("rules") or []
-        rule_ids = {r.get("id") for r in rules if isinstance(r, dict)} | {r for r in rules if isinstance(r, str)}
+        if dos_closure is None:
+            flags.append("--dos given but dos-extract/scripts/dos_closure.py is not reachable — "
+                         "closure unchecked; install the neighbour skill or drop --dos")
+            closure = None
+        else:
+            closure = dos_closure.closure_from_dos(load_yaml(a.dos), a.dos)
         for cid, c in cards.items():
             sl = c.get("dos_slice") or {}
             for o in sl.get("objects") or []:
-                if o not in objs:
+                canon = closure.resolve_object(o)
+                if canon is None:
                     rejects.append(f"{cid} dos_slice.objects `{o}` not declared in dos.yaml (closure)")
+                elif canon != o:
+                    flags.append(f"{cid} dos_slice.objects `{o}` closes as a synonym of `{canon}`")
             for r in sl.get("invariants") or []:
-                if r not in rule_ids:
+                canon = closure.resolve_rule(r)
+                if canon is None:
                     rejects.append(f"{cid} dos_slice.invariants `{r}` not a declared rule id (closure)")
+                elif canon != r:
+                    flags.append(f"{cid} dos_slice.invariants `{r}` closes as an alias of `{canon}`")
     else:
         info.append("DOS closure unchecked (no --dos)")
 
@@ -206,6 +274,51 @@ def main():
                     rejects.append(f"{cid} ac_ids `{x}` not in done_when.acceptance")
         if not (c.get("title") or "").strip():
             flags.append(f"{cid} has no title")
+    # 6. projection ↔ data source must not straddle a card seam
+    for cid, c in sorted(cards.items()):
+        projections = [p for p in (c.get("allowed_files") or []) if is_projection(p, projection_re)]
+        if not projections:
+            continue
+        declared = c.get("reads_from")
+        if declared is None:
+            rejects.append(f"{cid} owns projection script(s) {projections} but declares no `reads_from:` — "
+                           f"name the data it renders (empty list = renders nothing another card owns)")
+            declared = []
+        elif not isinstance(declared, list):
+            rejects.append(f"{cid} reads_from must be a list of paths, got {type(declared).__name__}")
+            declared = []
+        deps = set(c.get("depends_on") or [])
+        note = (c.get("notes") or "").strip()
+        for src in declared:
+            if any(path_glob_match(src, pat) or src == pat for pat in c.get("allowed_files") or []):
+                continue  # same card — the atomic case, nothing to check
+            other = owner_of(src, cards, exclude=cid)
+            if other is None:
+                info.append(f"{cid} reads `{src}`, which no card owns — external input")
+                continue
+            if other not in deps:
+                rejects.append(f"{cid} renders `{src}` but {other} owns it and {cid} does not depends_on "
+                               f"{other} — a projection and its data source belong in one card, or the "
+                               f"seam must be declared")
+            elif not note or (src not in note and other not in note):
+                rejects.append(f"{cid} depends_on {other} for `{src}` but its notes do not describe the "
+                               f"seam — say what breaks if only one side changes")
+        if a.repo_root:
+            for script in projections:
+                literals = read_path_literals(a.repo_root, script)
+                if literals is None:
+                    flags.append(f"{cid} projection `{script}` not readable under --repo-root — "
+                                 f"reads_from is unverified")
+                    continue
+                for lit in literals:
+                    if lit in declared or lit == os.path.basename(script):
+                        continue
+                    if any(path_glob_match(lit, pat) for pat in c.get("allowed_files") or []):
+                        continue
+                    other = owner_of(lit, cards, exclude=cid)
+                    if other:
+                        rejects.append(f"{cid} projection `{script}` reads `{lit}`, owned by {other}, and "
+                                       f"`{lit}` is not in {cid}.reads_from — undeclared seam")
     flags.append("needs_semantic_review: self-containment / minimal allowed_files / honest context estimate (judge)")
 
     out = {"cards": len(cards), "req_universe": sorted(universe), "source": source,

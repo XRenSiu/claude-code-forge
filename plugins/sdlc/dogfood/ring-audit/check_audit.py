@@ -25,8 +25,8 @@ Predicate → the token printed in `error` / `errors` / `failed_predicates`:
   naming.rename is the constant false (建议不等于重命名 — PSL-014)                  rename_true
   every Ring carries a `missing` key (an empty list answers; an absent key is     rings_without_missing_key
   silence — PSL-017)
-  rule 2  every id in rings[].missing[] and parts[].fills[] exists in gaps[]      unknown_gap_ref
-          with the same ring
+  rule 2  every id in rings[].missing[] and parts[].fills[] exists in gaps[];     unknown_gap_ref
+          only rings[].missing[] must also stay in-ring (see rule 4 below)
           a Gap nobody fills that is absent from its ring's missing               orphan_gap
           fills == [] ⇒ needed.verdict must be overfill (填零缺口 = 过填 — PSL-002)  overfill_unmarked
   rule 1  ≥2 producers of one Artifact id are legal iff `alternatives_of` is set  double_producer
@@ -39,8 +39,38 @@ Predicate → the token printed in `error` / `errors` / `failed_predicates`:
           run_evidence.gates[] verdict ∈ {pending, pass, reject, waived}          gate_verdict_outside_enum
           any verdict but pending needs signer + signer_kind (pending may be null) human_gate_without_signer
           a delegated_agent signer needs an authorization_ref (代签须有授权记录)     delegated_without_authorization_ref
-  every Proposal names a source Assessment or Gap                                proposal_without_source
+  every Proposal names a source Assessment or Gap — and it must resolve (rule 6) proposal_without_source
   with --required-parts: every named Part attends the selected Rings (F-17)      required_part_missing
+
+G1 解释规则 4-10 (g1-interpretations.md, 2026-09-06) — seven readings adjudicated, compiled here.  Six of
+them correct behaviour this script used to have; none of them changes a frozen contract byte, and all seven
+run clean over the current audit.yaml (a reading under which a correct audit cannot pass its own check
+script is a wrong reading — 规则 1):
+
+  rule 4  parts[].fills[] is an EDGE and may cross rings; same-ring binds only    unknown_gap_ref
+          rings[].missing[], a Ring's declaration about ITSELF
+  rule 5  ring_unexpected always reads the whole document — "is there a ring id   ring_unexpected
+          outside the legal ten" does not depend on which rings you are viewing;
+          --rings narrows the EXPECTED SET of ring_missing and nothing else
+  rule 6  proposals[].source must RESOLVE to an assessment.id or a gaps[].id;     proposal_without_source
+          an empty key and a dangling id are two faces of one predicate, told
+          apart in the location string, not by a second token (AC-004-b froze it)
+  rule 7  alternatives_of must read `stage.<x>`, sit on an id carrying ≥2         spurious_alternatives_of
+          records, and never be stamped on EVERY record of that id
+  rule 8  gates[].kind must be present and ∈ {script, human}; an out-of-enum      gate_kind_outside_enum
+          kind is still judged under BOTH the script and the human rule
+  rule 9  every assessment.disposition and gaps[].disposition ∈ {fix_list,        disposition_outside_enum
+          issue, none} — 签字版 F-16 governs, audit.schema.md does not narrow it;
+          a misfit Part may dispose only as issue or none                        misfit_disposition_outside_enum
+  rule 10 F-06's gate cap reads the Part's EXCLUSIVE artifact — its own           implemented_above_gate_cap
+          `artifact` field — never every artifacts[] row whose producer is this   exclusive_artifact_unregistered
+          Part; an ungated exclusive artifact caps implemented.verdict at
+          `declared` (confirming G3 / mf-009)
+
+NOT CHECKED, by ruling (g1-interpretations.md 规则 7, and `known_gaps.yaml` keeps the gap open): F-05
+conditions (a) "two Parts sit under one stage.<x> node's handled_by" and (b) "a `when`-guarded conditional
+edge picks between them" both live in graph.yaml, which this script does not read.  Rule 7 checks only the
+half audit.yaml can witness.  Reading `alternatives_of` here as satisfied is therefore a GAP, not a pass.
 
 Exit 1 = at least one predicate failed.  Exit 2 = the input could not be read.
 
@@ -62,9 +92,14 @@ DIMENSIONS = ("needed", "implemented", "naming")
 EVIDENCE_KINDS = {"file", "gate_json", "smoke", "run_record"}
 IMPLEMENTED_VERDICTS = {"declared", "compiled", "verified"}
 HUMAN_GATES = {"G1", "G2", "G3"}                 # rule 3d — merge / harness-review are Parts, not Gates
+GATE_KINDS = {"script", "human"}                 # rule 8 — a closed enum, or one misspelling voids rule 3
 GATE_VERDICTS = {"pending", "pass", "reject", "waived"}
+DISPOSITIONS = {"fix_list", "issue", "none"}     # rule 9 — 签字版 F-16, not audit.schema.md's narrower pair
+MISFIT_DISPOSITIONS = {"issue", "none"}          # rule 9 — a misfit does not go on a fix list
+GATE_CAPPED_VERDICTS = {"compiled", "verified"}  # rule 10 — what an ungated exclusive artifact forbids
 DOOR = "门"                                       # the rendered word reserved for human gates
 PSL_ID_RE = re.compile(r"\bPSL-\d+\b")
+STAGE_RE = re.compile(r"^stage\.[A-Za-z0-9_.-]+$")   # rule 7 — the shape an alternatives_of value must read
 
 
 def die(msg):
@@ -87,7 +122,15 @@ def load_yaml(path, what):
 
 
 def load_psl_index(path):
-    """The closed set of PSL ids the audit may cite: the `- PSL-NNN …` entries of the 规律索引 section."""
+    """The closed set of PSL ids the audit may cite: the `- PSL-NNN …` entries of the 规律索引 section.
+
+    An EMPTY index is refused, not tolerated.  `psl_id_unknown` used to be guarded by `elif psl_ids:`,
+    so a truncated or empty PSL made the whole closed-set check evaporate and the document passed —
+    a wrong PSL failed loudly (126 unknown ids) while an empty one went green.  The emptier the
+    evidence, the greener the result: exactly backwards.  verify_psl.py already rejects a PSL with no
+    PSL-NNN id (I-02); this is the same rule on the reading side (I-99, PR #3 pre-review's lesson that
+    an empty validator exits 0).
+    """
     try:
         with open(path, encoding="utf-8") as fh:
             text = fh.read()
@@ -108,6 +151,10 @@ def load_psl_index(path):
                 ids.add(m.group(1))
     if not ids:                                  # no index section: fall back to every id the PSL mentions
         ids = set(PSL_ID_RE.findall(text))
+    if not ids:
+        die(f"PSL has no `- PSL-NNN` entry under 规律索引: {path} — an empty closed set silently "
+            f"disables psl_id_unknown, so it is refused rather than tolerated (I-99)")
+
     return ids
 
 
@@ -162,10 +209,16 @@ def check_rings(doc, selected_rings, report):
     for rid in wanted:
         if rid not in by_id:
             report.fail("ring_missing", rid)
-    if selected_rings is None:
-        for rid in by_id:
-            if rid not in CANONICAL_RINGS:
-                report.fail("ring_unexpected", f"{rid} is not one of {'/'.join(CANONICAL_RINGS)}")
+    # G1 解释规则 5: F-13's set equality has two directions and only ⊆ is a view.
+    #   ⊆ ring_missing   — "did the rings we are looking at attend" — --rings IS the expected set.
+    #   ⊇ ring_unexpected — "is there a ring id outside the legal ten" — the answer cannot depend on which
+    #                       rings we look at, so --rings must not switch it off.  It used to (`if
+    #                       selected_rings is None`), which is not narrowing a view but deleting a
+    #                       predicate, against F-17 「不改任何既有谓词」: `--rings R6` returned exit 0 on a
+    #                       document carrying `id: R9`.
+    for rid in by_id:
+        if rid not in CANONICAL_RINGS:
+            report.fail("ring_unexpected", f"{rid} is not one of {'/'.join(CANONICAL_RINGS)}")
 
     return rings, [by_id[r] for r in wanted if r in by_id]
 
@@ -208,7 +261,7 @@ def check_dimensions(all_parts, psl_ids, report):
             if not ids:
                 report.bump("dims_without_psl_id")
                 report.fail("psl_id_missing", where)
-            elif psl_ids:
+            elif psl_ids is not None:
                 unknown = [i for i in ids if i not in psl_ids]
                 if unknown:
                     report.bump("dims_with_unknown_psl_id")
@@ -255,16 +308,29 @@ def check_gaps(doc, rings, all_parts, report):
 
     unknown_refs = 0
 
-    def resolve(gid, ring_id, where):
-        """A gap reference must name a gaps[] entry that sits in the same ring (rule 2e)."""
+    def resolve(gid, ring_id, where, same_ring):
+        """A gap reference must name a gaps[] entry; only rings[].missing[] must also stay in-ring.
+
+        Rule 2(e) is asymmetric on purpose, and G1 解释规则 4 confirms the asymmetry against this script,
+        which used to demand same-ring for both:
+
+          rings[].missing[] is a Ring's declaration ABOUT ITS OWN blanks.  A ring declaring another ring's
+          blank has filed in the wrong place — same-ring is definitional.
+          parts[].fills[] is an EDGE, and edges cross.  F-04 puts a Gap in exactly one Ring and a Part in
+          exactly one Ring, and lets N Parts fill N Gaps; two "exactly one"s multiplied make the cross-ring
+          edge a legal product of the data model.  A `spine` Part filling an R4 Control gap is the designed
+          shape, and the old same-ring rule made that correctly-recorded audit fail its own check script —
+          the trap 规则 1 was written to catch.
+        """
         nonlocal unknown_refs
         gap = gaps.get(gid)
         if gap is None:
             unknown_refs += 1
             report.fail("unknown_gap_ref", f"{where} references {gid}, which is not in gaps[]")
-        elif gap.get("ring") != ring_id:
+        elif same_ring and gap.get("ring") != ring_id:
             unknown_refs += 1
-            report.fail("unknown_gap_ref", f"{where} references {gid}, whose ring is {gap.get('ring')!r}")
+            report.fail("unknown_gap_ref",
+                        f"{where} references {gid}, whose ring is {gap.get('ring')!r}, not {ring_id!r}")
         return gap
 
     # FILLS edges + 过填 (a Part that fills no Gap must say so — PSL-002)
@@ -275,7 +341,7 @@ def check_gaps(doc, rings, all_parts, report):
         fills = as_list(part.get("fills"))
         for gid in fills:
             filled.add(gid)
-            resolve(gid, rid, f"{rid}/{pid}.fills")
+            resolve(gid, rid, f"{rid}/{pid}.fills", same_ring=False)
         if not fills and as_dict(part.get("assessment")).get("needed") is not None:
             verdict = as_dict(as_dict(part["assessment"]).get("needed")).get("verdict")
             if verdict != "overfill":
@@ -298,7 +364,7 @@ def check_gaps(doc, rings, all_parts, report):
             if not nonempty_str(gid):
                 continue
             ids.add(gid)
-            resolve(gid, rid, f"{rid}.missing")
+            resolve(gid, rid, f"{rid}.missing", same_ring=True)
         declared[rid] = ids
     report.set("rings_without_missing_key", without_missing_key)
     report.set("unknown_gap_refs", unknown_refs)
@@ -353,10 +419,113 @@ def check_artifacts(doc, all_parts, report):
                         f"{rid}/{pid} claims merge_candidate but produces no contested Artifact")
     report.set("spurious_merge_candidate", spurious)
 
+    # G1 解释规则 7 — the other face of "merge_candidate 不能当装饰撒".  Any non-empty string used to buy an
+    # exemption from double_producer, so stamping BOTH producers of a genuinely contested Artifact washed
+    # it into `owners < 2` and neither double_producer nor spurious_merge_candidate fired.  What audit.yaml
+    # can witness is the SHAPE and the PLACE; F-05 conditions (a) and (b) need graph.yaml and stay unchecked
+    # (see the module docstring — that is a gap, not a pass).
+    spurious_alt = 0
+    for aid, entries in grouped.items():
+        for entry in entries:
+            value = entry.get("alternatives_of")
+            if not nonempty_str(value):
+                continue
+            where = f"{aid} / {entry.get('producer')}"
+            if not STAGE_RE.match(value):
+                spurious_alt += 1
+                report.fail("spurious_alternatives_of",
+                            f"{where} alternatives_of={value!r} is not a stage.<x> node")
+            if len(entries) < 2:
+                spurious_alt += 1
+                report.fail("spurious_alternatives_of",
+                            f"{where} is the only record of {aid} — there is no alternative to be one of")
+            elif all(nonempty_str(sibling.get("alternatives_of")) for sibling in entries):
+                spurious_alt += 1
+                report.fail("spurious_alternatives_of",
+                            f"{where} — every record of {aid} carries alternatives_of, so none of them is"
+                            " the branch being alternated with")
+    report.set("spurious_alternatives_of", spurious_alt)
+
+
+def check_exclusive_artifacts(doc, all_parts, report):
+    """F-06's gate cap, read on the Part's EXCLUSIVE Artifact (G1 解释规则 10, confirming G3 / mf-009).
+
+    "独占" is the Part's own `artifact` field — audit.schema.md §Part: 独占生产的产物；无产物写 null.  It is
+    NOT "every artifacts[] row whose producer is this Part".  Under that wider reading a Part gets demoted
+    for an ungated SIDE product: R1/dos-extract would be capped over decisions.md and R7/review-loop over
+    github:reply — and G3 named dos-extract as one that must NOT be capped.  So the wide reading makes an
+    audit G3 judged correct fail its own check script, which 规则 1 settles.  An ungated side product is a
+    Gap to register (73 of them are), not a downgrade of its producer.
+
+    Reads the whole document; --rings does not narrow it (F-17 — dimension, Gap, Artifact, Gate and
+    Proposal predicates always read everything).
+    """
+    entries = [as_dict(e) for e in as_list(doc.get("artifacts"))]
+    unregistered, above_cap = 0, 0
+    for rid, part in all_parts:
+        pid, aid = part.get("id"), part.get("artifact")
+        if not nonempty_str(aid):
+            continue                              # artifact: null — F-06 says nothing about a Part with no product
+        exclusive = next((e for e in entries if e.get("id") == aid and e.get("producer") == pid), None)
+        if exclusive is None:
+            unregistered += 1
+            report.fail("exclusive_artifact_unregistered",
+                        f"{rid}/{pid} claims {aid} as its exclusive artifact, but artifacts[] has no record"
+                        f" with that id and producer={pid}")
+            continue
+        if as_list(exclusive.get("checked_by")):
+            continue                              # 有闸 — no cap
+        verdict = as_dict(as_dict(part.get("assessment")).get("implemented")).get("verdict")
+        if verdict in GATE_CAPPED_VERDICTS:
+            above_cap += 1
+            report.fail("implemented_above_gate_cap",
+                        f"{rid}/{pid} is {verdict} while its exclusive artifact {aid} has an empty"
+                        " checked_by — an ungated product caps implemented at 'declared' (F-06)")
+    report.set("exclusive_artifact_unregistered", unregistered)
+    report.set("implemented_above_gate_cap", above_cap)
+
+
+def check_dispositions(doc, all_parts, report):
+    """F-16's three-value enum (G1 解释规则 9): the signed form governs, audit.schema.md does not narrow it.
+
+    audit.schema.md says of itself 「改这份文档不会改判定」 — a document that declares itself a projection
+    cannot shrink the signed enum.  Its {none, issue} is a proper subset of F-16's {fix_list, issue, none},
+    so compiling the schema would REJECT a `disposition: fix_list` F-16 explicitly allows: 规则 1 again.
+    `disposition` says whether an Assessment / Gap grows a proposal at all and of which kind;
+    `Proposal.destination` says where a proposal goes.  Two fields, not two spellings of one.
+    """
+    outside, misfit_outside = 0, 0
+
+    def judge(where, value):
+        nonlocal outside
+        if value not in DISPOSITIONS:
+            outside += 1
+            report.fail("disposition_outside_enum",
+                        f"{where} disposition={value!r} is not one of {'/'.join(sorted(DISPOSITIONS))}")
+
+    for rid, part in all_parts:
+        assessment = as_dict(part.get("assessment"))
+        where = f"{rid}/{part.get('id')}"
+        disposition = assessment.get("disposition")
+        judge(where, disposition)
+        # F-16 同句的后半：a Part whose name does not fit is not a fix-list item
+        if as_dict(assessment.get("naming")).get("fit") == "misfit" and disposition not in MISFIT_DISPOSITIONS:
+            misfit_outside += 1
+            report.fail("misfit_disposition_outside_enum",
+                        f"{where} is a misfit disposing as {disposition!r} — a misfit may only be"
+                        f" {' or '.join(sorted(MISFIT_DISPOSITIONS))}")
+
+    for gap in as_list(doc.get("gaps")):
+        gap = as_dict(gap)
+        judge(f"gaps[{gap.get('id')}]", gap.get("disposition"))
+
+    report.set("disposition_outside_enum", outside)
+    report.set("misfit_disposition_outside_enum", misfit_outside)
+
 
 def check_gates(doc, report):
     """Rule 3: gates[] is the design view (门 / 闸); run_evidence.gates[] carries the F-07 signer triplet."""
-    for key in ("gates_not_declared", "script_gates_rendered_as_door",
+    for key in ("gates_not_declared", "script_gates_rendered_as_door", "gate_kind_outside_enum",
                 "gate_verdict_outside_enum", "human_gates_without_signer",
                 "delegated_without_authorization_ref"):
         report.set(key, 0)
@@ -364,11 +533,20 @@ def check_gates(doc, report):
     for gate in as_list(doc.get("gates")):
         gate = as_dict(gate)
         gid, kind = gate.get("id"), gate.get("kind")
-        if kind == "script":
-            if gate.get("label") == DOOR:
-                report.bump("script_gates_rendered_as_door")
-                report.fail("script_gate_rendered_as_door", f"{gid} is a script rendered as {DOOR}")
-        elif kind == "human" and gid not in HUMAN_GATES:
+        # G1 解释规则 8 — this was fail-open.  The old `if script … elif human …` let any other spelling
+        # (`shell`, `human_gate`, or no `kind` key at all) walk past BOTH rule-3 predicates, so
+        # `{id: verify_x.py, kind: shell, label: 门}` exited 0.  F-94 hangs the whole judgement on this
+        # field 「以 kind 字段区分而不以名字区分」, which only holds if the field is a closed enum.
+        outside_enum = kind not in GATE_KINDS
+        if outside_enum:
+            report.bump("gate_kind_outside_enum")
+            report.fail("gate_kind_outside_enum",
+                        f"{gid} kind={kind!r} is not one of {'/'.join(sorted(GATE_KINDS))}")
+        # 枚举外的脏值不因为脏就免检：judge it once under each rule rather than under neither
+        if (kind == "script" or outside_enum) and gate.get("label") == DOOR:
+            report.bump("script_gates_rendered_as_door")
+            report.fail("script_gate_rendered_as_door", f"{gid} is a script rendered as {DOOR}")
+        if (kind == "human" or outside_enum) and gid not in HUMAN_GATES:
             report.bump("gates_not_declared")
             report.fail("gate_not_declared", f"{gid} is not one of {'/'.join(sorted(HUMAN_GATES))}"
                                              " — merge and harness-review are human_gate Parts, not Gates")
@@ -391,14 +569,40 @@ def check_gates(doc, report):
                         f"run_evidence.gates[{gid}] is signed by a delegated_agent with no authorization_ref")
 
 
-def check_proposals(doc, report):
-    """补的理由只能是一个已识别的 Gap 或 Assessment (DP-2)."""
+def check_proposals(doc, all_parts, report):
+    """补的理由只能是一个已识别的 Gap 或 Assessment (DP-2) — and it must RESOLVE (G1 解释规则 6).
+
+    AC-004-b's given is "one proposal lacking a source assessment or gap id": the object is *a source
+    assessment or gap id*, not *a non-empty string*, so `source: A-does-not-exist` is precisely the failure
+    it names.  audit.schema.md §Proposal already says the same.  The namespace is closed and small —
+    rings[].parts[].assessment.id ∪ gaps[].id.
+
+    The empty key and the dangling id deliberately SHARE this one token.  AC-004-b froze
+    `expect: {exit: 1, error: proposal_without_source}`; giving the dangling id its own token would make the
+    most natural fixture emit a token no AC mentions and force a frozen contract byte open.  The two are
+    told apart in the location string instead.
+    """
+    namespace = set()
+    for _, part in all_parts:
+        aid = as_dict(part.get("assessment")).get("id")
+        if nonempty_str(aid):
+            namespace.add(aid)
+    for gap in as_list(doc.get("gaps")):
+        gid = as_dict(gap).get("id")
+        if nonempty_str(gid):
+            namespace.add(gid)
+
     without_source = 0
     for proposal in as_list(doc.get("proposals")):
         proposal = as_dict(proposal)
-        if not nonempty_str(proposal.get("source")):
+        pid, source = proposal.get("id"), proposal.get("source")
+        if not nonempty_str(source):
             without_source += 1
-            report.fail("proposal_without_source", str(proposal.get("id")))
+            report.fail("proposal_without_source", f"{pid}: source is empty")
+        elif source not in namespace:
+            without_source += 1
+            report.fail("proposal_without_source",
+                        f"{pid}: source {source!r} resolves to no assessment or gap")
     report.set("proposals_without_source", without_source)
 
 
@@ -421,8 +625,10 @@ def check(doc, psl_ids, selected_rings, required_parts, report):
     check_dimensions(all_parts, psl_ids, report)
     check_gaps(doc, rings, all_parts, report)
     check_artifacts(doc, all_parts, report)
+    check_exclusive_artifacts(doc, all_parts, report)
     check_gates(doc, report)
-    check_proposals(doc, report)
+    check_proposals(doc, all_parts, report)
+    check_dispositions(doc, all_parts, report)
     check_required_parts(required_parts, selected_rings, view_part_ids, all_parts, report)
 
     # F-14, reported and never gated: is this exit code usable as evidence at all?
@@ -452,7 +658,9 @@ def main(argv=None):
     if not isinstance(doc, dict):
         die(f"cannot read audit: {args.audit} is not a YAML mapping")
 
-    psl_ids = load_psl_index(args.psl) if args.psl else set()
+    # None = 没给尺子（--psl 未传，closed-set 检查照旧跳过）；空集 = 给了把坏尺子（load_psl_index 已经 die）。
+    # 这两件事必须分开：混为一谈正是 I-99 那个 fail-open 的形状。
+    psl_ids = load_psl_index(args.psl) if args.psl else None
     selected_rings = split_csv(args.rings) if args.rings else None
     required_parts = split_csv(args.required_parts) if args.required_parts else None
 
@@ -471,7 +679,7 @@ def main(argv=None):
     out.update({
         "audit": args.audit,
         "psl": args.psl,
-        "psl_index_size": len(psl_ids),
+        "psl_index_size": len(psl_ids) if psl_ids is not None else None,
         "rings_viewed": selected_rings if selected_rings is not None else CANONICAL_RINGS,
         "variant": args.variant,
         "ok": not predicates,

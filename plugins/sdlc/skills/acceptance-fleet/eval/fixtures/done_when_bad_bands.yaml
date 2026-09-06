@@ -1,0 +1,8 @@
+# an inverted band leaves scores between 2 and 8 with no rule — exactly the I-68 gap, as configuration
+feature: fixture-bad-bands
+based_on: [REQ-001]
+created_at: 2026-09-06T00:00:00+00:00
+created_by: fixture
+gaming_risk_threshold:
+  done_below: 8
+  block_at_or_above: 2

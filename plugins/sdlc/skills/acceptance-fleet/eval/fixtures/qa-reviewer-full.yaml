@@ -1,0 +1,62 @@
+# A full qa-reviewer report (shape: qa-reviewer/references/finding-schema.yaml). Facts and opinions mixed —
+# this is what the dispatch matrix used to hand straight to /spec-drift-detector.
+qa_report:
+  agent_role: qa-reviewer
+  model: claude-sonnet-4-6
+  classifier_model: claude-haiku-4-5
+  vendor: claude
+  test_source: tests/subscription-cancellation/
+  thresholds_source: specs/subscription-cancellation/done_when.yaml
+  baseline_source: ratchet-log/iteration-002/final-state.json
+  layers_run: [existence, unit, integration, e2e, mutation]
+  layers_skipped: []
+  duration_seconds: 487
+  auto_fix_maintenance: false
+  decision: NO-GO
+  decision_reasons:
+    - "1 P0 genuine failure in integration layer (test_cancel_atomicity)"
+    - "mutation kill rate 0.62 < threshold 0.70"
+  conditional_caveats: []
+  scope: { tests_executed: 245, tests_passed: 232, tests_failed: 1, tests_skipped: 12, tests_errored: 0 }
+  results:
+    existence: { exit_code: 0, checks_passed: 8, checks_failed: 0, failure_details: [], duration_seconds: 3 }
+    unit: { passed: 18, failed: 0, skipped: 0, errored: 0, line_coverage: 0.87, branch_coverage: 0.71, duration_seconds: 12 }
+    integration: { passed: 4, failed: 1, line_coverage: 0.62, duration_seconds: 145, containers_used: [postgres, redis] }
+    e2e: { passed: 2, failed: 0, duration_seconds: 89, browser_used: chromium }
+  mutation:
+    tool: stryker
+    qualified: true
+    mutants_generated: 62
+    mutants_killed: 47
+    kill_rate: 0.758
+    surviving_mutants:
+      - file: src/billing/cancel.ts
+        line: 47
+        mutation_kind: "boundary <= to <"
+        what_was_mutated: "if (subscription.end_date <= now) { ... }"
+        hint: "no test covers end_date exactly equal to now"
+    duration_seconds: 238
+  num_findings: 1
+  findings:
+    - finding_id: qa-001
+      severity: P0
+      classification: genuine
+      test_file: tests/subscription-cancellation/integration/test_cancel_atomicity.py
+      test_name: test_cancel_with_concurrent_retry_is_atomic
+      layer: integration
+      based_on: REQ-001
+      failure_type: assertion
+      assertion_message: "expected snapshot_before == snapshot_after"
+      regression: false
+      proposed_fix: "Wrap cancellation + refund_queue.enqueue in a single transaction."
+  maintenance_issues:
+    - test_file: tests/subscription-cancellation/e2e/test_cancel_button.spec.ts
+      classification: maintenance
+      confidence: high
+      reason: "Selector .btn-cancel-3 not found; impl diff did not touch UI."
+  regressions: []
+  caveats:
+    runtime_gaps: []
+    unknown_threshold_keys: []
+    slow_layers: []
+    decision_qualifier: null

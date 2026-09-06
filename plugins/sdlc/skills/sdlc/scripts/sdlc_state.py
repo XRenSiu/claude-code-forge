@@ -16,16 +16,22 @@ Usage:
   sdlc_state.py advance [--slug S] <stage> [--force --reason R]
   sdlc_state.py gate    [--slug S] <g1|g2|g3> --verdict pass|reject|waived --by NAME
                         [--record PATH] [--attribution derivation_error|rule_error|none]
+                        [--secondary-attribution derivation_error|rule_error]…  (recorded, never counted)
                         [--signer-kind human|delegated_agent] [--authorization TEXT]   # delegated requires authorization
   sdlc_state.py card    [--slug S] CARD-xx --status todo|doing|done|blocked [--commit SHA] [--ac AC-id ...]
   sdlc_state.py fail    [--slug S] --signal SIG [--card CARD-xx] [--fingerprint FP | --evidence TEXT]
                         [--score X] [--by REPORTER] [--routing PATH]   # -> route decision JSON + counters + ledger
+  sdlc_state.py waive   [--slug S] --signal SIG --reason R --by WHO
+                        [--signer-kind human|delegated_agent] [--authorization TEXT]
+                        [--fingerprint FP] [--card CARD-xx] [--layer L] [--stage S] [--scope TEXT] [--ref type:target ...]
+                        # a waiver WITHOUT a transition; prints the event id to cite as a waiver_ref
   sdlc_state.py report  [--slug S] --path FAILURE_REPORT.md            # clears pending.failure_report
   sdlc_state.py check-clean [--slug S] [--as-hook]                     # exit 0 clean / 1 dirty; --as-hook prints Stop-hook JSON
   sdlc_state.py graph   check|next|render [--graph PATH] [--full]      # execution graph as data (assets/graph.yaml)
   sdlc_state.py loops   [--slug S] [--loops PATH] [--pr-watch DIR] [--ratchet-dir DIR]   # budget consumption per loop
-  sdlc_state.py ledger  [--slug S] --kind K --note TEXT [--signal S] [--layer L] [--decision D] [--by B] [--ref type:target ...]
-  sdlc_state.py archive [--slug S] --to DIR               # copy state + ledger + trace + listed artifacts
+  sdlc_state.py ledger  [--slug S] --kind K --note TEXT [--signal S] [--layer L] [--decision D] [--by B]
+                        [--fingerprint FP] [--card CARD-xx] [--ref type:target ...]
+  sdlc_state.py archive [--slug S] --to DIR               # copy state + ledger + trace + contract + listed artifacts
 
 Exit codes: 0 ok · 1 rejected (transition invalid / prerequisite unmet / bad key / dirty) · 2 usage/IO error.
 Every mutating command appends a ledger row (and a trace event). Writes are atomic (tmp + rename).
@@ -39,6 +45,8 @@ Mechanical guarantees (the non-waivable half):
     repeat (same fp N×), oscillation (period-2/3 cycle), plateau (--score stale N rounds) and refuses
     impossible_under_contract from anyone not in routing.impossible_reporters; escalation sets
     pending.failure_report which check-clean / the Stop-hook template refuse to end a session on
+  - a waiver is a first-class record: `waive` writes one without a transition and prints its event id, and
+    `review.done` is a closed enum whose "waived" (or any exit_reason) must cite that id as review.waiver_ref
   - `graph check` asserts ORDER == assets/graph.yaml stages (data and code watch each other)
 Semantic half (a judge / a human, never this script): whether the candidate layer is the RIGHT layer.
 """
@@ -62,17 +70,24 @@ SETTABLE = {
     "issue.number", "issue.url", "issue.kind",
     "branch.name", "branch.base",
     "contract.done_when", "contract.contract_yaml", "contract.source",
-    "lock.path", "lock.signed_by", "lock.signed_at",
+    "lock.path", "lock.signed_by", "lock.signed_at", "lock.stage",
     "cards.dir", "cards.lint_passed",
     "acceptance.evaluation_result", "acceptance.meets_done_when", "acceptance.skipped_reason",
     "pr.number", "pr.url", "pr.size_class", "pr.pre_review_rounds",
-    "review.done", "review.exit_reason", "review.rounds",
+    "review.done", "review.exit_reason", "review.rounds", "review.waiver_ref",
     "merge.sha", "merge.merged_at",
     "gates.g3.required",
     "world.psl", "world.derived_dir", "world.dos", "world.invariants", "world.form_draft_sha256",
     "contract.compile_manifest", "contract.calibration_report", "contract.tests_manifest",
     "release.version", "release.tag", "release.notes", "release.done", "release.skipped_reason",
 }
+LOCK_STAGES = ("g2", "l5")
+# how the review ring exited, as a closed enum instead of a boolean with the qualification in free text
+# (dogfood 2026-09-06, I-83). Legacy `true` reads as "done"; "waived" and any exit_reason need a waiver_ref.
+REVIEW_EXITS = ("done", "waived")
+# the contract set an archive must carry so the run stays readable (and measurable) after the branch is gone
+CONTRACT_FILES = ("contract.done_when", "contract.compile_manifest", "contract.tests_manifest",
+                  "contract.calibration_report")
 LAYER_COUNTERS = ["card", "plan", "task", "ontology", "world"]
 BUDGET_KEY = {"card": "card_retries", "plan": "plan_reflows", "task": "task_reflows",
               "ontology": "ontology_reflows", "world": "world_reflows"}
@@ -192,6 +207,52 @@ def ledger_append(root, slug, kind, note="", stage=None, signal="", layer="", fi
     return trace_append(root, slug, ev)
 
 
+def trace_event_ids(root, slug):
+    """Every event id already written to trace.jsonl — the resolvable target set for a waiver_ref."""
+    tp = trace_path(root, slug)
+    ids = set()
+    if os.path.isfile(tp):
+        with open(tp, encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    ids.add(json.loads(line).get("id"))
+                except Exception:
+                    continue
+    return ids
+
+
+def gitignore_gap(root):
+    """`.sdlc/` is runtime state, not a deliverable: the archive is what gets committed (`archive --to
+    specs/<slug>/`). Committing the live state turns the ledger into a merge conflict and lets a stale
+    counter travel between branches. Nothing used to tell the operator (dogfood 2026-09-06, I-01)."""
+    try:
+        r = subprocess.run(["git", "check-ignore", "-q", root], capture_output=True, text=True)
+    except (OSError, ValueError):
+        return None
+    if r.returncode != 1:   # 0 = already ignored · 128 = not a repository, nothing to advise
+        return None
+    return (f"{root}/ is not ignored by git: it is runtime state, not a deliverable — add a `{root}/` line to "
+            f".gitignore and commit the archive instead (`archive --to specs/<slug>/`)")
+
+
+def resolve_commit(sha):
+    """Short sha → the full one, so the same commit cannot be registered twice under two spellings
+    (dogfood 2026-09-06, I-66). Outside a repo (or for a sha git does not know) the raw value stands."""
+    if not sha:
+        return sha
+    try:
+        r = subprocess.run(["git", "rev-parse", "--verify", "--quiet", f"{sha}^{{commit}}"],
+                           capture_output=True, text=True)
+        if r.returncode == 0 and r.stdout.strip():
+            return r.stdout.strip()
+    except (OSError, ValueError):
+        pass
+    return sha
+
+
 def parse_refs(items):
     out = []
     for it in items or []:
@@ -219,6 +280,39 @@ def set_path(st, dotted, value):
     for k in parts[:-1]:
         cur = cur.setdefault(k, {})
     cur[parts[-1]] = value
+
+
+def review_exit(st):
+    """How the review ring exited: "done" | "waived" | None (still open). Legacy `true` == "done"."""
+    v = get_path(st, "review.done")
+    if v is True:
+        return "done"
+    return v if v in REVIEW_EXITS else None
+
+
+def check_review(st, root, slug):
+    """The exit kind is the state, not a sentence beside it (I-83).
+
+    `review.done` is a closed enum (legacy boolean true still reads as "done"). A "waived" exit — or any
+    `exit_reason` prose qualifying a "done" one — must cite `review.waiver_ref`, a ledger event id that
+    resolves in trace.jsonl. That is the difference between "this was waived" being machine-readable and
+    it hiding in a free-text field no script reads.
+    """
+    v = get_path(st, "review.done")
+    if v is not None and v is not True and v is not False and v not in REVIEW_EXITS:
+        die(f"review.done must be true|false|{'|'.join(REVIEW_EXITS)} (closed enum), got {v!r}", 1)
+    kind = review_exit(st)
+    if kind is None:
+        return
+    reason, ref = get_path(st, "review.exit_reason"), get_path(st, "review.waiver_ref")
+    if (kind == "waived" or reason) and not ref:
+        why = "a waived exit" if kind == "waived" else "an exit_reason qualifying a done exit"
+        die(f"{why} requires review.waiver_ref=<ledger event id>: record the waiver first "
+            "(`waive --signal review --reason … --by …` prints the id). A qualification no script reads is "
+            "not an exit condition (I-83)", 1)
+    if ref and ref not in trace_event_ids(root, slug):
+        die(f"review.waiver_ref {ref!r} does not resolve to an event in trace.jsonl "
+            "(`waive` / `ledger` print the id they wrote)", 1)
 
 
 def coerce(v):
@@ -274,12 +368,12 @@ def prereqs(st, target):
     elif target == "review":
         need(get_path(st, "pr.number"), "pr.number set")
     elif target == "g3":
-        need(get_path(st, "review.done") is True, "review.done true")
+        need(review_exit(st), "review.done recorded (true | done | waived; a waived exit needs review.waiver_ref)")
     elif target == "merge":
         if get_path(st, "gates.g3.required", True):
             need(get_path(st, "gates.g3.verdict") in ("pass", "waived"), "G3 verdict pass — run `gate g3`")
         else:
-            need(get_path(st, "review.done") is True, "review.done true")
+            need(review_exit(st), "review.done recorded (true | done | waived; a waived exit needs review.waiver_ref)")
     elif target == "release":
         need(get_path(st, "merge.sha"), "merge.sha set")
     elif target == "archive":
@@ -319,7 +413,11 @@ def cmd_init(a):
     }
     save(a.root, a.slug, st)
     ledger_append(a.root, a.slug, "init", f"title={a.title} track={st['track']}", stage="intake")
-    print(json.dumps({"ok": True, "state": sp}, ensure_ascii=False))
+    out = {"ok": True, "state": sp}
+    gap = gitignore_gap(a.root)
+    if gap:
+        out["warning"] = gap
+    print(json.dumps(out, ensure_ascii=False))
 
 
 def cmd_show(a):
@@ -338,12 +436,16 @@ def cmd_set(a):
             die(f"key not settable: {k} (allowed: {sorted(SETTABLE)})", 1)
         if k == "track" and v not in ("psl", "task"):
             die("track must be psl|task", 1)
+        if k == "lock.stage" and v not in LOCK_STAGES:
+            die(f"lock.stage must be {'|'.join(LOCK_STAGES)} (the two signing stages)", 1)
         set_path(st, k, coerce(v))
         if k == "track":
             st["gates"]["g1"]["required"] = (v == "psl")
         if k in ("contract.done_when", "lock.path", "acceptance.evaluation_result", "world.derived_dir", "world.dos"):
             refs.append({"type": "references", "target": v})
         changed.append(k)
+    if any(k.startswith("review.") for k in changed):
+        check_review(st, a.root, a.slug)   # validated before the merge: a rejected proposal never lands
     save(a.root, a.slug, st)
     ledger_append(a.root, a.slug, "set", ", ".join(a.pairs), stage=st["stage"], refs=refs)
     print(json.dumps({"ok": True, "changed": changed}, ensure_ascii=False))
@@ -402,6 +504,19 @@ def cmd_gate(a):
         g["attribution"] = a.attribution
     elif a.verdict == "pass":
         g.pop("attribution", None)   # a stale reject attribution must not sit beside a pass (dogfood 2026-09-05, I-51)
+    # A rejection often has more than one layer of cause — this run had one that was honestly both a
+    # rule error and a derivation error. Recording only the primary loses the second; counting both
+    # would make the world-layer number stop meaning "how many times the world changed". So secondary
+    # causes are recorded here and never reach the counter below (dogfood I-22).
+    sec = [x for x in (a.secondary_attribution or []) if x != a.attribution]
+    if len(sec) != len(a.secondary_attribution or []):
+        die("--secondary-attribution repeats the primary — a duplicate is not a second layer", 1)
+    if sec:
+        if not a.attribution or a.attribution == "none":
+            die("--secondary-attribution needs a primary --attribution: the primary is what routes and counts", 1)
+        g["secondary_attribution"] = sec
+    elif a.verdict == "pass":
+        g.pop("secondary_attribution", None)
     # only a rule_error is a world-layer error (the PSL itself was wrong); a derivation_error re-derives with the
     # same PSL and must not inflate the world counter (dogfood 2026-09-05, I-34)
     if a.gate == "g1" and a.verdict == "reject" and a.attribution == "rule_error":
@@ -425,17 +540,23 @@ def cmd_card(a):
     items = st.setdefault("cards", {}).setdefault("items", {})
     c = items.setdefault(a.card, {"status": "todo", "retries": 0, "commits": []})
     c["status"] = a.status
-    if a.commit:
-        c.setdefault("commits", []).append(a.commit)
+    sha = resolve_commit(a.commit)
+    if sha:
+        commits = c.setdefault("commits", [])
+        if sha not in commits:   # one commit, one row — a short sha is the same commit as its full one (I-66)
+            commits.append(sha)
     save(a.root, a.slug, st)
     refs = [{"type": "references", "target": a.card}]
     extra = {"card": a.card}
-    if a.commit:
+    if sha:
         refs = [{"type": "implements", "target": a.card}] + [{"type": "implements", "target": ac} for ac in (a.ac or [])]
-        extra["sha"] = a.commit
-    ledger_append(a.root, a.slug, "card", f"{a.card} → {a.status}" + (f" commit {a.commit}" if a.commit else ""),
+        extra["sha"] = sha
+    ledger_append(a.root, a.slug, "card", f"{a.card} → {a.status}" + (f" commit {sha}" if sha else ""),
                   stage=st["stage"], refs=refs, extra=extra)
-    print(json.dumps({"ok": True, "card": a.card, "status": a.status}, ensure_ascii=False))
+    out = {"ok": True, "card": a.card, "status": a.status}
+    if sha:
+        out["commit"] = sha
+    print(json.dumps(out, ensure_ascii=False))
 
 
 def load_routing(path):
@@ -769,11 +890,47 @@ def cmd_loops(a):
         print(f"| {r['loop']} | {r['level']} | {r['timescale']} | {r['generator']} → {r['verifier']} | {r['used']}/{r['budget']} | {r['pct'] if r['pct'] is not None else '-'} | {r['trigger']} | {r['note']} |")
 
 
+def cmd_waive(a):
+    """A waiver without a transition to hang it on (dogfood 2026-09-06, I-67).
+
+    `advance --force` couples the waiver to a stage skip, so the commonest case — a budget is spent, a
+    signal is accepted as a ratchet item, the stage does not move — had no way to be recorded. dos.yaml and
+    the G1 rules both cite "a waiver record in state.json"; this is the command that writes one, and it
+    prints the event id so `review.waiver_ref` / audit.yaml `verdict: waived` can point at it.
+    """
+    st = load(a.root, a.slug)
+    if a.signer_kind == "delegated_agent" and not a.authorization:
+        die("--signer-kind delegated_agent requires --authorization <who/when/what allowed the delegation>", 1)
+    stage = a.stage or st["stage"]
+    rec = {"stage": stage, "signal": a.signal, "reason": a.reason, "at": now(),
+           "signer": a.by, "signer_kind": a.signer_kind}
+    for k, v in (("layer", a.layer), ("card", a.card), ("fingerprint", a.fingerprint),
+                 ("authorization", a.authorization), ("scope", a.scope)):
+        if v:
+            rec[k] = v
+    st.setdefault("waivers", []).append(rec)
+    save(a.root, a.slug, st)
+    signer_ref = f"human:{a.by}" if a.signer_kind == "human" else f"agent:{a.by}"
+    refs = [{"type": "decided_by", "target": signer_ref}] + parse_refs(a.ref)
+    if a.card:
+        refs.append({"type": "references", "target": a.card})
+    extra = {"signer_kind": a.signer_kind}
+    for k, v in (("card", a.card), ("authorization", a.authorization), ("scope", a.scope)):
+        if v:
+            extra[k] = v
+    wid = ledger_append(a.root, a.slug, "waiver", a.reason, stage=stage, signal=a.signal, layer=a.layer or "",
+                        fingerprint=a.fingerprint or "", decision="waived", by=a.by, refs=refs, extra=extra)
+    print(json.dumps({"ok": True, "event": wid, "signal": a.signal, "stage": stage,
+                      "waivers": len(st["waivers"])}, ensure_ascii=False))
+
+
 def cmd_ledger(a):
     st = load(a.root, a.slug)
-    ledger_append(a.root, a.slug, a.kind, a.note, stage=st["stage"], signal=a.signal or "", layer=a.layer or "",
-                  decision=a.decision or "", by=a.by or "engine", refs=parse_refs(a.ref))
-    print(json.dumps({"ok": True}, ensure_ascii=False))
+    extra = {"card": a.card} if a.card else None
+    eid = ledger_append(a.root, a.slug, a.kind, a.note, stage=st["stage"], signal=a.signal or "", layer=a.layer or "",
+                        fingerprint=a.fingerprint or "", decision=a.decision or "", by=a.by or "engine",
+                        refs=parse_refs(a.ref), extra=extra)
+    print(json.dumps({"ok": True, "event": eid}, ensure_ascii=False))
 
 
 def cmd_archive(a):
@@ -782,8 +939,16 @@ def cmd_archive(a):
     os.makedirs(a.to, exist_ok=True)
     copied = []
     srcs = [sp, lp] + ([trace_path(a.root, a.slug)] if os.path.isfile(trace_path(a.root, a.slug)) else [])
+    # the contract is not an "artifact" entry, yet retro/metrics.py reads done_when.yaml FROM the archive to
+    # compute the human-AC ratio — leaving it behind made that metric empty for every run (I-85)
+    srcs += [p for p in (get_path(st, k) for k in CONTRACT_FILES) if p and os.path.isfile(p)]
     srcs += [p for p in (st.get("artifacts") or {}).values() if p and os.path.isfile(p)]
-    for src in srcs:
+    seen, uniq = set(), []
+    for s in srcs:
+        r = os.path.abspath(s)
+        if r not in seen:
+            seen.add(r); uniq.append(s)
+    for src in uniq:
         dst = os.path.join(a.to, os.path.basename(src))
         shutil.copy2(src, dst)
         copied.append(dst)
@@ -810,15 +975,28 @@ def main():
     s = P("advance"); s.add_argument("stage"); s.add_argument("--force", action="store_true"); s.add_argument("--reason")
     s = P("gate"); s.add_argument("gate", choices=["g1", "g2", "g3"]); s.add_argument("--verdict", required=True, choices=["pass", "reject", "waived"])
     s.add_argument("--by", required=True); s.add_argument("--record"); s.add_argument("--attribution", choices=["derivation_error", "rule_error", "none"])
-    s.add_argument("--signer-kind", choices=["human", "delegated_agent"], default="human"); s.add_argument("--authorization")
+    s.add_argument("--secondary-attribution", action="append", choices=["derivation_error", "rule_error"], default=[],
+                   help="a further cause that also holds; recorded, never counted (dogfood I-22)")
+    s.add_argument("--signer-kind", choices=["human", "delegated_agent"], required=True,
+                   help="who is signing. No default: omitting it used to record an agent as a person, "
+                        "and a discipline bypassable by omission is not a discipline (re-audit 2026-09-06)")
+    s.add_argument("--authorization")
     s = P("card"); s.add_argument("card"); s.add_argument("--status", required=True, choices=["todo", "doing", "done", "blocked"]); s.add_argument("--commit"); s.add_argument("--ac", action="append")
     s = P("fail"); s.add_argument("--signal", required=True); s.add_argument("--card"); s.add_argument("--fingerprint"); s.add_argument("--evidence")
     s.add_argument("--score", type=float); s.add_argument("--by"); s.add_argument("--routing")
+    s = P("waive"); s.add_argument("--signal", required=True); s.add_argument("--reason", required=True); s.add_argument("--by", required=True)
+    s.add_argument("--signer-kind", choices=["human", "delegated_agent"], required=True,
+                   help="who is signing. No default: omitting it used to record an agent as a person, "
+                        "and a discipline bypassable by omission is not a discipline (re-audit 2026-09-06)")
+    s.add_argument("--authorization")
+    s.add_argument("--fingerprint"); s.add_argument("--card"); s.add_argument("--layer"); s.add_argument("--stage"); s.add_argument("--scope")
+    s.add_argument("--ref", action="append")
     s = P("report"); s.add_argument("--path", required=True); s.add_argument("--by")
     s = P("check-clean"); s.add_argument("--as-hook", action="store_true")
     s = P("graph"); s.add_argument("action", choices=["check", "next", "render"]); s.add_argument("--graph"); s.add_argument("--full", action="store_true")
     s = P("loops"); s.add_argument("--loops"); s.add_argument("--routing"); s.add_argument("--pr-watch"); s.add_argument("--ratchet-dir"); s.add_argument("--json", action="store_true")
     s = P("ledger"); s.add_argument("--kind", required=True); s.add_argument("--note", required=True); s.add_argument("--signal"); s.add_argument("--layer"); s.add_argument("--decision"); s.add_argument("--by"); s.add_argument("--ref", action="append")
+    s.add_argument("--fingerprint"); s.add_argument("--card")
     s = P("archive"); s.add_argument("--to", required=True)
 
     a = p.parse_args()
@@ -832,8 +1010,8 @@ def main():
         return cmd_loops(a)
     a.slug = resolve_slug(a.root, a.slug)
     return {"show": cmd_show, "set": cmd_set, "advance": cmd_advance, "gate": cmd_gate, "card": cmd_card,
-            "fail": cmd_fail, "report": cmd_report, "check-clean": cmd_check_clean, "graph": cmd_graph,
-            "ledger": cmd_ledger, "archive": cmd_archive}[a.cmd](a)
+            "fail": cmd_fail, "waive": cmd_waive, "report": cmd_report, "check-clean": cmd_check_clean,
+            "graph": cmd_graph, "ledger": cmd_ledger, "archive": cmd_archive}[a.cmd](a)
 
 
 if __name__ == "__main__":

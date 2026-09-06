@@ -45,11 +45,23 @@ BRANCH="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo '?')"
 # the branch's own commits, or every reachable commit where there is no main to compare against
 if git rev-parse --verify --quiet main >/dev/null 2>&1; then RANGE_SPEC="main..HEAD"; else RANGE_SPEC="HEAD"; fi
 
-# the G2 lock, if this tree carries one (a twin repository does not)
-LOCK=""
+# 锁的**路径**，不是工作区里那个文件。回放要按每条提交的父提交去取锁内容，
+# 所以这里只解析"锁应该在哪儿"，不要求它此刻存在：从工作区探测存在性，等于让分支尖
+# 决定要不要查锁——把分支尖上的锁删掉，整条锁检查就短路了（I-104 的外层那一半）。
+LOCK_REL=""
 for candidate in "$START_DIR/.done_when.lock" "$SCRIPT_DIR/.done_when.lock"; do
-  if [ -f "$candidate" ]; then LOCK="$candidate"; break; fi
+  case "$candidate" in
+    "$REPO_ROOT"/*) rel="${candidate#$REPO_ROOT/}" ;;
+    *) continue ;;
+  esac
+  # 此刻存在，或历史上任何一条被回放的提交的父提交里存在，都算数
+  if [ -f "$candidate" ] || git -C "$REPO_ROOT" log --oneline -1 --all -- "$rel" >/dev/null 2>&1 \
+     && [ -n "$(git -C "$REPO_ROOT" log --format=%H -1 --all -- "$rel" 2>/dev/null)" ]; then
+    LOCK_REL="$rel"; break
+  fi
 done
+LOCK=""
+[ -n "$LOCK_REL" ] && [ -f "$REPO_ROOT/$LOCK_REL" ] && LOCK="$REPO_ROOT/$LOCK_REL"
 
 records=""
 card_commits=0
@@ -115,9 +127,27 @@ for i in "${!shas[@]}"; do                       # "${!a[@]}" expands to nothing
     overflow=$((overflow + 1))
   else
     args=(python3 "$VERIFY" --range "$range" --card "$card_file")
-    [ -n "$LOCK" ] && args+=(--lock "$LOCK")
+    # 锁要取**父提交**的：那才是"这条提交动手时生效的规则"。
+    #
+    # 两个坑，都踩过：
+    # (1) 取工作区的锁 → 每次 l5 重签都追溯性地推翻过去每一条判决，一个落地时合法的提交
+    #     会因为后来有人把某个文件加进冻结集而变成"改了锁内文件却没带提案"（I-101）。
+    # (2) 取**这条提交自己树里**的锁 → 一条在同一个 diff 里删掉 .done_when.lock 的提交，
+    #     就因为"该 sha 上没有锁文件"而免检，它在同一次提交里对锁内文件做的任何改动都不再被拒
+    #     （I-104，PR #3 预审 round-4 F-7）。判据的来源被交给了受审对象本身。
+    # 父提交同时避开两者：仍是历史锁（不受此刻重签影响），且不由被审的那次提交决定。
+    commit_lock=""
+    if [ -n "$LOCK_REL" ]; then
+      if git -C "$REPO_ROOT" cat-file -e "$sha^:$LOCK_REL" 2>/dev/null; then
+        commit_lock="$(mktemp)"
+        git -C "$REPO_ROOT" show "$sha^:$LOCK_REL" > "$commit_lock" 2>/dev/null || commit_lock=""
+      fi
+      # 父提交没有锁（真正的早期提交，或首条提交无父）才不传 --lock。
+    fi
+    [ -n "$commit_lock" ] && args+=(--lock "$commit_lock")
     out="$("${args[@]}" 2>&1)"
     rc=$?
+    [ -n "$commit_lock" ] && rm -f "$commit_lock"
     if [ "$rc" -ne 0 ]; then
       rejected=$((rejected + 1))
       if printf '%s' "$out" | grep -qi 'whitelist overflow'; then overflow=$((overflow + 1)); fi

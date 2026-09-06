@@ -1,0 +1,395 @@
+# delta-R7-R8.yaml — 重跑审计的增量（R7 交付 / R8 学习）
+#
+# 底稿：audit.yaml 的 R7（pr / review-loop / agent.pr-reviewer / human_gate.merge / release）与
+# R8（retro / tune / human_gate.harness-review）共 8 个 Part，在 ab67052 的源码上逐条复核。
+#
+# 结论先说：**只有一个 Part 的判定变了**——agent.pr-reviewer 的 implemented declared → compiled，
+# 因为它的独占产物 findings.yaml (pre-review) 这一轮第一次有了闸（pr-poll.sh selfreview，六条
+# 非零退出路径），F-06 封顶的前提不再成立。其余七个 Part 三维判定一动不动：
+#   · pr / review-loop / release 的闸更严了（版本同步、merge 主题豁免、checks 三态、solo 谓词），
+#     但 static_only 没有变成行为层记录，仍是 compiled；
+#   · retro 的 metrics.py 这一轮改了 120 行（I-84/I-85），**仍然全文没有一处 sys.exit**——
+#     逐行读过：只有 argparse，连 docstring 自称的 "2 on IO error" 都没有对应代码。导出器不是闸，
+#     retro 停在 declared 未动；
+#   · tune / release 的脚本本轮**一个字节都没改**（git diff fbc6a3c..HEAD 为空）；
+#   · 两个 human_gate 的独占产物 checked_by 仍是空列表，F-06 把它们永久钉在 declared。
+#
+# 真正变的是：1 处判定、1 处 checked_by、1 条新缺口、15 处过期证据（大量是行号漂移，
+# 但其中五条是**断言本身已经不成立**：merge 跑过了、release 走到并记为 skipped、retro/tune 在
+# 真归档上跑过、pr 真的建过 PR、pr-poll done 真的联网跑过）。逐条理由见 notes。
+
+schema: ring-audit-reaudit-delta/1
+scope: R7,R8
+reviewed_at_head: ab67052
+
+parts:
+
+# ---------------------------------------------------------------------------
+# 唯一一个判定上移的 Part。
+# ---------------------------------------------------------------------------
+
+- id: agent.pr-reviewer
+  ring: R7
+  changes:
+    implemented:
+      from: declared
+      to: compiled
+      why: >-
+        F-06 封顶的前提消失了：其独占产物 findings.yaml (pre-review) 现在被 pr-poll.sh selfreview
+        校验，且该校验有真正的非零退出路径（不是恒 exit 0 的报告工具）。原判 declared 的唯一理由是
+        G3/mf-009 的封顶——"检的是下游 PR 正文的 Known issues 段，不是本 agent 的 findings 文件本身"。
+        这一轮（I-87，commit bedc159）把校验加到了**文件本身**上：pr-poll.sh#L365-L368 文件缺失或为空
+        exit 1；#L374-L395 的内嵌 python 校验器逐条拒——PyYAML 缺席 exit 1（fail closed）、不是合法
+        YAML exit 1、没有 `review:` 块 exit 1、review 块缺 target / mergeable exit 1、没有 findings 键
+        exit 1、findings 为空列表又没有 rationale exit 1；#L396-L399 把校验失败转成 exit 1。
+        它是承重的：review-loop 的单人仓库终止谓词（done --solo）把"≥1 轮 selfreview 记录"当作
+        APPROVED 的替代必要条件（pr-poll.sh#L222-L228、SKILL.md#L60-L73），产不出合格的 findings 文件
+        就登记不了那一轮，solo 谓词永远 exit 20。
+        原 adjudication（compiled vs declared，pending_G3）因此不再有分歧面：两种读法现在都落在 compiled——
+        取 compiled 的一方看下游 verify_pr.py --pre-review 仍成立，取 declared 的一方要的"产物本身有检"
+        也成立了。
+      evidence:
+      - {kind: file, ref: 'plugins/sdlc/skills/review-loop/scripts/pr-poll.sh#L359-L399'}
+      - {kind: file, ref: 'plugins/sdlc/skills/review-loop/scripts/pr-poll.sh#L222-L228'}
+      - {kind: file, ref: 'plugins/sdlc/skills/review-loop/SKILL.md#L67-L73'}
+      - {kind: smoke, ref: 'plugins/sdlc/eval/smoke.sh#L897-L903（非 review 记录的文件 → exit 1；真实 /pr-review 记录 → exit 0）'}
+      - {kind: smoke, ref: 'plugins/sdlc/eval/smoke.sh#L473-L483（空文件 exit 1；A 档存活阻断 solo；换 sha 后该轮失效）'}
+      - {kind: run_record, ref: 'bash plugins/sdlc/eval/smoke.sh @ab67052 → 389 passed, 0 failed（2026-09-06 本次重跑实测；gate.json 里记的仍是 101/2026-09-05）'}
+      caveat: >-
+        这道闸是**条件生效**的：只有 solo 模式（SELF_REVIEW=1 / --solo）把它接进终止谓词；默认
+        APPROVED 路径下没有任何东西读这份 findings 文件。F-06 只问 checked_by 空不空，所以封顶解除；
+        但"这个产物在所有路径上都被挡"并不成立，读的人不要读成后者。
+      not_reached:
+        verified: >-
+          行为层记录这一轮**确实产生了**，但缺的是最后一环，所以不抬到 verified：
+          (a) 隔离预审真跑过三轮，产物committed —— pre-review/round-1.findings.yaml、round-2.findings.yaml
+          （PR #2，2026-09-06）、pr3-round-1.findings.yaml（PR #3 = 本分支 fix/sdlc-issues-002，
+          15:20，跑在本轮修复之后的代码上）；PR #2 的三条 A 档（cr-001 锁闸 fail-open / cr-002 版本同步 /
+          cr-004 修复自身的回归）被找出并修掉，存活的 B/C 档进了 PR 正文 Known issues。
+          按 pr/eval/gate.json fix_list 第 3 条的字面要求，这件事已经做了。
+          (b) 但**这份记录从未过一次它自己的闸**：.sdlc/pr-watch/ 只有 pr-2.counters.json，内容是
+          `{"rounds":1,"empty_watches":0,"strikes":{}}`——没有 self_review 键，说明 selfreview 子命令
+          没有在任何一个真 PR 上跑过（PR #2 的 review 阶段是以 waiver 收场的，I-69）。闸只在 fixture 上验过。
+          (c) pr/eval/gate.json 仍写 gate_pass=static_only、harness_note 仍称 gh 联网路径未跑——
+          按 dos.yaml R017（static_only 的 skill 不得被描述为 verified）不上抬；要抬得先更新 gate.json
+          的档位与 provenance，那是被审文件，本次只读不改。
+    needed:
+      from: necessary
+      to: necessary        # 判定不变；deletion_test 因新证据要补一条更硬的后果
+      why: >-
+        原 deletion_test 只说到"自审读不出自己的盲点"与"--pre-review 这条路不可用"。这一轮之后
+        还多一条**机械后果**：单维护者仓库（GitHub 禁止作者 approve 自己的 PR）里，
+        done --solo 的六项条件中有三项直接建立在这个 agent 的产物上（≥1 轮 selfreview 记录 /
+        该轮 A 档存活 = 0 / 该轮 head_sha == 当前 HEAD）。撤掉它，solo 谓词永远缺
+        `no_isolated_self_review_round`，review 环在这类仓库里**机械上不可能收敛**，只能靠 waiver
+        收场——本仓库 PR #2 正是这么收的（ledger 2026-09-06T01:57:08 review waiver）。
+      evidence:
+      - {kind: file, ref: 'plugins/sdlc/skills/review-loop/scripts/pr-poll.sh#L213-L231'}
+      - {kind: file, ref: 'plugins/sdlc/skills/review-loop/SKILL.md#L56-L75'}
+      - {kind: run_record, ref: '.sdlc/sdlc-ring-audit/ledger.md 2026-09-06T01:57:08 review waiver（structural_non_convergence, I-69）'}
+      deletion_test: >-
+        撤掉后 `/pr --pre-review` 只能由写这个 PR 的同一上下文自审 —— 自审读不出自己的盲点
+        （PSL-003 评估者与被评估者分离）。具体错误产物 —— 一个 `## Known issues` 段没有来源、
+        条目无 file:line 锚点的 PR body（verify_pr.py --pre-review 会拒，于是 --pre-review 这条路直接不可用）；
+        具体漏检 —— 本可在 push 前修掉的 P0 全部推到 reviewer 侧，review 轮次上移；
+        且在单维护者仓库里 done --solo 失去它三项条件的承载者（selfreview 轮次 / A 档存活 / head_sha 对齐），
+        review 环退回"APPROVED 不可得"的死局，只能以 waiver 记账收场。
+  artifacts:
+  - id: findings.yaml (pre-review)
+    checked_by_from: []
+    checked_by_to: [pr-poll.sh]
+    why: >-
+      pr-poll.sh 的 selfreview 子命令（#L359-L399）现在按 /pr-review 实际产出的形状校验这份文件，
+      六条非零退出路径见上。SKILL.md#L71-L72 明说这份 findings 文件"来自 agents/pr-reviewer.md 的
+      隔离预审（或 /pr --pre-review 的产出）"，即本 Part 的独占产物。
+    note: >-
+      Part 的 `gates:` 字段目前写 [verify_pr.py]，按同一事实应读作 [verify_pr.py, pr-poll.sh]；
+      装配时一并改。graph.yaml 这一轮给该产物起的名字是 `pre-review/round-N.findings.yaml`
+      （#L247），与 audit.yaml 的 id `findings.yaml (pre-review)` 指同一件东西，仓库里的实物是
+      plugins/sdlc/dogfood/ring-audit/pre-review/round-{1,2}.findings.yaml。
+
+unchanged_but_evidence_stale:
+
+# ---- R7 / pr ----
+- id: pr
+  stale: >-
+    needed.evidence 与 implemented.evidence 都指 `verify_pr.py#L194` 当"这条闸真的会拒"的锚点。
+    该行在 fbc6a3c 确实是 `sys.exit(1 if rejects else 0)`，但本轮 verify_pr.py 从 195 行长到 299 行，
+    L194 现在是 `if items and len(items) > 5:`（一条 flag，不是拒）。
+  replacement: >-
+    锚点改 `plugins/sdlc/skills/pr/scripts/verify_pr.py#L295`（`sys.exit(1 if rejects else 0)`）。
+    本轮新增的两条 REJECT 路径可另加锚点：插件三处 version 同步 #L73-L125 + 调用点 #L239-L244（I-76），
+    以及 merge 提交主题豁免 #L265-L285（I-74，按 parent 数放行，非 merge 提交照判）。
+- id: pr
+  stale: >-
+    implemented.not_reached.verified 写「无行为层运行记录 —— gate.json 的 harness_note 明说 gh 联网
+    路径（pr create）未跑，fix_list 第 2 条即 "gh pr create path not exercised"」。
+    第一句在 ab67052 **已经不成立**：PR #2 是用 /pr 真建出来的。
+  replacement: >-
+    改写为：gh pr create 路径已跑过一次——ledger 2026-09-06T01:52:22 记 "PR #2 opened as draft
+    against main from docs/1-sdlc-ring-audit at efd45ac (46 commits). verify_pr PASS (--allow-xl…)"，
+    2026-09-06T03:46:36 记该 PR 由**用户本人**合入（merge.sha=1e671f3）。仍不到 verified 的三条理由：
+    (a) 这次实跑用的是**修复前**的 verify_pr.py（PR 建于 09:52+08:00，版本同步/merge 豁免两条 REJECT
+    路径的提交 2b29715 落在 12:39+08:00 之后），新增的两条闸只有 fixture 证据；
+    (b) fix_list 第 1 条的后半段（Scope 段被 /review-loop 当作越界基准使用）没有发生——PR #2 全程零评论；
+    (c) pr/eval/gate.json 未随实测更新，仍 static_only，按 R017 不得描述为 verified。
+- id: pr
+  stale: >-
+    implemented.evidence 的两条 gate_json 锚点指向 pr/eval/gate.json 的 provenance；该文件本轮未改，
+    里面的 `smoke: "bash plugins/sdlc/eval/smoke.sh → 101 passed, 0 failed (2026-09-05)"` 已过期。
+  replacement: >-
+    冒烟基数改 389 passed / 0 failed（本次在 ab67052 实跑：`bash plugins/sdlc/eval/smoke.sh`，
+    仓库工作区跑完仍 clean）。gate.json 本身未更新这件事，属于被审文件的问题，记在 notes，不在此改。
+
+# ---- R7 / review-loop ----
+- id: review-loop
+  stale: >-
+    implemented.evidence 指 `pr-poll.sh#L252` 当闸的锚点。fbc6a3c 的 L252 是
+    `if (( r >= MAX_ROUNDS )); then exit 30; fi`；本轮 pr-poll.sh 从 296 行长到 451 行，
+    L252 现在是 done_predicate 里拼 reason 字符串的一行。
+  replacement: >-
+    锚点改 `pr-poll.sh#L345`（round → exit 30）与 `#L356`（strike → exit 31）；
+    终止谓词本体现在是 #L203-L259（`return 20` 在 #L258），本轮新增的两块可另加锚点：
+    checks 三态 #L191-L199（I-82：空 rollup 是 none_configured，不再折成 checks_green=true）
+    与 solo 替代谓词 #L213-L231（I-69）。
+- id: review-loop
+  stale: >-
+    implemented.not_reached.verified 写「watch / snapshot / threads / resolve / done 需要一个活的 PR，未跑」。
+    `done` 这一条已不成立。
+  replacement: >-
+    改写为：`done`（连同它调用的 pr_state / threads_json / checks_state）在真 PR 上跑过两次——
+    ledger 2026-09-06T01:57:08 与 01:58:19 记 PR #2 在 head efd45ac 与 79b4736 上 `pr-poll.sh done`
+    均 exit 20（reviewDecision '' / unresolved_count 0 / 无 CI 配置）。仍不到 verified：
+    (a) 那两次跑的是**修复前**的脚本（三态 checks 与 solo 谓词的提交 bedc159 落在 12:39+08:00，晚于 09:57）；
+    (b) watch / snapshot / resolve / selfreview 至今没有一次联网或真 PR 上的运行——
+    .sdlc/pr-watch/pr-2.counters.json 只有 `{"rounds":1,"empty_watches":0,"strikes":{}}`，无 self_review 键；
+    (c) gate.json fix_list 第 1 条「run on one real PR with ≥3 comments」仍未做：PR #2 收到零条评论，
+    整个 review 环一条线程都没处理过。
+- id: review-loop
+  stale: >-
+    needed.evidence 的 `review-loop/SKILL.md#L31-L37` 是信号表。本轮该表插入了一行
+    `done --solo`（#L35），并把 exit 0 行的第三项从「checks 绿」改成「checks 非红非未知」。
+  replacement: 'review-loop/SKILL.md#L31-L38；单人仓库的六项替代条件另见 #L56-L75。'
+
+# ---- R7 / agent.pr-reviewer（ring_evidence / loop 字段，非三维判定）----
+- id: agent.pr-reviewer
+  stale: >-
+    ring_evidence 的第一句「no_node —— graph.yaml 全文无 pr-reviewer 节点（R7 段 graph.yaml#L219-L238
+    只声明 agent.review-triager / agent.comment-fixer / agent.fix-verifier）」在 ab67052 已不成立：
+    P-R7-01 提的那件事这一轮做掉了。
+  replacement: >-
+    graph.yaml#L239-L248 现在有 `id: agent.pr-reviewer`（kind: agent, role: evaluator,
+    writes: [pre-review/round-N.findings.yaml], must_not_read: [implementer_session, ratchet-log/**]），
+    并有两条边：#L360 `pr → agent.pr-reviewer`（conditional, guard: flag.pre_review）与
+    #L361 `agent.pr-reviewer → pr`（loop_back, signal: pre_review_round_done, loop: review_loop）。
+    R7 的归属因此不再靠 ARCHITECTURE §1 推，图上自证。**连带**：Part 的 `loop: null` 也过期了——
+    它现在是一条带 `loop: review_loop` 的 loop_back 边的起点。是否照 review-loop 的 loop_reason 写法
+    改成 loops.yaml#review_loop 需要装配时统一裁（它既不是该环的 generator = agent.comment-fixer，
+    也不是 verifier = human_reviewer，与 review-loop 自己的处境相同），我不替这一步下判断。
+
+# ---- R7 / human_gate.merge ----
+- id: human_gate.merge
+  stale: >-
+    implemented.not_reached.verified 写「无行为层运行记录 —— 本次 dogfood 未走到 merge 阶段」。
+    这句已经**明确为假**：dogfood 走完了 merge。
+  replacement: >-
+    改写为：merge 真发生过——ledger 2026-09-06T03:46:36 记 "PR #2 merged into main as a merge commit
+    1e671f3 … Marked ready-for-review then merged by the USER's explicit decision — the delegated judges
+    neither marked it ready nor merged"，state.json 里 merge.sha=1e671f3ceb42…、merged_at=03:46:18Z。
+    但这**不改判定**：F-06 的封顶只看独占产物 github:merge 的 checked_by，它仍是空列表，
+    所以 implemented 无论有没有运行记录都封在 declared（check_audit.py#L99 GATE_CAPPED_VERDICTS
+    同时封 compiled 与 verified）。not_reached.compiled 那段仍逐字成立：sdlc_state.py#L372-L376 进 merge
+    只检 gates.g3 或 review_exit，state.schema.json#L246-L256 的 merge 对象只有 sha / merged_at，
+    没有签字人、没有 signer_kind，"合的是谁"事后仍分辨不出。
+- id: human_gate.merge
+  stale: >-
+    ring_evidence 与 implemented.evidence 指 `graph.yaml#L239-L245` 的 human.merge 节点；
+    本轮在它前面插入了 agent.pr-reviewer 节点（10 行），行号整体后移。
+  replacement: >-
+    graph.yaml#L249-L255（human.merge，内容一字未改）；g3 → merge 的 handoff 边从 #L354 移到 #L366。
+    另有一条新的、与本 Part 直接相关的文档证据：ARCHITECTURE.md#L113-L116 这一轮新增一段明写
+    「三道门 ≠ 五个 human 节点」——human.merge 与 human.harness-review「是人做的动作，不是门」，
+    没有 Gate 对象、sdlc_state.py 里没有对应 verdict。check_audit.py#L94 的
+    `HUMAN_GATES = {"G1","G2","G3"}  # rule 3d — merge / harness-review are Parts, not Gates` 是同一条读法。
+    这条新证据不推翻 naming 的 fits（Part id 记的是位置不是权限），但它把 not_reached.compiled
+    从"暂时没人写闸"改成了"按设计就没有可签可拒的判决"——装配时值得并列写进去。
+
+# ---- R7 / release ----
+- id: release
+  stale: >-
+    ring_evidence 指 `graph.yaml#L246`（release 节点）。行号后移。
+    implemented 的锚点 verify_release.py#L157 仍逐字有效（本轮该脚本一个字节没改，
+    `sys.exit(1 if rejects else 0)` 仍在 L157）。
+  replacement: >-
+    graph.yaml#L256。另可补一条本轮产生的行为层事实（不改判定）：release 阶段这次**走到了**，
+    并被显式记为 skipped 而不是 done——ledger 2026-09-06T03:48:11「release SKIPPED with reason recorded:
+    this repository has no tag / CHANGELOG / releases convention … verify_release.py not run because every
+    artefact it checks is absent by design here. release.done stays false — skipped is not done」。
+    这反而**加固**了原 not_reached.verified：脚本至今只在临时仓库对 fixture 冒烟，一次真实发布也没有。
+
+# ---- R8 / retro ----
+- id: retro
+  stale: >-
+    implemented.evidence 与 R8 缺口 retro-output-no-rejecting-gate 都指 `metrics.py#L108-L109`。
+    fbc6a3c 的 L108-L109 是 `def main():` + argparse（即"main() 只写文件"的锚点）；
+    本轮 metrics.py 从 187 行长到 287 行，L108-L109 现在落在 gate_history 相关代码里。
+  replacement: >-
+    锚点改 `plugins/sdlc/skills/retro/scripts/metrics.py#L197-L198`（def main + argparse）。
+    **判定不变，理由要更新**：not_reached.compiled 说「全文没有任何非零退出路径（无 sys.exit(1)，
+    main() 只写文件）」——在 ab67052 逐行复核后仍成立，而且更极端：全文**一处 sys.exit 都没有**
+    （`grep -n "sys.exit\|SystemExit" metrics.py` 无输出），连 docstring#L22 自称的
+    "Exit 0 always (reporting tool), 2 on IO error" 里的 2 都没有对应代码。本轮 I-84 的修复
+    （#L110-L168 gate_history_from_trace / gate_history_from_ledger，拦截数改从账本/trace 的
+    reject 事件数）是让**数字变对**，不是加拒绝路径；导出器仍是导出器。
+- id: retro
+  stale: >-
+    implemented.not_reached.verified 写「无真实归档的行为层运行记录 —— gate.json fix_list 第 1 条
+    要求"跑 ≥2 个已归档 feature"，未做」。前半句已不成立。
+  replacement: >-
+    改写为：metrics.py 在真归档上跑过一次——ledger 2026-09-06T03:50:11 记 retro + tune 完成，
+    产物 committed 在 plugins/sdlc/dogfood/ring-audit/retro/{metrics.json, metrics-baseline.md,
+    retro-2026-09-06.md}（lead 14.1h / review rounds 1 / reflows card 4·task 2·world 1 / waivers 3）。
+    仍不到 verified：(a) 只有 1 个归档，gate.json fix_list 第 1 条要 ≥2；
+    (b) 那次跑的是**修复前**的 metrics.py——它正是在那次跑出了两个错数（g1_interception_rate=0.0
+    而账本里有 2 次 G1 reject，I-84；human_ac_ratio=null 因为 archive 不复制 done_when.yaml，I-85），
+    修复提交 9c1e739 在 12:21+08:00，晚于 03:50 那次运行。当前代码的正确性只有 fixture 证据
+    （smoke.sh#L1123-L1124 三条断言：g1_interceptions=3、gate_source ledger/trace/state 三分、
+    gate_history_unavailable 标注）；
+    (c) retro 的独占产物 retro/retro-<date>.md 的 checked_by 仍空，F-06 把 implemented 封在 declared，
+    verified 这一栏在封顶下本就不可达。
+- id: retro
+  stale: 'ring_evidence 指 `graph.yaml#L254`（retro 节点）。行号后移。'
+  replacement: 'graph.yaml#L264；retro → stage.contract 的 loop_back 边从 #L359 移到 #L371。'
+
+# ---- R8 / tune ----
+- id: tune
+  stale: >-
+    implemented.not_reached.verified 写「gate.json fix_list 第 1 条 "run on ≥2 real archives +
+    a real .sdlc/pr-watch" 未做；只在 2 归档 + 2 PR 的 fixture 上跑过」。后半句现在不完整。
+  replacement: >-
+    改写为：tune.py 在真数据上跑过一次，但**样本不足以出提案**——ledger 2026-09-06T03:50:11
+    「tune: insufficient_samples (1 archive < min 2) → baseline only, no proposals」，
+    产物 committed 在 retro/harness-proposals.yaml（inputs.archive_root=specs, pr_watch: null,
+    ratchet_logs: null, stats.features=1）。真 .sdlc/pr-watch 与 ≥2 归档这两项都没喂进去，
+    fix_list 第 1 条实质未做。tune.py / apply_proposal.py 本轮**一个字节未改**，
+    not_reached.compiled 的封顶理由逐字成立：复核 ab67052 的源码，tune.py 全文只有两处 sys.exit，
+    都是 exit 2（#L47 PyYAML 缺席、#L302 内部错误），没有一条因"提案不合格"而拒的路径；
+    apply_proposal.py 的七处 exit 1 全是 IO / 形状 / 未知 apply.kind，且从不写目标文件。
+- id: tune
+  stale: 'ring_evidence 指 `graph.yaml#L261`（tune 节点）。行号后移。'
+  replacement: 'graph.yaml#L271；tune → human.harness-review 的 interrupt 边从 #L361 移到 #L373。'
+
+# ---- R8 / human_gate.harness-review ----
+- id: human_gate.harness-review
+  stale: >-
+    ring_evidence 与 implemented.evidence 指 `graph.yaml#L269-L275`。行号后移。
+  replacement: >-
+    graph.yaml#L279-L285（内容一字未改）；human.harness-review → sdlc 的 loop_back 边从 #L362 移到 #L374。
+    **P-R8-06 的两条都还开着**，复核如下：① 该节点 writes 仍是 [github:pr]（#L283），与 pr 节点
+    （#L206 起）的 writes 同名，R001 一读仍是双生产者；② 该节点仍没有 loop: 字段（#L279-L285 全文可见），
+    尽管 loops.yaml 把它列为 hill_climb 的 verifier、#L374 的边已带 loop: hill_climb。
+    本轮 graph.yaml 只加了 agent.pr-reviewer 节点与两条边（+12 行），没动这里。
+- id: human_gate.harness-review
+  stale: >-
+    not_reached.compiled 说「本门的裁决没有任何落盘形状」——仍成立，但现在有一条更硬的文档依据可并列。
+  replacement: >-
+    补 ARCHITECTURE.md#L113-L116（本轮新增）：human.merge 与 human.harness-review「是人做的动作，
+    不是门——它们没有 Gate 对象，sdlc_state.py 里也没有对应的 verdict」，
+    以及 check_audit.py#L94 的 `HUMAN_GATES = {"G1","G2","G3"}  # rule 3d`。
+    即"无落盘形状"这一轮从实况升格成了写下来的设计意图；判定（declared，且被 F-06 封顶）不变。
+
+# ---- 两条 Gap 的证据锚点（gaps[] 条目，不是 Part；判定仍是"未填"）----
+- id: R7/newly_identified/control/reply-resolve-order-unchecked
+  stale: >-
+    evidence 指 `pr-poll.sh#L219-L221`（resolve 子命令的"该不该 resolve 是模型的判据"注释）与
+    `review-loop/SKILL.md#L82-L86`。两处行号都因本轮扩写而漂移。
+  replacement: >-
+    pr-poll.sh#L312-L314（注释与 resolve 子命令，内容一字未改）；SKILL.md#L113-L118（resolve 的两个
+    合法场景 + "回帖进了 pending_replies → 更不能 resolve"）与 #L179-L188（按 verdict 决定是否收束的表）。
+    缺口**仍然开着**：逐行读过 resolve 子命令（#L312-#L338），它只发 resolveReviewThread mutation，
+    不查该线程上有没有落地的自己的回帖；"回帖先于 resolve"至今只活在 SKILL.md 的判据里。
+- id: R8/newly_identified/control/retro-output-no-rejecting-gate
+  stale: 'evidence 指 `metrics.py#L108-L109`；行号漂移（同 retro 条）。'
+  replacement: >-
+    metrics.py#L197-L198。缺口**仍然开着**：metrics.py 全文无 sys.exit，
+    retro/retro-<date>.md 与 metrics.json 的 checked_by 仍为空，
+    ARCHITECTURE.md#L42 §1 R8 的「门 / 闸」列仍把 metrics.py 渲染成闸（P-R8-02 未落地）。
+
+new_gaps:
+- id: R7/newly_identified/judgment/solo-a-tier-count-not-from-the-contract
+  ring: R7
+  atoms: [Judgment]
+  source: newly_identified
+  necessity: necessary
+  deletion_test: >-
+    solo 谓词用来替代人类 APPROVE 的六项条件里，"该轮 A 档存活 = 0"是唯一一项关于**内容**的判据，
+    而它的取数方式与 /pr-review 的产物契约对不上：pr-poll.sh#L400-L405 先找显式的
+    `a_tier_survivors: N`，找不到就 `grep -Eic '(tier|severity):\s*(A|P0)'` 数**行**。
+    但 `a_tier_survivors` 不是 /pr-review 输出的字段——findings_template.yaml 里根本没有它，
+    模板声明的是 `tier_summary: { A: n, B: n, C: n }`（#L14），而脚本从不读 tier_summary。
+    于是真实文件一律落进 fallback，而 fallback 数的是行不是条目：每条 A 档发现同时带
+    `tier: A` 与 `severity: P0` 两行，一条算两条。具体错误产物 —— 用本仓库真实的
+    pre-review/pr3-round-1.findings.yaml（tier_summary { A: 1 }）实测，脚本报 a_tier=2；
+    写进 counters 的 `.self_review.last.a_tier` 与 SKILL.md#L35 承诺向人汇报的"A 档存活数"因此是错的。
+    具体漏检 —— 方向上是 fail-closed（不会误判收敛），但它把作者逼回自证：round-1 里已修掉的
+    A 档没有任何机械方式表达为"已存活 0"，唯一出路是手写一个契约里不存在的 `a_tier_survivors: 0`
+    键——正是这道闸（I-87）想取消的那种自我声明。
+  evidence:
+  - {kind: file, ref: 'plugins/sdlc/skills/review-loop/scripts/pr-poll.sh#L400-L405'}
+  - {kind: file, ref: 'plugins/sdlc/skills/pr-review/assets/findings_template.yaml#L14（tier_summary，无 a_tier_survivors）'}
+  - {kind: file, ref: 'plugins/sdlc/skills/review-loop/SKILL.md#L71-L73（判据自陈：显式 a_tier_survivors，没有就数 tier/severity 条目）'}
+  - {kind: run_record, ref: 'plugins/sdlc/dogfood/ring-audit/pre-review/pr3-round-1.findings.yaml：tier_summary { A: 1 }，脚本 fallback 计数 = 2（#L22 tier: A 与 #L23 severity: P0 各命中一次）'}
+  disposition: fix_list
+  destination_note: >-
+    这条必须写进 R7.missing 才不会被 check_audit.py 判 orphan_gap（规则 4：missing 是环对自己的声明）；
+    对应提案建议 destination: skill_fix_list（收件人 review-loop 的 eval/gate.json），
+    改法：读 /pr-review 契约里已有的 `tier_summary.A`，或把 `a_tier_survivors` 加进
+    findings_template.yaml 成为契约字段；两者择一，别再让脚本去 grep 自由文本。
+
+closed_gaps: []
+# R7 四条、R8 三条登记为 missing 的缺口，逐条在 ab67052 上复核后**一条都没被填**：
+#   R7/unenforced_rule/control/merge-signer-not-enforced — state.schema.json#L246-L256 的 merge 对象
+#     仍只有 sha / merged_at，无签字人无 signer_kind；本轮 sdlc_state.py 加的
+#     "delegated_agent 必须带 --authorization"（gate / waive 两处 die(...,1)）只作用于 G1/G2/G3，不及 merge。
+#   R7/unenforced_rule/judgment/static-only-claim-not-enforced — 全仓 grep `gate_pass` 只命中
+#     各 skill 自己的 eval/gate.json 与 report.md，没有任何脚本读它；check_audit.py 只在审计文档内
+#     管住 implemented 的三态枚举，验收侧仍无人拒绝一份把 static_only 说成 verified 的报告。
+#   R7/newly_identified/control/merged-sha-vs-approved-head — sdlc_state.py#L377-L382 进 release / archive
+#     仍只 need("merge.sha set")，没有任何地方比对它与 review / G3 批准过的 head。
+#     （注意别误读：pr-poll.sh 新增的 self_review_stale 比的是 selfreview 记录的 head_sha 与本地
+#      git rev-parse HEAD，是 review 侧的新鲜度检查，不是 merge 侧的 sha 核对。）
+#   R7/newly_identified/control/reply-resolve-order-unchecked — 见上，resolve 子命令一字未改。
+#   R8 三条 — metrics.py 仍无拒绝路径；loops.yaml#hill_climb 与 tune.py 本轮完全未改，
+#     效果回读与"未校准"标记都没有出现。
+
+notes: >-
+  一、判定纪律的两处硬账，我是这么算的。
+  (1) 闸 = 存在非零退出路径，逐个读了源码不看名字：verify_pr.py 有（#L295，本轮又多两条 REJECT 分支）；
+  verify_release.py 有（#L157，本轮未改）；pr-poll.sh 有（selfreview #L366/#L398 exit 1、round exit 30、
+  strike exit 31、谓词 return 20）；commit.sh 有（但那是 R5 的 commit，不在本环）；
+  metrics.py **没有**（全文零处 sys.exit，docstring 自称的 exit 2 都不存在）；
+  tune.py **没有**（只有两处 exit 2 的 IO/内部错误）；apply_proposal.py 的 exit 1 全是 IO/形状且从不写目标文件。
+  (2) F-06 按独占产物封顶：agent.pr-reviewer 的独占产物 findings.yaml (pre-review) 这一轮拿到了闸，
+  封顶解除；human_gate.merge（github:merge）、human_gate.harness-review（github:pr harness 提案）、
+  retro（retro/retro-<date>.md）、tune（tune/harness-proposals-<date>.yaml）四个的独占产物 checked_by
+  仍是空列表，四个 Part 无论有没有运行记录都封在 declared——retro 与 human_gate.merge 这一轮确实
+  产生了运行记录，我没有拿它去抬判定，只更正了证据文本。
+  二、我压住没抬的两处，写明理由供装配/G3 复核。
+  (a) `pr`：gh pr create 真跑过（PR #2），/pr --pre-review 真跑过两轮，存活发现真进了 Known issues——
+  按 gate.json fix_list 的字面表述，第 2、3 条都算做了。我仍判 compiled 而不是 verified，因为那次实跑
+  用的是修复前的脚本、fix_list 第 1 条的后半段（Scope 被 review-loop 当基准）零发生、
+  且 gate.json 仍自陈 static_only（dos.yaml R017：static_only 的 skill 不得被描述为 verified）。
+  如果装配方认为"跑过就是跑过、gate.json 过期是被审文件的问题"，这条有翻案空间——我不替 G3 裁。
+  (b) `agent.pr-reviewer`：同理，三份 committed 的隔离预审产物（其中 pr3-round-1 跑在本轮修复之后的
+  代码上）是很硬的行为层记录，但它自己的闸从未在真文件上跑过（counters 里没有 self_review 键），
+  所以我只抬到 compiled。
+  三、本环的 skill 源码问题，本次新发现两条，都没改被审文件：
+  (1) new_gaps 里那条 a_tier 计数（契约里没有 a_tier_survivors，脚本却拿它当主路径；
+      fallback 按行数每条 A 档算两条，实测 1 条报 2）。
+  (2) metrics.py 的 docstring#L22 写 "Exit 0 always (reporting tool), 2 on IO error"，
+      而全文没有任何 sys.exit——IO 错误会以未捕获异常退出，不是它自称的 2。属 P-R8-02 同一族
+      （设计视图/自述高于实况），我把它并进 notes 而不新开缺口。
+  四、本次实跑的两条可复核记录：`bash plugins/sdlc/eval/smoke.sh`（@ab67052）→ 389 passed, 0 failed，
+  跑完 `git status --porcelain` 为空；以及上面那条 a_tier fallback 在真实 findings 文件上的计数复现。
+  R7/R8 五个 skill 的 eval/gate.json 本轮**一个都没更新**（仍写 2026-09-05 / 101 passed / static_only），
+  这本身是被审文件与实况的偏差，值得装配时并列记一笔。

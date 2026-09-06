@@ -1,0 +1,10 @@
+# minimal done_when slice: only the blocks next_iteration.py reads
+feature: fixture-bands
+based_on: [REQ-001]
+created_at: 2026-09-06T00:00:00+00:00
+created_by: fixture
+gaming_risk_threshold:
+  done_below: 5
+  block_at_or_above: 6
+spec_drift_threshold:
+  max_fix_loops_before_escalation: 4

@@ -1,0 +1,9 @@
+# iteration-003 — THE I-72 DEFECT, verbatim in shape: the task file was made by editing iteration-002's,
+# the label moved on but the number did not. iteration-002 produced 4.0; this says the baseline was 3.5,
+# so a flat trajectory reads as +0.5 rising.
+gaming_assessment:
+  agent_role: spec-gaming-detector
+  baseline_score: 3.5
+  gaming_risk_score: 4.0
+  gaming_risk_trajectory: [3.5, 4.0]
+  detected_patterns: []

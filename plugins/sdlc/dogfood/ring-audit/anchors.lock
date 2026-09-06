@@ -1,0 +1,1150 @@
+{
+  "audit": "plugins/sdlc/dogfood/ring-audit/audit.yaml",
+  "entries": {
+    "plugins/sdlc/agents/fix-verifier.md#L1-L6": {
+      "lines": 6,
+      "sha": "66e52d759dfc518e"
+    },
+    "plugins/sdlc/agents/fix-verifier.md#L20-L28": {
+      "lines": 9,
+      "sha": "33749038adee0a4f"
+    },
+    "plugins/sdlc/agents/pr-reviewer.md#L10-L11": {
+      "lines": 2,
+      "sha": "7417f5011f683fa2"
+    },
+    "plugins/sdlc/agents/pr-reviewer.md#L2-L3": {
+      "lines": 2,
+      "sha": "740a2290b0dc73e8"
+    },
+    "plugins/sdlc/agents/pr-reviewer.md#L22-L25": {
+      "lines": 4,
+      "sha": "16c5453771d893ca"
+    },
+    "plugins/sdlc/agents/review-triager.md#L1-L6": {
+      "lines": 6,
+      "sha": "e4b0b2e43b1a3620"
+    },
+    "plugins/sdlc/agents/review-triager.md#L13-L22": {
+      "lines": 10,
+      "sha": "83051f4c20b4c041"
+    },
+    "plugins/sdlc/docs/ARCHITECTURE.md#L101": {
+      "lines": 1,
+      "sha": "f26290f1b2378e30"
+    },
+    "plugins/sdlc/docs/ARCHITECTURE.md#L113-L116": {
+      "lines": 4,
+      "sha": "7389c9d85a652579"
+    },
+    "plugins/sdlc/docs/ARCHITECTURE.md#L133-L139": {
+      "lines": 7,
+      "sha": "62565136a68f51bc"
+    },
+    "plugins/sdlc/docs/ARCHITECTURE.md#L139": {
+      "lines": 1,
+      "sha": "0931f9e93961835a"
+    },
+    "plugins/sdlc/docs/ARCHITECTURE.md#L290": {
+      "lines": 1,
+      "sha": "4ceb614bcd1efc0c"
+    },
+    "plugins/sdlc/docs/ARCHITECTURE.md#L292": {
+      "lines": 1,
+      "sha": "cb06e9059b643326"
+    },
+    "plugins/sdlc/docs/ARCHITECTURE.md#L37": {
+      "lines": 1,
+      "sha": "ac69be7d08e01d01"
+    },
+    "plugins/sdlc/docs/ARCHITECTURE.md#L39": {
+      "lines": 1,
+      "sha": "2e9bfd8c9c598a41"
+    },
+    "plugins/sdlc/docs/ARCHITECTURE.md#L40": {
+      "lines": 1,
+      "sha": "9401fed2a427f955"
+    },
+    "plugins/sdlc/docs/ARCHITECTURE.md#L41": {
+      "lines": 1,
+      "sha": "b5a46811c521a99a"
+    },
+    "plugins/sdlc/docs/ARCHITECTURE.md#L42": {
+      "lines": 1,
+      "sha": "e7da6a0ea0dce941"
+    },
+    "plugins/sdlc/docs/ARCHITECTURE.md#L99-L100": {
+      "lines": 2,
+      "sha": "ab315520abe9bfaf"
+    },
+    "plugins/sdlc/docs/design-notes.md#L31": {
+      "lines": 1,
+      "sha": "da446d17c83848a9"
+    },
+    "plugins/sdlc/docs/design-notes.md#L36-L38": {
+      "lines": 3,
+      "sha": "47dd2a372d191184"
+    },
+    "plugins/sdlc/docs/design-notes.md#L39-L42": {
+      "lines": 4,
+      "sha": "4d7e8e109bbd979d"
+    },
+    "plugins/sdlc/docs/design-notes.md#L47-L49": {
+      "lines": 3,
+      "sha": "21d30ee28eaeba5c"
+    },
+    "plugins/sdlc/docs/design-notes.md#L50-L51": {
+      "lines": 2,
+      "sha": "994444a599c909c9"
+    },
+    "plugins/sdlc/docs/design-notes.md#L52": {
+      "lines": 1,
+      "sha": "dfee2b5cef5b3e23"
+    },
+    "plugins/sdlc/docs/design-notes.md#L52-L53": {
+      "lines": 2,
+      "sha": "0e875460d278dc08"
+    },
+    "plugins/sdlc/docs/design-notes.md#L56": {
+      "lines": 1,
+      "sha": "0cd2fc8ad708fd35"
+    },
+    "plugins/sdlc/docs/design-notes.md#L56-L57": {
+      "lines": 2,
+      "sha": "81a0b78d1f225803"
+    },
+    "plugins/sdlc/docs/design-notes.md#L57": {
+      "lines": 1,
+      "sha": "6da1ca36bd02cfcd"
+    },
+    "plugins/sdlc/docs/design-notes.md#L67-L68": {
+      "lines": 2,
+      "sha": "8e3e46e20fcc0b2f"
+    },
+    "plugins/sdlc/docs/design-notes.md#L67-L69": {
+      "lines": 3,
+      "sha": "d6fc7e81e079eaa5"
+    },
+    "plugins/sdlc/docs/design-notes.md#L68": {
+      "lines": 1,
+      "sha": "cff3a2342395fa19"
+    },
+    "plugins/sdlc/docs/design-notes.md#L70": {
+      "lines": 1,
+      "sha": "5e36cb7da183035c"
+    },
+    "plugins/sdlc/docs/design-notes.md#L80-L81": {
+      "lines": 2,
+      "sha": "f6be351eaa6b8ed2"
+    },
+    "plugins/sdlc/docs/lifecycle.md#L40": {
+      "lines": 1,
+      "sha": "71215eb1be8abff8"
+    },
+    "plugins/sdlc/docs/lifecycle.md#L42": {
+      "lines": 1,
+      "sha": "44c83cdf50c2c3fc"
+    },
+    "plugins/sdlc/docs/lifecycle.md#L44": {
+      "lines": 1,
+      "sha": "82aa42b2edcfb450"
+    },
+    "plugins/sdlc/docs/lifecycle.md#L62": {
+      "lines": 1,
+      "sha": "fe03bfe534cf37e7"
+    },
+    "plugins/sdlc/dogfood/ring-audit/check_audit.py#L94": {
+      "lines": 1,
+      "sha": "1d849ef1f8ded330"
+    },
+    "plugins/sdlc/dogfood/ring-audit/dos.yaml#L376-L379": {
+      "lines": 4,
+      "sha": "f64e196f046b5f00"
+    },
+    "plugins/sdlc/dogfood/ring-audit/dos.yaml#L394-L397": {
+      "lines": 4,
+      "sha": "c7a6a792c389377b"
+    },
+    "plugins/sdlc/dogfood/ring-audit/dos.yaml#L404-L407": {
+      "lines": 4,
+      "sha": "f176518fac1f4012"
+    },
+    "plugins/sdlc/dogfood/ring-audit/dos.yaml#L412-L415": {
+      "lines": 4,
+      "sha": "7f562d01bb3477f1"
+    },
+    "plugins/sdlc/dogfood/ring-audit/dos.yaml#L440-L443": {
+      "lines": 4,
+      "sha": "60e1c730a45c9d3d"
+    },
+    "plugins/sdlc/dogfood/ring-audit/dos.yaml#L677": {
+      "lines": 1,
+      "sha": "38f838ec8e5a497f"
+    },
+    "plugins/sdlc/dogfood/ring-audit/pre-review/pr3-round-1.findings.yaml#L22": {
+      "lines": 1,
+      "sha": "6c791570f059bd21"
+    },
+    "plugins/sdlc/dogfood/ring-audit/pre-review/pr3-round-1.findings.yaml#L23": {
+      "lines": 1,
+      "sha": "99ae4eb95595d23f"
+    },
+    "plugins/sdlc/eval/smoke.sh#L1156-L1173": {
+      "lines": 18,
+      "sha": "10f45fecc7fe4365"
+    },
+    "plugins/sdlc/skills/acceptance-fleet/SKILL.md#L1-L20": {
+      "lines": 20,
+      "sha": "47e77ca44d7d63e7"
+    },
+    "plugins/sdlc/skills/acceptance-fleet/SKILL.md#L122": {
+      "lines": 1,
+      "sha": "cae0d3876fed235f"
+    },
+    "plugins/sdlc/skills/acceptance-fleet/SKILL.md#L187": {
+      "lines": 1,
+      "sha": "4337ec65c9091d7c"
+    },
+    "plugins/sdlc/skills/acceptance-fleet/SKILL.md#L237-L256": {
+      "lines": 20,
+      "sha": "5813378341ae0a31"
+    },
+    "plugins/sdlc/skills/acceptance-fleet/SKILL.md#L311": {
+      "lines": 1,
+      "sha": "423a9e6503c64a0b"
+    },
+    "plugins/sdlc/skills/acceptance-fleet/SKILL.md#L73": {
+      "lines": 1,
+      "sha": "4b6497a1a882d0fd"
+    },
+    "plugins/sdlc/skills/acceptance-fleet/references/ratchet-log-format.md#L28-L40": {
+      "lines": 13,
+      "sha": "37d6f2a76baeca78"
+    },
+    "plugins/sdlc/skills/acceptance-fleet/references/ratchet-log-format.md#L41": {
+      "lines": 1,
+      "sha": "fc6a1614320f4b09"
+    },
+    "plugins/sdlc/skills/acceptance-fleet/references/skill-dispatch-matrix.md#L147": {
+      "lines": 1,
+      "sha": "5f02375b81b1b45e"
+    },
+    "plugins/sdlc/skills/acceptance-fleet/references/skill-dispatch-matrix.md#L147-L151": {
+      "lines": 5,
+      "sha": "9fa5a34f8fd00af6"
+    },
+    "plugins/sdlc/skills/acceptance-fleet/references/skill-dispatch-matrix.md#L151": {
+      "lines": 1,
+      "sha": "95c5c44fe4ee4f8f"
+    },
+    "plugins/sdlc/skills/acceptance-fleet/scripts/next_iteration.py#L100-L124": {
+      "lines": 25,
+      "sha": "a4ae8d4e15f48efc"
+    },
+    "plugins/sdlc/skills/acceptance-fleet/scripts/next_iteration.py#L101": {
+      "lines": 1,
+      "sha": "0355dfdb190866b8"
+    },
+    "plugins/sdlc/skills/acceptance-fleet/scripts/next_iteration.py#L156-L165": {
+      "lines": 10,
+      "sha": "4f5fdb000156f55d"
+    },
+    "plugins/sdlc/skills/acceptance-fleet/scripts/next_iteration.py#L156-L171": {
+      "lines": 16,
+      "sha": "6e003fd6119af082"
+    },
+    "plugins/sdlc/skills/acceptance-fleet/scripts/next_iteration.py#L189-L191": {
+      "lines": 3,
+      "sha": "dd744a51b387fcfa"
+    },
+    "plugins/sdlc/skills/acceptance-fleet/scripts/next_iteration.py#L206-L212": {
+      "lines": 7,
+      "sha": "5d5efe686bcde5bb"
+    },
+    "plugins/sdlc/skills/acceptance-fleet/scripts/next_iteration.py#L214-L216": {
+      "lines": 3,
+      "sha": "347f5983525761a3"
+    },
+    "plugins/sdlc/skills/acceptance-fleet/scripts/next_iteration.py#L214-L221": {
+      "lines": 8,
+      "sha": "4032fefaa5f387ab"
+    },
+    "plugins/sdlc/skills/acceptance-fleet/scripts/next_iteration.py#L236-L249": {
+      "lines": 14,
+      "sha": "d80f244284736e9b"
+    },
+    "plugins/sdlc/skills/acceptance-fleet/scripts/qa_facts.py#L115-L118": {
+      "lines": 4,
+      "sha": "342c324cd09dd055"
+    },
+    "plugins/sdlc/skills/acceptance-fleet/scripts/qa_facts.py#L130-L134": {
+      "lines": 5,
+      "sha": "8287c4ae0675824f"
+    },
+    "plugins/sdlc/skills/acceptance-fleet/scripts/qa_facts.py#L93-L96": {
+      "lines": 4,
+      "sha": "608faa0212516b39"
+    },
+    "plugins/sdlc/skills/acceptance-fleet/scripts/qa_facts.py#L96": {
+      "lines": 1,
+      "sha": "81f209064fe1692b"
+    },
+    "plugins/sdlc/skills/acceptance-spec/scripts/validate_done_when.py#L264": {
+      "lines": 1,
+      "sha": "b15c3bf67d5f35ee"
+    },
+    "plugins/sdlc/skills/acceptance-spec/scripts/validate_done_when.py#L288-L291": {
+      "lines": 4,
+      "sha": "513179b14ab1e9c5"
+    },
+    "plugins/sdlc/skills/code-reviewer/SKILL.md#L1-L20": {
+      "lines": 20,
+      "sha": "e006d1163d6f5993"
+    },
+    "plugins/sdlc/skills/dos-extract/scripts/verify_dos.py#L167-L189": {
+      "lines": 23,
+      "sha": "155555a7c87fc5b6"
+    },
+    "plugins/sdlc/skills/dos-extract/scripts/verify_dos.py#L169": {
+      "lines": 1,
+      "sha": "6011e91bc46e8ae8"
+    },
+    "plugins/sdlc/skills/dos-extract/scripts/verify_dos.py#L182-L185": {
+      "lines": 4,
+      "sha": "bf4d502d3fd8983c"
+    },
+    "plugins/sdlc/skills/dos-extract/scripts/verify_dos.py#L73-L96": {
+      "lines": 24,
+      "sha": "ebee482298bb7110"
+    },
+    "plugins/sdlc/skills/meta-judge/SKILL.md#L1-L22": {
+      "lines": 22,
+      "sha": "4952b07e1c18f789"
+    },
+    "plugins/sdlc/skills/meta-judge/SKILL.md#L75": {
+      "lines": 1,
+      "sha": "b04d95e51d38a5ca"
+    },
+    "plugins/sdlc/skills/meta-judge/SKILL.md#L87": {
+      "lines": 1,
+      "sha": "240c4306f797391c"
+    },
+    "plugins/sdlc/skills/meta-judge/scripts/compute_confidence.py#L74-L104": {
+      "lines": 31,
+      "sha": "44971fbc2b2a7438"
+    },
+    "plugins/sdlc/skills/plan-cards/SKILL.md#L39": {
+      "lines": 1,
+      "sha": "de63138f7ff23a23"
+    },
+    "plugins/sdlc/skills/plan-cards/assets/card_template.yaml#L23": {
+      "lines": 1,
+      "sha": "9d4cdb85dba7dd7b"
+    },
+    "plugins/sdlc/skills/plan-cards/scripts/lint_cards.py#L277-L321": {
+      "lines": 45,
+      "sha": "09c05d844806aac0"
+    },
+    "plugins/sdlc/skills/pm-reviewer/SKILL.md#L1-L22": {
+      "lines": 22,
+      "sha": "8db6045c85a63e16"
+    },
+    "plugins/sdlc/skills/pr-review/SKILL.md#L1-L20": {
+      "lines": 20,
+      "sha": "aefdbad0fe538d2e"
+    },
+    "plugins/sdlc/skills/pr-review/SKILL.md#L80": {
+      "lines": 1,
+      "sha": "b5744e5642392d1e"
+    },
+    "plugins/sdlc/skills/pr-review/assets/findings_template.yaml#L14": {
+      "lines": 1,
+      "sha": "31da9fa6005e16c6"
+    },
+    "plugins/sdlc/skills/pr-review/scripts/post_review.py#L77-L98": {
+      "lines": 22,
+      "sha": "c727a749489e4b85"
+    },
+    "plugins/sdlc/skills/pr-review/scripts/post_review.py#L79": {
+      "lines": 1,
+      "sha": "521dab9cbe60c653"
+    },
+    "plugins/sdlc/skills/pr-review/scripts/post_review.py#L97": {
+      "lines": 1,
+      "sha": "665d0e0dd3151226"
+    },
+    "plugins/sdlc/skills/pr/SKILL.md#L10": {
+      "lines": 1,
+      "sha": "64a0c27d35bbc341"
+    },
+    "plugins/sdlc/skills/pr/SKILL.md#L2": {
+      "lines": 1,
+      "sha": "c745f3cc0094a4e9"
+    },
+    "plugins/sdlc/skills/pr/SKILL.md#L23-L27": {
+      "lines": 5,
+      "sha": "87f333cecf06436f"
+    },
+    "plugins/sdlc/skills/pr/SKILL.md#L69-L72": {
+      "lines": 4,
+      "sha": "fcfa714c6acf7055"
+    },
+    "plugins/sdlc/skills/pr/scripts/verify_pr.py#L239-L244": {
+      "lines": 6,
+      "sha": "a159fb74b8a92938"
+    },
+    "plugins/sdlc/skills/pr/scripts/verify_pr.py#L265-L285": {
+      "lines": 21,
+      "sha": "3a497db7f22e3036"
+    },
+    "plugins/sdlc/skills/pr/scripts/verify_pr.py#L295": {
+      "lines": 1,
+      "sha": "0ef85c22e2e3e8d9"
+    },
+    "plugins/sdlc/skills/pr/scripts/verify_pr.py#L73-L125": {
+      "lines": 53,
+      "sha": "2cea73b392331c1e"
+    },
+    "plugins/sdlc/skills/psl/scripts/verify_psl.py#L311-L321": {
+      "lines": 11,
+      "sha": "52219e31e38be79d"
+    },
+    "plugins/sdlc/skills/qa-reviewer/SKILL.md#L1-L20": {
+      "lines": 20,
+      "sha": "9b9af6b6a6df4671"
+    },
+    "plugins/sdlc/skills/qa-reviewer/references/finding-schema.yaml#L3": {
+      "lines": 1,
+      "sha": "5161b06ad1f780b6"
+    },
+    "plugins/sdlc/skills/release/SKILL.md#L2": {
+      "lines": 1,
+      "sha": "03572c1c2cc21a93"
+    },
+    "plugins/sdlc/skills/release/SKILL.md#L21-L25": {
+      "lines": 5,
+      "sha": "ee33dac7516dfd72"
+    },
+    "plugins/sdlc/skills/release/scripts/verify_release.py#L157": {
+      "lines": 1,
+      "sha": "0ef85c22e2e3e8d9"
+    },
+    "plugins/sdlc/skills/retro/SKILL.md#L2": {
+      "lines": 1,
+      "sha": "fcdf503d31833940"
+    },
+    "plugins/sdlc/skills/retro/SKILL.md#L21-L24": {
+      "lines": 4,
+      "sha": "a4bd673f328c8565"
+    },
+    "plugins/sdlc/skills/retro/SKILL.md#L33-L40": {
+      "lines": 8,
+      "sha": "ad870ebf8f9870b6"
+    },
+    "plugins/sdlc/skills/retro/SKILL.md#L39": {
+      "lines": 1,
+      "sha": "a16235e905925fe3"
+    },
+    "plugins/sdlc/skills/retro/SKILL.md#L63-L68": {
+      "lines": 6,
+      "sha": "b352e0f2efba4dc8"
+    },
+    "plugins/sdlc/skills/retro/scripts/metrics.py#L197-L198": {
+      "lines": 2,
+      "sha": "240028fee902d216"
+    },
+    "plugins/sdlc/skills/review-loop/SKILL.md#L113-L117": {
+      "lines": 5,
+      "sha": "f7cb489046c9fc92"
+    },
+    "plugins/sdlc/skills/review-loop/SKILL.md#L12": {
+      "lines": 1,
+      "sha": "cc0f5653f03cecbc"
+    },
+    "plugins/sdlc/skills/review-loop/SKILL.md#L139": {
+      "lines": 1,
+      "sha": "2ace5004f32e1f24"
+    },
+    "plugins/sdlc/skills/review-loop/SKILL.md#L3-L11": {
+      "lines": 9,
+      "sha": "4ce0b157ddaf0e19"
+    },
+    "plugins/sdlc/skills/review-loop/SKILL.md#L31-L38": {
+      "lines": 8,
+      "sha": "36506861f6d4cc9e"
+    },
+    "plugins/sdlc/skills/review-loop/SKILL.md#L56-L75": {
+      "lines": 20,
+      "sha": "e65fe0de9f0b2a1d"
+    },
+    "plugins/sdlc/skills/review-loop/SKILL.md#L71-L73": {
+      "lines": 3,
+      "sha": "0bf04f69ab6edbc1"
+    },
+    "plugins/sdlc/skills/review-loop/scripts/pr-poll.sh#L222-L228": {
+      "lines": 7,
+      "sha": "9f68b988d81a0434"
+    },
+    "plugins/sdlc/skills/review-loop/scripts/pr-poll.sh#L312-L314": {
+      "lines": 3,
+      "sha": "ae7fcae2c52d7359"
+    },
+    "plugins/sdlc/skills/review-loop/scripts/pr-poll.sh#L313": {
+      "lines": 1,
+      "sha": "cc57281ab29b6a4d"
+    },
+    "plugins/sdlc/skills/review-loop/scripts/pr-poll.sh#L345": {
+      "lines": 1,
+      "sha": "05b1267feb9da91b"
+    },
+    "plugins/sdlc/skills/review-loop/scripts/pr-poll.sh#L365-L368": {
+      "lines": 4,
+      "sha": "bd11a8a4ab5d274d"
+    },
+    "plugins/sdlc/skills/review-loop/scripts/pr-poll.sh#L374-L395": {
+      "lines": 22,
+      "sha": "02842fe1ab29f937"
+    },
+    "plugins/sdlc/skills/review-loop/scripts/pr-poll.sh#L400-L405": {
+      "lines": 6,
+      "sha": "e6020be444e5ac54"
+    },
+    "plugins/sdlc/skills/sdlc/SKILL.md#L35": {
+      "lines": 1,
+      "sha": "f4a14438df65e6c5"
+    },
+    "plugins/sdlc/skills/sdlc/SKILL.md#L38": {
+      "lines": 1,
+      "sha": "5d7b4f65d02de278"
+    },
+    "plugins/sdlc/skills/sdlc/SKILL.md#L63": {
+      "lines": 1,
+      "sha": "8f7919f999d87c93"
+    },
+    "plugins/sdlc/skills/sdlc/assets/graph.yaml#L1-L11": {
+      "lines": 11,
+      "sha": "1969f52acaeb5a9b"
+    },
+    "plugins/sdlc/skills/sdlc/assets/graph.yaml#L101-L107": {
+      "lines": 7,
+      "sha": "7374b1adc28eacfd"
+    },
+    "plugins/sdlc/skills/sdlc/assets/graph.yaml#L110-L115": {
+      "lines": 6,
+      "sha": "72a2aa3f628a3cbd"
+    },
+    "plugins/sdlc/skills/sdlc/assets/graph.yaml#L116-L121": {
+      "lines": 6,
+      "sha": "1368b9560eefb6df"
+    },
+    "plugins/sdlc/skills/sdlc/assets/graph.yaml#L122-L128": {
+      "lines": 7,
+      "sha": "88d46b5d3cba4837"
+    },
+    "plugins/sdlc/skills/sdlc/assets/graph.yaml#L131-L136": {
+      "lines": 6,
+      "sha": "69f93a069fda00ba"
+    },
+    "plugins/sdlc/skills/sdlc/assets/graph.yaml#L139-L146": {
+      "lines": 8,
+      "sha": "9d1189bfb289ab54"
+    },
+    "plugins/sdlc/skills/sdlc/assets/graph.yaml#L143": {
+      "lines": 1,
+      "sha": "0d921db2242458eb"
+    },
+    "plugins/sdlc/skills/sdlc/assets/graph.yaml#L144": {
+      "lines": 1,
+      "sha": "bc6b007a18c69f39"
+    },
+    "plugins/sdlc/skills/sdlc/assets/graph.yaml#L147-L154": {
+      "lines": 8,
+      "sha": "1a6773ef017db512"
+    },
+    "plugins/sdlc/skills/sdlc/assets/graph.yaml#L152": {
+      "lines": 1,
+      "sha": "bc6b007a18c69f39"
+    },
+    "plugins/sdlc/skills/sdlc/assets/graph.yaml#L155-L162": {
+      "lines": 8,
+      "sha": "1ff7f7e048534ad4"
+    },
+    "plugins/sdlc/skills/sdlc/assets/graph.yaml#L160": {
+      "lines": 1,
+      "sha": "3aeed589f31005ec"
+    },
+    "plugins/sdlc/skills/sdlc/assets/graph.yaml#L163-L168": {
+      "lines": 6,
+      "sha": "18b013a4dc9f9784"
+    },
+    "plugins/sdlc/skills/sdlc/assets/graph.yaml#L171-L178": {
+      "lines": 8,
+      "sha": "d2a0ba2492db12ab"
+    },
+    "plugins/sdlc/skills/sdlc/assets/graph.yaml#L176": {
+      "lines": 1,
+      "sha": "2c8ed7f62fa67018"
+    },
+    "plugins/sdlc/skills/sdlc/assets/graph.yaml#L179": {
+      "lines": 1,
+      "sha": "2340188e51f407ca"
+    },
+    "plugins/sdlc/skills/sdlc/assets/graph.yaml#L179-L183": {
+      "lines": 5,
+      "sha": "736447b74a62222f"
+    },
+    "plugins/sdlc/skills/sdlc/assets/graph.yaml#L179-L189": {
+      "lines": 11,
+      "sha": "3f6f04e594fbb20d"
+    },
+    "plugins/sdlc/skills/sdlc/assets/graph.yaml#L179-L190": {
+      "lines": 12,
+      "sha": "b309a751484c2463"
+    },
+    "plugins/sdlc/skills/sdlc/assets/graph.yaml#L180": {
+      "lines": 1,
+      "sha": "cca4c03251065ce3"
+    },
+    "plugins/sdlc/skills/sdlc/assets/graph.yaml#L181": {
+      "lines": 1,
+      "sha": "594096f2fce26413"
+    },
+    "plugins/sdlc/skills/sdlc/assets/graph.yaml#L182": {
+      "lines": 1,
+      "sha": "ca579b5cc338aa24"
+    },
+    "plugins/sdlc/skills/sdlc/assets/graph.yaml#L183": {
+      "lines": 1,
+      "sha": "04a110af880d11f3"
+    },
+    "plugins/sdlc/skills/sdlc/assets/graph.yaml#L184-L190": {
+      "lines": 7,
+      "sha": "067e6173e4c77d6f"
+    },
+    "plugins/sdlc/skills/sdlc/assets/graph.yaml#L188": {
+      "lines": 1,
+      "sha": "fc9ce7a986f29700"
+    },
+    "plugins/sdlc/skills/sdlc/assets/graph.yaml#L189": {
+      "lines": 1,
+      "sha": "d9ae93f0c1dede17"
+    },
+    "plugins/sdlc/skills/sdlc/assets/graph.yaml#L191-L196": {
+      "lines": 6,
+      "sha": "18dc687481ab72d0"
+    },
+    "plugins/sdlc/skills/sdlc/assets/graph.yaml#L197": {
+      "lines": 1,
+      "sha": "6241c36b645989a8"
+    },
+    "plugins/sdlc/skills/sdlc/assets/graph.yaml#L197-L203": {
+      "lines": 7,
+      "sha": "38da00ed13f81383"
+    },
+    "plugins/sdlc/skills/sdlc/assets/graph.yaml#L200": {
+      "lines": 1,
+      "sha": "f9683bcc8e119b01"
+    },
+    "plugins/sdlc/skills/sdlc/assets/graph.yaml#L206": {
+      "lines": 1,
+      "sha": "83e1e07949ae09dd"
+    },
+    "plugins/sdlc/skills/sdlc/assets/graph.yaml#L210": {
+      "lines": 1,
+      "sha": "6e7bbf72a3b08a58"
+    },
+    "plugins/sdlc/skills/sdlc/assets/graph.yaml#L212": {
+      "lines": 1,
+      "sha": "9313249ecd8c5752"
+    },
+    "plugins/sdlc/skills/sdlc/assets/graph.yaml#L219-L221": {
+      "lines": 3,
+      "sha": "f1f179cda445dc1b"
+    },
+    "plugins/sdlc/skills/sdlc/assets/graph.yaml#L219-L224": {
+      "lines": 6,
+      "sha": "3cbfaac5c813c56d"
+    },
+    "plugins/sdlc/skills/sdlc/assets/graph.yaml#L225-L231": {
+      "lines": 7,
+      "sha": "6ce16bf43acbc551"
+    },
+    "plugins/sdlc/skills/sdlc/assets/graph.yaml#L229": {
+      "lines": 1,
+      "sha": "1a75b9024232ffb4"
+    },
+    "plugins/sdlc/skills/sdlc/assets/graph.yaml#L230": {
+      "lines": 1,
+      "sha": "bc6b007a18c69f39"
+    },
+    "plugins/sdlc/skills/sdlc/assets/graph.yaml#L232-L234": {
+      "lines": 3,
+      "sha": "5f17077369777e32"
+    },
+    "plugins/sdlc/skills/sdlc/assets/graph.yaml#L232-L238": {
+      "lines": 7,
+      "sha": "276f5e9550fd7277"
+    },
+    "plugins/sdlc/skills/sdlc/assets/graph.yaml#L239-L248": {
+      "lines": 10,
+      "sha": "4717e1bb09ad3789"
+    },
+    "plugins/sdlc/skills/sdlc/assets/graph.yaml#L249": {
+      "lines": 1,
+      "sha": "b6e3bd973b6b2ecc"
+    },
+    "plugins/sdlc/skills/sdlc/assets/graph.yaml#L249-L255": {
+      "lines": 7,
+      "sha": "076194ff9bc86b5e"
+    },
+    "plugins/sdlc/skills/sdlc/assets/graph.yaml#L256": {
+      "lines": 1,
+      "sha": "bf7b6e5d6fc8b0fe"
+    },
+    "plugins/sdlc/skills/sdlc/assets/graph.yaml#L26": {
+      "lines": 1,
+      "sha": "c201dd4ef2650700"
+    },
+    "plugins/sdlc/skills/sdlc/assets/graph.yaml#L264": {
+      "lines": 1,
+      "sha": "04f11c72ed419a26"
+    },
+    "plugins/sdlc/skills/sdlc/assets/graph.yaml#L271": {
+      "lines": 1,
+      "sha": "3520c1bcdbe3b518"
+    },
+    "plugins/sdlc/skills/sdlc/assets/graph.yaml#L273": {
+      "lines": 1,
+      "sha": "4e355fe326cb1d01"
+    },
+    "plugins/sdlc/skills/sdlc/assets/graph.yaml#L279": {
+      "lines": 1,
+      "sha": "258628fe2eff6382"
+    },
+    "plugins/sdlc/skills/sdlc/assets/graph.yaml#L279-L285": {
+      "lines": 7,
+      "sha": "5d6e85ebbcb0102d"
+    },
+    "plugins/sdlc/skills/sdlc/assets/graph.yaml#L29": {
+      "lines": 1,
+      "sha": "7a50eafc578baeb8"
+    },
+    "plugins/sdlc/skills/sdlc/assets/graph.yaml#L311": {
+      "lines": 1,
+      "sha": "bf91d57c22dcddfb"
+    },
+    "plugins/sdlc/skills/sdlc/assets/graph.yaml#L314-L315": {
+      "lines": 2,
+      "sha": "0cab04fdc1e60f25"
+    },
+    "plugins/sdlc/skills/sdlc/assets/graph.yaml#L316": {
+      "lines": 1,
+      "sha": "013147de1c02b6db"
+    },
+    "plugins/sdlc/skills/sdlc/assets/graph.yaml#L330": {
+      "lines": 1,
+      "sha": "55399c919d51c6d0"
+    },
+    "plugins/sdlc/skills/sdlc/assets/graph.yaml#L331": {
+      "lines": 1,
+      "sha": "3714e36d269b13a0"
+    },
+    "plugins/sdlc/skills/sdlc/assets/graph.yaml#L335-L336": {
+      "lines": 2,
+      "sha": "c91906b85a6638fc"
+    },
+    "plugins/sdlc/skills/sdlc/assets/graph.yaml#L347-L348": {
+      "lines": 2,
+      "sha": "4afbc7a6365638c3"
+    },
+    "plugins/sdlc/skills/sdlc/assets/graph.yaml#L347-L353": {
+      "lines": 7,
+      "sha": "46e00e9ce296fff7"
+    },
+    "plugins/sdlc/skills/sdlc/assets/graph.yaml#L349": {
+      "lines": 1,
+      "sha": "bc96f801bef03c8b"
+    },
+    "plugins/sdlc/skills/sdlc/assets/graph.yaml#L350-L352": {
+      "lines": 3,
+      "sha": "d19a55c44909df7f"
+    },
+    "plugins/sdlc/skills/sdlc/assets/graph.yaml#L351": {
+      "lines": 1,
+      "sha": "b87870db7e1f6317"
+    },
+    "plugins/sdlc/skills/sdlc/assets/graph.yaml#L353": {
+      "lines": 1,
+      "sha": "aa5ef5f70fd5f177"
+    },
+    "plugins/sdlc/skills/sdlc/assets/graph.yaml#L357": {
+      "lines": 1,
+      "sha": "3f9996ed42d12bed"
+    },
+    "plugins/sdlc/skills/sdlc/assets/graph.yaml#L358-L359": {
+      "lines": 2,
+      "sha": "ca9f5c94d48937c4"
+    },
+    "plugins/sdlc/skills/sdlc/assets/graph.yaml#L359": {
+      "lines": 1,
+      "sha": "63b725e76f6cb04e"
+    },
+    "plugins/sdlc/skills/sdlc/assets/graph.yaml#L360": {
+      "lines": 1,
+      "sha": "c07ef4ce1751b460"
+    },
+    "plugins/sdlc/skills/sdlc/assets/graph.yaml#L361": {
+      "lines": 1,
+      "sha": "b89ba362a43cbcf7"
+    },
+    "plugins/sdlc/skills/sdlc/assets/graph.yaml#L363": {
+      "lines": 1,
+      "sha": "03294c6acef9e5a7"
+    },
+    "plugins/sdlc/skills/sdlc/assets/graph.yaml#L366": {
+      "lines": 1,
+      "sha": "6a51581b26d8155b"
+    },
+    "plugins/sdlc/skills/sdlc/assets/graph.yaml#L366-L367": {
+      "lines": 2,
+      "sha": "6da00a0f5339c13c"
+    },
+    "plugins/sdlc/skills/sdlc/assets/graph.yaml#L371": {
+      "lines": 1,
+      "sha": "a42e59425330d96b"
+    },
+    "plugins/sdlc/skills/sdlc/assets/graph.yaml#L373": {
+      "lines": 1,
+      "sha": "cbe27d490bd8ab89"
+    },
+    "plugins/sdlc/skills/sdlc/assets/graph.yaml#L374": {
+      "lines": 1,
+      "sha": "5c01bbced59d12d4"
+    },
+    "plugins/sdlc/skills/sdlc/assets/graph.yaml#L39-L45": {
+      "lines": 7,
+      "sha": "d4c4fe449472a09a"
+    },
+    "plugins/sdlc/skills/sdlc/assets/graph.yaml#L4-L7": {
+      "lines": 4,
+      "sha": "72e720684facbbfb"
+    },
+    "plugins/sdlc/skills/sdlc/assets/graph.yaml#L48-L53": {
+      "lines": 6,
+      "sha": "efcee5e1a7582544"
+    },
+    "plugins/sdlc/skills/sdlc/assets/graph.yaml#L54-L59": {
+      "lines": 6,
+      "sha": "2f5542454e5b655d"
+    },
+    "plugins/sdlc/skills/sdlc/assets/graph.yaml#L60-L66": {
+      "lines": 7,
+      "sha": "066e5c2adb1d7787"
+    },
+    "plugins/sdlc/skills/sdlc/assets/graph.yaml#L69-L74": {
+      "lines": 6,
+      "sha": "a52aa83640904a58"
+    },
+    "plugins/sdlc/skills/sdlc/assets/graph.yaml#L73": {
+      "lines": 1,
+      "sha": "a6338f71fccb8d04"
+    },
+    "plugins/sdlc/skills/sdlc/assets/graph.yaml#L75-L80": {
+      "lines": 6,
+      "sha": "fd30837d6fe4fb37"
+    },
+    "plugins/sdlc/skills/sdlc/assets/graph.yaml#L83-L88": {
+      "lines": 6,
+      "sha": "1159cddae9864c61"
+    },
+    "plugins/sdlc/skills/sdlc/assets/graph.yaml#L89-L100": {
+      "lines": 12,
+      "sha": "31dddc453f625ba7"
+    },
+    "plugins/sdlc/skills/sdlc/assets/graph.yaml#L89-L94": {
+      "lines": 6,
+      "sha": "330ff0b413cead6d"
+    },
+    "plugins/sdlc/skills/sdlc/assets/graph.yaml#L95-L100": {
+      "lines": 6,
+      "sha": "486a70cc2b74e9f9"
+    },
+    "plugins/sdlc/skills/sdlc/assets/graph.yaml#L99": {
+      "lines": 1,
+      "sha": "acd2cc5b620fb853"
+    },
+    "plugins/sdlc/skills/sdlc/assets/loops.yaml#L1-L16": {
+      "lines": 16,
+      "sha": "baa424a602370580"
+    },
+    "plugins/sdlc/skills/sdlc/assets/loops.yaml#L106-L121": {
+      "lines": 16,
+      "sha": "a678a52509b73b45"
+    },
+    "plugins/sdlc/skills/sdlc/assets/loops.yaml#L109": {
+      "lines": 1,
+      "sha": "ca69977183d901e8"
+    },
+    "plugins/sdlc/skills/sdlc/assets/loops.yaml#L109-L111": {
+      "lines": 3,
+      "sha": "dce9ad3b4054e98b"
+    },
+    "plugins/sdlc/skills/sdlc/assets/loops.yaml#L109-L114": {
+      "lines": 6,
+      "sha": "a5b66cd784f466b8"
+    },
+    "plugins/sdlc/skills/sdlc/assets/loops.yaml#L110": {
+      "lines": 1,
+      "sha": "2efde10e2e295c03"
+    },
+    "plugins/sdlc/skills/sdlc/assets/loops.yaml#L111": {
+      "lines": 1,
+      "sha": "98fcc2af55f83397"
+    },
+    "plugins/sdlc/skills/sdlc/assets/loops.yaml#L22": {
+      "lines": 1,
+      "sha": "94c5baa3285972ed"
+    },
+    "plugins/sdlc/skills/sdlc/assets/loops.yaml#L25": {
+      "lines": 1,
+      "sha": "973fa732b41631dc"
+    },
+    "plugins/sdlc/skills/sdlc/assets/loops.yaml#L32": {
+      "lines": 1,
+      "sha": "3e3d033824f81348"
+    },
+    "plugins/sdlc/skills/sdlc/assets/loops.yaml#L37": {
+      "lines": 1,
+      "sha": "993b83ba22aadffa"
+    },
+    "plugins/sdlc/skills/sdlc/assets/loops.yaml#L37-L52": {
+      "lines": 16,
+      "sha": "1717ef00ad305558"
+    },
+    "plugins/sdlc/skills/sdlc/assets/loops.yaml#L58": {
+      "lines": 1,
+      "sha": "16247aca2e69c73d"
+    },
+    "plugins/sdlc/skills/sdlc/assets/loops.yaml#L59": {
+      "lines": 1,
+      "sha": "a47e0996774f98ba"
+    },
+    "plugins/sdlc/skills/sdlc/assets/loops.yaml#L6-L7": {
+      "lines": 2,
+      "sha": "e415dbc7c5b0e484"
+    },
+    "plugins/sdlc/skills/sdlc/assets/loops.yaml#L71-L84": {
+      "lines": 14,
+      "sha": "f4753fe89f2abbff"
+    },
+    "plugins/sdlc/skills/sdlc/assets/loops.yaml#L71-L87": {
+      "lines": 17,
+      "sha": "e5daad60328cab79"
+    },
+    "plugins/sdlc/skills/sdlc/assets/loops.yaml#L75": {
+      "lines": 1,
+      "sha": "fac05e14b9112cc7"
+    },
+    "plugins/sdlc/skills/sdlc/assets/loops.yaml#L75-L76": {
+      "lines": 2,
+      "sha": "19a60c9cf8d9eee5"
+    },
+    "plugins/sdlc/skills/sdlc/assets/loops.yaml#L76": {
+      "lines": 1,
+      "sha": "75f5d0a0d2cb6832"
+    },
+    "plugins/sdlc/skills/sdlc/assets/loops.yaml#L93": {
+      "lines": 1,
+      "sha": "37026890658a1b3e"
+    },
+    "plugins/sdlc/skills/sdlc/assets/loops.yaml#L93-L94": {
+      "lines": 2,
+      "sha": "67b2afa6dc14a392"
+    },
+    "plugins/sdlc/skills/sdlc/assets/loops.yaml#L94": {
+      "lines": 1,
+      "sha": "d4c0f32196252a49"
+    },
+    "plugins/sdlc/skills/sdlc/assets/routing.yaml#L1-L13": {
+      "lines": 13,
+      "sha": "a6f083871d13dcfc"
+    },
+    "plugins/sdlc/skills/sdlc/assets/routing.yaml#L3-L6": {
+      "lines": 4,
+      "sha": "c542f3aea5b0a86d"
+    },
+    "plugins/sdlc/skills/sdlc/assets/triggers.yaml#L1-L11": {
+      "lines": 11,
+      "sha": "c81a499d68d8618b"
+    },
+    "plugins/sdlc/skills/sdlc/assets/triggers.yaml#L3-L8": {
+      "lines": 6,
+      "sha": "e4cfe47d839078cc"
+    },
+    "plugins/sdlc/skills/sdlc/scripts/lock_done_when.py#L155": {
+      "lines": 1,
+      "sha": "69bcf313426e6c86"
+    },
+    "plugins/sdlc/skills/sdlc/scripts/sdlc_state.py#L262": {
+      "lines": 1,
+      "sha": "550ec1a08e013d9c"
+    },
+    "plugins/sdlc/skills/sdlc/scripts/sdlc_state.py#L356": {
+      "lines": 1,
+      "sha": "931c6c24a6f1c327"
+    },
+    "plugins/sdlc/skills/sdlc/scripts/sdlc_state.py#L357": {
+      "lines": 1,
+      "sha": "ebc5a050550d6918"
+    },
+    "plugins/sdlc/skills/sdlc/scripts/sdlc_state.py#L366-L368": {
+      "lines": 3,
+      "sha": "c0dcac1acc344dec"
+    },
+    "plugins/sdlc/skills/sdlc/scripts/sdlc_state.py#L370-L371": {
+      "lines": 2,
+      "sha": "255d62030ce2e94a"
+    },
+    "plugins/sdlc/skills/sdlc/scripts/sdlc_state.py#L373-L376": {
+      "lines": 4,
+      "sha": "84435b3b098eb5f3"
+    },
+    "plugins/sdlc/skills/sdlc/scripts/sdlc_state.py#L374-L375": {
+      "lines": 2,
+      "sha": "406a526d076c8e84"
+    },
+    "plugins/sdlc/skills/sdlc/scripts/sdlc_state.py#L392-L393": {
+      "lines": 2,
+      "sha": "a1f414e8c935e715"
+    },
+    "plugins/sdlc/skills/sdlc/scripts/sdlc_state.py#L435-L444": {
+      "lines": 10,
+      "sha": "78a9d847e1bb06f6"
+    },
+    "plugins/sdlc/skills/sdlc/scripts/sdlc_state.py#L486-L494": {
+      "lines": 9,
+      "sha": "2558e004baaa4e25"
+    },
+    "plugins/sdlc/skills/sdlc/scripts/sdlc_state.py#L497": {
+      "lines": 1,
+      "sha": "f78d64bda36fd907"
+    },
+    "plugins/sdlc/skills/sdlc/scripts/sdlc_state.py#L502-L503": {
+      "lines": 2,
+      "sha": "24225824569b1f36"
+    },
+    "plugins/sdlc/skills/sdlc/scripts/sdlc_state.py#L520-L524": {
+      "lines": 5,
+      "sha": "7d6001b9c849d2c1"
+    },
+    "plugins/sdlc/skills/sdlc/scripts/sdlc_state.py#L75": {
+      "lines": 1,
+      "sha": "2d00460f55e0f5f0"
+    },
+    "plugins/sdlc/skills/sdlc/scripts/sdlc_state.py#L980": {
+      "lines": 1,
+      "sha": "69bcf313426e6c86"
+    },
+    "plugins/sdlc/skills/sdlc/scripts/sdlc_state.py#L988": {
+      "lines": 1,
+      "sha": "69bcf313426e6c86"
+    },
+    "plugins/sdlc/skills/sdlc/scripts/trace.py#L253-L278": {
+      "lines": 26,
+      "sha": "f3322737e15218a7"
+    },
+    "plugins/sdlc/skills/sdlc/scripts/verify_graph.py#L131-L139": {
+      "lines": 9,
+      "sha": "318060f1f32f1c72"
+    },
+    "plugins/sdlc/skills/sdlc/scripts/verify_graph.py#L31": {
+      "lines": 1,
+      "sha": "68ee4ffc85b39be3"
+    },
+    "plugins/sdlc/skills/sdlc/scripts/verify_loop.py#L62": {
+      "lines": 1,
+      "sha": "8639846287ba9c57"
+    },
+    "plugins/sdlc/skills/spec-drift-detector/SKILL.md#L1-L19": {
+      "lines": 19,
+      "sha": "d0246c72d646e78c"
+    },
+    "plugins/sdlc/skills/spec-drift-detector/SKILL.md#L50": {
+      "lines": 1,
+      "sha": "6e6b4b2add0f4f4b"
+    },
+    "plugins/sdlc/skills/spec-drift-detector/SKILL.md#L63": {
+      "lines": 1,
+      "sha": "a87fe1e24f14a243"
+    },
+    "plugins/sdlc/skills/spec-drift-detector/references/divergence-types.md#L225": {
+      "lines": 1,
+      "sha": "9f07cb44d810eb16"
+    },
+    "plugins/sdlc/skills/spec-gaming-detector/SKILL.md#L1-L21": {
+      "lines": 21,
+      "sha": "ea66ab83dea7c9cd"
+    },
+    "plugins/sdlc/skills/spec-gaming-detector/scripts/compute_score.py#L68-L101": {
+      "lines": 34,
+      "sha": "73861f6088bc6d7b"
+    },
+    "plugins/sdlc/skills/tune/SKILL.md#L2": {
+      "lines": 1,
+      "sha": "c9e1f32139940800"
+    },
+    "plugins/sdlc/skills/tune/SKILL.md#L23-L27": {
+      "lines": 5,
+      "sha": "8df2290d8ab60fbb"
+    },
+    "plugins/sdlc/skills/tune/SKILL.md#L36-L38": {
+      "lines": 3,
+      "sha": "6d25573946c6d7b2"
+    },
+    "plugins/sdlc/skills/tune/SKILL.md#L46": {
+      "lines": 1,
+      "sha": "3eef429ad56a8baa"
+    },
+    "plugins/sdlc/skills/tune/SKILL.md#L47-L49": {
+      "lines": 3,
+      "sha": "6e889a98ccf63855"
+    },
+    "plugins/sdlc/skills/tune/SKILL.md#L50": {
+      "lines": 1,
+      "sha": "05c5782fad9f550b"
+    },
+    "plugins/sdlc/skills/tune/SKILL.md#L59-L61": {
+      "lines": 3,
+      "sha": "1f621f7fff19bc61"
+    },
+    "plugins/sdlc/skills/tune/SKILL.md#L69": {
+      "lines": 1,
+      "sha": "af4a859763b8c5c3"
+    },
+    "plugins/sdlc/skills/tune/SKILL.md#L70-L71": {
+      "lines": 2,
+      "sha": "565444fc771b960a"
+    },
+    "plugins/sdlc/skills/tune/SKILL.md#L80-L81": {
+      "lines": 2,
+      "sha": "abb7337ec37738e4"
+    },
+    "plugins/sdlc/skills/tune/SKILL.md#L89": {
+      "lines": 1,
+      "sha": "506d0231ee9dd0a3"
+    },
+    "plugins/sdlc/skills/tune/scripts/apply_proposal.py#L100-L114": {
+      "lines": 15,
+      "sha": "9582b7dcb609b338"
+    },
+    "plugins/sdlc/skills/tune/scripts/apply_proposal.py#L31-L38": {
+      "lines": 8,
+      "sha": "16ba978659c187c9"
+    },
+    "plugins/sdlc/skills/tune/scripts/tune.py#L302": {
+      "lines": 1,
+      "sha": "3d1f632048ec2e35"
+    }
+  },
+  "schema": "anchors-lock/1"
+}

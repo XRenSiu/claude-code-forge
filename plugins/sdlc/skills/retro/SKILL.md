@@ -8,7 +8,7 @@ description: >-
   出问题" / "度量" / 一个或多个 feature 归档之后。NOT for: 单次 bug 的根因（/adversarial-debugging 类）、
   改 skill 本身（skill-evolve 邻居）。前置：`specs/*/` 至少一个归档。
 argument-hint: "[--archive specs/] [--since YYYY-MM-DD] [--out retro/retro-<date>.md]"
-version: 0.2.0
+version: 0.3.0
 user-invocable: true
 ---
 
@@ -33,7 +33,7 @@ deletion 测试：撤掉本 skill，引擎会写"这次沟通不够充分，下�
   | 指标 | 数据源 | 高了说明哪层病 |
   |---|---|---|
   | 回流分布（card/plan/task/ontology/world） | counters | 哪一层最常被退回 = 那层的门太松或上游没建好 |
-  | G1 拦截率（PSL 轨） | gates.g1 | 高 = 推导常错（PSL 欠定）或世界常错（好事：拦住了） |
+  | 门的拦截次数 G1/G2/G3 | `ledger.md` 的 gate 行（缺则 trace.jsonl `kind=gate`） | 高 = 推导常错（PSL 欠定）或世界常错（好事：拦住了）。**不读 `state.json#gates.*.verdict`**：那是最终态，拒两次再过的运行在那里读出来是 0 次拦截（I-84）。归档既无账本也无 trace 时才退回最终态，此时 `gate_source` 记为 `state(final-verdict-only)` |
   | human AC 占比 | done_when | 持续过半 = 该类需求不该走流水线 |
   | PR 返工轮次 | review.rounds / pr-watch | 高 = 契约或卡的粒度问题，不是 reviewer 苛刻 |
   | 逃逸缺陷率 | escape-defects | 压住"切小任务刷首过率"；逐条看归因层 |
@@ -56,7 +56,7 @@ deletion 测试：撤掉本 skill，引擎会写"这次沟通不够充分，下�
 
 ## 原语（Π）
 
-- `scripts/metrics.py <archive_root> [--json OUT] [--md OUT]` —— X3 导出（lead time / 轮次 / 回流分布 / G1 率 / human AC / 逃逸 / 豁免）。
+- `scripts/metrics.py <archive_root> [--json OUT] [--md OUT]` —— X3 导出（lead time / 轮次 / 回流分布 / 门的拦截次数与率 / human AC / 逃逸 / 豁免）。
 - `assets/retro_template.md` —— 报告形状。
 - `references/reading-the-numbers.md` —— 各指标的解读与常见误读。
 

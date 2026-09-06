@@ -67,3 +67,19 @@ back-and-forth, T2 verbatim, T3 with a real legacy doc, T4 by answering "不知�
 produced artifact via `verify_psl.py`. Assert on the produced PSL (not the wording), require
 the with-skill run to clear conditions the without-skill run fails (`delta_exist > 0`), zero
 repeated regressions. Then update `gate.json`.
+
+## 2026-09-06 · dogfood 修复轮（I-02 / I-20 / I-23）
+
+仍是 `static_only`：新增的保证全在 L0 机械层；T1–T5 行为层依旧未跑。
+
+- **接缝闭合**：`verify_derived.py` 对"PSL 里没有任何 PSL-NNN"直接拒整份推导，而 `verify_psl.py`
+  对同一份产物 PASS——上游把一份下游必退的东西交了出去。现在两道闸说同一句话：无规律 id → reject，
+  同一 id 定义两条规律 → reject（id 不稳定，引用它的决策指向不明）。
+- 规律分层标记（`（形态层）` / `（内容层）`）以 INFO 报出条数分布，标错了看得见。
+- `[elicit:物料 <文件> §N]` 的文件与章节做存在性 flag（`--material-root` 指物料树）。
+  本次审计把 `ARCHITECTURE §7` 记成了 `lifecycle.md §7`，就是这条抓的类型。
+- `references/EXAMPLE.md` 的示例 PSL 补齐了 `PSL-NNN` / `UI-n` / `A-n` / `DP-n` 编号与一条内容层规律，
+  并由冒烟钉住——作者照抄示例产出的 PSL 必须能过它自己教的那道闸。
+
+冒烟：本轮 +31 条期望（单独看 196 → 225；并入已推进的基线后 246），0 失败。
+27 个变异体全部经仓库自带的 `smoke.sh --mutate` 复核，无一存活。

@@ -1,0 +1,25 @@
+# X1 fixture — the TO-BE ontology from /psl-derive. `Part` means the as-is `Node`;
+# `Ring` and `Gap` have no as-is counterpart; `Gate` is the same word in both;
+# R001 carries the same id and a DIFFERENT statement — a conflict, not an alias.
+meta: { dos_version: "0.1.0", product: "sdlc-audit", bounded_context: "audit", owner: "xrensiu", status: draft }
+scope: { in_scope: "auditing ring coverage", out_of_scope: "delivery" }
+objects:
+  Part:
+    description: "a skill, agent or script that fills a ring"
+    type: entity
+    synonyms: ["配件"]
+  Ring: { description: "one of the nine lifecycle rings", type: entity }
+  Gap: { description: "a ring position with no producer", type: entity }
+  Gate: { description: "a human-signed verdict", type: entity }
+relationships:
+  - { subject: Part, verb: FILLS, object: Ring, cardinality: "N:1", inverse: FILLED_BY }
+rules:
+  - { id: R001, statement: "An Artifact has exactly one producer Part.", rationale: "single producer", enforced_by: system }
+composition: {}
+behaviors: []
+bounded_contexts: { current_context: audit }
+agent_guidelines: { must: [], should: [], must_not: [] }
+anti_patterns: []
+open_questions:
+  - { id: Q001, question: "is a Gap an object or a Ring property?", raised_at: "2026-09-05", raised_by: "psl-derive", owner: "xrensiu", deadline: "2026-09-30" }
+evolution_log: []

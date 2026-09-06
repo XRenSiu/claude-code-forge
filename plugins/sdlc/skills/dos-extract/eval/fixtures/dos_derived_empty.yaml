@@ -1,0 +1,29 @@
+# I-37: a property declared as a materialised derived view must name its source.
+meta: { dos_version: "0.1.0", product: "audit", bounded_context: "rings", owner: "xrensiu", status: draft }
+scope: { in_scope: "ring coverage", out_of_scope: "delivery" }
+objects:
+  Ring:
+    description: "one of the nine lifecycle rings"
+    type: entity
+    properties:
+      id: { type: string, required: true }
+      missing:
+        type: array
+        required: false
+        description: "parts this ring has no producer for"
+        derived_from: ""
+  Part:
+    description: "a skill, agent or script that fills a ring"
+    type: entity
+relationships:
+  - { subject: Part, verb: FILLS, object: Ring, cardinality: "N:1", inverse: FILLED_BY }
+rules:
+  - { id: R001, statement: "every Part fills at least one Ring", rationale: "coverage", enforced_by: system }
+composition: {}
+behaviors: []
+bounded_contexts: { current_context: rings }
+agent_guidelines: { must: [], should: [], must_not: [] }
+anti_patterns: []
+open_questions:
+  - { id: Q001, question: "is a Gap an object or a Ring property?", raised_at: "2026-09-05", raised_by: "dos-extract", owner: "xrensiu", deadline: "2026-09-30" }
+evolution_log: []

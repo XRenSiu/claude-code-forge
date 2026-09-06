@@ -1,0 +1,463 @@
+schema: ring-audit-reaudit-delta/1
+scope: R0, R1, R2, spine
+reviewed_at_head: ab67052
+
+# =============================================================================
+# 结论先写：14 个 Part 的三维判定（implemented / needed / naming）在 HEAD 上一个都没变。
+#
+# 两条硬约束把所有上移路径堵死了，逐条核过：
+#   1. verified 无路可走 —— 本轮 8 个有 gate.json 的 Part 全部仍是 gate_pass: static_only；
+#      带 tier2_status 的四个（psl / dos-extract / invariant-extract / donewhen-extract）
+#      仍逐字写着 "NOT RUN"。修复轮加的是 L0 机械保证，psl / psl-derive 的 gate.json 自己
+#      在 fixes_2026_09_06.still 里写死："static_only — every added guarantee is L0 mechanical;
+#      the behavioural layer ... is still unrun"。
+#   2. F-06 封顶的三个 Part 独占产物 checked_by 仍为空 —— acceptance-spec 的
+#      spec.md / spec-robustness.md、asset.routing.yaml 的 routing.yaml、
+#      asset.triggers.yaml 的 triggers.yaml。逐个 grep + 读源码确认（见下面 stale 条目）。
+#
+# 变的是 evidence 的事实底座：6 个新脚本、smoke 期望 176 → 382、四份 gate.json 加了
+# dogfood 修复块。所以本文件的正文在 unchanged_but_evidence_stale，那才是这轮真正的产出。
+# =============================================================================
+
+parts: []
+
+unchanged_but_evidence_stale:
+
+# ---------------------------------------------------------------- R0 psl
+- id: psl
+  stale: >-
+    implemented.gate_caveat 说 "gate.json fix_list 第一条即此（A'-1）" —— 这一句仍成立
+    （fix_list[0] 逐字还是 "compile the delivery gate: add a hooks.json Stop/PostToolUse hook
+    that runs verify_psl.py"），但 evidence 里 verify_psl.py 的检查面已经和审计时不是同一
+    个脚本：本轮 +177 行，新增两条 REJECT（PSL 没有任何 PSL-NNN 规律 id · 同一个 id 被定义
+    两次），以及 [elicit:物料 …] 来路存在性 flag 与规律分层（form / content）解析。
+  replacement: >-
+    evidence 里 verify_psl.py 的条目补一句检查面："verify_psl.py:311-321 拒绝无 PSL-NNN id 与
+    重复 id（I-02，与 verify_derived.py:66 那条拒绝对齐，两道闸说同一句话）；:327 按 form/content
+    分层输出 info，决定下游 verify_derived.py 对哪些规律做未被引用 flag"。gate_caveat 保持原判
+    并可加一条现场核实：plugins/sdlc/ 下**至今没有任何 plugin 级 hooks.json**，
+    skills/sdlc/assets/hooks/stop-clean-state.json 仍是未安装的模板 —— 所以 "声明式预门、
+    未挂 hooks" 这句在 HEAD 上仍然逐字为真，不是过期结论。
+  evidence:
+  - {kind: file, ref: 'plugins/sdlc/skills/psl/scripts/verify_psl.py#L311-L321'}
+  - {kind: file, ref: 'plugins/sdlc/skills/psl/eval/gate.json#fixes_2026_09_06.still'}
+  - {kind: file, ref: plugins/sdlc/skills/sdlc/assets/hooks/stop-clean-state.json}
+
+# ---------------------------------------------------------- R0 psl-derive
+- id: psl-derive
+  stale: >-
+    implemented.not_reached.verified 说 "本 Run 的 derived/ 有 v1/v2/v3 三稿，那是同一推导者
+    的三轮修订，不是 N 次隔离推导的分歧集" —— 判定不变（gate.json fix_list 的 "L2: run N=3
+    isolated derivations ... and hold a real G1" 仍在），但 "三轮修订不受任何机械约束" 这层
+    背景已经不成立：verify_derived.py 本轮 +227 行，多轮推导现在有闸。
+  replacement: >-
+    evidence 里 verify_derived.py 的条目补一句："--round N 起，上一轮必须归档在 round{N-1}/
+    且四件产物齐全、必须有 round-diff.md 且真的引用 round{N-1}/、divergence.md 必须自报
+    `round: N` 且从第 2 轮起带「裁决 → 落点」表，缺一即 REJECT"。同时更正一处容易误记的因果：
+    "form-draft cites <id> which does not exist in the PSL" 这条拒绝**不是**本轮新增，
+    fbc6a3c 之前就在（旧 verify_derived.py:81），本轮新增的是 UI-n / A-n / DP-n 三类锚
+    与 F-<digits> id 格式的拒绝。
+  evidence:
+  - {kind: file, ref: 'plugins/sdlc/skills/psl-derive/scripts/verify_derived.py#round-archive rejects'}
+  - {kind: file, ref: 'plugins/sdlc/skills/psl-derive/eval/gate.json#fixes_2026_09_06.still'}
+
+# ------------------------------------------------------- R0 human_gate.G1
+- id: human_gate.G1
+  stale: >-
+    implemented.not_reached.verified 说 "签字人是 delegated_agent 代签，不是人签" —— 结论不变，
+    但 "代签与人签在机器一侧无差别" 这层事实没了：sdlc_state.py gate 本轮加了
+    --signer-kind human|delegated_agent，delegated 缺 --authorization 直接 die(…, 1)，
+    signer_kind 与 authorization 写进 state.gates.<g> 与 ledger，trace ref 也从
+    human:<by> 变成 agent:<by>。
+  replacement: >-
+    verified 一栏改写为："签字人仍是 delegated_agent；PSL-006 下代签不渲染为人签，所以
+    「人签的门跑通了」仍无证据。区别于审计时的是，代签现在是**被记录且被约束**的一等状态
+    （sdlc_state.py:496-497 拒绝无 authorization 的代签，:525 写 agent: 前缀的 decided_by），
+    不再与人签同形 —— 但脚本从不拒绝一次代签本身，且 --signer-kind 默认值就是 human，
+    所以「只能人签」这条宪法仍未编译（见下面 spine/unenforced_rule/control/r008-human-signer）。"
+    gate_caveat 一栏不动：cmd_gate 的 g1 pass 前置仍只有 world.derived_dir 是存在目录
+    （sdlc_state.py:490-494），仍不读 g1-record.md 的内容。
+  evidence:
+  - {kind: file, ref: 'plugins/sdlc/skills/sdlc/scripts/sdlc_state.py#L490-L534'}
+  - {kind: file, ref: 'plugins/sdlc/skills/sdlc/assets/state.schema.json#L375-L380'}
+
+# ------------------------------------------------------- R1 dos-extract
+- id: dos-extract
+  stale: >-
+    implemented.no_gate_note 的 "verify_dos.py 只在拒绝信息里提到它（scripts/verify_dos.py:67），
+    不校验它" 有两处过期：(a) 行号漂了 —— 旧 L67 那条 ">7 objects" 拒绝现在在 L169；
+    (b) 更重要的是 verify_dos.py 现在**真的读** decisions.md：新增 --decisions 参数与
+    parse_waivers()（L73-L96），读 `## Naming waivers` 节的条目；整词 UI/impl 名
+    （`Card` / `Service` 这类）的 REJECT 现在能被 decisions.md 里的一条豁免降级成 FLAG
+    （L182-L185），smoke 有一对孪生期望盯着这条路（decisions_no_waiver.md → exit 1 /
+    decisions_with_waiver.md → exit 0）。
+  replacement: >-
+    no_gate_note 改写为："decisions.md 仍无闸，但不再是无人读：verify_dos.py --decisions
+    解析它的 `## Naming waivers` 节，整词 UI/impl 名的拒绝由那里的一条豁免清除
+    （verify_dos.py:73-96, 182-185；smoke.sh:609-610 是这条路的孪生期望）。它检的仍然是
+    dos.yaml —— decisions.md 自身为空、内容与 dos.yaml 矛盾、或豁免写错格式，都只表现为
+    「没豁免成功」，没有任何非零退出路径指向 decisions.md 本身。且 >7 objects 那条拒绝
+    （L169）的措辞仍写着 'exceed only with a human waiver in decisions.md'，而代码里那条
+    拒绝**无条件**成立、根本不查 waivers —— 一条仍然指向空气的豁免路径。"
+    按 F-06，本 Part 独占产物 dos.yaml 的 checked_by 仍非空，implemented 维持 compiled 不变。
+  evidence:
+  - {kind: file, ref: 'plugins/sdlc/skills/dos-extract/scripts/verify_dos.py#L73-L96'}
+  - {kind: file, ref: 'plugins/sdlc/skills/dos-extract/scripts/verify_dos.py#L167-L189'}
+  - {kind: file, ref: 'plugins/sdlc/eval/smoke.sh#L609-L610'}
+
+# -------------------------------------------------- R1 invariant-extract
+- id: invariant-extract
+  stale: >-
+    evidence 只列了 verify_card.py 与 gate.json，没有说它检什么 —— 本轮 +212 行后检查面
+    宽了一大截，旧 evidence 读起来会低估它的承重。
+  replacement: >-
+    evidence 里 verify_card.py 的条目补检查面："新增拒绝 —— hard 不变量必须 disposition:
+    propose、低置信必须 propose、carded 条目的 altitude 必须是 territory 级、◊ 候选不得
+    同时以 □ 入卡、channel_2_input.failure_memory_count 有数无 sources、registered_gaps
+    条目缺 destination；新增 flag —— 与 dos.yaml 规则的近重复检测（--near-duplicate，
+    默认 0.6）、缺 narrowest_rule_note。gate.json dogfood_fixes 记 I-24…I-29 六条，
+    13 条新 smoke 期望，每条都跑过变异证明。" tier2_status 仍是 "NOT RUN — no held-out
+    Territory set"，implemented 维持 compiled。
+  evidence:
+  - {kind: file, ref: plugins/sdlc/skills/invariant-extract/scripts/verify_card.py}
+  - {kind: file, ref: 'plugins/sdlc/skills/invariant-extract/eval/gate.json#dogfood_fixes[0]'}
+
+# ------------------------------------------------------------- R2 issue
+- id: issue
+  stale: >-
+    evidence 里 verify_issue.py 的条目没有反映本轮 +86 行的两处结构性变化：
+    (a) DOS 闭包不再是脚本内联解析，改为 import dos-extract/scripts/dos_closure.py
+    这一个共享 resolver（lint_cards.py 也 import 同一个），闭包现在认 objects.synonyms /
+    rules.aliases；(b) 新增 --g1，读 g1-record.md 与 g1-interpretations.md 的
+    「明确不做」节，issue 正文命中被否决的词就报 flag。
+  replacement: >-
+    evidence 补一句并附一条 caveat："--g1 对 g1-record.md 的交叉核对只产 flag，不产 reject
+    （verify_issue.py:314-320），按本轮「闸 = 存在非零退出路径」的定义，它不构成对
+    g1-record.md 的闸，g1-record.md 的 checked_by 不因此改变。同理 dos_closure import
+    失败时降级为 flag（'closure unchecked'），--dos 在邻居 skill 缺席时是 fail-open 的。"
+    implemented 维持 compiled（verify_issue.py:325 仍是 `sys.exit(1 if rejects else 0)`，
+    正文里 20 余条 rejects.append 都是真拒绝）。
+  evidence:
+  - {kind: file, ref: 'plugins/sdlc/skills/issue/scripts/verify_issue.py#L266-L320'}
+  - {kind: file, ref: plugins/sdlc/skills/dos-extract/scripts/dos_closure.py}
+
+# -------------------------------------------------- R2 donewhen-extract
+- id: donewhen-extract
+  stale: >-
+    needed.merge_reason 的 F-05 三条件判定（(c) 一个产 v2、一个产 v1，不是同 schema）
+    我重核过，**仍然成立**：acceptance-spec 本轮只改了 SKILL.md 版本号与两份 reference，
+    scripts/validate_done_when.py 一个字节未动，仍是 v1 校验器。此条不是 stale，写在这里
+    是为了留下「重核过、没变」的记录。真正过期的是 implemented.evidence：
+    validate_done_when_v2.py 本轮 +73 行。
+  replacement: >-
+    implemented.evidence 里 validate_done_when_v2.py 的条目补检查面："新增 --form-draft ——
+    每个 expect 键必须是签字版形态草案里点过名的谓词，否则 REJECT（I-40）；新增
+    given 必须是具名前置条件的 mapping、human AC 的 statement 含无阈值模糊词即拒。"
+    needed.merge_candidate 与 merge_reason 三条件判定原样保留。
+  evidence:
+  - {kind: file, ref: 'plugins/sdlc/skills/donewhen-extract/scripts/validate_done_when_v2.py#--form-draft'}
+  - {kind: file, ref: plugins/sdlc/skills/acceptance-spec/scripts/validate_done_when.py}
+
+# --------------------------------------------------- R2 acceptance-spec
+- id: acceptance-spec
+  stale: >-
+    implemented.not_reached.compiled 的核心论据 "全插件 31 个 scripts/*.py 里没有一个读
+    spec.md" 现在**逐字不成立**，两处都错：(a) 数变了 —— HEAD 上是 36 个
+    skills/*/scripts/*.py（加 commit.sh 与 pr-poll.sh 共 38 个脚本文件；另有 1 个
+    plan-cards fixture 里的 render_audit.py 不算），本轮新增 6 个真脚本；
+    (b) "没有一个读 spec.md" 是错的 —— 四个脚本读它：本 Part 自己的
+    validate_done_when.py（:264 默认猜同目录 spec.md）、donewhen-extract 的
+    validate_done_when_v2.py 与 convert_v1_to_v2.py、plan-cards 的 lint_cards.py。
+    **但判定不变**：它们读 spec.md 是把它当参照语料去判**别的**产物，spec.md 自身缺失、
+    空壳、格式错都不产生任何失败 —— validate_done_when.py 里 spec.md 不存在就静默跳过，
+    唯一由 spec.md 内容触发的 "spec.req_not_in_based_on" 是 warn 而非 error，且整个脚本
+    不加 --check 时恒 exit 0（:290-291）。spec-robustness.md 仍然只在 verify_graph.py:31
+    的 FORBIDDEN_CARRY_TOKENS 里作为禁带词出现。
+  replacement: >-
+    not_reached.compiled 改写为："no_gate —— 本 Part 独占的 specs/<f>/spec.md 与
+    specs/<f>/spec-robustness.md 的 checked_by 仍为空。HEAD 上 36 个
+    skills/*/scripts/*.py 里有四个**读** spec.md（validate_done_when.py:264 /
+    validate_done_when_v2.py:101 / convert_v1_to_v2.py / lint_cards.py），但都是把它
+    当参照语料去判 done_when.yaml 或卡：spec.md 缺失即静默跳过，唯一源自 spec.md 内容的
+    发现（spec.req_not_in_based_on）是 warn，且 validate_done_when.py 不传 --check 时
+    恒 exit 0。读 ≠ 检；没有一条非零退出路径以 spec.md 为对象。spec-robustness.md 仍只在
+    verify_graph.py:31 作禁带词出现。按 F-06 封顶 declared。"
+  evidence:
+  - {kind: file, ref: 'plugins/sdlc/skills/acceptance-spec/scripts/validate_done_when.py#L222-L234'}
+  - {kind: file, ref: 'plugins/sdlc/skills/acceptance-spec/scripts/validate_done_when.py#L288-L291'}
+  - {kind: file, ref: 'plugins/sdlc/skills/sdlc/scripts/verify_graph.py#L31'}
+
+# ------------------------------------------------------- R2 human_gate.G2
+- id: human_gate.G2
+  stale: >-
+    implemented.not_reached.verified 说 "锁机制本身（sign --stage g2 / l5、篡改被拒、
+    附提案放行）在 fixture 与本 Run 的 43 文件 l5 锁上都走过" —— 判定不变，但锁机制本轮
+    多了三件事，旧描述已经不完整：(a) sign --gate SCRIPT 把执行契约的 verify_*.py 一起
+    冻进锁（role=gate），check 把 changed_gates 与 changed 分开报，l5 锁没带 --gate 时
+    输出 warning（INV-001 / I-30）；(b) sign 拒绝把 g1-interpretations*.md 锁进去
+    （exit 2, I-60）；(c) --signer-kind delegated_agent 缺 --authorization 时 exit 1，
+    signer_kind 写进锁文件。
+  replacement: >-
+    verified 一栏保留原结论（代签不是人签，PSL-006 下无「人签的门跑通了」的证据），把锁机制
+    那一句扩成："锁机制在 fixture 与本 Run 的 l5 锁上走过，且本轮又加了三条非零退出路径 ——
+    role=gate 条目与 changed_gates 分离报告、拒锁 g1-interpretations*.md（exit 2）、
+    代签缺 authorization（exit 1）。这些都是 compiled 的证据，不是 verified 的。"
+  evidence:
+  - {kind: file, ref: 'plugins/sdlc/skills/sdlc/scripts/lock_done_when.py#L60-L100'}
+  - {kind: file, ref: 'plugins/sdlc/skills/sdlc/scripts/lock_done_when.py#L130-L140'}
+
+# ------------------------------------------------------------ spine sdlc
+- id: sdlc
+  stale: >-
+    implemented.evidence 的 smoke 条目写 "gate.json provenance.smoke：178 expectations,
+    178 pass, 2026-09-05" —— 这个数在 HEAD 上已经不是现实：plugins/sdlc/eval/smoke.sh
+    现在有 382 行 `^expect`（fbc6a3c 时 176；修复轮自报 378 期望 0 失败，并用
+    `smoke.sh --mutate` 逐条证明杀得死 mutant）。而 skills/sdlc/eval/gate.json 的
+    provenance.smoke 与 provenance.date **没有跟着更新**，仍写 178 / 2026-09-05，
+    与它自己 skills/psl/eval/gate.json 的 fixes_2026_09_06.smoke（"196 → 225 …
+    246 with the merged base"）互相矛盾。
+  replacement: >-
+    smoke 证据条目改成："plugins/sdlc/eval/smoke.sh 在 ab67052 上有 382 条 expect
+    （fbc6a3c 时 176），修复轮自报 378 期望 0 失败 + 约 100 条跑过变异证明；注意
+    skills/sdlc/eval/gate.json 的 provenance.smoke 未随之更新，仍停在 178 / 2026-09-05
+    —— 引用时以 smoke.sh 本身为准，别引 gate.json 那个数。" implemented 维持 compiled，
+    calibration_note（routing v2 收敛阈值是文献先验、未校准）原样保留 —— 本轮没有任何
+    校准动作。
+  evidence:
+  - {kind: file, ref: plugins/sdlc/eval/smoke.sh}
+  - {kind: file, ref: 'plugins/sdlc/skills/sdlc/eval/gate.json#provenance.smoke'}
+  - {kind: file, ref: 'plugins/sdlc/skills/psl/eval/gate.json#fixes_2026_09_06.smoke'}
+
+# ------------------------------------------------- spine asset.graph.yaml
+- id: asset.graph.yaml
+  stale: >-
+    被审对象本身变了：graph.yaml 本轮加了 agent.pr-reviewer 节点与两条边
+    （pr →(conditional, guard flag.pre_review) agent.pr-reviewer；
+    agent.pr-reviewer →(loop_back, review_loop) pr），补的是 dogfood I-16
+    「插件出五个 agent、图里只有四个」。implemented.not_reached.verified 里
+    "只有作者在 2026-09-05 的 smoke 记录…本 Run 没有跑过 verify_graph.py" 这句里的
+    前半段现在指的是一份已经不存在的 graph.yaml。
+  replacement: >-
+    verified 一栏改成："graph.yaml 在 ab67052 上含 agent.pr-reviewer 节点与其两条边
+    （I-16）；重审时在 HEAD 上跑过 python3 verify_graph.py（无参，检 shipped graph），
+    rejects 0 / warnings 0，exit 0 —— 五条 lint 在新图上仍全过。这仍是 compiled 级证据：
+    没有带 / 不带对比臂，gate.json 仍 static_only。"
+  evidence:
+  - {kind: file, ref: 'plugins/sdlc/skills/sdlc/assets/graph.yaml#agent.pr-reviewer'}
+  - {kind: run_record, ref: 'python3 plugins/sdlc/skills/sdlc/scripts/verify_graph.py → {"rejects": [], "warnings": []}, exit 0 @ ab67052'}
+
+# ------------------------------------------------- spine asset.loops.yaml
+- id: asset.loops.yaml
+  stale: >-
+    implemented.not_reached.verified 的 "本 Run 未跑" 仍成立，但重审时我在 HEAD 上跑了
+    verify_loop.py，留个可复核的记录；loops.yaml 本身本轮未改。
+  replacement: >-
+    verified 一栏补一句："重审在 ab67052 上跑过 python3 verify_loop.py（无参，检 shipped
+    loops + 同目录 routing.yaml），rejects 0 / warnings 0，exit 0，六个环全过。仍是
+    compiled 级证据：没有带 / 不带对比臂。"
+  evidence:
+  - {kind: run_record, ref: 'python3 plugins/sdlc/skills/sdlc/scripts/verify_loop.py → {"rejects": [], "warnings": []}, exit 0 @ ab67052'}
+
+# ----------------------------------------------- spine asset.routing.yaml
+- id: asset.routing.yaml
+  stale: >-
+    implemented.not_reached.compiled 的 "全插件 31 个 scripts/*.py 里没有一个校验
+    routing.yaml 自身" 里的数过期（HEAD 上是 36 个），且 "没有一个读它" 容易被误读 ——
+    实际有四个脚本读 routing.yaml：verify_loop.py（解 budget.ref）、sdlc_state.py
+    （fail 查路由表）、trace.py lint（解 routing.R\d+ 目标）、tune.py / apply_proposal.py
+    （读并生成改它的 patch）。**判定不变**：这四个读的都不是 routing.yaml 的合法性 ——
+    trace.py 那条尤其要点名，它是 `if routing_rules and …`（trace.py:277），routing.yaml
+    缺失或 rules 为空时这条校验静默失效，是 fail-open。
+  replacement: >-
+    not_reached.compiled 改写为："no_gate —— HEAD 上仍没有 verify_routing.py，36 个
+    skills/*/scripts/*.py 里没有一个校验 routing.yaml 自身的 rules 行 layer / handler /
+    action 是否合法、layers 与 budgets 的键是否对齐。四个脚本读它，都是把它当查询表用：
+    verify_loop.py:62 只解 budget.ref 能否落点；sdlc_state.py:588,831 在 fail 时查路由；
+    trace.py:253-278 用它解 trace 里的 routing.R\d+ 目标，且写成 `if routing_rules and …`
+    —— routing.yaml 缺失或空 rules 时这条校验静默失效；tune.py / apply_proposal.py 生成
+    改它的 patch（apply_proposal.py 只出 diff，从不写目标文件）。ARCHITECTURE §7 的 X2 行
+    闸列仍为空。" 按 F-06，独占产物 routing.yaml 的 checked_by 仍为空，封顶 declared。
+  evidence:
+  - {kind: file, ref: 'plugins/sdlc/skills/sdlc/scripts/trace.py#L253-L278'}
+  - {kind: file, ref: 'plugins/sdlc/skills/sdlc/scripts/verify_loop.py#L62'}
+
+# ---------------------------------------------- spine asset.triggers.yaml
+- id: asset.triggers.yaml
+  stale: >-
+    implemented.not_reached.compiled 的 "triggers.yaml 不在任何一个的检查范围内" 措辞过宽：
+    plugins/sdlc/eval/smoke.sh 里有一条内联断言盯着它 —— "triggers.yaml: every trigger
+    names a declared loop"，assert 每个 trigger.loop 在 loops.yaml 里有定义，断言失败即
+    非零退出。这条**不是本轮新增**（fbc6a3c 时就在，旧 smoke.sh:333），所以不是被本轮改
+    出来的 stale，是原判词的精度问题；另外 "Stop hook 只有模板" 这半句在 HEAD 上逐字仍真
+    （assets/hooks/stop-clean-state.json 是插件里唯一的 hooks 文件，plugins/sdlc/ 下没有
+    plugin 级 hooks.json）。
+  replacement: >-
+    not_reached.compiled 改写为："no_gate —— 仍没有 verify_triggers.py，ARCHITECTURE §7
+    对应行的闸列仍只写 verify_loop / verify_graph / check-clean。唯一盯着 triggers.yaml 的
+    机械检查是 smoke.sh 里一条内联断言（每个 trigger.loop 必须是 loops.yaml 里声明过的环），
+    那是插件自测套件对自家资产的回归保护，不是流水线上挡产物的闸，也不覆盖本 gap 点名的两种
+    失效（引用不存在的 predicate_scripts、漏 'or stop after N turns'）。三种绑定
+    （interactive / unattended / headless）仍一种都没走。" 按 F-06 封顶 declared 不变。
+  evidence:
+  - {kind: file, ref: 'plugins/sdlc/eval/smoke.sh#triggers.yaml: every trigger names a declared loop'}
+  - {kind: file, ref: plugins/sdlc/skills/sdlc/assets/hooks/stop-clean-state.json}
+
+# ------------------------------- 以下两条不是 Part，是 gap 注册表里的 evidence
+- id: 'gap:R1/newly_identified/control/decisions-md-no-gate'
+  stale: >-
+    evidence 指 `verify_dos.py#L67`，该行现在是 UI_IMPL_SUFFIXES 常量，">7 objects" 那条
+    拒绝已经漂到 L169。deletion_test 的两半现在真假不同：前半 "decisions.md 可以为空、
+    可以与 dos.yaml 矛盾而无人发现" **仍真**；后半 "没有任何检查确认那条豁免真的被写下"
+    对 >7 objects 仍真（L167-L170 无条件 reject，压根不查 waivers），但对整词 UI/impl 名
+    已经**假**了 —— 那条拒绝现在真的由 decisions.md 的一条豁免清除。
+  replacement: >-
+    evidence 改指 'plugins/sdlc/skills/dos-extract/scripts/verify_dos.py#L167-L189'，
+    deletion_test 后半改为："整词 UI/impl 名的豁免路径已经落地（parse_waivers 读
+    `## Naming waivers`，L182-L185 降级为 flag）；但 >7 objects 那条拒绝的措辞仍写着
+    'exceed only with a human waiver in decisions.md'，代码里却是无条件 reject、
+    从不查 waivers —— 同一个文件里两条豁免路径，一条通了，一条仍指向空气。"
+- id: 'gap:spine/unenforced_rule/control/r008-human-signer'
+  stale: >-
+    deletion_test 的 "门的 verdict 由谁签没有脚本核对，agent 代签与人签在状态里形状相同…
+    这条宪法在机器一侧完全没有承载" 已经过期：sdlc_state.py gate/waive 与
+    lock_done_when.py sign 三处都加了 --signer-kind，delegated 缺 --authorization
+    即非零退出（sdlc_state.py:496-497 · :902-903 · lock_done_when.py:76-77），
+    signer_kind 进 state.schema.json 的枚举、进 lock 文件、进 ledger，trace 的 decided_by
+    也分 human: / agent: 前缀。
+  replacement: >-
+    deletion_test 改为："签字人现在**被记录且被约束** —— 代签必须自报 --signer-kind
+    delegated_agent 并附 --authorization，否则三处签字入口都非零退出；signer_kind 进
+    state / lock / ledger / trace，代签与人签不再同形。但 R008 说的是『三道门只能人签』，
+    这一条仍未编译：没有任何脚本拒绝一次代签，而且 --signer-kind 的默认值就是 human ——
+    一个 agent 只要不传这个 flag，就被原样记成人签，约束整条绕开。所以这条宪法从『完全没有
+    承载』变成『承载了记录与授权、没承载拒绝』，仍是 unenforced_rule。"
+  evidence:
+  - {kind: file, ref: 'plugins/sdlc/skills/sdlc/scripts/sdlc_state.py#L980（--signer-kind default="human"）'}
+  - {kind: file, ref: 'plugins/sdlc/skills/sdlc/scripts/lock_done_when.py#L155'}
+
+new_gaps:
+- id: R2/newly_identified/control/gaming-band-unvalidated-at-r2
+  ring: R2
+  atoms: [Control]
+  source: newly_identified
+  necessity: necessary
+  deletion_test: >-
+    本轮给 done_when.yaml 加了新字段 gaming_risk_threshold（done_below /
+    block_at_or_above，acceptance-spec 的 v1 schema 与模板都写了它），但 R2 侧的两个校验器
+    都不认识它：acceptance-spec 自己的 validate_done_when.py 本轮一个字节未动、没有这个
+    字段的任何校验（它只对 spec_drift_threshold 做 extra_keys 检查），donewhen-extract 的
+    validate_done_when_v2.py 里连这个词都不出现。唯一校验它的是 R6 的
+    acceptance-fleet/scripts/next_iteration.py:156-165（未知子字段 / 非数字 / 带反的区间
+    → die(…, 1)）。后果：一份 done_below=7 / block_at_or_above=3 的倒挂契约在 R2 判为
+    clean、被 G2 冻进 .done_when.lock，直到 R6 第一次 ratchet 才炸；那时改契约要走变更提案
+    走回 G2，代价从「写契约时改一行」变成「解冻一份已签字的契约」。
+  evidence:
+  - {kind: file, ref: 'plugins/sdlc/skills/acceptance-spec/references/done-when-schema.yaml#gaming_risk_threshold'}
+  - {kind: file, ref: 'plugins/sdlc/skills/acceptance-fleet/scripts/next_iteration.py#L156-L165'}
+  - {kind: file, ref: plugins/sdlc/skills/acceptance-spec/scripts/validate_done_when.py}
+  disposition: issue
+
+closed_gaps:
+- id: R1/lifecycle_blank/control/dos-proposal-reconcile
+  filled_by: >-
+    新脚本 plugins/sdlc/skills/dos-extract/scripts/reconcile_dos.py（本轮新增，227 行）——
+    它就是这条 gap 点名的「应然 ↔ 现状对账」：--as-is dos.yaml 与 --to-be
+    derived/dos-proposal.yaml 逐对象逐规则比，输出 dos-reconciled.yaml，把映射上的 to-be
+    名折成 as-is 对象的 synonyms，于是下游只剩一个闭包源（dos_closure.py 解 synonyms，
+    verify_issue.py 与 lint_cards.py 都 import 它）。是真闸不是报告工具：有 to-be 对象
+    找不到 as-is 对应、或同一 rule id 在两份本体里说两件事，verdict=INCOMPLETE 且
+    return 1；--map 指向不存在的 as-is 对象 return 2；只有 --allow-unmapped 才写文件，
+    并把未映射的名字记进 open_questions，让缺口继续可见。它明确拒绝自己发明映射
+    （docstring："What it never does: invent a mapping"），符合本 gap 要的「分叉被发现、
+    要人裁决」而不是「自动合并」。
+  caveat: >-
+    填的是 capability + control 的机械半边，不是编排半边：reconcile_dos.py 没有进
+    graph.yaml（本轮 graph 只加了 agent.pr-reviewer），没有 hooks，没有任何上游强制它跑；
+    它产出的 dos-reconciled.yaml 也还没有在 audit.yaml 的 artifacts[] 里登记（生产者
+    应为 dos-extract，checked_by 为 [reconcile_dos.py]）。按本轮判定纪律这叫 compiled 级
+    填补，不是 verified。
+  evidence:
+  - {kind: file, ref: plugins/sdlc/skills/dos-extract/scripts/reconcile_dos.py}
+  - {kind: file, ref: 'plugins/sdlc/skills/dos-extract/eval/gate.json#dogfood_fixes[0].issues_closed（含 I-49）'}
+
+# 以下 gap 逐条复核过，**仍未填**，写在这里是为了留下「查过」的记录，避免下一轮重查：
+still_open_checked:
+- id: R0/lifecycle_blank/capability/psl-reference-lint
+  why: >-
+    verify_psl.py 本轮只做规律**定义**侧（parse_laws 收集定义行、拒绝零定义与重复 id），
+    没有任何「引用了一个未定义的 PSL-NNN」的解析：脚本里没有 referenced-minus-defined
+    的差集，grep 未定义/undefined/dangling 全无命中。下游那半
+    （form-draft 引用不存在的 id）由 verify_derived.py 拒，但那条拒绝 fbc6a3c 之前就有，
+    不是本轮新增，也不是 PSL 内部引用完整性。
+- id: R0/lifecycle_blank/control/g1-external-evidence
+  why: >-
+    g1_record.md 模板本轮 +116 行（加了四问、X1 应然↔现状对账、Open Questions 逐条、
+    明确不做、补签节），新增 g1_interpretations.md —— 全是模板层。sdlc_state.py cmd_gate
+    对 g1 pass 的前置仍只有 world.derived_dir 是存在目录（:490-494），不读记录内容；
+    verify_issue.py --g1 读「明确不做」节但只产 flag。「外部证据」仍是没有它照样 pass。
+- id: R1/lifecycle_blank/knowledge+control/ontology-drift
+  why: >-
+    inventory.py 本轮 +347 行加了 YAML/JSON 结构化通道，但它 `return 0` 恒成立（唯一的
+    低产出提示是写 stderr 的 WARNING），是报告工具不是闸；count_terms.py 有非零退出
+    （零命中词 → 1）但它数的是语料词频，不比对 dos.yaml 与代码。没有任何脚本发现
+    「本体与代码分叉」。
+- id: R1/lifecycle_blank/knowledge/dos-candidate-namespace
+  why: >-
+    仍无候选名词命名空间（dos_template.yaml:316 的 candidates 是 open_questions 的候选
+    答案，不是词表）。但 deletion_test 的「两条路」现在少了一点绝对：新加的
+    objects.synonyms / rules.aliases + dos_closure.py 给了第三条路 —— 一个**与既有对象
+    同义**的新词可以登记为同义词并闭上包，不必挤进 ≤7 objects。真正的新概念仍无处可落。
+- id: R2/lifecycle_blank/control/clarify-round-budget
+  why: >-
+    verify_issue.py 的必填节列表（:111）本轮未变，`assumptions` 早就在里面（fbc6a3c 时
+    的 :97 逐字相同）；脚本里没有任何轮次计数或上限校验。3 轮上限仍只是 SKILL.md 的判据。
+- id: R2/newly_identified/control/spec-md-no-gate
+  why: 见上面 acceptance-spec 的 stale 条 —— 读 spec.md 的脚本有四个，检它的仍是零。
+- id: R2/lifecycle_blank/knowledge+control/interface-contract
+  why: verify_issue.py 的 observe 边界检查（:175-177）与 fbc6a3c 相同，仍无接口契约产物。
+- id: spine/unenforced_rule/control/r001-single-producer
+  why: >-
+    verify_graph.py 本轮**完全未改**（不在 fbc6a3c..HEAD 的 diff 里），仍只检 writes 有界，
+    不检 writes 的交集；done_when.yaml 的双生产者仍只有审计自己的 check_audit.py
+    double_producer 谓词抓得到。
+- id: spine/newly_identified/control/routing-yaml-no-verifier
+  why: 见上面 asset.routing.yaml 的 stale 条 —— 仍无 verify_routing.py。
+- id: spine/newly_identified/control/triggers-yaml-no-verifier
+  why: 见上面 asset.triggers.yaml 的 stale 条 —— 仍无 verify_triggers.py。
+
+notes: >-
+  形状说明（先说，免得合并时踩到）：我在规定的五个键之外多写了两样东西。一是
+  still_open_checked（10 条，记「复核过、仍未填」的 gap，为的是下一轮别重查），二是给部分
+  unchanged_but_evidence_stale 条目加了 evidence 列表。两样都是纯增量，合并脚本可以整块丢掉
+  不影响其余部分。unchanged_but_evidence_stale 里最后两条的 id 带 `gap:` 前缀，指的是 gap
+  注册表条目而不是 Part —— 它们的 evidence/deletion_test 也过期了，但没有对应的 Part 可挂。
+
+  三处我做了判断而不是照搬，写明理由，便于复核时推翻：
+
+  (1) 我没有把 g1-record.md 的 checked_by 从 [sdlc_state.py] 扩成
+  [sdlc_state.py, verify_issue.py]。verify_issue.py --g1 确实读它，但对「issue 用了
+  G1 明确不做的词」只 flags.append，整份 issue 因此不会退非零；按本轮「闸 = 存在非零退出
+  路径」的定义它不是闸。同理我没有给 decisions.md 加 checked_by：verify_dos.py 读它，
+  但坏的 decisions.md 只表现为「豁免没生效」，没有以它为对象的拒绝。两处都是有意从严。
+
+  (2) R008（三道门只能人签）我判**未闭合**而不是闭合，尽管本轮加了 signer_kind +
+  authorization 三道非零退出。理由是 --signer-kind 的默认值是 "human"：一个代签的 agent
+  只要不传这个 flag，就被原样记成人签，整套约束绕开，不触发任何拒绝。这是我这轮最接近
+  「可以判成闭合」的一条，如果重审者认为「有记录 + 有授权即算承载」，结论会翻。默认值这件事
+  我倾向于算 fail-open 而不是单开一条新 gap，因为它讲的正是同一条宪法为什么仍未编译。
+
+  (3) 我在 HEAD 上跑了 verify_graph.py 与 verify_loop.py（两者都 exit 0、0 rejects），
+  并把它写成 run_record 级证据但**没有**据此把 asset.graph.yaml / asset.loops.yaml 抬到
+  verified。跑一次 verifier 是 compiled 类证据；verified 按本轮纪律要带 / 不带对比臂，
+  两个 Part 都没有。除此之外我没有运行任何东西 —— 特别是没跑 smoke.sh（它会 git init
+  临时仓库、写文件），smoke 的 382 这个数是数 `^expect` 行数得来的，与修复轮自报的 378
+  差 4，我没有去核对这 4 条差在哪里，引用时按「382 行 expect / 自报 378 通过」两个数
+  分开写。
+
+  一件我不确定、没有下判的事：skills/sdlc/eval/gate.json 的 provenance.smoke 与
+  provenance.date 停在 178 / 2026-09-05，而 psl / psl-derive / dos-extract /
+  invariant-extract 四份 gate.json 都加了 2026-09-06 的修复块；issue / donewhen-extract /
+  acceptance-spec / sdlc 四份则完全没更新，尽管它们的脚本本轮都改了
+  （verify_issue.py +86 / validate_done_when_v2.py +73 / sdlc_state.py +231 /
+  lock_done_when.py +72）。这是「gate.json 与它描述的代码脱同步」这一类问题，可能该开一条
+  gap 或一条 skill-issue，但它跨了我这四个环之外的 Part（也影响 R3-R8），我不替别人下判。

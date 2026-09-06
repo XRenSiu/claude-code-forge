@@ -16,11 +16,30 @@ It implements `references/sub-modules/existence-extractor.md`. Output is a singl
 fail-fast shell script. The implementer has not written the code yet, so it is
 EXPECTED to fail on first run — that is the contract, not a current-pass demand.
 
+Kinds
+-----
+v1 (Appendix C):  file / function / route / db_field / frontend_component
+v2 (observation boundaries, `validate_done_when_v2.py` EXIST_KEYS):
+                  route / db_field / ui / cli / event / frontend_component /
+                  api / topic / queue        (file / function are REJECTED in v2)
+
+`cli:` and `ui:` are the two v2 boundaries with real resolvers here (I-54): a
+`cli:` entry is satisfied by an executable on PATH or by a script under $SRC/$DOCS
+named after the command; a `ui:` entry is satisfied by its surface file existing
+under $DOCS and carrying the anchor. Domain knowledge a generator cannot derive
+from the contract string (which headings a `#ring-tables` anchor really means)
+comes in as DATA through --ui-anchor, so the bash stays generated, never
+hand-written.
+
 Usage:
-    python gen_existence.py <done_when.yaml> [--src src] [--version X.Y.Z] > tests/<feature>/existence.sh
+    python gen_existence.py <done_when.yaml> [--src src] [--docs DIR] [--version X.Y.Z]
+        [--cli NAME=PATH]... [--ui SURFACE=PATH]... [--ui-anchor 'SURFACE#ANCHOR=EREGEX']...
+        > tests/<feature>/existence.sh
 """
 
 import sys
+import os
+import re
 import argparse
 
 try:
@@ -40,6 +59,7 @@ HEADER = """\
 set -euo pipefail
 
 SRC="${{1:-{src}}}"
+DOCS="${{2:-{docs}}}"
 
 check() {{
   # No `if` and no `||`-with-assignment: those disable errexit and swallow failures.
@@ -47,63 +67,175 @@ check() {{
   "$@" >/dev/null 2>&1 || {{ echo "✗ FAIL: $label" >&2; exit 1; }}
   echo "✓ $label"
 }}
+
+# --- v2 observation-boundary resolvers (cli: / ui:) --------------------------
+# Both return non-zero instead of exiting, so check() stays the single exit point.
+# `|| true` keeps a failed probe from tripping errexit when the resolver is called
+# outside check()'s `||` context.
+_find_first() {{ # _find_first <name> <root> → prints the first match, or nothing
+  find "$2" -type f -name "$1" -print -quit 2>/dev/null
+}}
+
+cli_entry() {{ # cli_entry <command-name> — on PATH, or a script under $SRC / $DOCS
+  local name="$1" alt c root
+  alt="${{name//-/_}}"
+  command -v "$name" >/dev/null 2>&1 && return 0 || true
+  for root in "$SRC" "$DOCS"; do
+    test -d "$root" || continue
+    for c in "$name" "$name.py" "$name.sh" "$alt" "$alt.py" "$alt.sh"; do
+      test -n "$(_find_first "$c" "$root")" && return 0 || true
+    done
+  done
+  return 1
+}}
+
+ui_surface() {{ # ui_surface <file-name> — the surface exists under $DOCS
+  test -n "$(_find_first "$1" "$DOCS")"
+}}
+
+ui_anchor() {{ # ui_anchor <file-name> <ERE> — the surface carries the anchor
+  local f
+  f="$(_find_first "$1" "$DOCS")"
+  test -n "$f" && grep -qiE "$2" "$f"
+}}
+
+ui_anchor_at() {{ # ui_anchor_at <path> <ERE> — pinned surface path (--ui)
+  test -f "$1" && grep -qiE "$2" "$1"
+}}
 """
+
+ERE_META = set(r".[]{}()*+?^$|\\")
 
 
 def esc(s):
     return str(s).replace('"', '\\"')
 
 
-def emit_check(kind, value, src):
-    """Return (label, bash-command-words) for one existence entry."""
+def ere_escape(s):
+    return "".join("\\" + c if c in ERE_META else c for c in str(s))
+
+
+def anchor_regex(anchor):
+    """Default ERE for `ui: surface#anchor` — a heading whose slug is the anchor,
+    or an explicit id= / name= / {#anchor} target. Separators are treated as
+    interchangeable, so `run-evidence` matches a `## run_evidence` heading."""
+    words = [ere_escape(w) for w in re.split(r"[-_\s.]+", str(anchor)) if w]
+    if not words:
+        return "^#{1,6}[[:space:]]"
+    heading = "^#{1,6}[[:space:]].*" + "[^[:alnum:]]{0,3}".join(words)
+    slug = "[-_]?".join(words)
+    explicit = f"(id|name)=[\"']?{slug}|[{{]#{slug}[}}]"
+    return f"{heading}|{explicit}"
+
+
+def emit_checks(kind, value, opts):
+    """Return a list of (label, bash-command-words) for one existence entry."""
     v = esc(value)
     if kind == "file":
-        return (f"file {v}", f'test -f "{v}"')
+        return [(f"file {v}", f'test -f "{v}"')]
     if kind == "function":
         # Broad export match: direct export, export default, and barrel re-export.
         # (per existence-extractor.md — a narrow regex false-negatives on the latter two)
         name = value
         ts = (rf'export\s+(default\s+)?(class|function|const|let|var)\s+{name}\b'
               rf'|export\s*\{{[^}}]*\b{name}\b')
-        return (f"function {name} exported",
-                f'rg -qU "{ts}" "$SRC"')
+        return [(f"function {name} exported", f'rg -qU "{ts}" "$SRC"')]
+    if kind == "cli":
+        # v2 observation boundary: the command is reachable, not "this file exists".
+        pinned = opts.cli_map.get(str(value))
+        if pinned:
+            return [(f"cli {v} -> {esc(pinned)}", f'test -f "{esc(pinned)}"')]
+        return [(f"cli {v} resolvable", f'cli_entry "{v}"')]
+    if kind == "ui":
+        # v2 observation boundary: "<surface>#<anchor>" or a bare surface / component.
+        surface, sep, anchor = str(value).partition("#")
+        surface, anchor = surface.strip(), anchor.strip()
+        pinned = opts.ui_map.get(surface)
+        extras = opts.ui_anchor_map.get(str(value)) or []
+        looks_like_file = "." in os.path.basename(surface) or "/" in surface
+        if not sep and not looks_like_file:
+            # a bare component name, not a document surface
+            return [(f"ui {v}", f'rg -q "{v}" "$SRC"')]
+        base = os.path.basename(surface)
+        out = []
+        if pinned:
+            out.append((f"ui {esc(surface)} -> {esc(pinned)}", f'test -f "{esc(pinned)}"'))
+            for rx in extras or ([anchor_regex(anchor)] if anchor else []):
+                out.append((f"ui {v} anchor", f'ui_anchor_at "{esc(pinned)}" "{esc(rx)}"'))
+            return out
+        out.append((f"ui {esc(surface)} present", f'ui_surface "{esc(base)}"'))
+        for rx in extras or ([anchor_regex(anchor)] if anchor else []):
+            out.append((f"ui {v} anchor", f'ui_anchor "{esc(base)}" "{esc(rx)}"'))
+        return out
     if kind == "route":
         # value like "POST /api/subscription/cancel"
         parts = str(value).split(None, 1)
         path = parts[1] if len(parts) == 2 else parts[0]
-        return (f"route {v}", f'rg -q "{esc(path)}" "$SRC"')
+        return [(f"route {v}", f'rg -q "{esc(path)}" "$SRC"')]
     if kind == "db_field":
         # value like "subscription.status"
         tbl, _, col = str(value).partition(".")
-        return (f"db_field {v}", f'rg -q "{esc(col)}" "$SRC"')
+        return [(f"db_field {v}", f'rg -q "{esc(col)}" "$SRC"')]
     if kind == "frontend_component":
-        return (f"frontend_component {v}", f'rg -q "{v}" "$SRC"')
-    return (f"{kind} {v}", f'rg -q "{v}" "$SRC"')
+        return [(f"frontend_component {v}", f'rg -q "{v}" "$SRC"')]
+    # event / api / topic / queue and anything else: the name must appear in the source
+    return [(f"{kind} {v}", f'rg -q "{v}" "$SRC"')]
+
+
+def kv(pairs, label):
+    out = {}
+    for p in pairs or []:
+        k, sep, val = p.partition("=")
+        if not sep:
+            sys.stderr.write(f"{label} needs KEY=VALUE, got: {p!r}\n")
+            sys.exit(2)
+        out.setdefault(k.strip(), []).append(val)
+    return out
 
 
 def main():
     ap = argparse.ArgumentParser(description="Emit a fail-fast existence.sh from done_when.yaml.")
     ap.add_argument("path")
     ap.add_argument("--src", default="src", help="default source dir (overridable as $1 in the script)")
+    ap.add_argument("--docs", default=None,
+                    help="dir holding ui: surfaces (overridable as $2; default: the contract's dir)")
     ap.add_argument("--version", default="<skill-version>",
                     help="value of SKILL.md frontmatter version: (do NOT hardcode a literal)")
+    ap.add_argument("--cli", action="append", metavar="NAME=PATH",
+                    help="pin a cli: boundary to a concrete file instead of resolving it")
+    ap.add_argument("--ui", action="append", metavar="SURFACE=PATH",
+                    help="pin a ui: surface to a concrete file instead of resolving it")
+    ap.add_argument("--ui-anchor", action="append", metavar="SURFACE#ANCHOR=EREGEX",
+                    help="extra grep -E pattern(s) for one ui: anchor; repeatable, replaces the "
+                         "derived slug-heading pattern (domain knowledge the contract string "
+                         "cannot carry — supply it as data, never hand-write the bash)")
     args = ap.parse_args()
+
+    args.cli_map = {k: v[-1] for k, v in kv(args.cli, "--cli").items()}
+    args.ui_map = {k: v[-1] for k, v in kv(args.ui, "--ui").items()}
+    args.ui_anchor_map = kv(args.ui_anchor, "--ui-anchor")
 
     with open(args.path, encoding="utf-8") as fh:
         doc = yaml.safe_load(fh)
     feature = doc.get("feature", "<feature>")
     existence = doc.get("existence") or []
+    docs = args.docs if args.docs is not None else (os.path.dirname(os.path.abspath(args.path)) or ".")
 
-    out = [HEADER.format(version=args.version, feature=feature, src=args.src)]
+    out = [HEADER.format(version=args.version, feature=feature, src=args.src, docs=docs)]
     n = 0
+    seen = set()
     for entry in existence:
         if not isinstance(entry, dict) or len(entry) != 1:
             sys.stderr.write(f"skipping malformed existence entry: {entry!r}\n")
             continue
         kind, value = next(iter(entry.items()))
-        label, cmd = emit_check(kind, value, args.src)
-        out.append(f'check "{label}" {cmd}')
-        n += 1
+        for label, cmd in emit_checks(kind, value, args):
+            # two `ui:` entries on one surface share its presence check — emit it once
+            if (label, cmd) in seen:
+                continue
+            seen.add((label, cmd))
+            out.append(f'check "{label}" {cmd}')
+            n += 1
     out.append(f'echo "✓ All {n} existence checks passed"')
     sys.stdout.write("\n".join(out) + "\n")
 

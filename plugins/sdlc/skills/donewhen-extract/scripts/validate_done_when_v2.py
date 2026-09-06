@@ -21,7 +21,16 @@ Mechanical guarantees (REJECT):
   - existence entries: only route / db_field / ui / cli / event / frontend_component keys (no file / function)
   - constraints.forbidden_paths (if present) contains tests/** and done_when.yaml
   - --require-behavior (L5 stage): behavior has ≥1 test name
-Flags: thresholds without threshold_source; REQ in based_on with no AC; behavior empty (fine at G2).
+  - discipline 1 (adjective→threshold) applies to a human AC's `statement` too, not only `expect` —
+    a vague word with no number is boilerplate wherever it sits (dogfood I-08 / I-40)
+  - discipline 2 (twins) is not satisfied by existing alone: an `unwanted` twin's `given` must be
+    SELF-SUFFICIENT — it must cover its happy sibling's given keys, so the unhappy path can be
+    falsified without inheriting context from elsewhere (dogfood I-55)
+  - --form-draft <form-draft.md>: every key used in a mechanical AC's `expect` must appear in the
+    signed form draft, i.e. the contract may only assert predicates the form actually names, and an
+    AC may not invent a count the instrument was never designed to emit (dogfood I-40)
+Flags: thresholds without threshold_source; REQ in based_on with no AC; behavior empty (fine at G2);
+a human AC whose section mixes judges (split it — dogfood I-41).
 """
 import argparse
 import json
@@ -52,6 +61,8 @@ def vague(s):
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("path"); ap.add_argument("--spec"); ap.add_argument("--require-behavior", action="store_true"); ap.add_argument("--json", action="store_true")
+    ap.add_argument("--form-draft", help="signed form draft; every expect key must be a predicate it names (dogfood I-40)")
+
     a = ap.parse_args()
     try:
         d = yaml.safe_load(open(a.path, encoding="utf-8")) or {}
@@ -106,15 +117,49 @@ def main():
         else:
             if not ac.get("statement"):
                 rejects.append(f"{aid}: human AC needs statement")
+            else:
+                # discipline 1 holds for judgment clauses too: an adjective with no number is
+                # boilerplate whether a script or a person reads it (dogfood I-08 / I-40)
+                w = vague(ac.get("statement"))
+                if w:
+                    rejects.append(f"{aid}: statement contains vague `{w}` with no number — "
+                                   "discipline 1 (adjective→threshold) holds for human ACs too")
             if ac.get("judge") not in JUDGES:
                 rejects.append(f"{aid}: judge must be one of {sorted(JUDGES)}")
             if ac.get("evidence") not in EVIDENCE:
                 rejects.append(f"{aid}: evidence must be one of {sorted(EVIDENCE)}")
     for ac in acs:
         if isinstance(ac, dict) and ac.get("kind") == "mechanical" and ac.get("ears_type", "event") in ("event", "state"):
+            aid = ac.get("id")            # local to this pass: the outer loop's `aid` is long stale
             sib = [x for x in by_obs.get(str(ac.get("observe")), []) if x is not ac and x.get("ears_type") == "unwanted"]
+            paired = [x for x in acs if isinstance(x, dict) and x.get("id") == ac.get("paired_with")]
             if not sib and ac.get("paired_with") not in ids:
                 rejects.append(f"{ac.get('id')}: happy AC without an unhappy twin")
+            # the twin must be falsifiable ON ITS OWN: a `given` that only states the difference
+            # forces the reader to inherit context from the happy sibling, and a checker handed only
+            # the twin cannot tell what was removed (dogfood I-55). Pair each twin with ITS OWN happy
+            # AC — `paired_with` in either direction — never with any twin sharing the observe, or a
+            # contract with several happy ACs on one boundary reports the same twin many times over.
+            mine = [x for x in paired if x.get("ears_type") == "unwanted"]
+            mine += [x for x in sib if x.get("paired_with") == aid and x not in mine]
+            for twin in mine:
+                hg, tg = ac.get("given"), twin.get("given")
+                # A `given` that is not a mapping cannot be compared key by key, and silently skipping
+                # the comparison is how the check gets disarmed: write the twin's given as a string and
+                # the same contract the fixture rejects sails through (PR pre-review, B-tier). A
+                # mechanical AC's given must be a mapping, so say so instead of looking away.
+                for who, g in ((aid, hg), (twin.get("id"), tg)):
+                    if g is not None and not isinstance(g, dict):
+                        rejects.append(f"{who}: given must be a mapping of named preconditions, got "
+                                       f"{type(g).__name__} — a free-form given cannot be compared "
+                                       "against its twin's, which disarms the self-sufficiency check")
+                if isinstance(hg, dict) and isinstance(tg, dict):
+                    missing = [k for k in hg if k not in tg]
+                    if missing:
+                        rejects.append(
+                            f"{twin.get('id')}: unwanted twin's given is not self-sufficient — "
+                            f"missing {sorted(missing)} that its pair {aid} states; restate the happy "
+                            "given, then write the difference")
     for req in based:
         if not any(isinstance(x, dict) and x.get("req") == req for x in acs):
             flags.append(f"{req} in based_on has no AC")
@@ -140,6 +185,32 @@ def main():
     th = beh.get("thresholds") or d.get("thresholds") or {}
     if th and not (beh.get("threshold_source") or d.get("threshold_source")):
         flags.append("thresholds present but no threshold_source (needs_semantic_review)")
+    # C1's other half: the contract may only assert what the signed form actually names. An `expect`
+    # key the form never mentions is a count the instrument was never designed to emit, and the gap
+    # only surfaces when someone writes the test (dogfood I-40).
+    if a.form_draft:
+        try:
+            form = open(a.form_draft, encoding="utf-8").read()
+        except OSError as e:
+            sys.stderr.write(f"validate_done_when_v2: cannot read form draft: {e}\n"); sys.exit(2)
+        for ac in acs:
+            if not isinstance(ac, dict) or ac.get("kind") != "mechanical":
+                continue
+            for k in (ac.get("expect") or {}):
+                if str(k) not in form:
+                    rejects.append(f"{ac.get('id')}: expect key `{k}` is named nowhere in the signed "
+                                   "form draft — the contract asserts a predicate the form does not define")
+
+    # a human-AC section that mixes judges cannot be routed to one adjudicator (dogfood I-41)
+    by_obs_h = {}
+    for ac in acs:
+        if isinstance(ac, dict) and ac.get("kind") == "human":
+            by_obs_h.setdefault(str(ac.get("observe")), set()).add(ac.get("judge"))
+    for obs, judges in by_obs_h.items():
+        if len(judges) > 1:
+            flags.append(f"human ACs on {obs} carry mixed judges {sorted(judges)} — split the section "
+                         "so each observation goes to one adjudicator")
+
     fp = (d.get("constraints") or {}).get("forbidden_paths")
     if fp is not None:
         for must in ("tests/**", "done_when.yaml"):

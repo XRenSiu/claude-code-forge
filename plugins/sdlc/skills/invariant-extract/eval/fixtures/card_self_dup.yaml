@@ -1,0 +1,53 @@
+# I-25: two entries on ONE card stating the same rule. Cross-checking against dos.yaml alone
+# misses this — a card can re-legislate against itself.
+territory_id: search
+dos_ref: dos.yaml
+purpose: { name: "resolve relative time into eras", kpi: "p95 <= 300ms, 0 wrong-era", aspect: correctness, scope_ref: "dos.scope" }
+mode: auto
+channel_2_input:
+  failure_memory_count: 1
+  dry: false
+  snapshot_at: "2026-09-05T14:11:47Z"
+  sources:
+    - { ref: "ledger.md fail rows", entries: 1, kind: "one wrong-era auto-pick in production" }
+projected_out_obstacles: []
+registered_gaps:
+  - ref: "eval/gate.json fix_list"
+    gap: "the effect layer has never been run for this territory"
+    destination: done_when
+    note: "not built yet, so its negation is a ◊ — it belongs to this run's acceptance, not to □"
+hard_invariants:
+  - id: INV-search-001
+    statement: "WHEN a Memory is captured with no timestamp THE SYSTEM SHALL NOT file it under the newest Era"
+    ears_type: unwanted
+    survival_test: pass
+    strength: hard
+    altitude: territory
+    aspect: correctness
+    channel: abductive
+    provenance: { execution_point: "", obstacle_ref: "ledger:fail#3 undated capture filed under the newest era" }
+    narrowest_rule_note: "bars only the newest-Era default for undated captures; dated capture filing is untouched"
+    confidence: high
+    disposition: propose
+    golden_regression: true
+overridable_defaults:
+  - id: DEF-search-001
+    statement: "WHEN a Memory is captured without a timestamp THE SYSTEM SHALL NOT file it under the newest Era"
+    authority_level: "product owner may override per surface"
+    survival_test: pass
+    strength: overridable
+    altitude: territory
+    aspect: correctness
+    channel: deductive
+    provenance: { execution_point: "src/search/rank.ts:12", obstacle_ref: "" }
+    narrowest_rule_note: "ranking order only; says nothing about which candidates are eligible"
+    confidence: high
+    disposition: carded
+kicked_to_done_when:
+  - id: DW-search-001
+    statement: "the era picker ships behind a flag this release"
+    why_diamond: "attained once, then true — not a rule every future Run holds"
+    handoff_to: donewhen-extract
+conflicts_for_legislation: []
+deduped_against_constitution: []
+constitution_promotion_suspects: []

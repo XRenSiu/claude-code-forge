@@ -1,0 +1,254 @@
+# delta-R3-R5.yaml — 重跑审计的增量（R3 标准 / R4 计划 / R5 实现）
+#
+# 底稿：audit.yaml 的 R3/R4/R5 三环共 9 个 Part。判定在 ab67052 的源码上逐条复核。
+# 结论先说：**没有一个 Part 的三维判定改变**。R3-R5 这一轮的修复全部落在"闸更严"上，
+# 没有一条把 static_only 抬成行为层记录，也没有给 ratchet 的 experiment_dir/** 装上第一道闸。
+# 真正变了的是两处 checked_by、七处证据文本、以及一条新缺口。逐条理由见 notes。
+
+schema: ring-audit-reaudit-delta/1
+scope: R3,R4,R5
+reviewed_at_head: ab67052
+
+parts:
+
+# ---------------------------------------------------------------------------
+# 两个 Part 的独占产物换了闸集；三维判定都没动，所以没有 changes 块。
+# ---------------------------------------------------------------------------
+
+- id: test-suite-generator
+  ring: R3
+  artifacts:
+  - id: tests/<f>/**
+    checked_by_from: [gen_existence.py, check_verbatim_names.py, lock_done_when.py]
+    checked_by_to: [check_verbatim_names.py, lock_done_when.py, capture_red_baseline.py]
+    why: >-
+      两处改动，性质不同，分开读：
+      (加) capture_red_baseline.py 是本轮新增的脚本（I-62），检的正是 tests/<f>/RED_BASELINE.txt。
+      它有两条真正的非零退出路径——`--verify` 在基线不带 clean-checkout 证据时 exit 1（#L81），
+      采集时新检出不干净则 exit 1（#L120）——所以按"存在非零退出路径"的定义它是闸，不是报告工具。
+      (减) gen_existence.py 逐行读下来**没有任何拒绝路径**：它是生成器，把 done_when.yaml 的
+      existence 条目铺成一份 fail-fast 的 existence.sh。全文三处 sys.exit 分别是 PyYAML 缺席（#L49）、
+      `--cli/--ui` 参数不是 KEY=VALUE（#L191）、以及同一处的用法错误；畸形的 existence 条目走的是
+      `sys.stderr.write(f"skipping malformed…"); continue`（#L228-L230），跳过而不是拒绝；
+      全文无 raise、无 assert。承重的是它**生成的** existence.sh（`set -euo pipefail` + 首个缺失符号即退），
+      不是它自己。这是复核旧判定得出的更正，不是本轮代码变化——gen_existence.py 这一轮加了 cli:/ui:
+      两种 v2 观察边界（I-54），但没有加任何拒绝路径。
+    note: >-
+      去掉 gen_existence.py 不触发 F-06 封顶：tests/<f>/** 的 checked_by 仍有
+      check_verbatim_names.py（空契约名集 exit 2 #L125、缺名 exit 1 #L146）与 lock_done_when.py
+      （verify 不匹配 exit 1 #L148），test-suite-generator 的 implemented 稳在 compiled。
+
+- id: commit
+  ring: R5
+  artifacts:
+  - id: 'git:commit'
+    checked_by_from: [verify_commit.py]
+    checked_by_to: [verify_commit.py, commit.sh]
+    why: >-
+      commit.sh 是本轮新增的脚本（I-50），把"预门 exit 0 才 commit"从调用方的自觉编译成一条命令：
+      退出码用赋值捕获而不经管道（#L66），非 0 直接 exit "$rc" 且不提交（#L68）；另有 --amend 未带
+      --expect-subject 或 HEAD 主题对不上时 exit 2（#L50 / #L59）、门过但 git commit 自身失败 exit 3（#L87）。
+      它决定 git:commit 这件产物到底落不落地，是这个产物上比 verify_commit.py 更外层的那道闸。
+      SKILL.md v0.2.0 已把它写成"落地的默认入口"，并把 done_when 从 "verify_commit.py exit 0"
+      改写为 "commit.sh exit 0"。
+
+unchanged_but_evidence_stale:
+
+# ---- R3 ----
+- id: test-suite-generator
+  stale: >-
+    implemented.not_reached.verified 写「三个脚本只有作者本机冒烟，没有带 / 不带 skill 的行为对比」——
+    "三个脚本"不再成立：本轮新增 capture_red_baseline.py，eval/gate.json 的 provenance.scripts_run
+    现在有四条，且新增了一个 mutation_proof 块（10 个 mutant 全被杀）。
+  replacement: >-
+    「四个脚本（derive_counts / gen_existence / check_verbatim_names / capture_red_baseline）只有作者本机
+    冒烟，gate.json 的 provenance 自记 NOT a decorrelated read, NOT an L2 run；本轮补了 mutation_proof
+    （10 个 mutant 全被杀）——那证明的是 smoke 期望承重，不是 skill 的带 / 不带效力对比。
+    gate_pass 仍是 static_only。」
+
+- id: test-suite-generator
+  stale: >-
+    implemented.evidence 的 `gate.json#gate_pass` 与 `#provenance.scripts_run` 两条锚点本身仍在，
+    但 scripts_run 的内容已被整体重写（derive_counts 记了 v2 + --manifest 与空 seed exit 2；
+    check_verbatim_names 记了空名集 exit 2 与 --manifest 34/34），旧审计正文对它们的描述已对不上。
+  replacement: >-
+    锚点不变，转述要按 ab67052 的 gate.json 重取；特别是 I-54 / I-59 已把「空集当通过」这个洞堵死
+    （check_verbatim_names.py#L43 EMPTY_EXIT=2、derive_counts.py#L44 EMPTY_EXIT=2）。
+
+# ---- R4 ----
+- id: plan-cards
+  stale: >-
+    implemented.evidence 的 `plan-cards/eval/gate.json#provenance.scripts_run.lint_cards.py` 仍写
+    「bad card set rejected on 6 independent breaches」。lint_cards.py 本轮加了第 7 项检查
+    （投影 ↔ 数据源不得跨卡，I-73，#L277-L321，四条 rejects 路径 + --repo-root 时读脚本正文核验
+    reads_from），SKILL.md 也从 v0.1.0 升到 v0.2.0，而 eval/gate.json 一个字节没动（仍标 2026-09-05）。
+  replacement: >-
+    「lint_cards.py：7 项检查；bad card set 在 6 项旧检查上被拒，第 7 项（投影/数据源同卡）另有四条
+    拒绝路径与 --repo-root 的正文核验；smoke 里 4 条 I-73 期望 + 2 条 I-15/I-49 闭包期望。」
+    并注明 gate.json 未随脚本更新——见 new_gaps 的
+    R5/newly_identified/control/gate-json-stale-after-script-lands。
+
+# ---- R5 ----
+- id: implement
+  stale: >-
+    两处。(1) implemented.evidence 的 `commit/eval/gate.json#provenance.scripts_run.verify_commit.py`
+    仍是 2026-09-05 的那一句，列的是 I-38 / I-52 / I-63 / I-75 / I-78 / I-81 与版本同步检查落地**之前**的
+    verify_commit.py；同一份 gate.json 的 smoke 行还写「101 passed, 0 failed」，而 plugins/sdlc/eval/smoke.sh
+    现在有 387 条 expect。(2) needed.merge_candidate_reason 引的 `graph.yaml#L320`（conditional 边
+    executor == agent）与 `#L349`（review-triager → comment-fixer 的 handoff 边）行号已漂移。
+  replacement: >-
+    (1) 转述改按 ab67052 的 verify_commit.py 取：白名单 / 锁 / secret / 调试代码之外，新增
+    --range 必须是 A..B（#L189 exit 2）、锁内路径按落地内容哈希豁免、lock_detail 的集合级输出
+    （locked_changed / proposal_files / proposal_missing_path，#L332-L341）、tests_unlocked_at_green
+    （#L359，flag 非 reject）与插件版本同步（#L122，--range/PR 模式拒、暂存模式 flag）。
+    (2) `graph.yaml#L320` → `#L330`，`graph.yaml#L349` → `#L359`（本轮在 #L236 处插入了 agent.pr-reviewer
+    节点共 10 行，edges 段之后的锚点整体 +10；#L29 / #L139-L146 / #L163-L168 等 236 行之前的锚点不受影响）。
+
+- id: agent.card-implementer
+  stale: >-
+    两处。(1) Part 的 `gates: [verify_commit.py]` 与 implemented.evidence 已不足以描述它的约束面：
+    agents/card-implementer.md 本轮加了两条前置判据——动手前跑 `lock_done_when.py verify`（工作区模式，
+    exit 0 才算数，I-61）、一张卡一个 git worktree（I-64 / I-53），以及"绝不 amend 不是自己刚提的那条"。
+    (2) needed.evidence 与 naming.artifact_or_position 引的 `graph.yaml#L320` 行号已漂移。
+  replacement: >-
+    (1) gates 记 `[verify_commit.py, lock_done_when.py]`，并注明 lock_done_when.py 是**流程前置**而不是
+    card.allowed_files 这件独占产物上的闸（它检的是 .done_when.lock 与锁内文件），所以
+    artifacts[].checked_by 不变，implemented 也仍是 compiled。
+    (2) `graph.yaml#L320` → `#L330`。
+    仍然成立的部分：五个 agent 依旧一个 eval/gate.json 都没有（plugins/sdlc/agents/ 下只有五份 .md），
+    gap R5/newly_identified/control/agent-parts-without-gate-json 未被填。
+
+- id: agent.comment-fixer
+  stale: >-
+    needed.merge_candidate_reason 引的 `graph.yaml#L349`（review-triager → comment-fixer 的 handoff 边）
+    行号已漂移。
+  replacement: >-
+    `graph.yaml#L349` → `#L359`。
+    其余全部照旧且已复核：节点仍在 #L225-L231 且**仍然没有 loop 键**，loops.yaml#L75 仍把它写成
+    review_loop 的 generator——两份数据对同一个 Part 的环归属不一致这条源码问题本轮未修。
+
+- id: commit
+  stale: >-
+    两处。(1) needed.deletion_test 写「落地前的三道机械闸」——verify_commit.py 现在的拒绝面不止三道：
+    除白名单 / 锁 / secret+调试代码外，新增 --range 形状守卫（#L189 exit 2，堵 I-75/I-78/I-81 三扇
+    fail-open 门）与插件版本同步（#L122，--range/PR 模式拒）。(2) implemented.evidence 的
+    `commit/eval/gate.json#smoke（… → 101 passed, 0 failed, 2026-09-05）` 与
+    `#gate_pass` 所依的那份 gate.json 本轮未更新：它既不知道 commit.sh 存在，smoke 计数也停在 101
+    （smoke.sh 现有 387 条 expect）。
+  replacement: >-
+    (1) deletion_test 的闸数改写为按类枚举（白名单溢出 / 锁篡改与提案覆盖 / secret 与调试代码 /
+    range 形状 / 插件版本同步），不要再写死"三道"。
+    (2) smoke 计数与 commit.sh 都要按 ab67052 重取。gate_pass 仍是 static_only，
+    SKILL.md 结尾也仍自记「行为层未跑」，所以 implemented 停在 compiled 不变。
+
+- id: ratchet
+  stale: >-
+    needed.evidence 引的 `graph.yaml#L321`（conditional 边 executor == ratchet）行号已漂移。
+  replacement: >-
+    `graph.yaml#L321` → `#L331`。
+    判定完全不变且已逐条复核：plugins/sdlc/skills/ratchet/ 下仍无 scripts/ 目录，
+    eval/gate.json 仍是 static_only 且 provenance.scripts_run 仍是空对象，
+    artifacts[] 里 experiment_dir/** 的 checked_by 仍为空 —— F-06 把 implemented 压在 declared 不变。
+
+new_gaps:
+- id: R5/newly_identified/control/gate-json-stale-after-script-lands
+  ring: R5
+  atoms: [Control]
+  source: newly_identified
+  necessity: necessary
+  deletion_test: >-
+    没有任何机械物要求「skill 的脚本变了，它的 eval/gate.json 必须一起变」。本轮 commit 长出一整个
+    新的承重脚本 commit.sh（它决定 git:commit 落不落地），verify_commit.py 加了六类新拒绝路径，
+    而 commit/eval/gate.json 一个字节没动——它仍标 2026-09-05、仍写「101 passed」、
+    scripts_run 里没有 commit.sh 这一行；plan-cards 同样：lint_cards.py 加了第 7 项检查、SKILL.md
+    升到 v0.2.0，gate.json 仍写「6 independent breaches」。产出的后果是效力档位失去对账基础：
+    R017「效力声明不得超过证据档」在证据档比代码旧的时候形同虚设，而审计者只能靠逐行读 diff
+    才发现档案在说另一个版本的话。test-suite-generator 是同一次交付里唯一更新了 gate.json 的
+    （加了第四个脚本与 mutation_proof），三选一的命中率说明这靠的是记性不是机械物。
+  evidence:
+  - {kind: file, ref: plugins/sdlc/skills/commit/scripts/commit.sh}
+  - {kind: gate_json, ref: 'plugins/sdlc/skills/commit/eval/gate.json#provenance'}
+  - {kind: gate_json, ref: 'plugins/sdlc/skills/plan-cards/eval/gate.json#provenance.scripts_run'}
+  - {kind: file, ref: 'plugins/sdlc/skills/plan-cards/scripts/lint_cards.py#L277-L321'}
+  - {kind: gate_json, ref: 'plugins/sdlc/skills/test-suite-generator/eval/gate.json#provenance'}
+  disposition: issue
+
+closed_gaps: []
+
+notes: >-
+  一、为什么 R3-R5 一条 implemented 都没上移。逐条读过，不是省事：
+
+  ratchet 仍是唯一停在 declared 的 Part，因为 F-06 只看独占产物：experiment_dir/** 的 checked_by
+  依旧为空，skills/ratchet/ 下依旧没有 scripts/ 目录，gate.json 的 provenance.scripts_run 依旧是 {}。
+  gap R5/newly_identified/control/experiment-dir-unchecked 未被填。
+
+  其余八个 Part 想上移只有 compiled → verified 一条路，而 verified 要行为层运行记录。
+  九个 Part 涉及的七份 eval/gate.json 全部仍是 gate_pass: static_only（逐份读过），
+  spec-compile 与 calibrate 的 tier2_status 仍逐字写着 NOT RUN。按 skillwise 的 effect-gate.md，
+  verified 对应的是带 / 不带两臂的 delta_exist，本轮一次都没跑。本 feature 自己的 dogfood 里
+  card-implementer 确实真跑过 14 条卡提交（run_evidence.audited_dirs_diff），但那是**只有 with 臂**
+  的一次使用记录，不是 L2 对比，不足以把 agent.card-implementer 抬到 verified。
+
+  二、本轮真正的增量集中在"闸更严"这一层，且都在既有 checked_by 之内：
+  check_verbatim_names.py / derive_counts.py 把「空契约名集打 0/0 ✓」改成 exit 2（I-54 / I-59）；
+  lint_cards.py 多了投影 ↔ 数据源同卡的第 7 项（I-73）；verify_commit.py 堵掉了三扇 --range
+  fail-open 门（I-75 / I-78 / I-81）并加了集合级 lock_detail（I-63）。这些让闸更承重，
+  但不改变"这件产物有没有闸"这个 F-06 只关心的事实，所以 implemented 不动。
+
+  三、gen_existence.py 的判定我改了，理由写在 parts[].artifacts[].why 里，这里只标性质：
+  这是**复核旧判定**，不是代码变了。它与 R6 的 compute_confidence.py / compute_score.py 是同一类——
+  形状是脚本、实况是无拒绝路径。建议 audit.yaml 的 gates[] 给它补
+  `load_bearing: false` 与一条 note（照抄 compute_confidence.py 那条的写法），
+  否则去掉 checked_by 之后 gates[] 仍标它为「闸」，两张视图会对不上。
+  同理，gates[] 应新增两条：commit.sh（kind: script, label: 闸,
+  ref: plugins/sdlc/skills/commit/scripts/commit.sh）与 capture_red_baseline.py
+  （ref: plugins/sdlc/skills/test-suite-generator/scripts/capture_red_baseline.py）。
+  已确认 check_audit.py 不做 checked_by → gates[] 的反向校验（F-06 只读 checked_by 非空与否），
+  所以这三处不同步不会让检查脚本变红——这本身也是一处没人守的接缝。
+
+  四、两条 missing 缺口的现状，都没到"填了"，所以 closed_gaps 是空的：
+
+  R3/lifecycle_blank/control/red-green-evidence-script —— **部分填上，不算关闭**。
+  capture_red_baseline.py 把"红"那一半机械化了：clean checkout 采集 + `--verify` 拒绝不带
+  clean-checkout 证据的基线。但缺口的 deletion_test 问的是「一个从来没有红过的测试照样被写进
+  tests-manifest」，而没有任何脚本把 RED_BASELINE.txt 与 tests-manifest.yaml 对账、
+  据此拒绝一条从未红过的测试。verify_commit.py 的 tests_unlocked_at_green（#L359）碰到了"绿"那一半，
+  但它是 flag 不是 reject。缺口的核心仍开着。
+  附带：这条缺口的 evidence 引的 `ARCHITECTURE.md#L285` 行号已漂移（本轮在 #L110 处插入 5 行），
+  「红-绿脚本**空白**」那句现在在 #L290，而这句话本身也已过时（红那一半已有脚本）。
+
+  R4/newly_identified/control/card-depends-on-unchecked —— **缺口仍开，但它的 evidence 已过时**。
+  原文写「lint_cards.py 的五项检查里没有一条读它——全文无 depends_on」，这句现在不成立：
+  第 7 项检查确实读 depends_on（#L290、#L300、#L304），用它判定跨卡投影的接缝是否被声明。
+  但缺口真正要的东西没有：仍然没有任何一处检查 depends_on 的环（CARD-A ↔ CARD-B 互指）
+  或悬空卡号（depends_on 指向一个不存在的 CARD-NN）。deletion_test 照旧成立，
+  只有 evidence 那一句要改写成「lint_cards.py 只在第 7 项里把 depends_on 当作接缝声明来读，
+  不检环、不检悬空卡号」。
+
+  R3/unenforced_rule/control/uncalibrated-standard-used-as-evidence —— 未动。
+  全仓库除 skills/calibrate/ 自身外，没有任何 .py / .sh 读 calibration_report。
+  sdlc_state.py 里新出现的 `contract.calibration_report` 只是一个可 set 的状态槽，
+  且只被 CONTRACT_FILES（#L89）用在 archive 时拷文件（#L944），不参与任何判定；
+  cmd_gate（#L483-L497）对 G2 pass 只要求 lock.path 存在，没有校准前置。dos.yaml 的 R010
+  依旧 enforced_by: not_enforced。
+
+  R5/unenforced_rule/control/one-producer-per-artifact-unlinted —— 未动。
+  verify_graph.py 本轮零改动；card.allowed_files 在 graph.yaml 里依旧挂在三个节点下
+  （implement #L144、agent.card-implementer #L152、agent.comment-fixer #L230），图 lint 照旧全绿。
+
+  R5/newly_identified/control/agent-parts-without-gate-json —— 未动。
+  plugins/sdlc/agents/ 下仍是五份 .md、零份 eval/gate.json。
+
+  五、我不确定 / 没做的：
+
+  没有跑 plugins/sdlc/eval/smoke.sh。387 这个数是 `grep -cE "^\s*expect "` 数出来的静态计数
+  （skill-issues.md 的跟进节自报 378 passed / 0 failed），不是我这次跑出来的。
+  这不影响本份 delta 的任何判定——没有一条判定依赖 smoke 的通过与否，
+  只依赖"某个脚本有没有非零退出路径"，那是读源码定的。
+
+  graph.yaml 的 +10 行漂移我只核了 R3-R5 引到的四个锚点（#L320 / #L321 / #L349，
+  以及确认 #L29 / #L110-L168 / #L225-L231 不受影响）。R6-R8 引的 edges 段锚点大概率同样 +10，
+  但那不在我的范围，没有逐条核，交给对应的人。
+
+  ARCHITECTURE.md 的 +5 行漂移同理：我只核了 R3 两条缺口引的 #L285 / #L287，
+  以及确认 §1 表的 #L37 / #L39 / #L41 / #L42 在插入点之前、不受影响。

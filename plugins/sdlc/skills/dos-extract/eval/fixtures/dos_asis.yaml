@@ -1,0 +1,20 @@
+# X1 fixture — the AS-IS ontology (what the repo implements), shrunk from the
+# dogfood run: `Node` / `Event` exist, `Ring` / `Gap` do not.
+meta: { dos_version: "0.1.0", product: "sdlc", bounded_context: "delivery", owner: "xrensiu", status: draft }
+scope: { in_scope: "the delivery lifecycle", out_of_scope: "the audit" }
+objects:
+  Node: { description: "a declared execution-graph node", type: entity }
+  Event: { description: "an append-only ledger row", type: entity }
+  Gate: { description: "a human-signed verdict", type: entity }
+relationships:
+  - { subject: Node, verb: HOLDS, object: Gate, cardinality: "1:1", inverse: HELD_BY }
+rules:
+  - { id: R001, statement: "Within a Run, every artifact is written by exactly one Node.", rationale: "single producer", enforced_by: system }
+composition: {}
+behaviors: []
+bounded_contexts: { current_context: delivery }
+agent_guidelines: { must: [], should: [], must_not: [] }
+anti_patterns: []
+open_questions:
+  - { id: Q001, question: "does Node cover human nodes?", raised_at: "2026-09-05", raised_by: "dos-extract", owner: "xrensiu", deadline: "2026-09-30" }
+evolution_log: []

@@ -118,6 +118,29 @@ The agent executing the skill should:
 4. **Apply the prompt above** to the collected content. Output goes to
    `<workspace>/01b_docs_terms.md`.
 
+   **Counting is mechanical — do not tally by eye or hand-roll a regex per term.** Read the
+   corpus for the *candidate terms and their variants*, write those into a terms file, then let
+   `scripts/count_terms.py` produce the frequencies and the `file:line` evidence:
+
+   ```
+   # terms.txt — canonical label = comma-separated variants (a /regex/ variant is allowed)
+   Gate     = 门, Gate, G1, G2, G3
+   Contract = 契约, Contract, done_when
+   Card     = 卡, 任务卡, Card, /CARD-\d+/
+   ```
+
+   ```
+   python3 scripts/count_terms.py --terms terms.txt --root <repo> \
+       --group docs='docs/**/*.md' --group code='src/**/*.ts' --group data='**/*.yaml' \
+       --out <workspace>/01b_docs_terms.md
+   ```
+
+   The named groups become the `(≈150 docs · 321 code · 68 data)` columns. Cite the exact command
+   in `decisions.md`: a frequency table nobody can rerun is a claim, not evidence, and a term that
+   matched nothing exits non-zero so a typo in the terms file cannot pass as a dead word.
+   Then add, by hand, what the script cannot: the Definitions / Cross-references / Bounded Context
+   sections below, which are judgments about meaning rather than counts.
+
 5. **Sanity check the output**:
    - If fewer than 5 nouns came out of substantial docs (>20KB), the docs are
      either very abstract or the extraction missed something — re-run with a

@@ -1,0 +1,216 @@
+review:
+  target: PR#3 (fix/sdlc-issues-002)
+  head_sha: 9a1e93bb795ef4a36954108b80dbdab86f325efb
+  reviewer: agents/pr-reviewer.md（隔离上下文，只读）
+  scope: git diff b77feb0..9a1e93b（9 个提交）
+  mergeable: "no (A-tier)"
+  a_tier_survivors: 1
+  tier_summary: { A: 1, B: 3, C: 1 }
+  rationale: >-
+    findings 非空，此处记走过的路径供核对：在 /private/.../scratchpad 下用
+    `git archive <sha> | tar -x` 建了 7 份独立镜像做变异，全程未触碰仓库工作树（复核 git status 干净）。
+    四条主命令在 9a1e93b 上实跑（输出见 PR Verification 段）。check_anchors.py 274 行逐行读，
+    对它做了 6 组变异：graph.yaml 顶部/@240/@250/@252 插行、graph+verify_dos 双插、
+    tune.py 块复制、删 tune.py、空锁、坏锁、缺锁、缺 audit。两处抬档的闸在 HEAD 上各自重跑过。
+    I-93 / I-94 逐条回溯到 dc8ccba 与 git rev-list --all。四处口径（gap / P-RA-07 / PR 正文 / 台账）
+    逐字比对并机器核对 FILLS 边与 ring.missing。
+
+  findings:
+    - id: F-1
+      tier: A
+      file: plugins/sdlc/dogfood/ring-audit/check_anchors.py
+      line: 101
+      claim: >-
+        506 个行号锚点里有 78 个写成不带文件名的裸 `#Lnnn`，ANCHOR 正则匹配不到，
+        既不入锁也不校验也不报——静默放过；而 ad13fe0 刚写下的自证「432/432 SAME」读起来像全覆盖。
+      mechanism: >-
+        ANCHOR 要求锚点自带带扩展名的文件名。审计正文大量使用「先在句中点名文件、
+        随后括号里只写行号」的写法：`verify_dos.py --decisions 解析它的 ## Naming waivers 节（#L73-L96）`、
+        `降级成 FLAG（#L182-L185）`、`>7 objects 那条拒绝（#L167-L189）`、`（#L980 required）`、
+        `恒 exit 0（#L288-L291）`。这些串不进 walk_anchors 的回调，连 UNRESOLVED 都不算，
+        problems 里一条不出现。7f4a897 修的是**另一种**写法（冒号式 `file.py:12`，3 处），
+        裸 #L 这一类原封未动。
+      reproduction: |
+        # 覆盖率（在 9a1e93b 上）
+        python3 - <<'PY'
+        import re
+        raw=open('plugins/sdlc/dogfood/ring-audit/audit.yaml',encoding='utf-8').read()
+        A=re.compile(r"([A-Za-z0-9_./<>*-]+\.(?:py|sh|yaml|json|md))"
+                     r"(?:#L(\d+)(?:([-–])L?(\d+))?|:(\d+)(?:([-–])(\d+))?(?![\d/]))")
+        cov=[(m.start(),m.end()) for m in A.finditer(raw)]
+        miss=[m for m in re.finditer(r'#L\d+',raw) if not any(s<=m.start()<e for s,e in cov)]
+        print("total #L:",len(re.findall(r'#L\d+',raw))," matched:",len(cov)," bare #L missed:",len(miss))
+        PY
+        # 端到端（镜像树）：给 verify_dos.py 顶部插 3 行，再抹掉该文件唯一那个全限定锚点
+        python3 - <<'PY'
+        p='plugins/sdlc/skills/dos-extract/scripts/verify_dos.py'
+        L=open(p,encoding='utf-8').read().splitlines(keepends=True)
+        L[5:5]=["# MUTANT A\n","# MUTANT B\n","# MUTANT C\n"]
+        open(p,'w',encoding='utf-8').writelines(L)
+        p='plugins/sdlc/dogfood/ring-audit/audit.yaml'
+        s=open(p,encoding='utf-8').read()
+        open(p,'w',encoding='utf-8').write(
+            s.replace('plugins/sdlc/skills/dos-extract/scripts/verify_dos.py#L169','verify_dos.py(REDACTED)'))
+        PY
+        python3 plugins/sdlc/dogfood/ring-audit/check_anchors.py verify; echo "EXIT=$?"
+      evidence: |
+        total #L: 506  matched by ANCHOR: 431  bare #L still missed: 78
+        check_anchors verify: 431 个行号锚点 · 锁 plugins/sdlc/dogfood/ring-audit/anchors.lock
+          SAME        431
+        EXIT=0
+        # 与此同时 sed -n '182,185p' verify_dos.py 已变成 compound-reject 分支，
+        # 而 audit.yaml 仍写 #L182-L185 是「豁免降级成 FLAG」。绿灯，锚点指错。
+      fix: >-
+        (a) 加一条裸锚点规则 `(?<![\w./-])#L(\d+)(?:[-–]L?(\d+))?`，按同一标量内最近一次出现的
+        文件名归属，解析不出记 UNRESOLVED 并计入 exit 1——宁可吵也不要静默；
+        (b) verify 汇总行打印「已锁 N / 文件内行号锚点总数 M」，M>N 时明写差额，让覆盖率自己可见；
+        (c) 把 run_evidence 的「432/432 SAME」补成「432/506，其余 78 处为裸写形式暂不在保护范围」，
+        并写进 gap 的 deletion_test（它现在把 429 当总量，实际 506）。
+      why_a_tier: >-
+        P-RA-07 一旦落地把 verify 并进 check_audit.py，这 78 处会被一道**不可跳过**的绿灯背书，
+        比现在更坏。且 ad13fe0 的提交信息已经准确说出这个失效模式
+        （「一份看起来全绿的检查，可能只检了它认得的那部分」），却只应用到 3 处冒号式就停了。
+
+    - id: F-2
+      tier: B
+      file: plugins/sdlc/dogfood/ring-audit/check_anchors.py
+      line: 258
+      claim: AMBIGUOUS 是已证实的漂移，却与 SAME 一样 exit 0。
+      mechanism: >-
+        判定顺序：当前行 sha 对不上 → 全文搜锁住的原文 → 命中 1 处 MOVED、0 处 GONE、≥2 处 AMBIGUOUS。
+        走到 AMBIGUOUS 时「当前行号不再指着锁住的那段字」已经成立，不确定的只是它移到哪儿。
+        收尾 `return 1 if (stats["MOVED"] or stats["GONE"]) else 0` 把「不能自动改」等同于「没问题」。
+      reproduction: |
+        # 镜像树 @9a1e93b：把 tune.py#L302 锁住的那行下移一行，并在文件尾复制一份
+        python3 - <<'PY'
+        p='plugins/sdlc/skills/tune/scripts/tune.py'
+        L=open(p,encoding='utf-8').read().splitlines(keepends=True)
+        blk=L[301:302]; L=L[:301]+["# pad\n"]+L[301:]+["\n"]+blk
+        open(p,'w',encoding='utf-8').writelines(L)
+        PY
+        python3 plugins/sdlc/dogfood/ring-audit/check_anchors.py verify; echo "EXIT=$?"
+      evidence: |
+        check_anchors verify: 432 个行号锚点 · 锁 plugins/sdlc/dogfood/ring-audit/anchors.lock
+          SAME        430
+          AMBIGUOUS   2
+          AMBIGUOUS  …/tune.py#L302（tune） — 锁住的原文在当前文件里出现 2 次，机器不替人选
+        EXIT=0
+        # 另：graph.yaml#L273 在我做的每一组插行变异里都稳定判 AMBIGUOUS，
+        # 说明当前文件里已有天然重复块，不是构造出来的边角。
+      fix: >-
+        AMBIGUOUS 返回 1（或独立退出码 3），文案保持「机器不替人选、不自动改」，--fix 继续只动 MOVED。
+        docstring 退出码表同步：现在把 AMBIGUOUS 与 UNLOCKED 并列为 warn，但 UNLOCKED 是「还没锁」，
+        AMBIGUOUS 是「锁了且已确认对不上」，两者不同性质，不该同码。
+
+    - id: F-3
+      tier: B
+      file: plugins/sdlc/skills/review-loop/scripts/pr-poll.sh
+      line: 387
+      claim: >-
+        selfreview 校验器会拒掉 `mergeable: no`——也就是「有 A 档阻塞」这个结论本身——
+        并报出「review 块缺 mergeable」这个假错。抬档 R7/agent.pr-reviewer 所倚的正是这条校验器。
+      mechanism: >-
+        `missing = [k for k in ("target","mergeable") if not r.get(k)]` 用真值判断。
+        PyYAML 按 YAML 1.1 把裸 `no` / `off` 解析成 False → falsy → 判为「缺 mergeable」。
+        agents/pr-reviewer.md:33 写的取值是 `yes | no (A-tier) | with-warnings (B-tier)`。
+        后果两层：报错指向错误方向（字段明明在）；solo 模式下这一轮登记不上，
+        最省力的出路是把结论改写成校验器收得下的形态——压力方向朝着更宽松的判词，
+        而这正是 I-87 想堵的自证。本文件的 mergeable 之所以写成带引号的 "no (A-tier)"，就是为了绕开它。
+      reproduction: |
+        for v in 'no' '"no"' 'with-warnings' 'yes' 'off'; do
+          printf 'review:\n  target: PR#2\n  mergeable: %s\n  findings:\n    - {tier: A}\n' "$v" > /tmp/m.yaml
+          bash plugins/sdlc/skills/review-loop/scripts/pr-poll.sh selfreview 2 /tmp/m.yaml >/dev/null 2>&1
+          echo "$v -> $?"
+        done
+      evidence: |
+        no -> 1        # 唯一失败的取值，恰是表示「有阻塞」的那个
+        "no" -> 0
+        with-warnings -> 0
+        yes -> 0       # 恰好 truthy，所以通过
+        off -> 1
+        # 缓解事实：仓库自己的 pre-review/pr3-round-1.findings.yaml 写的是带引号的
+        # `mergeable: "no (A-tier)"`，实测 exit 0。所以这是潜伏陷阱，不是正在发作的故障。
+      fix: >-
+        改存在性判断：`missing = [k for k in ("target","mergeable") if r.get(k) in (None, "")]`
+        （必要时对 bool 单独归一）。并把这条缺陷记进 R7/agent.pr-reviewer 的 not_reached ——
+        重审的 reaudit_note 逐条列举了这个校验器的拒绝路径当作承重证据，唯独漏了这一条。
+
+    - id: F-4
+      tier: B
+      file: plugins/sdlc/dogfood/ring-audit/audit.yaml
+      line: 3799
+      claim: 重审表头「（闭合 1，新增 7）」与同行「73 → 80」算不平；closed 是表里唯一无法从 audit.yaml 现算出来的数。
+      mechanism: >-
+        `gaps: {closed: 1, added: 7, total_before: 73, total_after: 80}` 是手写字面量，
+        render_audit.py 原样投影成 AUDIT.md:999。读者做算术得 73-1+7=79。
+        实际 gap id 集差是新增 7、移除 0，73+7=80——total_after 对，closed 与它并列就不对。
+        closed:1 指 R1/lifecycle_blank/control/dos-proposal-reconcile（reaudit_note 写「已填」），
+        但它仍留在 gaps[] 里（disposition: issue，编排半边未完）。closed 是判断词，
+        被排版成计数项。首审时是 closed:1/added:6/79（73-1+6=78≠79），同一处偏移已跟着走了一轮。
+      reproduction: |
+        python3 -c "
+        import yaml;d=yaml.safe_load(open('plugins/sdlc/dogfood/ring-audit/audit.yaml',encoding='utf-8'))
+        print('len(gaps)=',len(d['gaps']))"
+        grep -n 'gaps: {closed' plugins/sdlc/dogfood/ring-audit/audit.yaml
+        grep -n '^| 缺口 ' plugins/sdlc/dogfood/ring-audit/AUDIT.md
+      evidence: |
+        len(gaps)= 80
+        3799:    gaps: {closed: 1, added: 7, total_before: 73, total_after: 80, note: '六条来自四份 delta…'}
+        999:| 缺口 | 73 → **80**（闭合 1，新增 7） |
+        # 首审时同一处：closed: 1, added: 6, total_after: 79
+      fix: >-
+        closed 改 0，把「dos-proposal-reconcile 的机械半边已填、缺口因编排半边保留」并进 gaps.note；
+        或保留 closed:1 但改写为「新增 7（另有 1 条判为已填、因编排半边未完仍在表内）」。
+        倾向前者——让表里每个数都能从 audit.yaml 现算得出，与本文件其余部分的纪律一致。
+
+    - id: F-5
+      tier: C
+      file: plugins/sdlc/dogfood/ring-audit/skill-issues.md
+      line: 126
+      claim: >-
+        两处被当作证据用的记录无法复核：I-94 那处「抓出并改正」的缺陷在任何已提交版本里都不存在；
+        run_evidence 自证的「132 MOVED」我在最接近的变异下得到 133，且该数完全取决于插入点。
+      mechanism: >-
+        I-94：台账称一条 evidence 指向 plugins/sdlc/skills/psl-derive/references/divergence-types.md。
+        该串在 b77feb0…9a1e93b 九个版本的 audit.yaml 里全为 0 命中，`git rev-list --all` 遍历该文件
+        所有历史版本同样 0 命中，四份 delta 里出现的是正确路径。全库唯一出现处是 I-94 这行自己。
+        最可能是它只存在于未提交工作树、当场被 verify 抓出后改掉——合乎工作流，但不留物证。
+        132 MOVED：插入点之前的锚点保持 SAME、之后位移判 MOVED、跨越插入点的区间判 GONE，
+        所以配比是插入位置的函数，不是这条闸的固有特征。
+      reproduction: |
+        for c in b77feb0 791b6b2 dc8ccba ec226f1 8a4829b 25110fa 5727030 7f4a897 ad13fe0 9a1e93b; do
+          echo "$c: $(git show $c:plugins/sdlc/dogfood/ring-audit/audit.yaml \
+            | grep -c 'psl-derive/references/divergence-types')"
+        done
+        git log --all --oneline -S "psl-derive/references/divergence" | head
+        # 132 MOVED：graph.yaml 与 verify_dos.py 各插一行，插入点取 1 / 240 / 252
+      evidence: |
+        # I-94：十个版本全部输出 0；git log -S 只命中 25110fa（即引入 I-94 那行本身的提交）
+        # 132 MOVED 复现尝试（graph@N + dos@5）：
+        graph@1   -> EXIT=1  SAME 291  MOVED 133  GONE 1  AMBIGUOUS 7
+        graph@240 -> EXIT=1  SAME 374  MOVED  56  GONE 1  AMBIGUOUS 1
+        graph@252 -> EXIT=1  SAME 378  MOVED  49  GONE 4  AMBIGUOUS 1
+        # exit 1 每次都成立；132 一次都没出现
+      fix: >-
+        I-94 补一句可核对的锚：贴出当时那条 evidence 的原文，或注明它只存在于未提交工作树。
+        对照 I-93——那条我能在 dc8ccba 上查到原文、在 HEAD 上查到已改，是这份台账应有的可核对度。
+        run_evidence 改成不依赖插入点的表述：「任意位置插一行 → 插入点之后判 MOVED、
+        跨越插入点的区间判 GONE、exit 1」；要留具体数字就写明插在第几行。
+
+  not_findings:
+    - >-
+        I-93 已双向核实为真缺陷：dc8ccba 上原文在（meta-judge 的 rename_reason 引裸 SKILL.md#L157/#L254），
+        meta-judge/SKILL.md 仅 243 行故 #L254 越界，acceptance-fleet/SKILL.md（402 行）L157 是
+        spec-gaming-detector 的派发矩阵行；HEAD 上 grep 'SKILL.md#L157' 已无命中。
+    - >-
+        四处口径一致性（gap / P-RA-07 / PR 正文 L78-80+L122 / 台账状态节）：逐字比对无一处把
+        check_anchors.py 说得比实际更强；机器核对亦无 Part 声称 FILLS 该 gap，且它在 spine.missing 里。
+        唯一走样的是 PR #3 的**标题**仍写 "close all 85 defects"，正文已是 94 开 / 93 落地。
+    - >-
+        I-92 判「半落地」正确，比替代说法更诚实；我的异议只在「不完整的原因只列了一条」，已并入 F-1。
+    - >-
+        三条退出路径实测全部为真且 fail-closed：缺锁/空锁/坏锁/缺 audit → 2；删证据文件 → GONE → 1；
+        插行 → MOVED/GONE → 1。5727030 的坏锁 → 2 修复有效。
+    - >-
+        ec226f1 的 smoke 证据改写是修正不是粉饰：改后逐字说明「101 passed 是 gate.json 自己的登记值、
+        当前实跑 391」，并指向 gate-json-stale 缺口。
