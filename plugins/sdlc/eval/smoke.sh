@@ -1,18 +1,76 @@
 #!/usr/bin/env bash
 # smoke.sh — run every sdlc script against its fixtures; print PASS/FAIL per expectation.
 # This is the L0/structural evidence behind each skill's eval/gate.json (static_only tier).
-# Usage: bash plugins/sdlc/eval/smoke.sh   (from the repo root; needs python3 + pyyaml, git, jq)
+#
+# Usage:
+#   bash plugins/sdlc/eval/smoke.sh                      # the whole suite (must end "0 failed")
+#   bash plugins/sdlc/eval/smoke.sh --only <ERE>         # only expectations whose label matches
+#   bash plugins/sdlc/eval/smoke.sh --mutate <file> <old-string> <new-string>
+#
+# --mutate is the self-check (I-80): it copies the plugin to a scratch dir, applies the string
+# mutation there, runs this suite against the copy, and reports which expectations went red.
+# Exit 0 = the mutant was killed (at least one expectation caught it); exit 1 = MUTANT SURVIVED.
+# A test that passes against both the buggy and the fixed implementation is worse than no test:
+# it claims coverage nobody has. Every new expectation for a fail-open fix must come with the
+# --mutate output that proves it kills its mutant. <file> is the plugin-relative (or repo-relative,
+# or absolute) path of the file to mutate; it must live under plugins/sdlc/.
+# Needs python3 + pyyaml, git, jq. Run from the repo root.
 set -u
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 S="$ROOT/skills"
 TMP="$(mktemp -d)"
-pass=0; fail=0
+ONLY=""; MUT_FILE=""; MUT_OLD=""; MUT_NEW=""
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --only) ONLY="${2:-}"; shift 2 ;;
+    --mutate) MUT_FILE="${2:-}"; MUT_OLD="${3:-}"; MUT_NEW="${4:-}"; shift 4 ;;
+    -h|--help) sed -n '2,17p' "$0"; exit 0 ;;
+    *) echo "smoke.sh: unknown argument: $1" >&2; exit 2 ;;
+  esac
+done
+pass=0; fail=0; skipped=0
 expect() { # expect <label> <want_exit> <cmd...>
   local label="$1" want="$2"; shift 2
+  if [[ -n "$ONLY" ]] && ! [[ "$label" =~ $ONLY ]]; then skipped=$((skipped+1)); return 0; fi
   local out; out="$("$@" 2>&1)"; local rc=$?
   if [[ "$rc" == "$want" ]]; then pass=$((pass+1)); echo "PASS  [$rc] $label"; else fail=$((fail+1)); echo "FAIL  [got $rc want $want] $label"; echo "$out" | head -20 | sed 's/^/      /'; fi
 }
 py() { python3 "$@"; }
+
+if [[ -n "$MUT_FILE" ]]; then
+  # --- mutation self-check (I-80): does the suite kill this mutant? ---------------------
+  COPY="$TMP/mutant/sdlc"; mkdir -p "$TMP/mutant"; cp -R "$ROOT" "$COPY"
+  case "$MUT_FILE" in
+    /*)            REL="${MUT_FILE#"$ROOT"/}" ;;
+    plugins/sdlc/*) REL="${MUT_FILE#plugins/sdlc/}" ;;
+    *)             REL="$MUT_FILE" ;;
+  esac
+  TARGET="$COPY/$REL"
+  [[ -f "$TARGET" ]] || { echo "smoke.sh --mutate: no such file under $ROOT: $MUT_FILE" >&2; exit 2; }
+  python3 - "$TARGET" "$MUT_OLD" "$MUT_NEW" <<'PYEOF' || exit 2
+import sys
+p, old, new = sys.argv[1], sys.argv[2], sys.argv[3]
+s = open(p, encoding="utf-8").read()
+n = s.count(old)
+if n == 0:
+    sys.stderr.write("smoke.sh --mutate: old string not found in %s: %r\n" % (p, old)); sys.exit(2)
+open(p, "w", encoding="utf-8").write(s.replace(old, new))
+sys.stderr.write("mutation applied: %d occurrence(s) of %r → %r in %s\n" % (n, old, new, p))
+PYEOF
+  echo "== mutation self-check: $REL"
+  LOG="$TMP/mutant-run.log"
+  SMOKE_NESTED=1 bash "$COPY/eval/smoke.sh" ${ONLY:+--only "$ONLY"} >"$LOG" 2>&1 || true
+  tail -1 "$LOG"
+  KILLERS="$(grep -E '^FAIL ' "$LOG" || true)"
+  if [[ -z "$KILLERS" ]]; then
+    echo "MUTANT SURVIVED — no expectation went red."
+    echo "A test that passes against both implementations claims coverage it does not have (I-80)."
+    echo "(full log: $LOG)"
+    exit 1
+  fi
+  echo "mutant killed by:"; echo "$KILLERS" | sed 's/^/  /'
+  exit 0
+fi
 
 echo "== issue / verify_issue.py"
 FX="$S/issue/eval/fixtures"
@@ -305,6 +363,14 @@ expect "check_verbatim_names: a name missing from the tests dir still → 1 unde
 expect "derive_counts: v2 behavior seed alone → rejected, not '0 unit tests' (I-54)" 2 py "$TSG/derive_counts.py" "$DW2"
 expect "derive_counts: --manifest gives 4 existence / 32 unit / 2 integration / 0 e2e (I-54)" 0 bash -c "python3 '$TSG/derive_counts.py' '$DW2' --manifest '$MF2' --json | python3 -c \"import json,sys; d=json.load(sys.stdin); assert d=={'existence':4,'unit_total':32,'unit_example':32,'unit_property':0,'integration_total':2,'integration_example':2,'integration_property':0,'e2e':0}, d\""
 
+# I-80: the suite must be able to prove its own expectations kill their mutants. Skipped inside a
+# --mutate child run (SMOKE_NESTED) — otherwise the self-check would recurse into itself.
+if [[ -z "${SMOKE_NESTED:-}" ]]; then
+  expect "smoke --mutate: a killed mutant is reported with the expectations that killed it (I-80)" 0 bash -c "bash '$ROOT/eval/smoke.sh' --only 'I-59' --mutate skills/test-suite-generator/scripts/check_verbatim_names.py 'EMPTY_EXIT = 2' 'EMPTY_EXIT = 0' | grep -q 'mutant killed by'"
+  expect "smoke --mutate: a surviving mutant fails the self-check (I-80)" 1 bash -c "bash '$ROOT/eval/smoke.sh' --only 'derive_counts on example' --mutate skills/test-suite-generator/scripts/derive_counts.py 'the count primitive' 'the counting primitive' >/dev/null 2>&1"
+  expect "smoke --mutate: an old string that is not in the file is an error, not a pass (I-80)" 2 bash -c "bash '$ROOT/eval/smoke.sh' --only 'derive_counts on example' --mutate skills/test-suite-generator/scripts/derive_counts.py 'no such string in this file' 'x' >/dev/null 2>&1"
+fi
+
 echo "== spec-gaming-detector / compute_score.py"
 expect "score P0+P1+P3 = 5.5" 0 bash -c "python3 '$S/spec-gaming-detector/scripts/compute_score.py' '$S/spec-gaming-detector/eval/fixtures/findings.json' --json | grep -q '5.5'"
 expect "trend warning on steep rise" 0 bash -c "python3 '$S/spec-gaming-detector/scripts/compute_score.py' '$S/spec-gaming-detector/eval/fixtures/findings.json' --baseline 3 --json | grep -q 'trend_warning'"
@@ -465,5 +531,5 @@ expect "apply_proposal: gate_fix_list kind produces gate.json diff" 0 bash -c "p
 expect "apply_proposal: unknown id rejected" 1 py "$TU/apply_proposal.py" "$TMP/tune.yaml" --id P-99 --skills-root "$S"
 
 echo
-echo "smoke: $pass passed, $fail failed  (tmp: $TMP)"
+echo "smoke: $pass passed, $fail failed${ONLY:+, $skipped skipped (--only $ONLY)}  (tmp: $TMP)"
 [[ $fail -eq 0 ]]

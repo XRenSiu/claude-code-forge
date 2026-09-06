@@ -237,6 +237,26 @@ The script must exit nonzero on kill-rate under threshold; this is the signal `r
 
 Do NOT run the mutation suite right now — it takes minutes-to-hours. Just emit and document.
 
+### A regression test for a fail-open must come with a mutation proof
+
+Mutation is not only the implementer's gate at 4-E. It is **your** gate on any test you write to close a bug — above all a *fail-open* bug, where the buggy code returns the same visible outcome as the fixed code for the wrong reason.
+
+The recorded case (I-80): two regression twins were written for a fail-open in a commit-range resolver. The fixture committed the tamper, which left the git index equal to `HEAD`, so the **buggy** resolver read the tampered index and rejected — the right-looking verdict from the wrong state. Both twins passed against the buggy implementation. Nobody noticed until an isolated verifier put the old code back and the whole suite stayed green.
+
+The rule:
+
+1. **Construct state that separates the two implementations**, not just the outcome that both produce. Reproducing the external symptom (`REJECT`) is not a regression test; the fixture has to make the buggy read and the fixed read disagree (there: the frozen bytes staged, the tamper left in the range head).
+2. **Put the old implementation back and watch the test go red.** In this plugin that is one command:
+
+   ```
+   bash plugins/sdlc/eval/smoke.sh --mutate <file> '<old-string>' '<new-string>'
+   ```
+
+   It copies the plugin to a scratch dir, applies the string mutation there, runs the suite against the copy, and prints the expectations that went red. Exit 0 = killed (they are named); exit 1 = **MUTANT SURVIVED**. Add `--only <ERE>` to run just the labels you care about while iterating.
+3. **Paste the killed-by list into the commit or the PR body.** A twin with no mutation proof is an unverified claim.
+
+> A test that passes against both implementations is worse than no test, because it claims coverage that nobody has. This is `/calibrate` mirror ① (mutation score) applied one test at a time: a gate nothing can fail is not a gate.
+
 ---
 
 ## 4-F — Removed in v1.0.0
