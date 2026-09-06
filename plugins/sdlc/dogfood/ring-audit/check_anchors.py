@@ -23,6 +23,19 @@ audit.yaml 里 800 多条证据，其中 400 多条带行号锚点，两种写�
 `--fix` 只改 MOVED。GONE 与 AMBIGUOUS 永不自动改：那是"内容变了"而不是"位置变了"，
 替审计者决定新锚点指哪儿，就是替他下判断。
 
+这条对账覆盖到哪儿为止（说清楚，别让它读起来像"全封住了"）
+------------------------------------------------------------
+对账做的是两族各自的恒等式：`#L` 一族、`file.ext:NNN` 一族，各自用一套**与 SCAN 不共用实现**的
+正则独立数一遍，再与扫描器走到的数比。它能抓住的是"扫描器少认了一种它本该认的写法"。
+
+它**抓不住**的是：一种两族都不属于的引用写法——比如"见该脚本第 169 行"这样纯中文的、
+或者只写 ` L197` 不带文件名的。那种写法在原始计数和走到的数里都不出现，两边同时为零，账照样平。
+这不是"已封住"，是"封住了在用的两族，并把边界写在这里"。真要更进一步，得先规定审计只准用这两种
+写法，再拿一条 lint 去挡第三种——那是判据的事，不是这把尺子的事。
+
+（这一节存在的理由：这一族已经栽了四次，每一次的"全绿"都只覆盖当时认得的那部分。
+把边界写下来，比再多认一种写法更管用。）
+
 退出码
 ------
   0  verify 全部 SAME（UNLOCKED 只 warn：那是快照之后新写的锚点，不是漂移）
@@ -93,7 +106,23 @@ BASENAMES = {
 
 # `unenforced_rules[].dos_anchors` 里的 `#L376-L379` 是**匹配模式**，render_audit.py 拿它去
 # gaps[].evidence[].ref 里现算归属；它不是一条指向某文件某行的引用，锁它没有意义。
-NOT_A_REFERENCE = re.compile(r"^\s*(?:-\s+)?.*\bdos_anchors:")
+# `unenforced_rules[].dos_anchors` 的**值**里那些 `#L376-L379` 是匹配模式（render_audit.py 拿它们
+# 去 gaps[].evidence[].ref 里现算归属），不是指向某文件某行的引用。
+#
+# 但排除必须**按 token，不按整行**：整行排除会在两边同时生效（walk 跳过这一行、原始计数也减掉这一行的
+# `#L`），于是把一个真锚点混写到这种行上，它既不入锁也不被对账发现，两边一起移动、账照样平
+# ——排除规则本身成了藏东西的地方（I-105，PR #3 预审 round-4 F-8）。
+# 所以只把 `dos_anchors:` 后面那对方括号**内部**的 `#L` 当模式，行上其余位置照常走。
+DOS_ANCHORS_VALUE = re.compile(r"\bdos_anchors:\s*\[([^\]]*)\]")
+
+
+def pattern_spans(line):
+    """这一行里属于 dos_anchors 值的字符区间——只有落在其中的锚点才算模式。"""
+    return [m.span(1) for m in DOS_ANCHORS_VALUE.finditer(line)]
+
+
+def in_spans(pos, spans):
+    return any(a <= pos < b for a, b in spans)
 
 # 「走到 N · 锁里比对了 M」只能量"走到的里面锁了几个"，**结构上看不见从未进过扫描的那一类**——
 # 而那正是这一族栽了四次的地方（带路径的 #L → 冒号式 → 裸写 → 斜杠串联，每一次"全绿"都只覆盖
@@ -101,17 +130,28 @@ NOT_A_REFERENCE = re.compile(r"^\s*(?:-\s+)?.*\bdos_anchors:")
 # 原始出现次数，减去 dos_anchors 那类模式，剩下的必须等于扫描器走到的 #L 锚点数。对不上就说明
 # 又有一种写法没被认出来——这条不依赖任何写法的知识，只依赖"每个 #L 都得有人认领"。
 RAW_HASH_L = re.compile(r"#L\d+")
+# 冒号式的独立正则，跟 SCAN 里那条**没有共用实现**——对账的价值全在于两边各算各的。
+RAW_COLON = re.compile(r"[A-Za-z0-9_./<>*-]+\.(?:py|sh|yaml|json|md):\d+(?![\d/])")
 
 
-def raw_hash_l_count(audit_path):
-    """文件里 `#L数字` 的原始出现次数，以及其中属于 dos_anchors 模式（非引用）的那部分。"""
-    total = patterns = 0
+def raw_counts(audit_path):
+    """独立于 SCAN 再数一遍：`#L数字` 与冒号式各多少，其中多少落在 dos_anchors 的值里。
+
+    F-9：原先的对账只覆盖 `#L`，而 walked 那侧又显式减掉了 colon_style，于是冒号式那一族
+    **两边都在等式之外**——正是 `#L` 这一族在 round-3 之前的处境。两族各自对账（I-106）。
+    """
+    hash_total = hash_pat = colon_total = colon_pat = 0
     for line in open(audit_path, encoding="utf-8").read().splitlines():
-        n = len(RAW_HASH_L.findall(line))
-        total += n
-        if NOT_A_REFERENCE.match(line):
-            patterns += n
-    return total, patterns
+        spans = pattern_spans(line)
+        for m in RAW_HASH_L.finditer(line):
+            hash_total += 1
+            if in_spans(m.start(), spans):
+                hash_pat += 1
+        for m in RAW_COLON.finditer(line):
+            colon_total += 1
+            if in_spans(m.start(), spans):
+                colon_pat += 1
+    return hash_total, hash_pat, colon_total, colon_pat
 
 # 审计里的行引用有**三**种写法，都会漂，都要保：
 #   `path/to/file.py#L12` / `#L12-L20` / `#L12–20`   —— evidence 的 ref 惯用
@@ -189,11 +229,11 @@ def walk_anchors(audit_path, skills, on_anchor):
             part[0] = pm.group(1)
         if NEW_KEY.match(stripped):
             last_file[0] = None          # 换判词就换话题，别把上一条的文件名带过来
-        if NOT_A_REFERENCE.match(stripped):
-            out.append(line)             # dos_anchors 是模式不是引用
-            continue
+        spans = pattern_spans(line)     # dos_anchors 的值是模式不是引用，按 token 排除
 
         def sub(m):
+            if in_spans(m.start(), spans):
+                return m.group(0)        # 落在 dos_anchors 值里的是模式，不走
             if m.group("fname"):
                 name = m.group("fname")
                 last_file[0] = name
@@ -351,18 +391,26 @@ def cmd_verify(args):
     VERDICTS = ("SAME", "MOVED", "GONE", "AMBIGUOUS", "UNLOCKED", "UNRESOLVED")
     total = sum(stats[k] for k in VERDICTS)      # colon_style 只是对账用的旁计数，不进总数
     covered = stats["SAME"] + stats["MOVED"] + stats["GONE"] + stats["AMBIGUOUS"]
-    raw_total, raw_patterns = raw_hash_l_count(args.audit)
-    expected_hash = raw_total - raw_patterns
+    raw_hash, raw_hash_pat, raw_colon, raw_colon_pat = raw_counts(args.audit)
+    expected_hash = raw_hash - raw_hash_pat
+    expected_colon = raw_colon - raw_colon_pat
     walked_hash = total - stats["colon_style"]
-    unaccounted = expected_hash - walked_hash
+    walked_colon = stats["colon_style"]
+    unaccounted_hash = expected_hash - walked_hash
+    unaccounted_colon = expected_colon - walked_colon
+    unaccounted = unaccounted_hash + unaccounted_colon
     print(f"check_anchors verify: 走到 {total} 个行号锚点 · 锁里比对了 {covered} 个 · 锁 {args.lock}")
     for k in ("SAME", "MOVED", "GONE", "AMBIGUOUS", "UNLOCKED", "UNRESOLVED"):
         if stats[k]:
             print(f"  {k:11} {stats[k]}")
-    if unaccounted:
-        print(f"  **{unaccounted} 处 `#L` 没有被任何写法认领** —— 文件里 {raw_total} 次，"
-              f"其中 {raw_patterns} 次是 dos_anchors 模式（非引用），应走到 {expected_hash} 个，"
-              f"实际只走到 {walked_hash} 个。又有一种引用写法没被认出来。")
+    if unaccounted_hash:
+        print(f"  **{unaccounted_hash} 处 `#L` 没有被任何写法认领** —— 文件里 {raw_hash} 次，"
+              f"其中 {raw_hash_pat} 次落在 dos_anchors 的值里（模式，非引用），应走到 {expected_hash} 个，"
+              f"实际走到 {walked_hash} 个。又有一种引用写法没被认出来。")
+    if unaccounted_colon:
+        print(f"  **{unaccounted_colon} 处冒号式行引用没有被认领** —— 文件里 {raw_colon} 次，"
+              f"其中 {raw_colon_pat} 次落在 dos_anchors 的值里，应走到 {expected_colon} 个，"
+              f"实际走到 {walked_colon} 个。")
     if covered < total:
         # 覆盖率明写。"全绿"只在分母等于分子时才等于"全都检过了"——
         # 第一版正是在这里骗了人：432/432 绿，而当时另有 78 个锚点根本没进过 walk。

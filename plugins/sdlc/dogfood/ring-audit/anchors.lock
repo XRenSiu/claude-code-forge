@@ -189,7 +189,7 @@
       "lines": 1,
       "sha": "99ae4eb95595d23f"
     },
-    "plugins/sdlc/eval/smoke.sh#L1156-L1173": {
+    "plugins/sdlc/eval/smoke.sh#L1157-L1174": {
       "lines": 18,
       "sha": "10f45fecc7fe4365"
     },
