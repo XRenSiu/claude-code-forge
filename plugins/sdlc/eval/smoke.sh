@@ -219,6 +219,18 @@ FXO="$S/dos-extract/eval/fixtures"
 DXS="$S/dos-extract/scripts"
 expect "clean dos passes" 0 py "$DXS/verify_dos.py" "$FXO/dos_good.yaml"
 expect "UI-suffixed object rejected" 1 py "$DXS/verify_dos.py" "$FXO/dos_bad_ui_suffix.yaml"
+# dogfood 2026-09-05 (I-10): the suffix heuristic aims at `TopicCard`; a whole-word domain
+# name is the waivable case, and a compound stays non-waivable however loudly it is waived.
+expect "whole-word UI name rejected without a waiver (I-10)" 1 py "$DXS/verify_dos.py" "$FXO/dos_whole_word_card.yaml"
+expect "whole-word UI name still rejected when decisions.md has no waiver section (I-10)" 1 py "$DXS/verify_dos.py" "$FXO/dos_whole_word_card.yaml" --decisions "$FXO/decisions_no_waiver.md"
+expect "whole-word UI name cleared by a decisions.md waiver, reported under waived (I-10)" 0 bash -c "python3 '$DXS/verify_dos.py' '$FXO/dos_whole_word_card.yaml' --decisions '$FXO/decisions_with_waiver.md' | python3 -c \"import json,sys; d=json.load(sys.stdin); assert d['exit']=='MECHANICALLY_CLEAN', d['rejects']; assert any(\\\"'Card'\\\" in w for w in d['waived']), d['waived']\""
+expect "compound UI suffix is NOT waivable (I-10)" 1 py "$DXS/verify_dos.py" "$FXO/dos_bad_ui_suffix.yaml" --waive DateFilterCard
+# dogfood 2026-09-05 (I-37): a materialised derived view must name its source.
+expect "empty derived_from rejected (I-37)" 1 py "$DXS/verify_dos.py" "$FXO/dos_derived_empty.yaml"
+expect "named derived_from passes and is reported (I-37)" 0 bash -c "python3 '$DXS/verify_dos.py' '$FXO/dos_derived_ok.yaml' | python3 -c \"import json,sys; d=json.load(sys.stdin); assert d['derived_properties']==['Ring.missing'], d['derived_properties']\""
+# dogfood 2026-09-05 (I-14): methodology.md §6's size budget was prose only; nothing measured it.
+expect "over-budget dos.yaml warns without changing the exit code (I-14)" 0 bash -c "python3 '$DXS/verify_dos.py' '$FXO/dos_good.yaml' --max-lines 5 | python3 -c \"import json,sys; d=json.load(sys.stdin); assert d['exit']=='MECHANICALLY_CLEAN', d['rejects']; assert any('lines >' in w for w in d['warnings']), d['warnings']\""
+expect "empty / placeholder / over-long object descriptions each warn (I-14)" 0 bash -c "python3 '$DXS/verify_dos.py' '$FXO/dos_bad_descriptions.yaml' | python3 -c \"import json,sys; w=json.load(sys.stdin)['warnings']; assert any('description empty' in x for x in w), w; assert any('placeholder' in x for x in w), w; assert any('chars >' in x for x in w), w\""
 
 echo "== dos-extract / inventory.py (structured channel)"
 INV="$TMP/inv"; mkdir -p "$INV/a/b/schema"
@@ -255,6 +267,27 @@ FXI="$S/invariant-extract/eval/fixtures"
 IXV="$S/invariant-extract/scripts/verify_card.py"
 expect "card with provenance passes" 0 py "$IXV" "$FXI/card_good.yaml" --dos "$FXO/dos_good.yaml"
 expect "card without provenance rejected" 1 py "$IXV" "$FXI/card_bad_noprov.yaml"
+# dogfood 2026-09-05 (I-11/I-37): the DOS template had nowhere to record a synonym, a downstream
+# translation, a rule alias, or a materialised derived view.
+expect "dos_template.yaml carries synonyms / aliases / translation_notes / derived_from (I-11/I-37)" 0 bash -c "python3 -c \"
+import yaml
+t=yaml.safe_load(open('$S/dos-extract/assets/dos_template.yaml'))
+o=t['objects']['ExampleObject']
+assert 'synonyms' in o, list(o)
+assert any('derived_from' in (p or {}) for p in o['properties'].values()), list(o['properties'])
+assert 'aliases' in t['rules'][0], t['rules'][0]
+assert 'translation_notes' in t['bounded_contexts']['downstream_contexts'][0]\""
+# dogfood 2026-09-05 (I-10/I-13): the decisions template presumed a non-empty pruning table and
+# had no machine-read waiver channel.
+expect "decisions_template.md's waiver section parses and the zero-noun case is written (I-10/I-13)" 0 bash -c "python3 -c \"
+import sys; sys.path.insert(0,'$DXS')
+import verify_dos as v
+w=v.parse_waivers('$S/dos-extract/assets/decisions_template.md')
+assert w, 'the ## Naming waivers section did not parse'
+text=open('$S/dos-extract/assets/decisions_template.md').read()
+assert 'code channel returned zero nouns' in text.lower() or '0 nouns' in text, 'no zero-noun guidance'
+assert 'count_terms.py' in text, 'docs counts are not tied to the counting primitive'\""
+
 echo "== donewhen-extract / verify_done_when.py (imported from qanat)"
 FXW="$S/donewhen-extract/eval/fixtures"
 expect "paired, thresholded card passes" 0 py "$S/donewhen-extract/scripts/verify_done_when.py" "$FXW/card_good.yaml"
