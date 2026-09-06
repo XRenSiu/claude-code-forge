@@ -122,6 +122,8 @@ bash plugins/sdlc/eval/smoke.sh                                             # 19
 
 **G. 过程记录**
 
+- **review 环结构性不收敛（I-69，代签判官豁免，钉在 PR head efd45ac）**：`pr-poll.sh done` 的终止谓词是 APPROVED ∧ 0 未解决线程 ∧ checks 绿。后两条成立，第一条**不可能成立**——GitHub 禁止 PR 作者批准自己的 PR，本仓库只有一个协作者。评审的实质在建 PR 前已交付：两轮隔离 pr-reviewer + 一轮独立 fix-verifier，在本 PR 自己的验证器修复里抓出 5 个缺陷（锁门 fail-open、版本未同步、第一次修法的回归、不杀 mutant 的装饰性孪生、空 range 的第三扇门），全部修掉，0 条 A 档存活。**并且**：`checks_green: true` 是**空转**——`statusCheckRollup` 为空，本仓库没有配置任何 CI，这与"检查通过"不是一回事，全文任何地方都不得写成后者。合并仍是人的动作 — `plugins/sdlc/dogfood/ring-audit/skill-issues.md:79`
+
 - 两轮修复各有 2/6 条发现是"修复自己引入的"；结构性成因是投影与其数据源分属两张卡且都无锁定测试 — `plugins/sdlc/dogfood/ring-audit/skill-issues.md:80`
 - gaming 轨迹 [3.5, 4.0, 4.0] **持平**（iteration-003 的检测器被编排者任务文件错传基线 3.5，检测器自报了不一致） — `plugins/sdlc/dogfood/ring-audit/skill-issues.md:79`
 - 隔离事件：`spec-drift-detector` 经其 `--qa-report` 参数读到 qa 的输出，与 fleet 的无串扰铁律冲突；裁为有界接受（qa 零发现，可继承的只有测量事实），drift 的 11 条信号不打折 — `plugins/sdlc/dogfood/ring-audit/skill-issues.md:78`
