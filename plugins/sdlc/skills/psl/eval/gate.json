@@ -21,7 +21,8 @@
   "discrimination": null,
   "fix_list": [
     "compile the delivery gate: add a hooks.json Stop/PostToolUse hook that runs verify_psl.py on any produced PSL-*.md — currently '交付前必须跑' is declarative only and inherits A'-1 (judge A round-1, highest-ROI remaining hardening)",
-    "run T1-T5 behaviorally via /psl in a fresh session (Skill list must pick up looper v0.2.0) to upgrade static_only → certified pass"
+    "run T1-T5 behaviorally via /psl in a fresh session (Skill list must pick up looper v0.2.0) to upgrade static_only → certified pass",
+    "hooks.json Stop hook running verify_psl.py is still the open item from the 2026-07-06 round; the rule-id reject makes it more valuable, not less"
   ],
   "provenance": {
     "date": "2026-07-06",
@@ -63,5 +64,18 @@
     "from": "looper v0.2.0",
     "changes": "body kept; added 术语映射 (qanat-derived only) + 接线（在 sdlc 里的位置）; support files: 立法收件箱/daemon wording mapped to sdlc change proposal / local tests+CI",
     "smoke_2026_09_05": "verify_psl.py: legal PSL fixture pass; Step-N Workflow reject"
+  },
+  "fixes_2026_09_06": {
+    "date": "2026-09-06",
+    "source": "dogfood 2026-09-05 ring-audit self-audit — skill-issues.md rows I-02 I-03 I-06 I-19 I-20 I-21 I-23 I-32 I-35 I-36 I-44 I-48 I-56 I-58 I-77",
+    "still": "static_only — every added guarantee is L0 mechanical; the behavioural layer (a real N=3 derivation + a real human G1) is still unrun",
+    "smoke": "plugins/sdlc/eval/smoke.sh +31 expectations from this round (196 → 225 on its own; 246 with the merged base), 0 failed",
+    "mutation_tested": "yes — 27 mutants replayed through the repo's own `smoke.sh --mutate <file> <old> <new>` harness; 0 survived. That harness caught four expectations of this round passing for the wrong reason (exit 1 came from the next check, or from an unguarded read raising); they now assert the reject text.",
+    "changes": [
+      "verify_psl.py REJECTs a PSL with no PSL-NNN rule id, and one that defines the same id twice — closing the seam where verify_derived.py refused a product this gate had passed (I-02)",
+      "rule index gained a form/content layer marker, reported as INFO so a mis-typed marker is visible (I-20)",
+      "[elicit:物料 <file> §N] provenance is checked for file and section existence via --material-root; flag only (I-23)",
+      "SKILL.md Σ/φ/出口 now state the rule-id, layer and provenance requirements; EXAMPLE.md's reference PSL carries PSL-NNN / UI-n / A-n / DP-n ids and one content-layer rule, and is pinned by smoke"
+    ]
   }
 }

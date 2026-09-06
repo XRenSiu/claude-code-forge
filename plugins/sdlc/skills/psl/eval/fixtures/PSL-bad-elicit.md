@@ -9,7 +9,7 @@
 
 - PSL-002 [Σ] 用户说"上个月"时想的是"那段日子发生了什么"，不是 30 天的区间。
   推出的形态决策：结果卡要带场景摘要。
-- PSL-003 [Σ] 相对时间天然含糊；用户接受被反问一次，不接受被猜错。
+- PSL-003 [Σ] 相对时间天然含糊；用户接受被反问一次，不接受被猜错。`[elicit:物料 material-notes.md §9]`
   推出的形态决策：重叠时出消歧提示。
 
 ## Domain Model
@@ -23,7 +23,7 @@
 ## State Machine
 
 - `TimeRef`: entered → resolved(single) | ambiguous(≥2 eras) → chosen。
-- PSL-005 [Σ] ambiguous 是合法终态之一，不是错误。
+- PSL-005 [Σ] ambiguous 是合法终态之一，不是错误。`[elicit:物料 material-notes.md §2]`
 
 ## Workflow
 

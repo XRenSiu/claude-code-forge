@@ -401,13 +401,32 @@ popd >/dev/null
 
 echo "== psl / verify_psl.py (imported from looper)"
 FXD="$S/psl-derive/eval/fixtures"
+FXPSL="$S/psl/eval/fixtures"
 expect "legal PSL passes" 0 py "$S/psl/scripts/verify_psl.py" "$FXD/PSL-memory-time-search.md"
 expect "PSL with Step N in Workflow rejected" 1 py "$S/psl/scripts/verify_psl.py" "$FXD/PSL-bad-steps.md"
+# dogfood 2026-09-05 (I-02): verify_derived rejects a PSL with no PSL-NNN ids, so this gate must too —
+# otherwise /psl hands on a product its own downstream refuses
+expect "PSL with no PSL-NNN rule ids rejected (I-02)" 1 py "$S/psl/scripts/verify_psl.py" "$FXPSL/PSL-no-rule-ids.md"
+expect "PSL reusing one rule id for two rules rejected (I-02)" 1 py "$S/psl/scripts/verify_psl.py" "$FXPSL/PSL-dup-rule-id.md"
+expect "verify_psl names the duplicated id and both lines (I-02)" 0 bash -c "python3 '$S/psl/scripts/verify_psl.py' '$FXPSL/PSL-dup-rule-id.md' | grep -q 'PSL-004.*被定义了两次'"
+# I-20: the rule index carries a layer marker so verify_derived knows which rules a form draft may skip
+expect "verify_psl reports the form/content split of the rule index (I-20)" 0 bash -c "python3 '$S/psl/scripts/verify_psl.py' '$FXD/PSL-memory-time-search.md' | grep -q 'form 7 / content 1'"
+# I-23: a 来路 citing §N of a material that has no §N is written from memory, not read
+expect "verify_psl flags an [elicit:物料 <file> §N] whose section does not exist (I-23)" 0 bash -c "python3 '$S/psl/scripts/verify_psl.py' '$FXPSL/PSL-bad-elicit.md' --material-root '$FXPSL' | grep -q 'material-notes.md §9'"
+expect "verify_psl leaves a resolvable [elicit:物料 <file> §N] alone (I-23)" 0 bash -c "python3 '$S/psl/scripts/verify_psl.py' '$FXPSL/PSL-bad-elicit.md' --material-root '$FXPSL' | grep -c '^FLAG' | grep -q '^1$'"
+# the reference example is what an author copies; it has to satisfy the gate it teaches (I-02)
+python3 -c "
+import re, pathlib, sys
+s = pathlib.Path('$S/psl/references/EXAMPLE.md').read_text(encoding='utf-8')
+b = re.findall(r'\`\`\`markdown\n(.*?)\n\`\`\`', s, re.S)
+sys.exit(1) if len(b) != 1 else pathlib.Path('$TMP/example_psl.md').write_text(b[0], encoding='utf-8')"
+expect "EXAMPLE.md's reference PSL passes verify_psl (I-02)" 0 py "$S/psl/scripts/verify_psl.py" "$TMP/example_psl.md"
+expect "EXAMPLE.md's reference PSL carries a content-layer rule (I-20)" 0 bash -c "python3 '$S/psl/scripts/verify_psl.py' '$TMP/example_psl.md' | grep -q '内容层：'"
 
 echo "== psl-derive / verify_derived.py"
 expect "good derived dir passes" 0 py "$S/psl-derive/scripts/verify_derived.py" "$FXD/derived_good" --psl "$FXD/PSL-memory-time-search.md"
 expect "bad derived dir rejected (no ref, fake id, Step, invented entity)" 1 py "$S/psl-derive/scripts/verify_derived.py" "$FXD/derived_bad" --psl "$FXD/PSL-memory-time-search.md"
-expect "bad derived reports all four breaches" 0 bash -c "python3 '$S/psl-derive/scripts/verify_derived.py' '$FXD/derived_bad' --psl '$FXD/PSL-memory-time-search.md' | grep -c 'without PSL-ID\|does not exist\|named steps\|not in PSL Domain' | grep -q '^4$'"
+expect "bad derived reports all four breaches" 0 bash -c "python3 '$S/psl-derive/scripts/verify_derived.py' '$FXD/derived_bad' --psl '$FXD/PSL-memory-time-search.md' | grep -c 'without an anchor\|does not exist\|named steps\|not in PSL Domain' | grep -q '^4$'"
 # dogfood 2026-09-05 (I-04 / I-05): template guidance in blockquotes must not count as steps; vocab regex must not
 # swallow the Domain Model body when the body mentions "Domain Model" again
 expect "verify_derived: Domain Model body mentioning 'Domain Model' again still yields vocabulary (I-05)" 0 python3 -c "
@@ -419,6 +438,81 @@ DG2="$TMP/derived_good_bq"; cp -R "$FXD/derived_good" "$DG2"; printf '%s\n%s\n' 
 expect "verify_derived: template guidance blockquote quoting banned tokens is not a violation (I-04)" 0 py "$S/psl-derive/scripts/verify_derived.py" "$DG2" --psl "$FXD/PSL-memory-time-search.md"
 DG3="$TMP/derived_badid"; cp -R "$FXD/derived_good" "$DG3"; printf '\n- [F-13a] a suffixed id that the old regex skipped ← PSL-001\n' >> "$DG3/form-draft.md"
 expect "verify_derived: suffixed decision id (F-13a) rejected instead of silently skipped (I-47)" 1 py "$S/psl-derive/scripts/verify_derived.py" "$DG3" --psl "$FXD/PSL-memory-time-search.md"
+
+# --- I-77: the I-04 fix stripped EVERY blockquote, so a workflow written entirely behind `> ` scanned
+# clean and the skill's only "write Σ/φ, not a procedure" check went blind. The strip is now bounded to
+# the leading preamble; this fixture is the mutant-killer.
+DG4="$TMP/derived_quoted_steps"; cp -R "$FXD/derived_good" "$DG4"
+cat > "$DG4/workflow.md" <<'WFEOF'
+# Workflow — memory-time-search
+
+> Σ 写"用户做 X 时世界里发生了什么"，φ 写"歧义如何裁决、对的结果长什么样"。
+> 禁止 Step 1/2/3、步骤 N、阶段 N、首先/然后/接着/最后 串。
+
+## Σ · 发生了什么
+
+> Step 1: 解析 `TimeRef`。
+> Step 2: 与 `Era` 集合求交。
+> Step 3: 重叠 ≥ 2 时进入 ambiguous。
+WFEOF
+expect "verify_derived: a workflow whose steps are all blockquoted is still rejected (I-77)" 1 py "$S/psl-derive/scripts/verify_derived.py" "$DG4" --psl "$FXD/PSL-memory-time-search.md"
+expect "verify_derived: the quoted-steps rejection names the steps (I-77)" 0 bash -c "python3 '$S/psl-derive/scripts/verify_derived.py' '$DG4' --psl '$FXD/PSL-memory-time-search.md' | grep -q 'named steps'"
+
+# --- I-19: UI Contract / Acceptance / Design Principles items are load-bearing and citable
+DG5="$TMP/derived_uianchor"; cp -R "$FXD/derived_good" "$DG5"
+sed -i.bak 's|← PSL-007$|← UI-1|' "$DG5/form-draft.md"
+expect "verify_derived: a decision anchored on ← UI-1 is legal (I-19)" 0 py "$S/psl-derive/scripts/verify_derived.py" "$DG5" --psl "$FXD/PSL-memory-time-search.md"
+DG6="$TMP/derived_badanchor"; cp -R "$FXD/derived_good" "$DG6"
+sed -i.bak 's|← PSL-007$|← UI-9|' "$DG6/form-draft.md"
+expect "verify_derived: ← UI-9 with no such UI Contract item rejected (I-19)" 1 py "$S/psl-derive/scripts/verify_derived.py" "$DG6" --psl "$FXD/PSL-memory-time-search.md"
+DG7="$TMP/derived_viaanchor"; cp -R "$FXD/derived_good" "$DG7"
+sed -i.bak 's|不提供日历筛选器 ←|不提供日历筛选器 (via DP-7) ←|' "$DG7/form-draft.md"
+expect "verify_derived: a (via DP-7) parenthetical naming no such principle rejected (I-19)" 1 py "$S/psl-derive/scripts/verify_derived.py" "$DG7" --psl "$FXD/PSL-memory-time-search.md"
+
+# --- I-20 / I-06: a content-layer rule absent from the form draft is not an omission, and the flag for
+# the ones that ARE omissions has to say what G1 does about it
+expect "verify_derived: content-layer rule kept out of the uncited flag (I-20)" 0 bash -c "python3 '$S/psl-derive/scripts/verify_derived.py' '$FXD/derived_good' --psl '$FXD/PSL-memory-time-search.md' | python3 -c \"import json,sys; d=json.load(sys.stdin); u=[f for f in d['flags'] if f.startswith('form-layer')]; assert u and 'PSL-006' not in u[0] and 'PSL-002' in u[0], d['flags']\""
+expect "verify_derived: the uncited-rule flag names the G1 agenda (I-06)" 0 bash -c "python3 '$S/psl-derive/scripts/verify_derived.py' '$FXD/derived_good' --psl '$FXD/PSL-memory-time-search.md' | grep -q 'G1 议程：删规律或补决策'"
+
+# --- I-21 / I-32 / I-35 / I-44: a targeted re-derivation is legal, but it must archive the round it
+# replaces, ship a decision-level round-diff, and say which round the directory holds
+expect "verify_derived: round 2 with round1/ archive + round-diff passes (I-21)" 0 py "$S/psl-derive/scripts/verify_derived.py" "$FXD/derived_round2" --psl "$FXD/PSL-memory-time-search.md" --round 2
+R2A="$TMP/r2_noarchive"; cp -R "$FXD/derived_round2" "$R2A"; rm -rf "$R2A/round1"
+expect "verify_derived: round 2 without the round1/ archive rejected (I-44)" 1 py "$S/psl-derive/scripts/verify_derived.py" "$R2A" --psl "$FXD/PSL-memory-time-search.md" --round 2
+expect "verify_derived: the missing-archive rejection says so (I-44)" 0 bash -c "python3 '$S/psl-derive/scripts/verify_derived.py' '$R2A' --psl '$FXD/PSL-memory-time-search.md' --round 2 | grep -q 'previous round not archived at round1/'"
+R2B="$TMP/r2_partialarchive"; cp -R "$FXD/derived_round2" "$R2B"; rm -f "$R2B/round1/workflow.md"
+expect "verify_derived: round 2 whose archive is missing a file rejected (I-44)" 0 bash -c "python3 '$S/psl-derive/scripts/verify_derived.py' '$R2B' --psl '$FXD/PSL-memory-time-search.md' --round 2 | grep -q \"round1/ is missing \\['workflow.md'\\]\""
+R2C="$TMP/r2_nodiff"; cp -R "$FXD/derived_round2" "$R2C"; rm -f "$R2C/round-diff.md"
+expect "verify_derived: round 2 without round-diff.md rejected (I-35)" 0 bash -c "python3 '$S/psl-derive/scripts/verify_derived.py' '$R2C' --psl '$FXD/PSL-memory-time-search.md' --round 2 | grep -q 'missing round-diff.md'"
+R2D="$TMP/r2_diff_no_archive_ref"; cp -R "$FXD/derived_round2" "$R2D"; sed -i.bak 's|`round1/form-draft.md`|上一轮|g' "$R2D/round-diff.md"
+expect "verify_derived: a round-diff whose left side names no archive rejected (I-35)" 1 py "$S/psl-derive/scripts/verify_derived.py" "$R2D" --psl "$FXD/PSL-memory-time-search.md" --round 2
+R2E="$TMP/r2_noround"; cp -R "$FXD/derived_round2" "$R2E"; sed -i.bak '/^round: 2$/d' "$R2E/divergence.md"
+expect "verify_derived: round 2 divergence.md not declaring round: 2 rejected (I-32)" 0 bash -c "python3 '$S/psl-derive/scripts/verify_derived.py' '$R2E' --psl '$FXD/PSL-memory-time-search.md' --round 2 | grep -q 'must declare .round: 2.'"
+R2G="$TMP/r2_wronground"; cp -R "$FXD/derived_round2" "$R2G"; sed -i.bak 's|^round: 2$|round: 5|' "$R2G/divergence.md"
+expect "verify_derived: divergence.md declaring a different round than --round rejected (I-32)" 0 bash -c "python3 '$S/psl-derive/scripts/verify_derived.py' '$R2G' --psl '$FXD/PSL-memory-time-search.md' --round 2 | grep -q 'declares round: 5 — mismatch'"
+R2F="$TMP/r2_noruling"; cp -R "$FXD/derived_round2" "$R2F"; sed -i.bak 's|^## G1 裁决 → 落点$|## 备注|' "$R2F/divergence.md"
+expect "verify_derived: round 2 divergence.md without a 裁决 → 落点 table rejected (I-32)" 1 py "$S/psl-derive/scripts/verify_derived.py" "$R2F" --psl "$FXD/PSL-memory-time-search.md" --round 2
+
+# --- I-56 / I-58: a predicate nobody worked once, and a record type with no declared landing, are the
+# two gaps L5 discovered while encoding fixtures — a round too late
+DG8="$TMP/derived_predicate"; cp -R "$FXD/derived_good" "$DG8"
+printf '\n- [F-30] 结果合法当且仅当 `eras[]` 非空 ∧ 每条带 `scene_summary` ← PSL-007\n' >> "$DG8/form-draft.md"
+expect "verify_derived: a predicate decision with no worked example is flagged (I-56)" 0 bash -c "python3 '$S/psl-derive/scripts/verify_derived.py' '$DG8' --psl '$FXD/PSL-memory-time-search.md' | grep -q 'no worked example.*F-30'"
+DG9="$TMP/derived_predicate_ok"; cp -R "$FXD/derived_good" "$DG9"
+printf '\n- [F-30] 结果合法当且仅当 `eras[]` 非空 ∧ 每条带 `scene_summary`；例：`{eras:[{id:1}]}` 缺 scene_summary → 非法 ← PSL-007\n' >> "$DG9/form-draft.md"
+expect "verify_derived: the same predicate with a worked example is not flagged (I-56)" 0 bash -c "! python3 '$S/psl-derive/scripts/verify_derived.py' '$DG9' --psl '$FXD/PSL-memory-time-search.md' | grep -q 'no worked example'"
+expect "verify_derived: good derived carries no worked-example flag (I-56)" 0 bash -c "! python3 '$S/psl-derive/scripts/verify_derived.py' '$FXD/derived_good' --psl '$FXD/PSL-memory-time-search.md' | grep -q 'no worked example'"
+DGA="$TMP/derived_noland"; cp -R "$FXD/derived_good" "$DGA"; sed -i.bak 's|；落位：[^←]*←|←|' "$DGA/form-draft.md"
+expect "verify_derived: 实体与数据形态 with no landing declared is flagged (I-58)" 0 bash -c "python3 '$S/psl-derive/scripts/verify_derived.py' '$DGA' --psl '$FXD/PSL-memory-time-search.md' | grep -q '没有任何落位说明'"
+expect "verify_derived: good derived declares landings and is not flagged (I-58)" 0 bash -c "! python3 '$S/psl-derive/scripts/verify_derived.py' '$FXD/derived_good' --psl '$FXD/PSL-memory-time-search.md' | grep -q '没有任何落位说明'"
+
+# --- I-36: a decision that asserts the shape of a data file needs a line-level locator for that claim
+DGB="$TMP/derived_nolocator"; cp -R "$FXD/derived_good" "$DGB"
+printf '\n- [F-31] 同阶段替代按 graph.yaml 里从同一 stage 节点出发的 conditional 边判定 ← PSL-005\n' >> "$DGB/form-draft.md"
+expect "verify_derived: a claim about graph.yaml structure with no line locator is flagged (I-36)" 0 bash -c "python3 '$S/psl-derive/scripts/verify_derived.py' '$DGB' --psl '$FXD/PSL-memory-time-search.md' | grep -q 'without a line-level locator.*F-31'"
+DGC="$TMP/derived_locator"; cp -R "$FXD/derived_good" "$DGC"
+printf '\n- [F-31] 同阶段替代按 graph.yaml 里从同一 stage 节点出发的 conditional 边判定（graph.yaml L320–321）← PSL-005\n' >> "$DGC/form-draft.md"
+expect "verify_derived: the same claim with graph.yaml L320 is not flagged (I-36)" 0 bash -c "! python3 '$S/psl-derive/scripts/verify_derived.py' '$DGC' --psl '$FXD/PSL-memory-time-search.md' | grep -q 'F-31'"
 
 echo "== dos-extract / verify_dos.py (imported from looper)"
 FXO="$S/dos-extract/eval/fixtures"

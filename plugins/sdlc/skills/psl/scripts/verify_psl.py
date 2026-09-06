@@ -2,14 +2,27 @@
 """verify_psl.py — PSL 文档的机械预门（L0）。
 
 检产物不检过程。reject 的是产品级缺陷（层缺失或空壳、Workflow 写成具名步骤、
-验收不可判、无 Open Questions 节），不是格式洁癖。语义半边（Domain Model 是否真推翻朴素实现、
-世界抓得对不对）机器不可判——本脚本只 flag（needs_semantic_review），裁决权在
-judge 与人。
+验收不可判、无 Open Questions 节、规律没有稳定 PSL-NNN id），不是格式洁癖。语义半边
+（Domain Model 是否真推翻朴素实现、世界抓得对不对）机器不可判——本脚本只 flag
+（needs_semantic_review），裁决权在 judge 与人。
 
-用法：python3 verify_psl.py <PSL文件.md>
-退出码：0 = pass（可带 flag/info），1 = reject。
+规律 id（U1，dogfood 2026-09-05 I-02）：下游 `/psl-derive` 的每条形态决策必须 `← PSL-NNN`，
+且 `verify_derived.py` 对"PSL 里一个 PSL-NNN 都没有"直接拒整份推导。两道闸必须说同一句话——
+所以本脚本也拒。规律可以写在各层的条目上（`- PSL-001 [Σ] …`），也可以集中在「规律索引」节。
+
+规律分层（I-20）：规律定义行的 id 后面可带 `（形态层）` / `（内容层）`（或 `(form)` /
+`(content)` / `[layer: form|content]`）。约束**内容**的规律不出现在形态草案里是正常的——
+`verify_derived.py` 只对 form 层的未引用规律 flag。不写 = form（默认）。
+
+来路核对（I-23）：`[elicit:物料 <file> §N]` 里的文件与章节做存在性 flag（只 flag，不拒——
+物料可能不在本机）。给 `--material-root` 指出物料树，默认取 PSL 同目录与当前工作目录。
+
+用法：python3 verify_psl.py <PSL文件.md> [--material-root DIR]...
+退出码：0 = pass（可带 flag/info），1 = reject，2 = 用法/IO 错。
 """
 
+import argparse
+import os
 import re
 import sys
 
@@ -42,6 +55,18 @@ PROSE_PATTERN = re.compile(r"智能理解|智能地|intelligently|automatically\
 
 # 疑似默认值填充 → flag（承重未知应进 Open Questions，不应以"暂定"糊在正文）
 DEFAULT_FILL_PATTERN = re.compile(r"\bTBD\b|\bTODO\b|暂定|默认假设", re.IGNORECASE)
+
+# 规律定义行：允许前置 bullet / 表格竖线 / 有序号，以及 `[Σ]` `[γ→人]` 这类标签，之后紧跟 PSL-NNN
+LAW_DEF_RE = re.compile(r"^\s*(?:[-*+]\s+|\|\s*|\d+[.、)]\s+)?(?:\[[^\]]*\]\s*)*(PSL-\d{3,})\b")
+# 分层标记：只在 id 之后的一小段里认，避免正文提到"形态层"时误判
+LAYER_RE = re.compile(r"[（(]\s*(内容层|形态层|content|form)\s*[)）]|\[\s*layer\s*[:：]\s*(content|form|内容|形态)\s*\]", re.I)
+CONTENT_LAYER = {"内容层", "content", "内容"}
+# 来路标注：[elicit:物料 …] / [elicit:material …]
+ELICIT_RE = re.compile(r"\[elicit\s*[:：]\s*(?:物料|material)([^\]]*)\]", re.I)
+# 一条来路里的 token：章节引用（§7 / §6.1 / #3）优先于普通词
+CITE_TOKEN_RE = re.compile(r"(?P<sec>[§#]\s*\d+(?:\.\d+)*)|(?P<word>[A-Za-z0-9_][A-Za-z0-9_./\-]*)")
+MATERIAL_EXT = (".md", ".markdown", ".yaml", ".yml", ".json", ".py", ".sh", ".txt", ".toml", ".cfg", ".ts", ".js")
+SKIP_DIRS = {".git", "node_modules", "__pycache__", ".venv", "venv", "dist", "build", ".mypy_cache", ".pytest_cache"}
 
 BULLET_RE = re.compile(r"^(?:[-*+]|\d+[.、)])\s+")
 HEADING_RE = re.compile(r"^(#{1,6})\s+(.*)")
@@ -94,11 +119,121 @@ def find_section(sections, pattern):
     return None
 
 
+def non_fenced(lines):
+    """(行号 1-based, 原文) 逐行，跳过 fenced code block 内容——示例里的 PSL-NNN 不是规律定义。"""
+    out, in_fence = [], False
+    for i, line in enumerate(lines):
+        if re.match(r"^\s*(```|~~~)", line):
+            in_fence = not in_fence
+            continue
+        if not in_fence:
+            out.append((i + 1, line))
+    return out
+
+
+def parse_laws(lines):
+    """扫规律定义行。返回 (laws, dupes)：laws = {id: {"line": n, "layer": "form"|"content"}}。"""
+    laws, dupes = {}, []
+    for lineno, line in non_fenced(lines):
+        m = LAW_DEF_RE.match(line)
+        if not m:
+            continue
+        law_id = m.group(1)
+        tail = line[m.end(1):m.end(1) + 40]
+        lm = LAYER_RE.search(tail)
+        marker = (lm.group(1) or lm.group(2)).lower() if lm else None
+        layer = "content" if marker in CONTENT_LAYER else "form"
+        if law_id in laws:
+            dupes.append((law_id, laws[law_id]["line"], lineno))
+            continue
+        laws[law_id] = {"line": lineno, "layer": layer, "declared": marker is not None}
+    return laws, dupes
+
+
+def index_materials(roots, cap=20000):
+    """basename / stem（小写）→ 路径列表。只索引物料类扩展名，跳过 .git 等噪声目录。"""
+    idx, n = {}, 0
+    for root in roots:
+        if not root or not os.path.isdir(root):
+            continue
+        for dirpath, dirnames, filenames in os.walk(root):
+            dirnames[:] = [d for d in dirnames if d not in SKIP_DIRS and not d.startswith(".")]
+            for fn in filenames:
+                if not fn.lower().endswith(MATERIAL_EXT):
+                    continue
+                n += 1
+                if n > cap:
+                    return idx
+                full = os.path.join(dirpath, fn)
+                idx.setdefault(fn.lower(), []).append(full)
+                idx.setdefault(os.path.splitext(fn)[0].lower(), []).append(full)
+    return idx
+
+
+def _numbered_heading(text, num):
+    return re.search(r"^#{1,6}\s*§?\s*" + re.escape(num) + r"(?:[.．、:：)）\s]|$)", text, re.M)
+
+
+def has_section(path, num):
+    """<path> 里有没有 §<num>。三种算数：编号标题（`## 7. …` / `### 3.1 …`）、字面 `§<num>`、
+    或 `a.b` 形式里 `## a.` 节内的第 b 条有序列表项（ARCHITECTURE §6.1 = §6 节的第 1 条规则）。"""
+    try:
+        with open(path, encoding="utf-8") as f:
+            text = f.read()
+    except OSError:
+        return True  # 读不到就不冤枉它
+    if _numbered_heading(text, num) or re.search(r"§\s*" + re.escape(num) + r"\b", text):
+        return True
+    if "." in num:
+        head, _, tail = num.rpartition(".")
+        m = _numbered_heading(text, head)
+        if m:
+            body = text[m.end():]
+            nxt = re.search(r"^#{1,2}\s", body, re.M)
+            body = body[:nxt.start()] if nxt else body
+            if re.search(r"^\s*" + re.escape(tail) + r"[.、)]\s", body, re.M):
+                return True
+    return False
+
+
+def check_elicit(lines, idx):
+    """对 [elicit:物料 …] 的文件与章节做存在性 flag。章节配它左边最近的那个已解析文件。"""
+    out = []
+    if not idx:
+        return out
+    for lineno, line in non_fenced(lines):
+        for cm in ELICIT_RE.finditer(line):
+            body = cm.group(1) or ""
+            current = None
+            resolved = []
+            for tm in CITE_TOKEN_RE.finditer(body):
+                if tm.group("word"):
+                    w = tm.group("word")
+                    hits = idx.get(w.lower()) or idx.get(os.path.basename(w).lower())
+                    if hits:
+                        current = (w, hits[0])
+                        resolved.append(current)
+                    elif re.search(r"[A-Za-z]", w) and re.search(r"\.[A-Za-z]{1,6}$", w):
+                        # 长得像文件名却找不到——最可能是来路写错了
+                        out.append(f"第 {lineno} 行来路 `[elicit:物料{body}]` 里的 `{w}` 在物料树里找不到"
+                                   f"——来路核对不上，needs_semantic_review")
+                        current = None
+                elif tm.group("sec"):
+                    num = re.sub(r"[^0-9.]", "", tm.group("sec"))
+                    target = current or (resolved[0] if len(resolved) == 1 else None)
+                    if target and not has_section(target[1], num):
+                        out.append(f"第 {lineno} 行来路 `[elicit:物料{body}]` 引用 {target[0]} 的 §{num}，"
+                                   f"但 {target[1]} 里没有这一节——来路凭记忆写的？needs_semantic_review")
+    return out
+
+
 def main():
-    if len(sys.argv) != 2:
-        print(__doc__)
-        return 2
-    path = sys.argv[1]
+    ap = argparse.ArgumentParser(add_help=True, description="PSL 文档的机械预门（L0）")
+    ap.add_argument("psl", help="PSL-<name>.md")
+    ap.add_argument("--material-root", action="append", default=[],
+                    help="物料树根目录（可重复）。默认：PSL 同目录 + 当前工作目录")
+    a = ap.parse_args()
+    path = a.psl
     try:
         with open(path, encoding="utf-8") as f:
             lines = f.read().splitlines()
@@ -173,7 +308,29 @@ def main():
             if PROSE_PATTERN.search(text):
                 flags.append(f"Acceptance 第 {lineno} 行条目疑似入口散文（智能理解…类）——needs_semantic_review")
 
-    # 4. 正文疑似默认值填充（Open Questions 节除外）
+    # 4. 规律 id（U1）：至少一条，且 id 唯一——下游 psl-derive 的每条形态决策都要引用它们。
+    #    verify_derived.py 对"没有任何 PSL-NNN"直接拒整份推导；两道闸必须说同一句话（I-02）。
+    laws, dupes = parse_laws(lines)
+    if not laws:
+        rejects.append("没有任何 `PSL-NNN` 规律 id——下游 /psl-derive 的形态决策无从引用"
+                       "（verify_derived.py 会拒整份推导）。给每条规律一个稳定编号，"
+                       "写在条目上（`- PSL-001 [Σ] …`）或集中在「规律索引」节")
+    for law_id, first, again in dupes:
+        rejects.append(f"规律 id `{law_id}` 被定义了两次（第 {first} 行与第 {again} 行）"
+                       f"——id 不稳定，引用它的形态决策指向哪一条无法确定")
+    if laws:
+        content = sorted(k for k, v in laws.items() if v["layer"] == "content")
+        declared = sum(1 for v in laws.values() if v["declared"])
+        infos.append(f"规律 {len(laws)} 条（form {len(laws) - len(content)} / content {len(content)}）；"
+                     f"带分层标记 {declared} 条"
+                     + (f"，内容层：{content}" if content else "")
+                     + "——分层决定 verify_derived.py 对哪些规律做「未被引用」flag（不写 = form）")
+
+    # 5. 来路核对：`[elicit:物料 <file> §N]` 的文件与章节存在性（只 flag——物料可能不在本机）
+    roots = a.material_root or [os.path.dirname(os.path.abspath(path)) or ".", os.getcwd()]
+    flags.extend(check_elicit(lines, index_materials(roots)))
+
+    # 6. 正文疑似默认值填充（Open Questions 节除外）
     oq_range = range(oq[2], oq[3]) if oq else range(0)
     for title, _, start, end in sections:
         if start in oq_range:

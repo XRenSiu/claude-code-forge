@@ -9,7 +9,7 @@ description: |
   触发词：PSL、产品世界、世界建模、把需求写成世界、"这需求 Agent 会不会做偏"、体验说不清、生成规则 vs 功能规格。
   NOT for deterministic requirements（支付校验 / 合规字段 / 报表列宽）——那里 PRD 的精确恰好够用，套世界模型是过填。
 argument-hint: "[一句/一段产品需求，或需求文件路径] [可选：物料文件路径…]"
-version: 0.1.0
+version: 0.2.0
 user-invocable: true
 # imported into sdlc 2026-09-05 from looper v0.2.0; body kept, sdlc wiring added (see 接线 / 术语映射)
 ---
@@ -59,6 +59,11 @@ Vision 赌注、目标 Persona、关键 Mental Model 承诺、能推翻朴素数
 
 第四种来路（编造、默认值糊上）不存在。用户没说、物料里没有、又不是通用常识的东西，一律 seam。
 
+**来路要写得能被核对。** `[elicit:物料 <文件> §N]` 里的文件名与章节号是给别人复核用的，凭记忆
+写等于没写——本次审计就把 `ARCHITECTURE §7` 的内容记成了 `lifecycle.md §7`，而 lifecycle.md 根本
+没有 §7。`verify_psl.py --material-root <物料目录>` 对文件与章节做存在性 flag（只 flag：物料可能
+不在本机）。标来路时打开那份文件确认一次，比事后被 G1 抓到便宜。
+
 ## 世界（Σ）：一份 PSL 长什么样
 
 骨架六层，**上一层是下一层的定律**（这是推导依赖，不是填表顺序）：
@@ -79,6 +84,19 @@ Vision 赌注、目标 Persona、关键 Mental Model 承诺、能推翻朴素数
 再加两块：**γ 约束**（消歧门 + seam 位置，以 `done_when` + 约束写，不写步骤）、
 **Open Questions**（未决的承重槽，留给用户，每条写清为什么需要人来定）。
 
+**规律要有稳定编号（U1）。** 每条规律带一个 `PSL-NNN` id——写在条目上（`- PSL-001 [Σ] …`）
+或集中成一节「规律索引」，两种都行。这不是格式偏好：下游 `/psl-derive` 的每条形态决策必须
+`← PSL-NNN`，G1 的"推错了 vs 规律错了"全靠这个引用才有着力点。id 一旦发出去就不改、不复用
+（同一个 id 定义两条规律 = 引用它的决策指向不明）。
+
+规律**分两层**，在 id 后面标出来：`（形态层）`约束产物长什么样，`（内容层）`约束产物里写什么。
+不标默认形态层。分层的用处是让 `verify_derived.py` 只对形态层的未引用规律 flag——内容层规律不
+出现在形态草案里是正常的，不该被当成漏了决策。
+
+UI Contract / Acceptance / Design Principles 三层的条目也编号（`UI-1` / `A-1` / `DP-1`），
+理由相同：它们同样承重，形态决策可以直接引它们（`← UI-2`）。不编号的话推导者只能借最近的规律
+再注一句 `(via UI-2)`，引用就成了装饰。
+
 产物落到当前工作目录（或用户指定路径），命名 `PSL-<产品/功能名>.md`，交付时回报路径。
 
 ## 判据（φ）：什么算写对了
@@ -90,6 +108,8 @@ Vision 赌注、目标 Persona、关键 Mental Model 承诺、能推翻朴素数
 - **Workflow 层是世界不是流程**：Σ 写"用户做 X 时世界里发生了什么"，φ 写"歧义如何裁决、
   对的结果长什么样"。具名步骤（Step N / 步骤 N / 阶段 N）和命令式时序串（首先…然后…
   接着…最后…）都说明写的是执行顺序，不是领域动力学——伪装成无序列表或散文的流水线同样算。
+- **规律可被引用**：每条规律有稳定 `PSL-NNN` id，id 不重复；承重的 UI Contract / Acceptance /
+  Design Principles 条目同样编号。没有编号的规律 = 下游引用不了 = 这份 PSL 到 G1 就断了。
 - **"完整"的定义**：每一层都在，未知的地方被诚实标记为 Open Question——而不是被默认值糊上。
   一份六层齐全、Open Questions 很长的 PSL，好过一份用假世界填满的 PSL。
 
@@ -113,17 +133,22 @@ Vision 赌注、目标 Persona、关键 Mental Model 承诺、能推翻朴素数
 
 ## 出口（编译态预门 + 真正的保证）
 
-`scripts/verify_psl.py <PSL文件.md>` 是**机械预门**——检产物不检过程。交付前必须跑。它 **reject**：
+`scripts/verify_psl.py <PSL文件.md> [--material-root DIR]…` 是**机械预门**——检产物不检过程。
+交付前必须跑。它 **reject**：
 
 - 六层缺任何一层（Vision / Mental Model / Domain Model / State Machine / Workflow / Acceptance），
   或任何一层存在但正文空壳；
 - 缺 Open Questions 节（空可以——前提是承重槽真的都被回答了——缺不行）；
 - Workflow 层出现 `Step N` / `步骤 N` / `第 N 步` / `阶段 N` 式的具名步骤；
-- Acceptance 的条目不含 `→`（不是"问 X → 返回 Y"的形态）。
+- Acceptance 的条目不含 `→`（不是"问 X → 返回 Y"的形态）；
+- 一条 `PSL-NNN` 规律 id 都没有，或同一个 id 定义了两条规律。**这一条是接缝**：
+  `verify_derived.py` 对"PSL 里没有任何 PSL-NNN"直接拒整份推导，上游不拒就等于把一份下游必退的
+  产物交出去（dogfood 2026-09-05，I-02）。
 
 它另 **flag**（`needs_semantic_review`，判给 judge / 人，不机械裁决）：Workflow 内 ≥3 连续
 有序列表项或 ≥3 处命令式时序词（首先/然后/接着/最后…）、验收条目里的"智能理解"类入口
-散文、正文里疑似默认值填充的"暂定/假设/TBD"。
+散文、正文里疑似默认值填充的"暂定/假设/TBD"、`[elicit:物料 <文件> §N]` 指向的文件或章节不存在。
+它还打一条 **info**：规律条数与形态层 / 内容层的分布——用来确认分层标记真的被认出来了。
 
 语义的另一半——Domain Model 是否**真**推翻了朴素实现、Mental Model 写的是用户的心智还是
 工程师的、"这个世界抓得对不对"——机器不可判。**声明不判，路由到人**：Open Questions +
