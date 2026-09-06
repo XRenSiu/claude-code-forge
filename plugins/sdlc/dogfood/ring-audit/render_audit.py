@@ -538,6 +538,7 @@ def run_evidence_section(d):
             f"| 缺口 | {gaps_ra.get('total_before')} → **{gaps_ra.get('total_after')}**"
             f"（闭合 {gaps_ra.get('closed')}，新增 {gaps_ra.get('added')}） |",
             f"| 证据锚点 | 重定位 {anchors.get('remapped')} 处，原位未动 {anchors.get('unchanged')} 处 |",
+            (lambda p: f"| 提案 | {p.get('total_before')} → **{p.get('total_after')}**（新增 {p.get('added')}） |")(dct(ra.get("proposals"))),
             f"| 没有变的 | {cell(ra.get('honesty_unchanged'))} |",
             "",
             f"> 锚点怎么修的：{para(anchors.get('how'))} {para(anchors.get('note'))}",

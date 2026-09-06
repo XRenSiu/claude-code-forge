@@ -929,7 +929,7 @@ rings:
         evidence:
         - {kind: file, ref: plugins/sdlc/skills/commit/scripts/verify_commit.py}
         - {kind: gate_json, ref: 'plugins/sdlc/skills/commit/eval/gate.json#gate_pass'}
-        - {kind: smoke, ref: 'plugins/sdlc/skills/commit/eval/gate.json#smoke（bash plugins/sdlc/eval/smoke.sh → 101 passed, 0 failed, 2026-09-05）'}
+        - {kind: smoke, ref: 'plugins/sdlc/skills/commit/eval/gate.json#smoke —— 该字段逐字写着 "101 passed, 0 failed, 2026-09-05"，那是它自己的登记值，**不是**当前计数：smoke.sh 在 b77feb0 上实跑 391 passed / 0 failed。gate.json 未随 commit.sh 与 verify_commit.py 的六类新拒绝路径更新，见缺口 R5/newly_identified/control/gate-json-stale-after-script-lands'}
         not_reached:
           verified: >-
             gate_pass=static_only；fix_list 自记两条未跑——L2（拿一份真实的多关注点 diff 看引擎是否真的拆成两条提交）
@@ -3631,6 +3631,31 @@ proposals:
 # 判据（G1 规则 1 + F-05）：争同一个 Artifact 且记了 alternatives_of → alternatives_of；
 # 争同一个 Artifact 且两边都标 merge_candidate → merge_candidate；产物各不相同 → distinct_exits。
 # =============================================================================
+- id: P-RA-01
+  source: R2/newly_identified/control/gaming-band-unvalidated-at-r2
+  destination: skill_fix_list
+  text: 'done_when.yaml 新增的 gaming_risk_threshold（done_below / block_at_or_above）在 R2 无人校验：acceptance-spec 的 validate_done_when.py 与 donewhen-extract 的 validate_done_when_v2.py 都不认识这个字段，唯一校验它的是 R6 的 next_iteration.py。后果是一份倒挂的阈值（done_below=7 / block_at_or_above=3）在 R2 判 clean、被 G2 冻进锁，直到 R6 第一次 ratchet 才炸——那时改契约的代价从"写契约时改一行"变成"解冻一份已签字的契约"。建议把这条校验前移到 v2 校验器。收件人：donewhen-extract 的 eval/gate.json fix_list。'
+- id: P-RA-02
+  source: R5/newly_identified/control/gate-json-stale-after-script-lands
+  destination: new_issue
+  text: '没有任何机械物要求「skill 的脚本变了，它的 eval/gate.json 必须一起变」。本轮 commit 长出承重脚本 commit.sh、verify_commit.py 加了六类新拒绝，而 commit/eval/gate.json 一个字节没动；plan-cards 同样。后果是效力档位失去对账基础——R017「效力声明不得超过证据档」在证据档比代码旧的时候形同虚设。建议：给 verify_commit.py 加一条检查，skills/<s>/scripts/ 有改动而 skills/<s>/eval/gate.json 的 provenance.date 未动即 flag（不是 reject，因为文档改动也算改动）。'
+- id: P-RA-03
+  source: R6/newly_identified/control/drift-consumer-flag-not-updated
+  destination: skill_fix_list
+  text: 'spec-drift-detector 的输入契约被单边改了而它自己不知道：acceptance-fleet 现在按 skill-dispatch-matrix.md 传 --qa-measurements 并明令禁止 --qa-report，而 spec-drift-detector/SKILL.md 的参数表仍只定义 --qa-report、铁律 8 仍指导用它。调度方与被调度方对同一个 flag 说两件事。建议改齐 SKILL.md，或让调度矩阵与参数表同源。收件人：spec-drift-detector 的 eval/gate.json fix_list。'
+- id: P-RA-04
+  source: R6/newly_identified/knowledge+control/ratchet-log-filenames-diverge-from-graph
+  destination: new_issue
+  text: 'ratchet-log 的文件名两处不一致，已被三轮真实 run 坐实：落地的是 fleet-outputs/{code-reviewer-security,qa-reviewer,pm-reviewer,…}.yaml 与 meta-judge-output.yaml，而 graph.yaml 写的是 ratchet-log/iteration-NNN/{code-review-*,qa-review,…}.yaml 与 final-verdict.yaml——目录层级、文件基名都不同。任何按 graph.yaml 找文件的下游都会扑空。定一个名并全线改齐（与 P-R6-05 是同一件事的两半）。'
+- id: P-RA-05
+  source: R6/newly_identified/control/gate-json-not-synced-with-smoke-coverage
+  destination: skill_fix_list
+  text: 'acceptance-fleet 长出了两个真闸（next_iteration.py / qa_facts.py）并有 smoke 覆盖，而它的 eval/gate.json 仍写 gate_pass=static_only、scripts_run 为空对象。证据档比代码旧，读 gate.json 的人会低估它的承重。收件人：acceptance-fleet 的 eval/gate.json。'
+- id: P-RA-06
+  source: R7/newly_identified/judgment/solo-a-tier-count-not-from-the-contract
+  destination: new_issue
+  text: '单人仓库替代谓词把「该轮 A 档存活 = 0」当作 APPROVED 的替代必要条件，但 A 档的数怎么来没有契约：脚本取 findings 文件里显式的 a_tier_survivors，没有就数 tier: A / severity: P0 的条目——两种数法可能给出不同的数，而写 findings 的是被审方自己的预审 agent。建议把 A 档判据写进 done_when 或 agents/pr-reviewer.md 的输出契约，让这个数有来源。'
+
 suspected_duplicate_pairs:
 - id: SDP-01
   parts: [donewhen-extract, acceptance-spec]
@@ -3739,6 +3764,7 @@ run_evidence:
       unchanged: 257
       note: 'graph.yaml 本轮插入 agent.pr-reviewer 节点（+10 行）与两条边（+2 行），插入点之后的锚点分两段位移，算术会算错，故一律按内容重定位。'
     gaps: {closed: 1, added: 6, total_before: 73, total_after: 79}
+    proposals: {added: 6, total_before: 39, total_after: 45, note: '六条新缺口的 disposition 是 issue，光登记不派单等于只让报告变长，所以按本文档已有的做法各配一条提案 P-RA-0N'}
     honesty_unchanged: 0 个配件达到 verified；三道门仍全是代签；仓库仍无 CI。
 
   # PSL-003 审计者不改被审对象——由 replay_card_commits.sh 证明，不由记忆保证。

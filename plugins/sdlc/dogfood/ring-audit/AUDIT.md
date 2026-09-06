@@ -11,7 +11,7 @@
 | 规律来源 | `plugins/sdlc/dogfood/ring-audit/PSL-sdlc-ring-audit.md` |
 | check-audit 对本文档 | exit 0 |
 | check-audit 删环变体 | exit 1（F-14 校准孪生已记录） |
-| 规模 | 10 环 · 42 配件 · 79 缺口 · 38 处登记为缺少 · 58 条产物-生产者 · 39 条提案 |
+| 规模 | 10 环 · 42 配件 · 79 缺口 · 38 处登记为缺少 · 58 条产物-生产者 · 45 条提案 |
 
 ## 读法
 
@@ -364,7 +364,7 @@
     - 证据：`file:plugins/sdlc/skills/commit/SKILL.md` · `file:plugins/sdlc/skills/commit/scripts/verify_commit.py` · `file:plugins/sdlc/docs/ARCHITECTURE.md#L39`
 - **implemented `compiled`** — compiled（有 verify 脚本或被门挡）
     - 未达 `verified`：gate_pass=static_only；fix_list 自记两条未跑——L2（拿一份真实的多关注点 diff 看引擎是否真的拆成两条提交） 与「红-绿证据是手工的，没有脚本」；脚本冒烟在临时仓库里跑过，不等于 skill 的带 / 不带行为对比。
-    - 证据：`file:plugins/sdlc/skills/commit/scripts/verify_commit.py` · `gate_json:plugins/sdlc/skills/commit/eval/gate.json#gate_pass` · `smoke:plugins/sdlc/skills/commit/eval/gate.json#smoke（bash plugins/sdlc/eval/smoke.sh → 101 passed, 0 failed, 2026-09-05）`
+    - 证据：`file:plugins/sdlc/skills/commit/scripts/verify_commit.py` · `gate_json:plugins/sdlc/skills/commit/eval/gate.json#gate_pass` · `smoke:plugins/sdlc/skills/commit/eval/gate.json#smoke —— 该字段逐字写着 "101 passed, 0 failed, 2026-09-05"，那是它自己的登记值，**不是**当前计数：smoke.sh 在 b77feb0 上实跑 391 passed / 0 failed。gate.json 未随 commit.sh 与 verify_commit.py 的六类新拒绝路径更新，见缺口 R5/newly_identified/control/gate-json-stale-after-script-lands`
 - **naming authored → `fits`** — 位置 / 产物：`git:commit`
     - 命名判定：不重命名；commit 与独占产物 git:commit 同词干（F-03）。它改编自 pdforge 的 git-workflow 约定 （design-notes.md#L52，「直接改编」而非「直接收编」），正文重写成判据 + 预门形态、gate.json 没有 imported_into_sdlc 块，故 provenance 记 authored。
     - 证据：`file:plugins/sdlc/docs/design-notes.md#L52-L53` · `gate_json:plugins/sdlc/skills/commit/eval/gate.json#provenance`
@@ -876,10 +876,10 @@
 
 ## proposals
 
-39 条。每条都必须指向一个已识别的 Assessment 或 Gap（DP-2：补的理由不能是「这环显得单薄」）——`proposal_without_source` 就是这条的闸。
+45 条。每条都必须指向一个已识别的 Assessment 或 Gap（DP-2：补的理由不能是「这环显得单薄」）——`proposal_without_source` 就是这条的闸。
 按 destination 分组：
 
-### new_issue（26）
+### new_issue（29）
 
 | id | source | 提案 |
 |---|---|---|
@@ -909,8 +909,11 @@
 | `P-R8-01` | `A-tune` | naming misfit: tune → suggested_name harness-tune（产物是 harness-proposals，位置是 hill_climb 环，"调什么"是这个名字唯一没说的东西，而 target 恰是封闭集）；不重命名，另开 G2 变更提案 —— 改名要同时动 graph.yaml / loops.yaml / triggers.yaml / ARCHITECTURE §1 / retro 接线段。 |
 | `P-R8-03` | `R8/newly_identified/control/retro-output-no-rejecting-gate` | retro 的产物无拒绝型闸也无门，PSL-015 在 R8 断掉；建议补一个 verify_retro.py（检基线表存在、每条提案有 target ∈ 封闭集 / change / verify_by、数字来自 metrics.json 而非手抄）。 |
 | `P-R8-04` | `R8/newly_identified/knowledge+judgment/harness-change-effect-unmeasured` | hill_climb 的 success 谓词只到 merged \| rejected，没有"上期 expected_delta 是否兑现"的回读；建议在 loops.yaml#hill_climb 的 goal 里加一条效果谓词，并让 tune.py 下一期先核对上期提案的 verify_by。 |
+| `P-RA-02` | `R5/newly_identified/control/gate-json-stale-after-script-lands` | 没有任何机械物要求「skill 的脚本变了，它的 eval/gate.json 必须一起变」。本轮 commit 长出承重脚本 commit.sh、verify_commit.py 加了六类新拒绝，而 commit/eval/gate.json 一个字节没动；plan-cards 同样。后果是效力档位失去对账基础——R017「效力声明不得超过证据档」在证据档比代码旧的时候形同虚设。建议：给 verify_commit.py 加一条检查，skills/<s>/scripts/ 有改动而 skills/<s>/eval/gate.json 的 provenance.date 未动即 flag（不是 reject，因为文档改动也算改动）。 |
+| `P-RA-04` | `R6/newly_identified/knowledge+control/ratchet-log-filenames-diverge-from-graph` | ratchet-log 的文件名两处不一致，已被三轮真实 run 坐实：落地的是 fleet-outputs/{code-reviewer-security,qa-reviewer,pm-reviewer,…}.yaml 与 meta-judge-output.yaml，而 graph.yaml 写的是 ratchet-log/iteration-NNN/{code-review-*,qa-review,…}.yaml 与 final-verdict.yaml——目录层级、文件基名都不同。任何按 graph.yaml 找文件的下游都会扑空。定一个名并全线改齐（与 P-R6-05 是同一件事的两半）。 |
+| `P-RA-06` | `R7/newly_identified/judgment/solo-a-tier-count-not-from-the-contract` | 单人仓库替代谓词把「该轮 A 档存活 = 0」当作 APPROVED 的替代必要条件，但 A 档的数怎么来没有契约：脚本取 findings 文件里显式的 a_tier_survivors，没有就数 tier: A / severity: P0 的条目——两种数法可能给出不同的数，而写 findings 的是被审方自己的预审 agent。建议把 A 档判据写进 done_when 或 agents/pr-reviewer.md 的输出契约，让这个数有来源。 |
 
-### skill_fix_list（13）
+### skill_fix_list（16）
 
 | id | source | 提案 |
 |---|---|---|
@@ -927,6 +930,9 @@
 | `P-R8-02` | `A-retro` | ARCHITECTURE.md#L42 §1 R8 的「门 / 闸」列把 metrics.py 与 tune.py 渲染成闸，但两者都无非零退出路径（tune/SKILL.md#L69 自述"报告工具"）。建议把该列改写为「导出：metrics.py / tune.py；控制：apply_proposal.py 只出 diff + human.harness-review」，否则设计视图高于实况（R017）。 |
 | `P-R8-05` | `R8/unenforced_rule/judgment/uncalibrated-tune-thresholds` | tune 的 40% / 50% / 0.95 是文献先验、未在本仓库校准（gate.json fix_list 已自述），但产出的提案没有携带"未校准"的标记；建议 tune.py 在每条提案里带 calibrated: false，让人在 review 时看得见（PSL-007）。 |
 | `P-R8-06` | `A-human_gate.harness-review` | graph.yaml 两处待修：① L273 human.harness-review 的 writes 与 L210 pr 的 writes 同名 github:pr，但它们是两个不同的 PR，按 R001 一读就成了双生产者；② 该节点没有 loop: 字段，尽管 loops.yaml#L111 把它列为 hill_climb 的 verifier、L362 的边已带 loop: hill_climb。 |
+| `P-RA-01` | `R2/newly_identified/control/gaming-band-unvalidated-at-r2` | done_when.yaml 新增的 gaming_risk_threshold（done_below / block_at_or_above）在 R2 无人校验：acceptance-spec 的 validate_done_when.py 与 donewhen-extract 的 validate_done_when_v2.py 都不认识这个字段，唯一校验它的是 R6 的 next_iteration.py。后果是一份倒挂的阈值（done_below=7 / block_at_or_above=3）在 R2 判 clean、被 G2 冻进锁，直到 R6 第一次 ratchet 才炸——那时改契约的代价从"写契约时改一行"变成"解冻一份已签字的契约"。建议把这条校验前移到 v2 校验器。收件人：donewhen-extract 的 eval/gate.json fix_list。 |
+| `P-RA-03` | `R6/newly_identified/control/drift-consumer-flag-not-updated` | spec-drift-detector 的输入契约被单边改了而它自己不知道：acceptance-fleet 现在按 skill-dispatch-matrix.md 传 --qa-measurements 并明令禁止 --qa-report，而 spec-drift-detector/SKILL.md 的参数表仍只定义 --qa-report、铁律 8 仍指导用它。调度方与被调度方对同一个 flag 说两件事。建议改齐 SKILL.md，或让调度矩阵与参数表同源。收件人：spec-drift-detector 的 eval/gate.json fix_list。 |
+| `P-RA-05` | `R6/newly_identified/control/gate-json-not-synced-with-smoke-coverage` | acceptance-fleet 长出了两个真闸（next_iteration.py / qa_facts.py）并有 smoke 覆盖，而它的 eval/gate.json 仍写 gate_pass=static_only、scripts_run 为空对象。证据档比代码旧，读 gate.json 的人会低估它的承重。收件人：acceptance-fleet 的 eval/gate.json。 |
 
 ### no_action（0）
 
@@ -990,6 +996,7 @@ python3 plugins/sdlc/dogfood/ring-audit/check_audit.py plugins/sdlc/dogfood/ring
 | implemented 档位分布 | 重审前 declared 19 / compiled 23 / verified 0 → 重审后 **declared 17 / compiled 25 / verified 0** |
 | 缺口 | 73 → **79**（闭合 1，新增 6） |
 | 证据锚点 | 重定位 105 处，原位未动 257 处 |
+| 提案 | 39 → **45**（新增 6） |
 | 没有变的 | 0 个配件达到 verified；三道门仍全是代签；仓库仍无 CI。 |
 
 > 锚点怎么修的：逐个锚点从装配时的 fbc6a3c 取原文，再到 HEAD 里按内容定位，得出新行号——不用算术推算。 graph.yaml 本轮插入 agent.pr-reviewer 节点（+10 行）与两条边（+2 行），插入点之后的锚点分两段位移，算术会算错，故一律按内容重定位。
@@ -1103,7 +1110,7 @@ CARD-06 只做装配。四个片段的正文逐字保留（同一段 YAML 在片
 | 5 | `run_evidence.calibration_wording` / `holdout` / `known_gaps` 逐字复制 | 它们是 calibrate 阶段的已接受声明 | 未改一字，含「never the unqualified word 'calibrated'」这条措辞禁令 |
 
 **其余全部为空**：没有新增、删除或改写任何 Part、Assessment、Gap、Artifact、Gate、Proposal；
-没有解决任何片段间的内容冲突（因为没有冲突：79 个 Gap、58 条产物-生产者、39 条提案的 id 两两不撞）。
+没有解决任何片段间的内容冲突（因为没有冲突：79 个 Gap、58 条产物-生产者、45 条提案的 id 两两不撞）。
 
 ### 装配核对：PSL-017 三种来源都登记了吗
 
