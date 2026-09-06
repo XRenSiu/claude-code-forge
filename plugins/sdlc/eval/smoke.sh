@@ -234,6 +234,33 @@ expect "XL allowed with --allow-xl" 0 py "$VP" --body "$FXP/good_body.md" --base
 git checkout -q main; expect "head == base rejected" 1 py "$VP" --body "$FXP/good_body.md" --base main; git checkout -q feat/42-demo
 popd >/dev/null
 
+echo "== pr / merge-commit subjects + version sync (I-74, I-76)"
+MR="$TMP/prmerge"; mkdir -p "$MR"; pushd "$MR" >/dev/null
+git init -q -b main . && git config user.name t && git config user.email t@t
+echo a > a.txt && git add -A && git commit -q -m "chore: init"
+git checkout -q -b feat/42-demo && echo b > b.txt && git add -A && git commit -q -m "feat(search): add relative time parser"
+git checkout -q main && echo c > c.txt && git add -A && git commit -q -m "chore: base moves on"
+git checkout -q feat/42-demo && git merge -q --no-edit main >/dev/null 2>&1
+# dogfood 2026-09-06 (I-74): preflight orders "merge origin/<base> first (no rebase)" when behind, then
+# judged git's generated merge subject by Conventional Commits — doing what the gate says failed the gate.
+expect "git's merge subject is exempt from the Conventional Commits check (I-74)" 0 py "$VP" --body "$FXP/good_body.md" --base main
+expect "…and the merge is reported as a flag, not silently (I-74)" 0 bash -c "python3 '$VP' --body '$FXP/good_body.md' --base main | grep -q 'merge commit(s) in range'"
+# the exemption must be by parent count, not by loosening the subject check
+echo d > d.txt && git add -A && git commit -q -m "just some words"
+expect "a non-merge commit with a bad subject is still rejected (I-74 guard)" 1 py "$VP" --body "$FXP/good_body.md" --base main
+git reset -q --hard HEAD~1 >/dev/null
+mkdir -p plugins/demo/.claude-plugin plugins/demo/skills/alpha
+printf -- '---\nname: alpha\nversion: 0.1.0\n---\n\n# alpha\n' > plugins/demo/skills/alpha/SKILL.md
+printf '{"name":"demo","version":"0.1.0"}\n' > plugins/demo/.claude-plugin/plugin.json
+git add -A && git commit -q -m "feat(demo): add the alpha skill"
+git checkout -q main && git merge -q --no-edit feat/42-demo >/dev/null 2>&1 && git checkout -q feat/42-demo
+echo "a fix to the skill body" >> plugins/demo/skills/alpha/SKILL.md && git add -A && git commit -q -m "fix(alpha): tweak"
+expect "PR range touching skills/** with a frozen plugin version → REJECT (I-76)" 1 py "$VP" --body "$FXP/good_body.md" --base main --skip-preflight
+printf '{"name":"demo","version":"0.1.1"}\n' > plugins/demo/.claude-plugin/plugin.json
+git add -A && git commit -q -m "chore: bump demo to v0.1.1"
+expect "…the same range with the bump passes (I-76)" 0 py "$VP" --body "$FXP/good_body.md" --base main --skip-preflight
+popd >/dev/null
+
 echo "== pr-review / post_review.py"
 FXR="$S/pr-review/eval/fixtures"
 PR="$S/pr-review/scripts/post_review.py"
