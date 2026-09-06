@@ -55,6 +55,8 @@ Do not narrate further — just walk the sub-steps.
     - **If the YAML omits tests** for a layer the matrix marks `✓`, do NOT invent them — that's iron rule 7 ("No inventing requirements"). Just note the omission in the manifest.
     The matrix is a *sanity-check on the contract*, not an override of it. But the deviations need to be visible so Step 5/6 reviewers can decide whether to push back on Step 3 or accept the choice.
 
+14. **A check over an empty set never passes.** Under `schema: 2` the contract's `behavior:` is an empty seed and the test list lives in `tests/<feature>/tests-manifest.yaml`; `--manifest` is a first-class input to `check_verbatim_names.py` and `derive_counts.py`. Pointed at the contract alone, both exit 2 rather than printing `0/0 ✓` or `0 unit tests` — a success report over an empty set is a claim of coverage nobody verified, and it arrives in the shape of evidence. Same rule for any gate you write: if it cannot fail, it is not a gate. See §4-A for the matching `existence:` change (v2 `cli:` / `ui:` boundaries).
+
 ---
 
 ## Sub-step map
@@ -261,10 +263,14 @@ Re-routing reference (for users migrating from v0.x contracts):
 **First, run the traceability exit gate (bundled primitive):**
 
 ```
-python scripts/check_verbatim_names.py <done_when.yaml> tests/<feature>/ --check
+python scripts/check_verbatim_names.py <done_when.yaml> tests/<feature>/ --check                  # v1 contract
+python scripts/check_verbatim_names.py <done_when.yaml> tests/<feature>/ \
+       --manifest tests/<feature>/tests-manifest.yaml --check                                     # v2 contract
 ```
 
 It asserts every contract test name appears in the generated files character-for-character. Any `MISSING (verbatim)` line means a name was paraphrased (the TS/JS `test('humanized title')` trap — iron rule 9), which silently breaks the downstream `grep`-based contract↔impl traceability. Fix the offending file before reporting to the user. This is the *product* check skillwise THEORY.md §4 asks for — a rule the author "should follow" is not a guarantee; a runnable check of the emitted files is.
+
+**Under v2 the names are not in the contract.** A `schema: 2` `done_when.yaml` keeps `behavior:` as an empty seed — the real list is the `tests-manifest.yaml` this skill fills and L5 locks. `--manifest` is therefore a first-class input, not a workaround; the manifest may also be passed as the positional argument on its own. Point the check at the contract alone and there is nothing to check, which is now an **error, not a pass**: an empty contract-name set exits 2 and tells you to pass `--manifest` (I-59). `0/0 contract names found ✓ every contract test name appears` was a success report over an empty set — traceability nobody verified, printed in the shape of evidence.
 
 Then tell the user, in short bullets:
 
@@ -280,7 +286,10 @@ Both the counts line above AND the same counts in the generated `tests/<feature>
 ```
 python scripts/derive_counts.py <done_when.yaml>          # human line + table
 python scripts/derive_counts.py <done_when.yaml> --json    # machine
+python scripts/derive_counts.py <done_when.yaml> --manifest tests/<feature>/tests-manifest.yaml   # v2
 ```
+
+Same v2 rule as the traceability gate above: behaviour counts come from the manifest, the `existence:` count from whichever document declares one. An empty `behavior:` with no `--manifest` exits 2 rather than reporting `0 unit tests` — a zero pasted into a README is a fabricated count, not a small one.
 
 `scripts/derive_counts.py` derives every number straight from the contract (`<N>`=`len(existence)`; `<M>`=`E+P` where `<E>`=`len(unit_tests.example_based)`, `<P>`=`len(unit_tests.property_based)`; `<I>`=integration example+PBT; `<K>`=`len(e2e_tests)`). Paste its output line verbatim into both surfaces. The relationship `M = E + P` is arithmetic done once by the script, not narrative re-counted by hand — which is the whole point: the divergence bug (iter-2 step2 P2-4: README said 16, YAML listed 14) had no named slot to land in once a primitive owns the count. **Never emit two contradicting numbers in the same artifact.** If the generated files end up with more/fewer tests than the script's count, that is a skill bug to surface upstream (push back per iron rule 7 "No inventing requirements" / iron rule 9 "Verbatim test names") — not papered over by inflating the README.
 
@@ -312,8 +321,8 @@ The test files this skill emits become the **acceptance contract** that Step 5 (
 Per skillwise THEORY.md §3, the mechanical sub-parts ship as runnable primitives, not prose the agent re-improvises each run:
 
 - `scripts/gen_existence.py` — emits the fail-fast `existence.sh` (4-A); forces `set -euo pipefail`, the no-`if` helper, and the broad export regex. Maps v1 kinds and the v2 `cli:` / `ui:` observation boundaries (`--cli` / `--ui` / `--ui-anchor`).
-- `scripts/derive_counts.py` — derives the canonical test counts from `done_when.yaml` (kills the headline/README count-divergence bug).
-- `scripts/check_verbatim_names.py` — asserts every contract test name appears verbatim in the generated files (iron rule 9 traceability gate).
+- `scripts/derive_counts.py` — derives the canonical test counts from `done_when.yaml` or, under v2, `--manifest tests-manifest.yaml` (kills the headline/README count-divergence bug).
+- `scripts/check_verbatim_names.py` — asserts every contract test name appears verbatim in the generated files (iron rule 9 traceability gate); `--manifest` for v2, and an empty name set is a failure.
 
 ## Wiring in sdlc
 
