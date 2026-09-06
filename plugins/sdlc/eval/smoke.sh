@@ -1187,6 +1187,12 @@ expect "qa_facts --check: a smuggled decision/finding is caught (I-71)" 1 py "$A
 expect "qa_facts --check: findings buried inside a measurement subtree are caught too" 1 py "$AF/qa_facts.py" --check "$FXA/qa-measurements-nested-leak.yaml"
 expect "qa_facts: a non-qa document is refused" 1 bash -c "printf 'gaming_assessment:\\n  gaming_risk_score: 4.0\\n' > '$TMP/notqa.yaml' && python3 '$AF/qa_facts.py' '$TMP/notqa.yaml'"
 
+# I-104: 回放要用**父提交**的锁——"这条提交动手时生效的规则"。取提交自己树里的锁，
+# 会让一条在同一个 diff 里删掉 .done_when.lock 的提交免检；从工作区探测锁是否存在，
+# 会让分支尖上删锁直接短路整条检查。两臂缺一不可：删锁的必须被拒，从无锁的历史必须放行。
+expect "replay: deleting the lock in the same commit does not exempt it (I-104)" 1 bash "$ROOT/eval/fixtures/replay_lock_arm.sh" "$ROOT/../.." delete_lock
+expect "replay: a commit from before any lock existed still passes (I-104 twin)" 0 bash "$ROOT/eval/fixtures/replay_lock_arm.sh" "$ROOT/../.." no_lock_history
+
 echo
 echo "smoke: $pass passed, $fail failed${ONLY:+, $skipped skipped (--only $ONLY)}  (tmp: $TMP)"
 [[ $fail -eq 0 ]]

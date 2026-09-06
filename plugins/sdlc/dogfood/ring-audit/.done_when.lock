@@ -4,7 +4,7 @@
   "signed_by": "reaudit-orchestrator",
   "signer_kind": "delegated_agent",
   "authorization": "用户 2026-09-06：把所有没有完成的都完成，需要人做的你就帮我做了当做人做的（代签，非人签）；变更提案 change-proposal-003.md（check_audit.py + replay_card_commits.sh + test_check_audit.py + tests-manifest.yaml）",
-  "signed_at": "2026-09-06T10:07:57+00:00",
+  "signed_at": "2026-09-06T10:43:10+00:00",
   "files": [
     {
       "path": "plugins/sdlc/dogfood/ring-audit/done_when.yaml",
@@ -303,7 +303,7 @@
     },
     {
       "path": "plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh",
-      "sha256": "dd87baedcd712e28d2809f1ed8e7a471c61242d090d83a4f0e2bc722d7493bc8",
+      "sha256": "8a10efedd786e81e1cd0c1a8e0b8f3ec9f89784900b05ac8232d0ad97389347f",
       "role": "gate"
     }
   ],

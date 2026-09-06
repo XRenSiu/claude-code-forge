@@ -12,7 +12,7 @@
 | 文件 | 锁内角色 | 改前 | 改后 |
 |---|---|---|---|
 | `check_audit.py` | `gate` | `load_psl_index` 接受空索引并返回空集；`psl_id_unknown` 由 `elif psl_ids:` 守卫；不传 `--psl` 时 `psl_ids = set()` | 空索引 `die(..., 2)` 并点名缺的是 `规律索引` 节；守卫改成 `elif psl_ids is not None:`；不传 `--psl` 时 `psl_ids = None`（"没给尺子"），`psl_index_size` 随之为 `null` |
-| `replay_card_commits.sh` | `gate` | 回放历史 Card 提交时，把**工作区当前**的 `.done_when.lock` 传给 `verify_commit.py` | 改用**那条提交当时**的锁（`git show <sha>:<lock 路径>`；该提交没有锁文件就不传 `--lock`） |
+| `replay_card_commits.sh` | `gate` | 回放历史 Card 提交时，把**工作区当前**的 `.done_when.lock` 传给 `verify_commit.py`；锁路径由工作区存在性探测 | 改用**父提交**的锁（`git show <sha>^:<lock 路径>`）；锁路径改为按位置解析、不要求此刻存在 |
 | `tests/ring-audit/test_check_audit.py` | `contract` | REQ-002 只有 `test_AC_002_b_empty_psl_ids_exit1_psl_id_missing`（契约侧：某一维的 `psl_ids` 为空） | 追加一对孪生：`test_AC_002_b_empty_psl_file_exit2_not_silently_green`（读取侧：空 PSL 文件必须 exit 2 且 stderr 点名 `规律索引`）与 `test_AC_002_b_no_psl_flag_still_runs`（不传 `--psl` 仍合法，`psl_index_size` 为 `null`）。34 → 54 个方法里新增 2 个 |
 
 | `tests/ring-audit/tests-manifest.yaml` | `contract` | `unit_tests.example_based` 与 `test_to_ac.AC-002-b` 各列 1 个方法 | 各补上新增的两个方法名 |
@@ -48,6 +48,22 @@
 
 变异证明：把这一处退回成传工作区的锁，`test_AC_007_a_replay_card_commits_exit0_touching_zero` 立刻变红（53 passed, 1 failed）；装回则 54/54，`replay_card_commits.sh` 自身 `ok: true` / `card_commits_rejected: 0`。
 
+## 第三处改动：锁要取父提交的，不是提交自己的（I-104）
+
+第二处改动最初写成"取**这条提交自己树里**的锁"。隔离预审 round-4 的 F-7 打的正是我请它打的那个点——"改用历史锁之后会不会反而放过本来该拒的东西"——它打中了：
+
+一条在同一个 diff 里**删掉 `.done_when.lock`** 的提交，会因为"该 sha 上没有锁文件"而被免检，它在同一次提交里对锁内文件做的任何改动都不再被拒。判据的来源被交给了受审对象本身，正是本提案给 I-100 写下的那句话的另一次发作。
+
+外层还有一半同样的病：锁**路径**原本由工作区存在性探测（`[ -f "$candidate" ]`），于是把分支尖上的锁删掉，整条锁检查直接短路。
+
+改法（预审给的）：取 `$sha^` 的锁——"这条提交动手时生效的规则"。它仍是历史锁，I-101 要修的"回放不能取决于此刻的锁"完全不受影响；同时锁路径改为按位置解析，不要求此刻存在。父提交没有锁文件才不传 `--lock`（真正的早期提交，本来就没有 G2 锁）。
+
+两臂对照固化成 smoke 期望，附带一次性 git 仓库（`plugins/sdlc/eval/fixtures/replay_lock_arm.sh`）：
+- 删锁的 Card 提交必须被拒（`ok: false`）
+- 从无锁的历史上的 Card 提交必须放行（`ok: true`）
+
+变异证明：把取锁的 sha 退回 `$sha`，A 臂那条期望立刻变红（`[got 0 want 1]`）。
+
 ## 归因层
 
 - [x] task（判据写错 / 写漏）——契约的 AC-002-b 只写了"某一维的 psl_ids 为空"，没写"整份 PSL 为空"；判据漏了读取侧那一半，形态字节不动
@@ -58,7 +74,7 @@ X2：本 PR 不是一次被 `sdlc_state.py` 跟踪的 run（PR #2 的 run 已 ar
 
 ## 重新冻结
 
-- 锁文件项数不变（60），四项内容更新：`check_audit.py` 与 `replay_card_commits.sh`（均 role=gate）、`tests/ring-audit/test_check_audit.py` 与 `tests/ring-audit/tests-manifest.yaml`（role=contract）
+- 锁文件项数不变（60），四项内容更新（`replay_card_commits.sh` 因 F-7 二次更新）：`check_audit.py` 与 `replay_card_commits.sh`（均 role=gate）、`tests/ring-audit/test_check_audit.py` 与 `tests/ring-audit/tests-manifest.yaml`（role=contract）
 - 重签命令与新 sha 见下方"签字"节；stage 仍为 `l5`，签字人 `reaudit-orchestrator`（delegated_agent，授权同上）
 
 ## 一个连带发现，本提案不修
