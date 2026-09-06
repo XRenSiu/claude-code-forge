@@ -91,6 +91,36 @@
 - **版本**：提案按期规划 0.3.0 → 0.6.0，实际一次实施直接到 0.6.0；`tune` 0.1.0 新增；sdlc / review-loop / pr / retro 0.2.0；
   implement / ratchet / acceptance-fleet patch（加环契约段）。
 
+## 2026-09-06 第四次整理：把报告的五条缺口实现掉（v0.10.0 → v0.11.0）
+
+`docs/reports/raising-the-floor-2026-09-05` 对照业界证据数出五条缺口，按「补上之后下限抬多少」排序。
+五条全部实现。设计取舍如下。
+
+- **结构闸**（`constraints.structure` + `verify_structure.py`）。借鉴 GitClear 2026 与 arXiv 2608.25241 的
+  测量：复制粘贴 9.4% → 15.7%、认知复杂度 +27% 对 +53%，而 A 档一项都不检。OpenAI 的做法是把架构约束
+  写成 linter；这里把它写进契约，因为它是**这次交付承诺的判据**，G2 冻结它、改它走变更提案。
+  **不照搬的地方**：分析器缺席不报绿。退出码 3 是这个脚本唯一不能妥协的设计。一把没跑的尺子不许报通过。
+  内建分析器只做能做准的：Python 用 ast 精确算，其它语言交给 lizard。近似不冒充精确。
+- **仓库地图**（`agent-map.md` + `verify_agent_map.py --probe`）。借鉴 OpenAI 的「AGENTS.md 只做目录」与
+  arXiv 2606.20512 的 probe-and-refine。**不照搬的地方**：不把 README 塞给 agent。2607.27250 的 288 次运行说堆仓库知识不提高正确率。
+  地图只装四样：跑起来、目录职责、禁区、已知陷阱。而且按卡切片才进 card_context。
+  陷阱必须有来路，与 `invariant-extract` 的 provenance 纪律同源。
+- **分歧集**（`divergence.py`）。搬的是本插件已有的 `psl-derive` 机制（N 次隔离推导取分歧），
+  搬到契约层给 TASK 轨。理由是 Ambig-SWE：模型分不清任务写没写清楚，所以不能问它「这里模糊吗」。
+- **体量分档**（`sizing.yaml`）。回应 Böckeler 对 spec 工具的批评。**极性是这条的全部**。缺省 M。S 的豁免只认 `size_source=derived`。
+  一个靠遗漏就能打开的门不是门。
+- **行为层对照**（`eval/effect/`）。这是插件第一次有自己的 L2 证据。设计上最重要的两条：
+  分数机器判（LLM 只在 arm 里干活，不在评分里说话），以及 `score.py` 在样本不够时**拒绝下结论**——
+  那条是给写这个目录的人设的。
+
+**这一轮真正的教训不在五条缺口里，在出题上。** 五个题目 bug（E-01 / E-05 / E-08 两处 / E-09）
+是同一个错的五次发作：出题人把自己的实现方式写进了判据。规矩写在 `evaluation.md`：
+判据只能落在行为上或「有没有」上，不能落在「怎么做」上。
+
+**顺带修的两处旧账**：`replay_lock_arm.sh` 写死仓库布局导致变异自检长期跑不了；
+跨供应商评估在正文里是「强烈建议」而没有任何接线（现在是 `evaluators.yaml` + `pick_evaluators.py`，
+分不到非本家就留 `same_vendor_caveat`）。
+
 ## 有意不做的
 
 - 不做 hooks：把 `verify_*.py` 挂成 PreToolUse 会拦所有 git commit，对非 sdlc 场景过填；留给用户按仓库决定。

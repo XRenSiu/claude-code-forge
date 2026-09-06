@@ -211,6 +211,15 @@ skill 正文的进化（第七个闭环）不在本插件：`skill-evolve` 邻�
 /pr-review 57 --focus security --post                # 审别人的 PR
 /dos-extract . ; /invariant-extract search           # 本体与不变量
 /retro --archive specs/                              # 复盘：判据与世界的提案
+
+# 五处新配件（v0.10–0.11），单独也能用
+python3 skills/sdlc/scripts/sdlc_state.py size --base origin/main --commit   # 体量分档，缺省 M
+python3 skills/qa-reviewer/scripts/verify_structure.py \
+        --done-when done_when.yaml --base origin/main                        # A 档结构闸，exit 3 = 未求值
+python3 skills/donewhen-extract/scripts/divergence.py d1.yaml d2.yaml d3.yaml # N 份草案的分歧集
+python3 skills/dos-extract/scripts/verify_agent_map.py agent-map.md --probe   # 仓库地图，命令真跑一遍
+python3 skills/plan-cards/scripts/slice_agent_map.py agent-map.md --card cards/CARD-01.yaml
+python3 skills/acceptance-fleet/scripts/pick_evaluators.py                     # 跨供应商分配 + 留痕
 /tune specs/ --pr-watch .sdlc/pr-watch               # 调参：环的参数提案（≥ 2 个归档）
 python3 skills/sdlc/scripts/sdlc_state.py loops      # 六个环的预算消耗
 python3 skills/sdlc/scripts/trace.py why AC-003      # 这条 AC 为什么改
@@ -310,7 +319,20 @@ derived/ · PSL-<x>.md · dos.yaml          releases/vX.Y.Z.md · CHANGELOG.md �
 
 ---
 
-## 8. 术语
+## 8. 还有哪些文档
+
+| 文档 | 回答什么 |
+|---|---|
+| `reference.md` | 手上这件事有没有现成脚本；它检什么、退出码什么意思。**全部脚本与资产的索引**，冒烟盯着它不许漏 |
+| `evaluation.md` | 这个插件自己怎么被验：三层证据、现在能说什么、哪些话还不能说 |
+| `lifecycle.md` | 全景与空白清单：每个环节由谁承载、哪些还空着 |
+| `routing.md` | 失败往哪回：归因启发式、分层预算、按体量的覆盖 |
+| `design-notes.md` | 借鉴来源与取舍：哪些是收编的、哪些是新写的、哪些有意不做 |
+| `proposals/loop-graph-engineering.md` | v0.6.0 那次按环 / 图透镜的重看 |
+| `reports/raising-the-floor-2026-09-05.*` | 为什么不同人用同一个 agent 质量差那么多；五条缺口与它们的实现 |
+| `../eval/effect/README.md` | 行为层对照的协议、题库、每一轮的读数与发现 |
+
+## 9. 术语
 
 | 词 | 含义 |
 |---|---|

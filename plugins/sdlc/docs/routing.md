@@ -32,6 +32,10 @@
 | ontology | 1 | 1 | → world |
 | world | 无上限 | 无上限 | 本来就该停下来交人 |
 
+**按体量的覆盖**（v0.11.0）：`assets/sizing.yaml` 的 `budget_overrides` 在轨道预算之上再盖一层。
+S 档收紧到 `card_retries: 2` / `plan_reflows: 1`——三行修复重试三次还不过，问题不在实现层。
+覆盖只在 `intake.size` 有值时生效，缺省 M 不覆盖任何一项。
+
 **指纹终止**：同层同指纹连续 2 次 = 无进展 → 立即升级，不等预算烧完。指纹 = 失败输出的稳定
 摘要（`--fingerprint`），或 `--evidence` 文本的 sha1 前 12 位。
 

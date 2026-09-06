@@ -1296,6 +1296,14 @@ expect "agent-map: the repo's own map still passes a real probe" 0 \
 expect "agent-map: the recursive command is recorded as skipped, not as proved" 0 \
   bash -c "env AGENT_MAP_NO_RECURSE=smoke.sh python3 '$S/dos-extract/scripts/verify_agent_map.py' '$ROOT/../../agent-map.md' --repo '$ROOT/../..' --probe --timeout 90 --json | python3 -c \"import json,sys;d=json.load(sys.stdin);sk=[p for p in d['probes'] if p['exit']=='skipped(recursive)'];assert sk, 'the self-referential command should be marked skipped';assert any('未 probe' in f for f in d['flags']), d['flags']\""
 
+# 文档漂移是可以被机器发现的（2026-09-06：8 个脚本、26 个资产曾在六份文档里一次都没出现过）。
+expect "docs: every script and asset appears in docs/reference.md" 0 \
+  py "$ROOT/eval/fixtures/doc_coverage.py" "$ROOT"
+expect "docs: a script missing from the index turns it red (twin)" 1 \
+  bash -c "t=\"$TMP/dc\"; rm -rf \"\$t\"; mkdir -p \"\$t/docs\"; cp -R '$ROOT/skills' \"\$t/\"; sed 's/verify_structure.py/verify_XXXX.py/g' '$ROOT/docs/reference.md' > \"\$t/docs/reference.md\"; python3 '$ROOT/eval/fixtures/doc_coverage.py' \"\$t\""
+expect "docs: the evaluation doc still states the plugin is not L2-verified" 0 \
+  bash -c "grep -q 'static_only' '$ROOT/docs/evaluation.md' && grep -q '出题人与被测者同源' '$ROOT/docs/evaluation.md'"
+
 echo
 echo "smoke: $pass passed, $fail failed${ONLY:+, $skipped skipped (--only $ONLY)}  (tmp: $TMP)"
 [[ $fail -eq 0 ]]

@@ -1,16 +1,17 @@
 # sdlc (v0.6.0)
 
-完整的软件开发生命周期：**上半段建世界**（PSL → 推导产物 → G1 人裁决）、**下半段收敛交付**（issue → 分支 →
-判据冻结 → 任务卡 → 按卡实现与提交 → PR → review 跟进 → 合入归档 → 逃逸缺陷登记）、**横切**（DOS 本体与不变量、
-回流路由与预算、度量）。每一步的产物要么能被脚本检，要么被一道只能人签的门挡住。
+完整的软件开发生命周期，分三段。上半段建世界：PSL → 推导产物 → G1 人裁决。
+下半段收敛交付：issue → 分支 → 判据冻结 → 任务卡 → 按卡实现与提交 → PR → review 跟进 → 合入归档 → 逃逸缺陷登记。
+横切三条：DOS 本体与不变量、回流路由与预算、度量。
+每一步的产物要么能被脚本检，要么被一道只能人签的门挡住。没有第三种。
 
-写法遵循 skillwise 的四原子纪律（Knowledge / Capability / Judgment / Control，不写 Step 1/2/3），
+写法遵循 skillwise 的四原子纪律：Knowledge、Capability、Judgment、Control，不写 Step 1/2/3。
 运行时遵循 SKILL.state（状态文件是充分统计量，脚本校验迁移）与 WikiSkill（账本只增不删）。
 流程对齐 *Spec Loop v1.2 × done_when Pipeline*：U1–U3 / G1、L1–L8 / G2 / G3、X1–X3。
 
 ## 二十八个 skill（九环 + 脊柱，见 [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)）
 
-> v0.6.0：按 loop engineering / graph engineering 的透镜重看（[`docs/proposals/loop-graph-engineering.md`](docs/proposals/loop-graph-engineering.md)）——图（`graph.yaml`）与六个环（`loops.yaml`）成为数据并被 lint；每个环绑到 `/goal` `/loop` Stop hook `/schedule`（`triggers.yaml`）；收敛检测加 oscillation / plateau / impossible（routing v2）；账本有了类型边伴生 `trace.jsonl`；`/pr --pre-review`；新 skill `/tune` 闭合 hill-climbing 环。
+> v0.6.0：按 loop engineering / graph engineering 的透镜重看（[`docs/proposals/loop-graph-engineering.md`](docs/proposals/loop-graph-engineering.md)）。图（`graph.yaml`）与六个环（`loops.yaml`）成为数据并被 lint；每个环绑到 `/goal` `/loop` Stop hook `/schedule`（`triggers.yaml`）；收敛检测加 oscillation / plateau / impossible（routing v2）；账本有了类型边伴生 `trace.jsonl`；`/pr --pre-review`；新 skill `/tune` 闭合 hill-climbing 环。
 
 ### 脊柱与交付主干（本插件原创）
 
@@ -105,6 +106,13 @@
 # 全流程（显式调起；--autopilot 免逐步确认，但三道门仍要人签）
 /sdlc "用户可以按相对时间搜索记忆" --track task
 /sdlc --resume memory-time-search
+
+# 五处新配件（v0.10–0.11），单点也能用
+python3 skills/sdlc/scripts/sdlc_state.py size --base origin/main --commit    # 体量分档（缺省 M，S 要证据换）
+python3 skills/qa-reviewer/scripts/verify_structure.py --done-when done_when.yaml --base origin/main
+python3 skills/donewhen-extract/scripts/divergence.py d1.yaml d2.yaml d3.yaml  # N 份草案的分歧 = 要澄清的槽
+python3 skills/dos-extract/scripts/verify_agent_map.py agent-map.md --probe    # 仓库地图，命令逐条真跑
+python3 skills/acceptance-fleet/scripts/pick_evaluators.py                      # 跨供应商分配 + 同源留痕
 ```
 
 ## 状态与产物
@@ -118,7 +126,7 @@ cards/CARD-xx.yaml          # L4 任务卡
 specs/<slug>/               # 归档（metrics.py 的数据源）
 ```
 
-`.sdlc/` 是**运行时状态，不入库**——把它加进仓库的 `.gitignore`。真正要留下的是 `specs/<slug>/`：
+`.sdlc/` 是**运行时状态，不入库**。把它加进仓库的 `.gitignore`。真正要留下的是 `specs/<slug>/`：
 `sdlc_state.py archive` 在收尾时把状态、账本、trace 与契约一起复制过去，retro 的 `metrics.py` 只读那里。
 两者搞混的后果是：要么把每一次门的中间态提交进历史，要么归档为空、下一次 retro 没有基线可比（dogfood I-01）。
 
@@ -127,12 +135,22 @@ specs/<slug>/               # 归档（metrics.py 的数据源）
 - `forge-teams` / `pdforge`：实现侧的并行 / TDD 执行器（L6），有则用
 - `looper`、`done-when-pipeline`、`ratchet`：本插件内含它们这条线上 skill 的副本；源插件仍是上游
 
-架构 / 运转 / 使用：[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)；全景与空白清单：[`docs/lifecycle.md`](docs/lifecycle.md)；路由与归因：[`docs/routing.md`](docs/routing.md)；
-借鉴与取舍：[`docs/design-notes.md`](docs/design-notes.md)。
+## 文档
+
+| 想知道什么 | 看哪份 |
+|---|---|
+| 这东西是什么、怎么运转、怎么用 | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) |
+| **手上这件事有没有现成脚本，它检什么、退出码什么意思** | [`docs/reference.md`](docs/reference.md)（全部脚本与资产的索引，冒烟盯着不许漏） |
+| **这个插件自己被验到什么程度，哪些话还不能说** | [`docs/evaluation.md`](docs/evaluation.md) |
+| 每个环节由谁承载、哪些还空着 | [`docs/lifecycle.md`](docs/lifecycle.md) |
+| 失败往哪回、预算怎么算 | [`docs/routing.md`](docs/routing.md) |
+| 为什么这样设计、什么有意不做 | [`docs/design-notes.md`](docs/design-notes.md) |
+| 为什么不同人用同一个 agent 质量差那么多 | [`docs/reports/raising-the-floor-2026-09-05.md`](docs/reports/raising-the-floor-2026-09-05.md) |
+| 行为层对照怎么跑、读数是多少 | [`eval/effect/README.md`](eval/effect/README.md) |
 
 ## 诚实声明
 
 所有 28 个 skill 处于 `static_only`：结构过审、脚本在 fixtures 上冒烟（`bash plugins/sdlc/eval/smoke.sh`）。
-**行为层对比不再是零**：`eval/effect/` 是带 / 不带 skill 的对照题库与跑分器，已在 1 个任务 × 3 个 arm 上真跑过一轮（`eval/effect/baseline.md`）。那一轮的主要产物是**题目自己的 bug**，不是 arm 的排名——`score.py` 在样本 < 5 个任务时一律回 `insufficient_sample`，不许拿它宣称插件有效。
+**行为层对比不再是零**：`eval/effect/` 是带 / 不带 skill 的对照题库与跑分器，已在 1 个任务 × 3 个 arm 上真跑过一轮（`eval/effect/baseline.md`）。那一轮的主要产物是**题目自己的 bug**，不是 arm 的排名。`score.py` 在样本 < 5 个任务时一律回 `insufficient_sample`，不许拿它宣称插件有效。
 v0.6.0 的收敛阈值（指纹历史 6、震荡周期 2–3、plateau 3 轮、sycophancy 0.95）与 tune 的 40% / 50% 规则是文献先验，未在真实运行上校准。
 静态读不是裁决。各 skill 的 `eval/gate.json` 记录了冒烟结果与 fix_list。
