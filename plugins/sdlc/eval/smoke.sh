@@ -815,10 +815,17 @@ expect "gen_existence: --ui-anchor reproduces the hand-written ring-tables expan
 expect "gen_existence: v1 kinds still map (file/function/route/db_field/component)" 0 bash -c "out=\$(python3 '$TSG/gen_existence.py' '$EX/done_when.yaml' --src src) && grep -q 'All 12 existence checks passed' <<<\"\$out\" && grep -q 'test -f \"src/billing/cancel_subscription_use_case.ts\"' <<<\"\$out\""
 expect "check_verbatim_names: v2 contract alone → empty name set rejected, never 0/0 ✓ (I-59)" 2 py "$TSG/check_verbatim_names.py" "$DW2" "$TD3" --check
 expect "check_verbatim_names: the empty-set message points at --manifest (I-59)" 0 bash -c "python3 '$TSG/check_verbatim_names.py' '$DW2' '$TD3' --check 2>&1 | grep -q -- '--manifest tests/<feature>/tests-manifest.yaml'"
-expect "check_verbatim_names: --manifest finds all 34 v2 names (I-54)" 0 bash -c "python3 '$TSG/check_verbatim_names.py' '$DW2' '$TD3' --manifest '$MF2' --json | python3 -c \"import json,sys; d=json.load(sys.stdin); assert d['total']==34 and d['present']==34 and not d['missing'], d\""
+expect "check_verbatim_names: every manifest name is present, whatever the suite's size (I-54)" 0 bash -c "python3 '$TSG/check_verbatim_names.py' '$DW2' '$TD3' --manifest '$MF2' --json | python3 -c \"import json,sys; d=json.load(sys.stdin); assert d['missing']==[] and d['present']==d['total'] and d['total']>0, d\""
 expect "check_verbatim_names: a name missing from the tests dir still → 1 under --manifest" 1 py "$TSG/check_verbatim_names.py" "$DW2" "$TD2" --manifest "$MF2" --check
 expect "derive_counts: v2 behavior seed alone → rejected, not '0 unit tests' (I-54)" 2 py "$TSG/derive_counts.py" "$DW2"
-expect "derive_counts: --manifest gives 4 existence / 32 unit / 2 integration / 0 e2e (I-54)" 0 bash -c "python3 '$TSG/derive_counts.py' '$DW2' --manifest '$MF2' --json | python3 -c \"import json,sys; d=json.load(sys.stdin); assert d=={'existence':4,'unit_total':32,'unit_example':32,'unit_property':0,'integration_total':2,'integration_example':2,'integration_property':0,'e2e':0}, d\""
+expect "derive_counts: the derived counts add up to the methods in the file (I-54)" 0 bash -c "python3 '$TSG/derive_counts.py' '$DW2' --manifest '$MF2' --json | python3 -c \"
+import json, re, sys
+d = json.load(sys.stdin)
+methods = len(re.findall(r'def (test_\\w+)', open('$TD3/test_check_audit.py', encoding='utf-8').read()))
+assert d['unit_total'] + d['integration_total'] == methods, (d, methods)
+assert d['unit_example'] + d['unit_property'] == d['unit_total'], d
+assert d['existence'] > 0, d
+\""
 
 # I-62: the RED baseline must measure a checkout of HEAD, not the working tree a parallel
 # implementer is writing into. Scenario: the suite is committed, the instrument is NOT.
