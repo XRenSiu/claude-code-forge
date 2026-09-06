@@ -116,6 +116,12 @@ expect "a secondary equal to the primary is refused (I-22)" 1 py "$S/sdlc/script
 expect "a secondary without a primary is refused (I-22)" 1 py "$S/sdlc/scripts/sdlc_state.py" gate --slug t g2 --verdict reject --by g2 --secondary-attribution rule_error
 popd >/dev/null
 expect "an unfilled G1 template yields no terms and says the wording cannot be checked (I-45)" 0 bash -c "python3 '$S/issue/scripts/verify_issue.py' '$PSLI2' --dos '$FX/dos.yaml' --g1 '$G1T' | grep -q 'no machine-readable'"
+# dogfood 2026-09-06 (I-60 handover): the enforcement half was closed when the negation check learned
+# to read both files; this is the instruction half. An operator reading the record must be able to
+# learn where a post-signature clarification goes, and the two templates must not claim the same act.
+expect "the G1 record points at the interpretations file (I-60)" 0 bash -c "grep -q 'g1-interpretations' '$S/sdlc/assets/g1_record.md'"
+expect "the interpretations template sends re-signatures back to the record (I-60)" 0 bash -c "grep -q '补签' '$S/sdlc/assets/g1_interpretations.md' && grep -q 'g1-record' '$S/sdlc/assets/g1_interpretations.md'"
+expect "sign refuses to lock the interpretations file (I-60)" 2 bash -c "cd \"\$(mktemp -d)\" && printf 'x' > g1-interpretations.md && python3 '$S/sdlc/scripts/lock_done_when.py' sign --by human --stage g2 --out .l g1-interpretations.md"
 
 echo "== plan-cards / lint_cards.py"
 FX="$S/sdlc/eval/fixtures"
