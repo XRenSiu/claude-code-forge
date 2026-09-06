@@ -149,6 +149,35 @@ expect "advance release" 0 py "$SS" advance release
 expect "advance archive refused (release not done)" 1 py "$SS" advance archive
 expect "set release.done → advance archive" 0 bash -c "python3 '$SS' set release.version=0.1.0 release.tag=v0.1.0 release.done=true >/dev/null && python3 '$SS' advance archive"
 expect "ledger has waiver row" 0 bash -c "grep -q '| waiver |' .sdlc/demo/ledger.md"
+# dogfood 2026-09-06 (I-57): state.schema.json defines lock.stage, so the l5 re-sign must be able to record it
+expect "set lock.stage=l5 (I-57)" 0 bash -c "python3 '$SS' set lock.stage=l5 >/dev/null && python3 -c \"import json; assert json.load(open('.sdlc/demo/state.json'))['lock']['stage']=='l5'\""
+expect "lock.stage outside the g2|l5 enum refused (I-57)" 1 py "$SS" set lock.stage=nope
+# dogfood 2026-09-06 (I-67): a waiver needs no stage transition to hang on; `waive` prints the id to cite
+expect "waive records a standalone waiver + ledger event (I-67)" 0 bash -c "python3 '$SS' waive --signal hidden_variant_fail --reason 'holdout 6/10 accepted as a ratchet item' --by g2-judge --fingerprint d1fc8380957b > '$TMP/waive.json' && python3 -c \"
+import json
+assert json.load(open('$TMP/waive.json'))['event'].startswith('ev-')
+w=json.load(open('.sdlc/demo/state.json'))['waivers']
+assert any(x.get('signal')=='hidden_variant_fail' and x.get('fingerprint')=='d1fc8380957b' for x in w), w\""
+expect "waive by a delegated agent without --authorization refused (I-67)" 1 py "$SS" waive --signal card_test_fail --reason r --by proxy-bot --signer-kind delegated_agent
+# dogfood 2026-09-06 (I-70): a hand-written row must be able to cite the fail it excuses, not describe it in prose
+expect "ledger --fingerprint / --card land on the trace event (I-70)" 0 bash -c "python3 '$SS' ledger --kind note --note 'the waiver above excuses this fail' --fingerprint d1fc8380957b --card CARD-01 >/dev/null && python3 -c \"
+import json
+ev=[json.loads(l) for l in open('.sdlc/demo/trace.jsonl') if l.strip()][-1]
+assert ev.get('fingerprint')=='d1fc8380957b' and ev.get('card')=='CARD-01', ev\""
+# dogfood 2026-09-06 (I-83): the review exit is a closed enum, and 'waived' / any exit_reason must cite a waiver event
+expect "review.done=waived without a waiver_ref refused (I-83)" 1 py "$SS" set review.done=waived
+expect "review.done=true beside a free-text exit_reason refused (I-83)" 1 py "$SS" set review.exit_reason="waived by a judge, not passed"
+expect "review.waiver_ref must resolve to a trace event (I-83)" 1 py "$SS" set review.done=waived review.waiver_ref=ev-9999
+expect "review.done outside the closed enum refused (I-83)" 1 py "$SS" set review.done=maybe
+expect "waived review exit citing its waiver event accepted (I-83)" 0 bash -c "WID=\$(python3 '$SS' waive --signal review_non_convergence --reason 'APPROVED unobtainable: the author cannot approve their own PR' --by human | python3 -c 'import json,sys; print(json.load(sys.stdin)[\"event\"])') && python3 '$SS' set review.done=waived review.waiver_ref=\$WID review.exit_reason='structural non-convergence' >/dev/null && python3 -c \"
+import json
+r=json.load(open('.sdlc/demo/state.json'))['review']
+assert r['done']=='waived' and r['waiver_ref'].startswith('ev-'), r\""
+expect "prereqs: a waived review exit still opens g3, an open one does not (I-83)" 0 python3 -c "
+import importlib.util; spec=importlib.util.spec_from_file_location('ss','$SS'); ss=importlib.util.module_from_spec(spec); spec.loader.exec_module(ss)
+assert ss.prereqs({'stage':'review','review':{'done':'waived','waiver_ref':'ev-0001'},'gates':{}},'g3')==[]
+assert ss.prereqs({'stage':'review','review':{'done':True},'gates':{}},'g3')==[]
+assert ss.prereqs({'stage':'review','review':{},'gates':{}},'g3'), 'an open review must not open g3'"
 expect "state.json never hand-edited: json valid" 0 python3 -c "import json;json.load(open('.sdlc/demo/state.json'))"
 popd >/dev/null
 
@@ -627,7 +656,20 @@ expect "trace lint on live run passes" 0 py "$SSG/trace.py" lint --root .sdlc --
 expect "trace why CARD-01 walks fail → reflow" 0 bash -c "python3 '$SSG/trace.py' why CARD-01 --root .sdlc --slug conv | grep -q 'reflow'"
 expect "loops: six rows with budget consumption" 0 bash -c "python3 '$SS' loops --slug conv --json | python3 -c \"import json,sys; d=json.load(sys.stdin); ids=[l['loop'] for l in d['loops']]; assert len(ids)==6 and 'card_retry' in ids and d['loops'][0]['used'] is not None, d\""
 expect "ledger --ref with unknown edge type rejected" 1 py "$SS" ledger --kind note --note x --ref bogus:CARD-01
+# dogfood 2026-09-06 (I-66): a short sha and its full one are one commit; registering both must not count two
+expect "card --commit resolves a short sha and dedupes against the full one (I-66)" 0 bash -c "FULL=\$(git rev-parse HEAD) && python3 '$SS' card CARD-03 --status doing --commit \$FULL >/dev/null && python3 '$SS' card CARD-03 --status done --commit \${FULL:0:7} >/dev/null && python3 -c \"
+import json, subprocess
+full=subprocess.run(['git','rev-parse','HEAD'],capture_output=True,text=True).stdout.strip()
+c=json.load(open('.sdlc/conv/state.json'))['cards']['items']['CARD-03']['commits']
+assert c==[full], c\""
+cp "$FX/done_when.yaml" done_when.yaml; py "$SS" set contract.done_when=done_when.yaml >/dev/null
 expect "archive copies trace.jsonl" 0 bash -c "python3 '$SS' archive --to specs/conv >/dev/null && test -f specs/conv/trace.jsonl"
+# dogfood 2026-09-06 (I-85): metrics.py reads done_when.yaml FROM the archive; leaving it behind emptied the metric
+expect "archive carries the contract retro reads (I-85)" 0 bash -c "test -f specs/conv/done_when.yaml"
+expect "human-AC ratio is computable from a fresh archive (I-85)" 0 bash -c "python3 '$S/retro/scripts/metrics.py' specs --json '$TMP/conv-metrics.json' >/dev/null && python3 -c \"
+import json
+r=[f for f in json.load(open('$TMP/conv-metrics.json'))['features'] if f['feature']=='conv'][0]
+assert r['human_ac_ratio'] is not None and r['contract_rework']['ac_total'], r\""
 popd >/dev/null
 
 echo "== pr / --pre-review (P2)"
@@ -645,6 +687,19 @@ expect "trace why AC-003-a walks 3 hops to hidden_variant_fail" 0 bash -c "pytho
 expect "trace impact AC-003-a reaches the escape" 0 bash -c "python3 '$SSG/trace.py' impact AC-003-a --trace '$S/retro/eval/fixtures/feat-a/trace.jsonl' | grep -q 'escape'"
 TB="$TMP/trace_bad.jsonl"; printf '%s\n' '{"id":"ev-0001","at":"t","kind":"fail","refs":[{"type":"related_to","target":"CARD-01"}]}' '{"id":"ev-0002","at":"t","kind":"reflow","refs":[{"type":"caused_by","target":"ev-0099"}]}' > "$TB"
 expect "trace lint: unknown edge type + dangling event rejected" 1 py "$SSG/trace.py" lint --trace "$TB"
+# dogfood 2026-09-06 (I-65): sdlc_state.py writes actor refs (agent:/human:/a bare name from the `by` column)
+# and git shas; a lint that flags its own writer is permanent noise a real dangling ref would drown in
+TA="$TMP/trace_actors.jsonl"; SHA="$(git rev-parse HEAD)"
+printf '%s\n' \
+  "{\"id\":\"ev-0001\",\"at\":\"t\",\"kind\":\"gate\",\"by\":\"g1-judge\",\"refs\":[{\"type\":\"decided_by\",\"target\":\"agent:g1-judge\"}]}" \
+  "{\"id\":\"ev-0002\",\"at\":\"t\",\"kind\":\"gate\",\"by\":\"alice\",\"refs\":[{\"type\":\"decided_by\",\"target\":\"human:alice\"}]}" \
+  "{\"id\":\"ev-0003\",\"at\":\"t\",\"kind\":\"fail\",\"by\":\"acceptance-fleet\",\"refs\":[{\"type\":\"decided_by\",\"target\":\"acceptance-fleet\"}]}" \
+  "{\"id\":\"ev-0003b\",\"at\":\"t\",\"kind\":\"gate\",\"by\":\"g2-judge\",\"refs\":[{\"type\":\"decided_by\",\"target\":\"g2-judge\"}]}" \
+  "{\"id\":\"ev-0004\",\"at\":\"t\",\"kind\":\"card\",\"by\":\"engine\",\"refs\":[{\"type\":\"references\",\"target\":\"$SHA\"},{\"type\":\"references\",\"target\":\"${SHA:0:7}\"}]}" > "$TA"
+expect "trace lint: actor refs and resolvable shas are not dangling (I-65)" 0 py "$SSG/trace.py" lint --trace "$TA" --base "$ROOT"
+TA2="$TMP/trace_actors_dangling.jsonl"; cat "$TA" > "$TA2"
+printf '%s\n' "{\"id\":\"ev-0005\",\"at\":\"t\",\"kind\":\"note\",\"by\":\"engine\",\"refs\":[{\"type\":\"references\",\"target\":\"not-an-actor-or-anything\"}]}" >> "$TA2"
+expect "trace lint: a genuinely dangling target is still rejected (I-65)" 1 py "$SSG/trace.py" lint --trace "$TA2" --base "$ROOT"
 
 echo "== tune / tune.py + apply_proposal.py (P4)"
 TU="$S/tune/scripts"; FXT="$S/tune/eval/fixtures"

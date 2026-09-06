@@ -214,12 +214,29 @@
     },
     "review": {
       "type": "object",
+      "description": "评审环的出口。done 是封闭枚举而不是布尔+散文：true（旧文件，等价 done）/ \"done\" 通过 / \"waived\" 豁免退出；waived 与任何 exit_reason 都必须带 waiver_ref 指向账本事件 id（I-83）",
       "properties": {
         "done": {
-          "type": "boolean"
+          "oneOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "enum": [
+                "done",
+                "waived"
+              ]
+            }
+          ]
         },
         "exit_reason": {
-          "type": "string"
+          "type": "string",
+          "description": "散文限定语；出现即须有 waiver_ref，否则「这是豁免不是通过」躲在没人解析的文本里"
+        },
+        "waiver_ref": {
+          "type": "string",
+          "pattern": "^ev-\\d{4,}$",
+          "description": "trace.jsonl 里那条 waiver 事件的 id（`waive` 会打印）"
         },
         "rounds": {
           "type": "integer"
@@ -320,6 +337,7 @@
     },
     "waivers": {
       "type": "array",
+      "description": "被豁免的东西：`advance --force` 的越级，或 `waive` 记下的、不伴随任何迁移的豁免（I-67）",
       "items": {
         "type": "object",
         "required": [
@@ -336,6 +354,42 @@
           },
           "at": {
             "type": "string"
+          },
+          "signal": {
+            "type": "string",
+            "description": "被豁免的信号（`waive --signal`）；越级豁免没有信号，改看 unmet"
+          },
+          "layer": {
+            "type": "string"
+          },
+          "card": {
+            "type": "string"
+          },
+          "fingerprint": {
+            "type": "string",
+            "description": "被豁免的那次 fail 的指纹——把豁免和它免掉的失败绑在一起"
+          },
+          "signer": {
+            "type": "string"
+          },
+          "signer_kind": {
+            "enum": [
+              "human",
+              "delegated_agent"
+            ]
+          },
+          "authorization": {
+            "type": "string",
+            "description": "代签授权：谁 / 何时 / 允许到哪一步"
+          },
+          "scope": {
+            "type": "string"
+          },
+          "unmet": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         }
       }
