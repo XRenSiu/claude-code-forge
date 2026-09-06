@@ -95,6 +95,24 @@ BASENAMES = {
 # gaps[].evidence[].ref 里现算归属；它不是一条指向某文件某行的引用，锁它没有意义。
 NOT_A_REFERENCE = re.compile(r"^\s*(?:-\s+)?.*\bdos_anchors:")
 
+# 「走到 N · 锁里比对了 M」只能量"走到的里面锁了几个"，**结构上看不见从未进过扫描的那一类**——
+# 而那正是这一族栽了四次的地方（带路径的 #L → 冒号式 → 裸写 → 斜杠串联，每一次"全绿"都只覆盖
+# 当时认得的那部分，PR #3 预审 F-1 / F-6）。所以再加一层最笨的对账：直接数文件里 `#L数字` 的
+# 原始出现次数，减去 dos_anchors 那类模式，剩下的必须等于扫描器走到的 #L 锚点数。对不上就说明
+# 又有一种写法没被认出来——这条不依赖任何写法的知识，只依赖"每个 #L 都得有人认领"。
+RAW_HASH_L = re.compile(r"#L\d+")
+
+
+def raw_hash_l_count(audit_path):
+    """文件里 `#L数字` 的原始出现次数，以及其中属于 dos_anchors 模式（非引用）的那部分。"""
+    total = patterns = 0
+    for line in open(audit_path, encoding="utf-8").read().splitlines():
+        n = len(RAW_HASH_L.findall(line))
+        total += n
+        if NOT_A_REFERENCE.match(line):
+            patterns += n
+    return total, patterns
+
 # 审计里的行引用有**三**种写法，都会漂，都要保：
 #   `path/to/file.py#L12` / `#L12-L20` / `#L12–20`   —— evidence 的 ref 惯用
 #   `path/to/file.py:12` / `:12-20`                   —— 正文散句里惯用
@@ -271,6 +289,8 @@ def cmd_verify(args):
     problems = []
 
     def on(name, path, a, b, dash, part, style="hash"):
+        if style == "colon":
+            stats["colon_style"] += 1          # 只用于对账，不是判定
         if path is None:
             stats["UNRESOLVED"] += 1
             shown = f"#L{a}" if style == "bare" else f"{name}#L{a}"
@@ -328,12 +348,21 @@ def cmd_verify(args):
     if args.fix and stats["MOVED"]:
         open(args.audit, "w", encoding="utf-8").write(fixed)
 
-    total = sum(stats.values())
+    VERDICTS = ("SAME", "MOVED", "GONE", "AMBIGUOUS", "UNLOCKED", "UNRESOLVED")
+    total = sum(stats[k] for k in VERDICTS)      # colon_style 只是对账用的旁计数，不进总数
     covered = stats["SAME"] + stats["MOVED"] + stats["GONE"] + stats["AMBIGUOUS"]
+    raw_total, raw_patterns = raw_hash_l_count(args.audit)
+    expected_hash = raw_total - raw_patterns
+    walked_hash = total - stats["colon_style"]
+    unaccounted = expected_hash - walked_hash
     print(f"check_anchors verify: 走到 {total} 个行号锚点 · 锁里比对了 {covered} 个 · 锁 {args.lock}")
     for k in ("SAME", "MOVED", "GONE", "AMBIGUOUS", "UNLOCKED", "UNRESOLVED"):
         if stats[k]:
             print(f"  {k:11} {stats[k]}")
+    if unaccounted:
+        print(f"  **{unaccounted} 处 `#L` 没有被任何写法认领** —— 文件里 {raw_total} 次，"
+              f"其中 {raw_patterns} 次是 dos_anchors 模式（非引用），应走到 {expected_hash} 个，"
+              f"实际只走到 {walked_hash} 个。又有一种引用写法没被认出来。")
     if covered < total:
         # 覆盖率明写。"全绿"只在分母等于分子时才等于"全都检过了"——
         # 第一版正是在这里骗了人：432/432 绿，而当时另有 78 个锚点根本没进过 walk。
@@ -347,7 +376,10 @@ def cmd_verify(args):
     # AMBIGUOUS 也退非零：走到那一支时"当前行号不再指着锁住的那段字"**已经成立**，
     # 不确定的只是它移到哪儿了。把"不能自动改"当成"没问题"，正是这条闸要防的那种绿灯
     # （PR #3 预审 F-2）。UNRESOLVED 同理：归不出文件的锚点不等于没有问题的锚点。
-    bad = stats["MOVED"] + stats["GONE"] + stats["AMBIGUOUS"] + stats["UNRESOLVED"]
+    # 认领不上的 `#L` 与漂移同等对待：一个没人认领的锚点，和一个指错地方的锚点，
+    # 对读者的伤害是一样的——他按它去核，看到的不是审计说的那回事。
+    bad = (stats["MOVED"] + stats["GONE"] + stats["AMBIGUOUS"] + stats["UNRESOLVED"]
+           + abs(unaccounted))
     if args.fix:
         bad -= stats["MOVED"]        # 刚改掉的不再算
     return 1 if bad else 0
