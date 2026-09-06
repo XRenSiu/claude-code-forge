@@ -236,6 +236,16 @@ nodes:
     must_not_read: [fixer_session]
     writes: [verify.yaml]
     authority: {commit: false}
+  - id: agent.pr-reviewer
+    kind: agent
+    role: evaluator
+    # The audit found this node missing while agents/pr-reviewer.md and /pr --pre-review both exist,
+    # so the graph said four agents where the plugin ships five (dogfood I-16). A node absent from the
+    # graph is a node no lint, no loop and no ring assignment can see.
+    reads: [git:base..head, CLAUDE.md, pr scope]
+    must_not_read: [implementer_session, ratchet-log/**]
+    writes: [pre-review/round-N.findings.yaml]
+    authority: {commit: false, post: false, approve: false}
   - id: human.merge
     kind: human
     role: gate
@@ -347,6 +357,8 @@ edges:
   - {from: stage.review, to: stage.review,         type: loop_back, signal: review_round, loop: review_loop}
   - {from: review-loop, to: agent.review-triager,  type: handoff, carries: [pr comments]}
   - {from: agent.review-triager, to: agent.comment-fixer, type: handoff, carries: [accepted_claim]}
+  - {from: pr,                   to: agent.pr-reviewer,  type: conditional, guard: flag.pre_review, carries: [diff, scope]}   # /pr --pre-review
+  - {from: agent.pr-reviewer,     to: pr,                 type: loop_back, signal: pre_review_round_done, loop: review_loop, carries: [surviving findings]}   # 存活发现进 Known issues
   - {from: agent.comment-fixer,  to: agent.fix-verifier,  type: handoff, carries: [fix diff, commit sha]}
   - {from: agent.fix-verifier,   to: review-loop,        type: loop_back, signal: iteration_complete, loop: review_loop, carries: [verdict]}   # 一次迭代收口
   - {from: stage.review, to: human.g3,             type: interrupt, signal: review_thread_strike_limit}

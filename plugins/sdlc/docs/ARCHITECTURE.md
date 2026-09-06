@@ -110,6 +110,11 @@ intake → track → issue → branch → contract → g2 → cards → implemen
 | **G2 判据冻结** | 契约写完、拆卡之前 | `done_when.yaml` v2（+ contract.yaml） | pass 要求 `lock.path` 存在；契约必须过 v2 校验 |
 | **G3 例外复核** | 验收之后、合入之前 | human AC 清单 + 失败报告 + 假设台账 | 产品需求默认触发；`gates.g3.required=false` 要显式 set 留痕 |
 
+> **三道门 ≠ 五个 human 节点。** `graph.yaml` 里 `kind: human` 的节点有五个：G1 / G2 / G3 是**门**（有 Gate 对象、
+> 有 `gate` 命令、有 verdict 与签字），`human.merge` 与 `human.harness-review` 是**人做的动作**，不是门——它们没有
+> Gate 对象，`sdlc_state.py` 里也没有对应的 verdict。本插件的自审曾在这里读岔（dogfood I-16 / Q004）：把五个 human
+> 节点当成五道门，或反过来以为文档漏写了两道。两者都不对，差别在于**有没有一个可以被签、被拒、被计数的判决**。
+
 ### 3.3 回流路由（X2）：失败归层，不原地重试
 
 `sdlc_state.py fail --signal <信号>` 读 `routing.yaml`：给候选层（card ⊂ plan ⊂ task ⊂ ontology ⊂ world）、处理者、

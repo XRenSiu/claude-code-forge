@@ -270,6 +270,19 @@ echo "# smuggled" >> done_when.yaml
 git add done_when.yaml && git -c user.name=t -c user.email=t@t commit -q -m "chore(contract): smuggle"
 expect "tampered locked file in an A..B range is rejected (cr-001 twin)" 1 py "$VC" --msg "chore(contract): smuggle" --lock .done_when.lock --range HEAD~1..HEAD --allow-main
 expect "single-ref --range refused, never fail-open (cr-001)" 2 py "$VC" --msg "chore(contract): smuggle" --lock .done_when.lock --range main --allow-main
+# dogfood 2026-09-06 (I-61): a card's diff can be clean against the lock while the working tree it
+# went green against is not. The green is real but it does not prove the frozen criteria.
+UNL="$TMP/unlocked"; mkdir -p "$UNL/tests" "$UNL/cards" "$UNL/src"; pushd "$UNL" >/dev/null
+git init -q .; git config user.email t@t; git config user.name t
+printf 'acceptance:\n  - id: AC-001-a\n' > done_when.yaml; printf "test('x')\n" > tests/a.test.ts
+printf 'id: CARD-01\nallowed_files:\n- src/x.py\nforbidden_files: []\n' > cards/CARD-01.yaml; echo "x=1" > src/x.py
+git add -A; git -c user.name=t -c user.email=t@t commit -qm "feat: base"
+py "$S/sdlc/scripts/lock_done_when.py" sign --by human --stage l5 --out .done_when.lock done_when.yaml tests/a.test.ts >/dev/null
+printf "test('x'); test('y')\n" > tests/a.test.ts; echo "x=2" > src/x.py; git add src/x.py
+expect "a card going green against tests that drifted from the lock is flagged (I-61)" 0 bash -c "python3 '$S/commit/scripts/verify_commit.py' --msg 'feat(x): change' --card cards/CARD-01.yaml --lock .done_when.lock --allow-main | python3 -c \"import json,sys; d=json.load(sys.stdin); assert d['verdict']=='PASS' and any('tests_unlocked_at_green' in f for f in d['flags']), d\""
+git checkout -q -- tests/a.test.ts
+expect "no flag once the tree matches the lock again (I-61)" 0 bash -c "python3 '$S/commit/scripts/verify_commit.py' --msg 'feat(x): change' --card cards/CARD-01.yaml --lock .done_when.lock --allow-main | python3 -c \"import json,sys; d=json.load(sys.stdin); assert not any('tests_unlocked_at_green' in f for f in d['flags']), d['flags']\""
+popd >/dev/null
 expect "three-dot range resolves the head side (cr-001)" 1 py "$VC" --msg "chore(contract): smuggle" --lock .done_when.lock --range HEAD~1...HEAD --allow-main
 # dogfood 2026-09-06 (pre-review cr-004 + fix-verifier): `A..` / `A...` are legal ranges whose right endpoint
 # defaults to HEAD; splitting on the separator yields "" and `git show :path` reads the INDEX — the wrong side.

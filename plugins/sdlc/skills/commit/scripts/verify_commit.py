@@ -33,6 +33,7 @@ import argparse
 import fnmatch
 import hashlib
 import json
+import os
 import re
 import subprocess
 import sys
@@ -341,6 +342,24 @@ def main():
                              f"{a.proposal_glob} names them — the proposal must cover every changed locked path")
         else:
             lock_status = "ok"
+        # A card's diff can be clean against the lock while the WORKING TREE it went green against is
+        # not: this run had an implementer's 34/34 pass run against re-encoded tests that were not yet
+        # the locked bytes, and the card staged only its own three files, so nothing here saw it. The
+        # green was real but it did not prove the frozen criteria (dogfood I-61). Cheap to check, and
+        # a flag rather than a reject because the orchestrator may legitimately be mid re-sign.
+        if a.card:
+            unlocked = []
+            for path, want in locked_sha.items():
+                if not want or not os.path.isfile(path):
+                    continue
+                with open(path, "rb") as fh:
+                    if hashlib.sha256(fh.read()).hexdigest() != want:
+                        unlocked.append(path)
+            if unlocked:
+                flags.append(f"tests_unlocked_at_green: {sorted(unlocked)[:6]} differ in the working tree "
+                             "from the lock — a card that went green here did not go green against the "
+                             "frozen bytes; re-sign the lock or re-run against them before landing")
+                lock_detail["working_tree_unlocked"] = sorted(unlocked)
 
     out = {"verdict": "REJECT" if rejects else "PASS", "branch": branch, "files": files, "added_lines": added,
            "lock": lock_status, "lock_detail": lock_detail, "rejects": rejects, "flags": flags}
