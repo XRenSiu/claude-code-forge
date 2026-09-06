@@ -1,0 +1,6 @@
+# The G1 as-is ↔ to-be reconciliation table, made machine-readable.
+# `to_be: as_is` — the left name is the derived word, the right the one the repo implements.
+objects:
+  Part: Node
+rules:
+  R001: R001

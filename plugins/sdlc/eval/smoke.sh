@@ -262,6 +262,30 @@ expect "count_terms: reproducible per-group counts + file:line evidence (I-12)" 
 expect "count_terms: a term matching nothing exits 1, not silently 0 (I-12)" 1 py "$DXS/count_terms.py" --terms "$TMP/terms.txt" --root "$S/dos-extract" --group fixtures='eval/fixtures/*.yaml'
 expect "count_terms: word boundaries keep PR out of PROPOSAL (I-12)" 0 bash -c "mkdir -p '$TMP/ct' && printf 'PROPOSAL and PROPRIETARY\n' > '$TMP/ct/a.md' && printf 'PR\n' >> '$TMP/ct/a.md' && printf 'PR\n' > '$TMP/terms2.txt' && python3 '$DXS/count_terms.py' --terms '$TMP/terms2.txt' --root '$TMP/ct' --corpus '*.md' --json | python3 -c \"import json,sys; d=json.load(sys.stdin); assert d['terms']['PR']['total']==1, d['terms']['PR']\""
 
+echo "== dos-extract / reconcile_dos.py + dos_closure.py (X1 as-is ↔ to-be)"
+# dogfood 2026-09-05 (I-49): the reconciliation existed only as prose in the G1 record, so the
+# card linter had to be pointed at a proposal file by hand.
+expect "reconcile: unmapped to-be object + rule conflict => INCOMPLETE, nothing written (I-49)" 1 bash -c "python3 '$DXS/reconcile_dos.py' --as-is '$FXO/dos_asis.yaml' --to-be '$FXO/dos_tobe.yaml' --map-file '$FXO/dos_reconcile_map.yaml' --output '$TMP/rec_bad.yaml' > '$TMP/rec_bad.json'; rc=\$?; python3 -c \"
+import json
+d=json.load(open('$TMP/rec_bad.json'))
+assert d['verdict']=='INCOMPLETE' and not d['written'], d
+assert d['unmapped_to_be']==['Gap','Ring'], d['unmapped_to_be']
+assert d['rule_conflicts'], d\" && test ! -f '$TMP/rec_bad.yaml' && exit \$rc"
+expect "reconcile: full mapping folds the to-be name into synonyms and exits 0 (I-49)" 0 bash -c "python3 '$DXS/reconcile_dos.py' --as-is '$FXO/dos_asis.yaml' --to-be '$FXO/dos_tobe_mappable.yaml' --map 'Part=Node' --output '$TMP/rec_ok.yaml' >/dev/null && python3 -c \"
+import sys; sys.path.insert(0,'$DXS')
+from dos_closure import load_closure
+c=load_closure('$TMP/rec_ok.yaml')
+assert c.resolve_object('Part')=='Node', c.resolve_object('Part')
+assert c.resolve_object('配件')=='Node'
+assert c.resolve_object('Ring') is None\""
+expect "reconcile: the reconciled DOS still passes verify_dos.py (I-49)" 0 py "$DXS/verify_dos.py" "$TMP/rec_ok.yaml"
+expect "reconcile: --allow-unmapped writes the file and records the gaps as open questions (I-49)" 1 bash -c "python3 '$DXS/reconcile_dos.py' --as-is '$FXO/dos_asis.yaml' --to-be '$FXO/dos_tobe.yaml' --map-file '$FXO/dos_reconcile_map.yaml' --allow-unmapped --output '$TMP/rec_partial.yaml' >/dev/null; rc=\$?; python3 -c \"
+import yaml
+d=yaml.safe_load(open('$TMP/rec_partial.yaml'))
+q=' '.join(str(x) for x in d['open_questions'])
+assert 'Ring' in q and 'Gap' in q, q
+assert d['reconciliation']['unmapped_to_be']==['Gap','Ring']\"; exit \$rc"
+
 echo "== dos closure honours synonyms (I-15) — verify_issue.py + lint_cards.py"
 SYNI="$TMP/syn_issue.md"; sed -e 's/objects: \[Memory, Era\]/objects: [Memory, Period]/' -e 's/invariants: \[R003\]/invariants: [INV-ERA-1]/' "$S/issue/eval/fixtures/good_issue.md" > "$SYNI"
 expect "verify_issue: the team's word closes through a declared synonym (I-15)" 0 py "$S/issue/scripts/verify_issue.py" "$SYNI" --dos "$FXO/dos_with_synonyms.yaml"
