@@ -11,7 +11,7 @@
 | 规律来源 | `plugins/sdlc/dogfood/ring-audit/PSL-sdlc-ring-audit.md` |
 | check-audit 对本文档 | exit 0 |
 | check-audit 删环变体 | exit 1（F-14 校准孪生已记录） |
-| 规模 | 10 环 · 42 配件 · 79 缺口 · 38 处登记为缺少 · 58 条产物-生产者 · 45 条提案 |
+| 规模 | 10 环 · 42 配件 · 80 缺口 · 39 处登记为缺少 · 58 条产物-生产者 · 46 条提案 |
 
 ## 读法
 
@@ -517,7 +517,7 @@
     - 重审更正：重审补记（2026-09-06）：产物标识分裂（final-verdict.yaml vs meta-judge-output.yaml，P-R6-05） 不但没修，还被真实 run 坐实——三轮 iteration 目录里落地的全是 meta-judge-output.yaml， 而 graph.yaml#L189 声明的是 final-verdict.yaml。
     - 证据：`gate_json:plugins/sdlc/skills/meta-judge/eval/gate.json#gate_pass=static_only` · `gate_json:plugins/sdlc/skills/meta-judge/eval/gate.json#scripts_run.compute_confidence.py` · `file:plugins/sdlc/skills/meta-judge/scripts/compute_confidence.py#L74-L104`
 - **naming adopted → `fits`** — 位置 / 产物：`ratchet-log/iteration-NNN/final-verdict.yaml（graph.yaml#L189 的声明）`
-    - 命名判定：配件名保留上游名（PSL-014），fits。但它的**产物**有两个名字：graph.yaml#L189 声明 writes: ratchet-log/iteration-NNN/final-verdict.yaml，而 meta-judge 自己的 --output 默认值（SKILL.md#L75）与 M5 步（#L87）、以及 acceptance-fleet 的目录契约（ratchet-log-format.md#L41、SKILL.md#L157/#L254）都写 meta-judge-output.yaml。同一份 SKILL.md 内部也不一致：description 与 M0 播报说 final-verdict.yaml，参数表说 meta-judge-output.yaml。这是产物标识分裂，不是配件命名问题——记入提案 P-R6-05，不改名。
+    - 命名判定：配件名保留上游名（PSL-014），fits。但它的**产物**有两个名字：graph.yaml#L189 声明 writes: ratchet-log/iteration-NNN/final-verdict.yaml，而 meta-judge 自己的 --output 默认值（SKILL.md#L75）与 M5 步（#L87）、以及 acceptance-fleet 的目录契约（ratchet-log-format.md#L41、plugins/sdlc/skills/acceptance-fleet/SKILL.md#L187/#L311）都写 meta-judge-output.yaml（重审 2026-09-06 更正引用：这两条原写成裸的「SKILL.md 第 157 / 254 行」，读起来像 meta-judge 自己的 SKILL.md，实际指的是 acceptance-fleet 的；第 254 行还越过了那份文件当时的长度。锚点的归属必须写全路径，否则下一个人核不出来——这条歧义是 check_anchors.py 抓出来的）。同一份 SKILL.md 内部也不一致：description 与 M0 播报说 final-verdict.yaml，参数表说 meta-judge-output.yaml。这是产物标识分裂，不是配件命名问题——记入提案 P-R6-05，不改名。
     - 证据：`file:plugins/sdlc/docs/design-notes.md#L39-L42` · `file:plugins/sdlc/skills/meta-judge/SKILL.md#L75` · `file:plugins/sdlc/skills/acceptance-fleet/references/ratchet-log-format.md#L41`
 - **Loop `loops.yaml#acceptance_ratchet`**：acceptance_ratchet 的 verifier（loops.yaml#L59）兼 loop_back 源（graph.yaml#L349，signal: iteration_complete）。该环 generator 是 implement（loops.yaml#L58），故 R014「generator ≠ verifier」在这个环上成立。注意 graph.yaml 的 meta-judge 节点本身没有 loop 键，环归属只能从边和 loops.yaml 反推——见提案 P-R6-05 附注。
 - disposition `issue`
@@ -763,7 +763,7 @@
 
 **问题**：谁持有状态、记账、按层路由失败、把三道门编译成不可跳过、把图与环声明成数据（ARCHITECTURE §1 脊柱段；§1 表无脊柱行，没有"问题"列可取，此处取脊柱段的五件事）
 
-5 个配件 · 4 处登记为缺少。
+5 个配件 · 5 处登记为缺少。
 
 | 配件 / 缺少 | kind | 缺口 · 原子 | 独占产物 / 角色 | 闸 · 门 | artifact 闸（checked_by） | Loop | needed | implemented | naming |
 |---|---|---|---|---|---|---|---|---|---|
@@ -776,6 +776,7 @@
 | **（缺少）** `r008-human-signer` | — | `Control`<br>**unenforced_rule（宪法有规则、机器无闸）** | — | — | — | — | necessity **necessary**<br>撤掉 / 不补它：签字人现在被记录也被约束：三处签字入口（sdlc_state.py gate / waive、lock_done_when.py sign）都要求 --signer-kind，代签必须自报 delegated_agent 并附 --authorization，否则非零退出；signer_kind 进 state / lock / ledger / trace，代签与人签不再同形。重审更正（2026-09-06）：装配时写的"在机器一侧完全没有承载"已不成立，而重审片段说的"--signer-kind 默认值就是 human，不传就被原样记成人签"在 HEAD 上也已不成立——b77feb0 把它改成 required=True（sdlc_state.py#L980/#L988、lock_done_when.py#L155），不传直接 argparse 报错。但 R008 说的是"三道门只能人签"，这一条仍未编译：没有任何脚本拒绝一次代签，一个 agent 只要传 --signer-kind human 就仍被记成人签，而没有一处核对那句 authorization 是否真的来自人。本次 dogfood 的三道门全是 delegated_agent 代签。这条宪法从"完全没有承载"变成"承载了记录与授权、没承载拒绝"，仍是 unenforced_rule。<br>证据：`file:plugins/sdlc/dogfood/ring-audit/dos.yaml#L404-L407（R008 enforced_by user_workflow）` · `file:plugins/sdlc/docs/ARCHITECTURE.md#32-三道门只能人签`<br>disposition `issue` | — | — |
 | **（缺少）** `routing-yaml-no-verifier` | — | `Control`<br>**newly_identified（本次审计新识别）** | — | — | — | — | necessity **necessary**<br>撤掉 / 不补它：routing.yaml 的 rules 行写错 layer、漏 handler、或 budgets 的键与 layers 不对齐，都不在写入时报错，只在 fail 那一刻以"路由到错的层"的形式静默生效——错误的回流层会把世界层的错误安静地在 card 层重试到预算耗尽，症状与"实现者不行"完全一样。<br>证据：`file:plugins/sdlc/skills/sdlc/assets/routing.yaml` · `file:plugins/sdlc/docs/ARCHITECTURE.md#7-覆盖矩阵与空白（X2 行闸列为空）`<br>disposition `issue` | — | — |
 | **（缺少）** `triggers-yaml-no-verifier` | — | `Control`<br>**newly_identified（本次审计新识别）** | — | — | — | — | necessity **necessary**<br>撤掉 / 不补它：triggers.yaml 的绑定引用了不存在的 predicate_scripts、或漏掉"or stop after N turns"，都只在无人值守跑的那一次显形，表现为环不停或环不启动；同一行还登记 Stop hook 只有模板未安装，即声明的绑定连安装状态都没被检。<br>证据：`file:plugins/sdlc/skills/sdlc/assets/triggers.yaml` · `file:plugins/sdlc/docs/ARCHITECTURE.md#7-覆盖矩阵与空白（环契约 / 图声明 / 触发绑定 行：闸列只有 verify_loop / verify_graph / check-clean）`<br>disposition `issue` | — | — |
+| **（缺少）** `evidence-anchors-unprotected` | — | `Control`<br>**newly_identified（本次审计新识别）** | — | — | — | — | necessity **necessary**<br>撤掉 / 不补它：audit.yaml 里 429 处证据写成 `<file>#L<n>` 的行号锚点，而没有任何机械物保证它们还指着当初那句话。check_audit.py 只看 evidence 的 kind 与 ref 非空；越界也抓不到，因为被引的文件是变长的。具体错误产物：一份锚点大面积指错、却仍然 exit 0 的审计报告——本轮就是这样，graph.yaml 插一个节点（+10 行）与两条边（+2 行），插入点之后的锚点分两段位移，`#L239` 从 human.merge 漂到了新节点头上，105 处锚点全靠人逐个重定位才修回来。具体漏检：读者按锚点去核，看到的是另一段代码，于是要么以为审计在胡说，要么更糟——以为那段代码就是审计说的那回事。这条缺口是"报告声称有证据"与"证据还在原处"之间的缝，PSL-015 在审计文档自身上落空。<br>证据：`file:plugins/sdlc/dogfood/ring-audit/check_anchors.py` · `file:plugins/sdlc/dogfood/ring-audit/anchors.lock` · `run_record:python3 plugins/sdlc/dogfood/ring-audit/check_anchors.py verify → 429 SAME, exit 0 @ b77feb0；往 graph.yaml 插一行的变异 → 123 MOVED + 1 GONE, exit 1`<br>disposition `fix_list`<br>**重审更正**：本轮已造出这条闸的机械半边：check_anchors.py（snapshot 把每个锚点指着的那几行的哈希锁进 anchors.lock，verify 重算并在漂移时按内容重定位），漂移 exit 1、干净 exit 0、锁缺失 exit 2， 并做过变异证明。但**缺口没有闭合**：它还没并进 check_audit.py——那份是 role=gate 的冻结脚本， 往里加检查要走变更提案与 l5 重签，本 PR 不开这个口子。在并进去之前，这条闸靠人记得跑， 不是不可跳过的，所以 FILLS 边不挂。见提案 P-RA-07。 | — | — |
 
 ### spine 判定详情
 
@@ -876,7 +877,7 @@
 
 ## proposals
 
-45 条。每条都必须指向一个已识别的 Assessment 或 Gap（DP-2：补的理由不能是「这环显得单薄」）——`proposal_without_source` 就是这条的闸。
+46 条。每条都必须指向一个已识别的 Assessment 或 Gap（DP-2：补的理由不能是「这环显得单薄」）——`proposal_without_source` 就是这条的闸。
 按 destination 分组：
 
 ### new_issue（29）
@@ -913,7 +914,7 @@
 | `P-RA-04` | `R6/newly_identified/knowledge+control/ratchet-log-filenames-diverge-from-graph` | ratchet-log 的文件名两处不一致，已被三轮真实 run 坐实：落地的是 fleet-outputs/{code-reviewer-security,qa-reviewer,pm-reviewer,…}.yaml 与 meta-judge-output.yaml，而 graph.yaml 写的是 ratchet-log/iteration-NNN/{code-review-*,qa-review,…}.yaml 与 final-verdict.yaml——目录层级、文件基名都不同。任何按 graph.yaml 找文件的下游都会扑空。定一个名并全线改齐（与 P-R6-05 是同一件事的两半）。 |
 | `P-RA-06` | `R7/newly_identified/judgment/solo-a-tier-count-not-from-the-contract` | 单人仓库替代谓词把「该轮 A 档存活 = 0」当作 APPROVED 的替代必要条件，但 A 档的数怎么来没有契约：脚本取 findings 文件里显式的 a_tier_survivors，没有就数 tier: A / severity: P0 的条目——两种数法可能给出不同的数，而写 findings 的是被审方自己的预审 agent。建议把 A 档判据写进 done_when 或 agents/pr-reviewer.md 的输出契约，让这个数有来源。 |
 
-### skill_fix_list（16）
+### skill_fix_list（17）
 
 | id | source | 提案 |
 |---|---|---|
@@ -933,6 +934,7 @@
 | `P-RA-01` | `R2/newly_identified/control/gaming-band-unvalidated-at-r2` | done_when.yaml 新增的 gaming_risk_threshold（done_below / block_at_or_above）在 R2 无人校验：acceptance-spec 的 validate_done_when.py 与 donewhen-extract 的 validate_done_when_v2.py 都不认识这个字段，唯一校验它的是 R6 的 next_iteration.py。后果是一份倒挂的阈值（done_below=7 / block_at_or_above=3）在 R2 判 clean、被 G2 冻进锁，直到 R6 第一次 ratchet 才炸——那时改契约的代价从"写契约时改一行"变成"解冻一份已签字的契约"。建议把这条校验前移到 v2 校验器。收件人：donewhen-extract 的 eval/gate.json fix_list。 |
 | `P-RA-03` | `R6/newly_identified/control/drift-consumer-flag-not-updated` | spec-drift-detector 的输入契约被单边改了而它自己不知道：acceptance-fleet 现在按 skill-dispatch-matrix.md 传 --qa-measurements 并明令禁止 --qa-report，而 spec-drift-detector/SKILL.md 的参数表仍只定义 --qa-report、铁律 8 仍指导用它。调度方与被调度方对同一个 flag 说两件事。建议改齐 SKILL.md，或让调度矩阵与参数表同源。收件人：spec-drift-detector 的 eval/gate.json fix_list。 |
 | `P-RA-05` | `R6/newly_identified/control/gate-json-not-synced-with-smoke-coverage` | acceptance-fleet 长出了两个真闸（next_iteration.py / qa_facts.py）并有 smoke 覆盖，而它的 eval/gate.json 仍写 gate_pass=static_only、scripts_run 为空对象。证据档比代码旧，读 gate.json 的人会低估它的承重。收件人：acceptance-fleet 的 eval/gate.json。 |
+| `P-RA-07` | `spine/newly_identified/control/evidence-anchors-unprotected` | 把 check_anchors.py 的 verify 并进 check_audit.py，让"锚点还指着同一段字"和 orphan_gap / gate_cap 一样成为报告自身的判定条件之一（新增失败谓词 anchor_drift）。要走变更提案 + l5 重签，因为 check_audit.py 是 role=gate 的冻结脚本。并进去之前，anchors.lock 的刷新要跟 audit.yaml 的改动同一个提交，否则锁自己就是过期证据。收件人：ring-audit 的 tests-manifest 与 check_audit.py 的变更提案。 |
 
 ### no_action（0）
 
@@ -994,9 +996,9 @@ python3 plugins/sdlc/dogfood/ring-audit/check_audit.py plugins/sdlc/dogfood/ring
 | 项 | 值 |
 |---|---|
 | implemented 档位分布 | 重审前 declared 19 / compiled 23 / verified 0 → 重审后 **declared 17 / compiled 25 / verified 0** |
-| 缺口 | 73 → **79**（闭合 1，新增 6） |
+| 缺口 | 73 → **80**（闭合 1，新增 7） |
 | 证据锚点 | 重定位 105 处，原位未动 257 处 |
-| 提案 | 39 → **45**（新增 6） |
+| 提案 | 39 → **46**（新增 7） |
 | 没有变的 | 0 个配件达到 verified；三道门仍全是代签；仓库仍无 CI。 |
 
 > 锚点怎么修的：逐个锚点从装配时的 fbc6a3c 取原文，再到 HEAD 里按内容定位，得出新行号——不用算术推算。 graph.yaml 本轮插入 agent.pr-reviewer 节点（+10 行）与两条边（+2 行），插入点之后的锚点分两段位移，算术会算错，故一律按内容重定位。
@@ -1110,7 +1112,7 @@ CARD-06 只做装配。四个片段的正文逐字保留（同一段 YAML 在片
 | 5 | `run_evidence.calibration_wording` / `holdout` / `known_gaps` 逐字复制 | 它们是 calibrate 阶段的已接受声明 | 未改一字，含「never the unqualified word 'calibrated'」这条措辞禁令 |
 
 **其余全部为空**：没有新增、删除或改写任何 Part、Assessment、Gap、Artifact、Gate、Proposal；
-没有解决任何片段间的内容冲突（因为没有冲突：79 个 Gap、58 条产物-生产者、45 条提案的 id 两两不撞）。
+没有解决任何片段间的内容冲突（因为没有冲突：80 个 Gap、58 条产物-生产者、46 条提案的 id 两两不撞）。
 
 ### 装配核对：PSL-017 三种来源都登记了吗
 

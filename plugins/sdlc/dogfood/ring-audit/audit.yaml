@@ -1354,7 +1354,7 @@ rings:
         - {kind: file, ref: plugins/sdlc/docs/design-notes.md#L39-L42}
         - {kind: file, ref: plugins/sdlc/skills/meta-judge/SKILL.md#L75}
         - {kind: file, ref: plugins/sdlc/skills/acceptance-fleet/references/ratchet-log-format.md#L41}
-        rename_reason: '配件名保留上游名（PSL-014），fits。但它的**产物**有两个名字：graph.yaml#L189 声明 writes: ratchet-log/iteration-NNN/final-verdict.yaml，而 meta-judge 自己的 --output 默认值（SKILL.md#L75）与 M5 步（#L87）、以及 acceptance-fleet 的目录契约（ratchet-log-format.md#L41、SKILL.md#L157/#L254）都写 meta-judge-output.yaml。同一份 SKILL.md 内部也不一致：description 与 M0 播报说 final-verdict.yaml，参数表说 meta-judge-output.yaml。这是产物标识分裂，不是配件命名问题——记入提案 P-R6-05，不改名。'
+        rename_reason: '配件名保留上游名（PSL-014），fits。但它的**产物**有两个名字：graph.yaml#L189 声明 writes: ratchet-log/iteration-NNN/final-verdict.yaml，而 meta-judge 自己的 --output 默认值（SKILL.md#L75）与 M5 步（#L87）、以及 acceptance-fleet 的目录契约（ratchet-log-format.md#L41、plugins/sdlc/skills/acceptance-fleet/SKILL.md#L187/#L311）都写 meta-judge-output.yaml（重审 2026-09-06 更正引用：这两条原写成裸的「SKILL.md 第 157 / 254 行」，读起来像 meta-judge 自己的 SKILL.md，实际指的是 acceptance-fleet 的；第 254 行还越过了那份文件当时的长度。锚点的归属必须写全路径，否则下一个人核不出来——这条歧义是 check_anchors.py 抓出来的）。同一份 SKILL.md 内部也不一致：description 与 M0 播报说 final-verdict.yaml，参数表说 meta-judge-output.yaml。这是产物标识分裂，不是配件命名问题——记入提案 P-R6-05，不改名。'
       disposition: issue
       adjudications: []
 
@@ -2329,6 +2329,7 @@ rings:
   - spine/unenforced_rule/control/r008-human-signer
   - spine/newly_identified/control/routing-yaml-no-verifier
   - spine/newly_identified/control/triggers-yaml-no-verifier
+  - spine/newly_identified/control/evidence-anchors-unprotected
 
 # =============================================================================
 # Gap 注册表（唯一真源；id = <ring>/<source>/<atoms>/<slug>）
@@ -3324,6 +3325,24 @@ gaps:
       fallback 计数 = 2（#L22 tier: A 与 #L23 severity: P0 各命中一次）'
   disposition: fix_list
 
+- id: spine/newly_identified/control/evidence-anchors-unprotected
+  ring: spine
+  atoms: [Control]
+  source: newly_identified
+  necessity: necessary
+  deletion_test: 'audit.yaml 里 429 处证据写成 `<file>#L<n>` 的行号锚点，而没有任何机械物保证它们还指着当初那句话。check_audit.py 只看 evidence 的 kind 与 ref 非空；越界也抓不到，因为被引的文件是变长的。具体错误产物：一份锚点大面积指错、却仍然 exit 0 的审计报告——本轮就是这样，graph.yaml 插一个节点（+10 行）与两条边（+2 行），插入点之后的锚点分两段位移，`#L239` 从 human.merge 漂到了新节点头上，105 处锚点全靠人逐个重定位才修回来。具体漏检：读者按锚点去核，看到的是另一段代码，于是要么以为审计在胡说，要么更糟——以为那段代码就是审计说的那回事。这条缺口是"报告声称有证据"与"证据还在原处"之间的缝，PSL-015 在审计文档自身上落空。'
+  evidence:
+  - {kind: file, ref: plugins/sdlc/dogfood/ring-audit/check_anchors.py}
+  - {kind: file, ref: plugins/sdlc/dogfood/ring-audit/anchors.lock}
+  - {kind: run_record, ref: 'python3 plugins/sdlc/dogfood/ring-audit/check_anchors.py verify → 429 SAME, exit 0 @ b77feb0；往 graph.yaml 插一行的变异 → 123 MOVED + 1 GONE, exit 1'}
+  reaudit_note: >-
+    本轮已造出这条闸的机械半边：check_anchors.py（snapshot 把每个锚点指着的那几行的哈希锁进
+    anchors.lock，verify 重算并在漂移时按内容重定位），漂移 exit 1、干净 exit 0、锁缺失 exit 2，
+    并做过变异证明。但**缺口没有闭合**：它还没并进 check_audit.py——那份是 role=gate 的冻结脚本，
+    往里加检查要走变更提案与 l5 重签，本 PR 不开这个口子。在并进去之前，这条闸靠人记得跑，
+    不是不可跳过的，所以 FILLS 边不挂。见提案 P-RA-07。
+  disposition: fix_list
+
 # =============================================================================
 # dos.yaml 里 enforced_by 不是 system 的四条规则。id / name / enforced_by 取自 dos.yaml
 # 对应行（name 用该规则 rationale 里的中文短名）；dos_anchors 是这条规则在 gaps[] 的
@@ -3651,6 +3670,10 @@ proposals:
   source: R6/newly_identified/control/gate-json-not-synced-with-smoke-coverage
   destination: skill_fix_list
   text: 'acceptance-fleet 长出了两个真闸（next_iteration.py / qa_facts.py）并有 smoke 覆盖，而它的 eval/gate.json 仍写 gate_pass=static_only、scripts_run 为空对象。证据档比代码旧，读 gate.json 的人会低估它的承重。收件人：acceptance-fleet 的 eval/gate.json。'
+- id: P-RA-07
+  source: spine/newly_identified/control/evidence-anchors-unprotected
+  destination: skill_fix_list
+  text: '把 check_anchors.py 的 verify 并进 check_audit.py，让"锚点还指着同一段字"和 orphan_gap / gate_cap 一样成为报告自身的判定条件之一（新增失败谓词 anchor_drift）。要走变更提案 + l5 重签，因为 check_audit.py 是 role=gate 的冻结脚本。并进去之前，anchors.lock 的刷新要跟 audit.yaml 的改动同一个提交，否则锁自己就是过期证据。收件人：ring-audit 的 tests-manifest 与 check_audit.py 的变更提案。'
 - id: P-RA-06
   source: R7/newly_identified/judgment/solo-a-tier-count-not-from-the-contract
   destination: new_issue
@@ -3762,9 +3785,13 @@ run_evidence:
       how: 逐个锚点从装配时的 fbc6a3c 取原文，再到 HEAD 里按内容定位，得出新行号——不用算术推算。
       remapped: 105
       unchanged: 257
+      instrument: plugins/sdlc/dogfood/ring-audit/check_anchors.py
+      lock: plugins/sdlc/dogfood/ring-audit/anchors.lock
+      verified: 'check_anchors.py verify → 429/429 SAME, exit 0；往 graph.yaml 插一行的变异 → 123 MOVED + 1 GONE, exit 1（这条闸自己也做了变异证明）'
+      instrument_note: 修完不留工具，下一次插一行又全烂而且没人知道——所以把重定位的做法落成了 snapshot / verify 两个子命令。它还不在 check_audit.py 里，见 P-RA-07。
       note: 'graph.yaml 本轮插入 agent.pr-reviewer 节点（+10 行）与两条边（+2 行），插入点之后的锚点分两段位移，算术会算错，故一律按内容重定位。'
-    gaps: {closed: 1, added: 6, total_before: 73, total_after: 79}
-    proposals: {added: 6, total_before: 39, total_after: 45, note: '六条新缺口的 disposition 是 issue，光登记不派单等于只让报告变长，所以按本文档已有的做法各配一条提案 P-RA-0N'}
+    gaps: {closed: 1, added: 7, total_before: 73, total_after: 80, note: '六条来自四份 delta；第七条 spine/newly_identified/control/evidence-anchors-unprotected 是落 delta 的过程本身暴露的——修 105 处锚点时发现没有任何机械物防这种漂移'}
+    proposals: {added: 7, total_before: 39, total_after: 46, note: '六条新缺口的 disposition 是 issue，光登记不派单等于只让报告变长，所以按本文档已有的做法各配一条提案 P-RA-0N'}
     honesty_unchanged: 0 个配件达到 verified；三道门仍全是代签；仓库仍无 CI。
 
   # PSL-003 审计者不改被审对象——由 replay_card_commits.sh 证明，不由记忆保证。

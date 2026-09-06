@@ -1,0 +1,274 @@
+#!/usr/bin/env python3
+"""check_anchors.py — 证据锚点的抗漂移锁（重审 2026-09-06 的产物）。
+
+为什么存在
+----------
+audit.yaml 里 800 多条证据，其中 400 多条带 `<file>#L<n>` / `#L<a>-L<b>` 的行号锚点。
+行号会漂：本轮 graph.yaml 插入 agent.pr-reviewer 节点（+10 行）与两条边（+2 行），
+插入点之后的锚点分两段位移——`#L239` 本该指 human.merge，插完之后指到了新节点头上。
+
+漂移**不被任何现有检查抓到**。check_audit.py 只看 evidence 的 kind 与 ref 非空，
+不看 ref 是否还指着当初那句话；越界也抓不到，因为文件是变长的。一份锚点全指错的审计
+照样 exit 0——那正是"报告声称有证据"与"证据还在原处"之间的缝。本轮手工修了 105 处，
+修完如果不留工具，下一次插一行又全烂，而且没人会知道。
+
+它凭什么判
+----------
+不猜、不算术、不依赖某个历史 commit：`snapshot` 把每个锚点当时指着的**那几行的哈希**
+存进 `anchors.lock`；`verify` 拿当前文件重算。哈希一致 = 锚点仍指着同一段字，
+不一致就到全文里找那段原文——找到且唯一即 MOVED（位置变了，内容没变，可 --fix 改），
+找不到即 GONE（内容被改写了），多处命中即 AMBIGUOUS（原文不唯一，机器不该替人选）。
+
+`--fix` 只改 MOVED。GONE 与 AMBIGUOUS 永不自动改：那是"内容变了"而不是"位置变了"，
+替审计者决定新锚点指哪儿，就是替他下判断。
+
+退出码
+------
+  0  verify 全部 SAME（或只有 AMBIGUOUS / 未锁项这类 warn）
+  1  有 MOVED 或 GONE 未修 —— 报告在拿漂走的行号当证据
+  2  用法错误 / 锁文件缺失 / 锁里没有任何条目
+
+这条闸现在的位置
+----------------
+独立工具，**不在** check_audit.py 里：那份是 role=gate 的冻结脚本，往里加检查要走变更提案。
+缺口与提案见 audit.yaml 的 `spine/newly_identified/control/evidence-anchors-unprotected`
+与 `P-RA-07`。在它被并进去之前，这条闸靠人记得跑——所以它自己也还不是"不可跳过"的。
+"""
+
+import argparse
+import collections
+import hashlib
+import json
+import os
+import re
+import sys
+
+BASENAMES = {
+    "graph.yaml": "plugins/sdlc/skills/sdlc/assets/graph.yaml",
+    "loops.yaml": "plugins/sdlc/skills/sdlc/assets/loops.yaml",
+    "routing.yaml": "plugins/sdlc/skills/sdlc/assets/routing.yaml",
+    "triggers.yaml": "plugins/sdlc/skills/sdlc/assets/triggers.yaml",
+    "ARCHITECTURE.md": "plugins/sdlc/docs/ARCHITECTURE.md",
+    "design-notes.md": "plugins/sdlc/docs/design-notes.md",
+    "lifecycle.md": "plugins/sdlc/docs/lifecycle.md",
+    "sdlc_state.py": "plugins/sdlc/skills/sdlc/scripts/sdlc_state.py",
+    "dos.yaml": "plugins/sdlc/dogfood/ring-audit/dos.yaml",
+    "ratchet-log-format.md": "plugins/sdlc/skills/acceptance-fleet/references/ratchet-log-format.md",
+    "verify_pr.py": "plugins/sdlc/skills/pr/scripts/verify_pr.py",
+    "pr-poll.sh": "plugins/sdlc/skills/review-loop/scripts/pr-poll.sh",
+    "tune.py": "plugins/sdlc/skills/tune/scripts/tune.py",
+    "metrics.py": "plugins/sdlc/skills/retro/scripts/metrics.py",
+    "next_iteration.py": "plugins/sdlc/skills/acceptance-fleet/scripts/next_iteration.py",
+    "qa_facts.py": "plugins/sdlc/skills/acceptance-fleet/scripts/qa_facts.py",
+    "skill-dispatch-matrix.md": "plugins/sdlc/skills/acceptance-fleet/references/skill-dispatch-matrix.md",
+    "references/finding-schema.yaml": "plugins/sdlc/skills/qa-reviewer/references/finding-schema.yaml",
+    "references/divergence-types.md": "plugins/sdlc/skills/spec-drift-detector/references/divergence-types.md",
+    "check_audit.py": "plugins/sdlc/dogfood/ring-audit/check_audit.py",
+    "verify_loop.py": "plugins/sdlc/skills/sdlc/scripts/verify_loop.py",
+    "verify_graph.py": "plugins/sdlc/skills/sdlc/scripts/verify_graph.py",
+    "trace.py": "plugins/sdlc/skills/sdlc/scripts/trace.py",
+    "lock_done_when.py": "plugins/sdlc/skills/sdlc/scripts/lock_done_when.py",
+    "verify_dos.py": "plugins/sdlc/skills/dos-extract/scripts/verify_dos.py",
+    "verify_commit.py": "plugins/sdlc/skills/commit/scripts/verify_commit.py",
+    "smoke.sh": "plugins/sdlc/eval/smoke.sh",
+}
+
+ANCHOR = re.compile(r"([A-Za-z0-9_./<>*-]+\.(?:py|sh|yaml|json|md))#L(\d+)(?:([-–])L?(\d+))?")
+PART_ID = re.compile(r"^\s*-?\s*id:\s*([A-Za-z0-9_.<>-]+)\s*$")
+
+
+def die(msg, code=2):
+    sys.stderr.write(f"check_anchors: {msg}\n")
+    sys.exit(code)
+
+
+def digest(lines):
+    return hashlib.sha256("\n".join(lines).encode("utf-8")).hexdigest()[:16]
+
+
+def skill_paths():
+    """<skill> → 它的 SKILL.md。裸 `SKILL.md#L` 靠所在 Part 的 id 消歧。"""
+    out = {}
+    root = "plugins/sdlc/skills"
+    if os.path.isdir(root):
+        for d in sorted(os.listdir(root)):
+            p = f"{root}/{d}/SKILL.md"
+            if os.path.isfile(p):
+                out[d] = p
+    return out
+
+
+def resolve(name, part, skills):
+    if name.startswith(("plugins/", "specs/", ".sdlc/")):
+        return name
+    if name in BASENAMES:
+        return BASENAMES[name]
+    if name.endswith("/SKILL.md") and name.count("/") == 1:
+        return f"plugins/sdlc/skills/{name}"
+    if name == "SKILL.md" and part in skills:
+        return skills[part]
+    return None
+
+
+def walk_anchors(audit_path, skills, on_anchor):
+    """逐行扫 audit.yaml，把每个锚点交给 on_anchor(name, path, a, b, dash)。
+    回调返回替换串（或 None 表示不动）。返回改写后的全文。"""
+    raw = open(audit_path, encoding="utf-8").read()
+    part = [None]
+    out = []
+    for line in raw.splitlines(keepends=True):
+        pm = PART_ID.match(line.rstrip("\n"))
+        if pm and pm.group(1) in skills:
+            part[0] = pm.group(1)
+
+        def sub(m):
+            name, a, dash, b = m.group(1), int(m.group(2)), m.group(3), m.group(4)
+            b = int(b) if b else a
+            path = resolve(name, part[0], skills)
+            r = on_anchor(name, path, a, b, dash, part[0])
+            return r if r is not None else m.group(0)
+
+        out.append(ANCHOR.sub(sub, line))
+    return "".join(out)
+
+
+class Reader:
+    def __init__(self):
+        self._c = {}
+
+    def lines(self, path):
+        if path not in self._c:
+            try:
+                self._c[path] = open(path, encoding="utf-8").read().splitlines()
+            except OSError:
+                self._c[path] = None
+        return self._c[path]
+
+
+def key_of(path, a, b):
+    return f"{path}#L{a}" + (f"-L{b}" if b != a else "")
+
+
+def cmd_snapshot(args):
+    reader, skills = Reader(), skill_paths()
+    lock, stats = {}, collections.Counter()
+
+    def on(name, path, a, b, dash, part):
+        if path is None:
+            stats["unresolved"] += 1
+            return None
+        lines = reader.lines(path)
+        if lines is None or b > len(lines):
+            stats["unreadable"] += 1
+            return None
+        block = lines[a - 1:b]
+        if all(not x.strip() for x in block):
+            stats["blank"] += 1
+            return None
+        lock[key_of(path, a, b)] = {"sha": digest(block), "lines": b - a + 1}
+        stats["locked"] += 1
+        return None
+
+    walk_anchors(args.audit, skills, on)
+    if not lock:
+        die("锁里一个条目都没有 —— audit.yaml 里没找到可解析的行号锚点", 2)
+    payload = {"schema": "anchors-lock/1", "audit": args.audit, "entries": lock}
+    with open(args.lock, "w", encoding="utf-8") as fh:
+        json.dump(payload, fh, ensure_ascii=False, indent=2, sort_keys=True)
+        fh.write("\n")
+    print(f"check_anchors snapshot: {len(lock)} 个锚点已锁进 {args.lock}")
+    for k in ("unresolved", "unreadable", "blank"):
+        if stats[k]:
+            print(f"  未锁（{k}）: {stats[k]}")
+    return 0
+
+
+def cmd_verify(args):
+    if not os.path.isfile(args.lock):
+        die(f"锁文件不存在: {args.lock}（先跑 snapshot）", 2)
+    lock = json.load(open(args.lock, encoding="utf-8")).get("entries") or {}
+    if not lock:
+        die(f"{args.lock} 里没有任何条目", 2)
+    reader, skills = Reader(), skill_paths()
+    stats = collections.Counter()
+    problems = []
+
+    def on(name, path, a, b, dash, part):
+        if path is None:
+            stats["UNRESOLVED"] += 1
+            return None
+        entry = lock.get(key_of(path, a, b))
+        lines = reader.lines(path)
+        if lines is None:
+            stats["GONE"] += 1
+            problems.append(("GONE", f"{name}#L{a}", part, f"{path} 读不到"))
+            return None
+        if entry is None:
+            # 锁里没有 = 这个锚点是快照之后新写的。报，但不算漂移。
+            stats["UNLOCKED"] += 1
+            problems.append(("UNLOCKED", key_of(name, a, b), part, "锁里没有它 —— 快照之后新增的锚点，跑一次 snapshot 收进来"))
+            return None
+        cur = lines[a - 1:b] if b <= len(lines) else []
+        if cur and digest(cur) == entry["sha"]:
+            stats["SAME"] += 1
+            return None
+        # 内容对不上：到全文里找锁住的那一段
+        n = entry["lines"]
+        hits = [i for i in range(len(lines) - n + 1)
+                if digest(lines[i:i + n]) == entry["sha"]]
+        if len(hits) == 1:
+            na = hits[0] + 1
+            nb = na + n - 1
+            stats["MOVED"] += 1
+            problems.append(("MOVED", key_of(name, a, b), part,
+                             f"原文整段移到 L{na}" + (f"-L{nb}" if nb != na else "")))
+            if args.fix:
+                return f"{name}#L{na}" + (f"{dash}L{nb}" if dash else "")
+            return None
+        if not hits:
+            now = lines[a - 1].strip()[:60] if a <= len(lines) else "<超出文件尾>"
+            stats["GONE"] += 1
+            problems.append(("GONE", key_of(name, a, b), part,
+                             f"锁住的原文已不存在；该行号现在是 {now!r}"))
+            return None
+        stats["AMBIGUOUS"] += 1
+        problems.append(("AMBIGUOUS", key_of(name, a, b), part,
+                         f"锁住的原文在当前文件里出现 {len(hits)} 次，机器不替人选"))
+        return None
+
+    fixed = walk_anchors(args.audit, skills, on)
+    if args.fix and stats["MOVED"]:
+        open(args.audit, "w", encoding="utf-8").write(fixed)
+
+    total = sum(stats.values())
+    print(f"check_anchors verify: {total} 个行号锚点 · 锁 {args.lock}")
+    for k in ("SAME", "MOVED", "GONE", "AMBIGUOUS", "UNLOCKED", "UNRESOLVED"):
+        if stats[k]:
+            print(f"  {k:11} {stats[k]}")
+    for verdict, anchor, part, detail in problems:
+        where = f"（{part}）" if part else ""
+        print(f"  {verdict:10} {anchor}{where} — {detail}")
+    if args.fix and stats["MOVED"]:
+        print(f"\n已就地改正 {stats['MOVED']} 处 MOVED；记得重跑 snapshot 刷新锁。"
+              f"GONE / AMBIGUOUS 未动 —— 那是内容变了，不是位置变了。")
+        return 1 if stats["GONE"] else 0
+    return 1 if (stats["MOVED"] or stats["GONE"]) else 0
+
+
+def main():
+    ap = argparse.ArgumentParser(description=__doc__,
+                                 formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--audit", default="plugins/sdlc/dogfood/ring-audit/audit.yaml")
+    ap.add_argument("--lock", default="plugins/sdlc/dogfood/ring-audit/anchors.lock")
+    sub = ap.add_subparsers(dest="cmd", required=True)
+    sub.add_parser("snapshot", help="把每个锚点当前指着的那几行的哈希锁下来")
+    v = sub.add_parser("verify", help="按锁核对每个锚点是否还指着同一段字")
+    v.add_argument("--fix", action="store_true", help="就地改正 MOVED（GONE / AMBIGUOUS 不动）")
+    a = ap.parse_args()
+    if not os.path.isfile(a.audit):
+        die(f"audit 文件不存在: {a.audit}")
+    sys.exit(cmd_snapshot(a) if a.cmd == "snapshot" else cmd_verify(a))
+
+
+if __name__ == "__main__":
+    main()
