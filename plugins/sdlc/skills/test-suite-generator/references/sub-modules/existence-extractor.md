@@ -108,7 +108,20 @@ Schema v1 (Appendix C of `done-when-pipeline.md`) defines **five** existence kin
 | `db_field:` | `rg -q "<column>" src/db/ src/migrations/` | upgrade if project uses a schema DSL (Prisma, SQLAlchemy declarative) — use the DSL's introspection instead |
 | `frontend_component:` | `rg -q "<Name>" src/components/` | rarely needed |
 
-If a contract uses any other kind (e.g. `env_var:` / `cli_command:` — both showed up in earlier drafts of this skill), it is non-v1 and should have been rejected at the validator step. Bail out and tell the user to regenerate the contract via `/acceptance-spec`.
+## v2 (`schema: 2`) — observation boundaries, not files
+
+A v2 contract's `existence:` block answers "where would you *watch* this from", not "which file exists": `validate_done_when_v2.py` accepts `route` / `db_field` / `ui` / `cli` / `event` / `frontend_component` / `api` / `topic` / `queue` and **rejects `file:` and `function:`** (file-level existence moved to each card's `allowed_files`). `gen_existence.py` maps the two boundaries v1 has no analogue for:
+
+| Kind | shell check | pinning flag |
+|---|---|---|
+| `cli:` | `cli_entry <name>` — on `PATH`, else a script under `$SRC` / `$DOCS` named `<name>`, `<name>.py`, `<name>.sh` (and the `_` spelling of a `-` name) | `--cli NAME=PATH` → plain `test -f` |
+| `ui:` | `ui_surface <file>` (surface exists under `$DOCS`) **+** `ui_anchor <file> <ERE>` per anchor — a heading whose slug matches the anchor with separators interchangeable, or an explicit `id=` / `name=` / `{#anchor}` | `--ui SURFACE=PATH`, `--ui-anchor 'SURFACE#ANCHOR=EREGEX'` (repeatable) |
+
+`--ui-anchor` is the seam for domain knowledge the contract string cannot carry. `ui: AUDIT.md#ring-tables` says nothing about nine `## R0`…`## R8` sections and a `needed|implemented|naming` table header; those are eleven `--ui-anchor` flags, and the script is still generated. Reaching for an editor because the contract is v2 is the failure this closes.
+
+`event:` / `api:` / `topic:` / `queue:` fall back to `rg -q "<value>" "$SRC"`. That is a name check, not a boundary check — if one of them is load-bearing for the feature, say so and either pin it or push back on the contract.
+
+If a contract uses a kind outside both tables (e.g. `env_var:` / `cli_command:` — both showed up in earlier drafts of this skill), it is neither v1 nor v2 and should have been rejected at the validator step. Bail out and tell the user to regenerate the contract via `/acceptance-spec` or `/donewhen-extract`.
 
 **Rule of thumb:** ripgrep is fine for ~90% of cases. Reach for tree-sitter / language-native AST only when the simple grep produces false positives (the name is too generic and matches unrelated code) or false negatives (the symbol exists but is generated/macro-expanded).
 

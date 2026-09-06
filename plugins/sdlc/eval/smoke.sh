@@ -286,6 +286,19 @@ expect "verbatim names all present → 0" 0 py "$S/test-suite-generator/scripts/
 TD2="$TMP/tests_missing"; mkdir -p "$TD2"; head -n 2 "$TD/all.test.ts" > "$TD2/some.test.ts"
 expect "verbatim names missing → 1" 1 py "$S/test-suite-generator/scripts/check_verbatim_names.py" "$EX/done_when.yaml" "$TD2" --check
 
+echo "== test-suite-generator / v2 contract: cli+ui boundaries, manifest, red baseline"
+# The real v2 artefacts from the ring-audit run: `behavior:` is an empty seed, the 34 names live in
+# tests-manifest.yaml, and `existence:` carries cli:/ui: observation boundaries instead of file:/function:.
+TSG="$S/test-suite-generator/scripts"
+DW2="$ROOT/dogfood/ring-audit/done_when.yaml"
+MF2="$ROOT/dogfood/ring-audit/tests/ring-audit/tests-manifest.yaml"
+TD3="$ROOT/dogfood/ring-audit/tests/ring-audit"
+expect "gen_existence: cli: boundary emits a resolver, not a blind rg (I-54)" 0 bash -c "out=\$(python3 '$TSG/gen_existence.py' '$DW2') && grep -q 'cli_entry \"check-audit\"' <<<\"\$out\" && grep -q 'cli_entry \"verify-commit\"' <<<\"\$out\" && ! grep -q 'rg -q \"check-audit\"' <<<\"\$out\""
+expect "gen_existence: ui: boundary checks the surface AND its anchor (I-54)" 0 bash -c "out=\$(python3 '$TSG/gen_existence.py' '$DW2') && grep -q 'ui_surface \"AUDIT.md\"' <<<\"\$out\" && grep -c 'ui_anchor \"AUDIT.md\"' <<<\"\$out\" | grep -qx 2"
+expect "gen_existence: the generated v2 existence script passes against the real tree (I-54)" 0 bash -c "python3 '$TSG/gen_existence.py' '$DW2' --src '$ROOT' > '$TMP/ex_v2.sh' && bash '$TMP/ex_v2.sh' | grep -q 'All 5 existence checks passed'"
+expect "gen_existence: --ui-anchor reproduces the hand-written ring-tables expansion (I-54)" 0 bash -c "python3 '$TSG/gen_existence.py' '$DW2' --cli 'check-audit=$ROOT/dogfood/ring-audit/check_audit.py' --cli 'verify-commit=$S/commit/scripts/verify_commit.py' --ui 'AUDIT.md=$ROOT/dogfood/ring-audit/AUDIT.md' --ui-anchor 'AUDIT.md#ring-tables=^## R0([^0-9]|\$)' --ui-anchor 'AUDIT.md#ring-tables=^## R8([^0-9]|\$)' --ui-anchor 'AUDIT.md#ring-tables=^## .*spine' --ui-anchor 'AUDIT.md#ring-tables=^\\|.*needed.*\\|.*implemented.*\\|.*naming' --ui-anchor 'AUDIT.md#run-evidence=^## .*run[_ -]?evidence' > '$TMP/ex_v2_pinned.sh' && bash '$TMP/ex_v2_pinned.sh' | grep -q 'All 8 existence checks passed'"
+expect "gen_existence: v1 kinds still map (file/function/route/db_field/component)" 0 bash -c "out=\$(python3 '$TSG/gen_existence.py' '$EX/done_when.yaml' --src src) && grep -q 'All 12 existence checks passed' <<<\"\$out\" && grep -q 'test -f \"src/billing/cancel_subscription_use_case.ts\"' <<<\"\$out\""
+
 echo "== spec-gaming-detector / compute_score.py"
 expect "score P0+P1+P3 = 5.5" 0 bash -c "python3 '$S/spec-gaming-detector/scripts/compute_score.py' '$S/spec-gaming-detector/eval/fixtures/findings.json' --json | grep -q '5.5'"
 expect "trend warning on steep rise" 0 bash -c "python3 '$S/spec-gaming-detector/scripts/compute_score.py' '$S/spec-gaming-detector/eval/fixtures/findings.json' --baseline 3 --json | grep -q 'trend_warning'"

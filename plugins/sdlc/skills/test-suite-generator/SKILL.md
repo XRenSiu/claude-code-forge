@@ -106,7 +106,16 @@ Read `references/sub-modules/existence-extractor.md` for the full grammar.
 python scripts/gen_existence.py <done_when.yaml> --src src --version <this SKILL's frontmatter version> > tests/<feature>/existence.sh
 ```
 
-`scripts/gen_existence.py` is the existence-script primitive. It seals the mechanical correctness so it is never re-improvised each run: `set -euo pipefail` is always line 1, every check runs through a no-`if` helper (so `errexit` can never be silently swallowed), and the `function:` check always uses the broad export-matching regex (direct / `export default` / barrel re-export) — a too-narrow regex that false-negatives on the latter two now has no slot to slip into. It maps the five v1 kinds (`file` / `function` / `route` / `db_field` / `frontend_component`) per `references/sub-modules/existence-extractor.md`; v0.x kinds like `env_var:` / `cli_command:` are not v1 and should already have been rejected by the validator.
+`scripts/gen_existence.py` is the existence-script primitive. It seals the mechanical correctness so it is never re-improvised each run: `set -euo pipefail` is always line 1, every check runs through a no-`if` helper (so `errexit` can never be silently swallowed), and the `function:` check always uses the broad export-matching regex (direct / `export default` / barrel re-export) — a too-narrow regex that false-negatives on the latter two now has no slot to slip into.
+
+**Both contract generations map.** v1 (Appendix C) kinds: `file` / `function` / `route` / `db_field` / `frontend_component`, per `references/sub-modules/existence-extractor.md`. v2 (`schema: 2`) drops `file:` / `function:` — a v2 `existence:` block carries **observation boundaries** (`validate_done_when_v2.py` `EXIST_KEYS`: `route` / `db_field` / `ui` / `cli` / `event` / `frontend_component` / `api` / `topic` / `queue`), and file-level existence lives in the cards' `allowed_files` instead. The two v2 boundaries with real resolvers here:
+
+| Boundary | What the generated check asserts | Flags |
+|---|---|---|
+| `cli: <name>` | the command is reachable — on `PATH`, or a script under `$SRC` / `$DOCS` named `<name>` / `<name>.py` / `<name>.sh` (and the underscore spelling) | `--cli NAME=PATH` pins it to one file instead |
+| `ui: <surface>#<anchor>` | the surface file exists under `$DOCS`, **and** carries the anchor — a heading whose slug matches (separators interchangeable, so `#run-evidence` matches `## run_evidence`), or an explicit `id=` / `name=` / `{#anchor}` target | `--ui SURFACE=PATH` pins the surface; `--ui-anchor 'SURFACE#ANCHOR=EREGEX'` (repeatable) supplies extra patterns |
+
+`--docs` defaults to the contract's own directory; `--ui-anchor` is how domain knowledge the contract string cannot carry gets in as **data**. A `ui: AUDIT.md#ring-tables` anchor that really means "nine `## R0`…`## R8` sections plus a `needed|implemented|naming` table header" is eleven `--ui-anchor` flags, not eleven hand-written `grep` lines — the bash stays generated. Hand-writing `existence.sh` because the contract is v2 is the bug this closes (I-54); if a kind still has no mapping, say so and push back on the contract, do not open an editor.
 
 **Why a primitive, not prose (skillwise THEORY.md §3).** Fail-fast (per `done-when-pipeline.md` §6.2) means stop on the **first** missing symbol — surfacing one immediately beats a 20-line tally. The forbidden anti-pattern is a count-all-then-exit tally, because an `if`/`||`-with-assignment wrapper disables `errexit` and swallows the failure. Hand-writing the bash is exactly where that bug crept back in before; the generator is the guarantee. If a user *insists* on a count-all diagnostic mode, that is a separate file (`existence-diag.sh`) and a SKILL-level discussion — do not silently switch the default.
 
@@ -302,7 +311,7 @@ The test files this skill emits become the **acceptance contract** that Step 5 (
 
 Per skillwise THEORY.md §3, the mechanical sub-parts ship as runnable primitives, not prose the agent re-improvises each run:
 
-- `scripts/gen_existence.py` — emits the fail-fast `existence.sh` (4-A); forces `set -euo pipefail`, the no-`if` helper, and the broad export regex.
+- `scripts/gen_existence.py` — emits the fail-fast `existence.sh` (4-A); forces `set -euo pipefail`, the no-`if` helper, and the broad export regex. Maps v1 kinds and the v2 `cli:` / `ui:` observation boundaries (`--cli` / `--ui` / `--ui-anchor`).
 - `scripts/derive_counts.py` — derives the canonical test counts from `done_when.yaml` (kills the headline/README count-divergence bug).
 - `scripts/check_verbatim_names.py` — asserts every contract test name appears verbatim in the generated files (iron rule 9 traceability gate).
 
