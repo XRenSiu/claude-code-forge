@@ -186,7 +186,15 @@ def cmd_snapshot(args):
 def cmd_verify(args):
     if not os.path.isfile(args.lock):
         die(f"锁文件不存在: {args.lock}（先跑 snapshot）", 2)
-    lock = json.load(open(args.lock, encoding="utf-8")).get("entries") or {}
+    try:
+        payload = json.load(open(args.lock, encoding="utf-8"))
+    except (json.JSONDecodeError, OSError) as exc:
+        # 锁读不出来就退 2 而不是让异常裸奔：exit 1 在这里的含义是"锚点漂了"，
+        # 拿它表示"锁坏了"会让调用方把两件事混为一谈。
+        die(f"锁文件读不出来: {args.lock} — {exc}", 2)
+    if not isinstance(payload, dict):
+        die(f"锁文件不是一个对象: {args.lock}", 2)
+    lock = payload.get("entries") or {}
     if not lock:
         die(f"{args.lock} 里没有任何条目", 2)
     reader, skills = Reader(), skill_paths()
