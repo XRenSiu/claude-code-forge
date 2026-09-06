@@ -366,6 +366,37 @@ case "$CMD" in
       echo "pr-poll: findings file '$FINDINGS' missing or empty — an isolated review round must leave a record" >&2
       exit 1
     fi
+    # Non-empty is not a record. `printf 'x' > f` used to satisfy the only condition solo mode has in
+    # place of a human APPROVE, which made the substitute weaker than the thing it substitutes for
+    # while SKILL.md called it stricter (PR pre-review, B-tier). Demand the shape /pr-review actually
+    # emits: a review block naming its target and verdict, and either findings or a stated rationale
+    # for having none.
+    if ! python3 - "$FINDINGS" <<'PYSR'
+import sys
+try:
+    import yaml
+except ImportError:
+    sys.stderr.write("pr-poll selfreview: PyYAML needed to validate the findings record\n"); sys.exit(1)
+try:
+    d = yaml.safe_load(open(sys.argv[1], encoding="utf-8"))
+except Exception as e:
+    sys.stderr.write("pr-poll selfreview: findings file does not parse as YAML: %s\n" % e); sys.exit(1)
+r = (d or {}).get("review") if isinstance(d, dict) else None
+if not isinstance(r, dict):
+    sys.stderr.write("pr-poll selfreview: no `review:` block — this is not a /pr-review output\n"); sys.exit(1)
+missing = [k for k in ("target", "mergeable") if not r.get(k)]
+if missing:
+    sys.stderr.write("pr-poll selfreview: review block lacks %s\n" % ", ".join(missing)); sys.exit(1)
+f = r.get("findings")
+if f is None:
+    sys.stderr.write("pr-poll selfreview: review has no `findings` key (write `findings: []` plus a rationale for an empty round)\n"); sys.exit(1)
+if isinstance(f, list) and not f and not (r.get("rationale") or r.get("no_findings_rationale")):
+    sys.stderr.write("pr-poll selfreview: an empty findings list needs a rationale saying what was walked\n"); sys.exit(1)
+PYSR
+    then
+      echo "pr-poll: '$FINDINGS' is not an isolated review record — solo mode stands on this file, so it must carry one" >&2
+      exit 1
+    fi
     a_tier="$(grep -Eo '(^|[[:space:]])a_tier_survivors:[[:space:]]*[0-9]+' "$FINDINGS" \
               | grep -Eo '[0-9]+' | tail -1 || true)"
     if [[ -z "$a_tier" ]]; then

@@ -1,0 +1,200 @@
+# pre-review round 1 — PR #3 (fix/sdlc-issues-002), read-only. No edits, no comments, no approve.
+review:
+  target: "origin/main..HEAD  (PR #3, branch fix/sdlc-issues-002)"
+  focus: all
+  model: claude-opus-5
+  vendor: claude
+  adversarial_mode: true
+  rules_loaded:
+    - "CLAUDE.md"
+    - "plugins/sdlc/skills/pr-review/SKILL.md"
+    - "plugins/sdlc/skills/pr-review/assets/findings_template.yaml"
+    - "pr2-body.md#Scope + #Known-issues"
+  hunks: 616
+  lines_changed: 7417          # 150 files, +6944 / -473
+  tool_calls_used: 19
+  max_findings: 5
+  mergeable: "no (A-tier)"
+  tier_summary: { A: 1, B: 3, C: 0 }
+
+  findings:
+    - id: cr-001
+      tier: A
+      severity: P0
+      file: plugins/sdlc/eval/smoke.sh
+      line_range: [60, 72]
+      category: test_harness_soundness
+      root_cause: >-
+        --mutate 判 "killed" 的全部依据是 L64 `grep -E '^FAIL ' "$LOG"` —— 变异后这一次运行里
+        有没有任何 FAIL。它从不先在**未变异的副本**上确认基线为绿，也不要求变红的期望与被变异
+        的文件有关。副本 `cp -R "$ROOT"` 拷的是**工作树**（不是 HEAD），所以任何先前就红的期望
+        （TDD 红态、别的 worktree 留下的半成品、环境差异）都会让每一个 mutant 都被判 killed，
+        exit 0。L12 的契约 "Exit 0 = the mutant was killed (at least one expectation caught it)"
+        因此是假的：caught it 换成了 something was already broken。
+      reproduction_scenario: >-
+        1) 取 suite 自己的 I-80 对照用例（smoke.sh:810 断言这个变异必须存活）：
+        `bash plugins/sdlc/eval/smoke.sh --only 'derive_counts on example' --mutate
+        skills/test-suite-generator/scripts/derive_counts.py 'the count primitive'
+        'the counting primitive'` → "MUTANT SURVIVED", exit 1（正确）。
+        2) 把 plugins/sdlc 拷到 scratch，在 skills/spec-gaming-detector/scripts/compute_score.py
+        顶部插入 `import sys; sys.exit(7)`（模拟任一条先前就红的期望）。
+        3) 从该副本跑**完全相同的变异**，按 header 记载的用法（不带 --only）：
+        `bash <copy>/eval/smoke.sh --mutate skills/test-suite-generator/scripts/derive_counts.py
+        'the count primitive' 'the counting primitive'`
+        → 输出 "mutant killed by: FAIL score P0+P1+P3 = 5.5 / FAIL trend warning on steep rise"，
+        exit 0。两条 killer 都在 compute_score.py，与被变异的 derive_counts.py 无关。
+        一个 suite 自证必须存活的 mutant，被同一个工具报成 killed。
+      confidence: high
+      evidence:
+        - { kind: read, file: plugins/sdlc/eval/smoke.sh, lines: [1, 75] }
+        - { kind: run, cmd: "bash plugins/sdlc/eval/smoke.sh", result: "381 passed, 0 failed (基线确为绿)" }
+        - { kind: run, cmd: "SMOKE_NESTED=1 bash <unmutated copy>/eval/smoke.sh", result: "378 passed, 0 failed —— 副本本身可绿，但工具从不检查这一点" }
+        - { kind: run, cmd: "<poisoned copy>/eval/smoke.sh --mutate …", result: "exit 0, 'mutant killed by' 两条无关期望" }
+        - { kind: grep, query: "mutation_tested|mutation_proof", matches: 3, note: "psl/psl-derive/test-suite-generator 的 eval/gate.json 已把 '27 mutants, 0 survived' / '10 mutants, all killed' 写成 provenance —— 该记录的强度等同本工具" }
+      needs_codebase_check: false
+      suggested_change: >-
+        在 L62 之前先跑一次未变异副本并要求 0 failed（否则 exit 2 "baseline not green — mutation
+        verdict would be meaningless"），把该轮 FAIL 集合存为 BASE；变异后把 killers 定义为
+        `comm -13 BASE CURRENT`（新增变红的期望），为空即 SURVIVED。
+      tags: ["mutation-testing", "false-negative", "load-bearing-proof"]
+
+    - id: cr-002
+      tier: B
+      severity: P1
+      file: plugins/sdlc/skills/review-loop/scripts/pr-poll.sh
+      line_range: [359, 381]
+      category: gate_bypass
+      root_cause: >-
+        solo 终止谓词把 "APPROVED" 换成 "≥1 轮 selfreview 记录 ∧ 该轮 A 档存活 = 0"，而
+        `selfreview` 对 findings 文件的**全部**要求是 L365 的 `[[ ! -s "$FINDINGS" ]]`（非空）。
+        不校验它是不是 findings_template 形状、不校验来源、不校验 reviewer 与 PR 作者是否同一。
+        A 档数先找 `a_tier_survivors: N`，找不到就 `grep -Eic 'tier|severity: A|P0'`，无内容即 0。
+        SKILL.md:67 那行 "APPROVED 不要求任何人真的读过 diff；这里要求一轮隔离上下文的对抗式
+        预审留下机械记录" 描述的强度没有编译进脚本 —— 编译进去的是"存在一个非空文件"。
+      reproduction_scenario: >-
+        在任一 git 仓库里：
+        `bash pr-poll.sh predicate 1 REVIEW_REQUIRED 0 none_configured 0 false --solo`
+        → `{"done": false, "missing": ["no_isolated_self_review_round"]}`, exit 20。
+        然后 `printf 'x' > junk-findings.yaml && bash pr-poll.sh selfreview 1 junk-findings.yaml`
+        → `{"rounds":1,"last":{"a_tier":0,…}}`, exit 0。再跑同一条 predicate
+        → `{"done": true, "reason": "solo_converged_no_checks"}`, exit 0。
+        一个字节的文件替代了那轮隔离预审。
+      confidence: high
+      evidence:
+        - { kind: read, file: plugins/sdlc/skills/review-loop/scripts/pr-poll.sh, lines: [359, 400] }
+        - { kind: read, file: plugins/sdlc/skills/review-loop/SKILL.md, lines: [58, 76] }
+        - { kind: run, cmd: "pr-poll.sh selfreview + predicate --solo in a scratch repo", result: "done:true after `printf x`" }
+      needs_codebase_check: false
+      suggested_change: >-
+        L365 之后加形状门：文件须能被 `python3 -c "import yaml,sys; d=yaml.safe_load(...)"` 解析
+        且含 `review.target` 与 `review.tier_summary`，否则 exit 1；并在写 counters 时拒绝
+        `reviewer` 等于 `gh pr view --json author` 的登录名。
+      tags: ["self-attestation", "termination-predicate"]
+
+    - id: cr-003
+      tier: B
+      severity: P2
+      file: plugins/sdlc/skills/donewhen-extract/scripts/validate_done_when_v2.py
+      line_range: [145, 155]
+      category: gate_coverage
+      root_cause: >-
+        新增的孪生自足 REJECT 被 L147 `if isinstance(hg, dict) and isinstance(tg, dict)` 包着，
+        而 v2 schema 从不要求 `given` 是 mapping。把 twin 的 `given` 写成字符串，整条检查静默
+        跳过，验证器返回 PASS。smoke.sh:841 的 I-55 fixture 用的是 dict，所以现有期望覆盖不到
+        这条绕法 —— 这个闸离"静默"只有一个 YAML 类型的距离。
+      reproduction_scenario: >-
+        取 donewhen-extract/eval/fixtures/v2_good.yaml，按 smoke.sh:833-840 的方式令
+        AC-001-a.given = {input: 上个月, seeded_rows: '120'}，但 AC-001-b.given 写成字符串
+        `'empty query'`（而非 smoke 用的 dict）→ `validate_done_when_v2.py <file>` 返回
+        `verdict: PASS`, `rejects: []`, exit 0；同一份契约把 given 改回 dict 则 REJECT。
+      confidence: high
+      evidence:
+        - { kind: read, file: plugins/sdlc/skills/donewhen-extract/scripts/validate_done_when_v2.py, lines: [117, 160] }
+        - { kind: run, cmd: "validate_done_when_v2.py <twin given as string>", result: "PASS / rejects: []" }
+        - { kind: read, file: plugins/sdlc/eval/smoke.sh, lines: [829, 845] }
+      needs_codebase_check: false
+      suggested_change: >-
+        在 L147 的 isinstance 判断之外补一条 reject：happy 或 twin 的 `given` 不是 mapping 时
+        `f"{aid}: given must be a mapping — otherwise the twin self-sufficiency check cannot run"`。
+      tags: ["silent-skip", "anti-gaming"]
+      note_secondary: >-
+        反方向的代价（不单列为发现，因为它与文档一致）：该检查用"key 集合超集"当自足性的代理，
+        于是不适用的前置也必须复述。构造 happy given {input, auth: signed in, quota_remaining: 5}
+        / twin given {input, auth: not signed in} → REJECT missing ['quota_remaining']，尽管未登录
+        时配额根本不被读。SKILL.md 新增那段确实写的是"restate the happy given, then write the
+        difference"，所以这是规则设计的取舍而非实现偏差，留给人判。
+
+    - id: cr-004
+      tier: B
+      severity: P2
+      file: plugins/sdlc/skills/commit/scripts/verify_commit.py
+      line_range: [122, 141]
+      category: duplication_and_coupling
+      root_cause: >-
+        同一份交付对"跨 skill 共享逻辑"给了两个相反答案，两边都没有机械检查。
+        (a) `version_sync_issues` 在 verify_commit.py:122-141 与 verify_pr.py:73-91 逐字重复
+        20 行（今日仅 docstring 不同），注释分别写 "Keep in sync with …" / "Deliberate duplicate
+        … keep in sync"，但 smoke 里没有任何期望比对这两份函数体 —— 命中 pr-review B 档阈值
+        "重复块 > 20 行 ×2"。
+        (b) 与此同时 verify_issue.py:38-45 与 lint_cards.py:47-54 走了相反的路：`sys.path.insert`
+        注入 ../../dos-extract/scripts 后 import dos_closure，且失败时在 **import 期** `sys.exit(2)`
+        —— 即使本次调用没传 --dos（唯一用到它的路径）也照样硬失败。
+        这与本 PR 自己在 I-45 上确立的原则（"从模板派生，使两者无法漂移"）也不一致。
+      reproduction_scenario: >-
+        (b) 可直接复现：把 plugins/sdlc 拷到 scratch、删掉 skills/dos-extract，再跑
+        `python3 <copy>/skills/issue/scripts/verify_issue.py <any good_issue.md>`（不带 --dos）
+        → stderr "cannot import dos-extract/scripts/dos_closure.py", exit 2。
+        (a) 无运行期症状，是漂移风险：`diff <(sed -n '/^def version_sync_issues/,/^    return hard, soft/p' …)`
+        今日只差注释。
+      confidence: high
+      evidence:
+        - { kind: read, file: plugins/sdlc/skills/commit/scripts/verify_commit.py, lines: [122, 141] }
+        - { kind: read, file: plugins/sdlc/skills/pr/scripts/verify_pr.py, lines: [73, 91] }
+        - { kind: read, file: plugins/sdlc/skills/issue/scripts/verify_issue.py, lines: [30, 46] }
+        - { kind: run, cmd: "verify_issue.py without --dos, dos-extract removed", result: "exit 2" }
+        - { kind: grep, query: "version_sync|I-76 in smoke.sh", matches: 8, note: "均为行为期望，无一比对两份实现" }
+      needs_codebase_check: false
+      suggested_change: >-
+        二选一并写进 CLAUDE.md：要么保持复制，但加一条 smoke 期望比对两份 `version_sync_issues`
+        的函数体文本（不含 docstring）；要么把共享件收到 plugins/sdlc/lib/，并把 dos_closure 的
+        import 失败从 `sys.exit(2)` 降级为延迟到 `--dos` 分支再报错。
+      tags: ["drift-risk", "cross-skill-coupling"]
+
+  # findings 非空，rationale 留空（模板要求）
+  rationale: null
+
+  # 本轮走过并**确认干净**的路径（brief 的五项重点，逐项给结论）
+  verified_clean:
+    - point: "1) --mutate 自身可信度"
+      result: "不可信 → cr-001。附带确认：未变异副本确为绿（378 = 381 − 3 条被 SMOKE_NESTED 跳过的自检），--only 作用域下行为正确（对照用例正确报 SURVIVED），old-string 不存在时 exit 2 而非误判通过。"
+    - point: "2) 三条新 REJECT 路径的误伤"
+      result: >-
+        版本未同步：无误伤 —— 对本分支 exit 0，且 15 个被改 skill 的 SKILL.md 全部 +minor、
+        plugin.json 0.7.0→0.8.1、marketplace 0.8.1，CLAUDE.md 三处同步实际成立（brief 第 3 点
+        的怀疑不成立）。--range 无分隔符：无误伤 —— `git diff <单 ref>` 语义确为「工作树 vs ref」，
+        拒绝是 fail-closed，`A..` / `A...` 开放端已单独处理。契约孪生 given：见 cr-003
+        （漏放大于误伤，误伤那半与文档一致）。
+    - point: "3) 收紧的检查可否绕过"
+      result: "pr-poll.sh solo 谓词可绕过 → cr-002。verify_commit 版本同步：仅 --no-version-sync（已在 PR body 声明为 feature flag）；lock_done_when --gate：role=gate 文件在 verify 里被分流出 changed，但仍落到 reject 分支，未 fail-open。"
+    - point: "4) 六 worktree 合并处互相抵消"
+      result: "未发现抵消。六个 worktree tip 的 expect 标签集合（371/231/212/210/244/236）在 HEAD(376) 中 0 丢失；verify_issue.py / lint_cards.py / g1_record.md 的分支增量在 HEAD 中 0 丢失（fix/psl 对 verify_issue.py 的 4 行系被 HEAD 的超集实现取代：改为同时读 g1-record + g1-interpretations，并共用 dos_closure）；所有改动的 .py 过 py_compile、.sh 过 bash -n；smoke.sh 无重复标签。"
+    - point: "5) 抽查新期望是否真承重"
+      result: "抽三条、各自把 origin/main 的旧实现装回副本后按 --only 跑：I-61（verify_commit.py）1 红 1 绿（绿的那条是正向对照，本应两侧都过）；I-73（lint_cards.py）3 红 1 绿（同）；I-45（verify_issue.py）2 红 0 绿。三条均真承重。注意：本抽查绕开了 cr-001 的工具，直接还原旧实现，所以结论独立于该工具。"
+    - point: "PR body 的 Verification / Acceptance 可复现性"
+      result: "逐条跑过：run_tests.sh 34 tests OK；mutation.sh killed 24/24 survivors []；check_audit.py ok:true 42 parts；verify_graph.py rejects []；metrics.py totals.g1_interception_rate = 0.4。唯一出入：smoke 实测 381 passed（body 写 378），系 body 之后又落了 3 条期望，属陈述滞后，不另开发现。"
+    - point: "AUDIT.md 的 delegated/human 与 static_only/verified 是否被美化"
+      result: "未发现美化。audit.yaml 仅改 G3 裁定的三处 compiled→declared 并各自写明 not_reached.compiled；AUDIT.md 铁律行的计数随之从 16/26 改为 19/23，与 HEAD 实际计数一致（declared 19 / compiled 23 / 共 42），且保留『没有一个到 verified』『三道门 3 道代签』。psl / psl-derive / test-suite-generator 的 gate.json 明写 `still: static_only`，无档位抬升。"
+
+  caveats:
+    adversarial_mode_caveat: >-
+      对抗式审查已开启，但执行者与实现者同厂同族（均为 Claude）；跨供应商评估器不可用，
+      未静默降级，在此标注。
+    diff_truncation_caveat: >-
+      616 个 hunk，超过 pr-review SKILL.md 的 500 hunk 上限。未逐 hunk 通读：改为
+      (a) 真跑整套 smoke（381/0）与 PR body 的每一条 Verification 命令，
+      (b) 对 brief 指定的六个 verifier 修法 + 四处合并接缝做定向 Detective Loop，
+      (c) 用"还原旧实现"抽查三条新期望。未覆盖：psl / psl-derive / dos-extract /
+      invariant-extract / acceptance-fleet 的模板与 references 文档改动的逐字审读。
+    single_vendor_caveat: >-
+      单一供应商：本次预审与 PR 的实现者出自同一模型家族，存在共同盲区；cr-001 与 cr-002
+      都属于"工具自称达标"这一类，正是同族审查最容易一起漏掉的类别——建议至少 cr-001 由人复核。

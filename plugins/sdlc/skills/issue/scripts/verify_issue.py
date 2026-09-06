@@ -39,10 +39,11 @@ import sys
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[2] / "dos-extract" / "scripts"))
 try:
     import dos_closure
-except ImportError:  # pragma: no cover - layout error, not a user error
-    sys.stderr.write("verify_issue.py: cannot import dos-extract/scripts/dos_closure.py "
-                     "(expected at ../../dos-extract/scripts/ relative to this script)\n")
-    sys.exit(2)
+except ImportError:  # a neighbour skill may be absent; that is not this script's failure
+    # Cross-skill code is an OPTIONAL dependency: this script belongs to its own skill and must run
+    # when a neighbour is missing. Hard-exiting at import time killed runs that never passed --dos
+    # (PR pre-review, B-tier). Absent, closure checking degrades to a flag where it is asked for.
+    dos_closure = None
 
 VAGUE = ["快", "慢", "稳定", "可靠", "健壮", "高效", "及时", "尽快", "尽量", "大部分", "多数", "合理",
          "友好", "流畅", "顺畅", "良好", "充分", "适当", "足够", "正确处理", "智能",
@@ -243,7 +244,12 @@ def main():
             rejects.append("Depends on DOS: `objects:` line missing (write `none` if truly none)")
         if a.dos:
             try:
-                closure = dos_closure.load_closure(a.dos)
+                if dos_closure is None:
+                    flags.append("--dos given but dos-extract/scripts/dos_closure.py is not reachable — "
+                                 "closure unchecked; install the neighbour skill or drop --dos")
+                    closure = None
+                else:
+                    closure = dos_closure.load_closure(a.dos)
             except Exception as e:
                 sys.stderr.write(f"verify_issue: cannot read dos: {e}\n"); sys.exit(2)
             # A term recorded as an object `synonyms:` / rule `aliases:` entry closes: the

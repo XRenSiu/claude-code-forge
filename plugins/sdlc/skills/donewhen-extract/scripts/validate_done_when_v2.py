@@ -144,6 +144,15 @@ def main():
             mine += [x for x in sib if x.get("paired_with") == aid and x not in mine]
             for twin in mine:
                 hg, tg = ac.get("given"), twin.get("given")
+                # A `given` that is not a mapping cannot be compared key by key, and silently skipping
+                # the comparison is how the check gets disarmed: write the twin's given as a string and
+                # the same contract the fixture rejects sails through (PR pre-review, B-tier). A
+                # mechanical AC's given must be a mapping, so say so instead of looking away.
+                for who, g in ((aid, hg), (twin.get("id"), tg)):
+                    if g is not None and not isinstance(g, dict):
+                        rejects.append(f"{who}: given must be a mapping of named preconditions, got "
+                                       f"{type(g).__name__} — a free-form given cannot be compared "
+                                       "against its twin's, which disarms the self-sufficiency check")
                 if isinstance(hg, dict) and isinstance(tg, dict):
                     missing = [k for k in hg if k not in tg]
                     if missing:

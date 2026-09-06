@@ -48,10 +48,11 @@ except ImportError:
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[2] / "dos-extract" / "scripts"))
 try:
     import dos_closure
-except ImportError:  # pragma: no cover - layout error, not a user error
-    sys.stderr.write("lint_cards.py: cannot import dos-extract/scripts/dos_closure.py "
-                     "(expected at ../../dos-extract/scripts/ relative to this script)\n")
-    sys.exit(2)
+except ImportError:  # a neighbour skill may be absent; that is not this script's failure
+    # Cross-skill code is an OPTIONAL dependency: this script belongs to its own skill and must run
+    # when a neighbour is missing. Hard-exiting at import time killed runs that never passed --dos
+    # (PR pre-review, B-tier). Absent, closure checking degrades to a flag where it is asked for.
+    dos_closure = None
 
 SHARED_BASENAMES = {"package.json", "package-lock.json", "pnpm-lock.yaml", "yarn.lock", "Cargo.lock",
                     "Cargo.toml", "go.mod", "go.sum", "requirements.txt", "pyproject.toml", "poetry.lock",
@@ -229,7 +230,12 @@ def main():
     #    the cards spoke the docs' vocabulary, the DOS keyed the objects differently, and the
     #    linter had to be pointed at a hand-picked proposal file instead).
     if a.dos:
-        closure = dos_closure.closure_from_dos(load_yaml(a.dos), a.dos)
+        if dos_closure is None:
+            flags.append("--dos given but dos-extract/scripts/dos_closure.py is not reachable — "
+                         "closure unchecked; install the neighbour skill or drop --dos")
+            closure = None
+        else:
+            closure = dos_closure.closure_from_dos(load_yaml(a.dos), a.dos)
         for cid, c in cards.items():
             sl = c.get("dos_slice") or {}
             for o in sl.get("objects") or []:

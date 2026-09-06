@@ -7,7 +7,11 @@
 #   bash plugins/sdlc/eval/smoke.sh --only <ERE>         # only expectations whose label matches
 #   bash plugins/sdlc/eval/smoke.sh --mutate <file> <old-string> <new-string>
 #
-# --mutate is the self-check (I-80): it copies the plugin to a scratch dir, applies the string
+# --mutate is the self-check (I-80): it copies the plugin to a scratch dir TWICE — once unmutated
+# as a baseline that must be green, once with the string replacement — and reports the DELTA. An
+# expectation already red before the mutation is not evidence of anything (pre-review cr-001).
+# Exit 0 killed · 1 survived · 2 the mutation never applied · 3 the baseline was not green.
+# It copies the plugin to a scratch dir, applies the string
 # mutation there, runs this suite against the copy, and reports which expectations went red.
 # Exit 0 = the mutant was killed (at least one expectation caught it); exit 1 = MUTANT SURVIVED.
 # A test that passes against both the buggy and the fixed implementation is worse than no test:
@@ -58,14 +62,44 @@ open(p, "w", encoding="utf-8").write(s.replace(old, new))
 sys.stderr.write("mutation applied: %d occurrence(s) of %r → %r in %s\n" % (n, old, new, p))
 PYEOF
   echo "== mutation self-check: $REL"
-  LOG="$TMP/mutant-run.log"
+  # A "killed" verdict means: an expectation that was GREEN before the mutation is RED after it.
+  # Grepping the mutant run for any FAIL line does not mean that. The copy comes from the working
+  # tree, so an expectation that was already red — a half-finished edit, an unrelated breakage —
+  # would make every mutant look killed, and this tool is what every mutation proof in the register
+  # rests on (found by PR pre-review, cr-001 against the harness itself).
+  BASE_LOG="$TMP/mutant-baseline.log"; LOG="$TMP/mutant-run.log"
+  BASE_COPY="$TMP/baseline/sdlc"; mkdir -p "$TMP/baseline"; cp -R "$ROOT" "$BASE_COPY"
+  SMOKE_NESTED=1 bash "$BASE_COPY/eval/smoke.sh" ${ONLY:+--only "$ONLY"} >"$BASE_LOG" 2>&1 || true
+  BASE_FAIL="$(grep -cE '^FAIL ' "$BASE_LOG" || true)"
+  if [[ "${BASE_FAIL:-0}" -gt 0 ]]; then
+    echo "BASELINE NOT GREEN — $BASE_FAIL expectation(s) already fail before the mutation:"
+    grep -E '^FAIL ' "$BASE_LOG" | sed 's/^/  /'
+    echo "A mutation proof over a red baseline proves nothing: every mutant would look killed."
+    echo "(baseline log: $BASE_LOG)"
+    exit 3
+  fi
   SMOKE_NESTED=1 bash "$COPY/eval/smoke.sh" ${ONLY:+--only "$ONLY"} >"$LOG" 2>&1 || true
   tail -1 "$LOG"
-  KILLERS="$(grep -E '^FAIL ' "$LOG" || true)"
+  # the delta, not the absolute set: labels red after and green before
+  KILLERS="$(python3 - "$BASE_LOG" "$LOG" <<'PYDELTA'
+import re, sys
+def failed(path):
+    out = {}
+    for line in open(path, encoding="utf-8", errors="replace"):
+        m = re.match(r"^FAIL\s+\[[^\]]*\]\s+(.*)$", line.rstrip("\n"))
+        if m:
+            out[m.group(1)] = line.rstrip("\n")
+    return out
+before, after = failed(sys.argv[1]), failed(sys.argv[2])
+for label, line in after.items():
+    if label not in before:
+        print(line)
+PYDELTA
+)"
   if [[ -z "$KILLERS" ]]; then
-    echo "MUTANT SURVIVED — no expectation went red."
+    echo "MUTANT SURVIVED — no expectation went from green to red."
     echo "A test that passes against both implementations claims coverage it does not have (I-80)."
-    echo "(full log: $LOG)"
+    echo "(baseline: $BASE_LOG · mutant: $LOG)"
     exit 1
   fi
   echo "mutant killed by:"; echo "$KILLERS" | sed 's/^/  /'
@@ -434,8 +468,8 @@ expect "default predicate still demands APPROVED (I-69: solo is never the defaul
 expect "solo without a recorded self-review round does not converge (I-69)" 20 bash -c "SELF_REVIEW=1 bash '$PP' predicate 7 null 0 green 3 false | grep -q no_isolated_self_review_round; SELF_REVIEW=1 bash '$PP' predicate 7 null 0 green 3 false >/dev/null"
 git init -q -b feat/9-demo . 2>/dev/null; git config user.name t; git config user.email t@t
 git commit -q --allow-empty -m "chore: init" 2>/dev/null
-printf 'findings: []\na_tier_survivors: 0\n' > clean-findings.yaml
-printf 'findings:\n  - id: cr-001\n    tier: A\n    note: real blocker\n' > dirty-findings.yaml
+printf 'review:\n  target: origin/main..HEAD\n  mergeable: "yes"\n  a_tier_survivors: 0\n  findings: []\n  rationale: walked every changed script; nothing survived\n' > clean-findings.yaml
+printf 'review:\n  target: origin/main..HEAD\n  mergeable: "no (A-tier)"\n  a_tier_survivors: 1\n  findings:\n    - id: cr-001\n      tier: A\n      note: real blocker\n' > dirty-findings.yaml
 expect "selfreview refuses an empty findings file (I-69)" 1 bash -c ": > empty.yaml && bash '$PP' selfreview 7 empty.yaml >/dev/null 2>&1"
 expect "selfreview records the round, its A-tier count and the sha it ran on (I-69)" 0 bash -c "bash '$PP' selfreview 7 clean-findings.yaml pr-reviewer-r1 | python3 -c \"import json,sys; d=json.load(sys.stdin); assert d['rounds']==1; assert d['last']['a_tier']==0; assert len(d['last']['head_sha'])==40\""
 expect "solo converges once a clean isolated round is on record (I-69)" 0 bash -c "SELF_REVIEW=1 bash '$PP' predicate 7 null 0 green 3 false | grep -q '\"reason\": \"solo_converged_green\"'"
@@ -809,6 +843,60 @@ if [[ -z "${SMOKE_NESTED:-}" ]]; then
   expect "smoke --mutate: a killed mutant is reported with the expectations that killed it (I-80)" 0 bash -c "bash '$ROOT/eval/smoke.sh' --only 'I-59' --mutate skills/test-suite-generator/scripts/check_verbatim_names.py 'EMPTY_EXIT = 2' 'EMPTY_EXIT = 0' | grep -q 'mutant killed by'"
   expect "smoke --mutate: a surviving mutant fails the self-check (I-80)" 1 bash -c "bash '$ROOT/eval/smoke.sh' --only 'derive_counts on example' --mutate skills/test-suite-generator/scripts/derive_counts.py 'the count primitive' 'the counting primitive' >/dev/null 2>&1"
   expect "smoke --mutate: an old string that is not in the file is an error, not a pass (I-80)" 2 bash -c "bash '$ROOT/eval/smoke.sh' --only 'derive_counts on example' --mutate skills/test-suite-generator/scripts/derive_counts.py 'no such string in this file' 'x' >/dev/null 2>&1"
+  # PR pre-review, A-tier against the harness itself: "killed" used to mean "some FAIL line exists in
+  # the mutant run". With the copy taken from the working tree, one already-red expectation made every
+  # mutant look killed — and every mutation proof in the register rests on this tool. Now the baseline
+  # must be green and the verdict is the delta.
+  expect "smoke --mutate: a red baseline is refused, not counted as a kill (harness cr-001)" 3 bash -c "
+    POISON=\"\$(mktemp -d)\"; cp -R '$ROOT' \"\$POISON/sdlc\"
+    printf 'raise SystemExit(9)\n' | cat - '$ROOT/skills/retro/scripts/metrics.py' > \"\$POISON/sdlc/skills/retro/scripts/metrics.py\"
+    bash \"\$POISON/sdlc/eval/smoke.sh\" --mutate skills/test-suite-generator/scripts/derive_counts.py 'the count primitive' 'the counting primitive' >/dev/null 2>&1"
+  expect "smoke --mutate: an expectation red both before and after does not count as a kill (harness cr-001)" 1 bash -c "
+    POISON=\"\$(mktemp -d)\"; cp -R '$ROOT' \"\$POISON/sdlc\"
+    bash \"\$POISON/sdlc/eval/smoke.sh\" --only 'derive_counts on example' --mutate skills/test-suite-generator/scripts/derive_counts.py 'the count primitive' 'the counting primitive' >/dev/null 2>&1"
+fi
+
+echo "== cross-skill boundaries (PR pre-review, B-tier)"
+# Two shared-logic decisions were made in opposite directions in one delivery. The rule now: a skill's
+# script is self-contained, and a cross-skill import is OPTIONAL — its absence must not kill a run
+# that never asked for it. Duplication is therefore deliberate, so it gets a test rather than a
+# "keep in sync" comment, and the optional import gets one proving the degraded path works.
+expect "version_sync_issues is code-identical in the commit and pr verifiers (deliberate copy, pinned)" 0 bash -c "python3 -c \"
+import re, ast
+def code(p):
+    s = open(p, encoding='utf-8').read()
+    m = re.search(r'^def version_sync_issues\\(.*?(?=^def |\\Z)', s, re.S | re.M)
+    assert m, p
+    fn = ast.parse(m.group(0)).body[0]
+    if fn.body and isinstance(fn.body[0], ast.Expr) and isinstance(fn.body[0].value, ast.Constant):
+        fn.body = fn.body[1:]          # each skill explains the same code to its own reader
+    return ast.dump(ast.Module(body=[fn], type_ignores=[]))
+assert code('$S/commit/scripts/verify_commit.py') == code('$S/pr/scripts/verify_pr.py'), 'the two copies have drifted apart'
+\""
+expect "verify_issue runs when the dos-extract neighbour is absent (optional import)" 0 bash -c "
+  T=\"\$(mktemp -d)\"; cp -R '$ROOT' \"\$T/sdlc\"; rm -rf \"\$T/sdlc/skills/dos-extract\"
+  python3 \"\$T/sdlc/skills/issue/scripts/verify_issue.py\" '$S/issue/eval/fixtures/good_issue.md' >/dev/null"
+expect "lint_cards runs when the dos-extract neighbour is absent (optional import)" 0 bash -c "
+  T=\"\$(mktemp -d)\"; cp -R '$ROOT' \"\$T/sdlc\"; rm -rf \"\$T/sdlc/skills/dos-extract\"
+  python3 \"\$T/sdlc/skills/plan-cards/scripts/lint_cards.py\" '$S/plan-cards/eval/fixtures/cards_good' >/dev/null"
+expect "a twin whose given is not a mapping is rejected, never skipped (PR pre-review)" 1 bash -c "python3 -c \"
+import yaml
+d=yaml.safe_load(open('$S/donewhen-extract/eval/fixtures/v2_good.yaml'))
+h=next(a for a in d['acceptance'] if a.get('kind')=='mechanical' and a.get('ears_type','event')!='unwanted')
+t=next(a for a in d['acceptance'] if a.get('paired_with')==h['id'] or (a.get('ears_type')=='unwanted' and a.get('observe')==h['observe']))
+t['given']='empty query'
+yaml.safe_dump(d,open('$TMP/v2_given_str.yaml','w'),allow_unicode=True,sort_keys=False)
+\"; python3 '$S/donewhen-extract/scripts/validate_done_when_v2.py' '$TMP/v2_given_str.yaml'"
+expect "solo selfreview refuses a file that is not a review record (PR pre-review)" 1 bash -c "
+  T=\"\$(mktemp -d)\"; cd \"\$T\"; git init -q .; printf 'x' > f.yaml
+  bash '$S/review-loop/scripts/pr-poll.sh' selfreview 1 f.yaml >/dev/null 2>&1"
+expect "solo selfreview accepts a real /pr-review record (PR pre-review)" 0 bash -c "
+  T=\"\$(mktemp -d)\"; cd \"\$T\"; git init -q .
+  printf 'review:\n  target: origin/main..HEAD\n  mergeable: \"yes\"\n  findings: []\n  rationale: walked every changed script\n' > g.yaml
+  bash '$S/review-loop/scripts/pr-poll.sh' selfreview 1 g.yaml >/dev/null 2>&1"
+
+if [[ -z "${SMOKE_NESTED:-}" ]]; then
+  : # placeholder so the following fi still balances
 fi
 
 echo "== spec-gaming-detector / compute_score.py"
