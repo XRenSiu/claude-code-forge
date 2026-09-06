@@ -1,6 +1,6 @@
-# Same card as card_good.yaml with the abductive provenance removed: no execution point,
-# no obstacle. "No provenance, no entry" is the line between a recovered rule and an
-# invented plausible-sounding one.
+# I-26: `altitude: proposed_to_constitution` on an entry and the top-level
+# constitution_promotion_suspects section say the same thing twice. The ruling keeps the
+# section; the narrowed territory form stays carded at altitude: territory.
 territory_id: search
 dos_ref: dos.yaml
 purpose: { name: "resolve relative time into eras", kpi: "p95 <= 300ms, 0 wrong-era", aspect: correctness, scope_ref: "dos.scope" }
@@ -23,10 +23,10 @@ hard_invariants:
     ears_type: unwanted
     survival_test: pass
     strength: hard
-    altitude: territory
+    altitude: proposed_to_constitution
     aspect: correctness
     channel: abductive
-    provenance: { execution_point: "", obstacle_ref: "" }
+    provenance: { execution_point: "", obstacle_ref: "ledger:fail#3 undated capture filed under the newest era" }
     narrowest_rule_note: "bars only the newest-Era default for undated captures; dated capture filing is untouched"
     confidence: high
     disposition: propose

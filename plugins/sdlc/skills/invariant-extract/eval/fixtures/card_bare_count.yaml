@@ -1,16 +1,10 @@
-# Same card as card_good.yaml with the abductive provenance removed: no execution point,
-# no obstacle. "No provenance, no entry" is the line between a recovered rule and an
-# invented plausible-sounding one.
+# I-29: `channel_2_input: {failure_memory_count: 84}` and nothing else. An integer nobody
+# can check is indistinguishable from a card that never opened the abductive channel.
 territory_id: search
 dos_ref: dos.yaml
 purpose: { name: "resolve relative time into eras", kpi: "p95 <= 300ms, 0 wrong-era", aspect: correctness, scope_ref: "dos.scope" }
 mode: auto
-channel_2_input:
-  failure_memory_count: 1
-  dry: false
-  snapshot_at: "2026-09-05T14:11:47Z"
-  sources:
-    - { ref: "ledger.md fail rows", entries: 1, kind: "one wrong-era auto-pick in production" }
+channel_2_input: { failure_memory_count: 84, dry: false }
 projected_out_obstacles: []
 registered_gaps:
   - ref: "eval/gate.json fix_list"
@@ -26,7 +20,7 @@ hard_invariants:
     altitude: territory
     aspect: correctness
     channel: abductive
-    provenance: { execution_point: "", obstacle_ref: "" }
+    provenance: { execution_point: "", obstacle_ref: "ledger:fail#3 undated capture filed under the newest era" }
     narrowest_rule_note: "bars only the newest-Era default for undated captures; dated capture filing is untouched"
     confidence: high
     disposition: propose

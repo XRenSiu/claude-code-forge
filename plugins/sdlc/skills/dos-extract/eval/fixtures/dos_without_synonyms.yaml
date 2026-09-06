@@ -1,0 +1,8 @@
+# The same ontology with the synonyms stripped: the mutant baseline for the closure
+# expectations. The operator's vocabulary (`Period`, `INV-ERA-1`) must NOT close here.
+objects:
+  Memory: { description: "a captured moment" }
+  Era: { description: "a period with scenes" }
+rules:
+  - id: R003
+    statement: "an Era has >= 1 Memory"

@@ -1,0 +1,27 @@
+# I-14: description quality had no mechanical check at all. Three defects here:
+# an empty description, one still carrying the template's placeholder, and one that is
+# a paragraph instead of the one-sentence definition the template asks for.
+meta: { dos_version: "0.1.0", product: "memory", bounded_context: "search", owner: "xrensiu", status: draft }
+scope: { in_scope: "search", out_of_scope: "picker" }
+objects:
+  Memory:
+    description: ""
+    type: entity
+  Era:
+    description: "# 一句话说明这是什么。不要超过 25 字。"
+    type: entity
+  TimeRef:
+    description: "a relative time expression whose resolution may be ambiguous across eras, carrying the raw user string, the parsed grammar node, the candidate era set, the confidence of each candidate, the tie-break policy applied, and the audit record of which policy fired"
+    type: value_object
+relationships:
+  - { subject: TimeRef, verb: RESOLVES_TO, object: Era, cardinality: "1:N", inverse: null }
+rules:
+  - { id: R001, statement: "an Era has at least one Memory", rationale: "empty eras are not periods", enforced_by: system }
+composition: {}
+behaviors: []
+bounded_contexts: { current_context: search }
+agent_guidelines: { must: [], should: [], must_not: [] }
+anti_patterns: []
+open_questions:
+  - { id: Q001, question: "overlap threshold?", raised_at: "2026-09-05", raised_by: "dos-extract", owner: "xrensiu", deadline: "2026-09-12" }
+evolution_log: []

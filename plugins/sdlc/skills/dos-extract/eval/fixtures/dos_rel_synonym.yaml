@@ -1,0 +1,29 @@
+# A relationship that names a synonym instead of the canonical key. It used to reject as an
+# undeclared object; now it resolves and is flagged so the DOS still prefers its own key.
+# `Card` here is a self-contained unit of work — describable with no screen in the
+# sentence, so Judgment 1 step 1 passes. verify_dos.py still rejects it by default
+# and clears it only against a recorded `## Naming waivers` bullet.
+meta: { dos_version: "0.1.0", product: "delivery", bounded_context: "cards", owner: "xrensiu", status: draft }
+scope:
+  in_scope: "splitting a frozen contract into units a context-free agent can finish alone"
+  out_of_scope: "the contract itself"
+objects:
+  Card:
+    description: "a self-contained unit of work an isolated agent can finish alone"
+    type: entity
+    synonyms: ["卡", "任务卡", "WorkUnit"]
+  Contract:
+    description: "the frozen acceptance criteria a Card is split from"
+    type: aggregate_root
+relationships:
+  - { subject: Contract, verb: SPLITS_INTO, object: WorkUnit, cardinality: "1:N", inverse: BELONGS_TO }
+rules:
+  - { id: R001, statement: "a REQ belongs to exactly one Card", rationale: "parallel isolation", enforced_by: system }
+composition: {}
+behaviors: []
+bounded_contexts: { current_context: cards }
+agent_guidelines: { must: [], should: [], must_not: [] }
+anti_patterns: []
+open_questions:
+  - { id: Q001, question: "is Card the canonical name or WorkUnit?", raised_at: "2026-09-05", raised_by: "dos-extract", owner: "xrensiu", deadline: "2026-09-30" }
+evolution_log: []

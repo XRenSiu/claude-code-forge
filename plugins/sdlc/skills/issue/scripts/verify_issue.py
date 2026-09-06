@@ -30,8 +30,19 @@ twin covers the RIGHT edge; these ACs are the narrowest falsifiable conditions f
 import argparse
 import json
 import os
+import pathlib
 import re
 import sys
+
+# DOS closure means the same thing here and in lint_cards.py: one resolver, owned by
+# dos-extract (the skill that writes dos.yaml). See dos-extract/scripts/dos_closure.py.
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[2] / "dos-extract" / "scripts"))
+try:
+    import dos_closure
+except ImportError:  # pragma: no cover - layout error, not a user error
+    sys.stderr.write("verify_issue.py: cannot import dos-extract/scripts/dos_closure.py "
+                     "(expected at ../../dos-extract/scripts/ relative to this script)\n")
+    sys.exit(2)
 
 VAGUE = ["快", "慢", "稳定", "可靠", "健壮", "高效", "及时", "尽快", "尽量", "大部分", "多数", "合理",
          "友好", "流畅", "顺畅", "良好", "充分", "适当", "足够", "正确处理", "智能",
@@ -232,15 +243,18 @@ def main():
             rejects.append("Depends on DOS: `objects:` line missing (write `none` if truly none)")
         if a.dos:
             try:
-                import yaml
-                dos = yaml.safe_load(open(a.dos, encoding="utf-8")) or {}
+                closure = dos_closure.load_closure(a.dos)
             except Exception as e:
                 sys.stderr.write(f"verify_issue: cannot read dos: {e}\n"); sys.exit(2)
-            do = dos.get("objects") or {}
-            names = set(do.keys()) if isinstance(do, dict) else {o.get("name") for o in do if isinstance(o, dict)}
-            rules = dos.get("rules") or []
-            rids = {r.get("id") for r in rules if isinstance(r, dict)} | {r for r in rules if isinstance(r, str)}
-            missing_terms = [o for o in objs if o not in names] + [i for i in invs if i not in rids]
+            # A term recorded as an object `synonyms:` / rule `aliases:` entry closes: the
+            # DOS's canonical key and the team's word are the same thing (dogfood I-15).
+            missing_terms = closure.unresolved(objs, "object") + closure.unresolved(invs, "rule")
+            for t in objs:
+                if closure.via_synonym(t, "object"):
+                    flags.append(f"DOS closure: `{t}` closes as a synonym of `{closure.resolve_object(t)}`")
+            for t in invs:
+                if closure.via_synonym(t, "rule"):
+                    flags.append(f"DOS closure: `{t}` closes as an alias of `{closure.resolve_rule(t)}`")
             if missing_terms:
                 rejects.append(f"DOS closure failed: {missing_terms} not in {a.dos} — world not built for these; force PSL track")
                 force_track = "psl"

@@ -547,13 +547,144 @@ expect "verify_derived: the same claim with graph.yaml L320 is not flagged (I-36
 
 echo "== dos-extract / verify_dos.py (imported from looper)"
 FXO="$S/dos-extract/eval/fixtures"
-expect "clean dos passes" 0 py "$S/dos-extract/scripts/verify_dos.py" "$FXO/dos_good.yaml"
-expect "UI-suffixed object rejected" 1 py "$S/dos-extract/scripts/verify_dos.py" "$FXO/dos_bad_ui_suffix.yaml"
+DXS="$S/dos-extract/scripts"
+expect "clean dos passes" 0 py "$DXS/verify_dos.py" "$FXO/dos_good.yaml"
+expect "UI-suffixed object rejected" 1 py "$DXS/verify_dos.py" "$FXO/dos_bad_ui_suffix.yaml"
+# dogfood 2026-09-05 (I-10): the suffix heuristic aims at `TopicCard`; a whole-word domain
+# name is the waivable case, and a compound stays non-waivable however loudly it is waived.
+expect "whole-word UI name rejected without a waiver (I-10)" 1 py "$DXS/verify_dos.py" "$FXO/dos_whole_word_card.yaml"
+expect "whole-word UI name still rejected when decisions.md has no waiver section (I-10)" 1 py "$DXS/verify_dos.py" "$FXO/dos_whole_word_card.yaml" --decisions "$FXO/decisions_no_waiver.md"
+expect "whole-word UI name cleared by a decisions.md waiver, reported under waived (I-10)" 0 bash -c "python3 '$DXS/verify_dos.py' '$FXO/dos_whole_word_card.yaml' --decisions '$FXO/decisions_with_waiver.md' | python3 -c \"import json,sys; d=json.load(sys.stdin); assert d['exit']=='MECHANICALLY_CLEAN', d['rejects']; assert any(\\\"'Card'\\\" in w for w in d['waived']), d['waived']\""
+expect "compound UI suffix is NOT waivable (I-10)" 1 py "$DXS/verify_dos.py" "$FXO/dos_bad_ui_suffix.yaml" --waive DateFilterCard
+expect "a relationship naming a synonym resolves and is flagged, not rejected (I-11)" 0 bash -c "python3 '$DXS/verify_dos.py' '$FXO/dos_rel_synonym.yaml' --waive Card | python3 -c \"import json,sys; d=json.load(sys.stdin); assert d['exit']=='MECHANICALLY_CLEAN', d['rejects']; assert any('resolves through a synonym' in f for f in d['needs_semantic_review']), d['needs_semantic_review']\""
+# dogfood 2026-09-05 (I-37): a materialised derived view must name its source.
+expect "empty derived_from rejected (I-37)" 1 py "$DXS/verify_dos.py" "$FXO/dos_derived_empty.yaml"
+expect "named derived_from passes and is reported (I-37)" 0 bash -c "python3 '$DXS/verify_dos.py' '$FXO/dos_derived_ok.yaml' | python3 -c \"import json,sys; d=json.load(sys.stdin); assert d['derived_properties']==['Ring.missing'], d['derived_properties']\""
+# dogfood 2026-09-05 (I-14): methodology.md §6's size budget was prose only; nothing measured it.
+expect "over-budget dos.yaml warns without changing the exit code (I-14)" 0 bash -c "python3 '$DXS/verify_dos.py' '$FXO/dos_good.yaml' --max-lines 5 | python3 -c \"import json,sys; d=json.load(sys.stdin); assert d['exit']=='MECHANICALLY_CLEAN', d['rejects']; assert any('lines >' in w for w in d['warnings']), d['warnings']\""
+expect "empty / placeholder / over-long object descriptions each warn (I-14)" 0 bash -c "python3 '$DXS/verify_dos.py' '$FXO/dos_bad_descriptions.yaml' | python3 -c \"import json,sys; w=json.load(sys.stdin)['warnings']; assert any('description empty' in x for x in w), w; assert any('placeholder' in x for x in w), w; assert any('chars >' in x for x in w), w\""
+
+echo "== dos-extract / inventory.py (structured channel)"
+INV="$TMP/inv"; mkdir -p "$INV/a/b/schema"
+cat > "$INV/a/b/schema/state.schema.json" <<'JSON'
+{"type":"object","properties":{"track":{"type":"string","enum":["psl","task"]},
+ "cards":{"type":"object"}},"$defs":{"gate":{"type":"object","properties":{"verdict":{"type":"string"}}}}}
+JSON
+cat > "$INV/graph.yaml" <<'YAML'
+nodes:
+  - {id: stage.intake, kind: stage}
+  - {id: plan-cards, kind: skill}
+YAML
+cat > "$INV/package.json" <<'JSON'
+{"name":"x","scripts":{"testonlymanifestkey":"echo"},"dependencies":{}}
+JSON
+# dogfood 2026-09-05 (I-09): a plugin/schema-first repo declares nothing in classes, so the
+# code-only scan returned 0 nouns and the operator hand-wrote the noun table.
+expect "structured channel finds \$defs / enum / kind / property nouns (I-09)" 0 bash -c "python3 '$DXS/inventory.py' '$INV' -o '$TMP/inv.md' >/dev/null 2>&1 && for t in gate verdict track psl task skill stage cards; do grep -q \"\\*\\*\$t\\*\\*\" '$TMP/inv.md' || { echo \"missing \$t\"; exit 1; }; done"
+expect "--no-structured reproduces the zero-noun scan (I-09)" 0 bash -c "python3 '$DXS/inventory.py' '$INV' -o '$TMP/inv0.md' --no-structured >/dev/null 2>&1 && grep -q 'Distinct nouns: 0' '$TMP/inv0.md'"
+expect "zero-noun report says so instead of printing an empty table (I-13)" 0 bash -c "grep -q 'No nouns found' '$TMP/inv0.md'"
+expect "tooling manifests are skipped by the structured channel (I-09)" 0 bash -c "grep -q '\\*\\*gate\\*\\*' '$TMP/inv.md' && ! grep -q 'testonlymanifestkey' '$TMP/inv.md'"
+expect "--exclude drops a directory of that name at any depth, not just at the root (I-09)" 0 bash -c "python3 '$DXS/inventory.py' '$INV' -o '$TMP/invx.md' --exclude schema >/dev/null 2>&1 && ! grep -q '\\*\\*gate\\*\\*' '$TMP/invx.md' && grep -q '\\*\\*stage\\*\\*' '$TMP/invx.md'"
+expect "--exclude also matches a file name segment, not only directories (I-09)" 0 bash -c "python3 '$DXS/inventory.py' '$INV' -o '$TMP/invf.md' --exclude graph.yaml >/dev/null 2>&1 && ! grep -q '\\*\\*stage\\*\\*' '$TMP/invf.md' && grep -q '\\*\\*gate\\*\\*' '$TMP/invf.md'"
+
+echo "== dos-extract / count_terms.py (docs channel counting primitive)"
+printf '%s\n' '# label = variants' 'Gate = gate, G1, G2' 'Ghost = zzznotathing' > "$TMP/terms.txt"
+# dogfood 2026-09-05 (I-12): the docs pass asked for "≈47 occurrences" with no way to reproduce it.
+expect "count_terms: reproducible per-group counts + file:line evidence (I-12)" 0 bash -c "python3 '$DXS/count_terms.py' --terms '$TMP/terms.txt' --root '$S/dos-extract' --group fixtures='eval/fixtures/*.yaml' --json 2>/dev/null | python3 -c \"import json,sys; d=json.load(sys.stdin); g=d['terms']['Gate']; import re; assert g['total']>0, g; assert g['evidence'] and re.match(r'^\\\`[^\\\`]+:[0-9]+\\\` ', g['evidence'][0]), g['evidence']\""
+expect "count_terms: a term matching nothing exits 1, not silently 0 (I-12)" 1 py "$DXS/count_terms.py" --terms "$TMP/terms.txt" --root "$S/dos-extract" --group fixtures='eval/fixtures/*.yaml'
+expect "count_terms: word boundaries keep PR out of PROPOSAL (I-12)" 0 bash -c "mkdir -p '$TMP/ct' && printf 'PROPOSAL and PROPRIETARY\n' > '$TMP/ct/a.md' && printf 'PR\n' >> '$TMP/ct/a.md' && printf 'PR\n' > '$TMP/terms2.txt' && python3 '$DXS/count_terms.py' --terms '$TMP/terms2.txt' --root '$TMP/ct' --corpus '*.md' --json | python3 -c \"import json,sys; d=json.load(sys.stdin); assert d['terms']['PR']['total']==1, d['terms']['PR']\""
+
+echo "== dos-extract / reconcile_dos.py + dos_closure.py (X1 as-is ↔ to-be)"
+# dogfood 2026-09-05 (I-49): the reconciliation existed only as prose in the G1 record, so the
+# card linter had to be pointed at a proposal file by hand.
+expect "reconcile: unmapped to-be object + rule conflict => INCOMPLETE, nothing written (I-49)" 1 bash -c "python3 '$DXS/reconcile_dos.py' --as-is '$FXO/dos_asis.yaml' --to-be '$FXO/dos_tobe.yaml' --map-file '$FXO/dos_reconcile_map.yaml' --output '$TMP/rec_bad.yaml' > '$TMP/rec_bad.json'; rc=\$?; python3 -c \"
+import json
+d=json.load(open('$TMP/rec_bad.json'))
+assert d['verdict']=='INCOMPLETE' and not d['written'], d
+assert d['unmapped_to_be']==['Gap','Ring'], d['unmapped_to_be']
+assert d['rule_conflicts'], d\" && test ! -f '$TMP/rec_bad.yaml' && exit \$rc"
+expect "reconcile: full mapping folds the to-be name into synonyms and exits 0 (I-49)" 0 bash -c "python3 '$DXS/reconcile_dos.py' --as-is '$FXO/dos_asis.yaml' --to-be '$FXO/dos_tobe_mappable.yaml' --map 'Part=Node' --output '$TMP/rec_ok.yaml' >/dev/null && python3 -c \"
+import sys; sys.path.insert(0,'$DXS')
+from dos_closure import load_closure
+c=load_closure('$TMP/rec_ok.yaml')
+assert c.resolve_object('Part')=='Node', c.resolve_object('Part')
+assert c.resolve_object('配件')=='Node'
+assert c.resolve_object('Ring') is None\""
+expect "reconcile: the reconciled DOS still passes verify_dos.py (I-49)" 0 py "$DXS/verify_dos.py" "$TMP/rec_ok.yaml"
+expect "reconcile: a mapping onto a name the as-is DOS lacks is a usage error, exit 2 (I-49)" 2 py "$DXS/reconcile_dos.py" --as-is "$FXO/dos_asis.yaml" --to-be "$FXO/dos_tobe_mappable.yaml" --map "Part=Nonexistent"
+expect "reconcile: --allow-unmapped writes the file and records the gaps as open questions (I-49)" 1 bash -c "python3 '$DXS/reconcile_dos.py' --as-is '$FXO/dos_asis.yaml' --to-be '$FXO/dos_tobe.yaml' --map-file '$FXO/dos_reconcile_map.yaml' --allow-unmapped --output '$TMP/rec_partial.yaml' >/dev/null; rc=\$?; python3 -c \"
+import yaml
+d=yaml.safe_load(open('$TMP/rec_partial.yaml'))
+q=' '.join(str(x) for x in d['open_questions'])
+assert 'Ring' in q and 'Gap' in q, q
+assert d['reconciliation']['unmapped_to_be']==['Gap','Ring']\"; exit \$rc"
+
+echo "== dos closure honours synonyms (I-15) — verify_issue.py + lint_cards.py"
+SYNI="$TMP/syn_issue.md"; sed -e 's/objects: \[Memory, Era\]/objects: [Memory, Period]/' -e 's/invariants: \[R003\]/invariants: [INV-ERA-1]/' "$S/issue/eval/fixtures/good_issue.md" > "$SYNI"
+expect "verify_issue: the team's word closes through a declared synonym (I-15)" 0 py "$S/issue/scripts/verify_issue.py" "$SYNI" --dos "$FXO/dos_with_synonyms.yaml"
+expect "verify_issue: the same word fails closure when the synonym is not declared (I-15)" 1 py "$S/issue/scripts/verify_issue.py" "$SYNI" --dos "$FXO/dos_without_synonyms.yaml"
+SYNC="$TMP/syn_cards"; cp -R "$S/plan-cards/eval/fixtures/cards_good" "$SYNC"
+sed -i.bak -e 's/objects: \[Memory, Era\]/objects: [Memory, Period]/' -e 's/invariants: \[R003\]/invariants: [INV-ERA-1]/' "$SYNC"/CARD-*.yaml && rm -f "$SYNC"/*.bak
+expect "lint_cards: a card slice written in the team's word closes through synonyms (I-15/I-49)" 0 py "$S/plan-cards/scripts/lint_cards.py" "$SYNC" --spec "$S/sdlc/eval/fixtures/spec.md" --done-when "$S/sdlc/eval/fixtures/done_when.yaml" --dos "$FXO/dos_with_synonyms.yaml"
+expect "lint_cards: the same slice fails closure without the synonyms (I-15/I-49)" 1 py "$S/plan-cards/scripts/lint_cards.py" "$SYNC" --spec "$S/sdlc/eval/fixtures/spec.md" --done-when "$S/sdlc/eval/fixtures/done_when.yaml" --dos "$FXO/dos_without_synonyms.yaml"
 
 echo "== invariant-extract / verify_card.py (imported from looper)"
 FXI="$S/invariant-extract/eval/fixtures"
-expect "card with provenance passes" 0 py "$S/invariant-extract/scripts/verify_card.py" "$FXI/card_good.yaml" --dos "$FXO/dos_good.yaml"
-expect "card without provenance rejected" 1 py "$S/invariant-extract/scripts/verify_card.py" "$FXI/card_bad_noprov.yaml"
+IXV="$S/invariant-extract/scripts/verify_card.py"
+expect "card with provenance passes" 0 py "$IXV" "$FXI/card_good.yaml" --dos "$FXO/dos_good.yaml"
+expect "card without provenance rejected" 1 py "$IXV" "$FXI/card_bad_noprov.yaml"
+# dogfood 2026-09-05 (I-25): the template had no `aspect` slot on overridable_defaults while the
+# script hard-rejected entries without one, and no `id` on kicked entries so ◊-leakage ran empty.
+expect "overridable entry without aspect rejected — the template now carries the slot (I-25)" 1 py "$IXV" "$FXI/card_no_aspect.yaml"
+expect "a ◊ candidate also carded is caught now that kicked entries carry ids (I-25)" 1 py "$IXV" "$FXI/card_diamond_leak.yaml"
+expect "a re-wording of an existing DOS rule is flagged, not silently accepted (I-25)" 0 bash -c "python3 '$IXV' '$FXI/card_near_dup.yaml' --dos '$FXO/dos_good.yaml' | python3 -c \"import json,sys; d=json.load(sys.stdin); assert any('similar to dos.yaml R002' in f for f in d['needs_semantic_review']), d['needs_semantic_review']\""
+expect "two entries on one card re-stating the same rule are flagged (I-25)" 0 bash -c "python3 '$IXV' '$FXI/card_self_dup.yaml' | python3 -c \"import json,sys; d=json.load(sys.stdin); assert any('statements' in f and 'similar' in f for f in d['needs_semantic_review']), d['needs_semantic_review']\""
+expect "the narrowest-rule flag is targeted, not one per entry (I-25)" 0 bash -c "python3 '$IXV' '$FXI/card_good.yaml' --dos '$FXO/dos_good.yaml' | python3 -c \"import json,sys; d=json.load(sys.stdin); assert not any('narrowest' in f for f in d['needs_semantic_review']), d['needs_semantic_review']\""
+expect "the report prints projected_out / deduped / suspects / conflicts counts (I-25)" 0 bash -c "python3 '$IXV' '$FXI/card_good.yaml' | python3 -c \"import json,sys; d=json.load(sys.stdin); [d[k] for k in ('projected_out_obstacles','deduped_against_constitution','constitution_promotion_suspects','conflicts_for_legislation','registered_gaps')]\""
+# dogfood 2026-09-05 (I-26): abduction.md §5 and the altitude/suspects duplication were unchecked.
+expect "low confidence must be proposed even in the overridable column (I-26)" 1 py "$IXV" "$FXI/card_low_conf_carded.yaml"
+expect "altitude proposed_to_constitution on a carded entry rejected (I-26)" 1 py "$IXV" "$FXI/card_altitude_promoted.yaml"
+# dogfood 2026-09-05 (I-29): a bare failure-memory integer, and gaps with no declared destination.
+expect "failure_memory_count with no sources rejected (I-29)" 1 py "$IXV" "$FXI/card_bare_count.yaml"
+expect "missing snapshot_at flagged when sources are given (I-29)" 0 bash -c "sed 's/^  snapshot_at:.*/  snapshot_at: \"\"/' '$FXI/card_good.yaml' > '$TMP/card_nosnap.yaml' && python3 '$IXV' '$TMP/card_nosnap.yaml' | python3 -c \"import json,sys; d=json.load(sys.stdin); assert any('snapshot_at' in f for f in d['needs_semantic_review']), d['needs_semantic_review']\""
+expect "a registered gap with no destination rejected (I-29)" 1 py "$IXV" "$FXI/card_gap_no_dest.yaml"
+
+echo "== R1 templates carry the slots their own verifiers require"
+# dogfood 2026-09-05 (I-25/I-29): a card filled from the shipped template used to be rejected for
+# fields the template had no slot for, so the operator hand-added them to pass.
+expect "invariant_card.yaml declares every field verify_card.py hard-requires (I-25/I-29)" 0 bash -c "python3 -c \"
+import yaml
+t=yaml.safe_load(open('$S/invariant-extract/assets/invariant_card.yaml'))
+need={'statement','aspect','strength','altitude','provenance','confidence','disposition','narrowest_rule_note'}
+for col in ('hard_invariants','overridable_defaults'):
+    missing=need-set(t[col][0]); assert not missing, (col, missing)
+assert 'id' in t['kicked_to_done_when'][0], 'kicked entries need an id for the diamond-leak check'
+c2=t['channel_2_input']; assert 'sources' in c2 and 'snapshot_at' in c2, c2
+assert t['registered_gaps'][0]['destination'] in ('done_when','issue','backlog')
+assert t['hard_invariants'][0]['altitude']=='territory'\""
+# dogfood 2026-09-05 (I-27): the template's comments carried another project's rule numbering
+# (R001 isolation / R002 gate-signing) beside sdlc's own R001/R002 on the same card.
+expect "invariant_card.yaml uses sdlc's G2 wording, not a borrowed R00n gate id (I-27)" 0 bash -c "! grep -qE '\\(R00[0-9]\\)' '$S/invariant-extract/assets/invariant_card.yaml' && grep -q 'G2' '$S/invariant-extract/assets/invariant_card.yaml'"
+# dogfood 2026-09-05 (I-11/I-37): the DOS template had nowhere to record a synonym, a downstream
+# translation, a rule alias, or a materialised derived view.
+expect "dos_template.yaml carries synonyms / aliases / translation_notes / derived_from (I-11/I-37)" 0 bash -c "python3 -c \"
+import yaml
+t=yaml.safe_load(open('$S/dos-extract/assets/dos_template.yaml'))
+o=t['objects']['ExampleObject']
+assert 'synonyms' in o, list(o)
+assert any('derived_from' in (p or {}) for p in o['properties'].values()), list(o['properties'])
+assert 'aliases' in t['rules'][0], t['rules'][0]
+assert 'translation_notes' in t['bounded_contexts']['downstream_contexts'][0]\""
+# dogfood 2026-09-05 (I-10/I-13): the decisions template presumed a non-empty pruning table and
+# had no machine-read waiver channel.
+expect "decisions_template.md's waiver section parses and the zero-noun case is written (I-10/I-13)" 0 bash -c "python3 -c \"
+import sys; sys.path.insert(0,'$DXS')
+import verify_dos as v
+w=v.parse_waivers('$S/dos-extract/assets/decisions_template.md')
+assert w, 'the ## Naming waivers section did not parse'
+text=open('$S/dos-extract/assets/decisions_template.md').read()
+assert 'code channel returned zero nouns' in text.lower() or '0 nouns' in text, 'no zero-noun guidance'
+assert 'count_terms.py' in text, 'docs counts are not tied to the counting primitive'\""
 
 echo "== donewhen-extract / verify_done_when.py (imported from qanat)"
 FXW="$S/donewhen-extract/eval/fixtures"

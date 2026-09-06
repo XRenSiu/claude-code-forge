@@ -50,10 +50,11 @@ scope:
     # 以及 Xmind SaaS 的账户/订阅体系。
 
   audience:                        # 谁会读这份 DOS？影响用词的难度
-    - "designers"
-    - "PM"
-    - "frontend engineers"
-    - "AI agents (Claude Code, Cursor, internal Xmind Agent)"
+    # 按本仓库的真实读者改写。产品仓库常见是设计/PM/前端；库、插件、基础设施仓库
+    # 的读者是维护者、集成方与 agent —— 别照抄下面这四行。
+    - "maintainers"
+    - "integrators / downstream contexts"
+    - "AI agents (Claude Code, Cursor, …)"
 
   success_criteria: |
     # 这份 DOS 写得好的标志是什么？写出来逼自己讲清楚。
@@ -97,22 +98,50 @@ objects:
       # 一句话说明这是什么。不要超过 25 字。
       # 反例: "代表系统中可以被用户操作的一种内容单元"（说了等于没说）
       # 正例: "用户发布的一条公开短消息"
-    
+      # verify_dos.py 对空描述、模板占位符、> 200 字符的描述发 warning（不影响退出码）。
+
+    synonyms: []                   # 团队/文档/代码里指同一个对象的其它写法。可选，但**是闭包源**：
+                                   # 下游的 `/issue --dos`、`lint_cards.py --dos` 通过
+                                   # scripts/dos_closure.py 解析同义词，所以写进来的词才闭得上。
+                                   # 三种典型用法：
+                                   #   1. 中英并存: ["卡", "任务卡", "Card", "CARD-xx"]
+                                   #   2. 收编来的外部词表: ["Territory", "MemoryAsset"]（否则只活在术语映射表里，闭包看不见）
+                                   #   3. 应然本体的对应名（见 scripts/reconcile_dos.py 自动折进来的那些）
+                                   # 铁律不变：同义词不是"改名逃过校验器"的通道。若正统名被
+                                   # verify_dos.py 的 UI 后缀启发式误伤，走 decisions.md 的
+                                   # `## Naming waivers` 豁免，别改名（改名会咬到下游闭包）。
+
+    naming_note: ""                # 可选：这个名字为什么不是文档里那个词。留空就删。
+
     type: "entity"                 # entity | value_object | aggregate_root
                                    # entity: 有唯一身份、生命周期长
                                    # value_object: 不可变、由属性定义（如 Money、Address）
                                    # aggregate_root: entity 的子类，是某组对象的"门户"
-    
+
     properties:
       id:
-        type: "string"
+        type: "string"             # 概念层的类型，不必是某语言的类型名。
+                                   # 对象活在 YAML/JSON schema 里时照写 schema 的类型
+                                   # （string / integer / array / object / enum / timestamp）；
+                                   # 活在文件里时写 "path" / "document" 也行——读者是人和 agent，不是编译器。
         required: true
         description: "唯一标识符"
       created_at:
         type: "timestamp"
         required: true
+      example_derived_property:
+        type: "array"
+        required: false
+        description: "物化的派生视图：算出来的，但真的存下来了"
+        derived_from:              # 可选。写了就表示：这个属性的值**派生自**下面这些来源，
+                                   # 但和 `composition` 不同 —— 它是**物化**的（存在对象上，
+                                   # 会和来源脱同步），不是纯派生视图。
+                                   # 纯派生（每次现算、不存）→ 放第 6 节 composition，别写在这里。
+                                   # verify_dos.py: 空的 derived_from 直接 reject；有值则 flag
+                                   # 一条"确认靠什么保持同步"给判断者。
+          - "Ring FILLS Part 边的补集"     # 例：Ring.missing 派生自 FILLS 边
       # ... 其他业务属性
-    
+
     identity_rule: |
       # 这个对象靠什么识别？
       # 例: 由 id 唯一标识；同名不同 id 视为不同对象。
@@ -160,6 +189,10 @@ rules:
     statement: ""                  # 例: "一条 Tweet 必须有且只有一个作者"
     rationale: ""                  # 为什么要有这条规则
     enforced_by: "system"          # system | user_workflow | not_enforced
+    aliases: []                    # 可选：同一条规则在别处的编号（收编来的词表、应然本体的
+                                   # 对应 id）。与 objects 的 synonyms 对称，闭包一并解析。
+                                   # 注意：id 相同但**说的是两件事**不是 alias，是冲突——
+                                   # reconcile_dos.py 会把它报成 rule_conflicts，要人裁决。
 
   - id: "R002"
     statement: ""
@@ -218,7 +251,11 @@ bounded_contexts:
 
   downstream_contexts:             # 依赖我的下游 Context
     - name: ""
-      consumes: []
+      consumes: []                 # 下游从我这里拿走哪些概念
+      translation_notes: ""        # 同一个概念在下游叫什么、语义有什么收窄/放宽。
+                                   # 与 upstream 的 translation_notes 对称：翻译关系是双向的，
+                                   # 只记上游会让下游的改名无处登记。名异实同的写法应同时
+                                   # 进对应对象的 `synonyms:`，闭包检查才认得。
 
 
 # -----------------------------------------------------------------------------
