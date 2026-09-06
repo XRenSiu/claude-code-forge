@@ -6,9 +6,9 @@
 | # | 阶段 | 现象 | 根因 | 修复建议 | 影响产物 |
 ---
 
-## 状态（2026-09-06，跟进 PR 关闭全部 95 条）
+## 状态（2026-09-06，跟进 PR 关闭全部 97 条）
 
-本清单开出的 95 条里，**93 条修法完全落地**，分六个隔离 worktree 并行做，每条至少一个 smoke 期望，
+本清单开出的 97 条里，**94 条修法完全落地，1 条登记错误已撤回**，分六个隔离 worktree 并行做，每条至少一个 smoke 期望，
 且每个期望都用 `smoke.sh --mutate` 把旧实现装回去证明它会变红——**不杀 mutant 的测试不算数**（I-80）。
 
 两条没有完全落地，明写在这里而不是混进"全部关闭"里——把它们说成关掉，就是本清单自己在犯它记录的那类错：
@@ -25,8 +25,8 @@
 | 跑过变异证明的期望 | 约 100（各 worktree 自报：11 + 14 + 10 + 27 + 28 + 若干） |
 | 一开始"活下来"的变异 | 9 条，全部是**真问题**——测试写得不承重，已逐条加强后重跑变红 |
 | 本轮新开的缺陷 | I-75 / I-78 / I-80 / I-81（修 fail-open 时自己引入的三扇门 + 装饰性测试） |
-| 重审阶段新开 | I-93 / I-94（审计自己的引用歧义与失效路径，由 `check_anchors.py` 上线当天抓出）；I-95（单人合入谓词依赖的预审计数器可被任何进程灌水，**本轮不修**，理由写在该行） |
-| I-92 的修法 | `check_anchors.py` + `anchors.lock`：432 个锚点（两种行引用写法都收）全部锁住内容哈希；漂移 exit 1，做过变异证明。**缺口未闭合**，理由见上 |
+| 重审阶段新开 | I-93（审计自己的引用歧义，由 `check_anchors.py` 抓出）；I-94（**我登记错了，已撤回**——那是工具映射错，不是文档缺陷）；I-95（单人合入谓词依赖的预审计数器可被任何进程灌水，**本轮不修**）；I-96 / I-97（隔离预审在这条新闸自己身上抓到的 A / B 档，已修） |
+| I-92 的修法 | `check_anchors.py` + `anchors.lock`：**501** 个锚点（三种行引用写法都收）全部锁住内容哈希；漂移 exit 1。变异按插入点报——插 graph.yaml 第 5 / 240 / 300 行后，MOVED 分别 137 / 59 / 43，**恒定的只有 exit 1**。**缺口未闭合**，理由见上 |
 
 修的过程本身又暴露了三件事，都记在正文里：同一个表达式连开三扇门（单 ref → 空右端 → 空串）；
 我为其中一扇写的回归孪生在坏代码上全绿，是隔离的 fix-verifier 装回旧实现才发现；
@@ -127,5 +127,7 @@
 | I-91 | 全体 skill 的 eval/gate.json | 脚本改了而 `gate.json` 不动：commit 长出了 `commit.sh` 这个承重脚本、gate.json 里零记录；plan-cards 多了第七条 lint 而 gate.json 仍写六条；`skills/sdlc/eval/gate.json` 说 178 条 smoke 期望，实际 391。证据档与它描述的东西各走各的（重跑审计 R3-R5 与 R0-R2 各自独立发现） | 没有任何机械物把"改了脚本"与"更新证据档"绑在一起；CLAUDE.md 的版本同步规则管 version，不管 gate.json | 与 I-76 同一手法：`verify_commit` / `verify_pr` 的版本同步检查扩一条——diff 触及 `skills/<s>/scripts/**` 而 `skills/<s>/eval/gate.json` 未变 → flag（不是 REJECT，证据档的更新有判断成分）；gate.json 里的计数字段改为由脚本回填而不是手写 | 否（本轮记录在案；证据档过时不影响本轮判定，但它正是 R017「效力主张不得超出证据档」赖以成立的东西） |
 | I-92 | 审计证据的锚点形式 | 审计的 evidence 大量用 `file:path#L123` 这种**行号锚**。本轮给 `graph.yaml` 加了一个 `agent.pr-reviewer` 节点，其后所有行号位移 +10，四组环的证据锚集体失效——重审第一件事就是修锚点 | 用会随文件增长而漂移的坐标当引用 | evidence 的 ref 改用**锚点而非行号**：标题锚、`id:` 值、或"包含该字符串的行"；确实需要行号时同时记录当时的文件 sha256。`check_audit.py` 可加一条 flag：`#L` 形式的 ref 在当前文件上是否仍指向记录时的内容（需要存 sha） | **已落地（2026-09-06 重审）**：`check_anchors.py` + `anchors.lock` 就是这里说的"存 sha"方案——snapshot 锁住每个锚点那几行的哈希，verify 重算并在漂移时按内容重定位；漂移 exit 1、干净 exit 0、锁缺失 exit 2，做过变异证明（往 graph.yaml 插一行 → 123 MOVED + 1 GONE）。105 处漂移已逐条修正。**但它还没并进 `check_audit.py`**（role=gate 的冻结脚本，要走变更提案），所以"下次改 graph.yaml 还会重演"这半句仍成立——只是现在有工具能一秒查出来。见 P-RA-07 |
 | I-93 | 审计的引用写法 | 同一句话里混用裸文件名与全路径：`meta-judge` 的 rename_reason 写"acceptance-fleet 的目录契约（SKILL.md#L157/#L254）"，裸 `SKILL.md` 读起来像它所在的 meta-judge，实际指 acceptance-fleet；且第 254 行越过了那份文件当时的长度。核的人按字面去查会查到另一份文件的另一段话 | 引用的归属靠上下文暗示，而上下文是人脑补的；机器解析时只能按所在 Part 猜 | 跨配件引用一律写全路径。`check_anchors.py` 的裸名解析会把这类锚点判给所在 Part，因此这种歧义现在会以 UNLOCKED / GONE 的形式暴露出来 | 是（本轮由 check_anchors.py 抓出并改正） |
-| I-94 | 审计的引用目标 | 一条 evidence 指向 `plugins/sdlc/skills/psl-derive/references/divergence-types.md`，而该文件在 psl-derive 下不存在——它在 `spec-drift-detector/references/` 下。装配时没人打开过这个路径 | 引用路径靠记忆写下，没有任何检查确认被引文件真的存在 | `check_anchors.py verify` 对读不到的文件判 GONE 并 exit 1 | 是（本轮抓出并改正） |
+| I-94 | ~~审计的引用目标~~ → **登记错误，已撤回** | 原文写的是「一条 evidence 指向 `psl-derive/references/divergence-types.md`，该路径不存在」。**这一条不成立**：隔离预审逐一回查了 `git rev-list --all` 里 `audit.yaml` 的每一个版本，那个路径**从未出现过**。真实情况是我在 `check_anchors.py` 的裸文件名映射表里把 `references/divergence-types.md` 填到了 psl-derive 名下（正确位置是 `spec-drift-detector/references/`），工具于是报 GONE——错在工具的映射，不在被审文档 | 我把自己工具的配置错误当成了被审对象的缺陷登记。根因是"工具报了红就记一条"，没有回头确认那条红的来源是被审物还是量具本身——这正是 PSL-007（尺子自己要先校准）说的那件事 | 映射已改对；本行保留并标注撤回，不删除——一条登记错了就悄悄抹掉，下一轮没人知道这里发生过什么 | 否（撤回；工具映射已修，audit.yaml 未因此改动） |
 | I-95 | review-loop 的 `pr-poll.sh selfreview` | 单人仓库的合入谓词把 `self_review.rounds ≥ 1` 当作 APPROVED 的替代必要条件，而这个计数器**任何能跑 shell 的进程都能加**：`selfreview` 只校验 findings 文件的形状（有 review 块、有 target / mergeable / findings、空 findings 要 rationale），不校验这一轮是不是真的由隔离上下文做的、findings 文件是不是刚为过闸拼出来的。本次实测更难看：我拿一个六行探针文件跑了**一次**，读回来 `self_review.rounds` 已经是 **2**——另一次来自审查者 agent 试跑同一条命令。**两个进程各自把这个计数器加了一，谁都没有做过一轮真正的隔离预审**，而谓词此时已经认为"预审做过了"。last.head_sha 也被更新成当时的 HEAD。而且计数器落在 `.sdlc/`（gitignored），改了不留痕、review 时看不见 | 替代谓词把"有记录"当成了"有隔离预审"。形状可校验，**出处不可校验**——而 solo 模式的全部严格性都压在出处上 | 至少三条可选，从便宜到贵：①`selfreview` 要求 findings 文件里带 `reviewer_session` / `isolation` 字段并记进 counters，让"谁做的"进入记录；②要求 findings 文件本身入库（不在 gitignored 目录），使这一轮在 PR diff 里可见；③把 a_tier 的数法写进契约（见 P-RA-06），并要求 findings 引用的每处位置在 diff 范围内。本轮不改：solo 谓词是 I-69 的产物，动它要重开 review-loop 的判据 | 是（本轮 dogfood 自身踩到：探针污染了 pr-3 的计数器，已手工清回 `{"rounds":0,"empty_watches":0,"strikes":{}}`） |
+| I-96 | `check_anchors.py` 的锚点识别面 | 这条闸上线时只认**自带文件名**的锚点。审计正文里最常见的写法恰恰不是那种——文件名在句子前半句点过，括号里只剩行号（`verify_dos.py --decisions 解析…（#L73-L96）`）。这类裸锚点 **506 处里占 78 处**，它们连 UNRESOLVED 都不算，不入锁、不比对、不报告，于是「432/432 全绿」读起来像全覆盖。隔离预审做了端到端证明：给 `verify_dos.py` 顶部插三行，`#L182-L185` 从「豁免降级成 FLAG」漂到 compound-reject 分支，闸照样 **exit 0** | 一条闸只覆盖它认得的那种写法，而汇总行只报「检过的里有几个是好的」，不报「有多少压根没检」。分母被悄悄换掉了 | 三处一起改：①正则加裸锚点分支，按同一值块内左边最近一次出现的文件名归属，归不出记 UNRESOLVED 且计入非零退出；②汇总行改成「走到 N · 锁里比对了 M」，M<N 时明写差额；③`dos_anchors` 那类**匹配模式**显式排除（它不是引用）。改完走到 501 个锚点、501 个全部入锁 | 是（预审 F-1，A 档。修复顺带暴露出前一轮「105 处重定位」漏掉了这批裸锚点，其中 **7 处至今仍停在旧行号**，一并修正，重定位总数 105 → 112） |
+| I-97 | `check_anchors.py` 的退出码语义 | AMBIGUOUS（锁住的原文在文件里出现多次）与 SAME 一样 exit 0。可走到那一支时「当前行号已经不指着锁住的那段字」**已经成立**，不确定的只是它移到哪儿去了——把「不能自动改」当成「没问题」 | 退出码按「工具能不能自己修」分档，而不是按「证据还成不成立」分档 | AMBIGUOUS 与 UNRESOLVED 一并计入 exit 1；拒绝自动 `--fix` 保持不变（那仍是对的：替审计者决定新锚点指哪儿就是替他下判断） | 是（预审 F-2，B 档） |

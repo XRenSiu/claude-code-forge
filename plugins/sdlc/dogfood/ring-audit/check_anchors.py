@@ -25,9 +25,11 @@ audit.yaml 里 800 多条证据，其中 400 多条带行号锚点，两种写�
 
 退出码
 ------
-  0  verify 全部 SAME（或只有 AMBIGUOUS / 未锁项这类 warn）
-  1  有 MOVED 或 GONE 未修 —— 报告在拿漂走的行号当证据
-  2  用法错误 / 锁文件缺失 / 锁里没有任何条目
+  0  verify 全部 SAME（UNLOCKED 只 warn：那是快照之后新写的锚点，不是漂移）
+  1  有 MOVED / GONE / AMBIGUOUS / UNRESOLVED —— 报告在拿一个已经不指着原文的行号当证据。
+     AMBIGUOUS 也算：走到那一支时"当前行号对不上锁"已经成立，不确定的只是它移到哪儿；
+     UNRESOLVED 也算：归不出文件的锚点不等于没问题的锚点。
+  2  用法错误 / 锁文件缺失、为空、损坏 / audit 文件不存在
 
 这条闸现在的位置
 ----------------
@@ -86,15 +88,30 @@ BASENAMES = {
     "compute_confidence.py": "plugins/sdlc/skills/meta-judge/scripts/compute_confidence.py",
     "reconcile_dos.py": "plugins/sdlc/skills/dos-extract/scripts/reconcile_dos.py",
     "dos_closure.py": "plugins/sdlc/skills/dos-extract/scripts/dos_closure.py",
+    "findings_template.yaml": "plugins/sdlc/skills/pr-review/assets/findings_template.yaml",
 }
 
-# 审计里的行引用有两种写法，都会漂，都要保：
+# `unenforced_rules[].dos_anchors` 里的 `#L376-L379` 是**匹配模式**，render_audit.py 拿它去
+# gaps[].evidence[].ref 里现算归属；它不是一条指向某文件某行的引用，锁它没有意义。
+NOT_A_REFERENCE = re.compile(r"^\s*(?:-\s+)?.*\bdos_anchors:")
+
+# 审计里的行引用有**三**种写法，都会漂，都要保：
 #   `path/to/file.py#L12` / `#L12-L20` / `#L12–20`   —— evidence 的 ref 惯用
-#   `path/to/file.py:12` / `:12-20`                   —— 正文散句里惯用（本轮有 3 处）
-# 冒号式后面必须紧跟数字，且数字后不能再接数字或斜杠，免得把日期与路径当成行号。
-ANCHOR = re.compile(
-    r"([A-Za-z0-9_./<>*-]+\.(?:py|sh|yaml|json|md))"
-    r"(?:#L(\d+)(?:([-–])L?(\d+))?|:(\d+)(?:([-–])(\d+))?(?![\d/]))")
+#   `path/to/file.py:12` / `:12-20`                   —— 正文散句里惯用
+#   `（#L73-L96）`  文件名在句子前半句点过，括号里只剩行号 —— 正文里最常见的一种
+# 第三种是本工具第一版与第二版都漏掉的那 78 处（PR #3 预审 F-1）：它们连 UNRESOLVED 都不算，
+# 静默跳过，于是「432/432 全绿」读起来像全覆盖，实际只覆盖了带文件名的那部分。
+# 归属规则：裸锚点归给**同一个值块里、它左边最近一次出现的文件名**；归不出来就记 UNRESOLVED，
+# 并且 UNRESOLVED 会让 verify 非零退出——一个查不出归属的锚点不能算"没问题"。
+FILE_RE = r"[A-Za-z0-9_./<>*-]+\.(?:py|sh|yaml|json|md)"
+# 每个文件名 token 都匹配（带不带锚点都要，因为它要更新"最近的文件名"），裸锚点单独一支。
+SCAN = re.compile(
+    rf"(?P<fname>{FILE_RE})"
+    rf"(?:#L(?P<qa>\d+)(?:(?P<qd>[-–])L?(?P<qb>\d+))?"
+    rf"|:(?P<ca>\d+)(?:(?P<cd>[-–])(?P<cb>\d+))?(?![\d/]))?"
+    rf"|(?<![\w./-])#L(?P<ba>\d+)(?:(?P<bd>[-–])L?(?P<bb>\d+))?")
+# 新的映射键起一行时，"最近的文件名"作废——跨判词继承会把锚点归到毫不相干的文件上。
+NEW_KEY = re.compile(r"^\s*(?:-\s+)?[A-Za-z_][\w.<>+-]*:(?:\s|$)")
 PART_ID = re.compile(r"^\s*-?\s*id:\s*([A-Za-z0-9_.<>-]+)\s*$")
 
 
@@ -136,28 +153,46 @@ def resolve(name, part, skills):
 
 
 def walk_anchors(audit_path, skills, on_anchor):
-    """逐行扫 audit.yaml，把每个锚点交给 on_anchor(name, path, a, b, dash)。
-    回调返回替换串（或 None 表示不动）。返回改写后的全文。"""
+    """逐行扫 audit.yaml，把每个锚点交给 on_anchor(name, path, a, b, dash, part, style)。
+    回调返回替换串（或 None 表示不动）。返回改写后的全文。
+
+    裸锚点（`（#L73-L96）`）没有自带文件名，归给同一个值块里它左边最近一次出现的文件名。
+    因此本函数必须**顺序**扫：每遇到一个文件名 token 就更新 last_file，遇到裸锚点就用它。
+    """
     raw = open(audit_path, encoding="utf-8").read()
     part = [None]
+    last_file = [None]
     out = []
     for line in raw.splitlines(keepends=True):
-        pm = PART_ID.match(line.rstrip("\n"))
+        stripped = line.rstrip("\n")
+        pm = PART_ID.match(stripped)
         if pm and pm.group(1) in skills:
             part[0] = pm.group(1)
+        if NEW_KEY.match(stripped):
+            last_file[0] = None          # 换判词就换话题，别把上一条的文件名带过来
+        if NOT_A_REFERENCE.match(stripped):
+            out.append(line)             # dos_anchors 是模式不是引用
+            continue
 
         def sub(m):
-            name = m.group(1)
-            if m.group(2) is not None:          # #L 式
-                style, a, dash, b = "hash", int(m.group(2)), m.group(3), m.group(4)
-            else:                                # 冒号式
-                style, a, dash, b = "colon", int(m.group(5)), m.group(6), m.group(7)
+            if m.group("fname"):
+                name = m.group("fname")
+                last_file[0] = name
+                if m.group("qa") is not None:
+                    style, a, dash, b = "hash", int(m.group("qa")), m.group("qd"), m.group("qb")
+                elif m.group("ca") is not None:
+                    style, a, dash, b = "colon", int(m.group("ca")), m.group("cd"), m.group("cb")
+                else:
+                    return m.group(0)     # 只是提到一个文件名，不是锚点
+            else:
+                name = last_file[0]
+                style, a, dash, b = "bare", int(m.group("ba")), m.group("bd"), m.group("bb")
             b = int(b) if b else a
-            path = resolve(name, part[0], skills)
+            path = resolve(name, part[0], skills) if name else None
             r = on_anchor(name, path, a, b, dash, part[0], style)
             return r if r is not None else m.group(0)
 
-        out.append(ANCHOR.sub(sub, line))
+        out.append(SCAN.sub(sub, line))
     return "".join(out)
 
 
@@ -233,6 +268,10 @@ def cmd_verify(args):
     def on(name, path, a, b, dash, part, style="hash"):
         if path is None:
             stats["UNRESOLVED"] += 1
+            shown = f"#L{a}" if style == "bare" else f"{name}#L{a}"
+            problems.append(("UNRESOLVED", shown, part,
+                             "归不出文件：裸锚点左边没有可解析的文件名，或该文件名不在映射里"
+                             if style == "bare" else f"{name} 解析不到仓库路径"))
             return None
         entry = lock.get(key_of(path, a, b))
         lines = reader.lines(path)
@@ -262,6 +301,9 @@ def cmd_verify(args):
             if args.fix:
                 if style == "colon":
                     return f"{name}:{na}" + (f"{dash}{nb}" if dash else "")
+                if style == "bare":
+                    # 裸锚点原样是裸的：补上文件名会改写审计的行文
+                    return f"#L{na}" + (f"{dash}L{nb}" if dash else "")
                 return f"{name}#L{na}" + (f"{dash}L{nb}" if dash else "")
             return None
         if not hits:
@@ -280,18 +322,28 @@ def cmd_verify(args):
         open(args.audit, "w", encoding="utf-8").write(fixed)
 
     total = sum(stats.values())
-    print(f"check_anchors verify: {total} 个行号锚点 · 锁 {args.lock}")
+    covered = stats["SAME"] + stats["MOVED"] + stats["GONE"] + stats["AMBIGUOUS"]
+    print(f"check_anchors verify: 走到 {total} 个行号锚点 · 锁里比对了 {covered} 个 · 锁 {args.lock}")
     for k in ("SAME", "MOVED", "GONE", "AMBIGUOUS", "UNLOCKED", "UNRESOLVED"):
         if stats[k]:
             print(f"  {k:11} {stats[k]}")
+    if covered < total:
+        # 覆盖率明写。"全绿"只在分母等于分子时才等于"全都检过了"——
+        # 第一版正是在这里骗了人：432/432 绿，而当时另有 78 个锚点根本没进过 walk。
+        print(f"  覆盖 {covered}/{total} —— 差额是未入锁的锚点，别把绿灯读成全覆盖")
     for verdict, anchor, part, detail in problems:
         where = f"（{part}）" if part else ""
         print(f"  {verdict:10} {anchor}{where} — {detail}")
     if args.fix and stats["MOVED"]:
         print(f"\n已就地改正 {stats['MOVED']} 处 MOVED；记得重跑 snapshot 刷新锁。"
               f"GONE / AMBIGUOUS 未动 —— 那是内容变了，不是位置变了。")
-        return 1 if stats["GONE"] else 0
-    return 1 if (stats["MOVED"] or stats["GONE"]) else 0
+    # AMBIGUOUS 也退非零：走到那一支时"当前行号不再指着锁住的那段字"**已经成立**，
+    # 不确定的只是它移到哪儿了。把"不能自动改"当成"没问题"，正是这条闸要防的那种绿灯
+    # （PR #3 预审 F-2）。UNRESOLVED 同理：归不出文件的锚点不等于没有问题的锚点。
+    bad = stats["MOVED"] + stats["GONE"] + stats["AMBIGUOUS"] + stats["UNRESOLVED"]
+    if args.fix:
+        bad -= stats["MOVED"]        # 刚改掉的不再算
+    return 1 if bad else 0
 
 
 def main():
