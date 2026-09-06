@@ -442,6 +442,12 @@ expect "trace lint on live run passes" 0 py "$SSG/trace.py" lint --root .sdlc --
 expect "trace why CARD-01 walks fail → reflow" 0 bash -c "python3 '$SSG/trace.py' why CARD-01 --root .sdlc --slug conv | grep -q 'reflow'"
 expect "loops: six rows with budget consumption" 0 bash -c "python3 '$SS' loops --slug conv --json | python3 -c \"import json,sys; d=json.load(sys.stdin); ids=[l['loop'] for l in d['loops']]; assert len(ids)==6 and 'card_retry' in ids and d['loops'][0]['used'] is not None, d\""
 expect "ledger --ref with unknown edge type rejected" 1 py "$SS" ledger --kind note --note x --ref bogus:CARD-01
+# dogfood 2026-09-06 (I-66): a short sha and its full one are one commit; registering both must not count two
+expect "card --commit resolves a short sha and dedupes against the full one (I-66)" 0 bash -c "FULL=\$(git rev-parse HEAD) && python3 '$SS' card CARD-03 --status doing --commit \$FULL >/dev/null && python3 '$SS' card CARD-03 --status done --commit \${FULL:0:7} >/dev/null && python3 -c \"
+import json, subprocess
+full=subprocess.run(['git','rev-parse','HEAD'],capture_output=True,text=True).stdout.strip()
+c=json.load(open('.sdlc/conv/state.json'))['cards']['items']['CARD-03']['commits']
+assert c==[full], c\""
 expect "archive copies trace.jsonl" 0 bash -c "python3 '$SS' archive --to specs/conv >/dev/null && test -f specs/conv/trace.jsonl"
 popd >/dev/null
 

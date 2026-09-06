@@ -220,6 +220,21 @@ def trace_event_ids(root, slug):
     return ids
 
 
+def resolve_commit(sha):
+    """Short sha → the full one, so the same commit cannot be registered twice under two spellings
+    (dogfood 2026-09-06, I-66). Outside a repo (or for a sha git does not know) the raw value stands."""
+    if not sha:
+        return sha
+    try:
+        r = subprocess.run(["git", "rev-parse", "--verify", "--quiet", f"{sha}^{{commit}}"],
+                           capture_output=True, text=True)
+        if r.returncode == 0 and r.stdout.strip():
+            return r.stdout.strip()
+    except (OSError, ValueError):
+        pass
+    return sha
+
+
 def parse_refs(items):
     out = []
     for it in items or []:
@@ -490,17 +505,23 @@ def cmd_card(a):
     items = st.setdefault("cards", {}).setdefault("items", {})
     c = items.setdefault(a.card, {"status": "todo", "retries": 0, "commits": []})
     c["status"] = a.status
-    if a.commit:
-        c.setdefault("commits", []).append(a.commit)
+    sha = resolve_commit(a.commit)
+    if sha:
+        commits = c.setdefault("commits", [])
+        if sha not in commits:   # one commit, one row — a short sha is the same commit as its full one (I-66)
+            commits.append(sha)
     save(a.root, a.slug, st)
     refs = [{"type": "references", "target": a.card}]
     extra = {"card": a.card}
-    if a.commit:
+    if sha:
         refs = [{"type": "implements", "target": a.card}] + [{"type": "implements", "target": ac} for ac in (a.ac or [])]
-        extra["sha"] = a.commit
-    ledger_append(a.root, a.slug, "card", f"{a.card} → {a.status}" + (f" commit {a.commit}" if a.commit else ""),
+        extra["sha"] = sha
+    ledger_append(a.root, a.slug, "card", f"{a.card} → {a.status}" + (f" commit {sha}" if sha else ""),
                   stage=st["stage"], refs=refs, extra=extra)
-    print(json.dumps({"ok": True, "card": a.card, "status": a.status}, ensure_ascii=False))
+    out = {"ok": True, "card": a.card, "status": a.status}
+    if sha:
+        out["commit"] = sha
+    print(json.dumps(out, ensure_ascii=False))
 
 
 def load_routing(path):
