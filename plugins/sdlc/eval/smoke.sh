@@ -32,6 +32,13 @@ echo "== plan-cards / lint_cards.py"
 FX="$S/sdlc/eval/fixtures"
 expect "bad cards rejected (dup REQ, overlap, missing REQ-003, ac_ids, dos closure, context)" 1 py "$S/plan-cards/scripts/lint_cards.py" "$S/plan-cards/eval/fixtures/cards_bad" --spec "$FX/spec.md" --done-when "$FX/done_when.yaml" --dos "$FX/dos.yaml"
 expect "good cards pass" 0 py "$S/plan-cards/scripts/lint_cards.py" "$S/plan-cards/eval/fixtures/cards_good" --spec "$FX/spec.md" --done-when "$FX/done_when.yaml" --dos "$FX/dos.yaml"
+# I-73: a projection and its data source must not straddle a card seam — no implementer can change both
+# sides atomically, and in the ring-audit run 4 of 12 fix-round findings came from exactly that.
+PC="$S/plan-cards/eval/fixtures"
+expect "cards: projection owning its data (or declaring the seam) passes (I-73)" 0 py "$S/plan-cards/scripts/lint_cards.py" "$PC/cards_projection_good" --spec "$FX/spec.md" --done-when "$FX/done_when.yaml" --dos "$FX/dos.yaml"
+expect "cards: projection across a card seam rejected, undeclared reads_from rejected (I-73)" 0 bash -c "python3 '$S/plan-cards/scripts/lint_cards.py' '$PC/cards_projection_bad' --spec '$FX/spec.md' --done-when '$FX/done_when.yaml' --dos '$FX/dos.yaml' > '$TMP/pc_bad.json'; [ \$? = 1 ] || exit 9; python3 -c \"import json; r=json.load(open('$TMP/pc_bad.json'))['rejects']; j=' | '.join(r); assert 'CARD-02 renders' in j and 'audit.yaml' in j and 'CARD-01 owns it' in j and 'does not depends_on CARD-01' in j, j; assert 'CARD-03 owns projection script' in j and 'declares no' in j and 'reads_from' in j, j\""
+expect "cards: a declared seam with no note in notes is rejected (I-73)" 1 bash -c "mkdir -p '$TMP/pcnote' && cp '$PC/cards_projection_good/'*.yaml '$TMP/pcnote/' && python3 -c \"import yaml; p='$TMP/pcnote/CARD-02.yaml'; d=yaml.safe_load(open(p)); d.pop('notes', None); yaml.safe_dump(d, open(p,'w'), allow_unicode=True)\" && python3 '$S/plan-cards/scripts/lint_cards.py' '$TMP/pcnote' --spec '$FX/spec.md' --done-when '$FX/done_when.yaml' --dos '$FX/dos.yaml'"
+expect "cards: --repo-root reads the script and catches an undeclared source (I-73)" 0 bash -c "python3 '$S/plan-cards/scripts/lint_cards.py' '$PC/cards_projection_bad' --spec '$FX/spec.md' --done-when '$FX/done_when.yaml' --dos '$FX/dos.yaml' --repo-root '$PC/repo' > '$TMP/pc_scan.json'; [ \$? = 1 ] || exit 9; python3 -c \"import json; r=json.load(open('$TMP/pc_scan.json'))['rejects']; j=' | '.join(r); assert 'commit-window.json' in j and 'owned by CARD-01' in j and 'undeclared seam' in j, j\""
 
 echo "== sdlc / lock_done_when.py"
 L="$TMP/lock"; mkdir -p "$L"; cp "$FX/done_when.yaml" "$L/"; pushd "$L" >/dev/null
