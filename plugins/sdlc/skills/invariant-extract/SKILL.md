@@ -15,7 +15,7 @@ description: |
   Do NOT use for: binding / claim-resolution (orthogonal, human-set), ontology /
   boundary (that is dos-extract), or task-level done_when (that is acceptance-spec).
 argument-hint: "<territory id or name> [--cross-territory] [--auto]"
-version: 0.2.0
+version: 0.3.0
 user-invocable: true
 # imported into sdlc 2026-09-05 from looper v0.2.0; body kept, sdlc wiring added (see 接线 / 术语映射)
 ---
