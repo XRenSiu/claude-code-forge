@@ -58,4 +58,8 @@
 - **cr-001（A，已修）** `verify_commit.py` 的 I-52 落地内容豁免在 `--range` 不含 `..` 时读基线侧 → 被篡改的被锁文件 PASS（锁门 fail-open）。修：单 ref 直接 exit 2 + 二/三点式取落地侧；smoke 190 → 193。偏差提交 e198e0e（PSL L122-123）。
 - **cr-002（A，已修）** 七个 `plugins/sdlc/skills/**` 文件改了而三处 version 不动 → 装 0.6.0 的用户收不到修复。代签判官裁为 scope (a)：版本行是同一豁免的收尾（无 Assessment 依赖版本字段，无行号型证据锚）。chore 提交 0cf6b1a，六文件各一行。
 - **cr-003（B，不修，作为 Known issue + 跟进 PR）** `verify_derived.py` 的 I-04 修法剥掉 workflow.md 全文引用行，整篇引用块的工作流零命中通过；本 run 的 PASS 仍成立。
-- **记录差额（G3 裁 AC-006-a 前必看）**：`audit.yaml` / `AUDIT.md` 冻结在 iteration-003 的字节，`non_card_commits_touching_audited_dirs` = **4**；分支现况 **6**（多出 e198e0e、0cf6b1a）。六条分类见 `commit-table.md` 与 pr-body 的 Known issues G 段。**Card 提交触碰被审目录仍为 0**。AUDIT.md 未重渲染（字节稳定不变量 + 它是被评审的那份）。
+- **记录差额（G3 裁 AC-006-a 前必看）**：`audit.yaml` / `AUDIT.md` 冻结在 iteration-003 的字节，`non_card_commits_touching_audited_dirs` = **4**；分支现况写这段时 **7**（多出 e198e0e、0cf6b1a、aaf3d5b；每条非 Card 偏差提交 +1，可现场重算）。六条分类见 `commit-table.md` 与 pr-body 的 Known issues G 段。**Card 提交触碰被审目录仍为 0**。AUDIT.md 未重渲染（字节稳定不变量 + 它是被评审的那份）。
+
+- **cr-004（A，预审第 2 轮，已修 aaf3d5b）**：cr-001 的修法只堵了单 ref，`A..` / `A...` 仍 split 出空串读索引 → 锁门再次 fail-open；已按"右端缺省即 HEAD"解析，smoke 193 → 195，五种 range 形态逐个证伪。
+- **cr-005（B，已改措辞）**：PR 正文与 `audit.yaml#run_evidence.git_diff_stat` 的 `git diff --stat 0be2770^..HEAD` 断言"空"在记录时（a2deb83）为真、对当前 HEAD 已假（5 files / 11 insertions），因为偏差提交落在首个 Card 提交之后。**AC-007-a 的证据是卡范围仪器**（`card_commits_touching_audited_dirs` 恒 0），不是这条原始命令。G3 裁 AC-006-a 时请按此读。
+- **cr-006（C，已改）**：plugin.json 与 marketplace.json 的 description 里写死的 "v0.6.0" 会随每次 bump 腐化，已改为 "Since v0.6.0 …"。
