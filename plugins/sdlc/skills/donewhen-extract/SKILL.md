@@ -15,7 +15,7 @@ description: |
   (that is invariant-extract), compiling done_when into tests/rubric (that is spec-compile),
   or proving the compiled ruler is correct (that is calibrate).
 argument-hint: "<issue id / signal id / intent text> [--template <contract_template_id>] [--auto]"
-version: 0.2.0
+version: 0.3.0
 user-invocable: true
 # imported into sdlc 2026-09-05 from qanat/.claude/skills; body kept, sdlc wiring added (see 接线 / 术语映射)
 ---

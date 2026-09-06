@@ -11,7 +11,7 @@ description: >-
   契约（/acceptance-spec）、写产品世界（/psl）、只想看 issue 列表（gh issue list 即可）。
   前置：gh 已认证、在目标仓库内。
 argument-hint: "<需求 / bug 一句话或文件路径> [--kind feature|bug|escape] [--track psl|task] [--dos dos.yaml] [--labels a,b] [--yes] [--dry-run]"
-version: 0.2.0
+version: 0.3.0
 user-invocable: true
 ---
 
