@@ -1,0 +1,47 @@
+{
+  "iteration": 3,
+  "state_decision": "NEEDS_HUMAN",
+  "blocking_findings_count": 0,
+  "merged_findings": 15,
+  "p1": [
+    "mf-001",
+    "mf-002"
+  ],
+  "p2": [
+    "mf-003",
+    "mf-004",
+    "mf-006",
+    "mf-007",
+    "mf-009"
+  ],
+  "p3": [
+    "mf-005",
+    "mf-008",
+    "mf-010",
+    "mf-011",
+    "mf-012",
+    "mf-013",
+    "mf-014",
+    "mf-015"
+  ],
+  "fix_induced": [
+    "mf-001",
+    "mf-002"
+  ],
+  "closed_from_previous": {
+    "count": 3,
+    "classes": 2
+  },
+  "gaming_risk_score": 4.0,
+  "gaming_trajectory": [
+    3.5,
+    4.0,
+    4.0
+  ],
+  "qa_decision": "GO",
+  "pm_overall": "partially_compliant (REQ-004 = KG-02), block_merge false",
+  "isolation": "medium",
+  "impl_snapshot_equals_head": "verified — see impl-equals-head.txt (10/10 files byte-equal; later commits are docs-only)",
+  "next_action": "g2-judge final decode: gaming 4.0 in (3.5,7) and two fix_induced P1 → per the iteration-002 precedent, one more decode with the composition, no more code",
+  "written_at": "2026-09-06T01:03:17Z"
+}

@@ -1,0 +1,340 @@
+diff --git a/plugins/sdlc/dogfood/ring-audit/AUDIT.md b/plugins/sdlc/dogfood/ring-audit/AUDIT.md
+index 6682f3d..606fe2c 100644
+--- a/plugins/sdlc/dogfood/ring-audit/AUDIT.md
++++ b/plugins/sdlc/dogfood/ring-audit/AUDIT.md
+@@ -965,19 +965,21 @@ python3 plugins/sdlc/dogfood/ring-audit/check_audit.py plugins/sdlc/dogfood/ring
+ 
+ | 项 | 值 |
+ |---|---|
++| 回放命令 | `bash plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh` |
++| 回放 exit | **0** |
+ | 回放结论 | `ok: true` |
+-| 分支 · HEAD | `fix/iter-002` @ `9ad5b9c` · `range_spec: main..HEAD` |
+-| 快照取于 | `9ad5b9c`（`sha_scope: branch-specific` — 下表的 sha 只在这个分支上解析得出，换分支或 rebase 后必须重跑） |
+-| Card-footer 提交数 | 12 |
++| 分支 · HEAD | `docs/1-sdlc-ring-audit` @ `a2deb83` · `range_spec: main..HEAD` |
++| 重新求证 | `bash plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh at a2deb83 on docs/1-sdlc-ring-audit`（`sha_scope: branch-specific` — 下表的 sha 只在这个分支上解析得出，换分支或 rebase 后必须重跑） |
++| Card-footer 提交数 | 14 |
+ | **碰了被审目录的提交数** | **0** |
+ | 回放被拒的提交数 | 0 |
+-| 无 Card footer 的提交（只记录，不进判定） | 自第一个 Card 提交起扫了 6 个，其中 **0** 个碰了被审目录 |
+-
+-> 这是快照，不是恒等式，而且下面每个 sha 只在它所在的分支上成立：取于 fix/iter-002 的 9ad5b9c（range_spec main..HEAD），覆盖当时全部 12 个 Card 提交。上一版记的 e5ffbbd / 1f1916e 来自 CARD-06 的工作树，cherry-pick 重写提交之后在本分支上解析不出来——sha 随分支重写，换分支或 rebase 之后必须重跑 replay_card_commits.sh，不要照抄这张表。一份记录也不可能覆盖承载它自己的那个提交，所以重跑会看到更大的 card_commits；记录之后的每个提交都只改 audit.yaml / AUDIT.md / render_audit.py / replay_card_commits.sh，四者都不在被审的三个目录里，touches 仍是 0。non_card_commits_* 是同一次运行的第二遍（自第一个 Card 提交起、不带 Card footer 的提交），它只记录、不进判定。不随快照漂移的是下面的 git_diff_stat：它一路算到 HEAD，恒为空，那才是 PSL-003 的承重数字。
++| 无 Card footer 的提交（只记录，不进判定） | 自第一个 Card 提交起扫了 20 个，其中 **4** 个碰了被审目录 |
+ 
+ | 提交 | 卡 | 回放 exit | 碰被审目录 |
+ |---|---|---|---|
+-| `9ad5b9c` | `CARD-01` | 0 | `false` |
++| `a2deb83` | `CARD-01` | 0 | `false` |
++| `ba7d5e2` | `CARD-06` | 0 | `false` |
++| `7cb1f55` | `CARD-01` | 0 | `false` |
+ | `843c3ee` | `CARD-06` | 0 | `false` |
+ | `5c84a5a` | `CARD-06` | 0 | `false` |
+ | `b24243d` | `CARD-06` | 0 | `false` |
+diff --git a/plugins/sdlc/dogfood/ring-audit/audit.yaml b/plugins/sdlc/dogfood/ring-audit/audit.yaml
+index 034766b..9669d05 100644
+--- a/plugins/sdlc/dogfood/ring-audit/audit.yaml
++++ b/plugins/sdlc/dogfood/ring-audit/audit.yaml
+@@ -3411,39 +3411,50 @@ run_evidence:
+   # PSL-003 审计者不改被审对象——由 replay_card_commits.sh 证明，不由记忆保证。
+   audited_dirs_diff:
+     instrument: plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh
+-    cmd: bash plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh
+-    exit: 1
+-    branch: fix/iter-002
+-    head: '9ad5b9c'
++    cmd: "bash plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh"
++    exit: 0
++    branch: docs/1-sdlc-ring-audit
++    recorded_at_head: "a2deb83"
+     range_spec: main..HEAD
+     sha_scope: branch-specific
+-    snapshot_at: '9ad5b9c'
+-    snapshot_note: 这是快照，不是恒等式，而且下面每个 sha 只在它所在的分支上成立：取于 fix/iter-002 的 9ad5b9c（range_spec main..HEAD），覆盖当时全部 12 个 Card 提交。上一版记的 e5ffbbd / 1f1916e 来自 CARD-06 的工作树，cherry-pick 重写提交之后在本分支上解析不出来——sha 随分支重写，换分支或 rebase 之后必须重跑 replay_card_commits.sh，不要照抄这张表。一份记录也不可能覆盖承载它自己的那个提交，所以重跑会看到更大的 card_commits；记录之后的每个提交都只改 audit.yaml / AUDIT.md / render_audit.py / replay_card_commits.sh，四者都不在被审的三个目录里，touches 仍是 0。non_card_commits_* 是同一次运行的第二遍（自第一个 Card 提交起、不带 Card footer 的提交），它只记录、不进判定。不随快照漂移的是下面的 git_diff_stat：它一路算到 HEAD，恒为空，那才是 PSL-003 的承重数字。
++    re-derive: "bash plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh at a2deb83 on docs/1-sdlc-ring-audit"
+     ok: true
+-    card_commits: 12
++    card_commits: 14
+     card_commits_touching_audited_dirs: 0
+     card_commits_rejected: 0
+-    non_card_commits_scanned: 6
+-    non_card_commits_touching_audited_dirs: 0
++    non_card_range_spec: "4d3057a..HEAD"
++    non_card_commits_scanned: 20
++    non_card_commits_touching_audited_dirs: 4
++    # 无 Card footer 的提交（只记录、不进判定）——sha 与它们碰到的被审路径分类列出。
++    non_card_commits_touching:
++    - {sha: "c729f76", subject: "fix(sdlc): lock check compares landing content hash, not paths (I-52)", audited_paths: 1,
++       files: ["plugins/sdlc/skills/commit/scripts/verify_commit.py"]}
++    - {sha: "ebe270d", subject: "fix(sdlc): gate pass clears a stale reject attribution (I-51)", audited_paths: 1,
++       files: ["plugins/sdlc/skills/sdlc/scripts/sdlc_state.py"]}
++    - {sha: "bf3f13e", subject: "docs(sdlc): add \"raising the floor\" report (2026-09-05)", audited_paths: 4,
++       files: ["plugins/sdlc/docs/reports/raising-the-floor-2026-09-05.cold-read-1.yaml", "plugins/sdlc/docs/reports/raising-the-floor-2026-09-05.cold-read-2.yaml", "plugins/sdlc/docs/reports/raising-the-floor-2026-09-05.html", "plugins/sdlc/docs/reports/raising-the-floor-2026-09-05.md"]}
++    - {sha: "587f371", subject: "fix(sdlc): verifier and gate defects found by the ring-audit dogfood run", audited_paths: 7,
++       files: ["plugins/sdlc/skills/commit/scripts/verify_commit.py", "plugins/sdlc/skills/issue/scripts/verify_issue.py", "plugins/sdlc/skills/psl-derive/scripts/verify_derived.py", "plugins/sdlc/skills/sdlc/assets/g1_record.md", "plugins/sdlc/skills/sdlc/assets/state.schema.json", "plugins/sdlc/skills/sdlc/scripts/lock_done_when.py", "plugins/sdlc/skills/sdlc/scripts/sdlc_state.py"]}
+     touches_audited_dirs_per_commit:
+-    - {sha: '9ad5b9c', card: CARD-01, exit: 0, touches_audited_dirs: false}
+-    - {sha: '843c3ee', card: CARD-06, exit: 0, touches_audited_dirs: false}
+-    - {sha: '5c84a5a', card: CARD-06, exit: 0, touches_audited_dirs: false}
+-    - {sha: 'b24243d', card: CARD-06, exit: 0, touches_audited_dirs: false}
+-    - {sha: '6326123', card: CARD-06, exit: 0, touches_audited_dirs: false}
+-    - {sha: '3441ba4', card: CARD-06, exit: 0, touches_audited_dirs: false}
+-    - {sha: 'eba9796', card: CARD-04, exit: 0, touches_audited_dirs: false}
+-    - {sha: '419a364', card: CARD-02, exit: 0, touches_audited_dirs: false}
+-    - {sha: 'f8ef234', card: CARD-05, exit: 0, touches_audited_dirs: false}
+-    - {sha: '05963a5', card: CARD-03, exit: 0, touches_audited_dirs: false}
+-    - {sha: '08238cd', card: CARD-01, exit: 0, touches_audited_dirs: false}
+-    - {sha: '0be2770', card: CARD-01, exit: 0, touches_audited_dirs: false}
++    - {sha: "a2deb83", card: CARD-01, exit: 0, touches_audited_dirs: false}
++    - {sha: "ba7d5e2", card: CARD-06, exit: 0, touches_audited_dirs: false}
++    - {sha: "7cb1f55", card: CARD-01, exit: 0, touches_audited_dirs: false}
++    - {sha: "843c3ee", card: CARD-06, exit: 0, touches_audited_dirs: false}
++    - {sha: "5c84a5a", card: CARD-06, exit: 0, touches_audited_dirs: false}
++    - {sha: "b24243d", card: CARD-06, exit: 0, touches_audited_dirs: false}
++    - {sha: "6326123", card: CARD-06, exit: 0, touches_audited_dirs: false}
++    - {sha: "3441ba4", card: CARD-06, exit: 0, touches_audited_dirs: false}
++    - {sha: "eba9796", card: CARD-04, exit: 0, touches_audited_dirs: false}
++    - {sha: "419a364", card: CARD-02, exit: 0, touches_audited_dirs: false}
++    - {sha: "f8ef234", card: CARD-05, exit: 0, touches_audited_dirs: false}
++    - {sha: "05963a5", card: CARD-03, exit: 0, touches_audited_dirs: false}
++    - {sha: "08238cd", card: CARD-01, exit: 0, touches_audited_dirs: false}
++    - {sha: "0be2770", card: CARD-01, exit: 0, touches_audited_dirs: false}
+     git_diff_stat:
+-      cmd: 'git diff --stat 0be2770^..HEAD -- plugins/sdlc/skills plugins/sdlc/agents plugins/sdlc/docs'
+-      first_card_commit: '0be2770'
++      cmd: "git diff --stat 0be2770^..HEAD -- plugins/sdlc/skills plugins/sdlc/agents plugins/sdlc/docs"
++      first_card_commit: "0be2770"
+       output: ''
+       lines: 0
+-
+   skill_issues: plugins/sdlc/dogfood/ring-audit/skill-issues.md
+   skill_issues_count: 67          # grep -c '^| I-' plugins/sdlc/dogfood/ring-audit/skill-issues.md
+ 
+diff --git a/plugins/sdlc/dogfood/ring-audit/render_audit.py b/plugins/sdlc/dogfood/ring-audit/render_audit.py
+index 8c1ea06..dbf9c8d 100755
+--- a/plugins/sdlc/dogfood/ring-audit/render_audit.py
++++ b/plugins/sdlc/dogfood/ring-audit/render_audit.py
+@@ -130,10 +130,10 @@ class Doc:
+         gate = dct(self.gates.get(gid))
+         kind = gate.get("kind")
+         if kind == "script":
+-            return f"闸 `{gid}`"
++            return f"闸 {code(gid)}"
+         if kind == "human":
+-            return f"门 `{gid}`"
+-        return f"`{gid}`（未在 gates[] 登记）"
++            return f"门 {code(gid)}"
++        return f"{code(gid)}（未在 gates[] 登记）"
+ 
+     # -- a Part's Gap atoms ---------------------------------------------------
+     def fills_of(self, part):
+@@ -256,7 +256,7 @@ def ring_section(d, ring):
+ 
+         fills = d.fills_of(part)
+         if fills:
+-            gapcol = "<br>".join(f"`{atoms}` {cell(gid.rsplit('/', 1)[-1])}" for gid, atoms, _ in fills)
++            gapcol = "<br>".join(f"{code(atoms)} {cell(gid.rsplit('/', 1)[-1])}" for gid, atoms, _ in fills)
+         else:
+             gapcol = "**不填任何缺口 → overfill**"
+ 
+@@ -303,9 +303,9 @@ def ring_section(d, ring):
+     for gid in missing:
+         gap = dct(d.gaps.get(gid))
+         atoms = "+".join(lst(gap.get("atoms"))) or "?"
+-        source = SOURCE_LABEL.get(gap.get("source"), str(gap.get("source")))
+-        ncell = (f"necessity **{gap.get('necessity')}**<br>撤掉 / 不补它：{cell(gap.get('deletion_test'))}"
+-                 f"<br>证据：{cell(refs(gap.get('evidence')))}<br>disposition `{gap.get('disposition')}`")
++        source = SOURCE_LABEL.get(gap.get("source"), cell(gap.get("source")))
++        ncell = (f"necessity **{cell(gap.get('necessity'))}**<br>撤掉 / 不补它：{cell(gap.get('deletion_test'))}"
++                 f"<br>证据：{cell(refs(gap.get('evidence')))}<br>disposition {code(gap.get('disposition'))}")
+         out.append(f"| **（缺少）** {code(gid.rsplit('/', 1)[-1])} | — | {code(atoms)}<br>**{source}** | "
+                    f"— | — | — | — | {ncell} | — | — |")
+ 
+@@ -456,11 +456,11 @@ def run_evidence_section(d):
+     meta = dct(run.get("run"))
+     out += [
+         "| 项 | 值 |", "|---|---|",
+-        f"| slug | `{meta.get('slug')}` |",
+-        f"| 状态机 | `{meta.get('state')}` |",
+-        f"| 账本 | `{meta.get('ledger')}` |",
+-        f"| 分支 | `{meta.get('branch')}` |",
+-        f"| issue | `#{meta.get('issue')}` |",
++        f"| slug | {code(meta.get('slug'))} |",
++        f"| 状态机 | {code(meta.get('state'))} |",
++        f"| 账本 | {code(meta.get('ledger'))} |",
++        f"| 分支 | {code(meta.get('branch'))} |",
++        f"| issue | {code('#' + str(meta.get('issue')))} |",
+         "",
+         "### 三道门的签字（F-07 三元组）",
+         "",
+@@ -508,6 +508,11 @@ def run_evidence_section(d):
+ 
+     diff = dct(run.get("audited_dirs_diff"))
+     stat = dct(diff.get("git_diff_stat"))
++    # 登记的 exit 与登记的 ok 必须同号（`exit: 0` 当且仅当 `ok: true`）。不同号说明这两行不是同一次运行
++    # 留下的，记录自己就不自洽——当场标出来，不要让读者自己去对，也不要让它冒充证据。
++    replay_exit, replay_ok = diff.get("exit"), diff.get("ok")
++    mismatch = (replay_exit == 0) != (replay_ok is True)
++    flag = " · **登记 ≠ 现算**" if mismatch else ""
+     out += [
+         "### 审计者不改被审对象（PSL-003）",
+         "",
+@@ -515,10 +520,12 @@ def run_evidence_section(d):
+         "白名单回放一遍 `verify_commit.py`，并检查它有没有碰被审的三个目录。",
+         "",
+         "| 项 | 值 |", "|---|---|",
+-        f"| 回放结论 | `ok: {str(diff.get('ok')).lower()}` |",
+-        f"| 分支 · HEAD | {code(diff.get('branch'))} @ {code(diff.get('head'))} · "
++        f"| 回放命令 | {code(diff.get('cmd'))} |",
++        f"| 回放 exit | **{cell(replay_exit)}**{flag} |",
++        f"| 回放结论 | `ok: {str(replay_ok).lower()}`{flag} |",
++        f"| 分支 · HEAD | {code(diff.get('branch'))} @ {code(diff.get('recorded_at_head'))} · "
+         f"`range_spec: {cell(diff.get('range_spec'))}` |",
+-        f"| 快照取于 | {code(diff.get('snapshot_at'))}（`sha_scope: {cell(diff.get('sha_scope'))}` — "
++        f"| 重新求证 | {code(diff.get('re-derive'))}（`sha_scope: {cell(diff.get('sha_scope'))}` — "
+         "下表的 sha 只在这个分支上解析得出，换分支或 rebase 后必须重跑） |",
+         f"| Card-footer 提交数 | {diff.get('card_commits')} |",
+         f"| **碰了被审目录的提交数** | **{diff.get('card_commits_touching_audited_dirs')}** |",
+@@ -527,13 +534,15 @@ def run_evidence_section(d):
+         f"{diff.get('non_card_commits_scanned')} 个，其中 "
+         f"**{diff.get('non_card_commits_touching_audited_dirs')}** 个碰了被审目录 |",
+         "",
+-    ] + ([f"> {para(diff.get('snapshot_note'))}", ""] if diff.get("snapshot_note") else []) + [
++    ] + ([f"> **登记 ≠ 现算**：记录里 `exit: {cell(replay_exit)}` 与 `ok: "
++          f"{str(replay_ok).lower()}` 不同号（`exit: 0` 当且仅当 `ok: true`）。这两行不是同一次运行"
++          "留下的，这块 PSL-003 证据在重跑之前不作数。", ""] if mismatch else []) + [
+         "| 提交 | 卡 | 回放 exit | 碰被审目录 |",
+         "|---|---|---|---|",
+     ]
+     for c in lst(diff.get("touches_audited_dirs_per_commit")):
+         c = dct(c)
+-        out.append(f"| `{c.get('sha')}` | `{c.get('card')}` | {c.get('exit')} | "
++        out.append(f"| {code(c.get('sha'))} | {code(c.get('card'))} | {cell(c.get('exit'))} | "
+                    f"`{str(c.get('touches_audited_dirs')).lower()}` |")
+     out += [
+         "",
+diff --git a/plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh b/plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh
+index ca26ee1..9aef84b 100755
+--- a/plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh
++++ b/plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh
+@@ -16,8 +16,11 @@
+ # stdout is one JSON object; card_commits_touching_audited_dirs is the number REQ-007 reads.
+ #
+ # A commit WITHOUT a `Card:` footer is out of that replay's scope by contract, which would make it invisible.
+-# A second, clearly separated pass therefore walks the footer-less commits since the first Card commit and
+-# reports non_card_commits_touching_audited_dirs (count + shas).  It is recorded, never gated.
++# A second, clearly separated pass therefore walks EVERY footer-less commit on the branch — merge-base(main, HEAD)..HEAD,
++# falling back to origin/main and then to the replay range — and reports non_card_commits_touching_audited_dirs
++# (count + shas + paths).  Bounding that pass by the first Card commit hid everything that landed before the cards
++# began, which is exactly the blind spot it exists to close.  It is recorded, never gated: the exit code still counts
++# only the Card range.
+ set -uo pipefail
+ 
+ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+@@ -64,10 +67,18 @@ range_of() {                                     # the range that shows only thi
+   else printf '%s..%s' "$EMPTY_TREE" "$1"; fi
+ }
+ 
+-audited_hits() {                                 # how many of the range's paths sit in the audited directories.
+-  local n                                        # --no-renames is load-bearing: a file MOVED OUT of an audited
+-  n="$(git diff --name-only --no-renames "$1" 2>/dev/null | grep -cE "$AUDITED_RE")"   # dir must still list its
+-  [ -n "$n" ] || n=0                             # old path, and rename detection would show only the destination.
++audited_files() {                                # the range's paths that sit in the audited directories.
++  # --no-renames is load-bearing: a file MOVED OUT of an audited dir must still list its old path, and rename
++  # detection would show only the destination.  core.quotePath=false is load-bearing too: git's default C-quotes
++  # every path carrying a non-ASCII byte — plugins/sdlc/skills/中文/x.md comes back as
++  # "plugins/sdlc/skills/\344\270\255\346\226\207/x.md" — and the leading quote alone stops AUDITED_RE matching.
++  git -c core.quotePath=false diff --name-only --no-renames "$1" 2>/dev/null | grep -E "$AUDITED_RE"
++}
++
++audited_hits() {                                 # how many of them there are
++  local n
++  n="$(audited_files "$1" | wc -l | tr -d '[:space:]')"
++  [ -n "$n" ] || n=0
+   printf '%s' "$n"
+ }
+ 
+@@ -79,12 +90,10 @@ while read -r sha; do
+   cards+=("$(card_footer_of "$sha")")
+ done < <(git log --format='%H' $RANGE_SPEC 2>/dev/null)
+ 
+-oldest_card_idx=-1
+-for i in $(seq 0 $(( ${#shas[@]} - 1 ))); do
+-  sha="${shas[$i]}"
+-  card="${cards[$i]}"
++for i in "${!shas[@]}"; do                       # "${!a[@]}" expands to nothing for an empty array, while
++  sha="${shas[$i]}"                              # `seq 0 -1` printed "0" and "-1" and ${shas[0]} then tripped
++  card="${cards[$i]}"                            # `set -u` — a branch with no commits of its own printed no JSON
+   [ -n "$card" ] || continue
+-  oldest_card_idx=$i                             # the log is newest-first, so the last one seen is the oldest
+   card_commits=$((card_commits + 1))
+ 
+   card_file=""
+@@ -121,25 +130,43 @@ for i in $(seq 0 $(( ${#shas[@]} - 1 ))); do
+ done
+ 
+ # Second pass — RECORDED, NOT GATED.  AC-007-a scopes the replay above to commits carrying a `Card:` footer, so a
+-# footer-less commit that touched the audited directories would leave no trace at all.  This pass walks every
+-# commit in the range since the first Card commit that has no footer and reports the ones that did touch them.
+-# It never feeds `touching` / `overflow` / `rejected`, so it cannot move the exit code.
++# footer-less commit that touched the audited directories would leave no trace at all.  This pass walks EVERY
++# footer-less commit on the branch and reports the ones that did touch them.  Its window is the branch, not the Card
++# era: bounding it by the oldest Card commit made the commits that landed before the cards began invisible to both
++# passes.  It never feeds `touching` / `overflow` / `rejected`, so it cannot move the exit code.
++NON_CARD_RANGE_SPEC="$RANGE_SPEC"                # the replay range is the last resort, for a tree with no main at all
++for base in main origin/main; do
++  if merge_base="$(git merge-base "$base" HEAD 2>/dev/null)" && [ -n "$merge_base" ]; then
++    NON_CARD_RANGE_SPEC="$merge_base..HEAD"
++    break
++  fi
++done
++
++has_card_footer() {                              # case-insensitive, so `card: CARD-01` still counts as a footer
++  git log -1 --format='%B' "$1" | grep -qiE '^Card:[[:space:]]*CARD-'
++}
++
+ non_card_records=""
+ non_card_scanned=0
+ non_card_touching=0
+-if [ "$oldest_card_idx" -ge 0 ]; then
+-  for i in $(seq 0 "$oldest_card_idx"); do
+-    [ -z "${cards[$i]}" ] || continue
+-    sha="${shas[$i]}"
+-    non_card_scanned=$((non_card_scanned + 1))
+-    hits="$(audited_hits "$(range_of "$sha")")"
+-    [ "$hits" -gt 0 ] || continue
+-    non_card_touching=$((non_card_touching + 1))
+-    [ -n "$non_card_records" ] && non_card_records="$non_card_records,"
+-    non_card_records="$non_card_records
+-    {\"sha\": \"$(json_escape "$sha")\", \"subject\": \"$(json_escape "$(git log -1 --format='%s' "$sha")")\", \"audited_paths\": $hits}"
+-  done
+-fi
++while read -r sha; do
++  [ -n "$sha" ] || continue
++  has_card_footer "$sha" && continue
++  non_card_scanned=$((non_card_scanned + 1))
++  nc_range="$(range_of "$sha")"
++  hits="$(audited_hits "$nc_range")"
++  [ "$hits" -gt 0 ] || continue
++  non_card_touching=$((non_card_touching + 1))
++  files_json=""
++  while IFS= read -r audited_path; do
++    [ -n "$audited_path" ] || continue
++    [ -n "$files_json" ] && files_json="$files_json, "
++    files_json="$files_json\"$(json_escape "$audited_path")\""
++  done < <(audited_files "$nc_range")
++  [ -n "$non_card_records" ] && non_card_records="$non_card_records,"
++  non_card_records="$non_card_records
++    {\"sha\": \"$(json_escape "$sha")\", \"subject\": \"$(json_escape "$(git log -1 --format='%s' "$sha")")\", \"audited_paths\": $hits, \"files\": [$files_json]}"
++done < <(git log --format='%H' $NON_CARD_RANGE_SPEC 2>/dev/null)
+ 
+ errors=""
+ if [ "$overflow" -gt 0 ]; then
+@@ -164,6 +191,7 @@ cat <<JSON
+   "card_commits_rejected": $rejected,
+   "replays": [${records}
+   ],
++  "non_card_range_spec": "$(json_escape "$NON_CARD_RANGE_SPEC")",
+   "non_card_commits_scanned": $non_card_scanned,
+   "non_card_commits_touching_audited_dirs": $non_card_touching,
+   "non_card_commits_touching": [${non_card_records}

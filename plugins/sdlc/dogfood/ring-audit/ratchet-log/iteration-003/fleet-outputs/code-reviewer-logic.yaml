@@ -1,0 +1,168 @@
+code_review:
+  agent_role: logic
+  model: claude-fable-5-1
+  vendor: claude
+  isolation: medium
+  adversarial_mode: false
+  inputs_read:
+    - scratchpad/fleet3/COMMON.md
+    - scratchpad/fleet3/code-reviewer-logic.md
+    - plugins/sdlc/skills/code-reviewer/SKILL.md
+    - plugins/sdlc/skills/code-reviewer/references/finding-schema.yaml
+    - plugins/sdlc/skills/code-reviewer/references/focus-areas.md
+    - plugins/sdlc/dogfood/ring-audit/check_audit.py (full)
+    - plugins/sdlc/dogfood/ring-audit/render_audit.py (full)
+    - plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh (full)
+    - plugins/sdlc/dogfood/ring-audit/audit.yaml (structure, run_evidence, artifacts, gaps, rings via pyyaml; hunk 3411-3460 via git diff)
+    - plugins/sdlc/dogfood/ring-audit/audit/rings-R0-R2-spine.yaml, rings-R3-R5.yaml, rings-R6.yaml, rings-R7-R8.yaml (programmatic merge comparison)
+    - plugins/sdlc/dogfood/ring-audit/AUDIT.md @4ddb362 (PSL-003 section; render-freshness diff)
+    - plugins/sdlc/dogfood/ring-audit/audit.schema.md (fills/missing lines 14, 60, 76-81, 152)
+    - plugins/sdlc/dogfood/ring-audit/done_when.yaml
+    - plugins/sdlc/dogfood/ring-audit/g1-record.md (lines 280-400: F-17 addendum + 签字版解释规则 1-3)
+    - plugins/sdlc/dogfood/ring-audit/derived/form-draft.md (F-04, F-05, F-12, F-13, F-14, F-15, F-16, F-17, F-20)
+    - plugins/sdlc/dogfood/ring-audit/tests/ring-audit/test_check_audit.py (grep only: fills / same-ring comments)
+    - plugins/sdlc/skills/commit/scripts/verify_commit.py (grep only: footer handling)
+    - "spec-robustness.md: ABSENT (not produced this Run; recorded as missing per COMMON.md)"
+    - "NOT read: any ratchet-log fleet-outputs / meta-judge files, .sdlc/**"
+  diff_source: "57ebf2b..4ddb362 -- plugins/sdlc/dogfood/ring-audit (Card range); incremental ba7d5e2..4ddb362 read in full for the code files, audit.yaml and AUDIT.md"
+  diff_total_hunks: 1991
+  diff_total_lines_changed: 33234
+  rules_loaded: []
+  repo_root: /Users/xrensiu/development/owner/claude-code-forge
+  iteration_seconds: 620
+  tool_calls_used: 22
+  tool_call_budget: 20
+
+  # COMMON.md: "Reproduce, do not trust". Everything below was re-run on docs/1-sdlc-ring-audit during this review.
+  reproduction_of_run_evidence:
+    branch_head_at_start: 4ddb3621395536ae53d327a94c33d6e37ada2309
+    branch_head_moved_to_during_review: "f11f0e2 (docs commit touching pr-body.md + skill-issues.md only; no Card footer). Review target stays 4ddb362."
+    check_audit_primary:
+      recorded: { exit: 0, rings: 10, parts_total: 42, parts_without_assessment: 0, required_parts_missing: 0 }
+      observed: { exit: 0, rings: 10, parts_total: 42, parts_without_assessment: 0, required_parts_missing: 0, orphan_gaps: 0, unknown_gap_refs: 0, double_producer: 0, spurious_merge_candidate: 0, overfill_unmarked: 0, psl_index_size: 17, calibration_twin_recorded: true }
+      match: true
+    check_audit_delete_ring_twin:
+      recorded: { variant: "delete-ring:R6", exit: 1, rings: 9, parts_total: 31, required_parts_missing: 2, orphan_gaps: 18, failed_predicates: [ring_missing, orphan_gap, required_part_missing], error: "ring_missing: R6" }
+      observed: { variant: "delete-ring:R6", exit: 1, rings: 9, parts_total: 31, required_parts_missing: 2, orphan_gaps: 18, failed_predicates: [ring_missing, orphan_gap, required_part_missing], error: "ring_missing: R6" }
+      match: true
+    replay_card_commits:
+      recorded_at: a2deb83
+      recorded: { exit: 0, ok: true, card_commits: 14, card_commits_touching_audited_dirs: 0, card_commits_rejected: 0, non_card_range_spec: "4d3057a..HEAD", non_card_commits_scanned: 20, non_card_commits_touching_audited_dirs: 4 }
+      observed_at_f11f0e2: { exit: 0, ok: true, card_commits: 15, card_commits_touching_audited_dirs: 0, card_commits_rejected: 0, non_card_range_spec: "4d3057af..HEAD", non_card_commits_scanned: 21, non_card_commits_touching_audited_dirs: 4 }
+      match: "consistent: +1 card commit (4ddb362 itself, CARD-06) and +1 non-card commit (f11f0e2) relative to the a2deb83 record; every recorded replay row is present with exit 0 / touches false; exit and ok agree"
+    recorded_shas_resolve_on_branch: "all 20 checked (a2deb83 ba7d5e2 7cb1f55 843c3ee 5c84a5a b24243d 6326123 3441ba4 eba9796 419a364 f8ef234 05963a5 08238cd 0be2770 c729f76 ebe270d bf3f13e 587f371 4d3057a 5a6889c) are ancestors of 4ddb362"
+    git_diff_stat_recorded_cmd: "git diff --stat 0be2770^..4ddb362 -- plugins/sdlc/skills plugins/sdlc/agents plugins/sdlc/docs -> 0 lines (matches output: '')"
+    non_card_touchers_position: "c729f76 ebe270d bf3f13e 587f371 are ALL ancestors of 0be2770 (first Card commit), i.e. they precede the Card era"
+    fragment_merge: "parts 42/42 byte-identical; gaps 73 distinct = 73 merged; artifacts 58 = 58; gates 32 -> 31 (lock_done_when.py duplicated identically in R0-R2-spine and R3-R5, kept once); proposals 39 = 39; missing[] and question identical per ring. Merged-only top-level additions: suspected_duplicate_pairs[] (5, documented in assembly notes) and unenforced_rules[] (4, NOT documented, see cr-004)"
+    render_freshness: "python3 render_audit.py audit.yaml -o <scratch> is byte-identical to AUDIT.md at 4ddb362"
+
+  num_findings: 4
+  max_findings_limit: 5
+  findings:
+    - finding_id: cr-001
+      severity: P1
+      file: plugins/sdlc/dogfood/ring-audit/render_audit.py
+      line_range: [533, 535]
+      category: projection_misstates_data
+      root_cause: "The PSL-003 table row is hard-coded to say the footer-less scan ran 自第一个 Card 提交起, but since CARD-01 (a2deb83) the second pass runs over merge-base(main,HEAD)..HEAD and audit.yaml records non_card_range_spec 4d3057a..HEAD; the renderer prints neither that range nor the non_card_commits_touching[] list (4 shas, 13 files), so AUDIT.md states '4 footer-less commits since the first Card commit touched the audited dirs' 19 lines before stating the diff over those dirs since the first Card commit is empty — both cannot be true, and the reader cannot resolve it from AUDIT.md."
+      reproduction_scenario: "git show 4ddb362:plugins/sdlc/dogfood/ring-audit/AUDIT.md | sed -n '976p;995p' -> line 976: '自第一个 Card 提交起扫了 20 个，其中 **4** 个碰了被审目录'; line 995: '自第一个 Card 提交（0be2770）起的 git diff --stat' followed by '0 行输出（空）'. Then: for s in c729f76 ebe270d bf3f13e 587f371; do git merge-base --is-ancestor $s 0be2770 && echo yes; done -> yes x4, i.e. none of the 4 is 'since the first Card commit'. audit.yaml run_evidence.audited_dirs_diff.non_card_range_spec = 4d3057a..HEAD (merge-base), and grep -c 'c729f76\\|587f371\\|non_card_range_spec' AUDIT.md -> 0."
+      confidence: high
+      evidence:
+        - kind: read
+          file: plugins/sdlc/dogfood/ring-audit/render_audit.py
+          lines: [505, 560]
+        - kind: read
+          file: plugins/sdlc/dogfood/ring-audit/audit.yaml
+          lines: [3412, 3460]
+        - kind: grep
+          query: "c729f76|ebe270d|bf3f13e|587f371|4d3057a|non_card_range_spec|自第一个 Card"
+          matches: 2
+          match_files: ["plugins/sdlc/dogfood/ring-audit/AUDIT.md"]
+        - kind: git_log
+          file: plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh
+          observation: "a2deb83 (CARD-01) moved the second pass from 'since the oldest Card commit' to merge-base(main,HEAD)..HEAD and added non_card_range_spec + non_card_commits_touching[] to the JSON; 4ddb362 (CARD-06) copied the new numbers into audit.yaml and touched the same render table (added cmd / exit rows) without updating the 自第一个 Card 提交起 label or rendering the new fields. git merge-base --is-ancestor confirms all 4 touchers predate 0be2770."
+      needs_codebase_check: false
+      suggested_change: "Render the scan window from data (f\"在 {code(diff.get('non_card_range_spec'))} 内扫了 N 个\") and add a small table for non_card_commits_touching[] (sha · subject · audited_paths · files) directly under the row, so the '4 touched' statement and the empty git_diff_stat are visibly about different windows."
+      tags: ["F-12", "F-15", "AC-006-a", "PSL-003"]
+
+    - finding_id: cr-002
+      severity: P1
+      file: plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh
+      line_range: [145, 147]
+      category: predicate_mismatch_between_passes
+      root_cause: "Pass 1 selects Card commits with a case-SENSITIVE grep (^Card:[[:space:]]*CARD-…, line 61) while pass 2 excludes 'footer-bearing' commits with a case-INSENSITIVE grep (-qiE ^Card:, line 146). A commit whose footer is 'card: CARD-01' therefore matches neither pass: it is not replayed through verify_commit.py, not counted in card_commits, and also skipped by the footer-less scan — it is less visible than a commit with no footer at all, which is the blind spot the second pass exists to close."
+      reproduction_scenario: "Twin repo: git init -b main; commit README; git checkout -b feat; mkdir -p plugins/sdlc/skills/foo; echo x > plugins/sdlc/skills/foo/SKILL.md; git commit -am $'feat: touch audited dir\\n\\ncard: CARD-01'; bash <repo>/plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh -> exit 0, {card_commits: 0, card_commits_touching_audited_dirs: 0, non_card_commits_scanned: 0, non_card_commits_touching_audited_dirs: 0, ok: true, replays: [], non_card_commits_touching: []}. Controls on the identical tree: footer 'Card: CARD-01' -> exit 1, card_commits_touching_audited_dirs 1; no footer -> exit 0 but non_card_commits_touching_audited_dirs 1 (recorded). The lowercase variant is the only one that leaves no trace. Scan of 4d3057a..4ddb362 found no lowercase footer on the real branch, so the shipped exit 0 is not currently hiding a violation; the instrument is unsound, not the audit."
+      confidence: high
+      evidence:
+        - kind: read
+          file: plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh
+          lines: [60, 63]
+        - kind: read
+          file: plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh
+          lines: [145, 155]
+        - kind: git_log
+          file: plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh
+          observation: "Twin-repo runs as described in reproduction_scenario (three variants of the same commit). a2deb83's message claims 'case-insensitive footer match' but applied it only to has_card_footer(), not to card_footer_of()."
+        - kind: grep
+          query: "^card:[[:space:]]*CARD- (case-insensitive) minus ^Card:[[:space:]]*CARD- (case-sensitive) over every commit in 4d3057a..4ddb362"
+          matches: 0
+          match_files: []
+      needs_codebase_check: false
+      suggested_change: "Use one footer predicate for both passes: make card_footer_of() case-insensitive (grep -oiE '^Card:[[:space:]]*CARD-[A-Za-z0-9_.-]+' then strip the key case-insensitively with sed -E 's/^[Cc][Aa][Rr][Dd]:[[:space:]]*//'), or define has_card_footer() as '[ -n \"$(card_footer_of \"$1\")\" ]' so pass 2 is exactly the complement of pass 1."
+      tags: ["REQ-007", "AC-007-a", "PSL-003", "gate-soundness"]
+
+    - finding_id: cr-003
+      severity: P2
+      file: plugins/sdlc/dogfood/ring-audit/check_audit.py
+      line_range: [265, 278]
+      category: predicate_stricter_than_signed_rule
+      root_cause: "resolve() applies the same-ring test (line 265) to every fills[] reference (line 278), but G1 签字版解释规则 2(e) requires ring consistency only for missing[] ('missing[] 里的每个键必在 gaps[] 且其 ring 一致；fills[] 里的每个键必在 gaps[]'); the module docstring (lines 28-29) misquotes rule 2 as 'missing[] and parts[].fills[] exists in gaps[] with the same ring'. A Part legitimately filling a Gap owned by another Ring (F-04 allows N:N FILLS and says nothing about rings) is rejected as unknown_gap_ref with the misleading text 'whose ring is …'."
+      reproduction_scenario: "Take audit.yaml, move 'R6/unenforced_rule/control/gate-signer-must-be-human' from rings[R6].missing[] into rings[spine].parts[sdlc].fills[] (a spine orchestrator closing an R6 control gap): check_audit.py exits 1 with 'unknown_gap_ref: spine/sdlc.fills references R6/…, whose ring is 'R6'' although the id is in gaps[]. Latent today: all 40 filled gaps in audit.yaml are filled by same-ring Parts (verified programmatically), so no current exit code changes."
+      confidence: high
+      evidence:
+        - kind: read
+          file: plugins/sdlc/dogfood/ring-audit/check_audit.py
+          lines: [248, 305]
+        - kind: read
+          file: plugins/sdlc/dogfood/ring-audit/g1-record.md
+          lines: [359, 367]
+        - kind: grep
+          query: "fills|同环|same ring"
+          matches: 4
+          match_files: ["plugins/sdlc/dogfood/ring-audit/audit.schema.md", "plugins/sdlc/dogfood/ring-audit/tests/ring-audit/test_check_audit.py"]
+        - kind: read
+          file: plugins/sdlc/dogfood/ring-audit/audit.yaml
+          observation: "programmatic check: for every part, every fills[] gap has gaps[].ring == part's ring (0 cross-ring edges); 73 gaps, 40 filled, 33 in missing[]"
+      needs_codebase_check: false
+      suggested_change: "Either drop the ring comparison for the fills branch (resolve(gid, None, …) with ring_id None meaning 'any ring') so the predicate matches 2(e) as signed, or have G1 amend 2(e) to say same-ring for fills before change-proposal-002 adds the KG-08 mutant that would lock the stricter reading in. Fix the docstring lines 28-29 either way. Note audit.schema.md line 80 and test_check_audit.py line 257 already assert the stricter reading, so this is a spec-text vs. implementation divergence, not only a code slip."
+      tags: ["G1-rule-2e", "F-04", "F-13", "KG-08", "spec-interpretation"]
+
+    - finding_id: cr-004
+      severity: P3
+      file: plugins/sdlc/dogfood/ring-audit/render_audit.py
+      line_range: [624, 637]
+      category: report_claim_contradicted_by_data
+      root_cause: "assembly_notes() prints '装配时只做了下面这些事，一处不漏' followed by a 5-row table, but the merge added a sixth thing: a top-level unenforced_rules[] (4 entries R001/R008/R010/R017, audit.yaml line 3031) that none of the four fragments carries; the section that consumes it (unenforced_rules_notes) never says it was added at assembly time."
+      reproduction_scenario: "python3: load the 4 fragments and audit.yaml; set(keys) of fragments = {schema, feature, psl, check, rings, gaps, artifacts, gates, proposals}; merged adds suspected_duplicate_pairs (row 3 of the table) and unenforced_rules (no row). git show 4ddb362:…/AUDIT.md | sed -n 1052,1062p shows the '一处不漏' claim and the 5 rows."
+      confidence: high
+      evidence:
+        - kind: read
+          file: plugins/sdlc/dogfood/ring-audit/render_audit.py
+          lines: [620, 640]
+        - kind: read
+          file: plugins/sdlc/dogfood/ring-audit/audit.yaml
+          lines: [3031, 3050]
+        - kind: grep
+          query: "^unenforced_rules:"
+          matches: 1
+          match_files: ["plugins/sdlc/dogfood/ring-audit/audit.yaml"]
+      needs_codebase_check: false
+      suggested_change: "Add row 6 to the assembly table: '新增顶层 unenforced_rules[]（4 条，来自 dos.yaml enforced_by ≠ system）| 片段不写它，装配核对节从它现算 | 只是索引'."
+      tags: ["CARD-06", "assembly-notes"]
+
+  rationale: null
+  caveats:
+    adversarial_mode_caveat: null
+    diff_truncation_caveat: "The Card range 57ebf2b..4ddb362 is 1991 hunks; ~1900 of them are L5 fixture YAML under tests/ring-audit/fixtures (qa-reviewer's domain). Per the task file I read the three code files in full, the incremental diff ba7d5e2..4ddb362 in full for those files plus audit.yaml/AUDIT.md, and compared the fragment merge programmatically; fixture hunks were not reviewed. Dropped after rebuttal: (a) --rings narrowing the parts_missing token — exit code is unchanged because the dimension predicates read the whole document; (b) replay errors[] string printing $touching where the condition is $overflow — message-only; (c) same producer listed twice for one artifact counted as double_producer — not reachable in shipped data."
+    rules_conflict_caveat: null
+    cross_vendor_unavailable_caveat: "Single-vendor (claude) review as configured by the fleet; no Codex/Gemini pass was run for this focus."

@@ -1,0 +1,261 @@
+# code-reviewer --focus=security --adversarial — acceptance-fleet iteration-003 (sdlc-ring-audit)
+# Shape: plugins/sdlc/skills/code-reviewer/references/finding-schema.yaml (+ COMMON.md header keys isolation / inputs_read).
+code_review:
+  agent_role: security
+  model: claude-fable-5-1
+  vendor: claude
+  isolation: medium
+  inputs_read:
+    - plugins/sdlc/skills/code-reviewer/SKILL.md
+    - plugins/sdlc/skills/code-reviewer/references/finding-schema.yaml
+    - plugins/sdlc/skills/code-reviewer/references/focus-areas.md
+    - "git diff --stat 57ebf2b..4ddb362 -- plugins/sdlc/dogfood/ring-audit (Card range, 92 files / 1991 hunks)"
+    - "git diff ba7d5e2..4ddb362 -- replay_card_commits.sh render_audit.py (iteration-003 incremental, read in full)"
+    - plugins/sdlc/dogfood/ring-audit/check_audit.py (full)
+    - plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh (full)
+    - plugins/sdlc/dogfood/ring-audit/render_audit.py (full)
+    - plugins/sdlc/dogfood/ring-audit/audit.schema.md (full)
+    - "plugins/sdlc/dogfood/ring-audit/audit.yaml (run_evidence block in full; gates[] / artifacts[] via yaml load)"
+    - "plugins/sdlc/dogfood/ring-audit/AUDIT.md (fresh render diff + grep 人签 / 自第一个 Card 提交起)"
+    - plugins/sdlc/dogfood/ring-audit/done_when.yaml
+    - plugins/sdlc/dogfood/ring-audit/issue-body.md
+    - plugins/sdlc/dogfood/ring-audit/derived/form-draft.md
+    - "plugins/sdlc/dogfood/ring-audit/g1-record.md ## 签字版解释规则"
+    - plugins/sdlc/dogfood/ring-audit/cards/CARD-01.yaml
+    - plugins/sdlc/dogfood/ring-audit/cards/CARD-06.yaml
+    - plugins/sdlc/dogfood/ring-audit/.done_when.lock
+    - plugins/sdlc/skills/commit/scripts/verify_commit.py (read-only hop; the replay's pre-gate)
+    - plugins/sdlc/skills/commit/assets/commit_template.txt (footer spelling)
+    - "plugins/sdlc/agents/card-implementer.md L12-34 (footer spelling)"
+    - "plugins/sdlc/dogfood/ring-audit/tests/ring-audit/test_check_audit.py (grep only: replay / footer coverage)"
+    - "plugins/sdlc/dogfood/ring-audit/tests/ring-audit/fixtures/mutant_gate_not_declared.yaml, mutant_script_gate_rendered_as_door.yaml (grep kind: only)"
+    - "git log / merge-base / interpret-trailers on docs/1-sdlc-ring-audit"
+    - "NOT read: ratchet-log/**/fleet-outputs, meta-judge*, needs-human.md, .sdlc/**; spec-robustness.md does not exist on this branch"
+  adversarial_mode: true
+  diff_source: "57ebf2b..4ddb362 -- plugins/sdlc/dogfood/ring-audit (Card range); incremental ba7d5e2..4ddb362 (iteration-003)"
+  diff_total_hunks: 1991
+  diff_total_lines_changed: 33234
+  rules_loaded:
+    - "plugins/sdlc/dogfood/ring-audit/done_when.yaml#rules"
+    - "plugins/sdlc/dogfood/ring-audit/derived/form-draft.md (F-05 / F-06 / F-07 / F-13 / F-14 / F-15 / F-17)"
+    - "plugins/sdlc/dogfood/ring-audit/g1-record.md#签字版解释规则 (rules 1-3)"
+    - "plugins/sdlc/dogfood/ring-audit/audit.schema.md"
+    - "CLAUDE.md (project instructions, loaded by the harness)"
+  repo_root: /Users/xrensiu/development/owner/claude-code-forge
+  iteration_seconds: 1500
+  tool_calls_used: 27
+  tool_call_budget: 20
+
+  num_findings: 3
+  max_findings_limit: 5
+  findings:
+    - finding_id: cr-001
+      severity: P1
+      file: plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh
+      line_range: [60, 63]
+      category: gate_bypass
+      root_cause: >-
+        The two passes classify a commit's `Card:` footer with two different regexes. Pass 1 (card_footer_of,
+        line 61) replays only footers matching case-sensitive `^Card:[[:space:]]*CARD-[A-Za-z0-9_.-]+`; pass 2
+        (has_card_footer, line 146, added in a2deb83) EXCLUDES every commit matching case-insensitive
+        `^Card:[[:space:]]*CARD-`. A footer that matches the second but not the first — `card: CARD-01`,
+        `Card: card-01`, or a dangling `Card: CARD-` — is skipped by the replay at line 96 AND by the scan at
+        line 154, so a commit that edits plugins/sdlc/skills|agents|docs is neither replayed, nor counted, nor
+        recorded: card_commits_touching_audited_dirs stays 0, non_card_commits_touching_audited_dirs stays 0,
+        exit 0, ok true. This is the PSL-003 / REQ-007 instrument (meta-judge rule: any card commit touching
+        those dirs is a P0), and the gap sits exactly between the gated pass and the pass created to close
+        footer-less blind spots.
+      reproduction_scenario: >-
+        In a scratch repo: `git init -b main; mkdir -p plugins/sdlc/skills/x cards; echo base >
+        plugins/sdlc/skills/x/SKILL.md; git add -A; git commit -m 'chore: base'; git checkout -b feat;
+        printf 'id: CARD-01\nallowed_files:\n- plugins/sdlc/dogfood/ring-audit/check_audit.py\nforbidden_files:\n-
+        plugins/sdlc/skills/**\n' > cards/CARD-01.yaml; git add cards; git commit -m 'chore: add card';
+        echo tampered >> plugins/sdlc/skills/x/SKILL.md; git add -A; printf 'fix(ring-audit): tamper\n\ncard:
+        CARD-01\n' | git commit -F -`. Then `bash <repo>/plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh`
+        from the scratch repo → exit 0, {card_commits: 0, card_commits_touching_audited_dirs: 0,
+        non_card_commits_scanned: 1 (the tamper commit is NOT among them), non_card_commits_touching_audited_dirs:
+        0, ok: true}. Same result for footers `Card: card-01` and `Card: CARD-`. Control with the canonical
+        `Card: CARD-01` → exit 1, card_commits_touching_audited_dirs 1, errors [whitelist_overflow]. Control
+        with no footer at all → exit 0 but non_card_commits_touching_audited_dirs 1 (recorded, as designed).
+      confidence: high
+      evidence:
+        - kind: read
+          file: plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh
+          lines: [60, 63]
+        - kind: read
+          file: plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh
+          lines: [145, 147]
+        - kind: read
+          file: plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh
+          lines: [93, 97]
+        - kind: read
+          file: plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh
+          lines: [152, 158]
+        - kind: git_log
+          file: plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh
+          observation: >-
+            a2deb83 (CARD-01, iteration-003) introduced has_card_footer with `grep -qiE`; before it, pass 2 tested
+            `[ -z "${cards[$i]}" ]`, i.e. reused pass 1's own classification, so no footer spelling could fall
+            between the passes. card_footer_of was left case-sensitive in the same commit.
+        - kind: grep
+          query: "grep -[a-z]*i[a-z]*E '\\^Card:' in replay_card_commits.sh"
+          matches: 1
+          match_files: ["plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh"]
+        - kind: find_similar
+          observation: >-
+            Scratch-twin runs (scratchpad/twin_lowercase): variant `card: CARD-01` → exit 0, card_commits 0,
+            non_card_commits_scanned 1, touching 0; variant `Card: card-01` → identical; variant `Card: CARD-` →
+            identical; control `Card: CARD-01` → exit 1, touching 1, whitelist_overflow; control no footer → exit
+            0, non_card_commits_touching_audited_dirs 1. `git interpret-trailers --parse` accepts `card: CARD-01`
+            as a trailer (git trailer keys are case-insensitive), and verify_commit.py never validates the footer,
+            so nothing upstream rejects the lowercase spelling.
+        - kind: read
+          file: plugins/sdlc/skills/commit/assets/commit_template.txt
+          lines: [11, 11]
+        - kind: find_similar
+          observation: >-
+            Likelihood check: the tooling spells the footer canonically (commit_template.txt:11, card-implementer.md:19
+            — the lowercase `card:` at card-implementer.md:27 is the result-report format, not the commit footer),
+            and all 15 Card footers on docs/1-sdlc-ring-audit are `Card: CARD-xx`. No live exploitation on this
+            branch; the hole is reachable by any hand-written or non-sdlc commit message.
+        - kind: find_similar
+          observation: >-
+            Reproduction of the recorded run (COMMON.md 'reproduce, do not trust'): `bash replay_card_commits.sh`
+            at HEAD f11f0e2 → exit 0, ok true, card_commits 15 (recorded 14 at a2deb83; +4ddb362 landed after the
+            recording, inherent), touching 0, rejected 0, non_card_range_spec 4d3057a..HEAD, non_card scanned 21
+            (recorded 20; +f11f0e2), non_card touching 4 (same four shas). All 20 shas recorded in
+            run_evidence.audited_dirs_diff are ancestors of HEAD; `git diff --stat 0be2770^..HEAD -- plugins/sdlc/skills
+            plugins/sdlc/agents plugins/sdlc/docs` → 0 lines; exit 0 ⇔ ok true. No contradiction found in the
+            recorded evidence.
+      needs_codebase_check: false
+      suggested_change: >-
+        Use ONE footer predicate for both passes and never let a footer-bearing commit fall through: e.g.
+        `footer="$(git log -1 --format=%B "$sha" | grep -oiE '^Card:[[:space:]]*CARD-[A-Za-z0-9_.-]*' | head -1)"`,
+        upper-case the extracted id; if the footer is present but the id is empty or the card file is missing, take the
+        existing rc=2 rejected path (counts toward overflow) instead of `continue`; in pass 2 exclude only the shas
+        pass 1 actually replayed (reuse `cards[$i]`), so the two passes partition the range by construction. Add a
+        twin-repo test with a `card: CARD-01` footer that modifies plugins/sdlc/skills/** and expects exit 1.
+      tags: ["psl-003", "req-007", "ac-007-a", "cwe-178"]
+
+    - finding_id: cr-002
+      severity: P2
+      file: plugins/sdlc/dogfood/ring-audit/check_audit.py
+      line_range: [364, 374]
+      category: predicate_bypass
+      root_cause: >-
+        check_gates never validates `gates[].kind` against F-06's enum {script, human}; both rule-3 design-view
+        predicates fire only on exact equality (`kind == "script"` → label check, `kind == "human"` → id check),
+        so a gates[] entry whose kind is any other string (`human_gate`, `Human`, `Script`, null) is exempt from
+        BOTH `gate_not_declared` and `script_gate_rendered_as_door`. G1 rule 3(d) is unconditional on kind ("把
+        human.merge / human.harness-review 放进 gates[] → exit 1 gate_not_declared"), so a crafted audit.yaml exits
+        0 while violating it.
+      reproduction_scenario: >-
+        Copy the shipped audit.yaml; append `{id: merge, kind: human_gate, label: 门, checks: [PR]}`,
+        `{id: harness-review, kind: Human, label: 门}` and `{id: verify_x.py, kind: Script, label: 门}` to gates[];
+        run `python3 check_audit.py <copy> --psl PSL-sdlc-ring-audit.md --required-parts "agent.card-implementer,
+        agent.comment-fixer,agent.fix-verifier,agent.pr-reviewer,agent.review-triager"` → exit 0, ok true,
+        failed_predicates [], gates_not_declared 0, script_gates_rendered_as_door 0. Control: the same `merge` entry
+        with `kind: human` → exit 1 gate_not_declared (this is the only spelling the L5 fixture
+        mutant_gate_not_declared.yaml exercises).
+      confidence: high
+      evidence:
+        - kind: read
+          file: plugins/sdlc/dogfood/ring-audit/check_audit.py
+          lines: [364, 374]
+        - kind: read
+          file: plugins/sdlc/dogfood/ring-audit/check_audit.py
+          lines: [64, 66]
+        - kind: find_similar
+          observation: >-
+            Mutations run in scratchpad (mutate.py): B (merge as kind human_gate + harness-review as kind Human) →
+            exit 0 failed []; G (verify_x.py kind Script label 门) → exit 0 failed []; B2 (a Part additionally
+            referencing gate `merge`) → exit 0; the renderer, being kind-driven with a default branch, prints
+            "`merge`（未在 gates[] 登记）" for it — no 门 is rendered, so AUDIT.md is not misled, only the exit code is
+            (and the parenthetical is itself untrue: the entry IS in gates[]).
+        - kind: grep
+          query: "kind: *(human|script|human_gate) in tests/ring-audit/fixtures/mutant_gate_not_declared.yaml + mutant_script_gate_rendered_as_door.yaml"
+          matches: 3
+          match_files: ["plugins/sdlc/dogfood/ring-audit/tests/ring-audit/fixtures/mutant_gate_not_declared.yaml", "plugins/sdlc/dogfood/ring-audit/tests/ring-audit/fixtures/mutant_script_gate_rendered_as_door.yaml"]
+        - kind: find_similar
+          observation: >-
+            Shipped audit.yaml gates[] kinds: {script: 28, human: 3} — no live bypass on this branch. Reproduction of
+            the recorded check_runs: primary command → exit 0 with rings 10, parts_total 42, parts_without_assessment 0,
+            required_parts_missing 0, psl_index_size 17, calibration_twin_recorded true, failed []; twin
+            `--variant delete-ring:R6` → exit 1, error `ring_missing: R6`, failed [ring_missing, orphan_gap] (recorded
+            twin also lists required_part_missing because it passed --required-parts). Both match
+            run_evidence.check_runs. `render_audit.py audit.yaml` reproduces AUDIT.md byte-identically.
+      needs_codebase_check: false
+      suggested_change: >-
+        Add a `gate_kind_outside_enum` failure for `kind not in {"script", "human"}`; key rule 3(d) on the id rather
+        than the kind (`if kind != "script" and gid not in HUMAN_GATES: fail("gate_not_declared")`); evaluate the
+        `label == 门` check for every non-human gate; add mutant fixtures with `kind: human_gate` and `kind: Script`
+        so /calibrate's mutation mirror covers the enum.
+      tags: ["g1-rule-3d", "f-06", "psl-006", "cwe-184"]
+
+    - finding_id: cr-003
+      severity: P3
+      file: plugins/sdlc/dogfood/ring-audit/render_audit.py
+      line_range: [573, 574]
+      category: rendering_integrity
+      root_cause: >-
+        The holdout witness cell renders `attested_by_kind` through a hand-written branch that falls back to the raw
+        yaml string (`code(hold.get("attested_by_kind"))`) for anything other than `delegated_agent`, bypassing the
+        closed mapping SIGNER_KIND_RENDER whose stated rule (line 41: 值不在表里就是「未知」，绝不回落到原串) the gates
+        table enforces at line 477. A crafted value is echoed verbatim into the F-15 surface that AC-006-a asks G3
+        to read (外部证据的替代品 … 不渲染为用户验证).
+      reproduction_scenario: >-
+        Copy audit.yaml; set `run_evidence.holdout.attested_by_kind: "human（人签）"`; check_audit.py exits 0 (no
+        predicate reads holdout); `python3 render_audit.py <copy> -o out.md` → the holdout table row reads
+        "| 见证人 | `orchestrator` · `human（人签）` |". With the shipped value `delegated_agent` the row renders
+        **代签（delegated）** correctly.
+      confidence: high
+      evidence:
+        - kind: read
+          file: plugins/sdlc/dogfood/ring-audit/render_audit.py
+          lines: [573, 574]
+        - kind: read
+          file: plugins/sdlc/dogfood/ring-audit/render_audit.py
+          lines: [41, 44]
+        - kind: read
+          file: plugins/sdlc/dogfood/ring-audit/render_audit.py
+          lines: [473, 480]
+        - kind: find_similar
+          observation: >-
+            Mutation E output: "| 见证人 | `orchestrator` · `human（人签）` |". Direct answer to the task's F-15 question:
+            for run_evidence.gates[] the renderer does NOT render delegated as 人签 — `delegated_agent` maps to
+            代签（delegated）, unknown values to **未知**, null to — (lines 41-44, 477); on the shipped document the
+            signer table has no 人签 cell (all 人签 hits in AUDIT.md are prose / evidence text). The holdout block
+            (lines 571-588) is the one F-15 surface that escaped the closed mapping; `render_as` (586) and
+            `authorization` (585) are likewise raw echoes.
+      needs_codebase_check: false
+      suggested_change: >-
+        `attested = "—" if not hold.get("attested_by_kind") else SIGNER_KIND_RENDER.get(hold.get("attested_by_kind"), "**未知**")`
+        and route `render_as` through the same table (or a closed {delegated, substitute} map).
+      tags: ["f-15", "psl-006", "ac-006-a"]
+
+  rationale: null
+
+  caveats:
+    adversarial_mode_caveat: >-
+      Single-vendor, single-size (claude-fable-5-1 reviewing Claude-authored instruments); expect ~30% blind spot to
+      Claude RLHF biases. Probes that were run and REBUTTED in S3 as spec-literal (not reported as findings, listed so
+      meta-judge / G3 can see them): (a) rule 1 — `alternatives_of` exempts a double producer on mere presence: marking
+      acceptance-spec's done_when.yaml entry `alternatives_of: stage.contract` and flipping both verdicts to `necessary`
+      exits 0, although F-05 explicitly rules this pair NOT an alternative; F-13's predicate is written on the field and
+      graph.yaml (F-05's data source) is not a checker input, so this is a spec gap; the renderer flags 登记 ≠ 现算 only
+      while suspected_duplicate_pairs is left unchanged. (b) rule 2 — a gap that is both filled and listed in its
+      ring's missing exits 0; rule 2(e) states no converse of 有边 = 从 missing 移出. (c) `signer_kind: human` on the
+      delegated G1 exits 0 and renders 人签 + 1 道人签 in 铁律; F-13 scopes the checker to 只核对 signer 存在，不代签,
+      identity is G3's. (d) signer_kind outside enum — already KG-04 in run_evidence.known_gaps. Out of focus, left for
+      the logic pass: render_audit.py:533 still says 自第一个 Card 提交起扫了 N 个 although CARD-01 widened the window to
+      merge-base(main, HEAD) — the four touching non-card commits are all pre-card.
+    diff_truncation_caveat: >-
+      The full Card range is 92 files / 1991 hunks (33,234 changed lines), dominated by fixtures, ring fragments and
+      ratchet-log. The security surface was read in full: check_audit.py, replay_card_commits.sh, render_audit.py,
+      audit.schema.md (4 hunks, +1751), the iteration-003 incremental diff of the two scripts (17 hunks excl.
+      ratchet-log) and audit.yaml's run_evidence block. Ring fragments and fixtures were not read line by line. HEAD
+      advanced from 4ddb362 to f11f0e2 (docs-only: pr-body.md, skill-issues.md) while this review ran; all
+      reproductions were executed at f11f0e2 and the instruments' files are byte-identical to 4ddb362.
+    rules_conflict_caveat: null
+    cross_vendor_unavailable_caveat: >-
+      No Codex / Gemini evaluator was invoked in this fleet slot; findings carry the same-vendor caveat.
