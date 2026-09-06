@@ -85,6 +85,29 @@ expect "bug kind without Repro rejected" 1 py "$S/issue/scripts/verify_issue.py"
 # dogfood 2026-09-05 (I-07): one-line Links (template shape) with a G1 path must not flag "without a G1 record path"
 PSLI="$TMP/psl_issue.md"; sed -e 's/- track: task/- track: psl/' -e 's|G1: none|G1: g1-record.md|' "$FX/good_issue.md" > "$PSLI"
 expect "psl-track issue with G1 path on the one-line Links carries no G1 flag (I-07)" 0 bash -c "python3 '$S/issue/scripts/verify_issue.py' '$PSLI' --dos '$FX/dos.yaml' | python3 -c \"import json,sys; d=json.load(sys.stdin); assert d['verdict']=='PASS' and not any('G1 record path' in f for f in d['flags']), d['flags']\""
+# dogfood 2026-09-05 (I-45): the negation cross-check only works if the G1 template's documented shape
+# is the shape verify_issue.py reads. Derive the record from the template itself so the two cannot drift:
+# un-blockquoting the template's worked example is exactly what an author does when filling it in.
+G1T="$S/sdlc/assets/g1_record.md"
+G1F="$TMP/g1_filled.md"; sed 's|^> - |- |' "$G1T" > "$G1F"
+PSLI2="$TMP/psl_issue_banned.md"; sed 's|^- do: |- do: report each finding once; |' "$PSLI" > "$PSLI2"
+expect "G1 record written to the template's 明确不做 shape arms the issue cross-check (I-45)" 0 bash -c "python3 '$S/issue/scripts/verify_issue.py' '$PSLI2' --dos '$FX/dos.yaml' --g1 '$G1F' | grep -q 'uses \`finding\`, which the G1 record lists under 明确不做'"
+# I-22: the record's primary attribution is what the operator types into `gate --attribution`. If the
+# template names a value the script does not accept, the record and the counter disagree silently.
+cat > "$TMP/attr_agree.py" <<'ATTREOF'
+import re, sys
+tpl = open(sys.argv[1], encoding='utf-8').read()
+sec = re.search(r'^## 归因.*?(?=^## )', tpl, re.S | re.M).group(0)
+named = set(re.findall(r'`([a-z_]+_error)`', sec))
+script = open(sys.argv[2], encoding='utf-8').read()
+ok = set(re.findall(r'[\x27\x22]([a-z_]+_error)[\x27\x22]',
+                    re.search(r'--attribution.{0,12}choices=\[([^\]]*)\]', script).group(1)))
+# both directions: nothing named that the script rejects, and nothing the script accepts left
+# unoffered — a template that lists only one cause is the single-value design I-22 is about
+assert named == ok, (sorted(named), sorted(ok))
+ATTREOF
+expect "the G1 template and sdlc_state.py name the same attribution values (I-22)" 0 py "$TMP/attr_agree.py" "$S/sdlc/assets/g1_record.md" "$S/sdlc/scripts/sdlc_state.py"
+expect "an unfilled G1 template yields no terms and says the wording cannot be checked (I-45)" 0 bash -c "python3 '$S/issue/scripts/verify_issue.py' '$PSLI2' --dos '$FX/dos.yaml' --g1 '$G1T' | grep -q 'no machine-readable'"
 
 echo "== plan-cards / lint_cards.py"
 FX="$S/sdlc/eval/fixtures"
