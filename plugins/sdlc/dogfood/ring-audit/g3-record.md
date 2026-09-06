@@ -334,12 +334,13 @@ fi
 | id | 条件 | 为什么 |
 |---|---|---|
 | **C-1** ✅ **已完成并复核** | 把 `audit.yaml#run_evidence.gates[G3]` 更新为 `verdict: pass` · `signer: g3-judge` · `signer_kind: delegated_agent` · `authorization_ref` 指向本记录，然后**用 `render_audit.py` 重渲染** `AUDIT.md`（确定性，不得手改） | 否则报告将永远显示 G3 `pending` 却对外称 G3 已过——那才是真的不诚实。**执行结果经我复核**：仅 2 hunk、无夹带；`check_audit.py` exit 0 且 `human_gates_without_signer` / `delegated_without_authorization_ref` 均为 0；`AUDIT.md` 与重渲染字节相同；G3 渲染为代签，「铁律」段自动更正为「3 道代签」 |
-| **C-2** ⏳ 未办 | 把 mf-009（三处 compiled → declared）、mf-002（`AUDIT.md:976` 的错标）、第 18 项的 adjudication、以及**补裁一/二新增的两项**（`review.done` 应拆成 `done \| waived` 封闭枚举或强制 `waiver_ref`；`pr-poll.sh` 必须区分 `no_checks_configured` 与 `checks_passed`）一并列进 **change-proposal-002** | 都是改冻结字节或改被审 skill 的项，按纪律 defer；但必须**有去处**，不能就此消失 |
+| **C-2** ✅ **已完成并复核** | 把 mf-009、mf-002、第 18 项的 adjudication、以及**补裁一 / 二新增的两项**一并列进 **change-proposal-002** | 已建 `change-proposal-002-scope.md`。我核对：mf-009 在 A 段并**逐字写进我的裁法**（三处应为 declared，底线 16/26/0 → 19/23/0）；mf-002 与第 18 项在 B 段；补裁两项已开成 **I-82**（`checks_green` 拆三态）与 **I-83**（`review.done` 拆 `done \| waived`）并进 D 段。**每一条 defer 都有去处** |
 | **C-3** ✅ **已完成并复核** | 更新 `skill_issues_count`（原记 67） | 现为 **81**，并在同一行注明是"取于 G3 签字时 head 的快照、该命令会随本 run 继续记缺陷而增大"。方向正确 |
-| **C-4** ⏳ 未办 | 更新 pr-body Verification 段的 smoke 计数（写 193，实测 **196 passed, 0 failed**）；该段的删环孪生命令缺 `--required-parts`（仍 exit 1，但与 `audit.yaml` 记录的命令不同字） | PR 正文是 AC-006-a 披露义务的落点，其可复现命令应当能逐字复现 |
+| **C-4** ⚠️ **部分完成，新增一项** | ① smoke 计数 193 → **196 passed, 0 failed**：**已改**；② 删环孪生命令补上 `--required-parts`：**已改**；③ **新增**：签完 G3 后 pr-body 自相矛盾——第 105 行写「G3 已裁……均 pass」，而第 53 / 54 / 81 / 148 行仍写「待 G3 代签，未通过」「G3 pending」 | PR 正文是 AC-006-a 披露义务的落点，**不得对门的状态自相矛盾**。方向是低报（说没过而实际已过），不是高报，故不阻断；但四处必须与第 105 行对齐 |
 
-C-1 是**硬条件**，已落地并经复核。C-3 同已完成。C-2 / C-4 是记录卫生与去处登记，不改变任何判定方向，
-可在 merge 前补。**四条都不构成 blocking_reasons**：C-1 / C-3 已办，C-2 / C-4 不改变任何 AC 的成立与否。
+C-1 / C-2 / C-3 **均已落地并经我复核**。C-4 余一项文字对齐。
+**四条都不构成 `blocking_reasons`**：已办的三条不再是条件，C-4 余项是低报方向的措辞不一致，
+不改变任何 AC 的成立与否，也不改变任何数字。
 
 ---
 
@@ -379,17 +380,29 @@ signer: g3-judge
 signer_kind: delegated_agent
 authorization: "user instruction 2026-09-05: '需要人审核的地方，请你弄一个子agent代替我审核一下'"
 record: plugins/sdlc/dogfood/ring-audit/g3-record.md
-reviewed: {audit_yaml_sha256: c82dfc8e51f9e99e71c16b230b0949a6648339e106dd21fd85447f8c7894940e, AUDIT_md_sha256: 962cc2f654812be195cd918d1c28943ebeb84bbde0ab5f211a6a0ac7f1d016d4, head: 79b4736}
+reviewed:
+  # 判读依据的字节（= iteration-003 评审过的快照，10/10 逐字节相等）
+  audit_yaml_sha256: c82dfc8e51f9e99e71c16b230b0949a6648339e106dd21fd85447f8c7894940e
+  AUDIT_md_sha256: 962cc2f654812be195cd918d1c28943ebeb84bbde0ab5f211a6a0ac7f1d016d4
+  head: 79b4736
+  # 本签字按条件 C-1 写回后的字节（仅 2 hunk：G3 三元组 + skill_issues_count；AUDIT.md 为确定性重渲染）
+  after_signature:
+    audit_yaml_sha256: b1babdb1eb9c9f1b8bca6de3b8e7bb0c1356b3154cd4fa85cd45cbb100a0fc4d
+    AUDIT_md_sha256: b6a396fa535770349dbf8e1ae2e6c2675dd5d1c3e2d39d3e59b7a9b83046cb7c
+    head: ec9ad54
+    re_verified: "check_audit exit 0；human_gates_without_signer 0；delegated_without_authorization_ref 0；AUDIT.md 与 render_audit.py 重渲染字节相同；replay card_commits_touching_audited_dirs 0"
 blocking_reasons: []
-rulings_summary: "10 accept / 3 reject / 8 defer-to-change-proposal-002"
+rulings_summary: "10 accept / 3 reject / 8 defer-to-change-proposal-002（另补裁 3 项：review 豁免 accept · checks_green 空转 accept · C-1/C-2/C-3 执行结果复核通过）"
 ```
 
 两个 human AC 都过。AC-005-a：checklist 14 框全中，42 个 Part 行与 33 个 missing 行逐列机械核过，
 deletion 泛语扫描 0 命中，AUDIT.md 经重渲染证明是 audit.yaml 的**字节级**无损投影。
-AC-006-a：两次 check 运行与回放我都亲自重跑并与记录逐字比对，holdout 4 个未命中确为 KG-01..04；
-我独立查出的每一处差额——错标的 976 行、4→8 的计数漂移、失效的原始 diff 命令、空转的 checks_green——
-**记录都先说了**，且方向压倒性是自曝其短。这是判 pass 的**决定性**理由。
-mf-009 我裁**成立**：三处 `compiled` 应为 `declared`（底线更正为 19/23/0），但按纪律 defer，不当场改冻结字节。
-merge 前必办 C-1：把 G3 的签字三元组写回 `audit.yaml` 并重渲染 `AUDIT.md`。
+AC-006-a：两次 check 运行、回放、`pr-poll.sh done` 的 exit 20 我都亲自重跑并与记录逐字比对，
+holdout 4 个未命中确为 KG-01..04；我独立查出的每一处差额——错标的 976 行、4→8 的计数漂移、
+失效的原始 diff 命令、空转的 checks_green——**记录都先说了**，方向压倒性是自曝其短。这是判 pass 的**决定性**理由。
+补裁三项：review 环是**豁免**不是通过（钉 head、写明范围、评审实质在别处交付且我复现了）；
+`checks_green` 的空转我追到了 `pr-poll.sh#L278-L283` 的源头，而三份交付物无一处写成"检查通过"；
+C-1 / C-2 / C-3 的执行结果我逐项复核而非采信。
+mf-009 我裁**成立**：三处 `compiled` 应为 `declared`（底线更正为 19/23/0），按纪律 defer 且已进 change-proposal-002。
 最后一句照录本 run 自己的铁律：**exit 0 说的是这份文档形状齐全，不是九环做到位了；
 42 个配件无一到 `verified`，三道门无一是人签——这道门也不是。**

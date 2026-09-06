@@ -50,8 +50,8 @@ bash plugins/sdlc/eval/smoke.sh                                             # 19
 | AC-003-b | mechanical | `test_AC_003_b_boolean_implemented_exit1_boolean_implemented` ✅ 34/34 at HEAD |
 | AC-004-a | mechanical | `test_AC_004_a_F13_orphan_gap_exit1_orphan_gaps_1`, `test_AC_004_a_F13_overfill_unmarked_exit1_overfill_unmarked`, `test_AC_004_a_F13_ring_without_missing_key_exit1_count1` (+2) ✅ 34/34 at HEAD |
 | AC-004-b | mechanical | `test_AC_004_b_proposal_without_source_exit1_proposal_without_source` ✅ 34/34 at HEAD |
-| AC-005-a | human | judge: tech · evidence: checklist → `tests/ring-audit/checklist_G3.md` + `g3-input.md`（待 G3 代签） |
-| AC-006-a | human | judge: product · evidence: checklist → `tests/ring-audit/checklist_G3.md` + `g3-input.md`（待 G3 代签） |
+| AC-005-a | human | judge: tech · evidence: checklist → `tests/ring-audit/checklist_G3.md` + `g3-input.md` · **G3 代签 pass**（g3-judge，14 项 checklist 全过；`g3-record.md`） |
+| AC-006-a | human | judge: product · evidence: checklist → `tests/ring-audit/checklist_G3.md` + `g3-input.md` · **G3 代签 pass**（判 pass 的决定性理由是披露：判官独立查出的每处差额，记录都先说了；`g3-record.md`） |
 | AC-007-a | mechanical | `test_AC_007_a_replay_card_commits_exit0_touching_zero` ✅ 34/34 at HEAD |
 | AC-007-b | mechanical | `test_AC_007_b_card_commit_touching_skills_exit1_whitelist_overflow` ✅ 34/34 at HEAD |
 | AC-008-a | mechanical | `test_AC_008_a_rings_R0_R2_spine_required_parts_exit0` ✅ 34/34 at HEAD |
@@ -78,7 +78,7 @@ bash plugins/sdlc/eval/smoke.sh                                             # 19
 
 ## Known issues
 
-> 依 g2-judge 对 iteration-002 / 003 的解码列全。AC-005-a / AC-006-a **待 G3 代签，未通过**。校准措辞：**instrument mutation 0.767; holdout 6/10 with 4 known gaps**（不写无限定的 calibrated）。本节条目多于常规上限 5——这是一次审计自身的 dogfood，发现登记册本身就是交付物之一；每条带 `file:line` 锚点。
+> 依 g2-judge 对 iteration-002 / 003 的解码列全。AC-005-a / AC-006-a **已由 G3 代签 pass**（g3-judge，delegated_agent；10 accept / 3 reject / 8 defer + 3 项补裁）——**代签不是人签**，且 G3 自陈其 pass 无输入前置、授权是无人核对的自由文本，效力只来自记录里可重跑的复现。校准措辞：**instrument mutation 0.767; holdout 6/10 with 4 known gaps**（不写无限定的 calibrated）。本节条目多于常规上限 5——这是一次审计自身的 dogfood，发现登记册本身就是交付物之一；每条带 `file:line` 锚点。
 
 **A. 已知空隙（11 项，`plugins/sdlc/dogfood/ring-audit/calibration/known_gaps.yaml:1`，状态 open → change-proposal-002）**
 
@@ -111,7 +111,7 @@ bash plugins/sdlc/eval/smoke.sh                                             # 19
 **D2. 原交给 G3 的裁项（已裁完）**
 
 - mf-009 F-06 封顶：R6/human_gate.G3、R7/agent.pr-reviewer、R8/tune 记 compiled 而其每个 Artifact 的 checked_by 皆空 — `plugins/sdlc/dogfood/ring-audit/audit.yaml:1348`
-- `g3-input.md` 第 1–20 项 + 三轮解码补充；AC-005-a / AC-006-a 待 G3，从不渲染为 passed — `plugins/sdlc/dogfood/ring-audit/g3-input.md:1`
+- `g3-input.md` 第 1–20 项 + 三轮解码补充：G3 已逐条裁完（10 accept / 3 reject / 8 defer）；AC-005-a / AC-006-a 均 pass，全文渲染为**代签**、从不写成人签 — `plugins/sdlc/dogfood/ring-audit/g3-record.md:1`
 
 **E. iteration-003 关闭的项（各由 ≥3 个评审复现为已修）**
 
@@ -136,7 +136,7 @@ bash plugins/sdlc/eval/smoke.sh                                             # 19
 - card 预算 4/3（两次升级由代签判官豁免，授予已用尽）；task 预算 2/2 耗尽；三次豁免记在状态与账本 — `plugins/sdlc/dogfood/ring-audit/ratchet-log/iteration-003/final-state.json:1`
 - 无 footer 提交的合法性（nh-003 裁决）与逐提交分类（28 条：Card 11 · 偏差 3 · 编排者文档 11 · peer 3） — `plugins/sdlc/dogfood/ring-audit/commit-table.md:1`
 - 所有评审均为 claude 厂商，编排者撰写评审提示；隔离为协议级而非 OS 级 — `plugins/sdlc/dogfood/ring-audit/ratchet-log/iteration-003/isolation.json:1`
-- 报告底线：0 verified / 26 compiled / 16 declared；三道门两道代签；G3 待定 — `plugins/sdlc/dogfood/ring-audit/AUDIT.md:1`
+- 报告底线：**0 verified** / 26 compiled / 16 declared；**三道门全部代签**（G1 / G2 / G3 无一人签）。G3 裁定 mf-009 后应为 **19 declared / 23 compiled / 0 verified**，字节按纪律 defer 到 change-proposal-002 — `plugins/sdlc/dogfood/ring-audit/AUDIT.md:1`
 - **记录与现况的差额（出 PR 前的两条偏差提交）**：`AUDIT.md` / `audit.yaml` 冻结在 iteration-003 评审过的字节，其中 `non_card_commits_touching_audited_dirs` 记的是 **4**；分支现况写这段时是 **8**，且每多一条非 Card 的偏差提交就 +1（可用 `bash plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh` 现场重算）。七条的分类：**PSL L122-123 的验证器偏差提交**（587f371 / ebe270d / c729f76 / e198e0e / aaf3d5b / 801a32e，最后三条是 PR 预审两轮 + 独立 fix-verifier 抓出的锁门 fail-open、其回归、以及空 range 的第三扇门）；**版本同步**（0cf6b1a，同一豁免的收尾）；**peer 的报告提交**（bf3f13e，main 已有孪生）。**Card 提交触碰被审目录仍为 0**（AC-007 成立，现场复现可得）。AUDIT.md 未重渲染——它是被评审过的那份。**并且**：`git diff --stat 0be2770^..HEAD -- <被审目录>` 这条**原始命令**在记录时（a2deb83）为空，但对**当前 HEAD** 已非空（5 files / 11 insertions）——正是那四条偏差提交与版本 bump 落在首个 Card 提交之后所致。AC-007-a 的证据是卡范围仪器（`card_commits_touching_audited_dirs` 恒为 0），不是这条会随分支增长而失效的原始命令；`audit.yaml#run_evidence.git_diff_stat` 冻结的是 a2deb83 时刻的真值（cr-005 / I-79） — `plugins/sdlc/dogfood/ring-audit/commit-table.md:1`
 - **cr-003（B 档，本 PR 相对 origin/main 引入的回归）**：`verify_derived.py` 的 I-04 修法把 workflow.md 全文的引用行都剥掉再扫，整篇用 `> ` 引起来的工作流零命中通过；本次 run 的 PASS 仍成立（其 workflow.md 有真实非引用内容）。修法与 nh-004 的测试清单一并进合并后的跟进 PR — `plugins/sdlc/skills/psl-derive/scripts/verify_derived.py:95`
 - **cr-001（A 档，出 PR 前已修）**：`verify_commit.py` 的落地内容豁免会在 `--range` 不含 `..` 时读到基线侧，被篡改的被锁文件因此 PASS；已改为拒绝单 ref 并按二/三点式取落地侧，smoke +3 — `plugins/sdlc/skills/commit/scripts/verify_commit.py:196`
@@ -145,6 +145,6 @@ bash plugins/sdlc/eval/smoke.sh                                             # 19
 ## Notes
 
 - size: XL（fixtures 23 × ~2k 行为生成数据；--allow-xl 理由：dogfood 产物不可拆，拆开会让 l5 锁与 Card 回放失去同一分支的可证性）· cards: CARD-01..06 · lock: changed_with_proposal (change-proposal-001; l5 re-signed, 43 files)
-- gates: G1 pass (g1-judge, delegated_agent) · G2 pass (g2-judge, delegated_agent) · G3 pending → 代签裁决见 g3-record.md；所有代签均在用户 2026-09-05 "需要人审核的地方，请你弄一个子agent代替我审核一下" 的授权下，报告里一律渲染为 delegated
+- gates: G1 pass (g1-judge) · G2 pass (g2-judge) · G3 pass (g3-judge) —— **三道全部 delegated_agent，无一人签**；裁决见 g3-record.md；所有代签均在用户 2026-09-05 "需要人审核的地方，请你弄一个子agent代替我审核一下" 的授权下，报告里一律渲染为 delegated
 - task reflows 2/2 exhausted (change-proposal-001; hidden_variant_fail → failure-report-002, fallback A by g2-judge)
 - 本 PR 直接从 run 分支 `docs/1-sdlc-ring-audit` 发出（g2-judge 裁决：评审过的迭代之后不改写 shipping 分支的历史；worktree 提交 cherry-pick 上来是允许的，但 worktree sha ≠ shipping sha，所以 run_evidence 里记录的每个 sha 都必须在 shipping 分支上产生——iteration-001/002 的 stale-sha 发现正是违反了这一点；spec-gaming-detector 所称“违反不 cherry-pick 裁决”基于本段旧措辞的误引）。因此**同一工作区另一 session 的三条提交随行**：100aa12 feat(humanize)、df48739 chore bump humanize v0.3.0、bf3f13e docs(sdlc) report——三条都已以内容相同的 cherry-pick 落在 main（eab072b / 1b07bb2 / fbc6a3c），`git diff origin/main HEAD -- plugins/humanize .claude-plugin plugins/sdlc/docs/reports` 为空，本 PR 的内容 diff 不含它们；它们不是本 run 的编辑，逐提交分类见 `plugins/sdlc/dogfood/ring-audit/commit-table.md`（28 条：Card 11 · deviation 3 · docs/test/chore 11 · peer 3）
