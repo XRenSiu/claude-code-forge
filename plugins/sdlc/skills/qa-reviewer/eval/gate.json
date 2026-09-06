@@ -43,7 +43,8 @@
       "--require-analyzers": "exit 1",
       "contract without constraints.structure": "exit 0 but facts say 本闸无对象 (not a pass)",
       "dogfood on this repo": "found real breaches: complexity 120 / 104 / 89 in bespoke-design-system",
-      "fail-open found by its own twin (2026-09-06)": "empty file enumeration used to report PASS; now unevaluated"
+      "fail-open found by its own twin (2026-09-06)": "empty file enumeration used to report PASS; now unevaluated",
+      "field_evidence 2026-09-06": "first trigger outside a fixture: an effect-harness arm ran the gate on uncommitted work; --base had nothing to diff and the gate reported unevaluated (exit 3) instead of pass — the exit-code-3 design working where it matters. Absolute mode on the same tree: worst cyclomatic 6 vs cap 15, duplication 0.0 vs cap 0.10."
     }
   },
   "dogfood_fixes": [
