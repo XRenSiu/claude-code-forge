@@ -45,3 +45,11 @@
 - 记录更正：先前裁决禁止的是"评审后改写 shipping 分支历史"，不是 cherry-pick；教训是 run_evidence 里的 sha 必须在 shipping 分支上产生。pr-body.md 已改。
 - G3 再补充：iteration-003 的 meta-judge 输出；mf-009 作为 G3 tech 裁项（F-06 封顶：R6/human_gate.G3、R7/agent.pr-reviewer、R8/tune 记为 compiled 而其所有 Artifact checked_by 为空；"任一 Artifact"还是"独占 Artifact"的读法）；nh-003 / nh-004 清单；在 shipping 分支上复现 check_audit.py、delete-ring 孪生与 replay_card_commits.sh 的确切命令（见 pr-body.md#Verification）。
 - nh-004（无锁定测试覆盖本轮修复）→ change-proposal-002 测试清单：AUDIT.md golden-file 字节比对；atoms/id 含 `|` 的 fixture；signer_kind 人签 / agent 变体；含重命名移出与非 ASCII 路径的孪生仓库；空 main..HEAD 范围 exit 0 + card_commits 0；gates[] kind human_gate 条目。
+
+## g2-judge 对 iteration-003 的终局解码（2026-09-06）与 G3 的最后一批必读
+- 裁决：**ship as reviewed**，acceptance.evaluation_result = `ratchet-log/iteration-003`（快照 4ddb362；HEAD 上实现字节与之逐字节相等，见 `impl-equals-head.txt`），推进到 pr。不开 iteration-004。
+- **AUDIT.md L976 的行是错标的**：它写"自第一个 Card 提交起"，而 yaml 的窗口是 `merge-base(main,HEAD)..HEAD`（4d3057a..HEAD），且那四条提交（587f371 / ebe270d / c729f76 = PSL L122-123 偏差提交；bf3f13e = peer）**全部早于**第一个 Card 提交。该标签下的真值是 **0**。真相在 `audit.yaml#run_evidence.audited_dirs_diff.non_card_range_spec` 与 `non_card_commits_touching[]`，以及 `commit-table.md`。AUDIT.md 未被手改（字节稳定渲染不变量）。
+- mf-009 作为明确的 **G3 tech 裁项**：R6/human_gate.G3、R7/agent.pr-reviewer、R8/tune 记 compiled 而其每一个 Artifact 的 checked_by 都为空（F-06 封顶；"任一 Artifact"还是"独占 Artifact"的读法）。
+- mf-011：holdout 见证单元格把 `attested_by_kind` 原样打出（本次值 delegated_agent，渲染正确，但未走封闭映射）。
+- **隔离披露**：drift 本轮的 11 条信号是在能看到 qa 报告的情况下产出的（其 `--qa-report` 参数与 fleet 的无串扰铁律冲突，I-71）；g2-judge 裁为有界接受，未打折。
+- gaming 轨迹实为 [3.5, 4.0, 4.0]**持平**（检测器被编排者的任务文件错传基线 3.5，I-72）。

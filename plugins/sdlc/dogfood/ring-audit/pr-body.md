@@ -104,18 +104,27 @@ bash plugins/sdlc/eval/smoke.sh                                             # 19
 - `g3-input.md` 第 1–20 项；AC-005-a / AC-006-a 待 G3，从不渲染为 passed
 
 **E. iteration-003 关闭项（仅列 iteration-003 确认关闭者；存活者按 id 留在 F）**
-__ITER3_CLOSED__
+- iteration-002 的两类记录缺陷 **已关闭**（各由 ≥3 个评审复现为已修）：stale-sha 类（记录的 sha 在 shipping 分支上不存在）、exit-vs-ok 类（`exit: 1` 与 `ok: true` 并存）；空范围崩溃（it-002 mf-003）亦关闭
+- 同轮关闭：quotePath 规避（非 ASCII 路径逃过被审目录正则）、pre-Card 扫描窗口、残余单元格插值、cmd/exit 未渲染
+- 复核：g2-judge 在 shipping 分支上亲自重跑——replay exit 0 / ok true / 15-0-0，`recorded_at_head` a2deb83 是 HEAD 的祖先，空范围在 main 的 scratch clone 里 exit 0 且出 JSON
 
 **F. iteration-003 存活的 P1 / P2（按其 finding id）**
-__ITER3_SURVIVORS__
+- **mf-001（P1，由 a2deb83 引入，it-002/mf-005 的复发）**：`replay_card_commits.sh` 的 `card_footer_of` 大小写敏感而 `has_card_footer` 不敏感，`card: CARD-xx` 这种拼法两遍都看不到——比无 footer 提交更隐蔽。**未被利用**：本分支 15 条 footer 两种匹配都命中（独立于被质疑的匹配器验证）。测试进 change-proposal-002（小写 footer 孪生须恰好出现在一遍里）
+- **mf-002（P1，由 a2deb83 + 4ddb362 引入，四评审一致）**：`AUDIT.md` L976 的无 footer 行标着"自第一个 Card 提交起"，而 yaml 的窗口是 `merge-base(main,HEAD)..HEAD`（4d3057a..HEAD）；`non_card_range_spec` 与那四条提交的清单未渲染，于是页面看起来像"四条 Card 之后的提交碰了被审目录"，而 19 行之后的 diff --stat 又是空的。**yaml 是权威且正确的**；那个标签下的真值是 0。真相在 `audit.yaml#run_evidence.audited_dirs_diff.non_card_range_spec` 与 `non_card_commits_touching[]`，以及 `commit-table.md`
+- mf-005（P3）：`skill_issues_count` 记 67，4ddb362 上 grep 得 69——记录时冻结的计数，所在从句的路径正确
+- mf-011（P3）：holdout 见证单元格把 `attested_by_kind` 原样打出而非走封闭签字人映射；本次交付值 delegated_agent 渲染正确
+- 其余 11/15 为**设计上带过**的复发项，全部是 change-proposal-002 或 G3 项：mf-003/KG-02 source 可解析、mf-004/KG-08 fills 同环、mf-006 gates[].kind 超枚举、mf-007/mf-008 注册表 6 vs 8、mf-009 F-06 封顶（G3）、mf-010 `--rings` vs F-17、mf-012 exit-2 不出 JSON、mf-013 disposition 枚举、mf-014 schema 前言过时、mf-015
+- **审查阶段处置（g2-judge 裁决）**：mf-001 / mf-002 若在 review 线程里被要求修，作为 CARD-01 / CARD-06 footer 提交经同一套预门落地，显式标 **UNTESTED**（tests/** 已锁，测试进 change-proposal-002），由 review-loop 自己的预算治理；PR 正文届时写明"acceptance 评的是 4ddb362；审查阶段的实现提交：<shas>，由渲染/回放复现复核，不由 fleet 迭代复核"。除非 `check_audit.py` 或 yaml 记录的数据改变，否则不开 iteration-004
 
 **G. 过程记录**
 - iteration-002 修复轮自身引入的两条回归（回放空范围崩溃 / run_evidence exit:1 与 ok:true 矛盾）及其在 iteration-003 的关闭
-- gaming 轨迹 [3.5, 4.0, __ITER3_GAMING__]（4.0 = stale-sha P1 + exit/ok P2 + F-06 P2 的组合）
+- gaming 轨迹 [3.5, 4.0, 4.0（持平；检测器被错传基线 3.5，见 I-72）]（4.0 = stale-sha P1 + exit/ok P2 + F-06 P2 的组合）
 - card 预算 4/3：两次 budget_exhausted 升级由 g2-judge（代签）豁免，此后无授予；task 预算 2/2 耗尽（change-proposal-001；hidden_variant_fail）
 - 无 footer 提交的合法性（nh-003 裁决）：587f371 / ebe270d / c729f76 = PSL L122-123 偏差提交（账本 deviation 行）；e217d10 = change-proposal-001 重锁；fafcad7 / 5a6889c 不在 forbidden_paths；bf3f13e = peer 提交、main 已有孪生 fbc6a3c；逐提交表 `commit-table.md`
 - 所有评审均为 claude 厂商（fable / sonnet），编排者撰写评审提示；隔离为协议级，非 OS 级（isolation.json）
 - 报告底线："0 verified / 26 compiled / 16 declared；三门两道代签；G3 待定"
+- **隔离事件（iteration-003）**：`spec-drift-detector` 通过其 SKILL.md 记载的 `--qa-report` 参数读到了 `qa-reviewer.yaml`，而 fleet 的 COMMON.md 禁止读 fleet-outputs——两份 skill 契约互相冲突（I-71）。g2-judge 裁为"真实、有界、本轮接受"：qa 零发现，可继承的只有测量事实而非意见，drift 的 11 条信号不打折；下一轮前 acceptance-fleet 必须改 dispatch
+- **结构性成因（进 retro）**：两轮修复各有 2/6 条发现是"修复自己引入的"，因为投影（render_audit.py，CARD-06）与其数据源（replay_card_commits.sh，CARD-01）分属两张卡且都无锁定测试（I-73、nh-004）
 
 链接：`failure-report-002-holdout.md` · `calibration_report.yaml` · `ratchet-log/iteration-00{1,2,3}/` · `g3-input.md` · `commit-table.md`
 
