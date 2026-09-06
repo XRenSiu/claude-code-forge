@@ -156,6 +156,66 @@ expect "open-ended A.. reads the range head, not the index (cr-004)" 1 py "$VC" 
 expect "open-ended A... reads the range head, not the index (cr-004)" 1 py "$VC" --msg "chore(contract): smuggle" --lock .done_when.lock --range "HEAD~1..." --allow-main
 expect "empty --range is refused, not treated as staged mode (fix-verifier)" 2 py "$VC" --msg "chore(contract): smuggle" --lock .done_when.lock --range "" --allow-main
 git reset -q --hard HEAD~1 >/dev/null
+# dogfood 2026-09-06 (I-63): changed_with_proposal must print the SET, not just a verdict — which locked
+# paths changed, and whether the staged proposal names each one. The human reviewing the proposal was
+# computing that intersection by hand across 26 locked paths.
+git checkout -q -- done_when.yaml 2>/dev/null; git reset -q .
+echo "# tamper" >> done_when.yaml && git add done_when.yaml
+echo "we should relax something" > change-proposal-001.md && git add change-proposal-001.md
+expect "lock output names the changed locked paths (I-63)" 0 bash -c "python3 '$VC' --msg 'chore(contract): tweak' --lock .done_when.lock | python3 -c \"import json,sys; d=json.load(sys.stdin); assert d['lock_detail']['locked_changed']==['done_when.yaml'], d['lock_detail']\""
+expect "proposal that never names the path is flagged (I-63)" 0 bash -c "python3 '$VC' --msg 'chore(contract): tweak' --lock .done_when.lock | python3 -c \"import json,sys; d=json.load(sys.stdin); assert d['lock_detail']['proposal_missing_path']==['done_when.yaml']; assert any('proposal_missing_path' in f for f in d['flags'])\""
+echo "change done_when.yaml threshold to 0.9" > change-proposal-001.md && git add change-proposal-001.md
+expect "proposal that names the path clears the flag (I-63)" 0 bash -c "python3 '$VC' --msg 'chore(contract): tweak' --lock .done_when.lock | python3 -c \"import json,sys; d=json.load(sys.stdin); assert d['lock_detail']['proposal_missing_path']==[], d['lock_detail']; assert not any('proposal_missing_path' in f for f in d['flags'])\""
+git reset -q . && git checkout -q -- done_when.yaml && rm -f change-proposal-001.md
+popd >/dev/null
+
+echo "== commit / commit.sh (the gate and the commit as ONE command, I-50)"
+CR="$TMP/commitsh"; mkdir -p "$CR"; pushd "$CR" >/dev/null
+git init -q -b feat/9-demo . && git -c user.name=t -c user.email=t@t commit -q --allow-empty -m "chore: init"
+git config user.name t && git config user.email t@t
+CSH="$S/commit/scripts/commit.sh"
+echo "export const a = 1;" > a.ts && git add a.ts
+# the defect: verify said REJECT, a pipeline swallowed the exit code, and the commit landed anyway
+expect "commit.sh: REJECT exits 1" 1 bash -c "bash '$CSH' --msg 'update stuff' >/dev/null 2>&1"
+# self-contained: stages its own file, so it stays load-bearing no matter what earlier expectations did
+expect "commit.sh: REJECT leaves HEAD where it was (I-50)" 0 bash -c "echo 'export const r = 0;' > r.ts && git add r.ts && b=\$(git rev-parse HEAD); bash '$CSH' --msg 'update stuff' >/dev/null 2>&1; a=\$(git rev-parse HEAD); git reset -q -- r.ts >/dev/null 2>&1; rm -f r.ts; [ \"\$b\" = \"\$a\" ]"
+expect "commit.sh: --dry-run passes the gate without committing" 0 bash -c "b=\$(git rev-parse HEAD); bash '$CSH' --msg 'feat(a): add a' --dry-run >/dev/null 2>&1 && [ \"\$b\" = \"\$(git rev-parse HEAD)\" ]"
+expect "commit.sh: PASS commits and reports the sha" 0 bash -c "bash '$CSH' --msg 'feat(a): add a' | grep -q '\"committed\": true' && git log -1 --format=%s | grep -qx 'feat(a): add a'"
+# dogfood 2026-09-06 (I-53): a shared checkout may carry another session's commit at HEAD; amending it
+# rewrote THEIR message. --amend must declare which subject it expects to find.
+echo "export const b = 2;" > b.ts && git add b.ts
+expect "commit.sh: --amend without --expect-subject refused (I-53)" 2 bash -c "bash '$CSH' --msg 'feat(a): add a and b' --amend >/dev/null 2>&1"
+expect "commit.sh: --amend on someone else's HEAD refused (I-53)" 2 bash -c "bash '$CSH' --msg 'feat(a): add a and b' --amend --expect-subject 'docs(report): their commit' >/dev/null 2>&1"
+expect "commit.sh: --amend refusal leaves HEAD subject untouched (I-53)" 0 bash -c "bash '$CSH' --msg 'feat(a): mine' --amend --expect-subject 'docs(report): their commit' >/dev/null 2>&1; git log -1 --format=%s | grep -qx 'feat(a): add a'"
+expect "commit.sh: --amend with the matching subject rewrites it" 0 bash -c "bash '$CSH' --msg 'feat(a): add a and b' --amend --expect-subject 'feat(a): add a' >/dev/null && git log -1 --format=%s | grep -qx 'feat(a): add a and b'"
+popd >/dev/null
+
+echo "== commit / plugin version sync (CLAUDE.md 三处 version, I-76)"
+VR="$TMP/versionsync"; mkdir -p "$VR"; pushd "$VR" >/dev/null
+git init -q -b feat/9-demo . && git config user.name t && git config user.email t@t
+mkdir -p plugins/demo/.claude-plugin plugins/demo/skills/alpha .claude-plugin
+printf -- '---\nname: alpha\nversion: 0.1.0\n---\n\n# alpha\n' > plugins/demo/skills/alpha/SKILL.md
+printf '{"name":"demo","version":"0.1.0"}\n' > plugins/demo/.claude-plugin/plugin.json
+printf '{"plugins":[{"name":"demo","version":"0.1.0"}]}\n' > .claude-plugin/marketplace.json
+git add -A && git commit -q -m "chore: init plugin"
+echo "a fix to the skill body" >> plugins/demo/skills/alpha/SKILL.md && git add -A && git commit -q -m "fix(alpha): tweak"
+# a version-keyed plugin cache serves <marketplace>/<plugin>/<version>/ — an unbumped fix reaches nobody
+expect "skills/** changed with plugin.json version frozen → REJECT in a range (I-76)" 1 py "$VC" --msg "fix(alpha): tweak" --range HEAD~1..HEAD --allow-main
+expect "…and the reject names the manifest (I-76)" 0 bash -c "python3 '$VC' --msg 'fix(alpha): tweak' --range HEAD~1..HEAD --allow-main | grep -q 'plugins/demo/.claude-plugin/plugin.json version is still 0.1.0'"
+expect "--no-version-sync opts out (I-76)" 0 py "$VC" --msg "fix(alpha): tweak" --range HEAD~1..HEAD --allow-main --no-version-sync
+# staged mode only flags: CLAUDE.md itself puts the bump in its own `chore:` commit, so rejecting here
+# would reject the workflow the rule prescribes
+echo "more" >> plugins/demo/skills/alpha/SKILL.md && git add -A
+expect "staged mode flags the missing bump but does not reject (I-76)" 0 bash -c "python3 '$VC' --msg 'fix(alpha): more' | python3 -c \"import json,sys; d=json.load(sys.stdin); assert d['verdict']=='PASS'; assert any('version is still 0.1.0' in f for f in d['flags']), d['flags']\""
+git reset -q --hard HEAD >/dev/null
+printf -- '---\nname: alpha\nversion: 0.1.1\n---\n\n# alpha\nfixed\n' > plugins/demo/skills/alpha/SKILL.md
+printf '{"name":"demo","version":"0.1.1"}\n' > plugins/demo/.claude-plugin/plugin.json
+printf '{"plugins":[{"name":"demo","version":"0.1.1"}]}\n' > .claude-plugin/marketplace.json
+git add -A && git commit -q -m "chore: bump demo to v0.1.1"
+expect "all three locations bumped → passes (I-76)" 0 py "$VC" --msg "chore: bump demo to v0.1.1" --range HEAD~1..HEAD --allow-main
+printf '{"plugins":[{"name":"demo","version":"0.1.0"}]}\n' > .claude-plugin/marketplace.json
+git add -A && git commit -q -m "chore: registry drifts"
+expect "marketplace.json out of sync with plugin.json → REJECT (I-76)" 1 py "$VC" --msg "chore: registry drifts" --range HEAD~2..HEAD --allow-main
 popd >/dev/null
 
 echo "== pr / verify_pr.py"
