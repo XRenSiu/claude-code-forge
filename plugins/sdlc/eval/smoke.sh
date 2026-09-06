@@ -653,6 +653,20 @@ expect "re-sign stage l5 with tests" 0 py "$S/sdlc/scripts/lock_done_when.py" si
 expect "verify reports stage l5" 0 bash -c "python3 '$S/sdlc/scripts/lock_done_when.py' verify | grep -q '\"stage\": \"l5\"'"
 echo "tampered" >> tests/a.test.ts
 expect "tampered locked test rejected" 1 py "$S/sdlc/scripts/lock_done_when.py" verify
+# dogfood 2026-09-06 (I-30): a contract whose gate script can be edited mid-run is not frozen (INV-001)
+git checkout -q -- tests/a.test.ts 2>/dev/null || printf "test('x')\n" > tests/a.test.ts
+printf '#!/usr/bin/env python3\nimport sys\nsys.exit(0)\n' > verify_thing.py
+expect "l5 sign --gate records the gate script with role=gate (I-30)" 0 bash -c "python3 '$S/sdlc/scripts/lock_done_when.py' sign --by tester --stage l5 --gate verify_thing.py --out .gate.lock done_when.yaml tests/a.test.ts | grep -q '\"gates\"' && python3 -c \"
+import json
+e=[f for f in json.load(open('.gate.lock'))['files'] if f['path']=='verify_thing.py']
+assert e and e[0]['role']=='gate', e\""
+expect "l5 sign without a gate script warns (I-30)" 0 bash -c "python3 '$S/sdlc/scripts/lock_done_when.py' sign --by tester --stage l5 --out .nogate.lock done_when.yaml tests/a.test.ts | python3 -c \"import json,sys; d=json.load(sys.stdin); assert 'gate script' in (d.get('warning') or ''), d\""
+printf '\n# edited mid-run\n' >> verify_thing.py
+expect "changed gate script rejected and named as a deviation, not a criteria change (I-30)" 1 bash -c "python3 '$S/sdlc/scripts/lock_done_when.py' verify --lock .gate.lock > '$TMP/gate-verify.json'; rc=\$?; python3 -c \"
+import json
+d=json.load(open('$TMP/gate-verify.json'))
+assert d['changed_gates']==['verify_thing.py'] and d['changed']==[], d
+assert 'deviation' in d['why'], d['why']\" || exit 9; exit \$rc"
 popd >/dev/null
 
 echo "== release / verify_release.py"
