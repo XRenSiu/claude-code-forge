@@ -145,9 +145,9 @@ expect "the G1 template and sdlc_state.py name the same attribution values (I-22
 # world counter still moves by exactly one — counting both would stop it meaning "the world changed".
 ATTR="$TMP/attr"; mkdir -p "$ATTR"; pushd "$ATTR" >/dev/null
 py "$S/sdlc/scripts/sdlc_state.py" init --slug t --title T --track psl >/dev/null
-expect "a reject records a secondary cause beside the primary (I-22)" 0 bash -c "python3 '$S/sdlc/scripts/sdlc_state.py' gate --slug t g1 --verdict reject --by g1 --attribution rule_error --secondary-attribution derivation_error >/dev/null && python3 -c \"import json; g=json.load(open('.sdlc/t/state.json')); assert g['gates']['g1']['secondary_attribution']==['derivation_error'] and g['counters']['world']==1, g\""
-expect "a secondary equal to the primary is refused (I-22)" 1 py "$S/sdlc/scripts/sdlc_state.py" gate --slug t g1 --verdict reject --by g1 --attribution rule_error --secondary-attribution rule_error
-expect "a secondary without a primary is refused (I-22)" 1 py "$S/sdlc/scripts/sdlc_state.py" gate --slug t g2 --verdict reject --by g2 --secondary-attribution rule_error
+expect "a reject records a secondary cause beside the primary (I-22)" 0 bash -c "python3 '$S/sdlc/scripts/sdlc_state.py' gate --slug t g1 --verdict reject --signer-kind human --by g1 --attribution rule_error --secondary-attribution derivation_error >/dev/null && python3 -c \"import json; g=json.load(open('.sdlc/t/state.json')); assert g['gates']['g1']['secondary_attribution']==['derivation_error'] and g['counters']['world']==1, g\""
+expect "a secondary equal to the primary is refused (I-22)" 1 py "$S/sdlc/scripts/sdlc_state.py" gate --slug t g1 --verdict reject --signer-kind human --by g1 --attribution rule_error --secondary-attribution rule_error
+expect "a secondary without a primary is refused (I-22)" 1 py "$S/sdlc/scripts/sdlc_state.py" gate --slug t g2 --verdict reject --signer-kind human --by g2 --secondary-attribution rule_error
 popd >/dev/null
 expect "an unfilled G1 template yields no terms and says the wording cannot be checked (I-45)" 0 bash -c "python3 '$S/issue/scripts/verify_issue.py' '$PSLI2' --dos '$FX/dos.yaml' --g1 '$G1T' | grep -q 'no machine-readable'"
 # dogfood 2026-09-06 (I-60 handover): the enforcement half was closed when the negation check learned
@@ -155,7 +155,7 @@ expect "an unfilled G1 template yields no terms and says the wording cannot be c
 # learn where a post-signature clarification goes, and the two templates must not claim the same act.
 expect "the G1 record points at the interpretations file (I-60)" 0 bash -c "grep -q 'g1-interpretations' '$S/sdlc/assets/g1_record.md'"
 expect "the interpretations template sends re-signatures back to the record (I-60)" 0 bash -c "grep -q '补签' '$S/sdlc/assets/g1_interpretations.md' && grep -q 'g1-record' '$S/sdlc/assets/g1_interpretations.md'"
-expect "sign refuses to lock the interpretations file (I-60)" 2 bash -c "cd \"\$(mktemp -d)\" && printf 'x' > g1-interpretations.md && python3 '$S/sdlc/scripts/lock_done_when.py' sign --by human --stage g2 --out .l g1-interpretations.md"
+expect "sign refuses to lock the interpretations file (I-60)" 2 bash -c "cd \"\$(mktemp -d)\" && printf 'x' > g1-interpretations.md && python3 '$S/sdlc/scripts/lock_done_when.py' sign --signer-kind human --by human --stage g2 --out .l g1-interpretations.md"
 
 echo "== plan-cards / lint_cards.py"
 FX="$S/sdlc/eval/fixtures"
@@ -171,7 +171,7 @@ expect "cards: --repo-root reads the script and catches an undeclared source (I-
 
 echo "== sdlc / lock_done_when.py"
 L="$TMP/lock"; mkdir -p "$L"; cp "$FX/done_when.yaml" "$L/"; pushd "$L" >/dev/null
-expect "sign writes lock" 0 py "$S/sdlc/scripts/lock_done_when.py" sign --by tester done_when.yaml
+expect "sign writes lock" 0 py "$S/sdlc/scripts/lock_done_when.py" sign --signer-kind human --by tester done_when.yaml
 expect "lock sign: delegated_agent without authorization refused (I-39)" 1 py "$S/sdlc/scripts/lock_done_when.py" sign --by proxy --signer-kind delegated_agent --out .dl.lock done_when.yaml
 expect "lock sign: delegated_agent with authorization records signer_kind (I-39)" 0 bash -c "python3 '$S/sdlc/scripts/lock_done_when.py' sign --by proxy --signer-kind delegated_agent --authorization 'user said so' --out .dl.lock done_when.yaml >/dev/null && grep -q '\"signer_kind\": \"delegated_agent\"' .dl.lock"
 expect "verify unchanged ok" 0 py "$S/sdlc/scripts/lock_done_when.py" verify
@@ -201,10 +201,10 @@ expect "advance g2 refused when contract is v1-shaped (C1 compiled)" 1 bash -c "
 py "$SS" set contract.done_when=done_when.yaml >/dev/null
 expect "advance g2 (v2 contract validates)" 0 py "$SS" advance g2
 expect "advance cards refused (G2 not passed)" 1 py "$SS" advance cards
-expect "gate g2 pass refused without lock.path" 1 py "$SS" gate g2 --verdict pass --by human
-py "$S/sdlc/scripts/lock_done_when.py" sign --by human done_when.yaml >/dev/null
+expect "gate g2 pass refused without lock.path" 1 py "$SS" gate g2 --verdict pass --signer-kind human --by human
+py "$S/sdlc/scripts/lock_done_when.py" sign --signer-kind human --by human done_when.yaml >/dev/null
 expect "set lock.path" 0 py "$SS" set lock.path=.done_when.lock lock.signed_by=human
-expect "gate g2 pass" 0 py "$SS" gate g2 --verdict pass --by human
+expect "gate g2 pass" 0 py "$SS" gate g2 --verdict pass --signer-kind human --by human
 expect "advance cards" 0 py "$SS" advance cards
 expect "advance implement refused (lint not passed)" 1 py "$SS" advance implement
 expect "set cards.lint_passed + card" 0 bash -c "python3 '$SS' set cards.lint_passed=true >/dev/null && python3 '$SS' card CARD-01 --status todo"
@@ -221,7 +221,7 @@ expect "advance acceptance" 0 py "$SS" advance acceptance
 expect "advance pr refused (no evaluation/skip reason)" 1 py "$SS" advance pr
 expect "force without reason refused" 1 py "$SS" advance pr --force
 expect "force with reason → waiver recorded" 0 py "$SS" advance pr --force --reason "task track lightweight"
-expect "gate g1 reject without attribution refused" 1 py "$SS" gate g1 --verdict reject --by human
+expect "gate g1 reject without attribution refused" 1 py "$SS" gate g1 --verdict reject --signer-kind human --by human
 expect "set pr/review/merge → advance to merge" 0 bash -c "python3 '$SS' set pr.number=7 >/dev/null && python3 '$SS' advance review >/dev/null && python3 '$SS' set review.done=true gates.g3.required=false >/dev/null && python3 '$SS' advance merge >/dev/null && python3 '$SS' set merge.sha=deadbeef >/dev/null"
 expect "advance release" 0 py "$SS" advance release
 expect "advance archive refused (release not done)" 1 py "$SS" advance archive
@@ -231,12 +231,12 @@ expect "ledger has waiver row" 0 bash -c "grep -q '| waiver |' .sdlc/demo/ledger
 expect "set lock.stage=l5 (I-57)" 0 bash -c "python3 '$SS' set lock.stage=l5 >/dev/null && python3 -c \"import json; assert json.load(open('.sdlc/demo/state.json'))['lock']['stage']=='l5'\""
 expect "lock.stage outside the g2|l5 enum refused (I-57)" 1 py "$SS" set lock.stage=nope
 # dogfood 2026-09-06 (I-67): a waiver needs no stage transition to hang on; `waive` prints the id to cite
-expect "waive records a standalone waiver + ledger event (I-67)" 0 bash -c "python3 '$SS' waive --signal hidden_variant_fail --reason 'holdout 6/10 accepted as a ratchet item' --by g2-judge --fingerprint d1fc8380957b > '$TMP/waive.json' && python3 -c \"
+expect "waive records a standalone waiver + ledger event (I-67)" 0 bash -c "python3 '$SS' waive --signal hidden_variant_fail --reason 'holdout 6/10 accepted as a ratchet item' --signer-kind human --by g2-judge --fingerprint d1fc8380957b > '$TMP/waive.json' && python3 -c \"
 import json
 assert json.load(open('$TMP/waive.json'))['event'].startswith('ev-')
 w=json.load(open('.sdlc/demo/state.json'))['waivers']
 assert any(x.get('signal')=='hidden_variant_fail' and x.get('fingerprint')=='d1fc8380957b' for x in w), w\""
-expect "waive by a delegated agent without --authorization refused (I-67)" 1 py "$SS" waive --signal card_test_fail --reason r --by proxy-bot --signer-kind delegated_agent
+expect "waive by a delegated agent without --authorization refused (I-67)" 1 py "$SS" waive --signal card_test_fail --reason r --signer-kind human --by proxy-bot --signer-kind delegated_agent
 # dogfood 2026-09-06 (I-70): a hand-written row must be able to cite the fail it excuses, not describe it in prose
 expect "ledger --fingerprint / --card land on the trace event (I-70)" 0 bash -c "python3 '$SS' ledger --kind note --note 'the waiver above excuses this fail' --fingerprint d1fc8380957b --card CARD-01 >/dev/null && python3 -c \"
 import json
@@ -247,7 +247,7 @@ expect "review.done=waived without a waiver_ref refused (I-83)" 1 py "$SS" set r
 expect "review.done=true beside a free-text exit_reason refused (I-83)" 1 py "$SS" set review.exit_reason="waived by a judge, not passed"
 expect "review.waiver_ref must resolve to a trace event (I-83)" 1 py "$SS" set review.done=waived review.waiver_ref=ev-9999
 expect "review.done outside the closed enum refused (I-83)" 1 py "$SS" set review.done=maybe
-expect "waived review exit citing its waiver event accepted (I-83)" 0 bash -c "WID=\$(python3 '$SS' waive --signal review_non_convergence --reason 'APPROVED unobtainable: the author cannot approve their own PR' --by human | python3 -c 'import json,sys; print(json.load(sys.stdin)[\"event\"])') && python3 '$SS' set review.done=waived review.waiver_ref=\$WID review.exit_reason='structural non-convergence' >/dev/null && python3 -c \"
+expect "waived review exit citing its waiver event accepted (I-83)" 0 bash -c "WID=\$(python3 '$SS' waive --signal review_non_convergence --reason 'APPROVED unobtainable: the author cannot approve their own PR' --signer-kind human --by human | python3 -c 'import json,sys; print(json.load(sys.stdin)[\"event\"])') && python3 '$SS' set review.done=waived review.waiver_ref=\$WID review.exit_reason='structural non-convergence' >/dev/null && python3 -c \"
 import json
 r=json.load(open('.sdlc/demo/state.json'))['review']
 assert r['done']=='waived' and r['waiver_ref'].startswith('ev-'), r\""
@@ -292,7 +292,7 @@ import importlib.util; spec=importlib.util.spec_from_file_location('vc','$VC'); 
 assert vc.glob_match('plugins/x/dogfood/done_when.yaml','done_when.yaml'); assert vc.glob_match('a/b/tests/c.py','**/tests/**'); assert not vc.glob_match('a/b/src/c.py','**/tests/**'); assert not vc.glob_match('a/done_when.yaml.bak','done_when.yaml')"
 git reset -q src/search/ui/oops.ts && rm -rf src/search/ui
 cp "$FX/done_when.yaml" done_when.yaml && git add done_when.yaml && git -c user.name=t -c user.email=t@t commit -q -m "chore(contract): add done_when"
-py "$S/sdlc/scripts/lock_done_when.py" sign --by human done_when.yaml >/dev/null
+py "$S/sdlc/scripts/lock_done_when.py" sign --signer-kind human --by human done_when.yaml >/dev/null
 echo "# tamper" >> done_when.yaml && git add done_when.yaml
 expect "locked file staged without proposal rejected" 1 py "$VC" --msg "chore(contract): tweak" --lock .done_when.lock
 echo "p" > change-proposal-001.md && git add change-proposal-001.md
@@ -317,7 +317,7 @@ git init -q .; git config user.email t@t; git config user.name t
 printf 'acceptance:\n  - id: AC-001-a\n' > done_when.yaml; printf "test('x')\n" > tests/a.test.ts
 printf 'id: CARD-01\nallowed_files:\n- src/x.py\nforbidden_files: []\n' > cards/CARD-01.yaml; echo "x=1" > src/x.py
 git add -A; git -c user.name=t -c user.email=t@t commit -qm "feat: base"
-py "$S/sdlc/scripts/lock_done_when.py" sign --by human --stage l5 --out .done_when.lock done_when.yaml tests/a.test.ts >/dev/null
+py "$S/sdlc/scripts/lock_done_when.py" sign --signer-kind human --by human --stage l5 --out .done_when.lock done_when.yaml tests/a.test.ts >/dev/null
 printf "test('x'); test('y')\n" > tests/a.test.ts; echo "x=2" > src/x.py; git add src/x.py
 expect "a card going green against tests that drifted from the lock is flagged (I-61)" 0 bash -c "python3 '$S/commit/scripts/verify_commit.py' --msg 'feat(x): change' --card cards/CARD-01.yaml --lock .done_when.lock --allow-main | python3 -c \"import json,sys; d=json.load(sys.stdin); assert d['verdict']=='PASS' and any('tests_unlocked_at_green' in f for f in d['flags']), d\""
 git checkout -q -- tests/a.test.ts
@@ -760,17 +760,22 @@ ST2="$TMP/state-psl"; mkdir -p "$ST2"; pushd "$ST2" >/dev/null
 expect "init psl track" 0 py "$SS" init --slug demo-psl --title "psl feature" --track psl
 expect "advance track" 0 py "$SS" advance track
 expect "advance issue refused (G1 pending)" 1 py "$SS" advance issue
-expect "gate g1 pass refused without world.derived_dir" 1 py "$SS" gate g1 --verdict pass --by human
+expect "gate g1 pass refused without world.derived_dir" 1 py "$SS" gate g1 --verdict pass --signer-kind human --by human
 mkdir -p derived && cp "$FXD/derived_good/"* derived/
 expect "set world.* paths" 0 py "$SS" set world.psl=PSL.md world.derived_dir=derived
-expect "gate g1 pass with derived products" 0 py "$SS" gate g1 --verdict pass --by human --record g1-record.md
+expect "gate g1 pass with derived products" 0 py "$SS" gate g1 --verdict pass --signer-kind human --by human --record g1-record.md
 expect "advance issue ok after G1" 0 py "$SS" advance issue
-expect "gate g1 reject with attribution bumps world counter" 0 bash -c "python3 '$SS' gate g1 --verdict reject --by human --attribution rule_error >/dev/null && python3 '$SS' show | grep -q '\"world\": 1'"
-expect "gate g1 reject with derivation_error does NOT bump world (I-34)" 0 bash -c "python3 '$SS' gate g1 --verdict reject --by human --attribution derivation_error >/dev/null && python3 '$SS' show | grep -q '\"world\": 1'"
-expect "gate g1 pass after a reject clears the stale attribution (I-51)" 0 bash -c "python3 '$SS' gate g1 --verdict pass --by human >/dev/null && ! python3 '$SS' show | grep -q 'derivation_error'"
+expect "gate g1 reject with attribution bumps world counter" 0 bash -c "python3 '$SS' gate g1 --verdict reject --signer-kind human --by human --attribution rule_error >/dev/null && python3 '$SS' show | grep -q '\"world\": 1'"
+expect "gate g1 reject with derivation_error does NOT bump world (I-34)" 0 bash -c "python3 '$SS' gate g1 --verdict reject --signer-kind human --by human --attribution derivation_error >/dev/null && python3 '$SS' show | grep -q '\"world\": 1'"
+expect "gate g1 pass after a reject clears the stale attribution (I-51)" 0 bash -c "python3 '$SS' gate g1 --verdict pass --signer-kind human --by human >/dev/null && ! python3 '$SS' show | grep -q 'derivation_error'"
+# re-audit 2026-09-06: --signer-kind used to default to `human`, so an agent that simply omitted the
+# flag was recorded as a person. A discipline bypassable by omission is not a discipline, and this
+# whole run's honesty rests on delegated signatures being marked as such. It is now required.
+expect "gate refuses to sign without saying which kind of signer it is (re-audit)" 2 py "$SS" gate g1 --verdict pass --by someone
+expect "lock sign refuses the same way (re-audit)" 2 bash -c "cd \"\$(mktemp -d)\" && printf 'a: 1\n' > c.yaml && python3 '$S/sdlc/scripts/lock_done_when.py' sign --by someone --out .l c.yaml"
 # dogfood 2026-09-05 (I-17): a delegated signature needs an authorization on record and is traced as agent:, not human:
-expect "gate: delegated_agent without --authorization refused" 1 py "$SS" gate g3 --verdict pass --by proxy-bot --signer-kind delegated_agent
-expect "gate: delegated_agent with authorization recorded as agent:<by> + [delegated]" 0 bash -c "python3 '$SS' gate g3 --verdict pass --by proxy-bot --signer-kind delegated_agent --authorization 'user said so' >/dev/null && grep -q 'agent:proxy-bot' .sdlc/demo-psl/trace.jsonl && grep -q '\[delegated\]' .sdlc/demo-psl/ledger.md"
+expect "gate: delegated_agent without --authorization refused" 1 py "$SS" gate g3 --verdict pass --signer-kind human --by proxy-bot --signer-kind delegated_agent
+expect "gate: delegated_agent with authorization recorded as agent:<by> + [delegated]" 0 bash -c "python3 '$SS' gate g3 --verdict pass --signer-kind human --by proxy-bot --signer-kind delegated_agent --authorization 'user said so' >/dev/null && grep -q 'agent:proxy-bot' .sdlc/demo-psl/trace.jsonl && grep -q '\[delegated\]' .sdlc/demo-psl/ledger.md"
 popd >/dev/null
 
 echo "== acceptance-spec / validate_done_when.py (imported from done-when-pipeline)"
@@ -954,19 +959,19 @@ yaml.safe_dump(d,open('$TMP/v2_mixed_judges.yaml','w'),allow_unicode=True,sort_k
 
 echo "== sdlc / lock_done_when.py two-stage"
 L2="$TMP/lock2"; mkdir -p "$L2/tests"; cp "$FXV/v2_good.yaml" "$L2/done_when.yaml"; echo "test('x')" > "$L2/tests/a.test.ts"; pushd "$L2" >/dev/null
-expect "sign stage g2" 0 py "$S/sdlc/scripts/lock_done_when.py" sign --by human --stage g2 done_when.yaml
-expect "re-sign stage l5 with tests" 0 py "$S/sdlc/scripts/lock_done_when.py" sign --by tester --stage l5 done_when.yaml tests/a.test.ts
+expect "sign stage g2" 0 py "$S/sdlc/scripts/lock_done_when.py" sign --signer-kind human --by human --stage g2 done_when.yaml
+expect "re-sign stage l5 with tests" 0 py "$S/sdlc/scripts/lock_done_when.py" sign --signer-kind human --by tester --stage l5 done_when.yaml tests/a.test.ts
 expect "verify reports stage l5" 0 bash -c "python3 '$S/sdlc/scripts/lock_done_when.py' verify | grep -q '\"stage\": \"l5\"'"
 echo "tampered" >> tests/a.test.ts
 expect "tampered locked test rejected" 1 py "$S/sdlc/scripts/lock_done_when.py" verify
 # dogfood 2026-09-06 (I-30): a contract whose gate script can be edited mid-run is not frozen (INV-001)
 git checkout -q -- tests/a.test.ts 2>/dev/null || printf "test('x')\n" > tests/a.test.ts
 printf '#!/usr/bin/env python3\nimport sys\nsys.exit(0)\n' > verify_thing.py
-expect "l5 sign --gate records the gate script with role=gate (I-30)" 0 bash -c "python3 '$S/sdlc/scripts/lock_done_when.py' sign --by tester --stage l5 --gate verify_thing.py --out .gate.lock done_when.yaml tests/a.test.ts | grep -q '\"gates\"' && python3 -c \"
+expect "l5 sign --gate records the gate script with role=gate (I-30)" 0 bash -c "python3 '$S/sdlc/scripts/lock_done_when.py' sign --signer-kind human --by tester --stage l5 --gate verify_thing.py --out .gate.lock done_when.yaml tests/a.test.ts | grep -q '\"gates\"' && python3 -c \"
 import json
 e=[f for f in json.load(open('.gate.lock'))['files'] if f['path']=='verify_thing.py']
 assert e and e[0]['role']=='gate', e\""
-expect "l5 sign without a gate script warns (I-30)" 0 bash -c "python3 '$S/sdlc/scripts/lock_done_when.py' sign --by tester --stage l5 --out .nogate.lock done_when.yaml tests/a.test.ts | python3 -c \"import json,sys; d=json.load(sys.stdin); assert 'gate script' in (d.get('warning') or ''), d\""
+expect "l5 sign without a gate script warns (I-30)" 0 bash -c "python3 '$S/sdlc/scripts/lock_done_when.py' sign --signer-kind human --by tester --stage l5 --out .nogate.lock done_when.yaml tests/a.test.ts | python3 -c \"import json,sys; d=json.load(sys.stdin); assert 'gate script' in (d.get('warning') or ''), d\""
 printf '\n# edited mid-run\n' >> verify_thing.py
 expect "changed gate script rejected and named as a deviation, not a criteria change (I-30)" 1 bash -c "python3 '$S/sdlc/scripts/lock_done_when.py' verify --lock .gate.lock > '$TMP/gate-verify.json'; rc=\$?; python3 -c \"
 import json
@@ -975,9 +980,9 @@ assert d['changed_gates']==['verify_thing.py'] and d['changed']==[], d
 assert 'deviation' in d['why'], d['why']\" || exit 9; exit \$rc"
 # dogfood 2026-09-06 (I-60): interpreting a G1 ruling changes no signed byte and must not need a proposal
 printf '# G1 interpretations\n' > g1-interpretations.md
-expect "sign refuses to lock a g1-interpretations file (I-60)" 2 py "$S/sdlc/scripts/lock_done_when.py" sign --by human --out .g1.lock done_when.yaml g1-interpretations.md
+expect "sign refuses to lock a g1-interpretations file (I-60)" 2 py "$S/sdlc/scripts/lock_done_when.py" sign --signer-kind human --by human --out .g1.lock done_when.yaml g1-interpretations.md
 printf '# G1 record\n- form draft sha256: deadbeef\n' > g1-record.md
-expect "the signed record itself is still lockable (I-60)" 0 py "$S/sdlc/scripts/lock_done_when.py" sign --by human --out .g1.lock done_when.yaml g1-record.md
+expect "the signed record itself is still lockable (I-60)" 0 py "$S/sdlc/scripts/lock_done_when.py" sign --signer-kind human --by human --out .g1.lock done_when.yaml g1-record.md
 popd >/dev/null
 
 echo "== sdlc / .sdlc runtime state is not a deliverable (I-01)"

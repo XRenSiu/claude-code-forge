@@ -977,12 +977,18 @@ def main():
     s.add_argument("--by", required=True); s.add_argument("--record"); s.add_argument("--attribution", choices=["derivation_error", "rule_error", "none"])
     s.add_argument("--secondary-attribution", action="append", choices=["derivation_error", "rule_error"], default=[],
                    help="a further cause that also holds; recorded, never counted (dogfood I-22)")
-    s.add_argument("--signer-kind", choices=["human", "delegated_agent"], default="human"); s.add_argument("--authorization")
+    s.add_argument("--signer-kind", choices=["human", "delegated_agent"], required=True,
+                   help="who is signing. No default: omitting it used to record an agent as a person, "
+                        "and a discipline bypassable by omission is not a discipline (re-audit 2026-09-06)")
+    s.add_argument("--authorization")
     s = P("card"); s.add_argument("card"); s.add_argument("--status", required=True, choices=["todo", "doing", "done", "blocked"]); s.add_argument("--commit"); s.add_argument("--ac", action="append")
     s = P("fail"); s.add_argument("--signal", required=True); s.add_argument("--card"); s.add_argument("--fingerprint"); s.add_argument("--evidence")
     s.add_argument("--score", type=float); s.add_argument("--by"); s.add_argument("--routing")
     s = P("waive"); s.add_argument("--signal", required=True); s.add_argument("--reason", required=True); s.add_argument("--by", required=True)
-    s.add_argument("--signer-kind", choices=["human", "delegated_agent"], default="human"); s.add_argument("--authorization")
+    s.add_argument("--signer-kind", choices=["human", "delegated_agent"], required=True,
+                   help="who is signing. No default: omitting it used to record an agent as a person, "
+                        "and a discipline bypassable by omission is not a discipline (re-audit 2026-09-06)")
+    s.add_argument("--authorization")
     s.add_argument("--fingerprint"); s.add_argument("--card"); s.add_argument("--layer"); s.add_argument("--stage"); s.add_argument("--scope")
     s.add_argument("--ref", action="append")
     s = P("report"); s.add_argument("--path", required=True); s.add_argument("--by")

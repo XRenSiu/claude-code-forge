@@ -152,7 +152,10 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)
     s = sub.add_parser("sign"); s.add_argument("--by", required=True); s.add_argument("--out", default=".done_when.lock"); s.add_argument("--stage", choices=["g2", "l5"], default="g2")
-    s.add_argument("--signer-kind", choices=["human", "delegated_agent"], default="human"); s.add_argument("--authorization")
+    s.add_argument("--signer-kind", choices=["human", "delegated_agent"], required=True,
+                   help="who is signing. No default: omitting it used to record an agent as a person, "
+                        "and a discipline bypassable by omission is not a discipline (re-audit 2026-09-06)")
+    s.add_argument("--authorization")
     s.add_argument("--gate", action="append", metavar="SCRIPT"); s.add_argument("files", nargs="+")
     s = sub.add_parser("verify"); s.add_argument("--lock", default=".done_when.lock"); s.add_argument("--proposal-glob", default="change-proposal-*.md"); s.add_argument("--staged", action="store_true")
     a = ap.parse_args()
