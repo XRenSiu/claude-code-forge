@@ -10,7 +10,7 @@ description: >-
   "G1 要审什么" / 写完 PSL 之后、建 issue 之前。NOT for: 写 PSL 本身（/psl）、从代码抽本体
   （/dos-extract）、写验收契约（/donewhen-extract）、直接实现（那正是本 skill 要拦的）。
 argument-hint: "<PSL-<name>.md 路径> [--n 3] [--out derived/] [--dos dos.yaml] [--auto]"
-version: 0.1.0
+version: 0.1.1
 user-invocable: true
 ---
 

@@ -9,7 +9,7 @@ description: >-
   `git add -A && git commit -m "update"` 时。NOT for: 推送与建 PR（/pr）、
   合并分支、改写已推送的历史（本 skill 禁止）。前置：git 仓库内。
 argument-hint: "[--card cards/CARD-xx.yaml] [--lock .done_when.lock] [--issue N] [--scope s] [--all|--paths a b] [--dry-run]"
-version: 0.1.0
+version: 0.1.1
 user-invocable: true
 ---
 
