@@ -216,14 +216,45 @@ expect "verify_derived: suffixed decision id (F-13a) rejected instead of silentl
 
 echo "== dos-extract / verify_dos.py (imported from looper)"
 FXO="$S/dos-extract/eval/fixtures"
-expect "clean dos passes" 0 py "$S/dos-extract/scripts/verify_dos.py" "$FXO/dos_good.yaml"
-expect "UI-suffixed object rejected" 1 py "$S/dos-extract/scripts/verify_dos.py" "$FXO/dos_bad_ui_suffix.yaml"
+DXS="$S/dos-extract/scripts"
+expect "clean dos passes" 0 py "$DXS/verify_dos.py" "$FXO/dos_good.yaml"
+expect "UI-suffixed object rejected" 1 py "$DXS/verify_dos.py" "$FXO/dos_bad_ui_suffix.yaml"
+
+echo "== dos-extract / inventory.py (structured channel)"
+INV="$TMP/inv"; mkdir -p "$INV/a/b/schema"
+cat > "$INV/a/b/schema/state.schema.json" <<'JSON'
+{"type":"object","properties":{"track":{"type":"string","enum":["psl","task"]},
+ "cards":{"type":"object"}},"$defs":{"gate":{"type":"object","properties":{"verdict":{"type":"string"}}}}}
+JSON
+cat > "$INV/graph.yaml" <<'YAML'
+nodes:
+  - {id: stage.intake, kind: stage}
+  - {id: plan-cards, kind: skill}
+YAML
+cat > "$INV/package.json" <<'JSON'
+{"name":"x","scripts":{"testonlymanifestkey":"echo"},"dependencies":{}}
+JSON
+# dogfood 2026-09-05 (I-09): a plugin/schema-first repo declares nothing in classes, so the
+# code-only scan returned 0 nouns and the operator hand-wrote the noun table.
+expect "structured channel finds \$defs / enum / kind / property nouns (I-09)" 0 bash -c "python3 '$DXS/inventory.py' '$INV' -o '$TMP/inv.md' >/dev/null 2>&1 && for t in gate verdict track psl task skill stage cards; do grep -q \"\\*\\*\$t\\*\\*\" '$TMP/inv.md' || { echo \"missing \$t\"; exit 1; }; done"
+expect "--no-structured reproduces the zero-noun scan (I-09)" 0 bash -c "python3 '$DXS/inventory.py' '$INV' -o '$TMP/inv0.md' --no-structured >/dev/null 2>&1 && grep -q 'Distinct nouns: 0' '$TMP/inv0.md'"
+expect "zero-noun report says so instead of printing an empty table (I-13)" 0 bash -c "grep -q 'No nouns found' '$TMP/inv0.md'"
+expect "tooling manifests are skipped by the structured channel (I-09)" 0 bash -c "grep -q '\\*\\*gate\\*\\*' '$TMP/inv.md' && ! grep -q 'testonlymanifestkey' '$TMP/inv.md'"
+expect "--exclude drops a directory of that name at any depth, not just at the root (I-09)" 0 bash -c "python3 '$DXS/inventory.py' '$INV' -o '$TMP/invx.md' --exclude schema >/dev/null 2>&1 && ! grep -q '\\*\\*gate\\*\\*' '$TMP/invx.md' && grep -q '\\*\\*stage\\*\\*' '$TMP/invx.md'"
+expect "--exclude also matches a file name segment, not only directories (I-09)" 0 bash -c "python3 '$DXS/inventory.py' '$INV' -o '$TMP/invf.md' --exclude graph.yaml >/dev/null 2>&1 && ! grep -q '\\*\\*stage\\*\\*' '$TMP/invf.md' && grep -q '\\*\\*gate\\*\\*' '$TMP/invf.md'"
+
+echo "== dos-extract / count_terms.py (docs channel counting primitive)"
+printf '%s\n' '# label = variants' 'Gate = gate, G1, G2' 'Ghost = zzznotathing' > "$TMP/terms.txt"
+# dogfood 2026-09-05 (I-12): the docs pass asked for "≈47 occurrences" with no way to reproduce it.
+expect "count_terms: reproducible per-group counts + file:line evidence (I-12)" 0 bash -c "python3 '$DXS/count_terms.py' --terms '$TMP/terms.txt' --root '$S/dos-extract' --group fixtures='eval/fixtures/*.yaml' --json 2>/dev/null | python3 -c \"import json,sys; d=json.load(sys.stdin); g=d['terms']['Gate']; import re; assert g['total']>0, g; assert g['evidence'] and re.match(r'^\\\`[^\\\`]+:[0-9]+\\\` ', g['evidence'][0]), g['evidence']\""
+expect "count_terms: a term matching nothing exits 1, not silently 0 (I-12)" 1 py "$DXS/count_terms.py" --terms "$TMP/terms.txt" --root "$S/dos-extract" --group fixtures='eval/fixtures/*.yaml'
+expect "count_terms: word boundaries keep PR out of PROPOSAL (I-12)" 0 bash -c "mkdir -p '$TMP/ct' && printf 'PROPOSAL and PROPRIETARY\n' > '$TMP/ct/a.md' && printf 'PR\n' >> '$TMP/ct/a.md' && printf 'PR\n' > '$TMP/terms2.txt' && python3 '$DXS/count_terms.py' --terms '$TMP/terms2.txt' --root '$TMP/ct' --corpus '*.md' --json | python3 -c \"import json,sys; d=json.load(sys.stdin); assert d['terms']['PR']['total']==1, d['terms']['PR']\""
 
 echo "== invariant-extract / verify_card.py (imported from looper)"
 FXI="$S/invariant-extract/eval/fixtures"
-expect "card with provenance passes" 0 py "$S/invariant-extract/scripts/verify_card.py" "$FXI/card_good.yaml" --dos "$FXO/dos_good.yaml"
-expect "card without provenance rejected" 1 py "$S/invariant-extract/scripts/verify_card.py" "$FXI/card_bad_noprov.yaml"
-
+IXV="$S/invariant-extract/scripts/verify_card.py"
+expect "card with provenance passes" 0 py "$IXV" "$FXI/card_good.yaml" --dos "$FXO/dos_good.yaml"
+expect "card without provenance rejected" 1 py "$IXV" "$FXI/card_bad_noprov.yaml"
 echo "== donewhen-extract / verify_done_when.py (imported from qanat)"
 FXW="$S/donewhen-extract/eval/fixtures"
 expect "paired, thresholded card passes" 0 py "$S/donewhen-extract/scripts/verify_done_when.py" "$FXW/card_good.yaml"
