@@ -1,0 +1,255 @@
+# findings.yaml — /pr-review round 2 (final) on docs/1-sdlc-ring-audit
+# shape: plugins/sdlc/skills/pr-review/assets/findings_template.yaml
+# Mandate: independently re-verify the round-1 A-tier fixes (cr-001 / cr-002) by reproduction,
+# not by reading the commit messages, and find what is new.
+review:
+  target: "origin/main..ff34bc0 (scoped: -- plugins/sdlc .gitignore)"
+  focus: all
+  model: claude-opus-5
+  vendor: claude
+  adversarial_mode: true
+  rules_loaded:
+    - "CLAUDE.md"
+    - "plugins/sdlc/dogfood/ring-audit/pr-body.md#Scope"
+    - "plugins/sdlc/dogfood/ring-audit/pr-body.md#Known issues (baseline for not-new)"
+    - "plugins/sdlc/skills/pr-review/references/tiers.md"
+  hunks: 170
+  lines_changed: 76461          # 76442 insertions + 19 deletions, 157 files
+  tool_calls_used: 22
+  max_findings: 5
+  mergeable: "no (A-tier)"
+  tier_summary: { A: 1, B: 2, C: 1 }
+
+  findings:
+
+    - id: cr-004
+      tier: A
+      severity: P1
+      file: plugins/sdlc/skills/commit/scripts/verify_commit.py
+      line_range: [94, 204]
+      category: gate_bypass
+      root_cause: >-
+        The cr-001 fix closed the single-ref door and left the empty-endpoint door open. The new guard at line 94
+        admits any --range containing "..", and the resolver at line 204 takes `re.split(r'[.]{2,3}', a.range)[-1]`.
+        For the git-legal ranges `A..` (= A..HEAD) and `A...` (= merge-base(A,HEAD)..HEAD) that expression returns
+        the EMPTY string, so the landing-content ref degrades to `":<path>"` — which is the INDEX blob, not the
+        range head. `git diff --name-only A..` still correctly lists the tampered locked file, but its hash is then
+        taken from the index; if the index holds the frozen bytes while the range head holds tampered bytes, the
+        file drops out of `touched` and the G2 lock prints `"lock": "ok"`. This is the same fail-open class cr-001
+        was raised for, reached through a sibling input form, and it is a regression: origin/main's verify_commit.py
+        REJECTs the identical repo state. The three cr-001 smoke twins added at smoke.sh:146-148 cover `A..B`,
+        a single ref and `A...B`, so none of them exercises an empty endpoint.
+      reproduction_scenario: >-
+        Scratch repo, branch main. (1) commit done_when.yaml; (2) `lock_done_when.py sign --by human-judge
+        --out .done_when.lock done_when.yaml` and commit the lock — call this commit BASE; (3) append a line to
+        done_when.yaml and commit it, so HEAD carries the tampered contract and no change-proposal exists;
+        (4) stage a restoration of the frozen bytes without committing: `git show BASE:done_when.yaml >
+        done_when.yaml && git add done_when.yaml`. Now
+        `verify_commit.py --msg "chore(contract): smuggle" --lock .done_when.lock --allow-main --range BASE..HEAD`
+        -> REJECT (correct), while the same command with `--range BASE..` and with `--range BASE...` ->
+        `{"verdict":"PASS","files":["done_when.yaml"],"lock":"ok","rejects":[]}` (exit 0). The locked file is
+        present in `files` and was silently exempted. Running the origin/main copy of the script on that identical
+        state with `--range BASE..` -> REJECT, which pins this as introduced by this diff. Precondition, stated
+        plainly: the index must differ from the range head for the locked file — with a clean index all three forms
+        behave correctly, which is why the existing smoke twins pass.
+      confidence: high
+      evidence:
+        - { kind: read, file: plugins/sdlc/skills/commit/scripts/verify_commit.py, lines: [90, 96] }
+        - { kind: read, file: plugins/sdlc/skills/commit/scripts/verify_commit.py, lines: [200, 213] }
+        - { kind: run, cmd: "python3 -c \"import re; print(re.split(r'[.]{2,3}','BASE..')[-1])\"", result: "'' (empty) -> ref becomes ':<path>' = the index blob" }
+        - { kind: run, cmd: "VC@ff34bc0 --lock .done_when.lock --range BASE..  (tampered HEAD, frozen bytes staged)", result: "PASS / lock=ok / exit 0" }
+        - { kind: run, cmd: "VC@ff34bc0 --lock .done_when.lock --range BASE... (same state)", result: "PASS / lock=ok / exit 0" }
+        - { kind: run, cmd: "VC@origin/main --lock .done_when.lock --range BASE.. (same state)", result: "REJECT — regression confirmed" }
+        - { kind: run, cmd: "git diff --name-only BASE..", result: "done_when.yaml — git accepts the form; only the hash side misreads it" }
+        - { kind: read, file: plugins/sdlc/eval/smoke.sh, lines: [141, 148], note: "the 3 cr-001 twins are A..B / single-ref / A...B; no empty-endpoint twin" }
+      needs_codebase_check: false
+      suggested_change: >-
+        Resolve the head instead of trusting the split, and reject an unresolvable one. Replace line 204's
+        expression with a helper computed once after the guard:
+        `head = re.split(r'[.]{2,3}', a.range)[-1].strip() or "HEAD"` (git's own default for an omitted right
+        endpoint), then `ref = f"{head}:{path}" if a.range else f":{path}"`. Alternatively tighten the guard at
+        line 94 to `if a.range and not re.fullmatch(r'\S+[.]{2,3}\S+', a.range): sys.exit(2)`. Add the missing
+        smoke twin next to smoke.sh:148 — the same tampered contract with the frozen bytes staged must REJECT
+        under `--range HEAD~1..` and `--range HEAD~1...`, not only under `--range HEAD~1..HEAD`.
+      tags: ["g2-lock", "fail-open", "regression", "cr-001-residual", "I-52", "I-75"]
+
+    - id: cr-005
+      tier: B
+      severity: P2
+      file: plugins/sdlc/dogfood/ring-audit/pr-body.md
+      line_range: [32, 32]
+      category: evidence_staleness
+      root_cause: >-
+        The PR body's Verification block lists `git diff --stat 0be2770^..HEAD -- plugins/sdlc/skills
+        plugins/sdlc/agents plugins/sdlc/docs` annotated `# (empty — AC-007-a)`, and the same command with the
+        same asserted result is frozen into audit.yaml:3453-3457 (`output: ''`, `lines: 0`) and rendered into
+        AUDIT.md:995-999 as `→ 0 行输出（空）`. At the shipped HEAD the command prints 5 files / 11 insertions:
+        the two commits that fixed the round-1 findings (e198e0e touching verify_commit.py, 0cf6b1a touching four
+        SKILL.md files) both land after 0be2770 inside an audited directory. This is NOT the disclosed 4→6 delta:
+        that Known-issues entry corrects `non_card_commits_touching_audited_dirs` (4 recorded vs 6 live) and
+        reassures the reader that "Card 提交触碰被审目录仍为 0（AC-007 成立，现场复现可得）" — true for the
+        card-scoped replay, but this command is not card-scoped, and its stated output is exactly what is no
+        longer reproducible. A reviewer working the Verification block top to bottom hits a contradiction on the
+        AC-007-a line and has nothing in the PR body telling them why.
+      reproduction_scenario: >-
+        At ff34bc0: `git diff --stat 0be2770^..HEAD -- plugins/sdlc/skills plugins/sdlc/agents plugins/sdlc/docs`
+        prints commit/SKILL.md, commit/scripts/verify_commit.py, issue/SKILL.md, psl-derive/SKILL.md,
+        sdlc/SKILL.md — "5 files changed, 11 insertions(+), 5 deletions(-)". The PR body, AUDIT.md and audit.yaml
+        all assert empty. Round 1 ran the same command at 136a8c0 and recorded it empty, so the two round-1 fix
+        commits are what broke it.
+      confidence: high
+      evidence:
+        - { kind: run, cmd: "git diff --stat 0be2770^..HEAD -- plugins/sdlc/skills plugins/sdlc/agents plugins/sdlc/docs", result: "5 files changed, 11 insertions(+), 5 deletions(-)" }
+        - { kind: read, file: plugins/sdlc/dogfood/ring-audit/pr-body.md, lines: [32, 32] }
+        - { kind: read, file: plugins/sdlc/dogfood/ring-audit/AUDIT.md, lines: [995, 999] }
+        - { kind: read, file: plugins/sdlc/dogfood/ring-audit/audit.yaml, lines: [3453, 3457] }
+        - { kind: run, cmd: "bash plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh", result: "ok true · card_commits_touching_audited_dirs 0 · non_card 6 — AC-007-a itself still holds" }
+      needs_codebase_check: false
+      suggested_change: >-
+        AC-007-a survives on the card-scoped instrument, so fix the claim, not the code: change pr-body.md:32 to
+        the card-scoped form that actually proves AC-007-a — `bash plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh
+        # card_commits_touching_audited_dirs 0` — and extend the existing 4→6 Known-issues bullet with one clause
+        naming AUDIT.md:999 / audit.yaml:3456 as frozen-at-a2deb83 records whose `git_diff_stat` was empty then and
+        is 5 files now, for the same two deviation commits. Do not re-render AUDIT.md (g2-judge ruled it frozen).
+      tags: ["pr-body", "audit-md", "reproducibility", "AC-007-a"]
+
+    - id: cr-003
+      tier: B
+      severity: P2
+      file: plugins/sdlc/skills/psl-derive/scripts/verify_derived.py
+      line_range: [95, 96]
+      category: gate_scope
+      root_cause: >-
+        Carried forward from round 1 unchanged, per the contract judge's ruling that it ships as a Known issue and
+        is fixed in a follow-up PR. Re-verified live at ff34bc0, not taken on trust. The I-04 fix drops EVERY
+        blockquote line in workflow.md, not just the template's leading guidance block, and it does so before both
+        consumers of the text: the named-steps REJECT at line 99 and the sequence-word flag at line 102. Prefixing
+        a procedural workflow with "> " therefore makes psl-derive's only mechanical enforcement of "write Σ/φ, not
+        a procedure" completely blind, not merely lenient. Re-reported at the same tier and severity as round 1;
+        not escalated.
+      reproduction_scenario: >-
+        Copy plugins/sdlc/dogfood/ring-audit/derived to a scratch dir and replace workflow.md with four
+        blockquoted lines: `> Step 1: 收集配件清单` / `> Step 2: 逐环打分` / `> 步骤 3: 出报告` /
+        `> 首先读 PSL，然后建表，接着填证据，最后渲染`. Then `python3
+        plugins/sdlc/skills/psl-derive/scripts/verify_derived.py <scratch> --psl
+        plugins/sdlc/dogfood/ring-audit/PSL-sdlc-ring-audit.md` returns verdict PASS with zero named-step rejects
+        and zero sequence flags. Strip the four "> " prefixes and the identical content returns REJECT
+        "workflow.md contains named steps: ['Step 1', 'Step 2', '步骤 3']".
+      confidence: high
+      evidence:
+        - { kind: read, file: plugins/sdlc/skills/psl-derive/scripts/verify_derived.py, lines: [92, 103] }
+        - { kind: run, cmd: "verify_derived.py <all-blockquote workflow.md> --psl PSL-sdlc-ring-audit.md", result: "PASS, 0 named-step rejects, 0 sequence flags" }
+        - { kind: run, cmd: "same content with the '> ' prefixes stripped", result: "REJECT — named steps ['Step 1','Step 2','步骤 3']" }
+      needs_codebase_check: false
+      suggested_change: >-
+        Bound the strip to the preamble instead of the whole file: drop blockquote lines only until the first
+        non-blank, non-blockquote line, e.g. replace line 96 with
+        `ls=w.splitlines(); i=0
+         while i<len(ls) and (not ls[i].strip() or ls[i].lstrip().startswith((">","#"))): i+=1
+         w="\n".join(ls[i:])`.
+        Alternative if mid-file guidance must stay legal: keep scanning blockquotes but demote their hits from
+        `rejects` to a `needs_semantic_review` flag, so a procedure hidden behind "> " is surfaced rather than erased.
+      tags: ["I-04", "evasion", "psl-derive", "carried-from-round-1"]
+
+    - id: cr-006
+      tier: C
+      severity: P3
+      file: plugins/sdlc/.claude-plugin/plugin.json
+      line_range: [3, 4]
+      category: release_hygiene
+      root_cause: >-
+        A byproduct of the cr-002 fix, surfaced precisely because the bump commit was disciplined about touching
+        only version lines. 0cf6b1a moves plugin.json:4 and .claude-plugin/marketplace.json:291 from 0.6.0 to
+        0.7.0, but the `description` string in both files (plugin.json:3, marketplace.json:290 — byte-identical
+        copies) still opens its feature paragraph with "v0.6.0 reads the plugin through the loop-engineering /
+        graph-engineering lens", and nothing in it names what 0.7.0 changed. The marketplace card therefore
+        advertises 0.7.0 while its own prose self-identifies as 0.6.0, and the six verifier fixes this PR exists to
+        ship are invisible in the listing a user reads before installing. C tier because CLAUDE.md's sync checklist
+        governs the three `version` fields (all correctly moved) and says nothing about description prose — whether
+        an embedded version sentence must track the bump is a judgment call for the maintainer, and the benign
+        reading ("v0.6.0 introduced X" as changelog history) is defensible.
+      reproduction_scenario: null    # C tier
+      confidence: high
+      evidence:
+        - { kind: run, cmd: "python3 -c \"import json,re; d=json.load(open('plugins/sdlc/.claude-plugin/plugin.json')); print(d['version'], re.findall(r'v0[.]\\d+[.]\\d+', d['description']))\"", result: "0.7.0 ['v0.6.0']" }
+        - { kind: run, cmd: "same over the sdlc entry of .claude-plugin/marketplace.json", result: "0.7.0 ['v0.6.0']" }
+        - { kind: run, cmd: "git show 0cf6b1a --stat", result: "6 files changed, 6 insertions(+), 6 deletions(-) — one version line each, nothing else; the CLAUDE.md checklist is fully met" }
+      needs_codebase_check: false
+      suggested_change: >-
+        Either drop the version token ("the plugin reads itself through the loop-engineering lens…") so the
+        sentence stops decaying at every bump, or add one clause naming 0.7.0's content — "v0.7.0 lands the six
+        dogfood verifier fixes (I-04/05/07/17/34/38/39/47/51/52) and the ring-audit self-audit" — in both
+        plugin.json:3 and marketplace.json:290, which must stay byte-identical.
+      tags: ["claude-md", "semver", "marketplace"]
+
+  rationale: >-
+    Round-2 verdicts on the two round-1 A-tier findings, reproduced independently rather than read off the commits.
+    (A) cr-001 — PARTIALLY CLOSED. The reported door is shut: in a scratch repo carrying a tampered locked file and
+    no change-proposal, the pre-fix script (e198e0e^) returns PASS / lock=ok under `--range main` and
+    `--range HEAD~1`, while the shipped script exits 2 with "verify_commit: --range needs A..B" and the A..B and
+    A...B forms both REJECT. The three new smoke twins at smoke.sh:146-148 pin exactly that, and all 193 smoke
+    expectations pass at ff34bc0. A sibling door is still open — see cr-004, filed as a new finding rather than a
+    reopening, because it needs an input form (`A..` / `A...`) the fix never considered and a staged/head
+    divergence the original did not.
+    (B) cr-002 — CLOSED, fully. All three CLAUDE.md tiers moved in one commit: the four touched skills'
+    SKILL.md frontmatter (commit 0.1.0→0.1.1, issue 0.1.0→0.1.1, psl-derive 0.1.0→0.1.1, sdlc 0.2.0→0.3.0),
+    plugins/sdlc/.claude-plugin/plugin.json 0.6.0→0.7.0, and .claude-plugin/marketplace.json's sdlc entry
+    0.6.0→0.7.0 (verified by parsing both JSON files at origin/main and at ff34bc0). No skill under
+    plugins/sdlc/skills changed without its SKILL.md moving. `git show 0cf6b1a --stat` is 6 files / 6 insertions /
+    6 deletions — one version line each, no prose touched, no line shifted, so no audit evidence anchor moves.
+    The minor-vs-patch split matches CLAUDE.md's table (sdlc gained new CLI flags = 功能增强 = minor; the other
+    three are pure fixes = patch). Only residue is cr-006, a C-tier prose nit.
+    (C) PR-body Verification block re-run at ff34bc0, clean tree before and after: run_tests 34/34 OK;
+    mutation killed 24/24 kill_rate 1.0 survivors []; check_audit exit 0 rings 10 parts_total 42 failed_predicates
+    []; --variant delete-ring:R6 exit 1 ring_missing; replay ok true card_commits 15
+    card_commits_touching_audited_dirs 0 non_card 6; verify_calibration meta_gate PASS (c1-c4 true, 3
+    needs_semantic_review); smoke 193 passed 0 failed. Seven of eight reproduce; the eighth is cr-005.
+    (D) REFUTED — lock_done_when.py `verify` now defaults a missing `signer_kind` to "human"
+    (scripts/lock_done_when.py, cmd_verify), which would render an unattributed signature as human verification and
+    hit the Scope "don't". Not a finding: the field is introduced by this PR, the only lock in the repo
+    (plugins/sdlc/dogfood/ring-audit/.done_when.lock) carries `signer_kind: delegated_agent` plus a full
+    `authorization` string, and every lock predating the field was signed under a build that had no delegated
+    concept at all, so "human" is correct by construction there.
+    (E) REFUTED — cited run evidence that lives under the `.sdlc/` tree this same PR gitignores
+    (holdout_run.json, holdout_manifest.yaml, state.json, ledger.md) is unreachable to any reader, so the
+    "holdout 6/10" claim cannot be checked. The mechanism is real but it is disclosed, not concealed:
+    calibration_report.yaml's `holdout_ref` says "gitignored" in the value itself, `attested_by_kind:
+    delegated_agent` / `render_as: delegated` are carried into known_gaps.yaml and audit.yaml#run_evidence,
+    verify_calibration.py documents ☐3 as a non-emptiness check plus a needs_semantic_review flag rather than a
+    resolution, and the isolation_evidence block states the honest limit ("protocol-level, not OS-enforced").
+    Nothing here writes delegated up to verified.
+    (F) REFUTED — the exit-2 that the cr-001 fix introduces breaks a caller, since exit 2 prints no JSON and every
+    consumer parses stdout. Grepped every `--range` occurrence outside ratchet-log: replay_card_commits.sh:117,
+    audit.schema.md:265, the cards, done_when.yaml, g2-record.md and the L5 test all use `<sha>^..<sha>`. No
+    in-repo caller passes a single ref, and the full replay exits 0 at HEAD.
+    (G) WITHHELD as nits, not padded into findings: state.schema.json's new `signer_kind` / `authorization` are
+    added to $defs/gate uncoupled, so a hand-written state.json could claim delegated_agent with no authorization
+    and still validate — but nothing imports jsonschema, both scripts enforce the coupling at runtime
+    (sdlc_state.py cmd_gate, lock_done_when.py cmd_sign), and round 1 already withheld it. Also withheld:
+    verify_issue.py's new Links regex takes the last match per key when a key repeats in the section, which is a
+    theoretical last-wins hazard I could not turn into a real failing input.
+    (H) Not re-reported, per this round's baseline: everything under pr-body.md "Known issues" A-G — KG-01..11,
+    the deferred mf-* / srg-* / I-68 items, mf-001 (card_footer_of case sensitivity), mf-002 (AUDIT.md:976 non-card
+    window label — note cr-005 is a different line and a different claim), mf-005, mf-011, nh-004, and the
+    disclosed 4→6 `non_card_commits_touching_audited_dirs` delta.
+    (I) Not read, per the task's isolation instruction: .sdlc/** and ratchet-log/**.
+
+  caveats:
+    adversarial_mode_caveat: >-
+      Adversarial default ON ("assume this shipped and caused an incident; find why"). cr-004 came from that
+      stance — the question asked was not "is the guard reasonable" but "which git-legal range shapes does the
+      guard admit that the resolver then misreads", and it was confirmed against the origin/main copy of the same
+      script on an identical repo state before being written up.
+    diff_truncation_caveat: >-
+      157 files, 170 hunks, 76,461 lines changed. The 23 `mutant_*.yaml` fixtures (~2k lines each, roughly 46k of
+      the total) are generated mutation inputs and were not read line by line; mutation.sh reproduced at 24/24
+      killed. audit.yaml and AUDIT.md were read only at the run_evidence / replay anchors relevant to cr-005.
+      Effort concentrated on the six verifier fixes under plugins/sdlc/skills, smoke.sh, the version-sync surface,
+      and the reproducibility of every command in the PR body, as the task directed.
+    single_vendor_caveat: >-
+      This reviewer is Claude (opus-5) — the same vendor as the implementers, as round 1, as every agent in the
+      run's acceptance chain, and as the g1/g2 delegated judges (pr-body Known issues G: 所有评审均为 claude 厂商,
+      编排者撰写评审提示, 隔离为协议级而非 OS 级). No Codex or Gemini evaluator was available, so blind spots
+      systematically shared with the authors are not covered by either round. Two isolated same-vendor rounds
+      reduce single-pass variance; they do not substitute for a cross-vendor pass. Per the SKILL's Σ this is
+      stated rather than silently downgraded.

@@ -201,7 +201,10 @@ def main():
 
         def staged_sha256(path):
             # the content about to land: index blob in staged mode, the range head's blob in --range mode
-            ref = f"{re.split(r'[.]{2,3}', a.range)[-1]}:{path}" if getattr(a, "range", None) else f":{path}"
+            # `A..` and `A...` are legal git ranges whose right endpoint defaults to HEAD; the split then yields
+            # "" and `git show :path` would read the INDEX — the wrong side again (pre-review cr-004).
+            head = (re.split(r"[.]{2,3}", a.range)[-1].strip() or "HEAD") if getattr(a, "range", None) else None
+            ref = f"{head}:{path}" if head else f":{path}"
             r = subprocess.run(["git", "show", ref], capture_output=True)
             return hashlib.sha256(r.stdout).hexdigest() if r.returncode == 0 else None
 
