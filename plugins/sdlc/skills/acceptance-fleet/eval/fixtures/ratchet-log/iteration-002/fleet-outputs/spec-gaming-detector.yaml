@@ -1,0 +1,7 @@
+# iteration-002 — baseline correctly carried from iteration-001's 3.5.
+gaming_assessment:
+  agent_role: spec-gaming-detector
+  baseline_score: 3.5
+  gaming_risk_score: 4.0
+  gaming_risk_trajectory: [3.5, 4.0]
+  detected_patterns: []

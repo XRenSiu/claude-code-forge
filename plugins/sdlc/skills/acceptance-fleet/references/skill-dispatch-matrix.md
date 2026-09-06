@@ -22,6 +22,27 @@ A new skill `/spec-drift-detector` was added in v1.0+; it didn't have a v0.x equ
 
 ---
 
+## Before the matrix: derive the parameters, do not type them
+
+Every `$PREV_*` and every threshold below comes from one call, made once at S0:
+
+```bash
+eval "$(scripts/next_iteration.py "$RATCHET_LOG" "$N" --done-when "$SPEC_DIR/done_when.yaml")"
+```
+
+It sets `ITER_DIR`, `PREV_ITER_DIR`, `PREV_SNAPSHOT`, `PREV_GAMING_SCORE`, `PREV_QA_REPORT`,
+`PREV_PM_REVIEW`, `GAMING_TRAJECTORY`, `GAMING_DONE_BELOW`, `GAMING_BLOCK_AT`, `PREV_GAMING_BAND`,
+`SPEC_DRIFT_TRIGGER`, `BASELINE_DISCREPANCY`. Missing values come back empty so `${VAR:+--flag="$VAR"}`
+omits the flag; exit 1 means the predecessor is missing or the configured band is empty — stop, do not
+dispatch (iron rule 6).
+
+This exists because iteration-003 of the sdlc-ring-audit run was handed `--baseline-score 3.5` when
+iteration-002 had produced 4.0: the task file was made by editing the previous one, and the sed moved the
+label but not the number. Reading both the value and its path from the same place makes that class of edit
+impossible. Save the script's stdout as `$ITER_DIR/dispatch-params.sh`.
+
+---
+
 ## v1.0+ dispatch matrix
 
 The orchestrator spawns 7 sub-skill calls per iteration (3 code-reviewer focuses + 4 other skills). Always in parallel.
@@ -83,8 +104,12 @@ The orchestrator spawns 7 sub-skill calls per iteration (3 code-reviewer focuses
 ```bash
 /qa-reviewer "$SPEC_DIR/tests/" \
   --thresholds="$SPEC_DIR/done_when.yaml" \
-  --baseline="<prev iteration>/qa-reviewer.yaml" \
+  ${PREV_QA_REPORT:+--baseline="$PREV_QA_REPORT"} \
   --output="$ITER_DIR/fleet-outputs/qa-reviewer.yaml"
+
+# then project the report down to measurements — this file, not the report, is what drift may read
+scripts/qa_facts.py "$ITER_DIR/fleet-outputs/qa-reviewer.yaml" \
+  --output="$ITER_DIR/fleet-outputs/qa-measurements.yaml"
 ```
 
 | Setting | Value |
@@ -102,7 +127,7 @@ The orchestrator spawns 7 sub-skill calls per iteration (3 code-reviewer focuses
 ```bash
 /pm-reviewer "$SPEC_DIR/spec.md" "$IMPL_ROOT" \
   --severity-marks="<critical_req_ids>" \
-  --prev-review="<prev iteration>/pm-reviewer.yaml" \
+  ${PREV_PM_REVIEW:+--prev-review="$PREV_PM_REVIEW"} \
   --output="$ITER_DIR/fleet-outputs/pm-reviewer.yaml"
 ```
 
@@ -119,15 +144,24 @@ The orchestrator spawns 7 sub-skill calls per iteration (3 code-reviewer focuses
 ```bash
 /spec-drift-detector "$SPEC_DIR/spec.md" "$IMPL_ROOT" \
   --history-depth=100 \
-  --qa-report="$ITER_DIR/fleet-outputs/qa-reviewer.yaml" \
+  --qa-measurements="$ITER_DIR/fleet-outputs/qa-measurements.yaml" \
   --output="$ITER_DIR/fleet-outputs/spec-drift-detector.yaml"
 ```
+
+**Never `--qa-report`.** Passing `qa-reviewer.yaml` here is what broke iron rule 2 and got recorded as an
+isolation breach in the sdlc-ring-audit run: it hands the drift detector qa's findings, severities and
+GO/NO-GO decision while drift is still forming its own opinion. `scripts/qa_facts.py` projects the report
+down to its measurements — counts, coverages, durations, layers run, mutation totals — and refuses to
+write a file that still carries `decision`, `decision_reasons`, `findings`, `num_findings`,
+`maintenance_issues`, `regressions`, `caveats` or a surviving mutant's `hint`. Facts cross the wall;
+judgments do not. `qa_facts.py --check <file>` re-verifies any file before it is passed on.
 
 | Setting | Value |
 |---|---|
 | Output → | `spec-drift-detector.yaml` |
 | Model | Claude Opus 4.7 |
-| Dependencies | `/qa-reviewer` must complete first (perf evidence comes from there) — but the orchestrator can still spawn in parallel; spec-drift-detector waits for qa-reviewer's output via filesystem polling. |
+| Dependencies | `/qa-reviewer` must complete first, then `qa_facts.py` — the measurement projection is the dependency, not the report. The orchestrator can still spawn drift in parallel; it waits for `qa-measurements.yaml` to appear via filesystem polling. |
+| Isolation | measurements only. A drift finding citing this file counts as ONE source at `/meta-judge` (qa and drift reading the same number is shared input, not corroboration); a drift finding citing a qa *finding* or verdict is an isolation breach, because the projection makes it impossible to obtain honestly. |
 
 ### `/spec-gaming-detector`
 
@@ -136,7 +170,7 @@ The orchestrator spawns 7 sub-skill calls per iteration (3 code-reviewer focuses
 ```bash
 /spec-gaming-detector "$SPEC_DIR/spec.md" "$IMPL_ROOT" \
   ${SPEC_ROBUSTNESS:+--spec-robustness="$SPEC_DIR/spec-robustness.md"} \
-  ${PREV_SNAPSHOT:+--history="$PREV_ITER_DIR/impl-snapshot.tar.gz"} \
+  ${PREV_SNAPSHOT:+--history="$PREV_SNAPSHOT"} \
   ${PREV_GAMING_SCORE:+--baseline-score="$PREV_GAMING_SCORE"} \
   --output="$ITER_DIR/fleet-outputs/spec-gaming-detector.yaml"
 ```
@@ -146,7 +180,8 @@ The orchestrator spawns 7 sub-skill calls per iteration (3 code-reviewer focuses
 | Output → | `spec-gaming-detector.yaml` |
 | Model (strong isolation) | **Codex GPT-5 or Gemini Pro 3 (cross-vendor)** |
 | Model (medium/weak isolation) | Claude Opus 4.7 |
-| `--history` | provided from iteration 2 onward |
+| `--history` | `$PREV_SNAPSHOT`, empty before iteration 2 |
+| `--baseline-score` | `$PREV_GAMING_SCORE` — read from iteration N-1's own `spec-gaming-detector.yaml`, never copied from a task template |
 | `--spec-robustness` | provided if `spec-robustness.md` exists |
 
 ---
@@ -160,6 +195,14 @@ Run `/meta-judge` (S2 of the orchestrator's phase map):
   --rules="$SPEC_DIR/done_when.yaml" \
   --context="$CONTEXT_JSON" \
   --output="$ITER_DIR/meta-judge-output.yaml"
+```
+
+`$CONTEXT_JSON` carries the one declared shared input so meta-judge can weight it without guessing:
+
+```json
+{"feature": "<name>", "iteration": 3, "is_hotfix": false,
+ "shared_inputs": [{"from": "qa-reviewer", "to": "spec-drift-detector",
+                    "file": "fleet-outputs/qa-measurements.yaml", "kind": "measurements_only"}]}
 ```
 
 | Setting | Value |
@@ -178,11 +221,11 @@ The 7 sub-skill calls launch simultaneously. The orchestrator:
 2. Polls `fleet-outputs/` for completion of each.
 3. Once all 7 are present (or marked `skipped:`), invokes `/meta-judge`.
 
-`/spec-drift-detector` has a soft dependency on `/qa-reviewer` (uses its qa-report for measurement-backed non-functional drift). The orchestrator can either:
-- (a) Spawn drift detector at the end, after qa completes (sacrifices a bit of parallelism for cleaner data flow).
-- (b) Spawn all 7 in parallel and have drift detector wait for qa-report.yaml to appear via filesystem polling.
+`/spec-drift-detector` has a soft dependency on `/qa-reviewer` (it uses qa's measurements for measurement-backed non-functional drift). The orchestrator can either:
+- (a) Spawn drift detector at the end, after qa completes and `qa_facts.py` has written the projection (sacrifices a bit of parallelism for cleaner data flow).
+- (b) Spawn all 7 in parallel and have drift detector wait for `qa-measurements.yaml` to appear via filesystem polling.
 
-Default behavior is (b) for max parallelism. If you see drift-detector running before qa, that's expected — it'll pause until qa-report.yaml shows up.
+Default behavior is (b) for max parallelism. If you see drift-detector running before qa, that's expected — it'll pause until `qa-measurements.yaml` shows up. It waits for the projection, never for `qa-reviewer.yaml`: if the raw report is what appears first, that is a wiring bug, not an early start.
 
 ---
 

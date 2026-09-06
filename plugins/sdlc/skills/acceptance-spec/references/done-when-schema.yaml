@@ -134,3 +134,21 @@ rules:
 
 spec_drift_threshold:
   max_fix_loops_before_escalation: 3       # PBT 失败 N 次后退回 Step 2 (Appendix C default)
+
+# ============================================================================
+# GAMING-RISK BAND (optional; added v1.1.0 for /acceptance-fleet S3)
+# ============================================================================
+# The two thresholds that split /spec-gaming-detector's gaming_risk_score into the three ratchet
+# bands. Omit the block entirely to take the defaults 3 / 7.
+#
+#   score < done_below                      → clean    (rule E: DONE, if meta-judge also passed)
+#   done_below <= score < block_at_or_above → elevated (rule F: FIX if falling, else NEEDS_HUMAN)
+#   score >= block_at_or_above              → blocking (rule B: GAMING_RISK)
+#
+# Exactly two sub-fields, both numbers, with done_below <= block_at_or_above.
+# /acceptance-fleet reads them through scripts/next_iteration.py, which refuses an inverted band —
+# an inverted band leaves scores with no rule, which is the defect this block was added to close.
+
+gaming_risk_threshold:
+  done_below: 3
+  block_at_or_above: 7

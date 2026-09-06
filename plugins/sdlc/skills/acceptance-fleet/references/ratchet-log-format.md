@@ -22,6 +22,7 @@ specs/<feature>/
 ratchet-log/iteration-NNN/
 ├── timestamp.txt
 ├── isolation.json
+├── dispatch-params.sh             # verbatim stdout of scripts/next_iteration.py
 ├── input-manifest.json
 ├── impl-snapshot.txt              # OPTIONAL but recommended
 ├── impl-diff.patch                # OPTIONAL — diff vs previous iteration's impl-snapshot
@@ -33,6 +34,7 @@ ratchet-log/iteration-NNN/
 │   ├── adversarial-reviewer.yaml
 │   ├── edge-case-hunter.yaml
 │   ├── e2e-explorer.yaml
+│   ├── qa-measurements.yaml       # scripts/qa_facts.py projection of qa-reviewer.yaml
 │   └── spec-gaming-detector.yaml
 ├── rebuttals/
 │   └── <originating-finding-id>.yaml
@@ -57,7 +59,15 @@ One line, ISO-8601 UTC, when the iteration started.
 ```
 
 ### `isolation.json`
-What isolation level the iteration ran at + which model went to which role. See `evaluation-isolation-levels.md` for the schema. Required.
+What isolation level the iteration ran at + which model went to which role. See `evaluation-isolation-levels.md` for the schema. Required. When `next_iteration.py` reported a `BASELINE_DISCREPANCY`, record it here too — it says an earlier iteration was dispatched on a number the log contradicts.
+
+### `dispatch-params.sh`
+The verbatim stdout of `scripts/next_iteration.py <ratchet-log-dir> <N> --done-when <done_when.yaml>`: every cross-iteration parameter and threshold this iteration was dispatched with, each derived from the file it names. Written before any sub-skill is spawned. Its purpose is that a later reader can tell what the fleet was handed without reconstructing it from prose — which is how the wrong `--baseline-score` went unnoticed for two iterations.
+
+### `fleet-outputs/qa-measurements.yaml`
+`scripts/qa_facts.py`'s projection of `qa-reviewer.yaml`, and the only qa bytes `/spec-drift-detector` is allowed to read (iron rule 2's stated exception). Measurements only: counts, coverages, durations, layers run, mutation totals. `decision`, `decision_reasons`, `findings`, `num_findings`, `maintenance_issues`, `regressions`, `caveats` and each surviving mutant's `hint` are omitted, and the omitted key list is recorded in the file's own `provenance:` block.
+
+The `fleet-outputs/` names above still show the v0.x role files; the authoritative per-skill filenames are in `skill-dispatch-matrix.md`.
 
 ### `input-manifest.json`
 Checksums of every input file the iteration consumed, so we can reconstruct exactly what the evaluators saw even if files change later.
@@ -112,6 +122,9 @@ The compact summary used by anything that needs the iteration's verdict without 
   "state_decision": "FIX",
   "blocking_findings_count": 2,
   "gaming_risk_score": 5,
+  "gaming_band": "elevated",
+  "gaming_thresholds": {"done_below": 3, "block_at_or_above": 7},
+  "ratchet_rule": "F1",
   "spec_drift_counter": 0,
   "duration_seconds_total": 487,
   "cost_usd_estimated": 0.72,
@@ -128,6 +141,8 @@ Exactly one of these, depending on `state_decision`:
 - `needs-human.md` — when `NEEDS_HUMAN`. The specific questions requiring human input.
 
 If the state is `DONE`, no state-specific report — the iteration directory itself is the artifact.
+
+`gaming_band` (`clean` / `elevated` / `blocking` / `unknown`), `gaming_thresholds` and `ratchet_rule` (which lettered rule in SKILL.md S3 decided this state) are required from v1.1.0 on. They exist so an iteration's state can be re-derived from the log instead of taken on trust: an `elevated` band with no `ratchet_rule` means somebody adjudicated by hand, which is a defect in the S3 table and should be recorded as one.
 
 ---
 

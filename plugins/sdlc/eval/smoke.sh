@@ -450,6 +450,25 @@ expect "apply_proposal --patch writes patch, target untouched" 0 bash -c "before
 expect "apply_proposal: gate_fix_list kind produces gate.json diff" 0 bash -c "python3 '$TU/apply_proposal.py' '$TMP/tune.yaml' --id P-2 --skills-root '$S' 2>/dev/null | grep -q 'audit ACCEPT'"
 expect "apply_proposal: unknown id rejected" 1 py "$TU/apply_proposal.py" "$TMP/tune.yaml" --id P-99 --skills-root "$S"
 
+echo "== acceptance-fleet / next_iteration.py + qa_facts.py"
+AF="$S/acceptance-fleet/scripts"; FXA="$S/acceptance-fleet/eval/fixtures"; RL="$FXA/ratchet-log"
+# I-72: the baseline comes from iteration N-1's own output. The fixture reproduces the real defect —
+# iteration-003 recorded baseline_score 3.5 while iteration-002 actually produced 4.0.
+expect "next_iteration: baseline derived from iteration N-1, not the task file (I-72)" 0 bash -c "python3 '$AF/next_iteration.py' '$RL' 3 --format json 2>/dev/null | python3 -c \"import json,sys; d=json.load(sys.stdin); assert d['PREV_GAMING_SCORE']=='4', d; assert d['PREV_ITER_DIR'].endswith('iteration-002'), d; assert d['GAMING_TRAJECTORY']=='3.5,4', d; assert d['PREV_SNAPSHOT'].endswith('iteration-002/impl-snapshot.tar.gz'), d; assert d['PREV_QA_REPORT'].endswith('iteration-002/fleet-outputs/qa-reviewer.yaml'), d; assert d['PREV_PM_REVIEW'].endswith('iteration-002/fleet-outputs/pm-reviewer.yaml'), d\""
+expect "next_iteration: a recorded baseline that disagrees with the log is named (I-72)" 0 bash -c "python3 '$AF/next_iteration.py' '$RL' 3 --format json 2>/dev/null | python3 -c \"import json,sys; d=json.load(sys.stdin); b=d['BASELINE_DISCREPANCY']; assert 'iteration-003' in b and '3.5' in b and 'iteration-002' in b, b\""
+expect "next_iteration: iteration 1 carries nothing forward" 0 bash -c "python3 '$AF/next_iteration.py' '$RL' 1 --format json 2>/dev/null | python3 -c \"import json,sys; d=json.load(sys.stdin); assert d['PREV_ITER_DIR']=='' and d['PREV_GAMING_SCORE']=='' and d['PREV_GAMING_BAND']=='unknown', d\""
+expect "next_iteration: missing predecessor refuses to dispatch" 1 py "$AF/next_iteration.py" "$RL" 9
+expect "next_iteration: shell output is eval-able and sets the vars" 0 bash -c "eval \"\$(python3 '$AF/next_iteration.py' '$RL' 3 2>/dev/null)\"; [ \"\$PREV_GAMING_SCORE\" = 4 ] && [ \"\$GAMING_BLOCK_AT\" = 7 ] && [ \"\$PREV_GAMING_BAND\" = elevated ]"
+# I-68: the two ratchet-band thresholds are configuration, read from done_when.yaml, not literals in prose.
+expect "next_iteration: gaming band read from done_when.yaml (I-68)" 0 bash -c "python3 '$AF/next_iteration.py' '$RL' 3 --done-when '$FXA/done_when_bands.yaml' --format json 2>/dev/null | python3 -c \"import json,sys; d=json.load(sys.stdin); assert d['GAMING_DONE_BELOW']=='5' and d['GAMING_BLOCK_AT']=='6', d; assert d['PREV_GAMING_BAND']=='clean', d; assert d['SPEC_DRIFT_TRIGGER']=='4', d\""
+expect "next_iteration: inverted band rejected — it would leave scores with no rule (I-68)" 1 py "$AF/next_iteration.py" "$RL" 3 --done-when "$FXA/done_when_bad_bands.yaml"
+# I-71: drift may read qa's measurements, never its findings, severities or decision.
+expect "qa_facts: projection keeps measurements, drops findings/decision (I-71)" 0 bash -c "python3 '$AF/qa_facts.py' '$FXA/qa-reviewer-full.yaml' --output '$TMP/qam.yaml' >/dev/null && python3 -c \"import yaml; m=yaml.safe_load(open('$TMP/qam.yaml'))['qa_measurements']; assert m['scope']['tests_executed']==245 and m['mutation']['kill_rate']==0.758 and m['results']['integration']['duration_seconds']==145, m; assert not ({'decision','decision_reasons','findings','num_findings','maintenance_issues','regressions','caveats'} & set(m)), sorted(m); assert 'hint' not in m['mutation']['surviving_mutants'][0], m['mutation']; assert set(m['provenance']['omitted_keys'])>={'decision','findings','caveats'}, m['provenance']\""
+expect "qa_facts --check: a clean projection passes" 0 bash -c "python3 '$AF/qa_facts.py' '$FXA/qa-reviewer-full.yaml' --output '$TMP/qam2.yaml' >/dev/null && python3 '$AF/qa_facts.py' --check '$TMP/qam2.yaml'"
+expect "qa_facts --check: a smuggled decision/finding is caught (I-71)" 1 py "$AF/qa_facts.py" --check "$FXA/qa-measurements-leaky.yaml"
+expect "qa_facts --check: findings buried inside a measurement subtree are caught too" 1 py "$AF/qa_facts.py" --check "$FXA/qa-measurements-nested-leak.yaml"
+expect "qa_facts: a non-qa document is refused" 1 bash -c "printf 'gaming_assessment:\\n  gaming_risk_score: 4.0\\n' > '$TMP/notqa.yaml' && python3 '$AF/qa_facts.py' '$TMP/notqa.yaml'"
+
 echo
 echo "smoke: $pass passed, $fail failed  (tmp: $TMP)"
 [[ $fail -eq 0 ]]

@@ -1,0 +1,9 @@
+# A hand-made "measurements" file that smuggles the decision and a finding back across the wall.
+qa_measurements:
+  agent_role: qa-reviewer
+  scope: { tests_executed: 245, tests_passed: 232 }
+  decision: NO-GO
+  results:
+    integration:
+      passed: 4
+      findings: [{ severity: P0, test_name: test_cancel_atomicity }]
