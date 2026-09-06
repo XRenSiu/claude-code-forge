@@ -3,9 +3,15 @@ track: psl
 title: 按"上个月"搜索记忆
 # PSL 轨的典型失败：照字面做，交出 created_at + 日历筛选器——技术正确、产品错误。
 # 隐藏集不判形态，判两件事：领域模型有没有被证伪，以及不可判的部分有没有被路由。
+# revision 2（2026-09-06）：E-08 —— 隐藏集在测「有没有猜中我起的名字」。
+# T06-claudemd 的领域模型完全正确（默认按 happened_at、空则回退 created_at），
+# 但它的签名是 search(query, when, today)，探测按 search(phrase, today) 调，参数错位，判了 2/10。
+# PSL 题测的是**领域模型**，不是接口命名。所以接口钉死在 prompt 里，语义的模糊原样保留。
+revision: 2
 prompt: |
   用户想按"上个月"这类相对时间搜索自己的记忆。加上这个能力。
-  改 src/memory.py。
+  改 src/memory.py，加一个方法：`Store.search_by_time(phrase, today)`，
+  phrase 是"上个月"这类词，today 是当天日期，返回命中的记忆列表。
 checks:
   - {id: H1, kind: pytest, file: test_semantics.py, weight: 5, measures: "领域模型：一条昨天补录、上个月发生的记忆，属不属于「上个月」。朴素模型（按写入时间）在这里给相反的答案"}
   - {id: H2, kind: pytest, file: test_naive_trap.py, weight: 2, measures: "朴素实现的痕迹：只按 created_at 过滤、或把 happened_at 为空的记忆当成没有时间直接丢掉"}

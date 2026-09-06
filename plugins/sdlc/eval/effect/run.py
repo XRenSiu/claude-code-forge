@@ -166,6 +166,8 @@ def cmd_collect(a):
 
     r = sh(["git", "diff", "--stat", "HEAD"], cwd=d)
     res = {"task": a.task, "arm": a.arm, "dir": arm_dir, "scored_in": d,
+           # 题目改过之后，旧修订版跑出来的分不能和新的混在一张表里比（E-08）
+           "task_revision": int(t.get("revision", 1)),
            "contaminated": bool(leaked), "leak_after_work": leak_after_work,
            "checks": checks, "check_score": got, "check_total": total,
            "check_ratio": round(got / total, 3) if total else None,

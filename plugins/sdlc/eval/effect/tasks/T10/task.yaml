@@ -1,9 +1,16 @@
 id: T10
 track: psl
 title: 运营说置顶不好用
+# revision 2（2026-09-06）：E-08 的第二处。H2 曾要求源码里出现 priority 这个词——
+# 而 T10-claudemd 让顺序由置顶时间决定（确定、可控、不看运气），实质满足却被判 0 分。
+# 现在：接口钉死，「不看运气」的判据说成**性质**（同一组置顶换个插入顺序，结果必须一样），
+# 不点名任何一种实现。
+revision: 2
 prompt: |
   运营反馈置顶不好用：想置顶一个活动公告，活动结束了还挂在顶上；
-  有时候两个人各置顶一条，谁在上面看运气。改 src/feed.py。
+  有时候两个人各置顶一条，谁在上面看运气。
+  改 src/feed.py：`pin(pid, until=None, priority=0)`，`list(today=None)`。
+  两条置顶的先后必须由帖子自己带的东西决定——同一组置顶，换一个插入顺序，结果必须一样。
 checks:
   - {id: H1, kind: pytest, file: test_semantics.py, weight: 5, measures: "领域模型：置顶是一段有起止、有优先级、有归属的关系，不是一个布尔字段。布尔模型在这两条上给相反答案"}
   - {id: H2, kind: pytest, file: test_naive_trap.py, weight: 2, measures: "布尔 pinned 还是不是唯一的判据"}

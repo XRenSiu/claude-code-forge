@@ -332,6 +332,21 @@ section.sources li{margin-bottom:.3rem}
 <tr><td class="num">5</td><td>流程不分体量</td><td><code>sizing.yaml</code> + <code>sdlc_state.py size</code>：六条封闭规则，输入只有四个可数的量</td><td>极性是这条的全部：缺省 M，S 档豁免只认 <code>size_source=derived</code>。<b>一个靠遗漏就能打开的门不是门</b></td></tr>
 </tbody></table></div>
 <p>两条没排进前五的做了一半：跨供应商评估仍是「强烈建议」没有接线；review 精确率仍未进 <code>/tune</code> 的输入。冒烟从 397 条涨到 422 条，新增的每一条都配了孪生（闸真的会红）。</p>
+<h3>十道题跑完之后（30 次运行）</h3>
+<p>题库补到十道并全部跑完。<b>结论要泼冷水</b>：把受混淆的维度剥掉之后，三个 arm 分不开。</p>
+<div class="tablewrap"><table>
+<caption>三个 arm × 十道题 × 两个维度</caption>
+<thead><tr><th>维度</th><th>bare</th><th>claudemd</th><th>sdlc</th></tr></thead>
+<tbody>
+<tr><td>全部十道 · 隐藏集（做对了没有）</td><td class="num">0.80</td><td class="num">0.80</td><td class="num">0.94</td></tr>
+<tr><td>全部十道 · 欠定槽（写下来了没有）</td><td class="num">0.55</td><td class="num">0.60</td><td class="num">0.95</td></tr>
+<tr><td><b>PSL 轨 · 只看不受混淆的部分</b></td><td class="num">0.94</td><td class="num">0.94</td><td class="num">1.00</td></tr>
+</tbody></table></div>
+<p>最后一行最该看。欠定槽与「不可判部分交给人」这两维，sdlc arm 的提示词<b>明确要求</b>它写台账，那两维部分在测量它服从自己的指令。剥掉之后只留「领域模型有没有被证伪」：三个 arm 落在噪声带内（33/35 · 33/35 · 35/35）。</p>
+<p><b>两条站得住的观察。</b>其一，CLAUDE.md 在十道题上没有产生任何可测量的差别——bare 与 claudemd 每个维度同分，唯一的差是二十个欠定槽里多写了一个。这与本文引的 288 次运行一致，而 CLAUDE.md 正是业界默认做法。其二，分开三个 arm 的是「写没写下来」，不是「做没做对」；方向与本文的主张一致，但它证明的是「要求写台账就会写台账」，不是「这套纪律让人做得更好」。</p>
+<div class="open"><p><b>干净的下一步。</b>不给 sdlc arm 那段纪律、只给它脚本，看它还写不写台账。那才能分开「服从指令」与「纪律内化」。这一轮做不到，因为纪律段就是 arm 定义的一部分。</p></div>
+<p>这一轮的另一半产出是<b>五个题目 bug</b>（E-01 / E-05 / E-08 两处 / E-09），全是同一个错：出题人把自己的实现方式写进了判据——查用词、查函数名、查参数名、查架构位置。规律已写进方法文档：判据只能落在行为上或「有没有」上，不能落在「怎么做」上。</p>
+
 <h3>第一轮运行的四个发现</h3>
 <p>行为层那一轮跑完，产出的不是排名，是四个 bug——两个在题目里，一个在 harness 自己的纪律上，一个在插件源码里。</p>
 <div class="tablewrap"><table>
