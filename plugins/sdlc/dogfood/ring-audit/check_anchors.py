@@ -3,7 +3,8 @@
 
 为什么存在
 ----------
-audit.yaml 里 800 多条证据，其中 400 多条带 `<file>#L<n>` / `#L<a>-L<b>` 的行号锚点。
+audit.yaml 里 800 多条证据，其中 400 多条带行号锚点，两种写法都收：
+`<file>#L<n>` / `#L<a>-L<b>`（evidence 的 ref 惯用）与 `<file>:<n>`（正文散句惯用）。
 行号会漂：本轮 graph.yaml 插入 agent.pr-reviewer 节点（+10 行）与两条边（+2 行），
 插入点之后的锚点分两段位移——`#L239` 本该指 human.merge，插完之后指到了新节点头上。
 
@@ -71,9 +72,29 @@ BASENAMES = {
     "verify_dos.py": "plugins/sdlc/skills/dos-extract/scripts/verify_dos.py",
     "verify_commit.py": "plugins/sdlc/skills/commit/scripts/verify_commit.py",
     "smoke.sh": "plugins/sdlc/eval/smoke.sh",
+    "validate_done_when.py": "plugins/sdlc/skills/acceptance-spec/scripts/validate_done_when.py",
+    "validate_done_when_v2.py": "plugins/sdlc/skills/donewhen-extract/scripts/validate_done_when_v2.py",
+    "verify_psl.py": "plugins/sdlc/skills/psl/scripts/verify_psl.py",
+    "verify_derived.py": "plugins/sdlc/skills/psl-derive/scripts/verify_derived.py",
+    "verify_issue.py": "plugins/sdlc/skills/issue/scripts/verify_issue.py",
+    "verify_card.py": "plugins/sdlc/skills/invariant-extract/scripts/verify_card.py",
+    "lint_cards.py": "plugins/sdlc/skills/plan-cards/scripts/lint_cards.py",
+    "verify_release.py": "plugins/sdlc/skills/release/scripts/verify_release.py",
+    "apply_proposal.py": "plugins/sdlc/skills/tune/scripts/apply_proposal.py",
+    "post_review.py": "plugins/sdlc/skills/pr-review/scripts/post_review.py",
+    "compute_score.py": "plugins/sdlc/skills/spec-gaming-detector/scripts/compute_score.py",
+    "compute_confidence.py": "plugins/sdlc/skills/meta-judge/scripts/compute_confidence.py",
+    "reconcile_dos.py": "plugins/sdlc/skills/dos-extract/scripts/reconcile_dos.py",
+    "dos_closure.py": "plugins/sdlc/skills/dos-extract/scripts/dos_closure.py",
 }
 
-ANCHOR = re.compile(r"([A-Za-z0-9_./<>*-]+\.(?:py|sh|yaml|json|md))#L(\d+)(?:([-–])L?(\d+))?")
+# 审计里的行引用有两种写法，都会漂，都要保：
+#   `path/to/file.py#L12` / `#L12-L20` / `#L12–20`   —— evidence 的 ref 惯用
+#   `path/to/file.py:12` / `:12-20`                   —— 正文散句里惯用（本轮有 3 处）
+# 冒号式后面必须紧跟数字，且数字后不能再接数字或斜杠，免得把日期与路径当成行号。
+ANCHOR = re.compile(
+    r"([A-Za-z0-9_./<>*-]+\.(?:py|sh|yaml|json|md))"
+    r"(?:#L(\d+)(?:([-–])L?(\d+))?|:(\d+)(?:([-–])(\d+))?(?![\d/]))")
 PART_ID = re.compile(r"^\s*-?\s*id:\s*([A-Za-z0-9_.<>-]+)\s*$")
 
 
@@ -105,6 +126,10 @@ def resolve(name, part, skills):
         return BASENAMES[name]
     if name.endswith("/SKILL.md") and name.count("/") == 1:
         return f"plugins/sdlc/skills/{name}"
+    # `acceptance-fleet/scripts/next_iteration.py` 这种带 skill 名前缀的相对写法
+    head = name.split("/", 1)[0]
+    if "/" in name and os.path.isdir(f"plugins/sdlc/skills/{head}"):
+        return f"plugins/sdlc/skills/{name}"
     if name == "SKILL.md" and part in skills:
         return skills[part]
     return None
@@ -122,10 +147,14 @@ def walk_anchors(audit_path, skills, on_anchor):
             part[0] = pm.group(1)
 
         def sub(m):
-            name, a, dash, b = m.group(1), int(m.group(2)), m.group(3), m.group(4)
+            name = m.group(1)
+            if m.group(2) is not None:          # #L 式
+                style, a, dash, b = "hash", int(m.group(2)), m.group(3), m.group(4)
+            else:                                # 冒号式
+                style, a, dash, b = "colon", int(m.group(5)), m.group(6), m.group(7)
             b = int(b) if b else a
             path = resolve(name, part[0], skills)
-            r = on_anchor(name, path, a, b, dash, part[0])
+            r = on_anchor(name, path, a, b, dash, part[0], style)
             return r if r is not None else m.group(0)
 
         out.append(ANCHOR.sub(sub, line))
@@ -153,7 +182,7 @@ def cmd_snapshot(args):
     reader, skills = Reader(), skill_paths()
     lock, stats = {}, collections.Counter()
 
-    def on(name, path, a, b, dash, part):
+    def on(name, path, a, b, dash, part, style="hash"):
         if path is None:
             stats["unresolved"] += 1
             return None
@@ -201,7 +230,7 @@ def cmd_verify(args):
     stats = collections.Counter()
     problems = []
 
-    def on(name, path, a, b, dash, part):
+    def on(name, path, a, b, dash, part, style="hash"):
         if path is None:
             stats["UNRESOLVED"] += 1
             return None
@@ -231,6 +260,8 @@ def cmd_verify(args):
             problems.append(("MOVED", key_of(name, a, b), part,
                              f"原文整段移到 L{na}" + (f"-L{nb}" if nb != na else "")))
             if args.fix:
+                if style == "colon":
+                    return f"{name}:{na}" + (f"{dash}{nb}" if dash else "")
                 return f"{name}#L{na}" + (f"{dash}L{nb}" if dash else "")
             return None
         if not hits:

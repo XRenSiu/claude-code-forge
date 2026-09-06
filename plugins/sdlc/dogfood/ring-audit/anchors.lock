@@ -237,6 +237,10 @@
       "lines": 1,
       "sha": "81f209064fe1692b"
     },
+    "plugins/sdlc/skills/acceptance-spec/scripts/validate_done_when.py#L264": {
+      "lines": 1,
+      "sha": "b15c3bf67d5f35ee"
+    },
     "plugins/sdlc/skills/acceptance-spec/scripts/validate_done_when.py#L288-L291": {
       "lines": 4,
       "sha": "513179b14ab1e9c5"
