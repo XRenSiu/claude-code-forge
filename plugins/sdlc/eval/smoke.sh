@@ -448,7 +448,14 @@ import json, subprocess
 full=subprocess.run(['git','rev-parse','HEAD'],capture_output=True,text=True).stdout.strip()
 c=json.load(open('.sdlc/conv/state.json'))['cards']['items']['CARD-03']['commits']
 assert c==[full], c\""
+cp "$FX/done_when.yaml" done_when.yaml; py "$SS" set contract.done_when=done_when.yaml >/dev/null
 expect "archive copies trace.jsonl" 0 bash -c "python3 '$SS' archive --to specs/conv >/dev/null && test -f specs/conv/trace.jsonl"
+# dogfood 2026-09-06 (I-85): metrics.py reads done_when.yaml FROM the archive; leaving it behind emptied the metric
+expect "archive carries the contract retro reads (I-85)" 0 bash -c "test -f specs/conv/done_when.yaml"
+expect "human-AC ratio is computable from a fresh archive (I-85)" 0 bash -c "python3 '$S/retro/scripts/metrics.py' specs --json '$TMP/conv-metrics.json' >/dev/null && python3 -c \"
+import json
+r=[f for f in json.load(open('$TMP/conv-metrics.json'))['features'] if f['feature']=='conv'][0]
+assert r['human_ac_ratio'] is not None and r['contract_rework']['ac_total'], r\""
 popd >/dev/null
 
 echo "== pr / --pre-review (P2)"

@@ -30,7 +30,7 @@ Usage:
   sdlc_state.py loops   [--slug S] [--loops PATH] [--pr-watch DIR] [--ratchet-dir DIR]   # budget consumption per loop
   sdlc_state.py ledger  [--slug S] --kind K --note TEXT [--signal S] [--layer L] [--decision D] [--by B]
                         [--fingerprint FP] [--card CARD-xx] [--ref type:target ...]
-  sdlc_state.py archive [--slug S] --to DIR               # copy state + ledger + trace + listed artifacts
+  sdlc_state.py archive [--slug S] --to DIR               # copy state + ledger + trace + contract + listed artifacts
 
 Exit codes: 0 ok · 1 rejected (transition invalid / prerequisite unmet / bad key / dirty) · 2 usage/IO error.
 Every mutating command appends a ledger row (and a trace event). Writes are atomic (tmp + rename).
@@ -84,6 +84,9 @@ LOCK_STAGES = ("g2", "l5")
 # how the review ring exited, as a closed enum instead of a boolean with the qualification in free text
 # (dogfood 2026-09-06, I-83). Legacy `true` reads as "done"; "waived" and any exit_reason need a waiver_ref.
 REVIEW_EXITS = ("done", "waived")
+# the contract set an archive must carry so the run stays readable (and measurable) after the branch is gone
+CONTRACT_FILES = ("contract.done_when", "contract.compile_manifest", "contract.tests_manifest",
+                  "contract.calibration_report")
 LAYER_COUNTERS = ["card", "plan", "task", "ontology", "world"]
 BUDGET_KEY = {"card": "card_retries", "plan": "plan_reflows", "task": "task_reflows",
               "ontology": "ontology_reflows", "world": "world_reflows"}
@@ -904,8 +907,16 @@ def cmd_archive(a):
     os.makedirs(a.to, exist_ok=True)
     copied = []
     srcs = [sp, lp] + ([trace_path(a.root, a.slug)] if os.path.isfile(trace_path(a.root, a.slug)) else [])
+    # the contract is not an "artifact" entry, yet retro/metrics.py reads done_when.yaml FROM the archive to
+    # compute the human-AC ratio — leaving it behind made that metric empty for every run (I-85)
+    srcs += [p for p in (get_path(st, k) for k in CONTRACT_FILES) if p and os.path.isfile(p)]
     srcs += [p for p in (st.get("artifacts") or {}).values() if p and os.path.isfile(p)]
-    for src in srcs:
+    seen, uniq = set(), []
+    for s in srcs:
+        r = os.path.abspath(s)
+        if r not in seen:
+            seen.add(r); uniq.append(s)
+    for src in uniq:
         dst = os.path.join(a.to, os.path.basename(src))
         shutil.copy2(src, dst)
         copied.append(dst)
