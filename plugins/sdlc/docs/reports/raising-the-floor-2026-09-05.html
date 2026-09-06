@@ -332,6 +332,17 @@ section.sources li{margin-bottom:.3rem}
 <tr><td class="num">5</td><td>流程不分体量</td><td><code>sizing.yaml</code> + <code>sdlc_state.py size</code>：六条封闭规则，输入只有四个可数的量</td><td>极性是这条的全部：缺省 M，S 档豁免只认 <code>size_source=derived</code>。<b>一个靠遗漏就能打开的门不是门</b></td></tr>
 </tbody></table></div>
 <p>两条没排进前五的做了一半：跨供应商评估仍是「强烈建议」没有接线；review 精确率仍未进 <code>/tune</code> 的输入。冒烟从 397 条涨到 422 条，新增的每一条都配了孪生（闸真的会红）。</p>
+<h3>第一轮运行的四个发现</h3>
+<p>行为层那一轮跑完，产出的不是排名，是四个 bug——两个在题目里，一个在 harness 自己的纪律上，一个在插件源码里。</p>
+<div class="tablewrap"><table>
+<thead><tr><th>#</th><th>发现</th><th>谁发现的</th></tr></thead>
+<tbody>
+<tr><td class="num">E-01</td><td>隐藏集把「六列加在哪个函数上」的一种读法写死成唯一答案。<code>claudemd</code> arm 读了「别动已有接口」，合法地新加了一个函数，被判 0 分</td><td>收分时对比三个 arm 的产物</td></tr>
+<tr><td class="num">E-02</td><td>欠定槽的证据模式比隐藏测试窄，同一件事一个说写了一个说没写</td><td>同上</td></tr>
+<tr><td class="num">E-03</td><td><b>铁律「隐藏集只在收分时进场」只写在文档里，没有编译。</b>收分早跑了一步，隐藏集落进还在干活的 arm 目录，那一轮作废</td><td>那个 arm 自己报上来的</td></tr>
+<tr><td class="num">E-04</td><td>结构层校验用的变量名覆盖了测试名清单，<code>tests_in_manifest</code> 报的是层数</td><td><b>被测的 arm 读插件源码发现的</b></td></tr>
+</tbody></table></div>
+<p>E-03 的修法值得单独说：收分改成在<b>副本</b>里做，绝不碰 arm 的工作区；一次运行算不算污染由文件 mtime 机械判定（泄漏晚于 arm 的全部产物 = 它没机会读到隐藏集），被判污染的结果不计入均值但留在报告里。写在 README 里的纪律不是纪律——这正是整份报告在说的那件事，只不过这次犯的人是我。</p>
 <div class="open"><p><b>第一条缺口只走了一步。</b><code>eval/effect/baseline.md</code> 的 verdict 是 <code>insufficient_sample</code>——1 个任务，下限 5。从「没有测量」到「有了尺子和一次读数」，不是「测过了」。</p></div>
 </section>
 

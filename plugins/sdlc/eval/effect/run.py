@@ -93,15 +93,39 @@ def cmd_prepare(a):
 
 def cmd_collect(a):
     t = load_task(a.task)
-    d = os.path.join(a.workdir, f"{a.task}-{a.arm}")
-    if not os.path.isdir(d):
-        sys.stderr.write(f"没有这个 arm 的工作区：{d}（先 prepare 再让 arm 干活）\n"); return 2
+    arm_dir = os.path.join(a.workdir, f"{a.task}-{a.arm}")
+    if not os.path.isdir(arm_dir):
+        sys.stderr.write(f"没有这个 arm 的工作区：{arm_dir}（先 prepare 再让 arm 干活）\n"); return 2
+    # 收分在**副本**里做，绝不碰 arm 的工作区。
+    # 2026-09-06 run 1 的教训：collect 早跑了一步，隐藏集落进还在干活的 arm 目录，
+    # 那个 arm 的最后一次 pytest 把 5 个隐藏测试也跑了（它自陈没读内容，但那已经是污染）。
+    # 铁律「隐藏集在 collect 时才进工作区」当时只写在文档里，没有编译——现在编译了。
+    d = os.path.join(a.workdir, f".score-{a.task}-{a.arm}")
+    if os.path.exists(d):
+        shutil.rmtree(d)
+    # tests_hidden / result.json 若出现在 arm 目录里，本身就是污染证据：记下来，但不带进评分副本。
+    # 污染与否由 mtime 机械判定，不由记忆判定：泄漏发生在 arm 全部产物之后 = 它没机会读到隐藏集。
+    leaked = [p for p in os.listdir(arm_dir) if p in ("tests_hidden", "result.json")]
+    leak_after_work = None
+    if leaked:
+        leak_t = min(os.path.getmtime(os.path.join(arm_dir, p)) for p in leaked)
+        newest = 0.0
+        for root, dirs, files in os.walk(arm_dir):
+            dirs[:] = [x for x in dirs if x not in ("tests_hidden", "__pycache__", ".pytest_cache", ".git")]
+            for f in files:
+                if f in ("result.json",):
+                    continue
+                newest = max(newest, os.path.getmtime(os.path.join(root, f)))
+        leak_after_work = newest <= leak_t
+        leaked = [] if leak_after_work else leaked
+    shutil.copytree(arm_dir, d, ignore=shutil.ignore_patterns(
+        "__pycache__", ".pytest_cache", "tests_hidden", "result.json"))
     hidden_src = os.path.join(task_dir(a.task), t.get("hidden_dir", "hidden"))
     hidden_dst = os.path.join(d, "tests_hidden")
-    if os.path.exists(hidden_dst):
-        shutil.rmtree(hidden_dst)
     shutil.copytree(hidden_src, hidden_dst)
     open(os.path.join(hidden_dst, "__init__.py"), "a").close()
+    if leaked:
+        sys.stderr.write(f"污染：{leaked} 出现在 arm 的工作区里——这一轮的分数不算数\n")
 
     checks, got, total = [], 0, 0
     for c in t.get("checks", []):
@@ -132,13 +156,16 @@ def cmd_collect(a):
         slots.append({"id": s["id"], "question": s["question"], "addressed": hit, "found_in": where})
 
     r = sh(["git", "diff", "--stat", "HEAD"], cwd=d)
-    res = {"task": a.task, "arm": a.arm, "dir": d,
+    res = {"task": a.task, "arm": a.arm, "dir": arm_dir, "scored_in": d,
+           "contaminated": bool(leaked), "leak_after_work": leak_after_work,
            "checks": checks, "check_score": got, "check_total": total,
            "check_ratio": round(got / total, 3) if total else None,
            "slots": slots, "slots_addressed": sum(1 for s in slots if s["addressed"]), "slots_total": len(slots),
            "diffstat": (r.stdout or "").strip().splitlines()[-1:] or ["(no diff)"],
            "collected_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
     open(os.path.join(d, "result.json"), "w", encoding="utf-8").write(json.dumps(res, ensure_ascii=False, indent=2))
+    if leaked:
+        print(f"⚠ 污染：{leaked} 在 arm 的工作区里，这一轮 {a.task}/{a.arm} 的分数不算数")
     if a.json:
         print(json.dumps(res, ensure_ascii=False, indent=2))
     else:

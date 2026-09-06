@@ -1264,6 +1264,20 @@ expect "effect: the bare arm has no CLAUDE.md and the claudemd arm does" 0 \
 expect "effect: score refuses to name a winner below the sample floor" 0 \
   bash -c "python3 '$ROOT/eval/effect/run.py' collect T01 --arm bare --workdir \"$TMP/eff\" >/dev/null 2>&1; python3 '$ROOT/eval/effect/score.py' --workdir \"$TMP/eff\" --out \"$TMP/base.md\" --json | grep -q insufficient_sample"
 
+# 变量覆盖（2026-09-06，由 effect harness 的 sdlc arm 读源码发现）：结构层名曾覆盖 behavior 的测试名清单，
+# 于是 tests_in_manifest 报的是层数。孪生：同一份契约声明 / 不声明 structure，测试计数必须一样。
+expect "contract: declaring layers does not change the test count (variable clobber twin)" 0 \
+  bash -c "b=\"$TMP/clob\"; mkdir -p \"\$b\"; printf 'schema: 2\\nfeature: f\\nbased_on: [REQ-1]\\nacceptance:\\n  - {id: A, req: REQ-1, kind: mechanical, ears_type: ubiquitous, observe: \"route:GET /x\", given: {a: 1}, expect: {status: 200}}\\nbehavior:\\n  unit_tests: {example_based: [t1, t2, t3], property_based: []}\\n  integration_tests: {example_based: [], property_based: []}\\n  e2e_tests: []\\nconstraints:\\n  forbidden_paths: [tests/**, done_when.yaml]\\n' > \"\$b/a.yaml\"; sed 's#  forbidden_paths: \\[tests/\\*\\*, done_when.yaml\\]#  forbidden_paths: [tests/**, done_when.yaml]\\n  structure:\\n    layers: [{name: d, path: \"src/d/**\", may_import: []}]#' \"\$b/a.yaml\" > \"\$b/b.yaml\"; n1=\$(python3 '$S/donewhen-extract/scripts/validate_done_when_v2.py' \"\$b/a.yaml\" --json | python3 -c 'import json,sys;print(json.load(sys.stdin)[\"tests_in_manifest\"])'); n2=\$(python3 '$S/donewhen-extract/scripts/validate_done_when_v2.py' \"\$b/b.yaml\" --json | python3 -c 'import json,sys;print(json.load(sys.stdin)[\"tests_in_manifest\"])'); [ \"\$n1\" = 3 ] && [ \"\$n2\" = 3 ]"
+
+# 收分不许碰 arm 的工作区（run 1 的教训编译成闸）
+expect "effect: collect scores in a copy and leaves the arm's tree untouched" 0 \
+  bash -c "w=\"$TMP/eff2\"; rm -rf \"\$w\"; python3 '$ROOT/eval/effect/run.py' prepare T01 --arm bare --workdir \"\$w\" >/dev/null; python3 '$ROOT/eval/effect/run.py' collect T01 --arm bare --workdir \"\$w\" >/dev/null 2>&1; [ ! -e \"\$w/T01-bare/tests_hidden\" ] && [ ! -e \"\$w/T01-bare/result.json\" ] && [ -e \"\$w/.score-T01-bare/result.json\" ]"
+# 污染 = 隐藏集泄漏进 arm 目录 **且** arm 在那之后还动过产物（mtime 判，不靠记忆）。
+expect "effect: a hidden set that leaked before the arm's last edit contaminates the run" 0 \
+  bash -c "w=\"$TMP/eff3\"; rm -rf \"\$w\"; python3 '$ROOT/eval/effect/run.py' prepare T01 --arm bare --workdir \"\$w\" >/dev/null; mkdir -p \"\$w/T01-bare/tests_hidden\"; sleep 1; touch \"\$w/T01-bare/src/export.py\"; python3 '$ROOT/eval/effect/run.py' collect T01 --arm bare --workdir \"\$w\" >/dev/null 2>&1; python3 -c \"import json;d=json.load(open('\$w/.score-T01-bare/result.json'));assert d['contaminated'] is True and d['leak_after_work'] is False, d\""
+expect "effect: a leak after the arm stopped working does not void the run (twin)" 0 \
+  bash -c "w=\"$TMP/eff4\"; rm -rf \"\$w\"; python3 '$ROOT/eval/effect/run.py' prepare T01 --arm bare --workdir \"\$w\" >/dev/null; sleep 1; mkdir -p \"\$w/T01-bare/tests_hidden\"; python3 '$ROOT/eval/effect/run.py' collect T01 --arm bare --workdir \"\$w\" >/dev/null 2>&1; python3 -c \"import json;d=json.load(open('\$w/.score-T01-bare/result.json'));assert d['contaminated'] is False and d['leak_after_work'] is True, d\""
+
 echo
 echo "smoke: $pass passed, $fail failed${ONLY:+, $skipped skipped (--only $ONLY)}  (tmp: $TMP)"
 [[ $fail -eq 0 ]]

@@ -234,10 +234,13 @@ def main():
             elif "may_import" not in lay:
                 rejects.append(f"layer {lay.get('name')} 没写 may_import —— 不写等于不检，"
                                "允许什么必须显式列出（空列表 = 谁都不许 import）")
-        names = {l.get("name") for l in (st.get("layers") or []) if isinstance(l, dict)}
+        # layer_names，不是 names —— 第 175 行的 names 是 behavior 的测试名列表。
+        # 2026-09-06：这里曾写成 names，把测试名清单覆盖成层名集合，于是 tests_in_manifest 报的是层数。
+        # 由 effect harness 的 sdlc arm 在跑 T01 时读源码发现（它自己的契约声明了 2 个层、11 个测试名，报了 2）。
+        layer_names = {l.get("name") for l in (st.get("layers") or []) if isinstance(l, dict)}
         for lay in (st.get("layers") or []):
             for t in (lay.get("may_import") or []) if isinstance(lay, dict) else []:
-                if t not in names:
+                if t not in layer_names:
                     rejects.append(f"layer {lay.get('name')}.may_import 指向未声明的层 {t}")
         if not any(k in st for k in STRUCT_NUM) and not st.get("layers"):
             rejects.append("constraints.structure 是空壳：一条阈值或一个 layers 都没有")

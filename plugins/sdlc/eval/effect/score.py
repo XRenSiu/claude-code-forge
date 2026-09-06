@@ -31,13 +31,21 @@ def main() -> int:
     ap.add_argument("--json", action="store_true")
     a = ap.parse_args()
     results = []
-    for p in sorted(glob.glob(os.path.join(a.workdir, "*", "result.json"))):
+    # 评分产物在 .score-<task>-<arm>/ 里（点开头，glob 的 * 不匹配它）；旧布局的 */result.json 也认
+    # 只读评分副本。arm 目录里若有 result.json，那是旧布局留下的污染物，不是数据源。
+    paths = sorted(glob.glob(os.path.join(a.workdir, ".score-*", "result.json")))
+    for p in paths:
         try:
             results.append(json.load(open(p, encoding="utf-8")))
         except Exception:
             pass
     if not results:
         sys.stderr.write(f"{a.workdir} 下没有 result.json —— 先 run.py collect\n"); return 2
+    # 被污染的结果不计入，但**留在报告里**：账本只增不删，作废的那次也要看得见。
+    contaminated = [r for r in results if r.get("contaminated")]
+    results = [r for r in results if not r.get("contaminated")]
+    if not results:
+        sys.stderr.write("所有结果都被标为污染 —— 重跑，别拿它们算分\n"); return 2
 
     by_arm = {arm: [r for r in results if r["arm"] == arm] for arm in ARMS}
     tasks = sorted({r["task"] for r in results})
@@ -82,6 +90,11 @@ def main() -> int:
         failed = ", ".join(c["id"] for c in r["checks"] if not c["passed"]) or "—"
         lines.append(f"| {r['task']} | {r['arm']} | {r['check_score']}/{r['check_total']} | "
                      f"{r['slots_addressed']}/{r['slots_total']} | {failed} |")
+    if contaminated:
+        lines += ["", "## 作废（不计入上表）", "",
+                  "| 任务 | arm | 为什么作废 |", "|---|---|---|"]
+        lines += [f"| {r['task']} | {r['arm']} | 收分产物出现在 arm 的工作区里，隐藏集可能被它跑过 |"
+                  for r in contaminated]
     lines += ["", "## 这份数据不能回答什么", "",
               "- 不能回答「sdlc 值不值得用」：任务是本仓库自己出的，出题人与被测者同源。",
               "- 不能回答「哪个 arm 写的代码更好看」：隐藏集只判行为，不判品味。",
