@@ -1,0 +1,4 @@
+schema: 2
+acceptance:
+  - {id: X1, req: REQ-001, kind: mechanical, ears_type: event, observe: "route:GET /export", given: {rows: 100}, expect: {status: 200, columns: 8}}
+  - {id: X3, req: REQ-002, kind: human, ears_type: state, observe: "route:GET /export", statement: 导出够快, judge: tech, evidence: checklist}

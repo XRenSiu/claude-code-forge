@@ -34,5 +34,19 @@
     "evaluator": "AUTHOR-RUN structural pass: skillwise lint_skill.py L0 (0 blocking; step-order/persona items are inherited 'to confirm' findings) + plugins/sdlc/eval/smoke.sh on bundled scripts. NOT a decorrelated read, NOT an L2 run.",
     "scripts_run": {},
     "residual": "no bundled script; phase map inherited (4 hits)"
-  }
+  },
+  "script_smoke": {
+    "verify_structure.py": {
+      "clean fixture repo": "PASS exit 0 (3 checks evaluated)",
+      "complexity cap 1 (twin)": "BREACH exit 1 — the gate bites",
+      "declared constraint, no analyzer": "exit 3 unevaluated — never reported as pass",
+      "--require-analyzers": "exit 1",
+      "contract without constraints.structure": "exit 0 but facts say 本闸无对象 (not a pass)",
+      "dogfood on this repo": "found real breaches: complexity 120 / 104 / 89 in bespoke-design-system",
+      "fail-open found by its own twin (2026-09-06)": "empty file enumeration used to report PASS; now unevaluated"
+    }
+  },
+  "dogfood_fixes": [
+    "2026-09-06 raising-the-floor: implemented the report's gaps; see plugins/sdlc/docs/reports/"
+  ]
 }

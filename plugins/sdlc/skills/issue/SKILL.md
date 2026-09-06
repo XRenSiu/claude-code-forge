@@ -11,7 +11,7 @@ description: >-
   契约（/acceptance-spec）、写产品世界（/psl）、只想看 issue 列表（gh issue list 即可）。
   前置：gh 已认证、在目标仓库内。
 argument-hint: "<需求 / bug 一句话或文件路径> [--kind feature|bug|escape] [--track psl|task] [--dos dos.yaml] [--labels a,b] [--yes] [--dry-run]"
-version: 0.3.0
+version: 0.4.0
 user-invocable: true
 ---
 
@@ -38,8 +38,11 @@ deletion 测试：撤掉本 skill，引擎会把需求原文当 body 直接建 i
 - **两条轨道。** 语义份额 × 变化率高、实现原语难度低 → PSL 轨（先 `/psl` 建世界 → G1 人签，
   再回来建 issue）；确定性主导 → TASK 轨直接建。混合需求只对体验性内核走 PSL。速判：把需求
   交给不了解产品的工程师照字面做，会不会做出"技术正确、产品错误"的东西？会 → PSL。
-  **客观触发**：`--dos dos.yaml` 时，`依赖 DOS:` 字段里出现 dos.yaml 解析不了的概念 →
-  强制 PSL 轨（脚本判，不靠自评）。详见 `references/dual-track.md`。
+  **客观触发有两条，都不靠自评**（Ambig-SWE：模型分不清任务写没写清楚）：
+  ① `--dos dos.yaml` 时 `依赖 DOS:` 出现 dos.yaml 解析不了的概念 → 强制 PSL 轨；
+  ② TASK 轨在 issue 之后、G2 之前，对同一个 issue **隔离**起草 2–3 份 done_when，跑
+  `../donewhen-extract/scripts/divergence.py`：分歧率超阈值 → 那些分歧就是必须澄清的槽
+  （每条自带要问用户的话）。详见 `references/dual-track.md`。
 - **范围段四项**（做 / 不做 / 硬约束 / 成功度量）是人写的："做到哪儿为止"agent 推不出来。
   你可以起草，但每项都要让用户确认或改。
 - **假设台账**：澄清最多 3 轮；答不上来的承重槽不默认填，写进台账：假设 · 绑定的 REQ/AC ·

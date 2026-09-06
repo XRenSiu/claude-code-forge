@@ -28,6 +28,12 @@
 | `/retro` | X3 学习：基线 → 回流分布 + 逃逸缺陷因果链 + 契约返工率 → 提案落层（psl / dos / invariant / ac / routing / skill） | `metrics.py` | 模型可 |
 | `/tune`（新） | X3 harness 闭环：六个环的 trace → 环参数提案（routing 预算 / 指纹阈值 / MAX_ROUNDS / 隔离等级 / fix_list，封闭集）→ diff / patch → 人开 PR；样本 < 2 只记基线 | `tune.py` `apply_proposal.py`（只出 diff） | 模型可 |
 
+> v0.10.0 实现了 `docs/reports/raising-the-floor-2026-09-05` 的五条缺口：A 档加结构闸
+> （`constraints.structure` + `verify_structure.py`，声明了但没法求值 = exit 3，不是通过）；`dos-extract` 产
+> `agent-map.md`（`--probe` 逐条真跑命令，陷阱必须有来路），`plan-cards` 按卡切片进 `card_context.md`；
+> `donewhen-extract` 的 `divergence.py` 用 N 份隔离草案给 TASK 轨一个不靠自评的模糊度信号；
+> `sizing.yaml` + `sdlc_state.py size` 按体量分档，缺省不给豁免；`eval/effect/` 是这个插件一直缺的行为层对照。
+
 ### 上半段 · 建世界（引自 looper；加了 sdlc 接线）
 
 | skill | 一句话 | 机械预门 |
@@ -126,6 +132,7 @@ specs/<slug>/               # 归档（metrics.py 的数据源）
 
 ## 诚实声明
 
-所有 28 个 skill 处于 `static_only`：结构过审、27 个脚本在 fixtures 上冒烟（`bash plugins/sdlc/eval/smoke.sh`）；带/不带 skill 的行为层对比未跑。
+所有 28 个 skill 处于 `static_only`：结构过审、脚本在 fixtures 上冒烟（`bash plugins/sdlc/eval/smoke.sh`）。
+**行为层对比不再是零**：`eval/effect/` 是带 / 不带 skill 的对照题库与跑分器，已在 1 个任务 × 3 个 arm 上真跑过一轮（`eval/effect/baseline.md`）。那一轮的主要产物是**题目自己的 bug**，不是 arm 的排名——`score.py` 在样本 < 5 个任务时一律回 `insufficient_sample`，不许拿它宣称插件有效。
 v0.6.0 的收敛阈值（指纹历史 6、震荡周期 2–3、plateau 3 轮、sycophancy 0.95）与 tune 的 40% / 50% 规则是文献先验，未在真实运行上校准。
 静态读不是裁决。各 skill 的 `eval/gate.json` 记录了冒烟结果与 fix_list。

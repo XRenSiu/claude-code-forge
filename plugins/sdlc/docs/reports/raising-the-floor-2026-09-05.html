@@ -318,6 +318,23 @@ section.sources li{margin-bottom:.3rem}
 </details>
 </section>
 
+<section>
+<h2>后记：五条缺口的实现（2026-09-06 · sdlc v0.10.0）</h2>
+<p>这份报告写完的第二天，五条缺口按原排序实现了。下面是每条的落点，以及它第一次跑就咬到的真东西。</p>
+<div class="tablewrap"><table class="gaps">
+<caption>实现落点与第一次运行的发现</caption>
+<thead><tr><th>#</th><th>缺口</th><th>落点</th><th>第一次跑就咬到的</th></tr></thead>
+<tbody>
+<tr><td class="num">1</td><td>全部 skill static_only</td><td><code>eval/effect/</code>：三个 arm、隐藏集机器判、<code>score.py</code> 在样本 &lt; 5 时拒绝下结论</td><td>跑了 1 个任务 × 3 个 arm。<b>主要产物是题目自己的两个 bug</b>，不是 arm 的排名：隐藏集把一种合法读法判了 0 分，欠定槽的证据模式比隐藏测试窄</td></tr>
+<tr><td class="num">2</td><td>A 档没有结构性质量闸</td><td><code>constraints.structure</code> + <code>verify_structure.py</code>；声明了但分析器跑不了 = exit 3，不是 pass</td><td>对本仓库跑，抓到复杂度 120 / 104 / 89 的函数。它自己的孪生用例又抓到它一个假绿：文件列表为空时报 PASS</td></tr>
+<tr><td class="num">3</td><td>实现者拿不到「这个仓库怎么干活」</td><td><code>agent-map.md</code> + <code>verify_agent_map.py --probe</code>（命令逐条真跑）+ <code>slice_agent_map.py</code>（按卡切片）</td><td>给本仓库写的第一份地图被 probe 拒了：一条自检命令 exit 3。「跑不通的命令比没有命令更糟」第一次用就生效</td></tr>
+<tr><td class="num">4</td><td>模糊检测只有本体闭包一条客观触发</td><td><code>divergence.py</code>：N 份隔离草案的分歧 = 必须澄清的槽，每条带要问用户的话</td><td>三份草案在同一个 observe 上给出 6 / 6 / 8 三个列数与两个不同的 p95——「阈值没有来源」第一次有了机器可判的形态</td></tr>
+<tr><td class="num">5</td><td>流程不分体量</td><td><code>sizing.yaml</code> + <code>sdlc_state.py size</code>：六条封闭规则，输入只有四个可数的量</td><td>极性是这条的全部：缺省 M，S 档豁免只认 <code>size_source=derived</code>。<b>一个靠遗漏就能打开的门不是门</b></td></tr>
+</tbody></table></div>
+<p>两条没排进前五的做了一半：跨供应商评估仍是「强烈建议」没有接线；review 精确率仍未进 <code>/tune</code> 的输入。冒烟从 397 条涨到 422 条，新增的每一条都配了孪生（闸真的会红）。</p>
+<div class="open"><p><b>第一条缺口只走了一步。</b><code>eval/effect/baseline.md</code> 的 verdict 是 <code>insufficient_sample</code>——1 个任务，下限 5。从「没有测量」到「有了尺子和一次读数」，不是「测过了」。</p></div>
+</section>
+
 <section class="sources">
 <h2>来源</h2>
 <ol>

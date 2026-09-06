@@ -1,0 +1,65 @@
+# sizing.yaml — 体量分档（数据，不是 prompt 里的一段话）
+#
+# 谁读它：scripts/sdlc_state.py size → 推导 S/M/L；cmd_advance 读 intake.size 决定豁免。
+# 为什么存在：一套流程不分任务大小是 spec 工具的通病（Böckeler 2026 对 Kiro / spec-kit 的批评）。
+# 三行 bug 修复走完 issue → 契约 → G2 → 卡 → 六审，成本高到没人愿意用，于是整条流水线被绕过——
+# 一条被绕过的流水线抬不高任何人的下限。
+#
+# 极性（不可反转）：**缺省不给豁免。** init 时 size = M / size_source = default；
+# S 档的豁免必须由 `size --commit` 用证据换来（改动文件数、AC 数、human AC 数都记进 state）。
+# 漏填得到的是较严的路径，不是较松的路径——一个靠遗漏就能打开的门不是门。
+
+version: 1
+
+tiers:
+  S:
+    label: 单点修复
+    process: [issue, commit, pr-review]
+    exempt: [acceptance-fleet, plan-cards]
+    note: 三行以内的 bug 修复、文案改动、单文件配置。仍要过 verify_commit.py 与 pr-review。
+  M:
+    label: 常规特性
+    process: [issue, contract, g2, cards, implement, acceptance-fleet(subset), pr, review]
+    fleet_subset: [qa-reviewer, spec-gaming-detector]
+    exempt: []
+    note: 默认档。六审只跑"真跑测试"与"假设作者在作弊"两个——其余四个按需加。
+  L:
+    label: 全流程
+    process: [all]
+    exempt: []
+    note: 契约面宽、跨模块、有 human AC、或 PSL 轨。
+
+# 推导规则（封闭集，按顺序求值，第一条命中即定档）。
+# 输入只有四个可数的量：改动文件数、AC 条数、human AC 条数、轨道。没有形容词。
+rules:
+  - id: SZ-01
+    when: {track: psl}
+    tier: L
+    why: PSL 轨的形态是新建的，没有"小"的版本——世界错了就全错。
+  - id: SZ-02
+    when: {human_acs_min: 1}
+    tier: L
+    why: 有一条判断档（human）AC 就必然要走 G3，走 G3 就不是小改动。
+  - id: SZ-03
+    when: {acs_min: 8}
+    tier: L
+    why: 判据条目多 = 契约面宽。
+  - id: SZ-04
+    when: {files_min: 15}
+    tier: L
+    why: 改动面宽，卡间写冲突与结构退化的风险都在这里。
+  - id: SZ-05
+    when: {acs_max: 2, files_max: 3, track: task}
+    tier: S
+    why: 单点修复：判据两条以内、改动三个文件以内、形态已定。
+  - id: SZ-06
+    when: {}
+    tier: M
+    why: 兜底。不确定就是 M——默认档是较严的那一档。
+
+# 每档的回流预算覆盖（缺省取 routing.yaml 的按轨道预算）。
+# S 的预算更小：三行修复重试三次还不过，问题不在实现层。
+budget_overrides:
+  S: {card_retries: 2, plan_reflows: 1}
+  M: {}
+  L: {}

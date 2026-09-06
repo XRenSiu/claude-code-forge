@@ -8,7 +8,7 @@ description: >-
   "开始写代码" 且已有卡与冻结契约时。NOT for: 拆卡（/plan-cards）、修 review 评论（/review-loop 的
   comment-fixer）、跑到达标为止的优化循环（/ratchet）、整体验收（/acceptance-fleet）。
 argument-hint: "<cards/CARD-xx.yaml> [--executor self|agent|ratchet|forge-teams] [--lock .done_when.lock]"
-version: 0.1.1
+version: 0.2.0
 user-invocable: true
 ---
 

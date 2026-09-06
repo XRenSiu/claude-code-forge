@@ -12,7 +12,7 @@ description: >-
   只想发 PR（/pr）、只想审别人的 PR（/pr-review）、只想盯一个已有 PR 的评论（/review-loop）——
   单点动作直接用对应 skill，进流水线反而慢。前置：git 仓库内、gh 已认证、python3。
 argument-hint: "<需求一句话 | 需求文件路径 | #issue> [--track psl|task] [--resume <slug>] [--autopilot] [--dry-run]"
-version: 0.5.0
+version: 0.6.0
 user-invocable: true
 # 只能由人显式调起：它会建 issue、开分支、发 PR、自动回帖——都是公开且部分不可逆的动作，
 # 不能因为对话里出现"需求""流程"就被模型自行调起。它是编排者，没有别的 skill 依赖它。
@@ -195,6 +195,26 @@ deletion 测试：撤掉本 skill，让引擎"把这个需求做完提 PR"。它
 
 `<skill_dir>` = 本文件所在目录的绝对路径；插件根 = `<skill_dir>/../..`。脚本一律 `python3`/`bash`
 显式调用，不 chmod（目录可能只读）。
+
+## 体量分档（v0.3.0：`assets/sizing.yaml`）
+
+一套流程不分任务大小是 spec 工具的通病（Böckeler 2026 对 Kiro / spec-kit 的批评）。三行 bug 修复
+走完 issue → 契约 → G2 → 卡 → 六审，成本高到没人愿意用，于是整条流水线被绕过——**一条被绕过的
+流水线抬不高任何人的下限**。
+
+```
+sdlc_state.py size --files 3 --acs 2 --human-acs 0        # 只推荐
+sdlc_state.py size --base origin/main --commit            # 从 diff 与契约里数，写进 state
+```
+
+推导规则是数据（`sizing.yaml` 六条，按顺序求值）：PSL 轨 / 有 human AC / AC ≥ 8 / 改动 ≥ 15 文件 → L；
+AC ≤ 2 且改动 ≤ 3 文件且 TASK 轨 → S；其余 M。输入只有四个可数的量，**没有形容词**。
+
+**极性不可反转**：`init` 时 `intake.size = M`、`size_source = default`。S 档的豁免（跳过
+acceptance-fleet）只认 `size_source = derived`——手设的档位拿不到（`set intake.size=…` 会把来源打回
+`manual`，而 `size_source` 根本不在 SETTABLE 里）。漏填得到的是较严的路径，**一个靠遗漏就能打开的门
+不是门**。豁免生效时 `advance pr` 写一条有类型的 `size_exemption` 进账本，`/retro` 按档分桶数逃逸缺陷——
+分档对不对，由下一次逃逸缺陷回答，不由拍脑袋回答。
 
 ## 高危黑名单（不可豁免）
 

@@ -1,0 +1,50 @@
+id: T01
+track: task
+title: 导出接口加六列
+# 三个 arm 拿到的是**一字不差的同一段需求**。它故意欠定——这不是出题不严谨，这是被测量的东西：
+# Ambig-SWE 说模型分不清任务写没写清楚，所以隐藏集里有一半分数是给"你怎么处理没写清楚的地方"的。
+# revision 2（2026-09-06）：第一轮跑出来的题目 bug E-01 —— 「别动已有接口的行为」与「加六列」在
+# 同一个函数上冲突，claudemd arm 合法地读成「新加一个函数」，却被 H1 判 0 分。隐藏集不许把一种读法
+# 写死成唯一答案：模糊要么是**故意留的**（U1/U2，评分看你怎么处理），要么就该说清。这里说清。
+# baseline.md 里那一轮的数字是 revision 1 的，不能与之后的运行混在一起比。
+revision: 2
+prompt: |
+  给报表导出加六列：order_id, created_at, customer, sku, qty, amount，就按这个顺序。
+  就在 src/export.py 的 export_rows 上加，调用方还是调它，不要新开一个函数。
+  导出要快。别改已有的三列在前的顺序和取值。
+fixture: fixture
+hidden_dir: hidden
+# 隐藏集：三个 arm 都看不到，评分时才跑。每条要么机器判，要么不进。
+checks:
+  - id: H1
+    kind: pytest
+    file: test_columns.py
+    weight: 2
+    measures: 需求写清楚的部分做对了没有（六列、顺序）
+  - id: H2
+    kind: pytest
+    file: test_empty_policy.py
+    weight: 3
+    measures: 需求没说空值怎么写。任选一种都算对，但必须**前后一致**且**在代码里写明选了哪种**——
+              这是"信息补足"的机器可判形态：silently guess 的会被抓到不一致或无记录。
+  - id: H3
+    kind: pytest
+    file: test_scale.py
+    weight: 3
+    measures: 「导出要快」是形容词。20 万行 2 秒内完成 = 有人把它变成了阈值并按阈值实现；
+              一次性拼字符串的实现会超时。
+  - id: H4
+    kind: pytest
+    file: test_regression.py
+    weight: 2
+    measures: 别动已有行为
+# 欠定槽：量"补足信息"这件事本身。评分看 arm 的产物里有没有留下痕迹。
+underspecified_slots:
+  - id: U1
+    question: 空值怎么写（空字符串 / NULL / 跳过该行）
+    evidence_in: [src/export.py, ASSUMPTIONS.md, done_when.yaml, issue.md]
+    pattern: "(empty|空值|missing|缺|NULL|null|placeholder|默认|假设|assumption)"   # 与 H2 的模式必须同集：否则同一件事一个说写了一个说没写
+  - id: U2
+    question: 「快」是多少（阈值与它的来源）
+    evidence_in: [src/export.py, ASSUMPTIONS.md, done_when.yaml, issue.md]
+    pattern: "(\\d+\\s*(s|秒|ms|行|rows)|p9[59]|阈值|threshold)"

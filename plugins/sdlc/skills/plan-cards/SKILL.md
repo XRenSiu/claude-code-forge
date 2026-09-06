@@ -9,7 +9,7 @@ description: >-
   "split into cards" / "task cards" / 契约已 G2 冻结、准备实现之前。NOT for: 写契约（/donewhen-extract）、
   写测试（/test-suite-generator）、实现卡（/implement）。前置：`.done_when.lock` 存在（G2 已签）。
 argument-hint: "<specs/<feature>/ 或 done_when.yaml> [--spec spec.md] [--dos dos.yaml] [--out cards/] [--max-context 40000]"
-version: 0.3.0
+version: 0.4.0
 user-invocable: true
 ---
 
@@ -57,6 +57,15 @@ implement` 要求 `cards.lint_passed`）。
 - `assets/card_template.yaml` —— 卡的具名字段。
 - `references/splitting.md` —— 拆分启发式（按观察边界 / 按 DOS 对象 / 先契约后 UI / 投影与数据源同卡）、
   共享文件处置、上下文估算法、以及 L4 对契约层 REQ 粒度的反压。
+
+## 仓库地图切片（v0.2.0）
+
+卡给实现者卡 + AC 子集 + 红基线 + 约束，**没给**测试怎么跑、构建怎么起、这块目录谁管、边上哪里不能碰。
+`scripts/slice_agent_map.py <agent-map.md> --card cards/CARD-xx.yaml --out slice.md` 把仓库地图按本卡切：
+命令一节**全给**（红-绿自证靠它），目录 / 禁区 / 陷阱只给与 `allowed_files` 相交的行。
+切出来的块拼进 `../implement/assets/card_context.md` 的「仓库怎么干活」一节。
+
+给整份地图是噪音（2607.27250：堆仓库知识不提高正确率），给零行是让实现者去猜。切片是这两者之间那个东西。
 
 ## 门（γ）
 

@@ -73,6 +73,18 @@ rules:                                    # meta-judge 规则源
 constraints:
   forbidden_paths: [tests/**, done_when.yaml, dos.yaml, contract.yaml, .done_when.lock]
   mock_allowlist: [external.mail]
+  # 结构性质量判据（A 档；执行器 skills/qa-reviewer/scripts/verify_structure.py）。
+  # 为什么在契约里而不是在 linter 配置里：它是**这次交付**承诺的判据，G2 冻结它，改它要走变更提案。
+  # 声明了但分析器跑不了 = unevaluated（退出码 3），不是 pass——一把没跑的尺子不报绿。
+  structure:
+    max_function_complexity: 15       # 新增/修改函数的圈复杂度绝对上限
+    max_complexity_delta: 5           # 同名函数相对 base 的最大增量
+    max_duplicate_block_lines: 30     # 新增代码与仓库其它处的最长重复块
+    max_duplicate_ratio: 0.10         # 新增行里落在重复块内的比例
+    layers:                           # 依赖方向；低层不得 import 高层
+      - {name: domain, path: "src/domain/**", may_import: []}
+      - {name: app,    path: "src/app/**",    may_import: [domain]}
+    exclude: ["**/generated/**"]
 
 budgets: { card_retries: 3, plan_reflows: 2, task_reflows: 1 }
 spec_drift_threshold: { max_fix_loops_before_escalation: 3 }

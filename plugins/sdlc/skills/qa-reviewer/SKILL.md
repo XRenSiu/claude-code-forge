@@ -17,7 +17,7 @@ description: >-
   "run the test suite" / "execute tests" / "release readiness check" / "verify
   this build" / "/qa-reviewer" / pointing at a tests/ directory + thresholds file.
 argument-hint: "<path to tests/ directory | path to test manifest> --thresholds=<path to YAML> [--baseline=<previous qa-report.yaml>]"
-version: 1.0.0
+version: 1.1.0
 user-invocable: true
 # imported into sdlc 2026-09-05 from done-when-pipeline v1.1.0 (canonical copy in this repo; qanat holds an older copy); body kept, sdlc wiring section added
 ---
@@ -244,6 +244,26 @@ Beyond `/acceptance-fleet`:
 The skill knows nothing about `done_when.yaml`, EARS specs, or pipelines. The thresholds file is the only contract input.
 
 ---
+
+## 结构性质量（A 档的第三条腿，v0.10.0）
+
+测试绿、lint 绿、类型绿，**结构烂掉**，是这条流水线此前放行的产物。GitClear 2026 测到新代码里
+复制粘贴 9.4% → 15.7%、重构 21% → 3.8%；arXiv 2608.25241 测到认知复杂度在没有配置约束的仓库里
+涨 53%、有约束的涨 27%。这三项没有任何机械物拦着。
+
+`scripts/verify_structure.py --done-when <契约> --base <ref>` 读契约里的 `constraints.structure`，
+只对**本次 diff 引入的代码**求值，产出 `structure-facts.yaml`：
+
+| 检查 | 分析器 | 违反的样子 |
+|---|---|---|
+| 圈复杂度（绝对值 / 相对 base 的增量） | Python 用 ast 精确算；其它语言用 lizard（缺席则报 unevaluated） | 新函数 30 > 上限 15 |
+| 重复块 | 内建的归一化行窗口比对（与语言无关） | 新增 11 行与仓库别处逐字相同 |
+| 依赖方向 | py / js / ts 的 import 解析 | `domain` 层 import 了 `app` 层 |
+
+**退出码 3 是这个脚本的要点**：契约声明了一条约束、而分析器跑不了，结果是 `unevaluated`——
+不是 pass。一把没跑的尺子不许报绿；CI 里用 `--require-analyzers` 把 3 变成 1。
+契约里没有 `constraints.structure` 时脚本 exit 0，但 facts 里写明「本闸无对象」——
+那不是通过，是这次交付没人承诺过结构性质量。
 
 ## Wiring in sdlc
 

@@ -8,7 +8,7 @@ description: >-
   出问题" / "度量" / 一个或多个 feature 归档之后。NOT for: 单次 bug 的根因（/adversarial-debugging 类）、
   改 skill 本身（skill-evolve 邻居）。前置：`specs/*/` 至少一个归档。
 argument-hint: "[--archive specs/] [--since YYYY-MM-DD] [--out retro/retro-<date>.md]"
-version: 0.3.0
+version: 0.4.0
 user-invocable: true
 ---
 
@@ -38,6 +38,9 @@ deletion 测试：撤掉本 skill，引擎会写"这次沟通不够充分，下�
   | PR 返工轮次 | review.rounds / pr-watch | 高 = 契约或卡的粒度问题，不是 reviewer 苛刻 |
   | 逃逸缺陷率 | escape-defects | 压住"切小任务刷首过率"；逐条看归因层 |
   | 豁免数 | waivers | 门被 --force 绕过的次数；> 0 就要问为什么 |
+  | **按体量分桶的逃逸缺陷率**（v0.4） | state.intake.size + escape-defects | S 档豁免了整体验收，它的逃逸率如果不低于 M，说明分档标准定错了——分档对不对由逃逸缺陷回答，不由拍脑袋回答 |
+  | **size_exemption 次数**（v0.4） | ledger 的 size_exemption 行 | 每一次都是一次"这次不跑六审"的决定；数它，别让它变成默认 |
+  | **agent-map 候选**（v0.4） | ledger 的失败指纹 + 逃逸缺陷 | 同一个坑绊倒第二个实现者 = 它该进 `agent-map.md` 的「已知陷阱」并带上这条 ledger 行做来路 |
   | lead time | created_at → merged_at | 与轮次一起看，单看无意义 |
   | 逃逸缺陷因果链（v0.6） | trace.jsonl：escape → caused_by* → 根 | 深度与根的层直接回答"为什么门没拦住"；根在 task = 契约；根在 gate = 人签时没看到 |
   | 契约返工率（v0.6） | trace.jsonl：`supersedes done_when.yaml#AC-*` / AC 总数 | 高 = G2 之前判据写得太早或太松 |

@@ -18,7 +18,7 @@ description: |
   constitution from a static repo. Do NOT use for: a single Territory's resident
   invariants (that is invariant-extract), or task-level acceptance criteria (acceptance-spec).
 argument-hint: "[repo path] [--auto]"
-version: 0.3.0
+version: 0.4.0
 user-invocable: true
 # imported into sdlc 2026-09-05 from looper v0.2.0; body kept, sdlc wiring added (see 接线 / 术语映射)
 ---
@@ -197,6 +197,26 @@ artifacts live in a `.dos-extract/` workspace; finals copy to the project root.
   before-code edition."
 - **Mock/stub-heavy** → filter test fixtures from the inventory (ghost objects like `MockUser`).
 - **Disagreement after the fact** → re-run the relevant judgment; workspace artifacts persist.
+
+## agent-map：仓库怎么干活（v0.3.0）
+
+DOS 说的是「系统里有什么、叫什么、什么不可违反」。它不说「测试怎么跑、构建怎么起、哪个目录管什么」——
+而那恰恰是一个无上下文的实现者上手时必问、卡里又从来没有的四件事。sdlc 有意不做 rules/ 与 hooks
+（怕注入每个会话），结果这部分知识回到了每个人自己的 CLAUDE.md，正是「不同人给的上下文不一样」这个
+差异的来源。
+
+产物 `agent-map.md`（形状 `assets/agent_map_template.md`），四节：**跑起来** / **目录职责** /
+**禁区** / **已知陷阱**。三条纪律由 `scripts/verify_agent_map.py --probe` 编译：
+
+- **命令必须真能跑**：`--probe` 逐条执行并比对期望退出码。跑不通的命令比没有命令更糟——
+  实现者会照着它试三次再去猜。没有 `--probe` 的一次检查，输出里写明 `probed=false`：那时候
+  这份地图里的命令是**声明**，不是事实。
+- **陷阱必须有来路**（`ledger:` / `issue:#N` / `commit:sha` / `file:`）。没有来路的陷阱是想出来的，
+  不是这个仓库里的——与 `invariant-extract` 的 provenance 纪律同源。
+- **占位符不算填写**；没有的项写 `无`（那是一条信息：实现者不必去找）。
+
+不是把 README 塞给 agent：2607.27250 那 288 次运行说，把仓库知识堆进上下文**不提高正确率**。
+所以地图只装这四样，且由 `../plan-cards/scripts/slice_agent_map.py` 按卡切片后才进 `card_context.md`。
 
 ## 接线（在 sdlc 里的位置）
 

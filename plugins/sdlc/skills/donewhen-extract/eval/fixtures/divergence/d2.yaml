@@ -1,0 +1,6 @@
+schema: 2
+acceptance:
+  - {id: A1, req: REQ-001, kind: mechanical, ears_type: event, observe: "route:GET /export ", given: {rows: 100}, expect: {status: 200, columns: 6}, paired_with: A2}
+  - {id: A2, req: REQ-001, kind: mechanical, ears_type: unwanted, observe: "route:GET /export", given: {rows: 100000}, expect: {status: 413}}
+  - {id: A3, req: REQ-002, kind: mechanical, ears_type: state, observe: "route:GET /export", expect: {p95_ms: 800}}
+  - {id: A4, req: REQ-003, kind: human, ears_type: state, observe: "ui:data-test=export-btn", statement: 列顺序符合财务习惯, judge: product, evidence: demo}

@@ -1,0 +1,7 @@
+id: CARD-01
+title: 只碰 qa-reviewer 的脚本
+req_ids: [REQ-001]
+ac_ids: [AC-001-a]
+dos_slice: {objects: [], invariants: []}
+allowed_files: ["plugins/sdlc/skills/qa-reviewer/scripts/**"]
+forbidden_files: ["tests/**"]

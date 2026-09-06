@@ -1,0 +1,5 @@
+schema: 2
+acceptance:
+  - {id: AC-1, req: REQ-001, kind: mechanical, ears_type: event, observe: "route:GET /export", given: {rows: 100}, expect: {status: 200, columns: 6}, paired_with: AC-2}
+  - {id: AC-2, req: REQ-001, kind: mechanical, ears_type: unwanted, observe: "route:GET /export", given: {rows: 200000}, expect: {status: 413}}
+  - {id: AC-3, req: REQ-002, kind: mechanical, ears_type: state, observe: "route:GET /export", expect: {p95_ms: 300}}

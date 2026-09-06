@@ -13,6 +13,7 @@ Usage:
   sdlc_state.py init    --slug S --title T [--track psl|task] [--root .sdlc]
   sdlc_state.py show    [--slug S] [--root .sdlc]
   sdlc_state.py set     [--slug S] key=value ...          # dotted keys, whitelisted (see SETTABLE)
+  sdlc_state.py size    [--slug S] [--files N --acs M --human-acs K | --base REF] [--commit]
   sdlc_state.py advance [--slug S] <stage> [--force --reason R]
   sdlc_state.py gate    [--slug S] <g1|g2|g3> --verdict pass|reject|waived --by NAME
                         [--record PATH] [--attribution derivation_error|rule_error|none]
@@ -67,6 +68,7 @@ ORDER = ["intake", "track", "issue", "branch", "contract", "g2", "cards", "imple
          "acceptance", "pr", "review", "g3", "merge", "release", "archive"]
 SETTABLE = {
     "track", "title",
+    "intake.size",   # size_source 不可 set：只有 cmd_size 能写 derived，手设的档位拿不到豁免
     "issue.number", "issue.url", "issue.kind",
     "branch.name", "branch.base",
     "contract.done_when", "contract.contract_yaml", "contract.source",
@@ -89,6 +91,8 @@ REVIEW_EXITS = ("done", "waived")
 CONTRACT_FILES = ("contract.done_when", "contract.compile_manifest", "contract.tests_manifest",
                   "contract.calibration_report")
 LAYER_COUNTERS = ["card", "plan", "task", "ontology", "world"]
+# 体量分档（assets/sizing.yaml）。极性不可反转：缺省是 M（较严），S 的豁免必须用证据换。
+SIZES = ("S", "M", "L")
 BUDGET_KEY = {"card": "card_retries", "plan": "plan_reflows", "task": "task_reflows",
               "ontology": "ontology_reflows", "world": "world_reflows"}
 # Append-only logs can only point backwards, so the causal edge is `caused_by` (effect → cause); the rest are
@@ -364,7 +368,12 @@ def prereqs(st, target):
         need(not get_path(st, "pending.failure_report"), "pending failure report written (`report --path …`)")
     elif target == "pr":
         ok = get_path(st, "acceptance.evaluation_result") or get_path(st, "acceptance.skipped_reason")
-        need(ok, "acceptance.evaluation_result path OR acceptance.skipped_reason (TASK 轨轻量, recorded)")
+        # 第三条路：sizing.yaml 的 S 档豁免整体验收。只认 size_source=derived——
+        # 缺省的 M 不给豁免，手设的 S 也不给（size_source 不在 SETTABLE 里，只有 `size --commit` 能写）。
+        if not ok and get_path(st, "intake.size") == "S" and get_path(st, "intake.size_source") == "derived":
+            ok = True
+        need(ok, "acceptance.evaluation_result path OR acceptance.skipped_reason "
+                 "(or a derived size=S tier — `size --files N --acs M --commit`)")
     elif target == "review":
         need(get_path(st, "pr.number"), "pr.number set")
     elif target == "g3":
@@ -409,6 +418,8 @@ def cmd_init(a):
         "counters": {k: 0 for k in LAYER_COUNTERS} | {"last_fingerprints": {}, "fingerprint_repeats": {},
                                                        "fingerprint_history": {}, "scores": {}},
         "pending": {"failure_report": False},
+        # 缺省 M：漏填得到较严的路径。S 档的豁免只能由 `size --commit` 用证据换（sizing.yaml）。
+        "intake": {"size": "M", "size_source": "default", "size_evidence": {}},
         "waivers": [], "assumptions": [], "artifacts": {},
     }
     save(a.root, a.slug, st)
@@ -436,9 +447,14 @@ def cmd_set(a):
             die(f"key not settable: {k} (allowed: {sorted(SETTABLE)})", 1)
         if k == "track" and v not in ("psl", "task"):
             die("track must be psl|task", 1)
+        if k == "intake.size" and v not in SIZES:
+            die(f"intake.size must be {'|'.join(SIZES)}; prefer `size --files N --acs M --commit` so the "
+                "evidence is recorded with it (a tier set by hand grants exemptions nobody can audit)", 1)
         if k == "lock.stage" and v not in LOCK_STAGES:
             die(f"lock.stage must be {'|'.join(LOCK_STAGES)} (the two signing stages)", 1)
         set_path(st, k, coerce(v))
+        if k == "intake.size":
+            set_path(st, "intake.size_source", "manual")   # 手设 = 无证据 = 不给豁免
         if k == "track":
             st["gates"]["g1"]["required"] = (v == "psl")
         if k in ("contract.done_when", "lock.path", "acceptance.evaluation_result", "world.derived_dir", "world.dos"):
@@ -475,9 +491,22 @@ def cmd_advance(a):
         refs.append({"type": "decided_by", "target": wid})
     prev = st["stage"]
     st["stage"] = a.stage
+    # S 档对整体验收的豁免：写成有类型、可数的记录（不是一句自由文本的借口），/retro 按档分桶数逃逸缺陷。
+    exempted = None
+    if (a.stage == "pr" and get_path(st, "intake.size") == "S"
+            and not get_path(st, "acceptance.evaluation_result")
+            and not get_path(st, "acceptance.skipped_reason")):
+        ev = get_path(st, "intake.size_evidence", {}) or {}
+        exempted = (f"size=S exemption (rule {ev.get('rule', '?')}: files={ev.get('files')} acs={ev.get('acs')} "
+                    f"human_acs={ev.get('human_acs')}) — sizing.yaml S 档豁免 acceptance-fleet")
+        set_path(st, "acceptance.skipped_reason", exempted)
+        set_path(st, "acceptance.skipped_by", "size_tier")
     save(a.root, a.slug, st)
     ledger_append(a.root, a.slug, "advance", f"{prev} → {a.stage}", stage=a.stage, refs=refs)
-    print(json.dumps({"ok": True, "from": prev, "to": a.stage, "waived": bool(problems)}, ensure_ascii=False))
+    if exempted:
+        ledger_append(a.root, a.slug, "size_exemption", exempted, stage=a.stage, decision="S")
+    print(json.dumps({"ok": True, "from": prev, "to": a.stage, "waived": bool(problems),
+                      **({"size_exemption": exempted} if exempted else {})}, ensure_ascii=False))
 
 
 def cmd_gate(a):
@@ -557,6 +586,90 @@ def cmd_card(a):
     if sha:
         out["commit"] = sha
     print(json.dumps(out, ensure_ascii=False))
+
+
+def load_sizing(path=None):
+    p = path or os.path.join(ASSETS, "sizing.yaml")
+    d = load_yaml(p)
+    if not d or not d.get("rules"):
+        die(f"sizing table missing or empty: {p}", 2)
+    return d
+
+
+def derive_size(sizing, *, track, files, acs, human_acs):
+    """→ (tier, rule_id, why)。规则按顺序求值，第一条命中即定档；没有形容词，只有可数的量。"""
+    for r in sizing["rules"]:
+        w = r.get("when") or {}
+        ok = True
+        if "track" in w and w["track"] != track:
+            ok = False
+        for key, val, actual in (("files_min", w.get("files_min"), files),
+                                 ("acs_min", w.get("acs_min"), acs),
+                                 ("human_acs_min", w.get("human_acs_min"), human_acs)):
+            if val is not None and not (actual is not None and actual >= val):
+                ok = False
+        for key, val, actual in (("files_max", w.get("files_max"), files),
+                                 ("acs_max", w.get("acs_max"), acs),
+                                 ("human_acs_max", w.get("human_acs_max"), human_acs)):
+            if val is not None and not (actual is not None and actual <= val):
+                ok = False
+        if ok:
+            return r["tier"], r["id"], r.get("why", "")
+    return "M", "fallback", "no rule matched"
+
+
+def count_acs(done_when):
+    """从契约里数 AC —— 这是可核对的来源，不是引擎报的数。→ (总数, human 数) 或 (None, None)。"""
+    d = load_yaml(done_when)
+    if not d:
+        return None, None
+    acc = d.get("acceptance") or []
+    if not isinstance(acc, list):
+        return None, None
+    return len(acc), sum(1 for x in acc if isinstance(x, dict) and x.get("kind") == "human")
+
+
+def cmd_size(a):
+    st = load(a.root, a.slug)
+    sizing = load_sizing(a.sizing)
+    files, acs, human = a.files, a.acs, a.human_acs
+    src = {"files": "--files", "acs": "--acs", "human_acs": "--human-acs"}
+    dw = get_path(st, "contract.done_when")
+    if (acs is None or human is None) and dw and os.path.isfile(dw):
+        c_acs, c_human = count_acs(dw)
+        if acs is None and c_acs is not None:
+            acs, src["acs"] = c_acs, f"contract:{dw}"
+        if human is None and c_human is not None:
+            human, src["human_acs"] = c_human, f"contract:{dw}"
+    if files is None and a.base:
+        code, out, _ = run_git(["diff", "--name-only", f"{a.base}...HEAD"])
+        if code == 0:
+            files, src["files"] = len([l for l in out.splitlines() if l.strip()]), f"git diff {a.base}...HEAD"
+    missing = [k for k, v in (("files", files), ("acs", acs)) if v is None]
+    if missing and not a.allow_unknown:
+        die(f"cannot derive a tier without {missing} — pass --files/--acs, or --base <ref> and a contract, "
+            "or --allow-unknown to record the fallback tier. An unmeasured tier is a guess, and a guess "
+            "that grants exemptions is worse than the default.", 1)
+    tier, rule_id, why = derive_size(sizing, track=st.get("track"), files=files, acs=acs, human_acs=human)
+    ev = {"files": files, "acs": acs, "human_acs": human, "sources": src,
+          "rule": rule_id, "why": why, "at": now()}
+    out = {"ok": True, "tier": tier, "rule": rule_id, "why": why, "evidence": ev,
+           "tier_process": (sizing["tiers"].get(tier) or {}).get("process"),
+           "exempt": (sizing["tiers"].get(tier) or {}).get("exempt") or [],
+           "committed": False}
+    if a.commit:
+        st.setdefault("intake", {})
+        st["intake"].update({"size": tier, "size_source": "derived", "size_evidence": ev})
+        save(a.root, a.slug, st)
+        ledger_append(a.root, a.slug, "size", f"tier={tier} by {rule_id} ({why}) | files={files} acs={acs} human_acs={human}",
+                      stage=st["stage"], decision=tier)
+        out["committed"] = True
+    print(json.dumps(out, ensure_ascii=False, indent=2))
+
+
+def run_git(args):
+    r = subprocess.run(["git"] + args, capture_output=True, text=True)
+    return r.returncode, r.stdout, r.stderr
 
 
 def load_routing(path):
@@ -640,7 +753,13 @@ def cmd_fail(a):
         c["last_fingerprint"] = fp
 
     track = st.get("track") if st.get("track") in ("psl", "task") else "task"
-    budgets = rt.get("budgets", {}).get(track, {})
+    budgets = dict(rt.get("budgets", {}).get(track, {}) or {})
+    size = get_path(st, "intake.size")
+    if size:
+        try:
+            budgets.update((load_sizing().get("budget_overrides", {}) or {}).get(size, {}) or {})
+        except SystemExit:
+            pass
     budget = budgets.get(BUDGET_KEY.get(layer, ""), None)
     used = cnt.get(layer, 0) if layer in LAYER_COUNTERS else None
     limit = int(rt.get("fingerprint_repeat_limit", 2))
@@ -981,6 +1100,11 @@ def main():
                    help="who is signing. No default: omitting it used to record an agent as a person, "
                         "and a discipline bypassable by omission is not a discipline (re-audit 2026-09-06)")
     s.add_argument("--authorization")
+    s = P("size"); s.add_argument("--files", type=int); s.add_argument("--acs", type=int)
+    s.add_argument("--human-acs", type=int, dest="human_acs"); s.add_argument("--base",
+                   help="git ref: 用 diff 数改动文件数，而不是引擎报一个数")
+    s.add_argument("--commit", action="store_true", help="把档位与证据写进 state（否则只推荐）")
+    s.add_argument("--allow-unknown", action="store_true"); s.add_argument("--sizing")
     s = P("card"); s.add_argument("card"); s.add_argument("--status", required=True, choices=["todo", "doing", "done", "blocked"]); s.add_argument("--commit"); s.add_argument("--ac", action="append")
     s = P("fail"); s.add_argument("--signal", required=True); s.add_argument("--card"); s.add_argument("--fingerprint"); s.add_argument("--evidence")
     s.add_argument("--score", type=float); s.add_argument("--by"); s.add_argument("--routing")
@@ -1010,6 +1134,7 @@ def main():
         return cmd_loops(a)
     a.slug = resolve_slug(a.root, a.slug)
     return {"show": cmd_show, "set": cmd_set, "advance": cmd_advance, "gate": cmd_gate, "card": cmd_card,
+            "size": cmd_size,
             "fail": cmd_fail, "waive": cmd_waive, "report": cmd_report, "check-clean": cmd_check_clean,
             "graph": cmd_graph, "ledger": cmd_ledger, "archive": cmd_archive}[a.cmd](a)
 

@@ -12,6 +12,10 @@
 ## 红基线
 <测试名 → 在 <base-sha> 上失败的一行输出；无测试的 AC 列 `no-tests-for:`>
 
+## 仓库怎么干活（agent-map 切片）
+<`python3 <plugin>/skills/plan-cards/scripts/slice_agent_map.py agent-map.md --card cards/CARD-xx.yaml` 的输出；
+ 没有 agent-map.md 时写 `无——实现者需要自己找测试入口`，别留空>
+
 ## 约束
 - 只改 allowed_files；forbidden_files 一律不动
 - 每个 commit：`python3 <plugin>/skills/commit/scripts/verify_commit.py --msg-file <msg> --card cards/CARD-xx.yaml --lock .done_when.lock`

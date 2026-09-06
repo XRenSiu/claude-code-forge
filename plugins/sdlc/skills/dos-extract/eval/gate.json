@@ -71,6 +71,16 @@
       ],
       "changes": "inventory.py: YAML/JSON structured channel ($defs / schema-property / enum-value / kind-value / key), declarations-before-keys report, --exclude semantics documented; new count_terms.py (reproducible docs counts), reconcile_dos.py (dos-reconciled.yaml), dos_closure.py (one synonym-aware resolver, imported by verify_issue.py and lint_cards.py); verify_dos.py: whole-word waiver via decisions.md `## Naming waivers`, compounds stay non-waivable, derived_from check, size and description warnings; templates: synonyms / aliases / translation_notes / derived_from, zero-noun guidance, waiver section",
       "smoke": "24 new expectations, each proven to kill a mutant that reinstates the pre-fix behaviour"
+    },
+    "2026-09-06 raising-the-floor: implemented the report's gaps; see plugins/sdlc/docs/reports/"
+  ],
+  "script_smoke": {
+    "verify_agent_map.py": {
+      "filled fixture with --probe": "exit 0, every command really executed and compared to its expected code",
+      "command that does not run": "exit 1",
+      "trap without provenance": "exit 1",
+      "unfilled template": "exit 1 (placeholders are not entries)",
+      "dogfood": "wrote agent-map.md for this repo; the first probe rejected it on 4 counts (1 real: a self-check command that exits 3)"
     }
-  ]
+  }
 }

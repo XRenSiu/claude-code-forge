@@ -211,6 +211,37 @@ def main():
             flags.append(f"human ACs on {obs} carry mixed judges {sorted(judges)} — split the section "
                          "so each observation goes to one adjudicator")
 
+    # ---- constraints.structure：形状对不对（值本身由 verify_structure.py 在 A 档求值）----
+    STRUCT_NUM = {"max_function_complexity": int, "max_complexity_delta": int,
+                  "max_duplicate_block_lines": int, "max_duplicate_ratio": float}
+    st = (d.get("constraints") or {}).get("structure")
+    if st is None:
+        flags.append("constraints.structure 缺席：这次交付没有承诺任何结构性质量判据"
+                     "（复杂度增量 / 重复率 / 依赖方向）。A 档不检它 = 测试全绿而结构退化可以合入")
+    elif not isinstance(st, dict):
+        rejects.append("constraints.structure 必须是映射")
+    else:
+        known = set(STRUCT_NUM) | {"layers", "exclude"}
+        for k in st:
+            if k not in known:
+                rejects.append(f"constraints.structure 未知键 {k}（封闭集：{sorted(known)}）")
+        for k, typ in STRUCT_NUM.items():
+            if k in st and not isinstance(st[k], (int, float)):
+                rejects.append(f"constraints.structure.{k} 必须是数字，得到 {st[k]!r}")
+        for lay in (st.get("layers") or []):
+            if not isinstance(lay, dict) or not lay.get("name") or not lay.get("path"):
+                rejects.append(f"constraints.structure.layers 每条要有 name 与 path：{lay!r}")
+            elif "may_import" not in lay:
+                rejects.append(f"layer {lay.get('name')} 没写 may_import —— 不写等于不检，"
+                               "允许什么必须显式列出（空列表 = 谁都不许 import）")
+        names = {l.get("name") for l in (st.get("layers") or []) if isinstance(l, dict)}
+        for lay in (st.get("layers") or []):
+            for t in (lay.get("may_import") or []) if isinstance(lay, dict) else []:
+                if t not in names:
+                    rejects.append(f"layer {lay.get('name')}.may_import 指向未声明的层 {t}")
+        if not any(k in st for k in STRUCT_NUM) and not st.get("layers"):
+            rejects.append("constraints.structure 是空壳：一条阈值或一个 layers 都没有")
+
     fp = (d.get("constraints") or {}).get("forbidden_paths")
     if fp is not None:
         for must in ("tests/**", "done_when.yaml"):

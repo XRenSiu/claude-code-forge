@@ -1,0 +1,10 @@
+# verify_structure.py 的自检 fixture：一个只有 Python、约束都满足的小仓库。
+# smoke.sh 与 agent-map 的「结构闸自检」都指向它——拿整个仓库当例子会因为缺 lizard 而 exit 3。
+schema: 2
+constraints:
+  structure:
+    max_function_complexity: 10
+    max_duplicate_block_lines: 20
+    layers:
+      - {name: domain, path: "src/domain/**", may_import: []}
+      - {name: app, path: "src/app/**", may_import: [domain]}

@@ -1202,6 +1202,68 @@ expect "anchors: an independent count agrees with what the tool walked (I-105/I-
 expect "anchors: the cross-check fails when the tool stops recognising a family (twin)" 1 \
   bash "$ROOT/eval/fixtures/anchor_crosscheck_twin.sh" "$RA2" "$ROOT/eval/fixtures/anchor_crosscheck.py"
 
+# ---------------------------------------------------------------------------
+# 报告 raising-the-floor 的五条缺口（2026-09-06 实现）。每条都带一条"变异证明"式的孪生：
+# 闸真的会红，而不是"我认得的那部分全绿"。
+# ---------------------------------------------------------------------------
+QAF="$S/qa-reviewer/fixtures"
+expect "structure: a clean fixture repo passes all three checks" 0 \
+  py "$S/qa-reviewer/scripts/verify_structure.py" --done-when "$QAF/structure-clean.yaml" --repo "$QAF/repo" --out "$TMP/sf1.yaml"
+expect "structure: a complexity cap of 1 is breached (twin — the gate really bites)" 1 \
+  py "$S/qa-reviewer/scripts/verify_structure.py" --done-when "$QAF/structure-breach.yaml" --repo "$QAF/repo" --out "$TMP/sf2.yaml"
+expect "structure: a declared constraint with no analyzer is unevaluated (exit 3), never a pass" 3 \
+  bash -c "d=\"$TMP/nostruct\"; rm -rf \"\$d\"; mkdir -p \"\$d\"; printf 'package main\\nfunc F(){}\\n' > \"\$d/x.go\"; python3 '$S/qa-reviewer/scripts/verify_structure.py' --done-when '$QAF/structure-clean.yaml' --repo \"\$d\" --out /dev/null"
+expect "structure: --require-analyzers turns unevaluated into a breach" 1 \
+  bash -c "d=\"$TMP/nostruct\"; python3 '$S/qa-reviewer/scripts/verify_structure.py' --done-when '$QAF/structure-clean.yaml' --repo \"\$d\" --out /dev/null --require-analyzers"
+expect "structure: a contract with no structure block says so instead of reporting green" 0 \
+  bash -c "printf 'schema: 2\\n' > \"$TMP/nos.yaml\"; python3 '$S/qa-reviewer/scripts/verify_structure.py' --done-when \"$TMP/nos.yaml\" --repo '$QAF/repo' --out /dev/null | grep -q '本闸无对象'"
+expect "contract: a structure block with an unknown key is rejected" 1 \
+  bash -c "printf 'schema: 2\\nfeature: f\\nbased_on: [REQ-1]\\nacceptance:\\n  - {id: A, req: REQ-1, kind: mechanical, ears_type: ubiquitous, observe: \"route:GET /x\", given: {a: 1}, expect: {status: 200}}\\nconstraints:\\n  forbidden_paths: [tests/**, done_when.yaml]\\n  structure: {bogus_key: 1}\\n' > \"$TMP/badstruct.yaml\"; python3 '$S/donewhen-extract/scripts/validate_done_when_v2.py' \"$TMP/badstruct.yaml\""
+expect "contract: a layer without may_import is rejected (not writing it means not checking it)" 1 \
+  bash -c "printf 'schema: 2\\nfeature: f\\nbased_on: [REQ-1]\\nacceptance:\\n  - {id: A, req: REQ-1, kind: mechanical, ears_type: ubiquitous, observe: \"route:GET /x\", given: {a: 1}, expect: {status: 200}}\\nconstraints:\\n  forbidden_paths: [tests/**, done_when.yaml]\\n  structure:\\n    layers: [{name: d, path: \"src/d/**\"}]\\n' > \"$TMP/nolayer.yaml\"; python3 '$S/donewhen-extract/scripts/validate_done_when_v2.py' \"$TMP/nolayer.yaml\""
+
+DVF="$S/donewhen-extract/eval/fixtures/divergence"
+expect "divergence: three isolated drafts that disagree must be clarified before G2" 1 \
+  py "$S/donewhen-extract/scripts/divergence.py" "$DVF/d1.yaml" "$DVF/d2.yaml" "$DVF/d3.yaml" --out "$TMP/div.yaml"
+expect "divergence: identical drafts pass (twin — it is not just always red)" 0 \
+  py "$S/donewhen-extract/scripts/divergence.py" "$DVF/d1.yaml" "$DVF/d1.yaml" --out "$TMP/div2.yaml"
+expect "divergence: a single draft is refused — one draft has no divergence to show" 2 \
+  py "$S/donewhen-extract/scripts/divergence.py" "$DVF/d1.yaml"
+expect "divergence: every divergence carries the question to ask the user" 0 \
+  bash -c "python3 -c \"import yaml,sys; d=yaml.safe_load(open('$TMP/div.yaml')); assert d['divergent'] and all(x.get('question') for x in d['divergent']), 'a divergence without a question is a report, not an agenda'\""
+
+AMF="$S/dos-extract/eval/fixtures"
+expect "agent-map: the filled template passes with every command really executed" 0 \
+  py "$S/dos-extract/scripts/verify_agent_map.py" "$AMF/agent-map-good.md" --repo "$ROOT/../.." --probe --timeout 60
+expect "agent-map: a command that does not run is rejected (twin)" 1 \
+  py "$S/dos-extract/scripts/verify_agent_map.py" "$AMF/agent-map-badcmd.md" --repo "$ROOT/../.." --probe --timeout 60
+expect "agent-map: a trap with no provenance is rejected" 1 \
+  py "$S/dos-extract/scripts/verify_agent_map.py" "$AMF/agent-map-notrace.md" --repo "$ROOT/../.."
+expect "agent-map: the unfilled template is rejected (placeholders are not entries)" 1 \
+  py "$S/dos-extract/scripts/verify_agent_map.py" "$S/dos-extract/assets/agent_map_template.md" --repo "$ROOT"
+expect "agent-map: the slice drops rows a card cannot touch" 0 \
+  bash -c "out=\$(python3 '$S/plan-cards/scripts/slice_agent_map.py' '$AMF/agent-map-good.md' --card '$AMF/slice-card.yaml'); echo \"\$out\" | grep -q '跑起来\|怎么跑起来' && ! echo \"\$out\" | grep -q 'dogfood'"
+
+expect "size: init records M/default — omission gives the stricter path" 0 \
+  bash -c "d=\"$TMP/sz\"; rm -rf \"\$d\"; python3 '$S/sdlc/scripts/sdlc_state.py' init --root \"\$d\" --slug s --title t --track task >/dev/null; python3 -c \"import json;d=json.load(open('\$d/s/state.json'));assert d['intake']=={'size':'M','size_source':'default','size_evidence':{}},d['intake']\""
+expect "size: an S tier needs counted evidence, never a bare assertion" 1 \
+  py "$S/sdlc/scripts/sdlc_state.py" size --root "$TMP/sz" --slug s
+expect "size: a human AC forces L even on a two-file change" 0 \
+  bash -c "python3 '$S/sdlc/scripts/sdlc_state.py' size --root \"$TMP/sz\" --slug s --files 2 --acs 2 --human-acs 1 | grep -q '\"tier\": \"L\"'"
+expect "size: a derived S grants the fleet exemption and records it as a typed ledger line" 0 \
+  bash -c "d=\"$TMP/sz2\"; rm -rf \"\$d\"; python3 '$S/sdlc/scripts/sdlc_state.py' init --root \"\$d\" --slug s --title t --track task >/dev/null; python3 '$S/sdlc/scripts/sdlc_state.py' size --root \"\$d\" --slug s --files 1 --acs 1 --human-acs 0 --commit >/dev/null; python3 -c \"import json;p='\$d/s/state.json';d=json.load(open(p));d['stage']='acceptance';json.dump(d,open(p,'w'))\"; python3 '$S/sdlc/scripts/sdlc_state.py' advance --root \"\$d\" --slug s pr >/dev/null && grep -q size_exemption \"\$d/s/ledger.md\""
+expect "size: a hand-set S never grants the exemption (twin — the door does not open by omission)" 1 \
+  bash -c "d=\"$TMP/sz3\"; rm -rf \"\$d\"; python3 '$S/sdlc/scripts/sdlc_state.py' init --root \"\$d\" --slug s --title t --track task >/dev/null; python3 '$S/sdlc/scripts/sdlc_state.py' set --root \"\$d\" --slug s intake.size=S >/dev/null; python3 -c \"import json;p='\$d/s/state.json';d=json.load(open(p));d['stage']='acceptance';json.dump(d,open(p,'w'))\"; python3 '$S/sdlc/scripts/sdlc_state.py' advance --root \"\$d\" --slug s pr"
+expect "size: size_source is not settable — only the derivation can write it" 1 \
+  py "$S/sdlc/scripts/sdlc_state.py" set --root "$TMP/sz3" --slug s intake.size_source=derived
+
+expect "effect: prepare leaves no hidden test in the arm's working copy" 0 \
+  bash -c "w=\"$TMP/eff\"; rm -rf \"\$w\"; python3 '$ROOT/eval/effect/run.py' prepare T01 --arm bare --workdir \"\$w\" >/dev/null && ! find \"\$w\" -name 'test_columns.py' -o -name 'test_scale.py' | grep -q ."
+expect "effect: the bare arm has no CLAUDE.md and the claudemd arm does" 0 \
+  bash -c "w=\"$TMP/eff\"; python3 '$ROOT/eval/effect/run.py' prepare T01 --arm claudemd --workdir \"\$w\" >/dev/null && [ ! -f \"\$w/T01-bare/CLAUDE.md\" ] && [ -f \"\$w/T01-claudemd/CLAUDE.md\" ]"
+expect "effect: score refuses to name a winner below the sample floor" 0 \
+  bash -c "python3 '$ROOT/eval/effect/run.py' collect T01 --arm bare --workdir \"$TMP/eff\" >/dev/null 2>&1; python3 '$ROOT/eval/effect/score.py' --workdir \"$TMP/eff\" --out \"$TMP/base.md\" --json | grep -q insufficient_sample"
+
 echo
 echo "smoke: $pass passed, $fail failed${ONLY:+, $skipped skipped (--only $ONLY)}  (tmp: $TMP)"
 [[ $fail -eq 0 ]]

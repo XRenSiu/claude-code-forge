@@ -194,6 +194,22 @@ def escape_rows(path):
     return n
 
 
+def size_buckets(archives):
+    """按体量分桶（v0.4）：S 档豁免了整体验收，它的逃逸率不低于 M 就说明分档标准定错了。
+    分档对不对由逃逸缺陷回答，不由拍脑袋回答。"""
+    out = {}
+    for a in archives:
+        st = a.get("state") or {}
+        size = ((st.get("intake") or {}).get("size")) or "unrecorded"
+        src = ((st.get("intake") or {}).get("size_source")) or "unrecorded"
+        b = out.setdefault(size, {"runs": 0, "derived": 0, "size_exemptions": 0, "escapes": 0})
+        b["runs"] += 1
+        b["derived"] += 1 if src == "derived" else 0
+        b["size_exemptions"] += a.get("size_exemptions", 0)
+        b["escapes"] += a.get("escapes", 0)
+    return out
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("archive_root"); ap.add_argument("--json"); ap.add_argument("--md")

@@ -41,5 +41,18 @@
     },
     "moved": "lint_cards.py → plan-cards/scripts, metrics.py → retro/scripts (2026-09-05 re-split)",
     "v0.6.0": "P1–P4 of docs/proposals/loop-graph-engineering.md implemented 2026-09-05; all still static_only"
-  }
+  },
+  "script_smoke": {
+    "sdlc_state.py size (v0.6)": {
+      "init": "intake.size=M / size_source=default — omission gives the stricter path",
+      "no counted input": "exit 1 — an unmeasured tier is a guess",
+      "human AC present": "L (SZ-02) even on a 2-file change",
+      "derived S": "grants the acceptance-fleet exemption, recorded as a typed size_exemption ledger line",
+      "hand-set S (twin)": "no exemption — set intake.size resets size_source to manual",
+      "size_source": "not in SETTABLE — only the derivation writes it"
+    }
+  },
+  "dogfood_fixes": [
+    "2026-09-06 raising-the-floor: implemented the report's gaps; see plugins/sdlc/docs/reports/"
+  ]
 }

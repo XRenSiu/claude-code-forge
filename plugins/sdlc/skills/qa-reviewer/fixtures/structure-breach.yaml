@@ -1,0 +1,5 @@
+# 同一个 fixture 仓库，但把上限压到必然违反 —— smoke 的变异证明用它（闸真的会红）。
+schema: 2
+constraints:
+  structure:
+    max_function_complexity: 1

@@ -15,7 +15,7 @@ description: |
   (that is invariant-extract), compiling done_when into tests/rubric (that is spec-compile),
   or proving the compiled ruler is correct (that is calibrate).
 argument-hint: "<issue id / signal id / intent text> [--template <contract_template_id>] [--auto]"
-version: 0.3.0
+version: 0.4.0
 user-invocable: true
 # imported into sdlc 2026-09-05 from qanat/.claude/skills; body kept, sdlc wiring added (see 接线 / 术语映射)
 ---
@@ -125,6 +125,26 @@ HTML disciplines are the load-bearing three; full procedures in `references/give
 - **The intent scan** is documented patterns for harvesting candidate conditions from the Issue +
   its `failure_memory` (last-N for this template/Territory) + the contract template's prior done_when.
   Patterns: `references/given-when-then.md`. (Engine-runnable; not welded into a sequence.)
+
+## 分歧集：把「这需求写清楚了没有」从自评变成可核对的信号（v0.2.0）
+
+Ambig-SWE（ICLR 2026）的第一条结论是**模型分不清一个任务是写清楚了还是没写清楚**，
+所以"引擎觉得这里不模糊"不是证据。sdlc 此前只有一条客观触发（DOS 词表闭包），它只抓得到
+"名词不在本体里"这一种模糊。
+
+`psl-derive` 已经有对的机制——同一份 PSL 隔离推导 N 次，分歧集就是 G1 的议程。TASK 轨照搬：
+**对同一个 issue 隔离生成 2–3 份 done_when 草案**（不同会话，互相看不见），然后
+
+```
+python3 scripts/divergence.py draft1.yaml draft2.yaml draft3.yaml --out divergence.yaml
+```
+
+它按 `(req, ears_type, 归一化 observe)` 对齐各草案的 AC（id 本来就不一样，不能靠 id），报五类分歧：
+`only_in_some`（这条判据要不要）· `expect_differs`（「对」的样子）· `threshold_differs`（数不一样 =
+阈值没有来源）· `kind_differs`（谁来裁决）· `twin_asymmetry`（失败语义）。每条带一句**要问用户的话**——
+分歧集是 G2 之前的议程，不是报告。分歧率超过 `--max-divergence`（缺省 0.20）exit 1：必须澄清才能进 G2。
+
+N 个读者读同一句需求读出了不同的判据，那句需求就是欠定的，与谁更聪明无关。
 
 ## The exit — mechanical pre-gate, then the real guarantee
 

@@ -32,10 +32,10 @@
 | 环 | 问题 | skill | 产物（一产物一生产者） | 门 / 闸 |
 |---|---|---|---|---|
 | R0 世界 | 这个产品为什么这样运转 | `psl`、`psl-derive` | `PSL-<x>.md`、`derived/{dos-proposal,workflow,form-draft,divergence}` | `verify_psl.py`、`verify_derived.py`、**G1** |
-| R1 本体 | 系统里有什么、叫什么、什么不可违反 | `dos-extract`、`invariant-extract` | `dos.yaml`、`decisions.md`、不变量卡 | `verify_dos.py`、`verify_card.py`；agent 无写权 |
-| R2 契约 | 什么算做完 | `issue`、`donewhen-extract`、`acceptance-spec` | issue、`spec.md`、**`done_when.yaml` v2** | `verify_issue.py`、`verify_done_when.py`、`validate_done_when_v2.py`、**G2**（`lock_done_when.py sign --stage g2`） |
+| R1 本体 | 系统里有什么、叫什么、什么不可违反 | `dos-extract`、`invariant-extract` | `dos.yaml`、`decisions.md`、不变量卡、**`agent-map.md`** | `verify_dos.py`、`verify_card.py`、**`verify_agent_map.py --probe`（命令逐条实跑）**；agent 无写权 |
+| R2 契约 | 什么算做完 | `issue`、`donewhen-extract`、`acceptance-spec` | issue、`spec.md`、**`done_when.yaml` v2**（含 `constraints.structure`）、**`divergence.yaml`** | `verify_issue.py`、`verify_done_when.py`、`validate_done_when_v2.py`、**G2**（`lock_done_when.py sign --stage g2`） |
 | R3 标准 | 判据怎么被机器执行 | `test-suite-generator`、`spec-compile`、`calibrate` | `tests/<f>/`、`behavior`（manifest）、`compile_manifest.yaml`、`calibration_report.yaml` | `derive_counts / gen_existence / check_verbatim_names`、`verify_compile.py`、`verify_calibration.py`；L5 二次锁 |
-| R4 计划 | 怎么拆成无上下文可做的卡 | `plan-cards` | `cards/CARD-xx.yaml` | `lint_cards.py` |
+| R4 计划 | 怎么拆成无上下文可做的卡 | `plan-cards` | `cards/CARD-xx.yaml`、**地图切片** | `lint_cards.py`、`slice_agent_map.py` |
 | R5 实现 | 按卡做、按卡提交 | `implement`、`commit`、`ratchet` | diff、commit、卡状态 | `verify_commit.py`（白名单 · 锁 · secrets）、`sdlc_state.py fail`（指纹升级） |
 | R6 验收 | 三档验收，谁一票否决 | `acceptance-fleet` + `code-reviewer` `qa-reviewer` `pm-reviewer` `spec-drift-detector` `spec-gaming-detector` + `meta-judge`；`pr-review` | `ratchet-log/iteration-NNN/`、`final-state.json`、`findings.yaml` | A 档一票否决 / B 档告警 / C 档请求人；**G3** |
 | R7 交付 | 合入与发布 | `pr`、`review-loop`、`release` | PR、收敛证据日志、tag、`CHANGELOG`、`releases/vX.md` | `verify_pr.py`、`pr-poll.sh done`、`verify_release.py`；merge / push tag 是人类动作 |
@@ -134,7 +134,7 @@ intake → track → issue → branch → contract → g2 → cards → implemen
 
 | 档 | 检查项 | 执行者 | 效力 |
 |---|---|---|---|
-| A 机械 | 测试 / lint / 类型 / secrets / 白名单 / 锁 / 新增依赖 / REQ 覆盖 / 隐藏集 / 契约硬命中 / 有复现的缺陷 | 脚本、`qa-reviewer`、`spec-gaming-detector`（硬）、`pr-review` 缺陷类 | 一票否决 |
+| A 机械 | 测试 / lint / 类型 / secrets / 白名单 / 锁 / 新增依赖 / REQ 覆盖 / 隐藏集 / 契约硬命中 / 有复现的缺陷 / **结构（复杂度增量 · 重复块 · 依赖方向）** | 脚本、`qa-reviewer`（含 `verify_structure.py`）、`spec-gaming-detector`（硬）、`pr-review` 缺陷类 | 一票否决；结构闸 exit 3 = 未检，按未检记录不按通过 |
 | B 结构 | 复杂度 / 重复 / 公共 API 变更 / diff 体量 / spec-drift / gaming 软命中 | `code-reviewer`、`spec-drift-detector`、`pr-review` | 超阈值告警，有界可进 |
 | C 判断 | human AC / 架构意图 / 可读性 | `pm-reviewer`（只路由）、`meta-judge`、`pr-review` C 档 | 请求人工（G3） |
 
@@ -275,6 +275,11 @@ derived/ · PSL-<x>.md · dos.yaml          releases/vX.Y.Z.md · CHANGELOG.md �
 11. **图与环是数据，不是散文**：节点有写范围，每个圈有环契约，评估者到实现者只带 fix_prompt，人节点有恢复绑定——`verify_graph.py` 检。
 12. **收敛 ≠ 正确**：repeat / oscillation / plateau 都是"换层"的信号，不是"再试一次"的理由；`impossible` 只能由评估者说。
 13. **harness 改动经人**：`/tune` 只出 diff；routing / 脚本默认值 / fix_list 的改动都是 PR。
+14. **声明了但没求值 ≠ 通过**（v0.10.0）：契约承诺了一条判据而分析器跑不了，结果是 `unevaluated`
+    （`verify_structure.py` 退出码 3），调用方按"未检"记录。一把没跑的尺子不许报绿；连"一个文件都没数出来"
+    也算没跑——那次假绿是本轮自己的孪生用例抓到的。
+15. **缺省不给豁免**（v0.10.0）：`intake.size` 缺省 M，S 档跳过整体验收的豁免只认 `size_source=derived`，
+    手设的档位拿不到。漏填得到的是较严的路径——**一个靠遗漏就能打开的门不是门**。
 
 ---
 
@@ -293,7 +298,12 @@ derived/ · PSL-<x>.md · dos.yaml          releases/vX.Y.Z.md · CHANGELOG.md �
 | L8 合入 · 交付 · 逃逸 | pr · review-loop · release · issue --escape | 已有 |
 | X1 DOS 生命周期 | dos-extract · invariant-extract · dos-proposal | 部分：应然↔现状对账、candidate 命名空间、ontology-drift **空白** |
 | X2 路由 · 预算 | routing.yaml · sdlc_state fail | 已有 |
-| X3 度量 | retro · metrics.py（+ trace 指标）· **tune**（harness 闭环） | 已有 |
+| **结构性质量（A 档）** | `constraints.structure` · `verify_structure.py` | 已有（v0.10.0）；unevaluated 有独立退出码 |
+| **仓库地图** | `agent_map_template.md` · `verify_agent_map.py --probe` · `slice_agent_map.py` | 已有（v0.10.0） |
+| **TASK 轨模糊度信号** | `divergence.py`（N 份隔离草案） | 已有（v0.10.0） |
+| **体量分档** | `sizing.yaml` · `sdlc_state.py size` | 已有（v0.10.0） |
+| **行为层对比** | `eval/effect/`（run.py · score.py · tasks/T01） | **部分**：1/10 任务、3 arm 跑过一轮；score.py 在 < 5 任务时拒绝下结论 |
+| X3 度量 | retro · metrics.py（+ trace 指标 + 体量分桶）· **tune**（harness 闭环） | 已有 |
 | 环契约 / 图声明 / 触发绑定（loop & graph engineering） | loops.yaml · graph.yaml · triggers.yaml · verify_loop / verify_graph · check-clean | 已有（v0.6.0）；Stop hook 只有模板 |
 | 收敛检测（oscillation / plateau / impossible） | routing.yaml v2 R14–R16 · `fail --score --by` | 已有；阈值是文献先验，待真实运行校准 |
 | 决策迹 | trace.jsonl · trace.py · metrics 新指标 | 已有 |

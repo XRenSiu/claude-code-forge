@@ -45,7 +45,12 @@ G1 世界裁决     人 · gate g1     + 范围段             G2 签字冻结  
 | DOS 本体 + 闭包 | `/dos-extract` + `/invariant-extract`（本插件，引自 looper）+ `verify_issue.py --dos` / `lint_cards.py --dos` | 部分 | 应然↔现状对账 / candidate / ontology-drift **空白** |
 | 回流路由 | `routing.yaml` + `sdlc_state.py fail`；`/acceptance-fleet` 四态、`/ratchet` kill/restart 映射到它 | 已有 | 归因器是启发式，人确认 |
 | 终止预算 | 分层计数 + 指纹终止 | 已有 | 按轨道分预算 |
-| 度量 | `/retro`（`metrics.py`，+ 逃逸因果链 / 契约返工率） | 已有 | 先记基线；提案落层 |
+| 度量 | `/retro`（`metrics.py`，+ 逃逸因果链 / 契约返工率 / 按体量分桶） | 已有 | 先记基线；提案落层 |
+| **结构性质量（A 档第三条腿）** | `constraints.structure` + `qa-reviewer/scripts/verify_structure.py` | 已有（v0.10.0） | 复杂度增量 / 重复块 / 依赖方向；分析器缺席 = unevaluated（exit 3），不是 pass |
+| **仓库地图** | `dos-extract/assets/agent_map_template.md` + `verify_agent_map.py --probe` + `plan-cards/scripts/slice_agent_map.py` | 已有（v0.10.0） | 命令逐条实跑；陷阱必须有来路；按卡切片进 card_context |
+| **TASK 轨的模糊度信号** | `donewhen-extract/scripts/divergence.py` | 已有（v0.10.0） | N 份隔离草案的分歧 = 必须澄清的槽；不靠引擎自评 |
+| **体量分档** | `sdlc/assets/sizing.yaml` + `sdlc_state.py size` | 已有（v0.10.0） | 缺省 M；S 的豁免只认 derived，且写成有类型的 size_exemption |
+| **行为层对比（带 / 不带 skill）** | `eval/effect/`（run.py · score.py · tasks/） | **部分**：题库与跑分器已有，1/10 个任务跑过 | score.py 在样本 < 5 时拒绝下结论；见 `eval/effect/baseline.md` |
 | harness 调参（Hill-Climbing Loop） | `/tune`（`tune.py` · `apply_proposal.py`） | 已有（v0.6.0） | 封闭 target 集；样本 < 2 不提案；只出 diff |
 | 环契约 / 执行图 / 触发绑定 | `loops.yaml` · `graph.yaml` · `triggers.yaml` · `verify_loop.py` · `verify_graph.py` | 已有（v0.6.0） | 数据与 ORDER 互相断言；Stop hook 只有模板 |
 | 收敛检测 | `routing.yaml` v2 R14–R16 · `sdlc_state.py fail --score --by` | 已有（v0.6.0） | 阈值为文献先验 |

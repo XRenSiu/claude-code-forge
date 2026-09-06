@@ -54,5 +54,19 @@
       "convert_v1_to_v2.py": "acceptance-spec example → v2 skeleton (schema 2, tests kept as manifest, file existence → cards_hint); skeleton honestly fails v2 validation until ACs are completed",
       "references/done-when-v2-schema.yaml": "the single contract schema of sdlc"
     }
-  }
+  },
+  "script_smoke": {
+    "divergence.py": {
+      "three disagreeing drafts": "exit 1 must_clarify, 6 divergences each carrying the question to ask",
+      "identical drafts (twin)": "exit 0 — not always-red",
+      "single draft": "exit 2 — one draft has no divergence to show"
+    },
+    "validate_done_when_v2.py (v0.4)": {
+      "structure block shape": "unknown key / non-numeric threshold / layer without may_import → REJECT",
+      "no structure block": "flag, not reject — but the flag says A-tier will not check structural decay"
+    }
+  },
+  "dogfood_fixes": [
+    "2026-09-06 raising-the-floor: implemented the report's gaps; see plugins/sdlc/docs/reports/"
+  ]
 }
