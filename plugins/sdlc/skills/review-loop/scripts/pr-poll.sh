@@ -15,27 +15,43 @@
 #   pr-poll.sh resolve  <pr> <thread_id>                    # 收束线程（仅限已修复+已回帖的）
 #   pr-poll.sh round    <pr>                                # 轮次 += 1（每批修复+push+回帖后调用）
 #   pr-poll.sh strike   <pr> <thread_id>                    # 线程往返 += 1
-#   pr-poll.sh done     <pr>                                # 编译态终止谓词
+#   pr-poll.sh done     <pr> [--solo]                       # 编译态终止谓词
+#   pr-poll.sh selfreview <pr> <findings-file> [reviewer]   # 记一轮隔离预审（离线；单人仓库的必要条件）
+#   pr-poll.sh predicate <pr> <decision> <unresolved> <checks_state> <checks_count> <truncated> [--solo]
+#                                                           # 同一谓词，事实由参数给（离线；done 自己也走它）
 #
 # 预算（环境变量覆盖，不改脚本）：
 #   MAX_ROUNDS=10  MAX_EMPTY_WATCHES=4  MAX_THREAD_STRIKES=3  STATE_DIR=.sdlc/pr-watch
+#   SELF_REVIEW=1  单人仓库自审模式（等价于 done --solo）——**必须显式打开，不会自己变成默认**
+#
+# checks 三态（I-82）：`green`（有 check 且全绿）/ `none_configured`（仓库一个 check 都没配）/
+#   `red`（有失败）/ `unknown`（取不到）。旧版把 none_configured 折成 checks_green=true，于是终止
+#   谓词的第三项在无 CI 的仓库里恒真且无意义，下游还会把它渲染成"检查通过"。现在 JSON 里
+#   `checks` 是三态字符串、`checks_count` 是数量、`checks_green` 只有真绿才为 true，
+#   done 的 reason 区分 `approved_resolved_green` 与 `approved_resolved_no_checks`。
+#
+# 单人仓库（I-69）：GitHub 不允许 PR 作者 approve 自己的 PR，所以 reviewDecision 永远到不了
+#   APPROVED，默认谓词在单维护者仓库里**永不收敛**。SELF_REVIEW=1 / --solo 换上一组**更严**的
+#   替代条件：无 CHANGES_REQUESTED ∧ 未解决线程=0 ∧ checks 非红非未知 ∧ 线程未截断 ∧
+#   至少一轮 selfreview 记录 ∧ 该轮 A 档存活=0 ∧ 该轮记的 head sha == 当前 HEAD（预审必须是对
+#   正在收敛的这份代码做的——APPROVED 都不保证这一条）。
 #
 # Exit codes:
-#   0  = watch/snapshot: 有新活动(stdout delta JSON) | done: 已收敛(APPROVED ∧ 未解决线程=0 ∧ checks 绿)
+#   0  = watch/snapshot: 有新活动(stdout delta JSON) | done: 已收敛(见 reason)
 #   10 = PR 终态 merged/closed
 #   20 = watch/snapshot: 本轮无活动 | done: 尚未收敛(stdout 说明缺哪条)
 #   21 = watch: 连续空轮询达 MAX_EMPTY_WATCHES(计数已自动清零)
 #   22 = resolve: 收束失败但非致命(无写权限/线程已删/id 过期)
 #   30 = round: 全局轮次预算耗尽 —— 硬停并汇报
 #   31 = strike: 该线程达 MAX_THREAD_STRIKES —— 冻结该线程，交还人类
-#   1  = 真实错误 (gh 未登录 / 网络 / 权限 / jq 缺失)
+#   1  = 真实错误 (gh 未登录 / 网络 / 权限 / jq 缺失 / 用法错)
 #
 # 依赖: jq；watch/snapshot/threads/resolve/done 另需 gh(已 auth) 且在目标 git 仓库内。
-# round/strike 只操作本地计数文件，不触网。
+# round/strike/selfreview/predicate 只操作本地计数文件，不触网。
 
 set -euo pipefail
 
-CMD="${1:?usage: pr-poll.sh watch|snapshot|threads|resolve|round|strike|done <pr-number>}"
+CMD="${1:?usage: pr-poll.sh watch|snapshot|threads|resolve|round|strike|selfreview|predicate|done <pr-number>}"
 PR="${2:?PR number required}"
 INTERVAL="${3:-45}"
 MAX_WAIT="${4:-480}"
@@ -43,6 +59,13 @@ MAX_WAIT="${4:-480}"
 MAX_ROUNDS="${MAX_ROUNDS:-10}"
 MAX_EMPTY_WATCHES="${MAX_EMPTY_WATCHES:-4}"
 MAX_THREAD_STRIKES="${MAX_THREAD_STRIKES:-3}"
+
+# 单人仓库自审模式必须被显式打开——默认永远是"要有第二个人 approve"（I-69）。
+SOLO=0
+if [[ "${SELF_REVIEW:-0}" == "1" ]]; then SOLO=1; fi
+for _arg in "$@"; do
+  if [[ "$_arg" == "--solo" ]]; then SOLO=1; fi
+done
 
 STATE_DIR="${STATE_DIR:-.sdlc/pr-watch}"
 mkdir -p "$STATE_DIR"
@@ -165,6 +188,76 @@ threads_json() {
         else del(.truncated) end'
 }
 
+checks_state() {
+  # 三态 + unknown（I-82）：空 rollup 是"一个 check 都没配"，不是"全绿"。把两者折成同一个布尔，
+  # 终止谓词的第三项在无 CI 的仓库里就恒真，下游还会把它渲染成"检查通过"。
+  local rollup
+  rollup="$(gh pr view "$PR" --json statusCheckRollup -q '.statusCheckRollup | length' 2>/dev/null || echo '?')"
+  if [[ -z "$rollup" || "$rollup" == "?" || "$rollup" == "null" ]]; then echo "unknown 0"; return; fi
+  if [[ "$rollup" == "0" ]]; then echo "none_configured 0"; return; fi
+  if gh pr checks "$PR" >/dev/null 2>&1; then echo "green $rollup"; else echo "red $rollup"; fi
+}
+
+# 终止谓词本体：事实进，判决出。done 取完事实调它；predicate 子命令由参数喂事实（离线可测）。
+# 两条路径同一份逻辑——谓词是这个 skill 的承重件，不允许存在"只在联网时才跑到"的分支。
+done_predicate() {
+  local decision="$1" unresolved="$2" checks="$3" ccount="$4" truncated="$5" solo="$6"
+  local missing="" checks_ok=false mode="review" reason=""
+  local sr_rounds=0 sr_a=0 sr_sha="" cur_sha=""
+  case "$checks" in
+    green|none_configured) checks_ok=true ;;
+  esac
+  if [[ "$truncated" == "true" ]]; then missing="$missing threads_truncated"; fi
+  if [[ "$unresolved" != "0" ]]; then missing="$missing unresolved_threads"; fi
+  if [[ "$checks_ok" != "true" ]]; then missing="$missing checks_${checks}"; fi
+  if (( solo )); then
+    mode="solo"
+    counters_init
+    sr_rounds="$(jq -r '.self_review.rounds // 0' "$CNT_FILE")"
+    sr_a="$(jq -r '.self_review.last.a_tier // 0' "$CNT_FILE")"
+    sr_sha="$(jq -r '.self_review.last.head_sha // ""' "$CNT_FILE")"
+    cur_sha="$(git rev-parse HEAD 2>/dev/null || echo "")"
+    # APPROVED 拿不到（GitHub 禁止作者 approve 自己的 PR），换一组更严的：不是"没人反对"就算过。
+    if [[ "$decision" == "CHANGES_REQUESTED" ]]; then missing="$missing changes_requested"; fi
+    if (( sr_rounds < 1 )); then
+      missing="$missing no_isolated_self_review_round"
+    else
+      if (( sr_a > 0 )); then missing="$missing self_review_a_tier_survivors"; fi
+      # 预审必须是对**正在收敛的这份代码**做的：之后又推了提交，那一轮就不再承重。
+      if [[ -n "$cur_sha" && "$sr_sha" != "$cur_sha" ]]; then missing="$missing self_review_stale"; fi
+    fi
+  else
+    if [[ "$decision" != "APPROVED" ]]; then missing="$missing not_approved"; fi
+  fi
+
+  local base_json
+  base_json="$(jq -n --arg mo "$mode" --arg d "$decision" --argjson u "$unresolved" \
+        --arg c "$checks" --argjson cc "$ccount" --argjson t "$truncated" \
+        --argjson srr "$sr_rounds" --argjson sra "$sr_a" --arg srs "$sr_sha" --arg cur "$cur_sha" \
+    '{mode: $mo, reviewDecision: $d, unresolved_count: $u,
+      checks: $c, checks_count: $cc, checks_green: ($c == "green")}
+     + (if $c == "none_configured"
+        then {checks_note: "no check is configured on this repository — the checks clause is vacuous, NOT green; never render it as \"checks passed\""}
+        else {} end)
+     + (if $c == "unknown" then {checks_note: "could not read statusCheckRollup — treated as not satisfied"} else {} end)
+     + (if $mo == "solo"
+        then {self_review: {rounds: $srr, a_tier_survivors: $sra, head_sha: $srs, current_head: $cur}}
+        else {} end)
+     + (if $t then {threads_truncated: true,
+                    note: "线程超过 100 条，unresolved_count 只是下界；收敛判定已因此拒绝返回 0"}
+        else {} end)')"
+
+  if [[ -z "${missing// /}" ]]; then
+    if (( solo )); then reason="solo_converged"; else reason="approved_resolved"; fi
+    if [[ "$checks" == "none_configured" ]]; then reason="${reason}_no_checks"; else reason="${reason}_green"; fi
+    jq -n --argjson b "$base_json" --arg r "$reason" '{done: true, reason: $r} + $b'
+    return 0
+  fi
+  jq -n --argjson b "$base_json" --arg m "$missing" \
+    '{done: false, missing: ($m | split(" ") | map(select(. != "")))} + $b'
+  return 20
+}
+
 case "$CMD" in
   snapshot)
     resolve_repo
@@ -263,6 +356,44 @@ case "$CMD" in
     if (( s >= MAX_THREAD_STRIKES )); then exit 31; fi
     ;;
 
+  selfreview)
+    # 单人仓库收敛的必要条件：一轮**隔离上下文**的对抗式预审留下的机械记录（离线，不触网）。
+    # 记的是"这一轮跑过、A 档存活几条、跑在哪个 sha 上"——不是判决，判决在 done_predicate 里。
+    FINDINGS="${3:?findings file required: pr-poll.sh selfreview <pr> <findings-file> [reviewer]}"
+    REVIEWER="${4:-pr-reviewer}"
+    counters_init
+    if [[ ! -s "$FINDINGS" ]]; then
+      echo "pr-poll: findings file '$FINDINGS' missing or empty — an isolated review round must leave a record" >&2
+      exit 1
+    fi
+    a_tier="$(grep -Eo '(^|[[:space:]])a_tier_survivors:[[:space:]]*[0-9]+' "$FINDINGS" \
+              | grep -Eo '[0-9]+' | tail -1 || true)"
+    if [[ -z "$a_tier" ]]; then
+      a_tier="$(grep -Eic '(^|[[:space:]])(tier|severity):[[:space:]]*"?'"'"'?(A|P0)([^A-Za-z0-9]|$)' "$FINDINGS" || true)"
+    fi
+    [[ "$a_tier" =~ ^[0-9]+$ ]] || a_tier=0
+    head_sha="$(git rev-parse HEAD 2>/dev/null || echo "")"
+    tmp="$(jq --arg f "$FINDINGS" --argjson a "$a_tier" --arg s "$head_sha" --arg r "$REVIEWER" \
+              --arg t "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+      '.self_review = {rounds: ((.self_review.rounds // 0) + 1),
+                       last: {findings: $f, a_tier: $a, head_sha: $s, reviewer: $r, at: $t}}' \
+      "$CNT_FILE")" && write_counters "$tmp"
+    jq -c '.self_review' "$CNT_FILE"
+    ;;
+
+  predicate)
+    # 同一个终止谓词，事实由参数给——联网取数与判决分离，谓词得以离线验证。
+    DEC="${3:?usage: pr-poll.sh predicate <pr> <reviewDecision> <unresolved> <checks_state> <checks_count> <truncated> [--solo]}"
+    UNRES="${4:?unresolved count required}"
+    CST="${5:?checks state required: green|none_configured|red|unknown}"
+    CCNT="${6:?checks count required}"
+    TRUNC="${7:-false}"
+    set +e
+    done_predicate "$DEC" "$UNRES" "$CST" "$CCNT" "$TRUNC" "$SOLO"; rc=$?
+    set -e
+    exit "$rc"
+    ;;
+
   done)
     resolve_repo
     st="$(pr_state)"
@@ -275,25 +406,11 @@ case "$CMD" in
     threads_out="$(threads_json)"
     unresolved="$(jq -r .unresolved_count <<<"$threads_out")"
     truncated="$(jq -r 'has("warning")' <<<"$threads_out")"
-    rollup="$(gh pr view "$PR" --json statusCheckRollup -q '.statusCheckRollup | length' 2>/dev/null || echo '?')"
-    checks_green=false
-    if [[ "$rollup" == "0" ]]; then
-      checks_green=true
-    elif gh pr checks "$PR" >/dev/null 2>&1; then
-      checks_green=true
-    fi
-    if [[ "$decision" == "APPROVED" && "$unresolved" == "0" && "$checks_green" == "true" \
-          && "$truncated" != "true" ]]; then
-      jq -n '{done: true, reason: "approved_resolved_green"}'
-      exit 0
-    fi
-    jq -n --arg d "$decision" --argjson u "$unresolved" --argjson g "$checks_green" \
-          --argjson t "$truncated" \
-      '{done: false, reviewDecision: $d, unresolved_count: $u, checks_green: $g}
-       + (if $t then {threads_truncated: true,
-                      note: "线程超过 100 条，unresolved_count 只是下界；收敛判定已因此拒绝返回 0"}
-          else {} end)'
-    exit 20
+    read -r cst ccnt <<<"$(checks_state)"
+    set +e
+    done_predicate "$decision" "$unresolved" "$cst" "$ccnt" "$truncated" "$SOLO"; rc=$?
+    set -e
+    exit "$rc"
     ;;
 
   *)

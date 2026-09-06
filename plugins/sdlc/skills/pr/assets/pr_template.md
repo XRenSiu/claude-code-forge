@@ -28,6 +28,11 @@ npm test            # 128 passed
 - Red-green: <tests/x.test.ts failed on <base-sha>, passes here | n/a>
 - untested — 未找到测试入口 <!-- 若如此 -->
 
+<!-- 否定断言（"某类提交没碰某些目录"）用卡范围的回放仪器，不用会失效的原始 diff：
+     ✅ replay_card_commits.sh → card_commits_touching_audited_dirs: 0   （只看卡的提交，分支再长也不变）
+     ❌ git diff --stat <首个卡提交>^..HEAD -- <目录>  → 空                （任何非卡提交落在后面就变假，I-79）
+     非要写原始 diff：两端都钉死 `<sha>^..<记录时的 sha>` 并注明记录时刻。 -->
+
 ## Acceptance mapping
 
 | AC | kind | evidence |

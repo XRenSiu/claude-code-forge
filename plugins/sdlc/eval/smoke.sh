@@ -214,6 +214,66 @@ expect "open-ended A.. reads the range head, not the index (cr-004)" 1 py "$VC" 
 expect "open-ended A... reads the range head, not the index (cr-004)" 1 py "$VC" --msg "chore(contract): smuggle" --lock .done_when.lock --range "HEAD~1..." --allow-main
 expect "empty --range is refused, not treated as staged mode (fix-verifier)" 2 py "$VC" --msg "chore(contract): smuggle" --lock .done_when.lock --range "" --allow-main
 git reset -q --hard HEAD~1 >/dev/null
+# dogfood 2026-09-06 (I-63): changed_with_proposal must print the SET, not just a verdict — which locked
+# paths changed, and whether the staged proposal names each one. The human reviewing the proposal was
+# computing that intersection by hand across 26 locked paths.
+git checkout -q -- done_when.yaml 2>/dev/null; git reset -q .
+echo "# tamper" >> done_when.yaml && git add done_when.yaml
+echo "we should relax something" > change-proposal-001.md && git add change-proposal-001.md
+expect "lock output names the changed locked paths (I-63)" 0 bash -c "python3 '$VC' --msg 'chore(contract): tweak' --lock .done_when.lock | python3 -c \"import json,sys; d=json.load(sys.stdin); assert d['lock_detail']['locked_changed']==['done_when.yaml'], d['lock_detail']\""
+expect "proposal that never names the path is flagged (I-63)" 0 bash -c "python3 '$VC' --msg 'chore(contract): tweak' --lock .done_when.lock | python3 -c \"import json,sys; d=json.load(sys.stdin); assert d['lock_detail']['proposal_missing_path']==['done_when.yaml']; assert any('proposal_missing_path' in f for f in d['flags'])\""
+echo "change done_when.yaml threshold to 0.9" > change-proposal-001.md && git add change-proposal-001.md
+expect "proposal that names the path clears the flag (I-63)" 0 bash -c "python3 '$VC' --msg 'chore(contract): tweak' --lock .done_when.lock | python3 -c \"import json,sys; d=json.load(sys.stdin); assert d['lock_detail']['proposal_missing_path']==[], d['lock_detail']; assert not any('proposal_missing_path' in f for f in d['flags'])\""
+git reset -q . && git checkout -q -- done_when.yaml && rm -f change-proposal-001.md
+popd >/dev/null
+
+echo "== commit / commit.sh (the gate and the commit as ONE command, I-50)"
+CR="$TMP/commitsh"; mkdir -p "$CR"; pushd "$CR" >/dev/null
+git init -q -b feat/9-demo . && git -c user.name=t -c user.email=t@t commit -q --allow-empty -m "chore: init"
+git config user.name t && git config user.email t@t
+CSH="$S/commit/scripts/commit.sh"
+echo "export const a = 1;" > a.ts && git add a.ts
+# the defect: verify said REJECT, a pipeline swallowed the exit code, and the commit landed anyway
+expect "commit.sh: REJECT exits 1" 1 bash -c "bash '$CSH' --msg 'update stuff' >/dev/null 2>&1"
+# self-contained: stages its own file, so it stays load-bearing no matter what earlier expectations did
+expect "commit.sh: REJECT leaves HEAD where it was (I-50)" 0 bash -c "echo 'export const r = 0;' > r.ts && git add r.ts && b=\$(git rev-parse HEAD); bash '$CSH' --msg 'update stuff' >/dev/null 2>&1; a=\$(git rev-parse HEAD); git reset -q -- r.ts >/dev/null 2>&1; rm -f r.ts; [ \"\$b\" = \"\$a\" ]"
+expect "commit.sh: --dry-run passes the gate without committing" 0 bash -c "b=\$(git rev-parse HEAD); bash '$CSH' --msg 'feat(a): add a' --dry-run >/dev/null 2>&1 && [ \"\$b\" = \"\$(git rev-parse HEAD)\" ]"
+expect "commit.sh: PASS commits and reports the sha" 0 bash -c "bash '$CSH' --msg 'feat(a): add a' | grep -q '\"committed\": true' && git log -1 --format=%s | grep -qx 'feat(a): add a'"
+# dogfood 2026-09-06 (I-53): a shared checkout may carry another session's commit at HEAD; amending it
+# rewrote THEIR message. --amend must declare which subject it expects to find.
+echo "export const b = 2;" > b.ts && git add b.ts
+expect "commit.sh: --amend without --expect-subject refused (I-53)" 2 bash -c "bash '$CSH' --msg 'feat(a): add a and b' --amend >/dev/null 2>&1"
+expect "commit.sh: --amend on someone else's HEAD refused (I-53)" 2 bash -c "bash '$CSH' --msg 'feat(a): add a and b' --amend --expect-subject 'docs(report): their commit' >/dev/null 2>&1"
+expect "commit.sh: --amend refusal leaves HEAD subject untouched (I-53)" 0 bash -c "bash '$CSH' --msg 'feat(a): mine' --amend --expect-subject 'docs(report): their commit' >/dev/null 2>&1; git log -1 --format=%s | grep -qx 'feat(a): add a'"
+expect "commit.sh: --amend with the matching subject rewrites it" 0 bash -c "bash '$CSH' --msg 'feat(a): add a and b' --amend --expect-subject 'feat(a): add a' >/dev/null && git log -1 --format=%s | grep -qx 'feat(a): add a and b'"
+popd >/dev/null
+
+echo "== commit / plugin version sync (CLAUDE.md 三处 version, I-76)"
+VR="$TMP/versionsync"; mkdir -p "$VR"; pushd "$VR" >/dev/null
+git init -q -b feat/9-demo . && git config user.name t && git config user.email t@t
+mkdir -p plugins/demo/.claude-plugin plugins/demo/skills/alpha .claude-plugin
+printf -- '---\nname: alpha\nversion: 0.1.0\n---\n\n# alpha\n' > plugins/demo/skills/alpha/SKILL.md
+printf '{"name":"demo","version":"0.1.0"}\n' > plugins/demo/.claude-plugin/plugin.json
+printf '{"plugins":[{"name":"demo","version":"0.1.0"}]}\n' > .claude-plugin/marketplace.json
+git add -A && git commit -q -m "chore: init plugin"
+echo "a fix to the skill body" >> plugins/demo/skills/alpha/SKILL.md && git add -A && git commit -q -m "fix(alpha): tweak"
+# a version-keyed plugin cache serves <marketplace>/<plugin>/<version>/ — an unbumped fix reaches nobody
+expect "skills/** changed with plugin.json version frozen → REJECT in a range (I-76)" 1 py "$VC" --msg "fix(alpha): tweak" --range HEAD~1..HEAD --allow-main
+expect "…and the reject names the manifest (I-76)" 0 bash -c "python3 '$VC' --msg 'fix(alpha): tweak' --range HEAD~1..HEAD --allow-main | grep -q 'plugins/demo/.claude-plugin/plugin.json version is still 0.1.0'"
+expect "--no-version-sync opts out (I-76)" 0 py "$VC" --msg "fix(alpha): tweak" --range HEAD~1..HEAD --allow-main --no-version-sync
+# staged mode only flags: CLAUDE.md itself puts the bump in its own `chore:` commit, so rejecting here
+# would reject the workflow the rule prescribes
+echo "more" >> plugins/demo/skills/alpha/SKILL.md && git add -A
+expect "staged mode flags the missing bump but does not reject (I-76)" 0 bash -c "python3 '$VC' --msg 'fix(alpha): more' | python3 -c \"import json,sys; d=json.load(sys.stdin); assert d['verdict']=='PASS'; assert any('version is still 0.1.0' in f for f in d['flags']), d['flags']\""
+git reset -q --hard HEAD >/dev/null
+printf -- '---\nname: alpha\nversion: 0.1.1\n---\n\n# alpha\nfixed\n' > plugins/demo/skills/alpha/SKILL.md
+printf '{"name":"demo","version":"0.1.1"}\n' > plugins/demo/.claude-plugin/plugin.json
+printf '{"plugins":[{"name":"demo","version":"0.1.1"}]}\n' > .claude-plugin/marketplace.json
+git add -A && git commit -q -m "chore: bump demo to v0.1.1"
+expect "all three locations bumped → passes (I-76)" 0 py "$VC" --msg "chore: bump demo to v0.1.1" --range HEAD~1..HEAD --allow-main
+printf '{"plugins":[{"name":"demo","version":"0.1.0"}]}\n' > .claude-plugin/marketplace.json
+git add -A && git commit -q -m "chore: registry drifts"
+expect "marketplace.json out of sync with plugin.json → REJECT (I-76)" 1 py "$VC" --msg "chore: registry drifts" --range HEAD~2..HEAD --allow-main
 popd >/dev/null
 
 echo "== pr / verify_pr.py"
@@ -230,6 +290,33 @@ python3 -c "print('\n'.join('line %d' % i for i in range(1200)))" > big.txt && g
 expect "XL size rejected" 1 py "$VP" --body "$FXP/good_body.md" --base main --skip-preflight
 expect "XL allowed with --allow-xl" 0 py "$VP" --body "$FXP/good_body.md" --base main --skip-preflight --allow-xl
 git checkout -q main; expect "head == base rejected" 1 py "$VP" --body "$FXP/good_body.md" --base main; git checkout -q feat/42-demo
+popd >/dev/null
+
+echo "== pr / merge-commit subjects + version sync (I-74, I-76)"
+MR="$TMP/prmerge"; mkdir -p "$MR"; pushd "$MR" >/dev/null
+git init -q -b main . && git config user.name t && git config user.email t@t
+echo a > a.txt && git add -A && git commit -q -m "chore: init"
+git checkout -q -b feat/42-demo && echo b > b.txt && git add -A && git commit -q -m "feat(search): add relative time parser"
+git checkout -q main && echo c > c.txt && git add -A && git commit -q -m "chore: base moves on"
+git checkout -q feat/42-demo && git merge -q --no-edit main >/dev/null 2>&1
+# dogfood 2026-09-06 (I-74): preflight orders "merge origin/<base> first (no rebase)" when behind, then
+# judged git's generated merge subject by Conventional Commits — doing what the gate says failed the gate.
+expect "git's merge subject is exempt from the Conventional Commits check (I-74)" 0 py "$VP" --body "$FXP/good_body.md" --base main
+expect "…and the merge is reported as a flag, not silently (I-74)" 0 bash -c "python3 '$VP' --body '$FXP/good_body.md' --base main | grep -q 'merge commit(s) in range'"
+# the exemption must be by parent count, not by loosening the subject check
+echo d > d.txt && git add -A && git commit -q -m "just some words"
+expect "a non-merge commit with a bad subject is still rejected (I-74 guard)" 1 py "$VP" --body "$FXP/good_body.md" --base main
+git reset -q --hard HEAD~1 >/dev/null
+mkdir -p plugins/demo/.claude-plugin plugins/demo/skills/alpha
+printf -- '---\nname: alpha\nversion: 0.1.0\n---\n\n# alpha\n' > plugins/demo/skills/alpha/SKILL.md
+printf '{"name":"demo","version":"0.1.0"}\n' > plugins/demo/.claude-plugin/plugin.json
+git add -A && git commit -q -m "feat(demo): add the alpha skill"
+git checkout -q main && git merge -q --no-edit feat/42-demo >/dev/null 2>&1 && git checkout -q feat/42-demo
+echo "a fix to the skill body" >> plugins/demo/skills/alpha/SKILL.md && git add -A && git commit -q -m "fix(alpha): tweak"
+expect "PR range touching skills/** with a frozen plugin version → REJECT (I-76)" 1 py "$VP" --body "$FXP/good_body.md" --base main --skip-preflight
+printf '{"name":"demo","version":"0.1.1"}\n' > plugins/demo/.claude-plugin/plugin.json
+git add -A && git commit -q -m "chore: bump demo to v0.1.1"
+expect "…the same range with the bump passes (I-76)" 0 py "$VP" --body "$FXP/good_body.md" --base main --skip-preflight
 popd >/dev/null
 
 echo "== pr-review / post_review.py"
@@ -249,6 +336,31 @@ expect "strike 1 ok" 0 bash -c "MAX_THREAD_STRIKES=2 bash '$PP' strike 7 PRRT_x 
 expect "strike 2 → exit 31 (freeze)" 31 bash -c "MAX_THREAD_STRIKES=2 bash '$PP' strike 7 PRRT_x >/dev/null"
 expect "counters file valid json" 0 bash -c "jq -e . .sdlc/pr-watch/pr-7.counters.json >/dev/null"
 expect "corrupt counters self-heal" 0 bash -c "echo '{bad' > .sdlc/pr-watch/pr-7.counters.json && MAX_ROUNDS=9 bash '$PP' round 7 | grep -q '\"rounds\": 1'"
+# dogfood 2026-09-06 (I-82): an empty statusCheckRollup meant "no CI configured", not "all checks green";
+# folding both into checks_green=true made the third clause of the termination predicate vacuously true.
+expect "checks green → done, reason says green (I-82)" 0 bash -c "bash '$PP' predicate 7 APPROVED 0 green 3 false | grep -q '\"reason\": \"approved_resolved_green\"'"
+expect "no CI configured is NOT rendered as green (I-82)" 0 bash -c "bash '$PP' predicate 7 APPROVED 0 none_configured 0 false | python3 -c \"import json,sys; d=json.load(sys.stdin); assert d['done'] is True; assert d['checks']=='none_configured'; assert d['checks_green'] is False; assert d['reason']=='approved_resolved_no_checks'; assert 'vacuous' in d['checks_note']\""
+expect "red checks block convergence (I-82)" 20 bash -c "bash '$PP' predicate 7 APPROVED 0 red 2 false >/dev/null"
+expect "unreadable rollup is not green either (I-82)" 20 bash -c "bash '$PP' predicate 7 APPROVED 0 unknown 0 false >/dev/null"
+# dogfood 2026-09-06 (I-69): GitHub forbids a PR author approving their own PR, so a single-maintainer
+# repo can never reach APPROVED — the default predicate cannot converge there at all.
+expect "default predicate still demands APPROVED (I-69: solo is never the default)" 20 bash -c "bash '$PP' predicate 7 null 0 green 3 false >/dev/null"
+expect "solo without a recorded self-review round does not converge (I-69)" 20 bash -c "SELF_REVIEW=1 bash '$PP' predicate 7 null 0 green 3 false | grep -q no_isolated_self_review_round; SELF_REVIEW=1 bash '$PP' predicate 7 null 0 green 3 false >/dev/null"
+git init -q -b feat/9-demo . 2>/dev/null; git config user.name t; git config user.email t@t
+git commit -q --allow-empty -m "chore: init" 2>/dev/null
+printf 'findings: []\na_tier_survivors: 0\n' > clean-findings.yaml
+printf 'findings:\n  - id: cr-001\n    tier: A\n    note: real blocker\n' > dirty-findings.yaml
+expect "selfreview refuses an empty findings file (I-69)" 1 bash -c ": > empty.yaml && bash '$PP' selfreview 7 empty.yaml >/dev/null 2>&1"
+expect "selfreview records the round, its A-tier count and the sha it ran on (I-69)" 0 bash -c "bash '$PP' selfreview 7 clean-findings.yaml pr-reviewer-r1 | python3 -c \"import json,sys; d=json.load(sys.stdin); assert d['rounds']==1; assert d['last']['a_tier']==0; assert len(d['last']['head_sha'])==40\""
+expect "solo converges once a clean isolated round is on record (I-69)" 0 bash -c "SELF_REVIEW=1 bash '$PP' predicate 7 null 0 green 3 false | grep -q '\"reason\": \"solo_converged_green\"'"
+expect "--solo flag is equivalent to SELF_REVIEW=1 (I-69)" 0 bash -c "bash '$PP' predicate 7 null 0 green 3 false --solo >/dev/null"
+# the same facts that converge under --solo must NOT converge without it: solo never becomes the default
+expect "solo is not the default — same facts, no flag, still not converged (I-69)" 20 bash -c "bash '$PP' predicate 7 null 0 green 3 false >/dev/null"
+expect "solo still refuses CHANGES_REQUESTED (I-69)" 20 bash -c "SELF_REVIEW=1 bash '$PP' predicate 7 CHANGES_REQUESTED 0 green 3 false | grep -q '\"changes_requested\"'; SELF_REVIEW=1 bash '$PP' predicate 7 CHANGES_REQUESTED 0 green 3 false >/dev/null"
+expect "solo still refuses unresolved threads (I-69)" 20 bash -c "SELF_REVIEW=1 bash '$PP' predicate 7 null 2 green 3 false >/dev/null"
+expect "an A-tier survivor blocks solo convergence (I-69)" 20 bash -c "bash '$PP' selfreview 7 dirty-findings.yaml >/dev/null && SELF_REVIEW=1 bash '$PP' predicate 7 null 0 green 3 false | grep -q self_review_a_tier_survivors; SELF_REVIEW=1 bash '$PP' predicate 7 null 0 green 3 false >/dev/null"
+# stricter than APPROVED: a GitHub approval survives later pushes, a recorded self-review round does not
+expect "a commit after the round makes it stale (I-69)" 20 bash -c "bash '$PP' selfreview 7 clean-findings.yaml >/dev/null && git commit -q --allow-empty -m 'fix(x): later work' && SELF_REVIEW=1 bash '$PP' predicate 7 null 0 green 3 false | grep -q self_review_stale; SELF_REVIEW=1 bash '$PP' predicate 7 null 0 green 3 false >/dev/null"
 popd >/dev/null
 
 echo "== psl / verify_psl.py (imported from looper)"
