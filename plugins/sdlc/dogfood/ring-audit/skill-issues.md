@@ -6,17 +6,23 @@
 | # | 阶段 | 现象 | 根因 | 修复建议 | 影响产物 |
 ---
 
-## 状态（2026-09-06，跟进 PR 关闭全部 85 条）
+## 状态（2026-09-06，跟进 PR 关闭全部 94 条）
 
-本清单开出的 85 条**全部有修法落地**，分六个隔离 worktree 并行做，每条至少一个 smoke 期望，
+本清单开出的 94 条里，**93 条修法完全落地**，分六个隔离 worktree 并行做，每条至少一个 smoke 期望，
 且每个期望都用 `smoke.sh --mutate` 把旧实现装回去证明它会变红——**不杀 mutant 的测试不算数**（I-80）。
+
+剩下的一条是 I-92：修法（`check_anchors.py` + `anchors.lock`）造出来了、也过了变异证明，
+但它还没并进 `check_audit.py`，所以还不是不可跳过的闸——**这一条只算落了一半，不算关掉**。
+把它写成"全部关闭"就是本清单自己在犯它记录的那类错。去处见 P-RA-07。
 
 | | |
 |---|---|
-| smoke 期望 | 190 → **378**，0 失败 |
+| smoke 期望 | 190 → **391**，0 失败 |
 | 跑过变异证明的期望 | 约 100（各 worktree 自报：11 + 14 + 10 + 27 + 28 + 若干） |
 | 一开始"活下来"的变异 | 9 条，全部是**真问题**——测试写得不承重，已逐条加强后重跑变红 |
 | 本轮新开的缺陷 | I-75 / I-78 / I-80 / I-81（修 fail-open 时自己引入的三扇门 + 装饰性测试） |
+| 重审阶段新开 | I-93 / I-94（审计自己的引用歧义与失效路径，由 `check_anchors.py` 上线当天抓出） |
+| I-92 的修法 | `check_anchors.py` + `anchors.lock`：429 个锚点全部锁住内容哈希；漂移 exit 1，做过变异证明。**缺口未闭合**——还没并进 `check_audit.py`（冻结的 gate 脚本，要走变更提案），见 P-RA-07 |
 
 修的过程本身又暴露了三件事，都记在正文里：同一个表达式连开三扇门（单 ref → 空右端 → 空串）；
 我为其中一扇写的回归孪生在坏代码上全绿，是隔离的 fix-verifier 装回旧实现才发现；
@@ -115,4 +121,6 @@
 | I-89 | 跨 skill 共享逻辑的边界 | 同一次交付里对同一个问题做了**相反**的两个决定：`version_sync_issues` 在 commit 与 pr 两个验证器里逐字复制、只有一句 "keep in sync" 注释且无任何检查；而 `dos_closure` 被 `verify_issue.py` / `lint_cards.py` 用 `sys.path` 跨 skill 导入，且在 import 阶段硬 exit 2——即便本次运行根本没传 `--dos` | 没有一条写下来的边界规则，两处各按当时顺手的方式决定 | 已就地定规则并落地：**skill 的脚本自包含；跨 skill 导入是可选依赖**——缺席时降级为 flag，绝不杀掉一次没要它的运行。复制因此是有意的，用测试钉住（AST 比对，剥掉各自的 docstring）而不是靠注释；可选导入各配一条"邻居缺席仍能跑"的期望 | 是（PR #3 预审 B 档；硬 exit 2 会让没装 dos-extract 的用户完全跑不了这两个脚本） |
 | I-90 | 脊柱 sdlc_state.py / lock_done_when.py | `--signer-kind` 的 default 是 `human`：一个 agent 只要**不传**这个参数，签字就被记成人签，没有拒绝、没有 flag，只有记录里一个错的词。本次 run 的全部诚实性建立在"代签必须标成代签"上，而这条纪律**可以靠省略绕过**。重跑审计时发现（R0-R2 组，它把这条标为"最可能被推翻的判断"并明确说了出来） | 给一个"你是谁"的问题设了默认答案 | 已就地修：三处 `--signer-kind` 全部 `required=True`；smoke 里 27 处调用相应补上显式声明——那 27 处本身就是证据，说明一直有这么多地方在吃默认值。smoke +2，变异验过 | 是（G1/G2/G3 三道门的签字性质全靠它；一次省略就足以把代签写成人签） |
 | I-91 | 全体 skill 的 eval/gate.json | 脚本改了而 `gate.json` 不动：commit 长出了 `commit.sh` 这个承重脚本、gate.json 里零记录；plan-cards 多了第七条 lint 而 gate.json 仍写六条；`skills/sdlc/eval/gate.json` 说 178 条 smoke 期望，实际 391。证据档与它描述的东西各走各的（重跑审计 R3-R5 与 R0-R2 各自独立发现） | 没有任何机械物把"改了脚本"与"更新证据档"绑在一起；CLAUDE.md 的版本同步规则管 version，不管 gate.json | 与 I-76 同一手法：`verify_commit` / `verify_pr` 的版本同步检查扩一条——diff 触及 `skills/<s>/scripts/**` 而 `skills/<s>/eval/gate.json` 未变 → flag（不是 REJECT，证据档的更新有判断成分）；gate.json 里的计数字段改为由脚本回填而不是手写 | 否（本轮记录在案；证据档过时不影响本轮判定，但它正是 R017「效力主张不得超出证据档」赖以成立的东西） |
-| I-92 | 审计证据的锚点形式 | 审计的 evidence 大量用 `file:path#L123` 这种**行号锚**。本轮给 `graph.yaml` 加了一个 `agent.pr-reviewer` 节点，其后所有行号位移 +10，四组环的证据锚集体失效——重审第一件事就是修锚点 | 用会随文件增长而漂移的坐标当引用 | evidence 的 ref 改用**锚点而非行号**：标题锚、`id:` 值、或"包含该字符串的行"；确实需要行号时同时记录当时的文件 sha256。`check_audit.py` 可加一条 flag：`#L` 形式的 ref 在当前文件上是否仍指向记录时的内容（需要存 sha） | 否（重审已逐条修正；但下次改 graph.yaml 还会重演） |
+| I-92 | 审计证据的锚点形式 | 审计的 evidence 大量用 `file:path#L123` 这种**行号锚**。本轮给 `graph.yaml` 加了一个 `agent.pr-reviewer` 节点，其后所有行号位移 +10，四组环的证据锚集体失效——重审第一件事就是修锚点 | 用会随文件增长而漂移的坐标当引用 | evidence 的 ref 改用**锚点而非行号**：标题锚、`id:` 值、或"包含该字符串的行"；确实需要行号时同时记录当时的文件 sha256。`check_audit.py` 可加一条 flag：`#L` 形式的 ref 在当前文件上是否仍指向记录时的内容（需要存 sha） | **已落地（2026-09-06 重审）**：`check_anchors.py` + `anchors.lock` 就是这里说的"存 sha"方案——snapshot 锁住每个锚点那几行的哈希，verify 重算并在漂移时按内容重定位；漂移 exit 1、干净 exit 0、锁缺失 exit 2，做过变异证明（往 graph.yaml 插一行 → 123 MOVED + 1 GONE）。105 处漂移已逐条修正。**但它还没并进 `check_audit.py`**（role=gate 的冻结脚本，要走变更提案），所以"下次改 graph.yaml 还会重演"这半句仍成立——只是现在有工具能一秒查出来。见 P-RA-07 |
+| I-93 | 审计的引用写法 | 同一句话里混用裸文件名与全路径：`meta-judge` 的 rename_reason 写"acceptance-fleet 的目录契约（SKILL.md#L157/#L254）"，裸 `SKILL.md` 读起来像它所在的 meta-judge，实际指 acceptance-fleet；且第 254 行越过了那份文件当时的长度。核的人按字面去查会查到另一份文件的另一段话 | 引用的归属靠上下文暗示，而上下文是人脑补的；机器解析时只能按所在 Part 猜 | 跨配件引用一律写全路径。`check_anchors.py` 的裸名解析会把这类锚点判给所在 Part，因此这种歧义现在会以 UNLOCKED / GONE 的形式暴露出来 | 是（本轮由 check_anchors.py 抓出并改正） |
+| I-94 | 审计的引用目标 | 一条 evidence 指向 `plugins/sdlc/skills/psl-derive/references/divergence-types.md`，而该文件在 psl-derive 下不存在——它在 `spec-drift-detector/references/` 下。装配时没人打开过这个路径 | 引用路径靠记忆写下，没有任何检查确认被引文件真的存在 | `check_anchors.py verify` 对读不到的文件判 GONE 并 exit 1 | 是（本轮抓出并改正） |
