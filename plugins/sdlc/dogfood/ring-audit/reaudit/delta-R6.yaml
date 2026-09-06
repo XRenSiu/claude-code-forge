@@ -1,0 +1,373 @@
+# delta-R6.yaml — R6（验收环）在 ab67052 上的重跑增量
+#
+# 本轮 R6 只有 acceptance-fleet 一个 Part 的源码被动过：
+#   git diff --name-only fbc6a3c..HEAD -- plugins/sdlc/skills/{acceptance-fleet,code-reviewer,qa-reviewer,
+#     pm-reviewer,spec-drift-detector,spec-gaming-detector,meta-judge,pr-review} plugins/sdlc/agents
+# 只回 acceptance-fleet 的 SKILL.md / 两份 references / 两个新脚本 / 一批 eval fixtures。
+# code-reviewer · qa-reviewer · pm-reviewer · spec-drift-detector · spec-gaming-detector · meta-judge ·
+# pr-review · agents/{review-triager,fix-verifier}.md 在这个区间里一个字节都没改。
+#
+# 两个新脚本都真的是闸（有非零退出路径，不是恒 exit 0 的报告工具）——但它们检的东西与
+# "ratchet-log 的形状"基本无关，逐条实测见下。R6 登记的 7 个 missing 缺口一个都没被填上。
+
+schema: ring-audit-reaudit-delta/1
+scope: R6
+reviewed_at_head: ab67052
+
+parts:
+
+# ---------------------------------------------------------------------------
+# qa-reviewer：唯一一处判定上移
+# ---------------------------------------------------------------------------
+- id: qa-reviewer
+  ring: R6
+  changes:
+    implemented:
+      from: declared
+      to: compiled
+      why: >-
+        新脚本 acceptance-fleet/scripts/qa_facts.py 会拒绝 qa-reviewer 的产物：#L93-L96 读不到顶层
+        `qa_report:` 映射就 die(...,1)，而顶层键 `qa_report:` 正是 qa-reviewer 自己的输出契约声明的根
+        （references/finding-schema.yaml#L3「Top-level key is `qa_report:`」、#L7）。这不是"存在一个脚本"，
+        是存在一条以该产物内容为条件的非零退出路径——与 compute_score.py / compute_confidence.py
+        那种"不拒绝任何输入"的计算原语正好相反（audit.yaml 拒 compiled 的原话就是"也不拒绝任何输入"）。
+        实测：非 qa 文档 exit 1，真实 run 产物 exit 0（见 evidence 的两条 run_record）。
+      evidence:
+      - {kind: file, ref: 'plugins/sdlc/skills/acceptance-fleet/scripts/qa_facts.py#L93-L96'}
+      - {kind: file, ref: 'plugins/sdlc/skills/qa-reviewer/references/finding-schema.yaml#L3'}
+      - {kind: file, ref: 'plugins/sdlc/skills/acceptance-fleet/SKILL.md#L63'}
+      - {kind: file, ref: 'plugins/sdlc/eval/smoke.sh#L1169-L1173'}
+      - kind: run_record
+        ref: >-
+          ab67052 · `python3 plugins/sdlc/skills/acceptance-fleet/scripts/qa_facts.py <非 qa 文档>` → exit 1
+          "has no top-level `qa_report:` mapping — this is not a qa-reviewer report"
+      - kind: run_record
+        ref: >-
+          ab67052 · 同脚本跑真实 run 产物 plugins/sdlc/dogfood/ring-audit/ratchet-log/iteration-003/
+          fleet-outputs/qa-reviewer.yaml → exit 0，"wrote …（omitted 10 opinion keys）"
+      gate_caveat: >-
+        与 verify_psl.py 同型：qa_facts.py 是"调度前必须跑"的声明式预门，没有挂 hooks——
+        plugins/sdlc/ 下**根本不存在 hooks/ 目录**（ls plugins/sdlc/ = agents docs dogfood eval
+        LICENSE README.md skills）。它的阻断力来自流程位置：/spec-drift-detector 轮询的是
+        qa-measurements.yaml，qa_facts.py exit 1 就没有这个文件、drift 起不来
+        （skill-dispatch-matrix.md#L151 与 SKILL.md#L63）。构成 compiled，不构成不可跳过。
+      caveat_thinness: >-
+        必须写明这条闸有多薄：它只核对根键在不在，qa-reviewer 的任何实质主张都没被检——
+        套件是否真跑过、阈值是否真比过、mutation 是否真做过，一条都没有。而且这个拒绝是
+        **顺带**的：qa_facts.py 的本职是投影，它 `--check` 模式真正承重的对象是 qa-measurements.yaml
+        （acceptance-fleet 的新产物）有没有漏意见键，不是 qa-review.yaml 本身对不对。
+        判 compiled 是按"闸 = 存在非零退出路径且条件落在该产物内容上"这条明写的尺子走的；
+        若 G-judge 采更严的"脚本要承载该配件的判据"读法，此条应退回 declared。见文末 notes。
+      not_reached:
+        verified: >-
+          gate.json 仍 gate_pass=static_only / evaluated_layers=[structural] / scripts_run={}，本轮未动。
+          更关键的是原判词的第一句仍然成立且一字未变：**没有任何脚本能证明测试套件确实跑过**——
+          一个以"真跑"为定义性差异的配件，这一层依然是空的。qa_facts.py 完全不碰这件事。
+  artifacts:
+  - id: ratchet-log/iteration-NNN/qa-review.yaml
+    checked_by_from: []
+    checked_by_to: [qa_facts.py]
+    why: >-
+      qa_facts.py#L93-L96。注意登记 id 与磁盘上的文件名不是一个词：registry 的 id 抄自
+      graph.yaml#L180（qa-review.yaml），而真实 run 与脚本用的都是
+      fleet-outputs/qa-reviewer.yaml（见 new_gaps N2 与 ratchet-log/iteration-00{1,2,3}/fleet-outputs/）。
+      本条按"同一件产物的两种拼法"记，拼法分裂另立缺口，不藏。
+      注：check_audit.py 的 check_exclusive_artifacts 以 Part 的 `artifact` 字段配 id + producer 取行，
+      本行 id 与 qa-reviewer 的 artifact 字段逐字一致，故此改动会正确解除该 Part 的 F-06 封顶。
+
+# ---------------------------------------------------------------------------
+# acceptance-fleet：新增两个真闸，但判定不动——F-06 仍然封顶
+# ---------------------------------------------------------------------------
+- id: acceptance-fleet
+  ring: R6
+  changes: {}          # implemented / needed / naming 三维均不变，见下面的 artifacts 与 stale 两节
+  artifacts:
+  - id: ratchet-log/iteration-NNN/**
+    checked_by_from: []
+    checked_by_to: [next_iteration.py]
+    why: >-
+      next_iteration.py#L206-L212：派发第 N 轮时 iteration-(N-1) 目录不存在即 die(...,1)。这是一条
+      落在该产物上的非零退出路径（实测 N=9 → exit 1），按 .done_when.lock 那条既有先例记入
+      checked_by（sdlc_state.py 对 lock.path 也只做 os.path.isfile，audit.yaml 照样把它算进
+      checked_by）。**但只到这里为止**：实测把 iteration-001/ 建成一个完全空的目录，
+      next_iteration.py 仍然 exit 0，只打四条 warning——目录里一个文件都没有也照过。
+      所以它检的是日志的"连号"，不是任何一份产物的形状。
+      此行不解除 acceptance-fleet 的 F-06 封顶：该 Part 的 `artifact` 字段指的是
+      final-state.json（下一行），不是本 glob。
+  - id: ratchet-log/iteration-NNN/final-state.json
+    checked_by_from: []
+    checked_by_to: []
+    why: >-
+      不变，且这是本环最要紧的一条：全仓库没有任何 .py / .sh 读 final-state.json
+      （grep -rn "final-state" 命中的全是 .md / .yaml 文档与 fixture 里的字符串）。
+      v1.1.0 还给它加了三个必填字段（gaming_band / gaming_thresholds / ratchet_rule，
+      ratchet-log-format.md#L125-L127、#L145），同样没有检查处——真实 run 的
+      iteration-003/final-state.json 三个字段一个都没有，无人报错。
+      故 F-06 依旧把 acceptance-fleet 封顶在 declared。
+
+# ---------------------------------------------------------------------------
+# 其余 9 个 Part：判定与产物 checked_by 全部不变
+# ---------------------------------------------------------------------------
+# code-reviewer / pm-reviewer / spec-drift-detector / spec-gaming-detector / meta-judge / pr-review /
+# human_gate.G3 / agent.review-triager / agent.fix-verifier —— 逐个复核结论见下，
+# 判定不变者只在 unchanged_but_evidence_stale 里记过时的证据文本。
+
+unchanged_but_evidence_stale:
+
+# ---- acceptance-fleet：两句已不成立 ----
+- id: acceptance-fleet
+  stale: >-
+    not_reached.compiled 的"skills/acceptance-fleet/ 下无 scripts/"。
+  replacement: >-
+    scripts/ 现在有两个脚本，且两个都是真闸（有非零退出路径、拒绝输入）：
+    next_iteration.py 在 gaming_risk_threshold 有未知子字段 / 阈值非数字 / done_below >
+    block_at_or_above / 不是映射（#L156-L171）以及前一轮目录缺失（#L189-L191、#L206-L212）时 exit 1；
+    qa_facts.py 在输入不是 qa 报告（#L96）或投影仍带意见键（#L115-L118、#L130-L134）时 exit 1。
+    改判仍是 declared，但理由必须换成 F-06：独占产物 final-state.json 的 checked_by 仍为空，
+    没有任何脚本读它，v1.1.0 新加的三个必填字段也无人检。
+- id: acceptance-fleet
+  stale: >-
+    not_reached.verified 的"本次审计也没有在真实 specs/<feature>/ 上跑过它"，
+    以及 evidence 里的 sdlc_state.py#L271-L273（行号已移位）。
+  replacement: >-
+    行号：advance pr 的前置现在在 sdlc_state.py#L365-L367，对照的 cards/lock.path isfile 在 #L356。
+    判词：仓库里存在 specs/sdlc-ring-audit/ 与三轮完整的
+    plugins/sdlc/dogfood/ring-audit/ratchet-log/iteration-00{1,2,3}/（7 份 fleet-outputs +
+    meta-judge-output.yaml + final-state.json + isolation.json，medium 隔离、评估者与实现者分属不同
+    模型与 session），.sdlc/sdlc-ring-audit/state.json 的 acceptance.evaluation_result 就指向
+    iteration-003，stage 已到 archive。所以"没在真实 specs/ 上跑过"这句在 HEAD 上不成立
+    （按时间戳它在写下时可能就已不成立：iteration-003/final-state.json written_at 2026-09-06T01:03Z，
+    audit.yaml 装配于 01:52）。改判仍是 declared，因为 F-06 封顶与运行证据无关；
+    但"没跑过"不能再作为理由——正确的理由只有独占产物无闸这一条。
+    这批运行记录到底算不算 Part 级行为层证据（是跑了打包的 skill，还是把角色提示手工派发给
+    子 agent），isolation.json 自陈"orchestrator（fable）also authored prompts"，我判不了，见 notes。
+
+# ---- qa-reviewer：被上移的那句 ----
+- id: qa-reviewer
+  stale: >-
+    not_reached.compiled 的"qa-review.yaml 无脚本校验，不被门挡"。
+  replacement: >-
+    改成"qa-review.yaml（磁盘名 fleet-outputs/qa-reviewer.yaml）现在被 qa_facts.py#L96 检根键，
+    薄但真；而'真跑测试'这条铁律仍无任何脚本兜底"。同段第一句（无执行器包装证明套件跑过）不变。
+
+# ---- pm-reviewer：新脚本碰了它的产物，但只 warn ----
+- id: pm-reviewer
+  stale: >-
+    "pm-review.yaml 不被门挡"这句结论不变，但现在有脚本会去 open 它，evidence 需要点名说清楚。
+  replacement: >-
+    next_iteration.py#L214-L221 会去找 fleet-outputs/pm-reviewer.yaml，但只做 os.path.isfile，
+    找不到就 warn 并把 PREV_PM_REVIEW 留空、**继续 exit 0**，而且从头到尾不解析文件内容。
+    这正是"有脚本读它 ≠ 有闸"的样本：判定维持 declared，evidence 应补一句说明有读者但无闸，
+    免得下一轮有人看到脚本名就抬档。
+
+# ---- spec-gaming-detector：最容易被误抬的一个 ----
+- id: spec-gaming-detector
+  stale: >-
+    "gaming.yaml 也不被门挡"结论不变；但现在有一个会解析它的脚本，不写清楚下一轮必被误读。
+  replacement: >-
+    next_iteration.py#L100-L124 真的解析 fleet-outputs/spec-gaming-detector.yaml，
+    取 gaming_risk_score 与 baseline_score（先 yaml，退化到正则）。但它在这条路径上**没有任何非零
+    退出**：文件缺失 → 返回 (None, None)；解析失败 → warn；无分数 → warn 并让 PREV_GAMING_SCORE 留空
+    （#L223-L227）；甚至 #L236-L249 那条 baseline 对账查出真实矛盾也只是 warn。
+    实测最有力：在真实 ratchet-log 上跑 N=3，脚本准确报出
+    "iteration-003 recorded baseline_score 3.5 but iteration-002 produced 4"——
+    即 I-72 那个真缺陷——然后 **exit 0**。它是报告工具，不是闸。判定维持 declared。
+    原评 compute_score.py 不承重的那段完全不用改。
+
+# ---- spec-drift-detector ----
+- id: spec-drift-detector
+  stale: >-
+    判定与 not_reached 全部不变（drift.yaml 仍无脚本、无门）。要补的是它的**输入契约**在本轮被
+    单边改了，而它自己不知道——细节见 new_gaps N1。
+  replacement: >-
+    evidence 可加一条：acceptance-fleet 现在按 skill-dispatch-matrix.md#L147-L151 传
+    --qa-measurements 并明令禁止 --qa-report，而 spec-drift-detector/SKILL.md#L63 的参数表仍然
+    只定义 --qa-report、#L50 的铁律 8 仍指导用它。
+
+# ---- meta-judge ----
+- id: meta-judge
+  stale: >-
+    evidence 里的 sdlc_state.py#L384-L392（G3 pass 不检输入）行号已移位。
+  replacement: >-
+    现为 sdlc_state.py#L483-L497：cmd_gate 里 G2 pass 要 lock.path 是存在的文件（#L486-L487）、
+    G1 pass 要 world.derived_dir 是存在的目录（#L490-L494），**G3 依然没有任何分支**。
+    产物标识分裂（final-verdict.yaml vs meta-judge-output.yaml，P-R6-05）不但没修，
+    还被真实 run 坐实：三轮 iteration 目录里落地的全是 meta-judge-output.yaml。
+
+# ---- human_gate.G3：两句已不成立 ----
+- id: human_gate.G3
+  stale: >-
+    not_reached.verified 的"本次 Run 的 G3 还没到（卡面状态摘要：stage = implement），没有真人签过"，
+    以及 evidence 的 sdlc_state.py#L384-L392 / #L276-L277 行号。
+  replacement: >-
+    .sdlc/sdlc-ring-audit/state.json：stage 已是 archive，gates.g3 = {verdict: pass, by: g3-judge,
+    at: 2026-09-06T02:11:00Z, signer_kind: delegated_agent, record:
+    plugins/sdlc/dogfood/ring-audit/g3-record.md}。所以"G3 还没到 / stage = implement"两句都不成立。
+    "没有真人签过"这半句仍然成立——签字是 delegated_agent，不是人，而且这条记录自陈
+    "G3 的 pass 无输入前置、--authorization 无人核对"。
+    第二半句（即便签了也不构成对 R6 产物的行为层校验）逐字仍成立，行号改为 #L483-L497；
+    advance g3 的前置改为 #L370-L371（且已从 `review.done is True` 放宽成 review_exit(st)，
+    "waived" 也放行）。判定维持 declared：F-06 封顶，g3-record.md 至今无任何脚本读
+    （grep g3.record / g3_record 在 skills/*/scripts/ 下 0 命中；cmd_gate 对 --record 只存字符串，
+    #L501-L502，连 isfile 都不做）。
+
+# ---- 两个 agent ----
+- id: agent.review-triager
+  stale: >-
+    判定与理由全部不变；只需确认了一遍：plugins/sdlc/agents/ 下仍是 5 个 .md，无 scripts/、无
+    eval/gate.json；triage.yaml 在 skills/*/scripts/ 下 0 命中；pr-poll.sh 本轮虽然大改（+196 行），
+    改的仍是轮次 / 空轮 / 线程 strike 计数与水位线，不读 triage.yaml。
+  replacement: 无需改写，evidence 仍然准确。
+- id: agent.fix-verifier
+  stale: >-
+    同上：verify.yaml 在 skills/*/scripts/ 下 0 命中，agents/ 无 gate.json。判定不变。
+  replacement: 无需改写。
+
+# ---- code-reviewer / pr-review ----
+- id: code-reviewer
+  stale: >-
+    判定不变（无 scripts/、gate.json 仍 static_only、code-review-*.yaml 无脚本无门）。
+    唯一要补的是产物名与磁盘不符，见 new_gaps N2。
+  replacement: >-
+    真实 run 落地的是 fleet-outputs/code-reviewer-{security,logic,perf}.yaml；
+    registry 与 graph.yaml#L179 写的是 ratchet-log/iteration-NNN/code-review-*.yaml
+    （少一段 fleet-outputs/，且词干是 code-review- 不是 code-reviewer-）。
+- id: pr-review
+  stale: 无。post_review.py 与 eval/gate.json 本轮未改，compiled + not_reached.verified 逐字仍成立。
+  replacement: 无需改写。
+
+# =============================================================================
+new_gaps:
+
+- id: R6/newly_identified/control/drift-consumer-flag-not-updated
+  ring: R6
+  atoms: [Control]
+  source: newly_identified
+  necessity: necessary
+  deletion_test: >-
+    本轮为修 I-71（drift 读到了 qa 的 findings 与 GO/NO-GO，被 meta-judge 记为隔离破口）建的墙只砌了
+    编排者这一侧。acceptance-fleet 侧：skill-dispatch-matrix.md#L147 传 --qa-measurements，#L151 加粗写
+    "**Never `--qa-report`**"；SKILL.md#L63 把它写成铁律 2 的唯一例外。消费者侧：
+    spec-drift-detector/SKILL.md#L63 的参数表仍然只定义 `--qa-report=<path>`（说明文字仍是
+    "A `/qa-reviewer` output"），#L50 的铁律 8 仍指导拿它做非功能漂移的度量依据，
+    references/divergence-types.md#L225 同样。--qa-measurements 在被调用方一处都没定义。
+    于是两种错误产物二选一：照 drift 自己的 SKILL.md 调用 → 又把整份 qa 报告递过去，I-71 原样复发；
+    照编排者的矩阵调用 → drift 收到一个自己文档里不存在的参数，度量证据来源未定义。
+    墙只有一面，另一面写着"请走这里"。
+  evidence:
+  - {kind: file, ref: 'plugins/sdlc/skills/spec-drift-detector/SKILL.md#L63'}
+  - {kind: file, ref: 'plugins/sdlc/skills/spec-drift-detector/SKILL.md#L50'}
+  - {kind: file, ref: 'plugins/sdlc/skills/acceptance-fleet/references/skill-dispatch-matrix.md#L147-L151'}
+  - {kind: file, ref: 'plugins/sdlc/skills/spec-drift-detector/references/divergence-types.md#L225'}
+  disposition: issue
+
+- id: R6/newly_identified/knowledge+control/ratchet-log-filenames-diverge-from-graph
+  ring: R6
+  atoms: [Knowledge, Control]
+  source: newly_identified
+  necessity: necessary
+  deletion_test: >-
+    graph.yaml#L179-L189 为五个评审者与 meta-judge 声明的 writes 路径，没有一条是系统真正产出的文件：
+    graph 说 iteration-NNN/{code-review-*,qa-review,pm-review,drift,gaming,final-verdict}.yaml，
+    磁盘上（三轮真实 run，plugins/sdlc/dogfood/ring-audit/ratchet-log/）与 ratchet-log-format.md /
+    skill-dispatch-matrix.md 里都是 iteration-NNN/fleet-outputs/{code-reviewer-*,qa-reviewer,
+    pm-reviewer,spec-drift-detector,spec-gaming-detector}.yaml 加 iteration-NNN/meta-judge-output.yaml。
+    六条里五条是新识别的（meta-judge 那条已是 P-R6-05）。
+    以前这条分歧是惰性的——没有任何脚本读 ratchet-log，写错也没人碰。本轮它变成承重的：
+    next_iteration.py#L101/#L214-L216 把 fleet-outputs/{spec-gaming-detector,qa-reviewer,pm-reviewer}.yaml
+    硬编码进代码，qa_facts.py 的整条数据流也建立在这套拼法上。于是第一批读 ratchet-log 的脚本，
+    依赖的是图从未声明过的路径。错误产物：graph.yaml 的 writes lint（verify_graph.py）核对的是一套
+    永远不会出现的文件名，而真正落地的那套没有任何一处声明——audit.yaml 的 artifacts registry 也照抄了
+    图的拼法，于是"某产物有没有闸"这个判定所指的对象，本身指不到磁盘上的东西。
+  evidence:
+  - {kind: file, ref: 'plugins/sdlc/skills/sdlc/assets/graph.yaml#L179-L189'}
+  - {kind: file, ref: 'plugins/sdlc/skills/acceptance-fleet/scripts/next_iteration.py#L101'}
+  - {kind: file, ref: 'plugins/sdlc/skills/acceptance-fleet/scripts/next_iteration.py#L214-L216'}
+  - {kind: file, ref: 'plugins/sdlc/skills/acceptance-fleet/references/ratchet-log-format.md#L28-L40'}
+  - kind: run_record
+    ref: >-
+      ab67052 · find plugins/sdlc/dogfood/ring-audit/ratchet-log -type f —— 三轮 iteration 里
+      qa-review.yaml / pm-review.yaml / drift.yaml / gaming.yaml / final-verdict.yaml 一个都不存在
+  disposition: issue
+
+- id: R6/newly_identified/control/gate-json-not-synced-with-smoke-coverage
+  ring: R6
+  atoms: [Control]
+  source: newly_identified
+  necessity: necessary
+  deletion_test: >-
+    acceptance-fleet 本轮新增两个脚本，smoke.sh#L1156-L1173 给了 12 条期望（其中 5 条断言非零退出），
+    在 ab67052 上实跑 389 passed / 0 failed 全绿。而 skills/acceptance-fleet/eval/gate.json 一个字节没动：
+    gate_pass 仍 static_only、evaluated_layers 仍只有 [structural]、provenance.scripts_run 仍是 {}，
+    provenance 里那句"smoke.sh on bundled scripts"是脚本还不存在时写的，现在字面为真而所指为空。
+    没有任何机械物让证据档位记录跟上真实覆盖：gate.json 是这个插件用来防止"把 static_only 说成
+    verified"（R017）的唯一账本，而这个账本本身没有人对账。错误产物：一份低报自己证据档位的 gate.json，
+    与一份可能高报的报告，两个方向的错都无法被发现——因为没有第三方去比"smoke 实际跑了什么"
+    与"gate.json 声称跑了什么"。
+  evidence:
+  - {kind: gate_json, ref: 'plugins/sdlc/skills/acceptance-fleet/eval/gate.json#provenance.scripts_run（空对象）'}
+  - {kind: file, ref: 'plugins/sdlc/eval/smoke.sh#L1156-L1173'}
+  - kind: run_record
+    ref: 'ab67052 · bash plugins/sdlc/eval/smoke.sh → exit 0, "smoke: 389 passed, 0 failed"；其中 acceptance-fleet 段 12/12 PASS'
+  disposition: issue
+
+# =============================================================================
+closed_gaps: []
+# R6 登记的 7 个 missing 缺口逐条复核，一个都没被填。这一条本身是本轮 R6 最值得报的结果：
+# 新增的两个脚本一个也没落在这 7 个位置上。
+#
+# - R6/lifecycle_blank/capability+control/meets-done-when-compare-script
+#     仍开：grep meets_done_when 在 skills/*/scripts/ 下只有 sdlc_state.py#L75 的 SETTABLE 白名单一处，
+#     没有任何脚本按契约阈值算它。
+# - R6/unenforced_rule/control/evaluator-may-declare-meets-done-when
+#     仍开：cmd_set 本轮加了 track / lock.stage 两个枚举校验（#L437-L440）与 review.* 的 check_review
+#     调用（#L447-L448），acceptance.meets_done_when 仍然一句 `set` 就走 #L441 写进去，
+#     无校验、不记谁写的。
+# - R6/unenforced_rule/control/gate-signer-must-be-human
+#     仍开且一字未动：#L496-L497 依旧只要求 delegated_agent 附 --authorization，照收该值；
+#     本 Run 的 G3 就是 signer_kind=delegated_agent 签的 pass。
+# - R6/unenforced_rule/knowledge/static-only-never-called-verified
+#     仍开，且本轮新增一个实例（见 new_gaps 第三条）。R6 八个 skill 的 gate.json 全部仍是 static_only。
+# - R6/unenforced_rule/control/one-artifact-one-producer-in-ratchet-log
+#     仍开，且写域重叠更密：acceptance-fleet 现在自己往 fleet-outputs/ 里写 qa-measurements.yaml
+#     （ratchet-log-format.md#L37），而这个目录同时是五个评审者的写域。verify_graph.py 的 lint ① 仍不检相交。
+# - R6/newly_identified/control/ratchet-log-shape-unchecked
+#     仍开，且现在有活体证据：.sdlc/sdlc-ring-audit/state.json 的 acceptance.evaluation_result =
+#     "plugins/sdlc/dogfood/ring-audit/ratchet-log/iteration-003"——一个**目录**，不是 final-state.json，
+#     advance pr（#L365-L367 只判非空串）照放，流水线一路推到 archive。
+#     next_iteration.py 也不补这个洞：实测空目录 exit 0。
+# - R6/newly_identified/control/g3-pass-has-no-input-precondition
+#     仍开：cmd_gate #L483-L497 里 G1 / G2 各有前置，G3 无分支。
+
+# =============================================================================
+notes: >-
+  三处我不替下一位裁决，写清楚留给人。
+
+  ①（唯一的判断题）qa-reviewer 上移到 compiled 是本 delta 里唯一一处抬档，它踩在尺子的边界上。
+  支持：qa_facts.py 有一条以该产物内容为条件的非零退出路径，这正是 audit.yaml 当初拒绝
+  compute_score.py 时给出的分界线原话——"也不拒绝任何输入"；而且它的位置与 verify_psl.py 同型
+  （声明式预门、未挂 hook、构成 compiled 不构成不可跳过），那一条判的就是 compiled。
+  反对：这条闸只核对根键在不在，且是投影脚本的副作用，不承载 qa-reviewer 任何判据——
+  若按"脚本要承载该配件的判据才算 verify 脚本"的更严读法，应退回 declared。
+  我按明写的尺子判 compiled 并把两面都写进 caveat_thinness，请裁。
+
+  ② 三轮真实 ratchet-log 算不算 R6 各 Part 的行为层运行记录，我判不了。它确实是在真实
+  specs/sdlc-ring-audit 上跑的、有 isolation.json 记录的、评估者与实现者分模型分 session 的三轮迭代；
+  但 isolation.json 自陈 "orchestrator (fable) also authored prompts"，我找不到任何记录能证明
+  评估者是**通过打包的 skill 入口**跑的，还是把角色提示手工派发给子 agent 跑的。这个区别决定它是
+  Part 级证据还是流程级证据。审计的 run_evidence 段没有把它登记为运行记录（只登记了 gates /
+  check_audit / replay），我不清楚那是刻意还是遗漏。无论哪种，本环没有任何 Part 因此上移到 verified，
+  因为挡在前面的是 F-06 封顶，不是证据不足。
+
+  ③ 一处越界观察，属 R7 不属我，只登记不判：.sdlc/sdlc-ring-audit/state.json 的 review 块有
+  done=true 与一大段 exit_reason，但没有 review.waiver_ref。本轮新加的 check_review
+  （sdlc_state.py#L293-L316，判罚在 #L308-L312）规定"done 之上带 exit_reason 必须有能在 trace.jsonl
+  里解析的 waiver_ref"，也就是说这份现存 state 若今天再被 `set review.*` 碰一次就会被拒
+  （cmd_set#L447-L448 会调它）。留给 R7 的复核者。
+
+  ④ 交付时的工作树状况，与我无关但须报备：git status 显示
+  plugins/sdlc/skills/sdlc/scripts/{sdlc_state.py,lock_done_when.py} 处于已修改状态，是本会话中
+  另一个并行 agent 在我工作期间改的（lock_done_when.py 那处把 --signer-kind 改成 required，
+  diff 自陈 "re-audit 2026-09-06"）。我只写了 delta-R6.yaml 这一个文件，未改未提交任何其它内容。
+  本 delta 的全部行号引用都是对**已提交的 ab67052** 逐条复核过的（用 git show 取出该版本比对），
+  不是对漂移中的工作树；若按工作树 sed 行号会偏移，请以 ab67052 为准。

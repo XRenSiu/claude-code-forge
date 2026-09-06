@@ -256,7 +256,10 @@ def ring_section(d, ring):
 
         fills = d.fills_of(part)
         if fills:
-            gapcol = "<br>".join(f"{code(atoms)} {cell(gid.rsplit('/', 1)[-1])}" for gid, atoms, _ in fills)
+            gapcol = "<br>".join(
+                f"{code(atoms)} {cell(gid.rsplit('/', 1)[-1])}"
+                + ("（**重审：已填**，详见判定详情）" if gap.get("reaudit_note") else "")
+                for gid, atoms, gap in fills)
         else:
             gapcol = "**不填任何缺口 → overfill**"
 
@@ -305,7 +308,8 @@ def ring_section(d, ring):
         atoms = "+".join(lst(gap.get("atoms"))) or "?"
         source = SOURCE_LABEL.get(gap.get("source"), cell(gap.get("source")))
         ncell = (f"necessity **{cell(gap.get('necessity'))}**<br>撤掉 / 不补它：{cell(gap.get('deletion_test'))}"
-                 f"<br>证据：{cell(refs(gap.get('evidence')))}<br>disposition {code(gap.get('disposition'))}")
+                 f"<br>证据：{cell(refs(gap.get('evidence')))}<br>disposition {code(gap.get('disposition'))}"
+                 + (f"<br>**重审更正**：{cell(gap.get('reaudit_note'))}" if gap.get("reaudit_note") else ""))
         out.append(f"| **（缺少）** {code(gid.rsplit('/', 1)[-1])} | — | {code(atoms)}<br>**{source}** | "
                    f"— | — | — | — | {ncell} | — | — |")
 
@@ -326,7 +330,8 @@ def part_detail(d, part):
     out = [f"#### `{pid}` — {a.get('id')}（state: {a.get('state')}）", ""]
 
     out.append(f"- **needed `{needed.get('verdict')}`** — 撤掉后：{para(needed.get('deletion_test'))}")
-    for key, label in (("merge_reason", "并列生产的判定"), ("merge_candidate_reason", "并列生产的判定")):
+    for key, label in (("merge_reason", "并列生产的判定"), ("merge_candidate_reason", "并列生产的判定"),
+                       ("reaudit_note", "重审更正")):
         if needed.get(key):
             out.append(f"    - {label}：{para(needed[key])}")
     out.append(f"    - 证据：{refs(needed.get('evidence'))}")
@@ -335,7 +340,7 @@ def part_detail(d, part):
     for state, why in dct(impl.get("not_reached")).items():
         out.append(f"    - 未达 `{state}`：{para(why)}")
     for key, label in (("gate_caveat", "闸的保留"), ("no_gate", "无闸"), ("no_gate_note", "无闸"),
-                       ("note", "备注"), ("calibration_note", "校准备注")):
+                       ("note", "备注"), ("calibration_note", "校准备注"), ("reaudit_note", "重审更正")):
         if impl.get(key):
             out.append(f"    - {label}：{para(impl[key])}")
     if impl.get("calibrated") is not None:
@@ -347,11 +352,17 @@ def part_detail(d, part):
     if naming.get("verdict") == "misfit":
         out.append(f"    - 建议名 `{naming.get('suggested_name')}`，**不重命名**（PSL-014：建议不等于重命名，"
                    f"`rename: {str(naming.get('rename')).lower()}`）")
-    for key, label in (("fit_reason", "贴合理由"), ("rename_reason", "命名判定")):
+    for key, label in (("fit_reason", "贴合理由"), ("rename_reason", "命名判定"),
+                       ("reaudit_note", "重审更正")):
         if naming.get(key):
             out.append(f"    - {label}：{para(naming[key])}")
     out.append(f"    - 证据：{refs(naming.get('evidence'))}")
 
+    for gid, _atoms, gap in d.fills_of(part):
+        if gap.get("reaudit_note"):
+            out.append(f"- **填上的缺口 `{gid}`**：{para(gap['reaudit_note'])}")
+    if part.get("gates_note"):
+        out.append(f"- **闸的补记**：{para(part['gates_note'])}")
     if part.get("loop_note"):
         out.append(f"- **Loop**：`{part.get('loop')}` — {para(part['loop_note'])}")
     elif part.get("loop_reason"):
@@ -505,6 +516,41 @@ def run_evidence_section(d):
             out.append("")
         if r.get("twin_note"):
             out += [f"> {para(r['twin_note'])}", ""]
+
+    ra = dct(run.get("reaudit"))
+    if ra:
+        anchors = dct(ra.get("anchor_repair"))
+        gaps_ra = dct(ra.get("gaps"))
+        dist, before = dct(ra.get("distribution")), dct(ra.get("distribution_before"))
+        out += [
+            "### 修复后的重审（PSL-009：合入不是终点）",
+            "",
+            f"装配时的判定读的是 `{ra.get('reviewed_at_head')}` 之前的代码。缺陷登记表里的修复落地后，"
+            f"四份 delta 在 `{ra.get('reviewed_at_head')}` 上重读了全部十环，本文件是它们的落点"
+            f"（应用于 `{ra.get('applied_at_head')}`）。签字：{code(ra.get('signer'))} — "
+            f"**代签（{ra.get('signer_kind')}）**，授权 {cell(ra.get('authorization_ref'))}。",
+            "",
+            "| 项 | 值 |",
+            "|---|---|",
+            f"| implemented 档位分布 | 重审前 declared {before.get('declared')} / compiled {before.get('compiled')} / "
+            f"verified {before.get('verified')} → 重审后 **declared {dist.get('declared')} / "
+            f"compiled {dist.get('compiled')} / verified {dist.get('verified')}** |",
+            f"| 缺口 | {gaps_ra.get('total_before')} → **{gaps_ra.get('total_after')}**"
+            f"（闭合 {gaps_ra.get('closed')}，新增 {gaps_ra.get('added')}） |",
+            f"| 证据锚点 | 重定位 {anchors.get('remapped')} 处，原位未动 {anchors.get('unchanged')} 处 |",
+            f"| 没有变的 | {cell(ra.get('honesty_unchanged'))} |",
+            "",
+            f"> 锚点怎么修的：{para(anchors.get('how'))} {para(anchors.get('note'))}",
+            "",
+        ]
+        if lst(ra.get("verdict_changes")):
+            out += ["改档的两处（其余 40 个配件一处没动）：", ""]
+            for vc in lst(ra.get("verdict_changes")):
+                vc = dct(vc)
+                out.append(f"- `{vc.get('part')}` 的 {code(vc.get('dim'))}："
+                           f"`{vc.get('from')}` → `{vc.get('to')}` — {para(vc.get('note'))}")
+            out.append("")
+        out += [f"四份 delta 逐字保留在：" + " · ".join(code(x) for x in lst(ra.get("deltas"))), ""]
 
     diff = dct(run.get("audited_dirs_diff"))
     stat = dct(diff.get("git_diff_stat"))
