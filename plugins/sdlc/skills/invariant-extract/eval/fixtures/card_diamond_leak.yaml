@@ -1,6 +1,5 @@
-# Same card as card_good.yaml with the abductive provenance removed: no execution point,
-# no obstacle. "No provenance, no entry" is the line between a recovered rule and an
-# invented plausible-sounding one.
+# I-25: the ◊-leakage check compares ids. While kicked_to_done_when entries had no `id`
+# slot the check ran empty; with ids it catches a candidate carded and kicked at once.
 territory_id: search
 dos_ref: dos.yaml
 purpose: { name: "resolve relative time into eras", kpi: "p95 <= 300ms, 0 wrong-era", aspect: correctness, scope_ref: "dos.scope" }
@@ -26,7 +25,7 @@ hard_invariants:
     altitude: territory
     aspect: correctness
     channel: abductive
-    provenance: { execution_point: "", obstacle_ref: "" }
+    provenance: { execution_point: "", obstacle_ref: "ledger:fail#3 undated capture filed under the newest era" }
     narrowest_rule_note: "bars only the newest-Era default for undated captures; dated capture filing is untouched"
     confidence: high
     disposition: propose
@@ -45,7 +44,7 @@ overridable_defaults:
     confidence: high
     disposition: carded
 kicked_to_done_when:
-  - id: DW-search-001
+  - id: INV-search-001
     statement: "the era picker ships behind a flag this release"
     why_diamond: "attained once, then true — not a rule every future Run holds"
     handoff_to: donewhen-extract

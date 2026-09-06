@@ -1,6 +1,5 @@
-# Same card as card_good.yaml with the abductive provenance removed: no execution point,
-# no obstacle. "No provenance, no entry" is the line between a recovered rule and an
-# invented plausible-sounding one.
+# I-25: the overridable_defaults template carried no `aspect` slot while verify_card.py
+# hard-rejected entries without one. The template now has the slot; this is the mutant.
 territory_id: search
 dos_ref: dos.yaml
 purpose: { name: "resolve relative time into eras", kpi: "p95 <= 300ms, 0 wrong-era", aspect: correctness, scope_ref: "dos.scope" }
@@ -26,7 +25,7 @@ hard_invariants:
     altitude: territory
     aspect: correctness
     channel: abductive
-    provenance: { execution_point: "", obstacle_ref: "" }
+    provenance: { execution_point: "", obstacle_ref: "ledger:fail#3 undated capture filed under the newest era" }
     narrowest_rule_note: "bars only the newest-Era default for undated captures; dated capture filing is untouched"
     confidence: high
     disposition: propose
@@ -38,7 +37,6 @@ overridable_defaults:
     survival_test: pass
     strength: overridable
     altitude: territory
-    aspect: correctness
     channel: deductive
     provenance: { execution_point: "src/search/rank.ts:12", obstacle_ref: "" }
     narrowest_rule_note: "ranking order only; says nothing about which candidates are eligible"

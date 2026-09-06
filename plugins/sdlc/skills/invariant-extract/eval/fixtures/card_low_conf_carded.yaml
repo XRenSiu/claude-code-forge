@@ -1,6 +1,5 @@
-# Same card as card_good.yaml with the abductive provenance removed: no execution point,
-# no obstacle. "No provenance, no entry" is the line between a recovered rule and an
-# invented plausible-sounding one.
+# I-26: references/abduction.md §5 says a low-confidence abduction is PROPOSED, not carded,
+# even when it is only an overridable default. Nothing used to check it.
 territory_id: search
 dos_ref: dos.yaml
 purpose: { name: "resolve relative time into eras", kpi: "p95 <= 300ms, 0 wrong-era", aspect: correctness, scope_ref: "dos.scope" }
@@ -26,7 +25,7 @@ hard_invariants:
     altitude: territory
     aspect: correctness
     channel: abductive
-    provenance: { execution_point: "", obstacle_ref: "" }
+    provenance: { execution_point: "", obstacle_ref: "ledger:fail#3 undated capture filed under the newest era" }
     narrowest_rule_note: "bars only the newest-Era default for undated captures; dated capture filing is untouched"
     confidence: high
     disposition: propose
@@ -42,7 +41,7 @@ overridable_defaults:
     channel: deductive
     provenance: { execution_point: "src/search/rank.ts:12", obstacle_ref: "" }
     narrowest_rule_note: "ranking order only; says nothing about which candidates are eligible"
-    confidence: high
+    confidence: low
     disposition: carded
 kicked_to_done_when:
   - id: DW-search-001

@@ -1,6 +1,5 @@
-# Same card as card_good.yaml with the abductive provenance removed: no execution point,
-# no obstacle. "No provenance, no entry" is the line between a recovered rule and an
-# invented plausible-sounding one.
+# I-25: the same rule as dos_good.yaml R002, said differently. Exact-lowercase dedup
+# passes it; a paraphrase of constitution is still re-legislation, so it must be flagged.
 territory_id: search
 dos_ref: dos.yaml
 purpose: { name: "resolve relative time into eras", kpi: "p95 <= 300ms, 0 wrong-era", aspect: correctness, scope_ref: "dos.scope" }
@@ -19,14 +18,14 @@ registered_gaps:
     note: "not built yet, so its negation is a ◊ — it belongs to this run's acceptance, not to □"
 hard_invariants:
   - id: INV-search-001
-    statement: "WHEN a Memory is captured with no timestamp THE SYSTEM SHALL NOT file it under the newest Era"
+    statement: "WHILE a TimeRef resolves to >= 2 Eras THE SYSTEM SHALL NEVER auto-pick one"
     ears_type: unwanted
     survival_test: pass
     strength: hard
     altitude: territory
     aspect: correctness
     channel: abductive
-    provenance: { execution_point: "", obstacle_ref: "" }
+    provenance: { execution_point: "", obstacle_ref: "ledger:fail#3 undated capture filed under the newest era" }
     narrowest_rule_note: "bars only the newest-Era default for undated captures; dated capture filing is untouched"
     confidence: high
     disposition: propose

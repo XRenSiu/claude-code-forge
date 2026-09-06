@@ -300,6 +300,37 @@ FXI="$S/invariant-extract/eval/fixtures"
 IXV="$S/invariant-extract/scripts/verify_card.py"
 expect "card with provenance passes" 0 py "$IXV" "$FXI/card_good.yaml" --dos "$FXO/dos_good.yaml"
 expect "card without provenance rejected" 1 py "$IXV" "$FXI/card_bad_noprov.yaml"
+# dogfood 2026-09-05 (I-25): the template had no `aspect` slot on overridable_defaults while the
+# script hard-rejected entries without one, and no `id` on kicked entries so ◊-leakage ran empty.
+expect "overridable entry without aspect rejected — the template now carries the slot (I-25)" 1 py "$IXV" "$FXI/card_no_aspect.yaml"
+expect "a ◊ candidate also carded is caught now that kicked entries carry ids (I-25)" 1 py "$IXV" "$FXI/card_diamond_leak.yaml"
+expect "a re-wording of an existing DOS rule is flagged, not silently accepted (I-25)" 0 bash -c "python3 '$IXV' '$FXI/card_near_dup.yaml' --dos '$FXO/dos_good.yaml' | python3 -c \"import json,sys; d=json.load(sys.stdin); assert any('similar to dos.yaml R002' in f for f in d['needs_semantic_review']), d['needs_semantic_review']\""
+expect "the narrowest-rule flag is targeted, not one per entry (I-25)" 0 bash -c "python3 '$IXV' '$FXI/card_good.yaml' --dos '$FXO/dos_good.yaml' | python3 -c \"import json,sys; d=json.load(sys.stdin); assert not any('narrowest' in f for f in d['needs_semantic_review']), d['needs_semantic_review']\""
+expect "the report prints projected_out / deduped / suspects / conflicts counts (I-25)" 0 bash -c "python3 '$IXV' '$FXI/card_good.yaml' | python3 -c \"import json,sys; d=json.load(sys.stdin); [d[k] for k in ('projected_out_obstacles','deduped_against_constitution','constitution_promotion_suspects','conflicts_for_legislation','registered_gaps')]\""
+# dogfood 2026-09-05 (I-26): abduction.md §5 and the altitude/suspects duplication were unchecked.
+expect "low confidence must be proposed even in the overridable column (I-26)" 1 py "$IXV" "$FXI/card_low_conf_carded.yaml"
+expect "altitude proposed_to_constitution on a carded entry rejected (I-26)" 1 py "$IXV" "$FXI/card_altitude_promoted.yaml"
+# dogfood 2026-09-05 (I-29): a bare failure-memory integer, and gaps with no declared destination.
+expect "failure_memory_count with no sources rejected (I-29)" 1 py "$IXV" "$FXI/card_bare_count.yaml"
+expect "missing snapshot_at flagged when sources are given (I-29)" 0 bash -c "sed 's/^  snapshot_at:.*/  snapshot_at: \"\"/' '$FXI/card_good.yaml' > '$TMP/card_nosnap.yaml' && python3 '$IXV' '$TMP/card_nosnap.yaml' | python3 -c \"import json,sys; d=json.load(sys.stdin); assert any('snapshot_at' in f for f in d['needs_semantic_review']), d['needs_semantic_review']\""
+expect "a registered gap with no destination rejected (I-29)" 1 py "$IXV" "$FXI/card_gap_no_dest.yaml"
+
+echo "== R1 templates carry the slots their own verifiers require"
+# dogfood 2026-09-05 (I-25/I-29): a card filled from the shipped template used to be rejected for
+# fields the template had no slot for, so the operator hand-added them to pass.
+expect "invariant_card.yaml declares every field verify_card.py hard-requires (I-25/I-29)" 0 bash -c "python3 -c \"
+import yaml
+t=yaml.safe_load(open('$S/invariant-extract/assets/invariant_card.yaml'))
+need={'statement','aspect','strength','altitude','provenance','confidence','disposition','narrowest_rule_note'}
+for col in ('hard_invariants','overridable_defaults'):
+    missing=need-set(t[col][0]); assert not missing, (col, missing)
+assert 'id' in t['kicked_to_done_when'][0], 'kicked entries need an id for the diamond-leak check'
+c2=t['channel_2_input']; assert 'sources' in c2 and 'snapshot_at' in c2, c2
+assert t['registered_gaps'][0]['destination'] in ('done_when','issue','backlog')
+assert t['hard_invariants'][0]['altitude']=='territory'\""
+# dogfood 2026-09-05 (I-27): the template's comments carried another project's rule numbering
+# (R001 isolation / R002 gate-signing) beside sdlc's own R001/R002 on the same card.
+expect "invariant_card.yaml uses sdlc's G2 wording, not a borrowed R00n gate id (I-27)" 0 bash -c "! grep -qE '\\(R00[0-9]\\)' '$S/invariant-extract/assets/invariant_card.yaml' && grep -q 'G2' '$S/invariant-extract/assets/invariant_card.yaml'"
 # dogfood 2026-09-05 (I-11/I-37): the DOS template had nowhere to record a synonym, a downstream
 # translation, a rule alias, or a materialised derived view.
 expect "dos_template.yaml carries synonyms / aliases / translation_notes / derived_from (I-11/I-37)" 0 bash -c "python3 -c \"
