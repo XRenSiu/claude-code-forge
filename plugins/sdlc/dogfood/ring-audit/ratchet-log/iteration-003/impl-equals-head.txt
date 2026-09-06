@@ -1,1 +1,2 @@
 verified at HEAD f11f0e2: all 10 implementation files byte-equal to the iteration-003 impl-snapshot (4ddb362); commits after 4ddb362 are docs-only (skill-issues.md, pr-body.md)
+re-verified at e4d3166 (after merging origin/main): all 10 implementation files still byte-equal to the 4ddb362 snapshot

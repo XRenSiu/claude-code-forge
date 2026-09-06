@@ -77,56 +77,57 @@ bash plugins/sdlc/eval/smoke.sh                                             # 19
 
 ## Known issues
 
-> 依 g2-judge 对 iteration-002 的解码列全（known_issues_must_list）；AC-005-a / AC-006-a **待 G3 代签，未通过**。校准措辞：**instrument mutation 0.767; holdout 6/10 with 4 known gaps**（不写无限定的 calibrated）。finding id 以 `ratchet-log/iteration-002/meta-judge-output.yaml` 的 mf-* 为准，iteration-003 的存活项按其自身 id 另列。
+> 依 g2-judge 对 iteration-002 / 003 的解码列全。AC-005-a / AC-006-a **待 G3 代签，未通过**。校准措辞：**instrument mutation 0.767; holdout 6/10 with 4 known gaps**（不写无限定的 calibrated）。本节条目多于常规上限 5——这是一次审计自身的 dogfood，发现登记册本身就是交付物之一；每条带 `file:line` 锚点。
 
-**A. known_gaps（11 项，`calibration/known_gaps.yaml`，状态 open → change-proposal-002，本轮不变）**
-- KG-01 `check_audit.py:376-391` waived 无 waiver_ref（G1 规则 3c 未命名 token）
-- KG-02 `check_audit.py:399` proposal.source 只检非空、不解析（AC-004-b 读法；= mf-011）——39 条 source 已人工核对可解析
-- KG-03 `check_audit.py:151-170` 重复环 id → rings 11 无谓词（AC-001-a rings == 10）
-- KG-04 `check_audit.py:376-391` signer_kind 超 F-07 枚举无 token（= mf-007）
-- KG-05..KG-11 `check_audit.py` 7 个存活仪器变体 M03/M04/M07/M14/M22/M23/M28
+**A. 已知空隙（11 项，`plugins/sdlc/dogfood/ring-audit/calibration/known_gaps.yaml:1`，状态 open → change-proposal-002）**
 
-**B. 契约 / 解释层延后项（change-proposal-002；先开一轮 G1 解释）**
-- mf-008 `check_audit.py:161-168` `--rings` 使 ring_unexpected 失效（F-17 "不改任何既有谓词"）
-- mf-010 `check_audit.py:258-278` 规则 2e 同环子句被用于 fills[]（G1 文本只对 missing[]）
-- mf-011 / KG-02 AC-004-b 的 source 可解析读法
-- mf-013 `check_audit.py:328-343` alternatives_of 任意非空即豁免（F-05 三条件未检）
-- mf-014 `check_audit.py:364-374` gates[].kind 超枚举落空规则 3
-- mf-007 / KG-04 signer_kind 枚举
-- mf-015 注册表可选 · mf-016 exit-2 路径不出 JSON · mf-017 注册表 8 vs 6 · mf-018 whitelist_overflow vs replay_reject token · mf-019 audit.schema.md 描述已移除的 CARD-01 状态 · mf-020 disposition 枚举 F-16 vs schema
-- srg-003 → AC-007-c：无 footer 提交触碰被审目录作为**记录字段**（不门控）· srg-006 → 实现期间重签者规则 · I-68 acceptance-fleet S3 对 3 ≤ gaming_risk_score < 7 无规则
+- KG-01 `waived` 无 waiver_ref，G1 规则 3c 未命名 token — `plugins/sdlc/dogfood/ring-audit/check_audit.py:376`
+- KG-02 / mf-003 proposal.source 只检非空、不解析（39 条 source 已人工核对可解析） — `plugins/sdlc/dogfood/ring-audit/check_audit.py:399`
+- KG-03 重复环 id → rings 11 无谓词 — `plugins/sdlc/dogfood/ring-audit/check_audit.py:151`
+- KG-04 / mf-007 signer_kind 超 F-07 枚举无 token — `plugins/sdlc/dogfood/ring-audit/check_audit.py:388`
+- KG-05..KG-11 七个存活仪器变体 M03/M04/M07/M14/M22/M23/M28（ring_unexpected / parts_missing / evidence_missing / 跨环 gap 引用 / gate_verdict 枚举 / reject-waived 无 signer / --rings 视图） — `plugins/sdlc/dogfood/ring-audit/calibration/known_gaps.yaml:43`
 
-**C. nh-004：本轮所有修复均无锁定测试 → change-proposal-002 测试清单**
-- AUDIT.md golden-file 字节比对；atoms / id 含 `|` 的 fixture；signer_kind 人签 / agent 变体；含重命名移出与非 ASCII 路径的孪生仓库；空 main..HEAD 范围 exit 0 + card_commits 0；gates[] kind human_gate 条目
+**B. 契约 / 解释层延后项（change-proposal-002；须先开一轮 G1 解释再编谓词）**
 
-**D. G3 裁项**
-- mf-009 F-06 封顶：R6/human_gate.G3、R7/agent.pr-reviewer、R8/tune 记 compiled 而其所有 Artifact checked_by 为空（"任一"还是"独占" Artifact 的读法）
-- `g3-input.md` 第 1–20 项；AC-005-a / AC-006-a 待 G3，从不渲染为 passed
+- mf-004 / KG-08 规则 2e 的同环子句被用于 fills[]，G1 文本只对 missing[] — `plugins/sdlc/dogfood/ring-audit/check_audit.py:265`
+- mf-006 gates[].kind 未对 {script, human} 校验，其他 kind 逃过两条规则 3 谓词 — `plugins/sdlc/dogfood/ring-audit/check_audit.py:371`
+- mf-010 `--rings` 使 ring_unexpected 失效，与 F-17"不改任何既有谓词"冲突 — `plugins/sdlc/dogfood/ring-audit/check_audit.py:161`
+- mf-013 alternatives_of 任意非空即豁免，F-05 三条件未检 — `plugins/sdlc/dogfood/ring-audit/check_audit.py:334`
+- mf-007 / mf-008 形态文档列六个顶层注册表，数据与渲染器用八个（多出 unenforced_rules / suspected_duplicate_pairs） — `plugins/sdlc/dogfood/ring-audit/audit.schema.md:36`
+- mf-012 exit-2 路径不出 JSON；mf-014 schema 前言自 5a6889c 起过时；mf-015 注册表可选 — `plugins/sdlc/dogfood/ring-audit/audit.schema.md:16`
+- srg-003（AC-007-c 作为记录字段）· srg-006（实现期重签者规则）· I-68（S3 在 3 ≤ gaming < 7 无规则） — `plugins/sdlc/dogfood/ring-audit/skill-issues.md:75`
 
-**E. iteration-003 关闭项（仅列 iteration-003 确认关闭者；存活者按 id 留在 F）**
-- iteration-002 的两类记录缺陷 **已关闭**（各由 ≥3 个评审复现为已修）：stale-sha 类（记录的 sha 在 shipping 分支上不存在）、exit-vs-ok 类（`exit: 1` 与 `ok: true` 并存）；空范围崩溃（it-002 mf-003）亦关闭
-- 同轮关闭：quotePath 规避（非 ASCII 路径逃过被审目录正则）、pre-Card 扫描窗口、残余单元格插值、cmd/exit 未渲染
-- 复核：g2-judge 在 shipping 分支上亲自重跑——replay exit 0 / ok true / 15-0-0，`recorded_at_head` a2deb83 是 HEAD 的祖先，空范围在 main 的 scratch clone 里 exit 0 且出 JSON
+**C. nh-004：本轮所有修复都没有锁定测试覆盖（tests/** 已锁，测试进 change-proposal-002）**
 
-**F. iteration-003 存活的 P1 / P2（按其 finding id）**
-- **mf-001（P1，由 a2deb83 引入，it-002/mf-005 的复发）**：`replay_card_commits.sh` 的 `card_footer_of` 大小写敏感而 `has_card_footer` 不敏感，`card: CARD-xx` 这种拼法两遍都看不到——比无 footer 提交更隐蔽。**未被利用**：本分支 15 条 footer 两种匹配都命中（独立于被质疑的匹配器验证）。测试进 change-proposal-002（小写 footer 孪生须恰好出现在一遍里）
-- **mf-002（P1，由 a2deb83 + 4ddb362 引入，四评审一致）**：`AUDIT.md` L976 的无 footer 行标着"自第一个 Card 提交起"，而 yaml 的窗口是 `merge-base(main,HEAD)..HEAD`（4d3057a..HEAD）；`non_card_range_spec` 与那四条提交的清单未渲染，于是页面看起来像"四条 Card 之后的提交碰了被审目录"，而 19 行之后的 diff --stat 又是空的。**yaml 是权威且正确的**；那个标签下的真值是 0。真相在 `audit.yaml#run_evidence.audited_dirs_diff.non_card_range_spec` 与 `non_card_commits_touching[]`，以及 `commit-table.md`
-- mf-005（P3）：`skill_issues_count` 记 67，4ddb362 上 grep 得 69——记录时冻结的计数，所在从句的路径正确
-- mf-011（P3）：holdout 见证单元格把 `attested_by_kind` 原样打出而非走封闭签字人映射；本次交付值 delegated_agent 渲染正确
-- 其余 11/15 为**设计上带过**的复发项，全部是 change-proposal-002 或 G3 项：mf-003/KG-02 source 可解析、mf-004/KG-08 fills 同环、mf-006 gates[].kind 超枚举、mf-007/mf-008 注册表 6 vs 8、mf-009 F-06 封顶（G3）、mf-010 `--rings` vs F-17、mf-012 exit-2 不出 JSON、mf-013 disposition 枚举、mf-014 schema 前言过时、mf-015
-- **审查阶段处置（g2-judge 裁决）**：mf-001 / mf-002 若在 review 线程里被要求修，作为 CARD-01 / CARD-06 footer 提交经同一套预门落地，显式标 **UNTESTED**（tests/** 已锁，测试进 change-proposal-002），由 review-loop 自己的预算治理；PR 正文届时写明"acceptance 评的是 4ddb362；审查阶段的实现提交：<shas>，由渲染/回放复现复核，不由 fleet 迭代复核"。除非 `check_audit.py` 或 yaml 记录的数据改变，否则不开 iteration-004
+- 清单：AUDIT.md golden-file 字节比对；atoms / id 含 `|` 的 fixture；signer_kind 人签 / agent 变体；含 CJK 路径与重命名移出的孪生仓库；空 main..HEAD 范围须 exit 0 + card_commits 0；小写 footer 提交须恰好出现在一遍里 — `plugins/sdlc/dogfood/ring-audit/ratchet-log/iteration-003/needs-human.md:1`
+
+**D. 交给 G3 的裁项**
+
+- mf-009 F-06 封顶：R6/human_gate.G3、R7/agent.pr-reviewer、R8/tune 记 compiled 而其每个 Artifact 的 checked_by 皆空 — `plugins/sdlc/dogfood/ring-audit/audit.yaml:1348`
+- `g3-input.md` 第 1–20 项 + 三轮解码补充；AC-005-a / AC-006-a 待 G3，从不渲染为 passed — `plugins/sdlc/dogfood/ring-audit/g3-input.md:1`
+
+**E. iteration-003 关闭的项（各由 ≥3 个评审复现为已修）**
+
+- stale-sha 类、exit-vs-ok 类、空范围崩溃（it-002 的 mf-001 / mf-002 / mf-003）全部关闭；同轮关闭 quotePath 规避、pre-Card 扫描窗口、残余单元格插值、cmd/exit 未渲染 — `plugins/sdlc/dogfood/ring-audit/ratchet-log/iteration-003/meta-judge-output.yaml:1`
+- g2-judge 在 shipping 分支上亲自复核：replay exit 0 / ok true / 15-0-0，`recorded_at_head` a2deb83 是 HEAD 的祖先，空范围在 main 的 scratch clone 里 exit 0 且出 JSON — `plugins/sdlc/dogfood/ring-audit/audit.yaml:3412`
+
+**F. iteration-003 存活项（15 条中的 P1 / P3；11 条为设计上带过的复发项，见 A / B / D）**
+
+- **mf-001（P1，由 a2deb83 引入）** `card_footer_of` 大小写敏感而 `has_card_footer` 不敏感，`card: CARD-xx` 拼法两遍都看不到；**未被利用**（本分支 15 条 footer 两种匹配都命中，独立于被质疑的匹配器验证） — `plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh:60`
+- **mf-002（P1，由 a2deb83 + 4ddb362 引入，四评审一致）** 该行标着"自第一个 Card 提交起"，而 yaml 的窗口是 `merge-base(main,HEAD)..HEAD`；四条命中提交全部早于第一个 Card 提交，标签下的真值是 **0**；`non_card_range_spec` 与清单未渲染 — `plugins/sdlc/dogfood/ring-audit/render_audit.py:533` 与 `plugins/sdlc/dogfood/ring-audit/AUDIT.md:976`；权威数据在 `plugins/sdlc/dogfood/ring-audit/audit.yaml:3412`
+- mf-005（P3）`skill_issues_count` 记 67，4ddb362 上 grep 得 69——记录时冻结的计数 — `plugins/sdlc/dogfood/ring-audit/audit.yaml:3459`
+- mf-011（P3）holdout 见证单元格把 `attested_by_kind` 原样打出而非走封闭映射（本次值 delegated_agent，渲染正确） — `plugins/sdlc/dogfood/ring-audit/render_audit.py:573`
+- **审查阶段处置**：mf-001 / mf-002 若在 review 线程里被要求修，作为 CARD-01 / CARD-06 footer 提交经同一套预门落地并显式标 UNTESTED，由 review-loop 预算治理；除非 `check_audit.py` 或 yaml 记录的数据改变，否则不开 iteration-004 — `plugins/sdlc/dogfood/ring-audit/ratchet-log/iteration-003/needs-human.md:1`
 
 **G. 过程记录**
-- iteration-002 修复轮自身引入的两条回归（回放空范围崩溃 / run_evidence exit:1 与 ok:true 矛盾）及其在 iteration-003 的关闭
-- gaming 轨迹 [3.5, 4.0, 4.0（持平；检测器被错传基线 3.5，见 I-72）]（4.0 = stale-sha P1 + exit/ok P2 + F-06 P2 的组合）
-- card 预算 4/3：两次 budget_exhausted 升级由 g2-judge（代签）豁免，此后无授予；task 预算 2/2 耗尽（change-proposal-001；hidden_variant_fail）
-- 无 footer 提交的合法性（nh-003 裁决）：587f371 / ebe270d / c729f76 = PSL L122-123 偏差提交（账本 deviation 行）；e217d10 = change-proposal-001 重锁；fafcad7 / 5a6889c 不在 forbidden_paths；bf3f13e = peer 提交、main 已有孪生 fbc6a3c；逐提交表 `commit-table.md`
-- 所有评审均为 claude 厂商（fable / sonnet），编排者撰写评审提示；隔离为协议级，非 OS 级（isolation.json）
-- 报告底线："0 verified / 26 compiled / 16 declared；三门两道代签；G3 待定"
-- **隔离事件（iteration-003）**：`spec-drift-detector` 通过其 SKILL.md 记载的 `--qa-report` 参数读到了 `qa-reviewer.yaml`，而 fleet 的 COMMON.md 禁止读 fleet-outputs——两份 skill 契约互相冲突（I-71）。g2-judge 裁为"真实、有界、本轮接受"：qa 零发现，可继承的只有测量事实而非意见，drift 的 11 条信号不打折；下一轮前 acceptance-fleet 必须改 dispatch
-- **结构性成因（进 retro）**：两轮修复各有 2/6 条发现是"修复自己引入的"，因为投影（render_audit.py，CARD-06）与其数据源（replay_card_commits.sh，CARD-01）分属两张卡且都无锁定测试（I-73、nh-004）
 
-链接：`failure-report-002-holdout.md` · `calibration_report.yaml` · `ratchet-log/iteration-00{1,2,3}/` · `g3-input.md` · `commit-table.md`
+- 两轮修复各有 2/6 条发现是"修复自己引入的"；结构性成因是投影与其数据源分属两张卡且都无锁定测试 — `plugins/sdlc/dogfood/ring-audit/skill-issues.md:80`
+- gaming 轨迹 [3.5, 4.0, 4.0] **持平**（iteration-003 的检测器被编排者任务文件错传基线 3.5，检测器自报了不一致） — `plugins/sdlc/dogfood/ring-audit/skill-issues.md:79`
+- 隔离事件：`spec-drift-detector` 经其 `--qa-report` 参数读到 qa 的输出，与 fleet 的无串扰铁律冲突；裁为有界接受（qa 零发现，可继承的只有测量事实），drift 的 11 条信号不打折 — `plugins/sdlc/dogfood/ring-audit/skill-issues.md:78`
+- card 预算 4/3（两次升级由代签判官豁免，授予已用尽）；task 预算 2/2 耗尽；三次豁免记在状态与账本 — `plugins/sdlc/dogfood/ring-audit/ratchet-log/iteration-003/final-state.json:1`
+- 无 footer 提交的合法性（nh-003 裁决）与逐提交分类（28 条：Card 11 · 偏差 3 · 编排者文档 11 · peer 3） — `plugins/sdlc/dogfood/ring-audit/commit-table.md:1`
+- 所有评审均为 claude 厂商，编排者撰写评审提示；隔离为协议级而非 OS 级 — `plugins/sdlc/dogfood/ring-audit/ratchet-log/iteration-003/isolation.json:1`
+- 报告底线：0 verified / 26 compiled / 16 declared；三道门两道代签；G3 待定 — `plugins/sdlc/dogfood/ring-audit/AUDIT.md:1`
 
 ## Notes
 
