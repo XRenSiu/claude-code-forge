@@ -1,0 +1,229 @@
+{
+  "version": 1,
+  "slug": "sdlc-ring-audit",
+  "title": "审计 sdlc 九环每个环节的配件与 skill：缺失 / 必要 / 已实现 / 命名",
+  "track": "psl",
+  "stage": "archive",
+  "created_at": "2026-09-05T13:37:54+00:00",
+  "updated_at": "2026-09-06T03:48:11+00:00",
+  "gates": {
+    "g1": {
+      "required": true,
+      "verdict": "pass",
+      "by": "g1-judge",
+      "at": "2026-09-05T14:59:49+00:00",
+      "signer_kind": "delegated_agent",
+      "authorization": "user instruction 2026-09-05: '需要人审核的地方，请你弄一个子agent代替我审核一下' — G1 delegated to g1-judge (3 rounds + 补签, signed 746c56ef…)",
+      "record": "plugins/sdlc/dogfood/ring-audit/g1-record.md"
+    },
+    "g2": {
+      "required": true,
+      "verdict": "pass",
+      "by": "g2-judge",
+      "at": "2026-09-05T14:58:31+00:00",
+      "signer_kind": "delegated_agent",
+      "authorization": "user instruction 2026-09-05: '需要人审核的地方，请你弄一个子agent代替我审核一下' — G2 delegated to g2-judge (g2-record.md FREEZE at contract sha fb5af3f0…, confirm 42)",
+      "record": "plugins/sdlc/dogfood/ring-audit/g2-record.md"
+    },
+    "g3": {
+      "required": true,
+      "verdict": "pass",
+      "by": "g3-judge",
+      "at": "2026-09-06T02:11:00+00:00",
+      "signer_kind": "delegated_agent",
+      "authorization": "user instruction 2026-09-05: '需要人审核的地方，请你弄一个子agent代替我审核一下' — G3 delegated to g3-judge; AC-005-a pass, AC-006-a pass; 10 accept / 3 reject / 8 defer; the record self-declares that a G3 pass checks no input and the authorization is unvalidated free text, so its force comes from the reproductions it lists",
+      "record": "plugins/sdlc/dogfood/ring-audit/g3-record.md"
+    }
+  },
+  "counters": {
+    "card": 4,
+    "plan": 0,
+    "task": 2,
+    "ontology": 0,
+    "world": 1,
+    "last_fingerprints": {
+      "task:task": "d1fc8380957b",
+      "CARD-06:card": "8c8de84215cf",
+      "CARD-01:card": "792d8e50930d"
+    },
+    "fingerprint_repeats": {
+      "task:task": 1,
+      "CARD-06:card": 1,
+      "CARD-01:card": 1
+    },
+    "fingerprint_history": {
+      "task:task": [
+        "c8026b5b38d0",
+        "d1fc8380957b"
+      ],
+      "CARD-06:card": [
+        "f07d09e4a981",
+        "8c8de84215cf"
+      ],
+      "CARD-01:card": [
+        "313fc04e7ff4",
+        "792d8e50930d"
+      ]
+    },
+    "scores": {}
+  },
+  "pending": {
+    "failure_report": false
+  },
+  "waivers": [
+    {
+      "stage": "acceptance",
+      "signal": "hidden_variant_fail",
+      "fingerprint": "d1fc8380957b",
+      "reason": "hidden_variant_fail d1fc8380957b: holdout 6/10, misses waived_without_waiver_ref / proposal_dangling_source / duplicate_ring_id / signer_kind_outside_enum, accepted by g2-judge (delegated) per failure-report-002-holdout.md",
+      "at": "2026-09-05T17:52:14Z",
+      "signer": "g2-judge",
+      "signer_kind": "delegated_agent",
+      "authorization": "user instruction 2026-09-05: '需要人审核的地方，请你弄一个子agent代替我审核一下'",
+      "scope": "this signal only; task budget stays 2/2 exhausted",
+      "unmet": [
+        "hidden_variant_fail (not an advance precondition; advance had no unmet problems, so --force was not applicable — recorded standalone, I-67)"
+      ]
+    },
+    {
+      "stage": "acceptance",
+      "signal": "card_test_fail",
+      "layer": "card",
+      "card": "CARD-01",
+      "fingerprint": "792d8e50930d",
+      "reason": "budget_exhausted escalation #1 of 2 WAIVED by g2-judge decode C (iteration-002): card fail #3 = CARD-01 a2deb83; grant 2 of 2, no further grant from the delegated judge; any further fix need after iteration-003 escalates to the USER",
+      "at": "2026-09-06T00:49:44Z",
+      "signer": "g2-judge",
+      "signer_kind": "delegated_agent",
+      "authorization": "user instruction 2026-09-05: '需要人审核的地方，请你弄一个子agent代替我审核一下'",
+      "unmet": [
+        "card budget exhausted (3/3, track=psl)"
+      ]
+    },
+    {
+      "stage": "acceptance",
+      "signal": "card_test_fail",
+      "layer": "card",
+      "card": "CARD-06",
+      "fingerprint": "8c8de84215cf",
+      "reason": "budget_exhausted escalation #2 of 2 WAIVED by g2-judge decode C (iteration-002): card fail #4 = CARD-06 4ddb362; grant 2 of 2, no further grant from the delegated judge; any further fix need after iteration-003 escalates to the USER",
+      "at": "2026-09-06T00:49:44Z",
+      "signer": "g2-judge",
+      "signer_kind": "delegated_agent",
+      "authorization": "user instruction 2026-09-05: '需要人审核的地方，请你弄一个子agent代替我审核一下'",
+      "unmet": [
+        "card budget exhausted (4/3, track=psl)"
+      ]
+    }
+  ],
+  "assumptions": [],
+  "artifacts": {},
+  "world": {
+    "psl": "plugins/sdlc/dogfood/ring-audit/PSL-sdlc-ring-audit.md",
+    "derived_dir": "plugins/sdlc/dogfood/ring-audit/derived",
+    "dos": "plugins/sdlc/dogfood/ring-audit/dos.yaml",
+    "invariants": "plugins/sdlc/dogfood/ring-audit/invariants/sdlc-plugin.card.yaml",
+    "form_draft_sha256": "746c56ef3e39e8e7089db0914bc01015b6dd522ef622c449e3d6260fbc10880d"
+  },
+  "issue": {
+    "number": 1,
+    "url": "https://github.com/XRenSiu/claude-code-forge/issues/1",
+    "kind": "feature"
+  },
+  "branch": {
+    "name": "docs/1-sdlc-ring-audit",
+    "base": "main"
+  },
+  "contract": {
+    "done_when": "plugins/sdlc/dogfood/ring-audit/done_when.yaml",
+    "source": "donewhen-extract",
+    "compile_manifest": "plugins/sdlc/dogfood/ring-audit/compile_manifest.yaml",
+    "tests_manifest": "plugins/sdlc/dogfood/ring-audit/tests/ring-audit/tests-manifest.yaml",
+    "calibration_report": "plugins/sdlc/dogfood/ring-audit/calibration_report.yaml"
+  },
+  "lock": {
+    "path": "plugins/sdlc/dogfood/ring-audit/.done_when.lock",
+    "signed_by": "g2-judge",
+    "signed_at": "2026-09-05T15:46:03Z"
+  },
+  "cards": {
+    "dir": "plugins/sdlc/dogfood/ring-audit/cards",
+    "lint_passed": true,
+    "items": {
+      "CARD-01": {
+        "status": "done",
+        "retries": 2,
+        "commits": [
+          "0be2770cb7dda6da90a2e5905382362bc134a6e0",
+          "08238cdab562e6311a245e9654c2be2ea9dd2991",
+          "ba7d5e2d2f3cc32da5e70a978c22db8f3feb6010",
+          "a2deb839040f576b1ea01ea1f37feb3cba0bd9f0"
+        ],
+        "last_fingerprint": "792d8e50930d"
+      },
+      "CARD-02": {
+        "status": "done",
+        "retries": 0,
+        "commits": [
+          "419a364903e34cabe69c83fb5baf9c8e1c8a4222"
+        ]
+      },
+      "CARD-03": {
+        "status": "done",
+        "retries": 0,
+        "commits": [
+          "05963a5035a8f268b5f3c846249b6a9015f5ad52"
+        ]
+      },
+      "CARD-04": {
+        "status": "done",
+        "retries": 0,
+        "commits": [
+          "eba979624f4a9b11cadd59d67adb8babead808e6"
+        ]
+      },
+      "CARD-05": {
+        "status": "done",
+        "retries": 0,
+        "commits": [
+          "f8ef23475f0ea0b2687ecb2db4a6d5e1e78a6a32"
+        ]
+      },
+      "CARD-06": {
+        "status": "done",
+        "retries": 2,
+        "commits": [
+          "3441ba48337fc17a6c69ab98908e5dafe4060a73",
+          "6326123c847eb973dbc039837f82abd221971e71",
+          "b24243d93f33ed4d5a8df7794cba909d25df9795",
+          "5c84a5a22db0dff84ffc3aff47407b0d21fd15c1",
+          "843c3ee60e39218074f8f358b3f3c373bfb5f596",
+          "7cb1f55317a1ab188bb339d586bc196b19f98fbe",
+          "4ddb3621395536ae53d327a94c33d6e37ada2309"
+        ],
+        "last_fingerprint": "8c8de84215cf"
+      }
+    }
+  },
+  "acceptance": {
+    "evaluation_result": "plugins/sdlc/dogfood/ring-audit/ratchet-log/iteration-003"
+  },
+  "pr": {
+    "number": 2,
+    "url": "https://github.com/XRenSiu/claude-code-forge/pull/2",
+    "size_class": "XL",
+    "pre_review_rounds": 2
+  },
+  "review": {
+    "done": true,
+    "rounds": 1,
+    "exit_reason": "structural_non_convergence (I-69): pr-poll.sh done returned exit 20 at PR #2 head efd45ac and re-verified at head 79b4736 with reviewDecision '' / unresolved_count 0 / checks_green true (VACUOUS — statusCheckRollup is empty; no CI checks are configured on this repository, which is not the same as checks passing). APPROVED is unobtainable because GitHub forbids the PR author approving their own PR and this repository has a single collaborator. Review substance was delivered before the PR opened: isolated pr-reviewer rounds 1-2 (3 A-tier found and fixed — cr-001 lock-gate fail-open e198e0e, cr-002 version sync 0cf6b1a, cr-004 fix regression aaf3d5b) plus an independent fix-verifier round (2 NEW_ISSUES fixed in 801a32e, proven by reinstating each historical bug: 2/1/3 failures), smoke 196/0 reproduced by g2-judge; 0 A-tier survive; B/C survivors cr-003 / cr-005 / cr-006 ship as Known issues. Waived by g2-judge (delegated_agent; user instruction 2026-09-05 '需要人审核的地方，请你弄一个子agent代替我审核一下'); scope this run and this head only; merge remains a human action after G3. Re-recorded at 79b4736 per the waiver's pinning condition: pr-poll.sh done still exit 20 (reviewDecision '' / 0 unresolved / no checks configured), verify_pr --pre-review PASS, smoke 196/0; the only change since efd45ac is the Known-issues disclosure this condition required."
+  },
+  "merge": {
+    "sha": "1e671f3ceb420dc850ac4deac0dc31aa9dcccd47",
+    "merged_at": "2026-09-06T03:46:18Z"
+  },
+  "release": {
+    "skipped_reason": "No release convention exists in this repository: 0 git tags, no CHANGELOG.md, no releases/ directory, no GitHub releases. The plugin's own version moved 0.6.0 -> 0.7.0 in this PR (plugin.json + marketplace.json + four SKILL.md files, commit 0cf6b1a) and that is how this repo ships a plugin — the marketplace entry is the distribution channel, not a tagged release. verify_release.py was therefore not run: it checks a CHANGELOG entry, a tag pointing at the merge, and release notes, none of which this repo maintains. Recorded as skipped, not as done."
+  }
+}

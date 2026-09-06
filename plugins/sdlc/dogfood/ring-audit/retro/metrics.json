@@ -1,0 +1,51 @@
+{
+  "totals": {
+    "features": 1,
+    "baseline_date": "2026-09-06",
+    "g1_interception_rate": 0.0,
+    "reflow_distribution": {
+      "card": 4,
+      "plan": 0,
+      "task": 2,
+      "ontology": 0,
+      "world": 1
+    },
+    "escape_defects": 0,
+    "avg_review_rounds": 1.0,
+    "avg_lead_time_h": 14.1,
+    "human_ac_ratio_over_half": [],
+    "waivers": 3,
+    "escape_chains": 0,
+    "avg_escape_chain_depth": null,
+    "escape_root_layers": {},
+    "contract_rework_ratio": null
+  },
+  "features": [
+    {
+      "feature": "sdlc-ring-audit",
+      "track": "psl",
+      "stage": "archive",
+      "lead_time_h": 14.1,
+      "review_rounds": 1,
+      "reflows": {
+        "card": 4,
+        "plan": 0,
+        "task": 2,
+        "ontology": 0,
+        "world": 1
+      },
+      "g1": "pass",
+      "g3_required": true,
+      "human_ac_ratio": null,
+      "escape_defects": 0,
+      "waivers": 3,
+      "trace_events": 128,
+      "escape_chains": [],
+      "contract_rework": {
+        "ac_superseded": [],
+        "ac_total": null,
+        "ratio": null
+      }
+    }
+  ]
+}

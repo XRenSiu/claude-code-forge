@@ -1,0 +1,71 @@
+{
+  "slug": "sdlc-ring-audit",
+  "archived_at": "2026-09-06T03:49:58+00:00",
+  "stage": "archive",
+  "files": [
+    "specs/sdlc-ring-audit/state.json",
+    "specs/sdlc-ring-audit/ledger.md",
+    "specs/sdlc-ring-audit/trace.jsonl"
+  ],
+  "counters": {
+    "card": 4,
+    "plan": 0,
+    "task": 2,
+    "ontology": 0,
+    "world": 1,
+    "last_fingerprints": {
+      "task:task": "d1fc8380957b",
+      "CARD-06:card": "8c8de84215cf",
+      "CARD-01:card": "792d8e50930d"
+    },
+    "fingerprint_repeats": {
+      "task:task": 1,
+      "CARD-06:card": 1,
+      "CARD-01:card": 1
+    },
+    "fingerprint_history": {
+      "task:task": [
+        "c8026b5b38d0",
+        "d1fc8380957b"
+      ],
+      "CARD-06:card": [
+        "f07d09e4a981",
+        "8c8de84215cf"
+      ],
+      "CARD-01:card": [
+        "313fc04e7ff4",
+        "792d8e50930d"
+      ]
+    },
+    "scores": {}
+  },
+  "gates": {
+    "g1": {
+      "required": true,
+      "verdict": "pass",
+      "by": "g1-judge",
+      "at": "2026-09-05T14:59:49+00:00",
+      "signer_kind": "delegated_agent",
+      "authorization": "user instruction 2026-09-05: '需要人审核的地方，请你弄一个子agent代替我审核一下' — G1 delegated to g1-judge (3 rounds + 补签, signed 746c56ef…)",
+      "record": "plugins/sdlc/dogfood/ring-audit/g1-record.md"
+    },
+    "g2": {
+      "required": true,
+      "verdict": "pass",
+      "by": "g2-judge",
+      "at": "2026-09-05T14:58:31+00:00",
+      "signer_kind": "delegated_agent",
+      "authorization": "user instruction 2026-09-05: '需要人审核的地方，请你弄一个子agent代替我审核一下' — G2 delegated to g2-judge (g2-record.md FREEZE at contract sha fb5af3f0…, confirm 42)",
+      "record": "plugins/sdlc/dogfood/ring-audit/g2-record.md"
+    },
+    "g3": {
+      "required": true,
+      "verdict": "pass",
+      "by": "g3-judge",
+      "at": "2026-09-06T02:11:00+00:00",
+      "signer_kind": "delegated_agent",
+      "authorization": "user instruction 2026-09-05: '需要人审核的地方，请你弄一个子agent代替我审核一下' — G3 delegated to g3-judge; AC-005-a pass, AC-006-a pass; 10 accept / 3 reject / 8 defer; the record self-declares that a G3 pass checks no input and the authorization is unvalidated free text, so its force comes from the reproductions it lists",
+      "record": "plugins/sdlc/dogfood/ring-audit/g3-record.md"
+    }
+  }
+}
