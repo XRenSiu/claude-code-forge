@@ -3296,7 +3296,7 @@ gaps:
   - Control
   source: newly_identified
   necessity: necessary
-  deletion_test: acceptance-fleet 本轮新增两个脚本，smoke.sh#L1156-L1173 给了 12 条期望（其中 5 条断言非零退出）， 在 ab67052 上实跑
+  deletion_test: acceptance-fleet 本轮新增两个脚本，smoke.sh#L1157-L1174 给了 12 条期望（其中 5 条断言非零退出）， 在 ab67052 上实跑
     389 passed / 0 failed 全绿。而 skills/acceptance-fleet/eval/gate.json 一个字节没动： gate_pass 仍 static_only、evaluated_layers
     仍只有 [structural]、provenance.scripts_run 仍是 {}， provenance 里那句"smoke.sh on bundled scripts"是脚本还不存在时写的，现在字面为真而所指为空。
     没有任何机械物让证据档位记录跟上真实覆盖：gate.json 是这个插件用来防止"把 static_only 说成 verified"（R017）的唯一账本，而这个账本本身没有人对账。错误产物：一份低报自己证据档位的
@@ -3305,7 +3305,7 @@ gaps:
   - kind: gate_json
     ref: plugins/sdlc/skills/acceptance-fleet/eval/gate.json#provenance.scripts_run（空对象）
   - kind: file
-    ref: plugins/sdlc/eval/smoke.sh#L1156-L1173
+    ref: plugins/sdlc/eval/smoke.sh#L1157-L1174
   - kind: run_record
     ref: 'ab67052 · bash plugins/sdlc/eval/smoke.sh → exit 0, "smoke: 389 passed, 0 failed"；其中 acceptance-fleet
       段 12/12 PASS'
@@ -3684,7 +3684,7 @@ proposals:
 - id: P-RA-08
   source: spine/unenforced_rule/control/r008-human-signer
   destination: skill_fix_list
-  text: '`lock_done_when.py verify` 在被锁文件有改动时判 changed_with_proposal 放行，而它认的"提案"是目录下存在任何一份 change-proposal-*.md，不核对它是否针对本次改动——两份历史提案足以让今后任何一次锁内改动过闸。建议：提案里写明本次覆盖的文件清单，verify 比对改动集是否被某一份提案完全覆盖；或要求提案文件本身在同一 diff 里是新增/修改。登记为 I-100，本轮不改：改它要动 change-proposal-003 赖以生效的那条判据，同一提交里既改判据又用判据放行自己，是把裁判和运动员合一。'
+  text: '`lock_done_when.py verify` 在被锁文件有改动时判 changed_with_proposal 放行，而它认的"提案"是目录下存在任何一份 change-proposal-*.md，不核对它是否针对本次改动——两份历史提案足以让今后任何一次锁内改动过闸。建议：提案里写明本次覆盖的文件清单，verify 比对改动集是否被某一份提案完全覆盖；或要求提案文件本身在同一 diff 里是新增/修改。登记为 I-100。**本轮不改，且它需要的不是一份以后的提案，而是换一个签字人**：隔离预审 round-4 指出「同一提交里既改判据又用判据放行自己」这个理由是永恒成立的，下一轮代签面对同一个圈会同样地推掉，于是这条提案永远不到期。这是唯一一条「改它的人恰好就是它放行的那个人」的缺陷，而本轮全程 delegated_agent。标记 requires_human_signer。'
 - id: P-RA-07
   source: spine/newly_identified/control/evidence-anchors-unprotected
   destination: skill_fix_list

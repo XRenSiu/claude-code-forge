@@ -813,6 +813,7 @@ TSG="$S/test-suite-generator/scripts"
 DW2="$ROOT/dogfood/ring-audit/done_when.yaml"
 MF2="$ROOT/dogfood/ring-audit/tests/ring-audit/tests-manifest.yaml"
 TD3="$ROOT/dogfood/ring-audit/tests/ring-audit"
+RA2="$ROOT/dogfood/ring-audit"
 expect "gen_existence: cli: boundary emits a resolver, not a blind rg (I-54)" 0 bash -c "out=\$(python3 '$TSG/gen_existence.py' '$DW2') && grep -q 'cli_entry \"check-audit\"' <<<\"\$out\" && grep -q 'cli_entry \"verify-commit\"' <<<\"\$out\" && ! grep -q 'rg -q \"check-audit\"' <<<\"\$out\""
 expect "gen_existence: ui: boundary checks the surface AND its anchor (I-54)" 0 bash -c "out=\$(python3 '$TSG/gen_existence.py' '$DW2') && grep -q 'ui_surface \"AUDIT.md\"' <<<\"\$out\" && grep -c 'ui_anchor \"AUDIT.md\"' <<<\"\$out\" | grep -qx 2"
 expect "gen_existence: the generated v2 existence script passes against the real tree (I-54)" 0 bash -c "python3 '$TSG/gen_existence.py' '$DW2' --src '$ROOT' > '$TMP/ex_v2.sh' && bash '$TMP/ex_v2.sh' | grep -q 'All 5 existence checks passed'"
@@ -1192,6 +1193,14 @@ expect "qa_facts: a non-qa document is refused" 1 bash -c "printf 'gaming_assess
 # 会让分支尖上删锁直接短路整条检查。两臂缺一不可：删锁的必须被拒，从无锁的历史必须放行。
 expect "replay: deleting the lock in the same commit does not exempt it (I-104)" 1 bash "$ROOT/eval/fixtures/replay_lock_arm.sh" "$ROOT/../.." delete_lock
 expect "replay: a commit from before any lock existed still passes (I-104 twin)" 0 bash "$ROOT/eval/fixtures/replay_lock_arm.sh" "$ROOT/../.." no_lock_history
+
+# I-105 / I-106: 锚点识别面已经连栽四次，每一次都是"我认得的那部分全绿"。隔离预审每一轮都手工
+# 跑一个**不共用实现**的交叉核对，并且正是它反复抓住这一族。手工的东西下一轮就会忘 —— 固化。
+expect "anchors: an independent count agrees with what the tool walked (I-105/I-106)" 0 \
+  py "$ROOT/eval/fixtures/anchor_crosscheck.py" "$RA2/audit.yaml" "$RA2/check_anchors.py"
+# 孪生：交叉核对本身必须会拒。让工具悄悄丢掉冒号一族（程序仍合法），两边就该对不上。
+expect "anchors: the cross-check fails when the tool stops recognising a family (twin)" 1 \
+  bash "$ROOT/eval/fixtures/anchor_crosscheck_twin.sh" "$RA2" "$ROOT/eval/fixtures/anchor_crosscheck.py"
 
 echo
 echo "smoke: $pass passed, $fail failed${ONLY:+, $skipped skipped (--only $ONLY)}  (tmp: $TMP)"
