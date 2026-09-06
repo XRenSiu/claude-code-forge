@@ -223,6 +223,20 @@ def trace_event_ids(root, slug):
     return ids
 
 
+def gitignore_gap(root):
+    """`.sdlc/` is runtime state, not a deliverable: the archive is what gets committed (`archive --to
+    specs/<slug>/`). Committing the live state turns the ledger into a merge conflict and lets a stale
+    counter travel between branches. Nothing used to tell the operator (dogfood 2026-09-06, I-01)."""
+    try:
+        r = subprocess.run(["git", "check-ignore", "-q", root], capture_output=True, text=True)
+    except (OSError, ValueError):
+        return None
+    if r.returncode != 1:   # 0 = already ignored · 128 = not a repository, nothing to advise
+        return None
+    return (f"{root}/ is not ignored by git: it is runtime state, not a deliverable — add a `{root}/` line to "
+            f".gitignore and commit the archive instead (`archive --to specs/<slug>/`)")
+
+
 def resolve_commit(sha):
     """Short sha → the full one, so the same commit cannot be registered twice under two spellings
     (dogfood 2026-09-06, I-66). Outside a repo (or for a sha git does not know) the raw value stands."""
@@ -398,7 +412,11 @@ def cmd_init(a):
     }
     save(a.root, a.slug, st)
     ledger_append(a.root, a.slug, "init", f"title={a.title} track={st['track']}", stage="intake")
-    print(json.dumps({"ok": True, "state": sp}, ensure_ascii=False))
+    out = {"ok": True, "state": sp}
+    gap = gitignore_gap(a.root)
+    if gap:
+        out["warning"] = gap
+    print(json.dumps(out, ensure_ascii=False))
 
 
 def cmd_show(a):

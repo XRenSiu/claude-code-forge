@@ -674,6 +674,14 @@ printf '# G1 record\n- form draft sha256: deadbeef\n' > g1-record.md
 expect "the signed record itself is still lockable (I-60)" 0 py "$S/sdlc/scripts/lock_done_when.py" sign --by human --out .g1.lock done_when.yaml g1-record.md
 popd >/dev/null
 
+echo "== sdlc / .sdlc runtime state is not a deliverable (I-01)"
+GI="$TMP/state-gitignore"; mkdir -p "$GI"; pushd "$GI" >/dev/null
+git init -q -b main .
+expect "init flags a repo whose .gitignore lacks .sdlc/ (I-01)" 0 bash -c "python3 '$SS' init --slug gi --title t | python3 -c \"import json,sys; d=json.load(sys.stdin); assert '.gitignore' in (d.get('warning') or ''), d\""
+printf '.sdlc/\n' > .gitignore
+expect "init is silent once .sdlc/ is ignored (I-01)" 0 bash -c "python3 '$SS' init --slug gi2 --title t | python3 -c \"import json,sys; d=json.load(sys.stdin); assert not d.get('warning'), d\""
+popd >/dev/null
+
 echo "== release / verify_release.py"
 RR="$TMP/rel"; mkdir -p "$RR/releases"; pushd "$RR" >/dev/null
 git init -q -b main . && git -c user.name=t -c user.email=t@t commit -q --allow-empty -m "chore: init" && git tag v0.1.0
