@@ -191,7 +191,7 @@
     },
     "plugins/sdlc/eval/smoke.sh#L1156-L1173": {
       "lines": 18,
-      "sha": "ac2e77d94dac4d26"
+      "sha": "10f45fecc7fe4365"
     },
     "plugins/sdlc/skills/acceptance-fleet/SKILL.md#L1-L20": {
       "lines": 20,
@@ -499,11 +499,11 @@
     },
     "plugins/sdlc/skills/review-loop/scripts/pr-poll.sh#L374-L395": {
       "lines": 22,
-      "sha": "5eafc6d2eca7d381"
+      "sha": "02842fe1ab29f937"
     },
     "plugins/sdlc/skills/review-loop/scripts/pr-poll.sh#L400-L405": {
       "lines": 6,
-      "sha": "5cad85ae469b055c"
+      "sha": "e6020be444e5ac54"
     },
     "plugins/sdlc/skills/sdlc/SKILL.md#L35": {
       "lines": 1,

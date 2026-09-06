@@ -384,7 +384,11 @@ except Exception as e:
 r = (d or {}).get("review") if isinstance(d, dict) else None
 if not isinstance(r, dict):
     sys.stderr.write("pr-poll selfreview: no `review:` block — this is not a /pr-review output\n"); sys.exit(1)
-missing = [k for k in ("target", "mergeable") if not r.get(k)]
+# 存在性，不是真值。PyYAML 按 YAML 1.1 把裸 `no` / `off` 读成 False，于是
+# `mergeable: no`——正好是"有 A 档、别合"这个结论本身——会被判成"缺 mergeable"。
+# 报错指向错误方向，而最省力的出路是把结论改写成校验器收得下的形态：
+# 压力朝着更宽松的判词，正是这条闸要防的方向（PR #3 预审 F-3）。
+missing = [k for k in ("target", "mergeable") if r.get(k) is None or r.get(k) == ""]
 if missing:
     sys.stderr.write("pr-poll selfreview: review block lacks %s\n" % ", ".join(missing)); sys.exit(1)
 f = r.get("findings")

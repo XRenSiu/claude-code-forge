@@ -651,7 +651,7 @@
     - 证据：`file:plugins/sdlc/agents/pr-reviewer.md#L10-L11` · `file:plugins/sdlc/skills/pr/SKILL.md#L69-L72` · `file:plugins/sdlc/docs/design-notes.md#L80-L81`
 - **implemented `compiled`** — compiled（有 verify 脚本或被门挡）
     - 未达 `verified`：gate.json fix_list 第 3 条 "L2: run /pr --pre-review once with agents/pr-reviewer.md in a fresh context and check survivors land in Known issues" 未做 —— 隔离预审从未真跑过。
-    - 重审更正：declared → compiled（重审 2026-09-06，编排者裁）。原判被 G3 的 mf-009 用 F-06 封在 declared， 理由是"verify_pr.py --pre-review 检的是下游 PR 正文的 Known issues 段，不是本 agent 的 findings 文件本身"。这一轮（I-87，commit bedc159）把校验加到了**文件本身**上：pr-poll.sh#L365-L368 文件缺失或为空 exit 1；#L374-L395 的内嵌校验器逐条拒 —— PyYAML 缺席 exit 1（fail closed）、 不是合法 YAML、没有 `review:` 块、review 块缺 target / mergeable、没有 findings 键、 findings 为空列表又没有 rationale，全部 exit 1。它是承重的：单人仓库的终止谓词 （done --solo）把"≥1 轮 selfreview 记录"当作 APPROVED 的替代必要条件 （pr-poll.sh#L222-L228、review-loop/SKILL.md#L56-L75），产不出合格的 findings 文件就登记不了那一轮。 封顶的前提（独占产物无闸）因此消失，两种读法现在都落在 compiled。 **这条闸薄在哪里，与 qa-reviewer 那条一视同仁地写明**：它校验的是 findings 文件的**形状** （有 review 块、有 target / mergeable / findings、空 findings 要 rationale），不校验这一轮 是不是真由隔离上下文做的。出处不可校验 —— I-95 实测：两个进程各自试跑一次 selfreview， `self_review.rounds` 就到了 2，而谁都没做过一轮真正的预审。这不推翻 compiled （compiled 的定义是"有 verify 脚本或被门挡"，不是"这道闸不可绕"）， 但它正是 verified 仍然遥远的原因之一，也是本 Part 的 not_reached.verified 该读的那一条。
+    - 重审更正：declared → compiled（重审 2026-09-06，编排者裁）。原判被 G3 的 mf-009 用 F-06 封在 declared， 理由是"verify_pr.py --pre-review 检的是下游 PR 正文的 Known issues 段，不是本 agent 的 findings 文件本身"。这一轮（I-87，commit bedc159）把校验加到了**文件本身**上：pr-poll.sh#L365-L368 文件缺失或为空 exit 1；#L374-L395 的内嵌校验器逐条拒 —— PyYAML 缺席 exit 1（fail closed）、 不是合法 YAML、没有 `review:` 块、review 块缺 target / mergeable、没有 findings 键、 findings 为空列表又没有 rationale，全部 exit 1。它是承重的：单人仓库的终止谓词 （done --solo）把"≥1 轮 selfreview 记录"当作 APPROVED 的替代必要条件 （pr-poll.sh#L222-L228、review-loop/SKILL.md#L56-L75），产不出合格的 findings 文件就登记不了那一轮。 封顶的前提（独占产物无闸）因此消失，两种读法现在都落在 compiled。 **这条闸薄在哪里，与 qa-reviewer 那条一视同仁地写明**：它校验的是 findings 文件的**形状** （有 review 块、有 target / mergeable / findings、空 findings 要 rationale），不校验这一轮 是不是真由隔离上下文做的。出处不可校验 —— I-95 实测：两个进程各自试跑一次 selfreview， `self_review.rounds` 就到了 2，而谁都没做过一轮真正的预审。这不推翻 compiled （compiled 的定义是"有 verify 脚本或被门挡"，不是"这道闸不可绕"）， 但它正是 verified 仍然遥远的原因之一，也是本 Part 的 not_reached.verified 该读的那一条。 还有一条要并列写下：重审第一次列举这条校验器的拒绝路径当作承重证据时，**漏了它的一处假拒**—— `mergeable: no`（YAML 1.1 的 False）会被判成"缺 mergeable"，也就是说"有 A 档、别合" 这个结论本身过不了闸，而 `no (A-tier)` 能过。压力朝着更宽松的判词。由隔离预审抓出（I-98）， 已修并配孪生期望与变异证明。一条闸的承重证据里漏掉它自己的假拒， 和只数它认得的那部分锚点是同一种错。
     - 这把尺子本身校准了没有（PSL-007）：`calibrated: false`
     - 证据：`gate_json:plugins/sdlc/skills/pr/eval/gate.json#provenance.scripts_run.verify_pr.py --pre-review` · `file:plugins/sdlc/skills/pr/scripts/verify_pr.py#L295` · `file:plugins/sdlc/agents/pr-reviewer.md#L22-L25`
 - **naming adopted → `fits`** — 位置 / 产物：`findings.yaml / /pr-review 的隔离只读执行体`
@@ -996,10 +996,12 @@ python3 plugins/sdlc/dogfood/ring-audit/check_audit.py plugins/sdlc/dogfood/ring
 | 项 | 值 |
 |---|---|
 | implemented 档位分布 | 重审前 declared 19 / compiled 23 / verified 0 → 重审后 **declared 17 / compiled 25 / verified 0** |
-| 缺口 | 73 → **80**（闭合 1，新增 7） |
+| 缺口 | 73 → **80**（新增 7） |
 | 证据锚点 | 重定位 112 处，原位未动 389 处 |
 | 提案 | 39 → **46**（新增 7） |
 | 没有变的 | 0 个配件达到 verified；三道门仍全是代签；仓库仍无 CI。 |
+| 缺口这一行怎么算 | 73 + 7 = 80，表里每个数都能从 audit.yaml 现算。六条来自四份 delta；第七条 spine/newly_identified/control/evidence-anchors-unprotected 是落 delta 的过程本身暴露的——修锚点时发现没有任何机械物防这种漂移。另有 1 条（R1/lifecycle_blank/control/dos-proposal-reconcile）被判为**机械半边已填**并挂上了 FILLS 边、从 R1.missing 移出，但它仍在 gaps[] 里，因为编排半边（进图、有上游强制它跑）未完——所以 closed 记 0，不记 1。原先写 closed:1 与 73→80 并列，读者做减法会得 79（PR #3 预审 F-4） |
+
 
 > 锚点怎么修的：逐个锚点从装配时的 fbc6a3c 取原文，再到 HEAD 里按内容定位，得出新行号——不用算术推算。 graph.yaml 本轮插入 agent.pr-reviewer 节点（+10 行）与两条边（+2 行），插入点之后的锚点分两段位移，算术会算错，故一律按内容重定位。
 

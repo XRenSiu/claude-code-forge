@@ -1763,6 +1763,11 @@ rings:
           `self_review.rounds` 就到了 2，而谁都没做过一轮真正的预审。这不推翻 compiled
           （compiled 的定义是"有 verify 脚本或被门挡"，不是"这道闸不可绕"），
           但它正是 verified 仍然遥远的原因之一，也是本 Part 的 not_reached.verified 该读的那一条。
+          还有一条要并列写下：重审第一次列举这条校验器的拒绝路径当作承重证据时，**漏了它的一处假拒**——
+          `mergeable: no`（YAML 1.1 的 False）会被判成"缺 mergeable"，也就是说"有 A 档、别合"
+          这个结论本身过不了闸，而 `no (A-tier)` 能过。压力朝着更宽松的判词。由隔离预审抓出（I-98），
+          已修并配孪生期望与变异证明。一条闸的承重证据里漏掉它自己的假拒，
+          和只数它认得的那部分锚点是同一种错。
       naming:
         verdict: fits
         provenance: adopted
@@ -3793,11 +3798,11 @@ run_evidence:
       unchanged: 389
       instrument: plugins/sdlc/dogfood/ring-audit/check_anchors.py
       lock: plugins/sdlc/dogfood/ring-audit/anchors.lock
-      verified: 'check_anchors.py verify → 501/501 SAME, exit 0（走到的 501 个锚点全部在锁里；文件里 #L 出现 506 次，差额是 dos_anchors 那类匹配模式，非引用，已显式排除）。变异证明按插入点报，不报固定数字：往 graph.yaml 第 5 / 240 / 300 行后各插一行，MOVED 分别是 137 / 59 / 43，GONE 2 / 1 / 0 —— **恒定的只有 exit 1**，MOVED 的条数是插入点的函数，把它写成一个定值就是不可复现的断言（PR #3 预审 F-1 指出）。'
+      verified: 'check_anchors.py verify → 501/501 SAME, exit 0（走到的 501 个锚点全部在锁里；文件里 #L 出现 506 次，差额是 dos_anchors 那类匹配模式，非引用，已显式排除）。变异的**不依赖插入点的表述**：往被引文件任意位置插一行 → 插入点之前的锚点仍判 SAME，之后的判 MOVED，跨越插入点的区间判 GONE，**exit 1**。要留具体数字就必须写明插在第几行：插 graph.yaml 第 5 / 240 / 300 行后，MOVED 分别 137 / 59 / 43，GONE 2 / 1 / 0。把 MOVED 写成一个不带插入点的定值就是不可复现的断言（PR #3 预审 F-1 / F-5 指出，原文曾写死 123 MOVED + 1 GONE）。'
       coverage_history: '三种行引用写法是分三次才收齐的，每一次的「全绿」都曾读起来像全覆盖：第一版只认带路径的 #L（432 个）；7f4a897 补上冒号式（3 处）；本次补上正文里最常见的裸 #L —— 文件名在句子前半句点过、括号里只剩行号（78 处）。裸写这一类是隔离预审 F-1 抓出来的，它同时暴露出前一轮「105 处重定位」漏掉了这批：其中 7 处至今仍停在旧行号，本次一并修正，重定位总数 105 → 112。'
       instrument_note: 修完不留工具，下一次插一行又全烂而且没人知道——所以把重定位的做法落成了 snapshot / verify 两个子命令。它还不在 check_audit.py 里，见 P-RA-07。
       note: 'graph.yaml 本轮插入 agent.pr-reviewer 节点（+10 行）与两条边（+2 行），插入点之后的锚点分两段位移，算术会算错，故一律按内容重定位。'
-    gaps: {closed: 1, added: 7, total_before: 73, total_after: 80, note: '六条来自四份 delta；第七条 spine/newly_identified/control/evidence-anchors-unprotected 是落 delta 的过程本身暴露的——修 105 处锚点时发现没有任何机械物防这种漂移'}
+    gaps: {closed: 0, added: 7, total_before: 73, total_after: 80, note: '73 + 7 = 80，表里每个数都能从 audit.yaml 现算。六条来自四份 delta；第七条 spine/newly_identified/control/evidence-anchors-unprotected 是落 delta 的过程本身暴露的——修锚点时发现没有任何机械物防这种漂移。另有 1 条（R1/lifecycle_blank/control/dos-proposal-reconcile）被判为**机械半边已填**并挂上了 FILLS 边、从 R1.missing 移出，但它仍在 gaps[] 里，因为编排半边（进图、有上游强制它跑）未完——所以 closed 记 0，不记 1。原先写 closed:1 与 73→80 并列，读者做减法会得 79（PR #3 预审 F-4）'}
     proposals: {added: 7, total_before: 39, total_after: 46, note: '六条新缺口的 disposition 是 issue，光登记不派单等于只让报告变长，所以按本文档已有的做法各配一条提案 P-RA-0N'}
     honesty_unchanged: 0 个配件达到 verified；三道门仍全是代签；仓库仍无 CI。
 

@@ -906,6 +906,16 @@ expect "solo selfreview accepts a real /pr-review record (PR pre-review)" 0 bash
   T=\"\$(mktemp -d)\"; cd \"\$T\"; git init -q .
   printf 'review:\n  target: origin/main..HEAD\n  mergeable: \"yes\"\n  findings: []\n  rationale: walked every changed script\n' > g.yaml
   bash '$S/review-loop/scripts/pr-poll.sh' selfreview 1 g.yaml >/dev/null 2>&1"
+# `mergeable: no` 是 YAML 1.1 的 False。用真值判断"字段在不在"，会把"有 A 档、别合"
+# 这个结论本身判成"缺 mergeable"——报错方向错了，而最省力的出路是把结论改软（I-98 / 预审 F-3）。
+expect "solo selfreview accepts mergeable: no — it is a verdict, not a missing field (I-98)" 0 bash -c "
+  T=\"\$(mktemp -d)\"; cd \"\$T\"; git init -q .
+  printf 'review:\n  target: origin/main..HEAD\n  mergeable: no\n  findings: []\n  rationale: an A-tier blocks this round\n' > n.yaml
+  bash '$S/review-loop/scripts/pr-poll.sh' selfreview 1 n.yaml >/dev/null 2>&1"
+expect "solo selfreview still refuses a review block with no mergeable at all (I-98 twin)" 1 bash -c "
+  T=\"\$(mktemp -d)\"; cd \"\$T\"; git init -q .
+  printf 'review:\n  target: origin/main..HEAD\n  findings: []\n  rationale: x\n' > m.yaml
+  bash '$S/review-loop/scripts/pr-poll.sh' selfreview 1 m.yaml >/dev/null 2>&1"
 
 if [[ -z "${SMOKE_NESTED:-}" ]]; then
   : # placeholder so the following fi still balances

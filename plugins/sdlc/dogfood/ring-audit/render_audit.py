@@ -536,10 +536,14 @@ def run_evidence_section(d):
             f"verified {before.get('verified')} → 重审后 **declared {dist.get('declared')} / "
             f"compiled {dist.get('compiled')} / verified {dist.get('verified')}** |",
             f"| 缺口 | {gaps_ra.get('total_before')} → **{gaps_ra.get('total_after')}**"
-            f"（闭合 {gaps_ra.get('closed')}，新增 {gaps_ra.get('added')}） |",
+            + (f"（闭合 {gaps_ra.get('closed')}，新增 {gaps_ra.get('added')}） |"
+               if gaps_ra.get("closed") else f"（新增 {gaps_ra.get('added')}） |"),
             f"| 证据锚点 | 重定位 {anchors.get('remapped')} 处，原位未动 {anchors.get('unchanged')} 处 |",
             (lambda p: f"| 提案 | {p.get('total_before')} → **{p.get('total_after')}**（新增 {p.get('added')}） |")(dct(ra.get("proposals"))),
             f"| 没有变的 | {cell(ra.get('honesty_unchanged'))} |",
+        ] + ([f"| 缺口这一行怎么算 | {cell(gaps_ra.get('note'))} |"] if gaps_ra.get("note") else []) + [
+            "",
+        ][:1] + [
             "",
             f"> 锚点怎么修的：{para(anchors.get('how'))} {para(anchors.get('note'))}",
             "",
