@@ -6,7 +6,10 @@ Baseline first, then see which layer is sick. Metrics the reference doc keeps, a
   - lead time (issue → merge)            state.json created_at / merge.merged_at
   - PR rework rounds                     state.json review.rounds
   - reflow distribution by layer         state.json counters.{card,plan,task,ontology,world}
-  - G1 interception rate (PSL track)     state.json gates.g1 (reject / psl runs)
+  - gate interceptions G1/G2/G3          ledger.md gate rows (fallback trace.jsonl `kind=gate`) — how many
+                                         times a gate REJECTED, not what it finally said. state.json keeps
+                                         only the last verdict, so a run that was rejected twice and then
+                                         passed reads as 0 interceptions there (I-84).
   - human-AC ratio                       done_when.yaml acceptance[].kind == human (if archived)
   - escape defects                       escape-defects.md rows (if archived)
   - waivers                              state.json waivers (forced transitions — a process smell)
@@ -23,7 +26,13 @@ import datetime as _dt
 import glob
 import json
 import os
+import re
 import sys
+
+GATE_SIGNALS = ("g1", "g2", "g3")
+# gate verdicts are pass | reject | waived (sdlc_state.py gate --verdict); the ledger/trace decision
+# string is the verdict plus optional attribution / delegation suffixes, e.g. "reject (rule_error) [delegated]"
+REJECT_RE = re.compile(r"^\s*reject\b", re.IGNORECASE)
 
 
 def parse_ts(s):
@@ -94,6 +103,86 @@ def contract_rework(evs, dw_path):
             "ratio": (round(len(superseded) / total, 3) if total else None)}
 
 
+def _empty_gate_counts():
+    return {g: 0 for g in GATE_SIGNALS}, {g: 0 for g in GATE_SIGNALS}
+
+
+def gate_history_from_trace(evs):
+    """Count gate REJECT events per signal from trace.jsonl. None when the trace holds no gate event."""
+    rejects, decisions = _empty_gate_counts()
+    seen = False
+    for e in evs:
+        if e.get("kind") != "gate":
+            continue
+        sig = str(e.get("signal") or "").strip().lower()
+        if sig not in rejects:
+            continue
+        seen = True
+        decisions[sig] += 1
+        if REJECT_RE.match(str(e.get("decision") or "")):
+            rejects[sig] += 1
+    return (rejects, decisions) if seen else None
+
+
+def gate_history_from_ledger(path):
+    """Count gate REJECT rows per signal from the append-only ledger.md table.
+
+    The ledger is the authoritative history (`只增不删`); trace.jsonl is its machine companion and may be
+    absent in older archives. Columns are located by header name, not by position.
+    """
+    if not os.path.isfile(path):
+        return None
+    rejects, decisions = _empty_gate_counts()
+    idx, seen = None, False
+    with open(path, encoding="utf-8") as f:
+        for line in f:
+            if not line.lstrip().startswith("|"):
+                continue
+            cells = [c.strip() for c in line.strip().strip("|").split("|")]
+            low = [c.lower() for c in cells]
+            if idx is None:
+                if "kind" in low and "decision" in low:
+                    idx = {"kind": low.index("kind"), "decision": low.index("decision"),
+                           "signal": next((i for i, c in enumerate(low) if c.startswith("signal")), None)}
+                continue
+            if all(set(c) <= set("-: ") for c in cells):
+                continue
+
+            def cell(name, _cells=cells, _idx=idx):
+                i = _idx.get(name)
+                return _cells[i] if i is not None and i < len(_cells) else ""
+
+            if cell("kind").lower() != "gate":
+                continue
+            sig = cell("signal").lower()
+            if sig not in rejects:
+                continue
+            seen = True
+            decisions[sig] += 1
+            if REJECT_RE.match(cell("decision")):
+                rejects[sig] += 1
+    return (rejects, decisions) if seen else None
+
+
+def gate_history(d, trace, gates):
+    """Gate interception counts for one archive. Ledger first, trace second, final verdict only as a last
+    resort — the last resort is exactly the I-84 defect, so it is labelled in `gate_source`."""
+    got = gate_history_from_ledger(os.path.join(d, "ledger.md"))
+    source = "ledger"
+    if got is None:
+        got, source = gate_history_from_trace(trace), "trace"
+    if got is None:
+        rejects, decisions = _empty_gate_counts()
+        for g in GATE_SIGNALS:
+            v = str((gates.get(g) or {}).get("verdict") or "")
+            if v and v != "pending":
+                decisions[g] += 1
+                if REJECT_RE.match(v):
+                    rejects[g] += 1
+        return rejects, decisions, "state(final-verdict-only)"
+    return got[0], got[1], source
+
+
 def escape_rows(path):
     if not os.path.isfile(path):
         return 0
@@ -124,21 +213,31 @@ def main():
         trace = read_trace(os.path.join(d, "trace.jsonl"))
         chains = escape_chains(trace)
         rework = contract_rework(trace, dw_path) if dw_path else {"ac_superseded": [], "ac_total": None, "ratio": None}
+        gates = st.get("gates") or {}
+        g_rejects, g_decisions, g_source = gate_history(d, trace, gates)
         rows.append({
             "feature": st.get("slug"), "track": st.get("track"), "stage": st.get("stage"),
             "lead_time_h": lead_h, "review_rounds": (st.get("review") or {}).get("rounds"),
             "reflows": {k: cnt.get(k, 0) for k in ("card", "plan", "task", "ontology", "world")},
-            "g1": (st.get("gates") or {}).get("g1", {}).get("verdict"),
-            "g3_required": (st.get("gates") or {}).get("g3", {}).get("required"),
+            "g1": gates.get("g1", {}).get("verdict"),
+            "g3_required": gates.get("g3", {}).get("required"),
+            "gate_rejections": g_rejects, "gate_decisions": g_decisions, "gate_source": g_source,
             "human_ac_ratio": dw, "escape_defects": escape_rows(os.path.join(d, "escape-defects.md")),
             "waivers": len(st.get("waivers") or []),
             "trace_events": len(trace), "escape_chains": chains, "contract_rework": rework,
         })
-    psl = [r for r in rows if r["track"] == "psl"]
-    g1_rate = round(sum(1 for r in psl if r["g1"] == "reject") / len(psl), 3) if psl else None
+    gate_rejections = {g: sum(r["gate_rejections"][g] for r in rows) for g in GATE_SIGNALS}
+    gate_decisions = {g: sum(r["gate_decisions"][g] for r in rows) for g in GATE_SIGNALS}
+    # the rate is rejections per gate SIGNING, counted from the history — not "features whose last verdict
+    # was reject", which is structurally blind to every interception but the last one (I-84).
+    g1_rate = round(gate_rejections["g1"] / gate_decisions["g1"], 3) if gate_decisions["g1"] else None
     totals = {
         "features": len(rows),
         "baseline_date": _dt.date.today().isoformat(),
+        "g1_interceptions": gate_rejections["g1"],
+        "gate_rejections": gate_rejections,
+        "gate_decisions": gate_decisions,
+        "gate_history_unavailable": [r["feature"] for r in rows if r["gate_source"].startswith("state")],
         "g1_interception_rate": g1_rate,
         "reflow_distribution": {k: sum(r["reflows"][k] for r in rows) for k in ("card", "plan", "task", "ontology", "world")},
         "escape_defects": sum(r["escape_defects"] for r in rows),
@@ -163,16 +262,19 @@ def main():
         with open(a.json, "w", encoding="utf-8") as f:
             json.dump(out, f, ensure_ascii=False, indent=2)
     md = ["# SDLC metrics — baseline %s" % totals["baseline_date"], "",
-          "| feature | track | lead h | review rounds | card/plan/task/onto/world | g1 | human AC | escapes | waivers | escape chain (depth→root) | AC rework |",
-          "|---|---|---|---|---|---|---|---|---|---|---|"]
+          "| feature | track | lead h | review rounds | card/plan/task/onto/world | g1 final | gate rejects g1/g2/g3 (src) | human AC | escapes | waivers | escape chain (depth→root) | AC rework |",
+          "|---|---|---|---|---|---|---|---|---|---|---|---|"]
     for r in rows:
         rf = r["reflows"]
         chains = "; ".join(f"{c['depth']}→{c['root_kind']}/{c['root_layer'] or '-'}" for c in r["escape_chains"]) or "-"
         rw = r["contract_rework"]
         rework = f"{len(rw['ac_superseded'])}/{rw['ac_total']}" if rw["ac_total"] else "-"
-        md.append("| %s | %s | %s | %s | %s/%s/%s/%s/%s | %s | %s | %s | %s | %s | %s |" % (
+        gj = r["gate_rejections"]
+        gate_cell = "%s/%s/%s (%s)" % (gj["g1"], gj["g2"], gj["g3"], r["gate_source"])
+        md.append("| %s | %s | %s | %s | %s/%s/%s/%s/%s | %s | %s | %s | %s | %s | %s | %s |" % (
             r["feature"], r["track"], r["lead_time_h"], r["review_rounds"], rf["card"], rf["plan"], rf["task"],
-            rf["ontology"], rf["world"], r["g1"], r["human_ac_ratio"], r["escape_defects"], r["waivers"], chains, rework))
+            rf["ontology"], rf["world"], r["g1"], gate_cell, r["human_ac_ratio"], r["escape_defects"],
+            r["waivers"], chains, rework))
     md += ["", "**totals**: " + json.dumps(totals, ensure_ascii=False)]
     text = "\n".join(md) + "\n"
     if a.md:
