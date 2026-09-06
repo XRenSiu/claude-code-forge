@@ -3787,7 +3787,7 @@ run_evidence:
       unchanged: 257
       instrument: plugins/sdlc/dogfood/ring-audit/check_anchors.py
       lock: plugins/sdlc/dogfood/ring-audit/anchors.lock
-      verified: 'check_anchors.py verify → 429/429 SAME, exit 0；往 graph.yaml 插一行的变异 → 123 MOVED + 1 GONE, exit 1（这条闸自己也做了变异证明）'
+      verified: 'check_anchors.py verify → 432/432 SAME, exit 0；往 graph.yaml 与 verify_dos.py 各插一行的变异 → 132 MOVED, exit 1（这条闸自己也做了变异证明）。两种行引用写法都收：#L 式与冒号式 —— 第一版只认 #L，漏掉的 3 处冒号式让「全绿」读起来像「全都检过了」'
       instrument_note: 修完不留工具，下一次插一行又全烂而且没人知道——所以把重定位的做法落成了 snapshot / verify 两个子命令。它还不在 check_audit.py 里，见 P-RA-07。
       note: 'graph.yaml 本轮插入 agent.pr-reviewer 节点（+10 行）与两条边（+2 行），插入点之后的锚点分两段位移，算术会算错，故一律按内容重定位。'
     gaps: {closed: 1, added: 7, total_before: 73, total_after: 80, note: '六条来自四份 delta；第七条 spine/newly_identified/control/evidence-anchors-unprotected 是落 delta 的过程本身暴露的——修 105 处锚点时发现没有任何机械物防这种漂移'}
