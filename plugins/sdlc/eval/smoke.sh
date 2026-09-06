@@ -225,6 +225,7 @@ expect "whole-word UI name rejected without a waiver (I-10)" 1 py "$DXS/verify_d
 expect "whole-word UI name still rejected when decisions.md has no waiver section (I-10)" 1 py "$DXS/verify_dos.py" "$FXO/dos_whole_word_card.yaml" --decisions "$FXO/decisions_no_waiver.md"
 expect "whole-word UI name cleared by a decisions.md waiver, reported under waived (I-10)" 0 bash -c "python3 '$DXS/verify_dos.py' '$FXO/dos_whole_word_card.yaml' --decisions '$FXO/decisions_with_waiver.md' | python3 -c \"import json,sys; d=json.load(sys.stdin); assert d['exit']=='MECHANICALLY_CLEAN', d['rejects']; assert any(\\\"'Card'\\\" in w for w in d['waived']), d['waived']\""
 expect "compound UI suffix is NOT waivable (I-10)" 1 py "$DXS/verify_dos.py" "$FXO/dos_bad_ui_suffix.yaml" --waive DateFilterCard
+expect "a relationship naming a synonym resolves and is flagged, not rejected (I-11)" 0 bash -c "python3 '$DXS/verify_dos.py' '$FXO/dos_rel_synonym.yaml' --waive Card | python3 -c \"import json,sys; d=json.load(sys.stdin); assert d['exit']=='MECHANICALLY_CLEAN', d['rejects']; assert any('resolves through a synonym' in f for f in d['needs_semantic_review']), d['needs_semantic_review']\""
 # dogfood 2026-09-05 (I-37): a materialised derived view must name its source.
 expect "empty derived_from rejected (I-37)" 1 py "$DXS/verify_dos.py" "$FXO/dos_derived_empty.yaml"
 expect "named derived_from passes and is reported (I-37)" 0 bash -c "python3 '$DXS/verify_dos.py' '$FXO/dos_derived_ok.yaml' | python3 -c \"import json,sys; d=json.load(sys.stdin); assert d['derived_properties']==['Ring.missing'], d['derived_properties']\""
@@ -279,6 +280,7 @@ assert c.resolve_object('Part')=='Node', c.resolve_object('Part')
 assert c.resolve_object('配件')=='Node'
 assert c.resolve_object('Ring') is None\""
 expect "reconcile: the reconciled DOS still passes verify_dos.py (I-49)" 0 py "$DXS/verify_dos.py" "$TMP/rec_ok.yaml"
+expect "reconcile: a mapping onto a name the as-is DOS lacks is a usage error, exit 2 (I-49)" 2 py "$DXS/reconcile_dos.py" --as-is "$FXO/dos_asis.yaml" --to-be "$FXO/dos_tobe_mappable.yaml" --map "Part=Nonexistent"
 expect "reconcile: --allow-unmapped writes the file and records the gaps as open questions (I-49)" 1 bash -c "python3 '$DXS/reconcile_dos.py' --as-is '$FXO/dos_asis.yaml' --to-be '$FXO/dos_tobe.yaml' --map-file '$FXO/dos_reconcile_map.yaml' --allow-unmapped --output '$TMP/rec_partial.yaml' >/dev/null; rc=\$?; python3 -c \"
 import yaml
 d=yaml.safe_load(open('$TMP/rec_partial.yaml'))
@@ -305,6 +307,7 @@ expect "card without provenance rejected" 1 py "$IXV" "$FXI/card_bad_noprov.yaml
 expect "overridable entry without aspect rejected — the template now carries the slot (I-25)" 1 py "$IXV" "$FXI/card_no_aspect.yaml"
 expect "a ◊ candidate also carded is caught now that kicked entries carry ids (I-25)" 1 py "$IXV" "$FXI/card_diamond_leak.yaml"
 expect "a re-wording of an existing DOS rule is flagged, not silently accepted (I-25)" 0 bash -c "python3 '$IXV' '$FXI/card_near_dup.yaml' --dos '$FXO/dos_good.yaml' | python3 -c \"import json,sys; d=json.load(sys.stdin); assert any('similar to dos.yaml R002' in f for f in d['needs_semantic_review']), d['needs_semantic_review']\""
+expect "two entries on one card re-stating the same rule are flagged (I-25)" 0 bash -c "python3 '$IXV' '$FXI/card_self_dup.yaml' | python3 -c \"import json,sys; d=json.load(sys.stdin); assert any('statements' in f and 'similar' in f for f in d['needs_semantic_review']), d['needs_semantic_review']\""
 expect "the narrowest-rule flag is targeted, not one per entry (I-25)" 0 bash -c "python3 '$IXV' '$FXI/card_good.yaml' --dos '$FXO/dos_good.yaml' | python3 -c \"import json,sys; d=json.load(sys.stdin); assert not any('narrowest' in f for f in d['needs_semantic_review']), d['needs_semantic_review']\""
 expect "the report prints projected_out / deduped / suspects / conflicts counts (I-25)" 0 bash -c "python3 '$IXV' '$FXI/card_good.yaml' | python3 -c \"import json,sys; d=json.load(sys.stdin); [d[k] for k in ('projected_out_obstacles','deduped_against_constitution','constitution_promotion_suspects','conflicts_for_legislation','registered_gaps')]\""
 # dogfood 2026-09-05 (I-26): abduction.md §5 and the altitude/suspects duplication were unchecked.
