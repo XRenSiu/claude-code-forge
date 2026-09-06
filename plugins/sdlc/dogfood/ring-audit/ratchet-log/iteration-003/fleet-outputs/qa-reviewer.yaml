@@ -1,0 +1,141 @@
+qa_report:
+  # ====== META BLOCK ======
+  agent_role: qa-reviewer
+  model: claude-sonnet-5
+  classifier_model: "n/a (no failures occurred; classifier not invoked)"
+  vendor: claude
+  isolation: medium
+  inputs_read:
+    - plugins/sdlc/skills/qa-reviewer/SKILL.md
+    - plugins/sdlc/skills/qa-reviewer/references/finding-schema.yaml
+    - plugins/sdlc/skills/qa-reviewer/references/test-layer-protocol.md
+    - plugins/sdlc/skills/qa-reviewer/references/thresholds-format.md
+    - plugins/sdlc/dogfood/ring-audit/tests/ring-audit/existence.sh (executed)
+    - plugins/sdlc/dogfood/ring-audit/tests/ring-audit/run_tests.sh (executed)
+    - plugins/sdlc/dogfood/ring-audit/tests/ring-audit/mutation.sh (executed)
+    - plugins/sdlc/dogfood/ring-audit/tests/ring-audit/mutation.config.yaml
+    - plugins/sdlc/dogfood/ring-audit/tests/ring-audit/tests-manifest.yaml
+    - plugins/sdlc/dogfood/ring-audit/tests/ring-audit/test_check_audit.py
+    - plugins/sdlc/dogfood/ring-audit/done_when.yaml (thresholds source, behavior.thresholds block)
+    - plugins/sdlc/dogfood/ring-audit/calibration_report.yaml (read; instrument_mutants.py NOT re-run per task instruction)
+    - plugins/sdlc/dogfood/ring-audit/calibration/instrument_mutation.json (self-consistency check only)
+    - plugins/sdlc/dogfood/ring-audit/check_audit.py (executed directly against real audit.yaml, incl. --variant delete-ring:R6 twin)
+    - plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh (executed directly against real repo, branch docs/1-sdlc-ring-audit, HEAD 4ddb362)
+    - plugins/sdlc/dogfood/ring-audit/audit.yaml (read, incl. run_evidence.audited_dirs_diff)
+    - plugins/sdlc/dogfood/ring-audit/AUDIT.md (read, run_evidence section)
+    - plugins/sdlc/dogfood/ring-audit/render_audit.py (read: audited_dirs_diff / 登记≠现算 rendering logic, L495-550)
+    - plugins/sdlc/dogfood/ring-audit/ratchet-log/iteration-002/fleet-outputs/qa-reviewer.yaml (--baseline, this file ONLY)
+    - git diff ba7d5e2..4ddb362 -- plugins/sdlc/dogfood/ring-audit (incremental Card diff, read-only; confirmed tests/** untouched, l5 lock held)
+  test_source: plugins/sdlc/dogfood/ring-audit/tests/ring-audit
+  thresholds_source: plugins/sdlc/dogfood/ring-audit/done_when.yaml (behavior.thresholds block)
+  baseline_source: plugins/sdlc/dogfood/ring-audit/ratchet-log/iteration-002/fleet-outputs/qa-reviewer.yaml
+  layers_run: [existence, unit, integration, mutation]
+  layers_skipped:
+    - {name: e2e, reason: "not_applicable — CLI/file-output feature (check_audit.py, AUDIT.md render), no UI or API surface to drive; done_when.yaml does not set e2e_required. Unchanged from baseline."}
+  duration_seconds: 16   # existence + run_tests.sh(7.05s) + mutation.sh + real check_audit.py run (incl. delete-ring twin) + replay_card_commits.sh against real repo, wall time this session
+  auto_fix_maintenance: false
+
+  # ====== DECISION ======
+  decision: GO
+  decision_reasons:
+    - "existence.sh: exit 0, all 4 declared observation boundaries present — identical to iteration-002 baseline, no regression"
+    - "run_tests.sh: 34/34 unit+integration tests pass (python3 -m unittest discover, 7.053s), 0 failed/errored — identical count and test names to baseline; tests/ring-audit/** is untouched in the ba7d5e2..4ddb362 diff (confirmed via git diff --stat, l5 lock held), so this is the same locked suite re-verified green on the new head"
+    - "mutation.sh (fixture-level L5 gate): kill_rate 1.0 (24/24) >= threshold 0.70 — identical to baseline"
+    - "check_audit.py run directly against the real audit.yaml (not just the fixture) exits 0, ok:true, rings:10, parts_total:42, every *_missing/*_without_* count 0 — reproduced independently this iteration"
+    - "check_audit.py --variant delete-ring:R6 twin (F-14) run directly: exit 1, ring_missing + orphan_gap (18) as the intended connate consequence of deleting R6 in memory — reproduced, matches the documented interpretation in AUDIT.md's twin_note"
+    - "replay_card_commits.sh run directly against the real repo (branch docs/1-sdlc-ring-audit, live HEAD 4ddb362): ok:true, card_commits:15, card_commits_touching_audited_dirs:0, card_commits_rejected:0 — the CARD-01 fixes (empty-range guard, core.quotePath=false, --no-renames) and the CARD-06 non-card-scan widening (merge-base(main,HEAD)..HEAD, case-insensitive footer match) are present in the script and run cleanly against real history"
+    - "the one load-bearing PSL-003 number — 'git diff --stat 0be2770^..HEAD -- plugins/sdlc/skills plugins/sdlc/agents plugins/sdlc/docs' — reproduces empty (0 lines) when run live against the true current HEAD (4ddb362), matching audit.yaml's recorded value exactly; this is the number render_audit.py's own doc text calls out as the one that does not drift with the snapshot, and it holds"
+    - "calibration_report.yaml's two mutation numbers reproduce: fixture-level 24/24 (1.0) reproduced live via mutation.sh above; instrument-level 23/30 (0.767) verified self-consistent in calibration/instrument_mutation.json (30 results, 23 with status=killed, survived list has exactly the 7 ids [M03,M04,M07,M14,M22,M23,M28] that both the JSON and calibration_report.yaml's surviving_mutants prose list match exactly, 23+7=30, round(23/30,3)=0.767) — did not re-run instrument_mutants.py itself per task instruction (requires a disposable worktree argument, unsafe on the primary checkout)"
+    - "no genuine or maintenance failures occurred in any layer this iteration; no regression vs iteration-002 baseline on any gating metric (same 34/34, same 24/24, same existence 4/4, same real check_audit.py ok:true with all counts 0)"
+  conditional_caveats: []
+
+  # ====== SCOPE ======
+  scope:
+    tests_executed: 34
+    tests_passed: 34
+    tests_failed: 0
+    tests_skipped: 0
+    tests_errored: 0
+
+  # ====== RESULTS PER LAYER ======
+  results:
+    existence:
+      exit_code: 0
+      checks_passed: 4          # the 4 boundaries declared in done_when.yaml's existence: block; identical to baseline
+      checks_failed: 0
+      failure_details: []
+      duration_seconds: 0
+
+    unit:
+      passed: 32                # 34 total minus the 2 REQ-007 replay tests classed as integration, per tests-manifest.yaml's own split — unchanged from baseline
+      failed: 0
+      skipped: 0
+      errored: 0
+      line_coverage: null       # no coverage tool configured; suite is pure functional/assertion-based (fixture in -> exit code + JSON counts out); not required by done_when.yaml
+      branch_coverage: null
+      duration_seconds: 7
+
+    integration:
+      passed: 2                 # test_AC_007_a_replay_card_commits_exit0_touching_zero, test_AC_007_b_card_commit_touching_skills_exit1_whitelist_overflow
+      failed: 0
+      line_coverage: null
+      duration_seconds: 7       # runs inside the same run_tests.sh unittest discover pass; real git history replay against a scratch worktree, no mocks (mock_allowlist is empty per done_when.yaml)
+      containers_used: []       # no testcontainers — this project's "integration" layer replays real git commits, not a service dependency
+
+    e2e:
+      passed: 0
+      failed: 0
+      duration_seconds: 0
+      browser_used: null
+
+  # ====== MUTATION (special) ======
+  mutation:
+    tool: "hand-rolled fixture mutants — tests/ring-audit/mutation.sh + mutation.config.yaml (mutmut/stryker not installed for this language mix)"
+    qualified: true
+    mutants_generated: 24
+    mutants_killed: 24
+    kill_rate: 1.0
+    surviving_mutants: []
+    duration_seconds: 5
+    secondary_mirror:
+      # /calibrate's separate "instrument mutation" mirror (calibration_report.yaml) — not part of the qa-reviewer
+      # L5 gate itself, recorded here as corroborating evidence per the task brief's instruction to cross-check it.
+      tool: "calibration/instrument_mutants.py — mutates check_audit.py source in a disposable worktree, reruns the 34 L5 tests"
+      total_mutants: 30
+      killed: 23
+      mutation_score: 0.767
+      threshold: 0.70
+      reproduced: true
+      reproduction_note: >-
+        Did not execute instrument_mutants.py this iteration (its own argv contract requires a throwaway worktree
+        path and it mutates check_audit.py in place — unsafe against the primary checkout, and the task brief
+        explicitly says not to run it there). Instead re-verified self-consistency of the committed
+        calibration/instrument_mutation.json independently: total_mutants=30, killed=23, len(survived)=7,
+        23+7=30, round(23/30,3)=0.767 matches the file's own mutation_score field; the 7 survived ids
+        [M03, M04, M07, M14, M22, M23, M28] match calibration_report.yaml's surviving_mutants list exactly
+        (same ids, same order). No inconsistency found. Unchanged from baseline iteration's finding.
+      status: "self-consistent; both mirrors clear the 0.70 floor (0.767 instrument-level, 1.0 fixture-level)"
+
+  # ====== FINDINGS (only genuine failures) ======
+  num_findings: 0
+  findings: []
+
+  # ====== MAINTENANCE ISSUES (non-blocking) ======
+  maintenance_issues: []
+
+  # ====== BASELINE REGRESSIONS ======
+  regressions: []   # baseline (iteration-002) was decision:GO, 34/34, 24/24 fixture kill rate, existence 4/4, real check_audit.py ok:true — this iteration matches on every gating axis; no test that passed at baseline now fails, no coverage/kill-rate drop
+
+  # ====== CAVEATS ======
+  caveats:
+    runtime_gaps: []
+    unknown_threshold_keys:
+      - "done_when.yaml behavior.thresholds uses a bespoke key set (rings, dims_with_psl_id_ratio, card_commits_touching_audited_dirs, parts_total, required_parts_by_ring_group, mutation_kill_rate) rather than thresholds-format.md's canonical keys. Unchanged from baseline: these values are literal assertions embedded inside the AC-named unittest methods themselves, not independently computed by qa-reviewer from generic runner output. Treated as informative, not blocking — the embedded assertions all passed."
+    slow_layers: []
+    decision_qualifier: null
+    other:
+      - "AUDITED_DIRS_DIFF SNAPSHOT DRIFT (observation, not a finding under the two disqualifying criteria the task set — a recorded sha that fails to resolve, or exit contradicting ok; neither holds here): audit.yaml's run_evidence.audited_dirs_diff is recorded at sha a2deb83 (14 card commits, 20 non-card commits scanned, 4 non-card commits touching audited dirs) and AUDIT.md's rendering discloses this honestly — 'recorded_at_head', 'sha_scope: branch-specific', and an explicit re-derive command are all present, and the exit/ok self-consistency flag (登记≠现算, render_audit.py:509-539) does not fire because exit:0 and ok:true agree. I independently reran replay_card_commits.sh against the true live HEAD (4ddb362, one CARD-06 commit later than the recorded snapshot) and got card_commits:15 (the one additional CARD-06 commit that carries this very evidence table), non_card_commits_scanned:20, non_card_commits_touching_audited_dirs:4 (all four are unrelated sdlc-plugin bugfix/docs commits on main, not ring-audit Card commits — recorded-but-not-gated by the script's own design) — and card_commits_touching_audited_dirs remained 0 at the live head too, so the substantive PSL-003 claim ('no Card commit touched the three audited directories') is verified true at the true current HEAD, not just at the recorded snapshot. The one number that both the recorded evidence and my live rerun agree does NOT drift is the load-bearing one: git diff --stat 0be2770^..HEAD over the three audited dirs is empty (0 lines) both as recorded in audit.yaml and as reproduced live against 4ddb362."
+      - "DOCUMENTATION-CLARITY REGRESSION (minor, non-blocking, outside qa-reviewer's execution scope — flagging for /code-reviewer or the human G3 reviewer): the ba7d5e2..4ddb362 diff to render_audit.py/AUDIT.md removes the prior iteration's explanatory blockquote that told a human reader in plain language why the recorded card_commits count would grow after the snapshot while touches stayed 0 ('这是快照，不是恒等式...记录之后的每个提交都只改 audit.yaml / AUDIT.md / render_audit.py / replay_card_commits.sh...touches 仍是 0'). It is replaced by a narrower machine self-consistency check (the 登记≠现算 flag) that only fires on exit/ok disagreement, not on the count drift itself — a reader of the current AUDIT.md sees the raw recorded numbers (14 / 20 / 4) with no explanation of why they no longer match a fresh rerun, only the branch/head/re-derive fields to reconstruct it themselves. Not a test-execution defect and does not change this run's GO decision."
+      - "TEST-COVERAGE GAP (carried forward, unchanged from baseline): tests/ring-audit/test_check_audit.py exercises only check_audit.py; render_audit.py (the file most changed in this iteration's diff — cell()/code() escaping, the SIGNER_KIND_RENDER map, the audited_dirs_diff mismatch-flag logic added this iteration) has no dedicated test file, and existence.sh's AUDIT.md check is structural only. I closed this gap manually again this iteration by reading the audited_dirs_diff rendering logic (render_audit.py:495-550) directly and cross-checking its output in AUDIT.md against the raw audit.yaml fields — consistent. Recommend routing to /calibrate or /test-suite-generator as a gap for the next test-suite ratchet (a golden-file byte-diff check for AUDIT.md, plus a small unit test for the mismatch-flag branch, would close it cheaply), not blocking this run."
+      - "spec-robustness.md does not exist for this Run (confirmed absent again this iteration) — out of scope for qa-reviewer (spec-gaming-detector's / acceptance-fleet's to weigh), noted only so the fleet doesn't lose the fact. Unchanged from baseline."
+      - "AC-005-a and AC-006-a remain human-judged ACs routed to G3 per done_when.yaml's rules block; qa-reviewer did not and should not auto-pass them. existence.sh only checks structural presence of the AUDIT.md sections they reference, not that content satisfies the human judge's rubric. This run reports evidence, not a verdict, for those two ACs — unchanged from baseline."

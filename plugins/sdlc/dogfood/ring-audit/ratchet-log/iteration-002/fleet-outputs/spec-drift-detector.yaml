@@ -1,0 +1,635 @@
+# spec-drift-detector — drift-signals.yaml
+# acceptance-fleet iteration-002 · sdlc-ring-audit · impl head ba7d5e2 (branch docs/1-sdlc-ring-audit)
+#
+# Stance (iron rule 1): neither the spec nor the code is assumed right. Every signal below says
+# "spec says X, code/data does Y, diverged at commit Z, intent looked like W". `recommendation` is a
+# git-archaeology heuristic (D6), not a verdict. No spec rewrite or code change is proposed here.
+
+agent_role: spec-drift-detector
+model: claude-fable-5-1
+vendor: claude
+isolation: medium
+skill: plugins/sdlc/skills/spec-drift-detector/SKILL.md
+skill_version: 1.0.1
+schema_note: >-
+  SKILL.md §D7 and §Resource index point at references/finding-schema.yaml, but that file does not
+  exist in plugins/sdlc/skills/spec-drift-detector/references/ (only divergence-types.md and
+  git-archaeology.md are present). Output shape below follows SKILL.md §D5–D7 field names
+  (divergence_type / spec_says / code_does / commit_introducing_drift / drift_age /
+  likely_intentional / recommendation) plus the fleet's COMMON.md header block.
+
+inputs_read:
+  - scratchpad/fleet2/COMMON.md
+  - scratchpad/fleet2/spec-drift-detector.md
+  - plugins/sdlc/skills/spec-drift-detector/SKILL.md
+  - plugins/sdlc/skills/spec-drift-detector/references/divergence-types.md
+  - plugins/sdlc/skills/spec-drift-detector/references/git-archaeology.md
+  - plugins/sdlc/dogfood/ring-audit/done_when.yaml
+  - plugins/sdlc/dogfood/ring-audit/issue-body.md
+  - plugins/sdlc/dogfood/ring-audit/PSL-sdlc-ring-audit.md
+  - plugins/sdlc/dogfood/ring-audit/derived/form-draft.md
+  - plugins/sdlc/dogfood/ring-audit/g1-record.md (## 签字版解释规则 section only, L346-L386)
+  - plugins/sdlc/dogfood/ring-audit/audit.schema.md
+  - plugins/sdlc/dogfood/ring-audit/cards/CARD-01.yaml (HEAD, and the 0be2770 version via git show)
+  - plugins/sdlc/dogfood/ring-audit/check_audit.py
+  - plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh (read; executed once at HEAD, read-only effect)
+  - plugins/sdlc/dogfood/ring-audit/render_audit.py (read; executed to a scratchpad path and diffed)
+  - plugins/sdlc/dogfood/ring-audit/audit.yaml (parsed; run_evidence / gates / proposals / top-level keys dumped)
+  - plugins/sdlc/dogfood/ring-audit/AUDIT.md (head L1-120; grep of run_evidence / assembly-notes regions)
+  - plugins/sdlc/dogfood/ring-audit/audit/rings-R0-R2-spine.yaml (L205 via grep)
+  - plugins/sdlc/dogfood/ring-audit/audit/rings-R7-R8.yaml (L179, L415 via grep)
+  - plugins/sdlc/dogfood/ring-audit/tests/ring-audit/test_check_audit.py (header L1-60 and L251-257 via grep; fixtures listing)
+  - plugins/sdlc/dogfood/ring-audit/ratchet-log/iteration-002/fleet-outputs/qa-reviewer.yaml (--qa-report, read last)
+  - git log / blame / show over 57ebf2b..ba7d5e2 -- plugins/sdlc/dogfood/ring-audit (21 commits)
+inputs_not_read:
+  - plugins/sdlc/dogfood/ring-audit/ratchet-log/iteration-001/** (no cross-iteration anchoring)
+  - plugins/sdlc/dogfood/ring-audit/ratchet-log/iteration-002/fleet-outputs/code-reviewer-perf.yaml (present, not permitted)
+  - .sdlc/** and any meta-judge file
+  - spec-robustness.md (does not exist for this Run — recorded as absent, per COMMON.md)
+
+invocation:
+  spec_source:
+    - plugins/sdlc/dogfood/ring-audit/done_when.yaml
+    - plugins/sdlc/dogfood/ring-audit/issue-body.md
+    - plugins/sdlc/dogfood/ring-audit/PSL-sdlc-ring-audit.md
+    - plugins/sdlc/dogfood/ring-audit/derived/form-draft.md
+    - plugins/sdlc/dogfood/ring-audit/g1-record.md#签字版解释规则
+    - plugins/sdlc/dogfood/ring-audit/audit.schema.md   # doubles as an impl deliverable of CARD-01
+  code_paths:
+    - plugins/sdlc/dogfood/ring-audit/check_audit.py
+    - plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh
+    - plugins/sdlc/dogfood/ring-audit/render_audit.py
+    - plugins/sdlc/dogfood/ring-audit/audit.yaml
+    - plugins/sdlc/dogfood/ring-audit/AUDIT.md
+    - plugins/sdlc/dogfood/ring-audit/audit/rings-*.yaml
+    - plugins/sdlc/dogfood/ring-audit/cards/CARD-01.yaml   # target of audit.schema.md's "supersedes" claim
+  history_depth: 100
+  history_range: "57ebf2b..ba7d5e2 -- plugins/sdlc/dogfood/ring-audit (21 commits, all 2026-09-05 23:33 → 2026-09-06 02:36 +0800; incremental 843c3ee..ba7d5e2 = 5 commits)"
+  qa_report: present
+  qa_report_path: plugins/sdlc/dogfood/ring-audit/ratchet-log/iteration-002/fleet-outputs/qa-reviewer.yaml
+  repo_root: /Users/xrensiu/development/owner/claude-code-forge
+
+summary: "spec-drift-detector: 11 signals (timing: 0, behavior: 8, contract: 3); recommendations: update_spec: 4, fix_code: 1, needs_human: 6. 2 medium-severity signals are new and unregistered anywhere in the Run (SD-01 replay record exit:1 vs ok:true; SD-02 --rings silently disables ring_unexpected). 1 medium is data-vs-F-06 routed to G3 (SD-03). 1 medium is already registered as KG-02 (SD-04). The rest are low."
+
+# ============================================================================================
+# Drift signals — ordered by (severity, novelty). Each anchors to a concrete spec_location and
+# code_location (iron rule 5) and carries a reproduction that was actually executed unless noted.
+# ============================================================================================
+drift_signals:
+
+  - id: SD-01
+    rank: 1
+    claim_id: CLAIM-007
+    divergence_type: behavior_mismatch
+    divergence_severity: medium
+    confidence: high
+    spec_location: "plugins/sdlc/dogfood/ring-audit/audit.yaml:3412-3427 (run_evidence.audited_dirs_diff); rendered at AUDIT.md:963-985"
+    spec_says: >-
+      The recorded replay run carries `exit: 1` (audit.yaml:3415) while the same block records `ok: true`
+      (L3422), `card_commits_rejected: 0` (L3425), `card_commits_touching_audited_dirs: 0` (L3424), and all
+      12 rows of touches_audited_dirs_per_commit show `exit: 0` / `touches_audited_dirs: false`. The record
+      is also stamped `branch: fix/iter-002`, `head: 9ad5b9c`, `card_commits: 12`.
+    code_location: "plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh:151-152, 171, 175"
+    code_does: >-
+      `status=1` only when `rejected>0` or `overflow>0`; `ok` is printed as `status -eq 0`; the script exits
+      `$status`. So `exit` and `ok` are the same bit in every real invocation — `exit: 1` together with
+      `ok: true`, 0 rejected and 0 touching cannot come out of one run of this instrument. Live run at HEAD
+      ba7d5e2 on docs/1-sdlc-ring-audit: exit 0, ok true, card_commits 13, card_commits_touching_audited_dirs 0,
+      card_commits_rejected 0, non_card_commits_scanned 8, non_card_commits_touching_audited_dirs 0.
+      Additionally, 9ad5b9c is not an ancestor of ba7d5e2 (`git merge-base --is-ancestor` fails; only
+      branch fix/iter-002 contains it), and the reviewed branch has 13 Card-footer commits (7cb1f55 CARD-01
+      and ba7d5e2 CARD-06 both carry footers), not the recorded 12. render_audit.py:509-537 never prints the
+      `exit` field, so AUDIT.md shows only `ok: true` and a reader of the projection cannot see the contradiction;
+      audit.yaml is the side that wins on disagreement (F-12).
+    reproduction: |
+      sed -n '3412,3427p' plugins/sdlc/dogfood/ring-audit/audit.yaml          # exit: 1 … ok: true
+      bash plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh; echo "exit=$?"   # exit=0, "ok": true, card_commits 13
+      git merge-base --is-ancestor 9ad5b9c ba7d5e2; echo $?                    # 1 (not an ancestor)
+      git branch --contains 9ad5b9c                                            # fix/iter-002 only
+      sed -n '144,152p;171p;175p' plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh
+    evidence:
+      - "git blame audit.yaml:3414-3421,3423,3426-3427 → ba7d5e2; L3422 ok:true → 3441ba4"
+      - "no `exit:` key existed under audited_dirs_diff at 3441ba4 / b24243d / 843c3ee (git show <sha>:…audit.yaml | grep -A3 audited_dirs_diff)"
+      - "snapshot_note (L3421) discloses sha_scope: branch-specific and that a record cannot cover its own commit — it does not disclose the exit/ok contradiction"
+    commit_introducing_drift: "ba7d5e2 — fix(ring-audit): escape cells, compute counts, render checked_by"
+    additional_contributing_commits: []
+    drift_age: "11 minutes ago (2026-09-06T02:36:13+08:00)"
+    likely_intentional: false
+    intent_evidence: >-
+      The commit body describes re-running the replay and recording branch / HEAD / range_spec / the non-Card
+      pass / sha_scope; it does not describe an `exit` value, and the value contradicts the `ok` it sits beside.
+      The renderer never surfaces `exit`, so nothing downstream would have flagged it. Collateral, not a
+      described change.
+    drift_origin: record_written_on_a_different_branch_than_the_one_under_review
+    recommendation: fix_code
+    recommendation_basis: "D6: likely_intentional=false + age < 30 days → fix_code (the 'code' here is the evidence record in audit.yaml)."
+    drift_notes: >-
+      The substantive PSL-003 claim (no Card commit touched plugins/sdlc/{skills,agents,docs}) is TRUE on the
+      reviewed branch by live rerun and by `git diff --stat 0be2770^..HEAD -- plugins/sdlc/skills plugins/sdlc/agents
+      plugins/sdlc/docs` (empty). The divergence is in the record, not in the property. COMMON.md lists
+      "run_evidence replay re-recorded on the branch" among the six fixes; the record itself says it was taken
+      on fix/iter-002 @ 9ad5b9c, which the reviewed branch does not contain.
+    already_registered: []
+    also_observed_by:
+      - "ratchet-log/iteration-002/fleet-outputs/qa-reviewer.yaml caveats.other[1] (independent; this signal was derived from audit.yaml before the qa report was read)"
+
+  - id: SD-02
+    rank: 2
+    claim_id: CLAIM-014
+    divergence_type: behavior_mismatch
+    divergence_severity: medium
+    confidence: high
+    spec_location: "plugins/sdlc/dogfood/ring-audit/audit.schema.md:26-28 and :47; derived/form-draft.md:35 (F-17)"
+    spec_says: >-
+      "`--rings` 只限定视图：哪些环必须在场、parts_without_assessment 数哪些 Part、--required-parts 去哪里找。
+      它不收窄其它任何谓词（F-17：不改任何既有谓词）". §Ring: "id 必须是 R0…R8 / spine 之一，十个一个不少
+      （ring_missing / ring_unexpected）". F-17: "不改任何既有谓词".
+    code_location: "plugins/sdlc/dogfood/ring-audit/check_audit.py:161-168 (and docstring L15-16)"
+    code_does: >-
+      `ring_unexpected` is evaluated only inside `if selected_rings is None:`. With any `--rings` value the
+      predicate is skipped entirely, so a document carrying a ring outside {R0..R8, spine} passes the view.
+      The docstring (L15-16) lists `ring_unexpected` under the "with --rings only the listed rings must attend"
+      clause, i.e. the code treats it as part of the attendance predicate that --rings is allowed to alter;
+      audit.schema.md (same commit) says --rings alters nothing but attendance.
+    reproduction: |
+      # copy audit.yaml, append a ring {id: R9, question: x, parts: [], missing: []}, then:
+      python3 check_audit.py <copy> --psl PSL-sdlc-ring-audit.md              # exit 1, failed_predicates [ring_unexpected], rings 11
+      python3 check_audit.py <copy> --psl PSL-sdlc-ring-audit.md --rings R6   # exit 0, failed_predicates [], rings 11
+    evidence:
+      - "check_audit.py:165 `if selected_rings is None:` guards the ring_unexpected loop (git blame → 0be2770)"
+      - "audit.schema.md:27 text (git blame → 0be2770)"
+      - "executed both runs above this session; counts as stated"
+    commit_introducing_drift: "0be2770 — feat(ring-audit): add check-audit CLI, commit replay and schema doc"
+    additional_contributing_commits: []
+    drift_age: "3 hours ago (2026-09-05T23:33:25+08:00)"
+    likely_intentional: unclear
+    intent_evidence: >-
+      Both the code (with its docstring grouping ring_unexpected under the --rings clause) and the contradicting
+      schema sentence were written in the same commit by the same author. The commit message says the gate
+      "enforces every F-13 / F-17 predicate" and does not mention any view-dependent relaxation.
+    drift_origin: spec_written_with_code
+    recommendation: needs_human
+    recommendation_basis: "D6: likely_intentional=unclear → needs_human."
+    drift_notes: >-
+      Practical exposure on this Run is bounded: the recorded AC-001-a run (no --rings) exercises ring_unexpected
+      and passes; the four AC-008..011 views alone would not detect a stray ring. Not the same as known_gaps
+      KG-03 (duplicate ring id) or KG-05 (mutant M03 disabling ring_unexpected outright).
+    already_registered: []
+    also_observed_by: []
+
+  - id: SD-03
+    rank: 3
+    claim_id: CLAIM-020
+    divergence_type: behavior_mismatch
+    divergence_severity: medium
+    confidence: high
+    spec_location: "plugins/sdlc/dogfood/ring-audit/derived/form-draft.md:21 (F-06); audit.schema.md:121"
+    spec_says: >-
+      F-06: "`checked_by` 为空的 Artifact 有两个后果同时成立：其 producer 的 `implemented` 不得高于 `declared`
+      （evidence 写 {file, <Part 目录>} 并注 no_gate，审计者不得以'读了代码觉得能跑'抬到 compiled），且一条 Control
+      原子的 Gap 进该 Artifact 所在 Ring 的 missing". audit.schema.md:121: "一个 `checked_by: []` 的产物，它的生产者
+      停在 `declared`（F-06）".
+    code_location: "plugins/sdlc/dogfood/ring-audit/audit.yaml (5 Parts); fragments audit/rings-R0-R2-spine.yaml:205, audit/rings-R7-R8.yaml:179 and :415; render_audit.py:151-163"
+    code_does: >-
+      Five producers own at least one artifacts[] record with empty checked_by and still carry
+      implemented.verdict = compiled: dos-extract (decisions.md), human_gate.G3 (g3-record.md — its declared
+      primary artifact), review-loop (github:reply, github:resolve), agent.pr-reviewer (findings.yaml (pre-review)
+      — its declared primary artifact), tune (tune/harness-proposals-<date>.yaml — its primary — and tune/*.patch).
+      Three of the five record an explicit deviating reading: dos-extract "按本片段解释 ①，独占产物 dos.yaml 有闸，
+      故不把本 Part 压回 declared"; agent.pr-reviewer "判 compiled 有争议、并列记下"; tune "判 compiled 的承重点是
+      apply_proposal.py 的结构性控制". human_gate.G3 and review-loop carry no such note. check_audit.py has no
+      predicate for F-06 (F-13 never listed it), so exit 0 is silent here; render_audit.py prints
+      "（无闸 → 封顶 declared）" in the checked_by column beside **compiled** for these rows (AUDIT.md:99, 592, 593, 686).
+    reproduction: |
+      python3 - <<'EOF'
+      import yaml; d=yaml.safe_load(open('plugins/sdlc/dogfood/ring-audit/audit.yaml'))
+      parts=[(r['id'],p) for r in d['rings'] for p in r['parts']]
+      for rid,p in parts:
+          empty=[a['id'] for a in d['artifacts'] if a.get('producer')==p['id'] and not a.get('checked_by')]
+          v=p['assessment']['implemented']['verdict']
+          if empty and v!='declared': print(rid,p['id'],v,empty)
+      EOF
+      # → R1 dos-extract compiled ['decisions.md']; R6 human_gate.G3 compiled ['g3-record.md'];
+      #   R7 review-loop compiled ['github:reply','github:resolve']; R7 agent.pr-reviewer compiled ['findings.yaml (pre-review)'];
+      #   R8 tune compiled ['tune/harness-proposals-<date>.yaml','tune/*.patch']
+    evidence:
+      - "executed the snippet above this session"
+      - "render_audit.py:152-154 docstring: 'part.gates is what the Part claims; artifacts[].checked_by is what the product declares, and the two disagree for 8 of the 42 Parts' — recomputed: 8 (that count is gates≠checked_by union; the F-06 count above is 5 producers above declared)"
+    commit_introducing_drift: "eba9796 — feat(ring-audit): audit fragment for ring R6 (CARD-04)  [most recent material: human_gate.G3]"
+    additional_contributing_commits:
+      - "f8ef234 — feat(ring-audit): audit fragment for rings R7-R8 (CARD-05)  [review-loop, agent.pr-reviewer, tune]"
+      - "419a364 — feat(ring-audit): audit fragment for rings R0-R2 and spine (CARD-02)  [dos-extract]"
+    drift_age: "about 1 hour 15 minutes ago (oldest contributing f8ef234 2026-09-06T01:24:48+08:00; newest eba9796 01:28:02)"
+    likely_intentional: unclear
+    intent_evidence: >-
+      Mixed. 3 of 5 fragments state a deviating interpretation in the record itself (intentional); 2 of 5
+      (human_gate.G3, review-loop) are silent. Commit messages are card-scoped and do not mention F-06.
+    drift_origin: content_cards_applied_a_narrower_reading_of_F-06_than_its_text
+    recommendation: needs_human
+    recommendation_basis: >-
+      D6: likely_intentional=unclear → needs_human. Independently, the PSL routes "这个 Part 的 Gap 归类对不对"
+      to G3 and done_when rules say AC-005-a is never auto-passed; this class of disagreement is the human AC.
+    drift_notes: >-
+      The renderer's dedicated checked_by column (added ba7d5e2) surfaces every one of these rows to the G3
+      reader, so the divergence is visible, not hidden. What diverges is F-06's "any artifact" wording vs the
+      fragments' "the exclusive/primary artifact" reading — and for G3 / review-loop no reading is recorded at all.
+    already_registered: []
+    also_observed_by: []
+
+  - id: SD-04
+    rank: 4
+    claim_id: CLAIM-004
+    divergence_type: behavior_mismatch
+    divergence_severity: medium
+    confidence: high
+    spec_location: "plugins/sdlc/dogfood/ring-audit/done_when.yaml:72-79 (AC-004-b); audit.schema.md:200; derived/form-draft.md:34 (F-16)"
+    spec_says: >-
+      AC-004-b: given "audit.yaml with one proposal lacking a source assessment or gap id" → expect exit 1,
+      error proposal_without_source. audit.schema.md:200: "`source` 必须指向一个 Assessment id 或 Gap id
+      （`proposal_without_source`）". F-16 (weaker wording): "没有 source 的提案不允许存在".
+    code_location: "plugins/sdlc/dogfood/ring-audit/check_audit.py:394-402"
+    code_does: >-
+      check_proposals() fails a proposal only when `source` is not a non-empty string. A `source` naming an id
+      that exists nowhere in gaps[] or in any assessment.id passes: exit 0, proposals_without_source 0.
+      All 39 sources in the current audit.yaml do resolve (26 → A-<part>, 13 → gap ids), so the document is
+      not affected today; the gate would not catch a future dangling one.
+    reproduction: |
+      # copy audit.yaml, set proposals[0].source: A-does-not-exist, then:
+      python3 check_audit.py <copy> --psl PSL-sdlc-ring-audit.md   # exit 0, failed_predicates [], proposals_without_source 0
+    evidence:
+      - "check_audit.py:399 `if not nonempty_str(proposal.get('source'))` (git blame → 0be2770; untouched by 08238cd)"
+      - "executed the mutation above this session"
+      - "computed: 0 unresolvable proposal sources in audit.yaml at HEAD"
+    commit_introducing_drift: "0be2770 — feat(ring-audit): add check-audit CLI, commit replay and schema doc"
+    additional_contributing_commits: []
+    drift_age: "3 hours ago (2026-09-05T23:33:25+08:00)"
+    likely_intentional: unclear
+    intent_evidence: >-
+      The commit scopes itself to "every F-13 / F-17 predicate"; F-13 lists no proposal predicate at all, F-16
+      says "没有 source" (reads as key absence), AC-004-b says "lacking a source assessment or gap id" (reads as
+      resolution), schema.md:200 says "必须指向" (resolution). Three spec sentences carry two readings; the code
+      implemented the weaker one and schema.md:203 later recorded the gap.
+    drift_origin: spec_sentences_disagree_on_strength; code_took_the_weaker
+    recommendation: needs_human
+    recommendation_basis: "D6: likely_intentional=unclear → needs_human. Already routed by the Run to change-proposal-002."
+    drift_notes: >-
+      Reported for completeness of the spec↔code map, not as news: the divergence is self-acknowledged in the
+      implementation's own doc and in run_evidence.known_gaps. Meta-judge may weight accordingly.
+    already_registered:
+      - "audit.schema.md:203 已知空隙（2026-09-06，failure-report-002）"
+      - "audit.yaml run_evidence.known_gaps KG-02 proposal_dangling_source → change-proposal-002"
+    also_observed_by: []
+
+  - id: SD-05
+    rank: 5
+    claim_id: CLAIM-018
+    divergence_type: behavior_mismatch
+    divergence_severity: low
+    confidence: high
+    spec_location: "plugins/sdlc/dogfood/ring-audit/g1-record.md:367 (签字版解释规则 2(e)); PSL-sdlc-ring-audit.md Domain Model (Gap 关联); derived/form-draft.md:19 (F-04)"
+    spec_says: >-
+      Rule 2(e): "`missing[]` 里的每个键必在 `gaps[]` 且其 `ring` 一致；`fills[]` 里的每个键必在 `gaps[]`。任一不满足
+      → exit 1 orphan_gap / unknown_gap_ref". The same-ring clause is written for missing[] and omitted for
+      fills[] in the same sentence. F-04 says a Gap belongs to exactly one Ring and "一个 Gap 可被多个 Part 填
+      （N:N）"; neither F-04 nor the PSL constrains the filling Part's ring.
+    code_location: "plugins/sdlc/dogfood/ring-audit/check_audit.py:258-268 (resolve), called at L278 for fills and L301 for missing; docstring L28-29; audit.schema.md:80"
+    code_does: >-
+      resolve() applies `gap.get('ring') != ring_id → unknown_gap_ref` to fills[] and missing[] alike. A Part in
+      R7 that fills an existing R6 gap is rejected. audit.schema.md:80 documents the stricter rule ("`fills[]` 每个
+      id 同样要在 `gaps[]` 里、同环"). The current document has 0 cross-ring fills, so its exit code is unaffected.
+    reproduction: |
+      # copy audit.yaml; append gap id R6/newly_identified/control+judgment/six-evaluator-dispatch-and-ratchet to R7/pr.fills, then:
+      python3 check_audit.py <copy> --psl PSL-sdlc-ring-audit.md
+      # → exit 1, error "unknown_gap_ref: R7/pr.fills references R6/…/six-evaluator-dispatch-and-ratchet, whose ring is 'R6'"
+    evidence:
+      - "check_audit.py:265-267 (git blame → 0be2770)"
+      - "tests/ring-audit/test_check_audit.py:257 comment: 'G1 rule 2e: rings[].missing[] (and parts[].fills[]) are ids that must exist in gaps[] with the same ring' — the L5 author (a different actor) read 2(e) the same way as the code"
+      - "computed: 0 cross-ring fills in audit.yaml at HEAD"
+    commit_introducing_drift: "0be2770 — feat(ring-audit): add check-audit CLI, commit replay and schema doc"
+    additional_contributing_commits: []
+    drift_age: "3 hours ago (2026-09-05T23:33:25+08:00)"
+    likely_intentional: true
+    intent_evidence: >-
+      The docstring states "with the same ring" for both edges and schema.md restates it; the choice was written
+      down twice in the introducing commit. The L5 tests, authored separately (e217d10), encode the same reading.
+    drift_origin: spec_written_before_code (rule 2(e) 2026-09-05, code 23:33 the same day)
+    recommendation: update_spec
+    recommendation_basis: "D6: likely_intentional=true + age < 6 months → update_spec. Note the spec side (g1-record.md) is in done_when.yaml constraints.forbidden_paths for this Run."
+    drift_notes: >-
+      Three downstream readers (code, schema doc, L5 tests) agree with each other against the literal rule text.
+      Whether a Part may legitimately fill a Gap in another Ring is a world-model question the PSL leaves open
+      ("六个审查 skill 共填一个 Judgment 缺口是常态" — all R6). No code position is taken here.
+    already_registered: []
+    also_observed_by: []
+
+  - id: SD-06
+    rank: 6
+    claim_id: CLAIM-015
+    divergence_type: behavior_mismatch
+    divergence_severity: low
+    confidence: high
+    spec_location: "plugins/sdlc/dogfood/ring-audit/audit.schema.md:36; g1-record.md:363 (rule 2(a))"
+    spec_says: >-
+      audit.schema.md: "六个加法式注册表，缺一不可（rule 2a）" — rings / gaps / artifacts / gates / proposals /
+      run_evidence. G1 rule 2(a) itself only says these registries are "加性顶层注册表落盘 … 不算新实体"; the
+      "缺一不可" (none may be absent) strengthening is the schema doc's.
+    code_location: "plugins/sdlc/dogfood/ring-audit/check_audit.py:153, 251, 328, 364, 376, 397, 429"
+    code_does: >-
+      Every registry is read as `as_list(doc.get(...))` / `as_dict(doc.get(...))`; an absent key is an empty
+      registry with no predicate of its own. Deleting `gates` → exit 0. Deleting `proposals` → exit 0. Deleting
+      `run_evidence` → exit 0 (calibration_twin_recorded false, gate checks vacuous). Deleting `gaps` fails only
+      through 76 unknown_gap_ref; deleting `artifacts` fails only through spurious_merge_candidate — and only
+      because this document has 4 merge_candidate Parts (a document with none would pass).
+    reproduction: |
+      # for k in gates proposals run_evidence: copy audit.yaml without top-level key k, then:
+      python3 check_audit.py <copy> --psl PSL-sdlc-ring-audit.md    # exit 0 for each of the three
+    evidence:
+      - "executed all five single-key deletions this session (m4_drop_*): gates/proposals/run_evidence exit 0; gaps exit 1 (unknown_gap_ref ×76); artifacts exit 1 (spurious_merge_candidate)"
+      - "audit.schema.md:36 (git blame → 0be2770)"
+    commit_introducing_drift: "0be2770 — feat(ring-audit): add check-audit CLI, commit replay and schema doc"
+    additional_contributing_commits: []
+    drift_age: "3 hours ago (2026-09-05T23:33:25+08:00)"
+    likely_intentional: unclear
+    intent_evidence: "Doc and code from one commit; the doc adds a requirement the code never had. Message silent on it."
+    drift_origin: spec_written_with_code
+    recommendation: needs_human
+    recommendation_basis: "D6: likely_intentional=unclear → needs_human."
+    drift_notes: "F-13's exit-0 conjunction does not include registry presence either, so the schema sentence is stricter than both F-13 and the code."
+    already_registered: []
+    also_observed_by: []
+
+  - id: SD-07
+    rank: 7
+    claim_id: CLAIM-016
+    divergence_type: contract_mismatch
+    divergence_severity: low
+    confidence: high
+    spec_location: "plugins/sdlc/dogfood/ring-audit/audit.schema.md:33-44 (顶层); AUDIT.md:1048-1060 (assembly notes, rendered from render_audit.py:610-629)"
+    spec_says: >-
+      audit.schema.md's top-level block lists exactly six registries (rings, gaps, artifacts, gates, proposals,
+      run_evidence) beside schema/feature/psl/check. AUDIT.md assembly notes: "装配时只做了下面这些事，一处不漏"
+      with rows 1-5 (row 3 "新增顶层 suspected_duplicate_pairs[]", row 4 "新增顶层 run_evidence{}") and "其余全部为空".
+    code_location: "plugins/sdlc/dogfood/ring-audit/audit.yaml (top-level keys); render_audit.py:374 and :667"
+    code_does: >-
+      audit.yaml carries eight registries: the six plus `suspected_duplicate_pairs` (5 entries, added 3441ba4)
+      and `unenforced_rules` (4 entries, added ba7d5e2). render_audit.py consumes both — suspected_duplicate_pairs
+      for the 疑似重复 section (L374), unenforced_rules[].dos_anchors for the PSL-017 装配核对 table (L667,
+      AUDIT.md:1066-1080). check_audit.py ignores unknown top-level keys (adding `totally_unknown_registry: [1,2]`
+      → exit 0). The assembly-notes list that claims exhaustiveness omits `unenforced_rules[]`.
+    reproduction: |
+      python3 -c "import yaml;print(list(yaml.safe_load(open('plugins/sdlc/dogfood/ring-audit/audit.yaml')).keys()))"
+      # → [..., 'gaps', 'unenforced_rules', 'artifacts', 'gates', 'proposals', 'suspected_duplicate_pairs', 'run_evidence']
+      git log --format='%h %s' -S'unenforced_rules:' 57ebf2b..ba7d5e2 -- plugins/sdlc/dogfood/ring-audit/audit.yaml   # ba7d5e2
+      git log --format='%h %s' -S'suspected_duplicate_pairs:' 57ebf2b..ba7d5e2 -- plugins/sdlc/dogfood/ring-audit/audit.yaml   # 3441ba4
+      grep -n 'unenforced_rules' plugins/sdlc/dogfood/ring-audit/audit.schema.md   # no hits
+    evidence:
+      - "ba7d5e2 body: 'matching the new top-level unenforced_rules[].dos_anchors against gaps[].evidence[].ref'"
+      - "AUDIT.md:1054-1058 rows 1-5; no row for unenforced_rules[] (executed grep this session)"
+    commit_introducing_drift: "ba7d5e2 — fix(ring-audit): escape cells, compute counts, render checked_by  [unenforced_rules]"
+    additional_contributing_commits:
+      - "3441ba4 — feat(ring-audit): assemble audit.yaml from the four ring fragments  [suspected_duplicate_pairs]"
+    drift_age: "11 minutes ago (ba7d5e2 2026-09-06T02:36:13+08:00); oldest contributing 3441ba4 62 minutes ago"
+    likely_intentional: true
+    intent_evidence: "Both commit bodies describe adding the respective top-level key by name."
+    drift_origin: code_evolved_after_schema_doc_was_written
+    recommendation: update_spec
+    recommendation_basis: "D6: likely_intentional=true + age < 6 months → update_spec."
+    drift_notes: "Shape-only; no behaviour of check_audit.py depends on either key."
+    already_registered: []
+    also_observed_by: []
+
+  - id: SD-08
+    rank: 8
+    claim_id: CLAIM-017
+    divergence_type: contract_mismatch
+    divergence_severity: low
+    confidence: high
+    spec_location: "plugins/sdlc/dogfood/ring-audit/audit.schema.md:22-24"
+    spec_says: "\"exit 2 = 输入读不了（文件不存在、YAML 解析失败、缺 pyyaml）。stdout 恒为一个 JSON 对象。\""
+    code_location: "plugins/sdlc/dogfood/ring-audit/check_audit.py:70-72 (die), 452-453, 460-461"
+    code_does: >-
+      die() writes one line to stderr and exits 2; nothing is written to stdout on any exit-2 path (missing file,
+      unparseable YAML, non-mapping document, unknown --variant, missing pyyaml). argparse errors behave the same.
+      By contrast replay_card_commits.sh:31-34 (fail_hard) does emit a JSON object on its exit 2.
+    reproduction: |
+      python3 plugins/sdlc/dogfood/ring-audit/check_audit.py /nonexistent.yaml > out.json 2> err.txt; echo "exit=$?"; wc -c < out.json; cat err.txt
+      # → exit=2, 0 bytes on stdout, stderr "check_audit: cannot read audit: /nonexistent.yaml does not exist"
+    evidence:
+      - "executed this session"
+      - "audit.schema.md:24 (git blame → 0be2770)"
+    commit_introducing_drift: "0be2770 — feat(ring-audit): add check-audit CLI, commit replay and schema doc"
+    additional_contributing_commits: []
+    drift_age: "3 hours ago (2026-09-05T23:33:25+08:00)"
+    likely_intentional: unclear
+    intent_evidence: "Same commit, same author, no mention. tests/ring-audit/test_check_audit.py:13 pins 'stdout = one JSON object' for the exit 0/1 cases only."
+    drift_origin: spec_written_with_code
+    recommendation: needs_human
+    recommendation_basis: "D6: likely_intentional=unclear → needs_human."
+    drift_notes: "Low stakes: exit 2 is 'unreadable input', outside every AC. Recorded because the sentence says 恒 (always)."
+    already_registered: []
+    also_observed_by: []
+
+  - id: SD-09
+    rank: 9
+    claim_id: CLAIM-009
+    divergence_type: behavior_mismatch
+    divergence_severity: low
+    confidence: high
+    spec_location: "plugins/sdlc/dogfood/ring-audit/audit.schema.md:266; cards/CARD-01.yaml:34 (notes); replay_card_commits.sh:9-10 (header comment)"
+    spec_says: >-
+      "任一回放被拒、或任一 Card 提交碰了 plugins/sdlc/skills|agents|docs → exit 1 + `whitelist_overflow`"
+      (schema); "任一 exit 1 即 exit 1 并打印 whitelist_overflow" (card notes); "Otherwise exit 1 with
+      `whitelist_overflow`" (script header).
+    code_location: "plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh:112-115, 144-149"
+    code_does: >-
+      Two tokens, not one. `whitelist_overflow` is emitted only when overflow>0 — an audited-dir hit (L98-101), a
+      Card footer naming a card file this tree lacks (L103-106), or verify_commit.py output matching
+      'whitelist overflow' (L114). A verify_commit.py rejection for any other reason (lock hash, secret/debug scan,
+      message format) increments `rejected` only and the script emits `replay_reject: N Card commit(s) were rejected
+      by verify_commit.py` (L147-148). Exit is 1 in both cases (L152).
+    reproduction: |
+      sed -n '112,115p;144,152p' plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh
+      # not executed against a synthetic rejected commit (read-only session; requires committing to a twin repo)
+    evidence:
+      - "replay_card_commits.sh:147-148 (git blame → 0be2770)"
+      - "AC-007-b's given (a Card commit modifying plugins/sdlc/skills/**) still yields whitelist_overflow via the L98-101 path, so the AC itself is unaffected; only the doc's '任一回放被拒' clause diverges"
+    commit_introducing_drift: "0be2770 — feat(ring-audit): add check-audit CLI, commit replay and schema doc"
+    additional_contributing_commits: []
+    drift_age: "3 hours ago (2026-09-05T23:33:25+08:00)"
+    likely_intentional: true
+    intent_evidence: "The second token is a deliberate, separately worded branch of the same commit's code."
+    drift_origin: spec_written_with_code
+    recommendation: update_spec
+    recommendation_basis: "D6: likely_intentional=true + age < 6 months → update_spec."
+    drift_notes: "Reproduction is by code reading; classified high-confidence because both branches are explicit literals."
+    already_registered: []
+    also_observed_by: []
+
+  - id: SD-10
+    rank: 10
+    claim_id: CLAIM-021
+    divergence_type: behavior_mismatch
+    divergence_severity: low
+    confidence: high
+    spec_location: "plugins/sdlc/dogfood/ring-audit/audit.schema.md:11-14"
+    spec_says: >-
+      "与 CARD-01 卡面 `notes` 的差异（卡面早于 G1 解释规则写成，以本文件为准）：签字三元组不在 gates[]，
+      gates[].exercised / not_exercised 这两个键不存在；merge_candidate 标在 assessment.needed.verdict 上，
+      不是标在 Assessment 顶层；rings[].missing[] 是 gap id 字符串，不是 Gap 记录。"
+    code_location: "plugins/sdlc/dogfood/ring-audit/cards/CARD-01.yaml:26-40 (notes) at HEAD"
+    code_does: >-
+      The card at HEAD already states all three G1 readings itself: "…无 exercised 标志）；签字人三元组随 verdict
+      ∈ {pending, pass, reject, waived} 放在 run_evidence.gates[]…（G1 解释规则 3，已裁）", "每个的
+      Assessment.needed.verdict 都是 merge_candidate…（G1 解释规则 1，已裁）", "parts[].fills[] 与 rings[].missing[]
+      都放 gap key…（G1 解释规则 2，已裁）". The three "差异" the schema doc claims to supersede existed in the card
+      at 0be2770 (it then said "human Gate 可带 exercised: false" and "两者 Assessment 都标 merge_candidate", and did
+      not say what missing[] holds) and were removed 13 minutes later by 5a6889c. At HEAD the doc describes a card
+      state that no longer exists, and its "以本文件为准" precedence clause has nothing left to override.
+    reproduction: |
+      git show 0be2770:plugins/sdlc/dogfood/ring-audit/cards/CARD-01.yaml | grep -o 'exercised[^;]*'          # exercised: false …
+      grep -o '无 exercised 标志\|G1 解释规则 [123]，已裁' plugins/sdlc/dogfood/ring-audit/cards/CARD-01.yaml   # 4 hits at HEAD
+      git log --format='%h %ad %s' --date=iso -- plugins/sdlc/dogfood/ring-audit/cards/CARD-01.yaml            # 5a6889c 23:46:56
+    evidence:
+      - "5a6889c body: 'cards/CARD-01.yaml: notes rewritten to the G1 签字版解释规则 readings (superseded points are now stated in audit.schema.md)'; stat shows audit.schema.md untouched by that commit"
+      - "audit.schema.md:11-14 (git blame → 0be2770, 23:33); da8c315 later touched schema.md (已知空隙 note) without revisiting this block"
+    commit_introducing_drift: "5a6889c — docs(sdlc): ring-audit skill issues I-59..I-64, CARD-01 notes on G1"
+    additional_contributing_commits: []
+    drift_age: "3 hours ago (2026-09-05T23:46:56+08:00)"
+    likely_intentional: true
+    intent_evidence: "The commit explicitly rewrote the card to the G1 readings; leaving the schema doc's '差异' framing stale was the untended side."
+    drift_origin: target_changed_after_doc_was_written
+    recommendation: update_spec
+    recommendation_basis: "D6: likely_intentional=true + age < 6 months → update_spec."
+    drift_notes: >-
+      Side note, not a signal: schema.md:123 spells the pointer `merge_candidate_with`, while G1 rule 1 and F-05 write
+      the informal `merge_candidate: <另一 Part>`; audit.yaml (4 Parts) and render_audit.py:282 use
+      merge_candidate_with, so doc, data and renderer agree — no divergence there.
+    already_registered: []
+    also_observed_by: []
+
+  - id: SD-11
+    rank: 11
+    claim_id: CLAIM-019
+    divergence_type: contract_mismatch
+    divergence_severity: low
+    confidence: high
+    spec_location: "plugins/sdlc/dogfood/ring-audit/derived/form-draft.md:34 (F-16); audit.schema.md:115 and :149"
+    spec_says: >-
+      F-16: "Assessment 与 Gap 各带 `disposition: fix_list | issue | none`". audit.schema.md: Assessment
+      "disposition: none  # none | issue" and Gap "disposition: issue  # none | issue" — the enum lost `fix_list`.
+    code_location: "plugins/sdlc/dogfood/ring-audit/audit.yaml (disposition values); check_audit.py (no disposition predicate); render_audit.py:308, :368"
+    code_does: >-
+      check_audit.py has no predicate on disposition (setting one to 'bogus' → exit 0). audit.yaml uses only
+      none (22 assessments / 40 gaps) and issue (20 / 33); no fix_list. The fix-list destination lives instead on
+      proposals[].destination = skill_fix_list (13 of 39), matching schema.md:201's destination enum. The
+      renderer prints disposition verbatim.
+    reproduction: |
+      python3 -c "import yaml,collections;d=yaml.safe_load(open('plugins/sdlc/dogfood/ring-audit/audit.yaml'));print(collections.Counter(p['assessment'].get('disposition') for r in d['rings'] for p in r['parts']),collections.Counter(g.get('disposition') for g in d['gaps']))"
+      # → Counter({'none': 22, 'issue': 20}) Counter({'none': 40, 'issue': 33})
+      # copy audit.yaml with rings[0].parts[0].assessment.disposition: bogus → check_audit.py exit 0
+    evidence:
+      - "executed both this session"
+      - "audit.schema.md:115, :149 (git blame → 0be2770)"
+    commit_introducing_drift: "0be2770 — feat(ring-audit): add check-audit CLI, commit replay and schema doc"
+    additional_contributing_commits: []
+    drift_age: "3 hours ago (2026-09-05T23:33:25+08:00)"
+    likely_intentional: unclear
+    intent_evidence: "Not mentioned in the commit; the enum was narrowed silently when F-16 was transcribed into the schema doc."
+    drift_origin: spec_transcription_narrowed_an_enum
+    recommendation: needs_human
+    recommendation_basis: "D6: likely_intentional=unclear → needs_human."
+    drift_notes: "F-16's other constraint ('naming.fit = misfit 的 disposition 只能是 issue 或 none') holds: tune, the only misfit, has disposition issue."
+    already_registered: []
+    also_observed_by: []
+
+# ============================================================================================
+# D1 — claims extracted (testable ones only, plus the vague ones marked testable: false)
+# ============================================================================================
+claims_extracted:
+  - {id: CLAIM-001, spec_location: "done_when.yaml AC-001-a", claim: "check-audit on complete audit.yaml with the 5 agent required_parts → exit 0, rings 10, parts_total 42, parts_without_assessment 0, required_parts_missing 0", testable: true, status: agree}
+  - {id: CLAIM-002, spec_location: "done_when.yaml AC-001-b", claim: "one ring removed → exit 1 ring_missing", testable: true, status: agree}
+  - {id: CLAIM-003, spec_location: "done_when.yaml AC-002-a", claim: "dims_without_psl_id / unknown / without_evidence all 0 against PSL index 001..017", testable: true, status: agree}
+  - {id: CLAIM-004, spec_location: "done_when.yaml AC-004-b; audit.schema.md:200", claim: "proposal lacking a source assessment or gap id → exit 1 proposal_without_source", testable: true, status: drift, signal: SD-04}
+  - {id: CLAIM-005, spec_location: "done_when.yaml AC-006-a; F-15", claim: "delegated_agent signers never render as 人签", testable: true, status: agree, note: "render_audit.py:41-44 closed map; AUDIT.md:929-935 renders 代签（delegated）for G1/G2; human AC — evidence only"}
+  - {id: CLAIM-006, spec_location: "done_when.yaml AC-006-a; F-14; PSL A6", claim: "run_evidence records the exit-0 run and a delete-ring exit-1 twin; header says exit 0 / exit 1", testable: true, status: agree, note: "both recorded cmds re-run verbatim this session; observed counts identical (10/42/0/0 and 9/31/2/18)"}
+  - {id: CLAIM-007, spec_location: "done_when.yaml AC-006-a; PSL A8", claim: "run_evidence lists the Card-commit replay against the three audited dirs (empty) and the skill-issues path", testable: true, status: drift, signal: SD-01, note: "property true by live run; record field inconsistent"}
+  - {id: CLAIM-008, spec_location: "done_when.yaml AC-007-a", claim: "every Card-footer commit replays exit 0 and card_commits_touching_audited_dirs = 0", testable: true, status: agree, note: "live: 13 replays exit 0, touching 0"}
+  - {id: CLAIM-009, spec_location: "done_when.yaml AC-007-b; audit.schema.md:266", claim: "a Card commit modifying plugins/sdlc/skills/** → exit 1 whitelist_overflow; any rejected replay → whitelist_overflow", testable: true, status: partial, signal: SD-09, note: "AC case agrees by code path; the '任一回放被拒' clause diverges"}
+  - {id: CLAIM-010, spec_location: "done_when.yaml AC-008..011-a", claim: "the four ring-group views with their required_parts → exit 0", testable: true, status: agree}
+  - {id: CLAIM-011, spec_location: "F-12; UI-2; AUDIT.md:3-11", claim: "AUDIT.md is the deterministic projection of audit.yaml, same directory, header names yaml + script paths", testable: true, status: agree, note: "render to scratch → byte-identical to committed AUDIT.md (1091 lines)"}
+  - {id: CLAIM-012, spec_location: "F-13", claim: "exit 0 iff the F-13 conjunction holds", testable: true, status: partial, signal: [SD-02, SD-05], note: "ring-set predicate weakened under --rings; fills predicate stricter than rule 2(e)"}
+  - {id: CLAIM-013, spec_location: "F-14; audit.schema.md:30-32", claim: "--variant delete-ring:<id> drops the ring in memory; exit 0 without a recorded twin is uncalibrated", testable: true, status: agree}
+  - {id: CLAIM-014, spec_location: "F-17; audit.schema.md:26-28", claim: "--rings narrows only attendance, parts_without_assessment and required-parts lookup; no other predicate", testable: true, status: drift, signal: SD-02}
+  - {id: CLAIM-015, spec_location: "audit.schema.md:36", claim: "six top-level registries, none may be absent", testable: true, status: drift, signal: SD-06}
+  - {id: CLAIM-016, spec_location: "audit.schema.md:33-44; AUDIT.md assembly notes", claim: "top-level shape is exactly the six registries; assembly notes list every assembly change", testable: true, status: drift, signal: SD-07}
+  - {id: CLAIM-017, spec_location: "audit.schema.md:24", claim: "stdout is always one JSON object", testable: true, status: drift, signal: SD-08}
+  - {id: CLAIM-018, spec_location: "g1-record.md:367 rule 2(e); audit.schema.md:80", claim: "fills[] keys must exist in gaps[] (rule 2e) / and be same-ring (schema)", testable: true, status: drift, signal: SD-05}
+  - {id: CLAIM-019, spec_location: "F-16; audit.schema.md:115,149", claim: "disposition enum", testable: true, status: drift, signal: SD-11}
+  - {id: CLAIM-020, spec_location: "F-06; audit.schema.md:121", claim: "an Artifact with empty checked_by caps its producer's implemented at declared", testable: true, status: drift, signal: SD-03}
+  - {id: CLAIM-021, spec_location: "audit.schema.md:11-14", claim: "CARD-01 notes differ from this file in three places", testable: true, status: drift, signal: SD-10}
+  - {id: CLAIM-022, spec_location: "g1-record.md rule 3(b); audit.schema.md §run_evidence", claim: "verdict ≠ pending needs signer + signer_kind; delegated_agent needs authorization_ref", testable: true, status: agree, note: "check_audit.py:376-391; signer_kind enum (F-07) is not checked — F-13 never asked; see dropped_candidates"}
+  - {id: CLAIM-023, spec_location: "PSL γ; F-13", claim: "audit.yaml top-level rings is exactly 10 (R0–R8 + spine)", testable: true, status: agree}
+  - {id: CLAIM-024, spec_location: "done_when.yaml behavior.thresholds mutation_kill_rate >= 0.70", claim: "mutation kill rate ≥ 0.70", testable: true, status: agree, note: "non-functional; measurement from --qa-report: fixture 24/24 = 1.0 (re-run by qa-reviewer), instrument 23/30 = 0.767 (self-consistent per qa-reviewer). No unmeasured non-functional signal emitted (iron rule 8)."}
+  - {id: CLAIM-025, spec_location: "render_audit.py:468, :711-712 (hard-coded prose)", claim: "'本次三道门没有一道是人签'; 'R017 归到的两个环…' ", testable: true, status: agree_today, note: "latent: prose is hard-coded, not computed; true for current data (2 delegated + 1 pending; R017 → R6 · R7 in the computed table). Not emitted — no present divergence."}
+  - {id: CLAIM-026, spec_location: "PSL Vision / Mental Model", claim: "配件的存在理由是填缺口 …", testable: false, note: "world-model statements; not comparable to code"}
+
+# ============================================================================================
+# Claims checked and found consistent (so the reader knows what was NOT drifting)
+# ============================================================================================
+verified_no_drift:
+  - "AUDIT.md:13-14 header exit 0 / exit 1 statements are derived from run_evidence.check_runs (render_audit.py:193-200) and the two recorded commands re-run verbatim at HEAD reproduce exit 0 (10/42/0/0, psl_index_size 17) and exit 1 (ring_missing: R6; rings 9, parts_total 31, required_parts_missing 2, orphan_gaps 18)."
+  - "AUDIT.md == render_audit.py(audit.yaml) byte-for-byte (1091 lines)."
+  - "AUDIT.md:15 scale line (10 环 · 42 配件 · 73 缺口 · 33 处登记为缺少 · 58 条产物-生产者 · 39 条提案) recomputed from audit.yaml: all six numbers match."
+  - "All 39 proposals[].source values resolve to an assessment.id or a gaps[].id today."
+  - "0 cross-ring fills, 0 orphan gaps, 0 double producers, 0 spurious merge_candidate in audit.yaml at HEAD."
+  - "AC-008..011-a views: all four exit 0 with required_parts_missing 0."
+  - "git diff --stat 0be2770^..HEAD -- plugins/sdlc/skills plugins/sdlc/agents plugins/sdlc/docs → empty (PSL-003 property holds on the reviewed branch)."
+  - "replay_card_commits.sh --no-renames (L69) and the footer-less second pass (L123-142) are present and ran cleanly: non_card_commits_scanned 8, touching 0."
+  - "run_evidence.gates: G1/G2 pass with signer_kind delegated_agent + authorization_ref; G3 pending with nulls — consistent with rule 3(b) and rendered as 代签（delegated）."
+  - "gates[]: 3 human (G1/G2/G3) + 28 script; no script labelled 门; merge / harness-review are Parts, not Gates (rule 3(d))."
+  - "F-16 'misfit → disposition issue|none': tune (only misfit) has disposition issue."
+
+# ============================================================================================
+# Candidates examined and dropped (iron rules 5, 7, 8; or already spec-internal, not spec↔code)
+# ============================================================================================
+dropped_candidates:
+  - candidate: "AC-008..011-b `given` lists rings but no required_parts, yet expects required_part_missing"
+    why_dropped: "Contract-shape issue inside the spec, already recorded in g1-record.md 顺带 and routed to G2 fix_list; tests inherit from the paired -a. Not a spec↔code divergence."
+  - candidate: "G1 rule 3(c) `waived` must reference a state.json waiver; code has no waiver_ref check"
+    why_dropped: "Rule constrains the data, not the checker; F-13 does not list it. Already known_gaps KG-01."
+  - candidate: "F-07 signer_kind ∈ {human, delegated_agent} not enforced by check_audit.py (signer_kind: robot → exit 0)"
+    why_dropped: "F-13 never listed the enum; render_audit.py maps unknown values to 未知 rather than trusting them. Already known_gaps KG-04."
+  - candidate: "AC-001-a expects rings: 10 (count) while F-13 speaks of a ring SET; duplicate ring ids"
+    why_dropped: "Already known_gaps KG-03; code checks membership per id, count is reported."
+  - candidate: "F-15 writes `evidence_kind: substitute`; audit.yaml and audit.schema.md use `kind: substitute`"
+    why_dropped: "Informal key naming in the form-draft prose; renderer reads `kind`; no behavioural difference. Below the bet-the-rent bar."
+  - candidate: "F-10 '没有 Part 的 Ring 节仍出现并写无 Part' / F-11 '空时报告写本次无' wording not produced by the renderer"
+    why_dropped: "No ring has 0 parts today and the renderer prints '0 处登记为缺少' for empty missing; wording-level only, no present divergence."
+  - candidate: "render_audit.py:468 hard-coded '本次三道门没有一道是人签' and :711-712 R017 prose"
+    why_dropped: "True for the current document; a latent rot vector, not a present factual disagreement (see CLAIM-025)."
+  - candidate: "AUDIT.md replay table cites shas (9ad5b9c …) that do not resolve on the reviewed branch"
+    why_dropped: "Folded into SD-01 rather than emitted separately; the record's own snapshot_note discloses branch-specificity."
+
+# ============================================================================================
+# Archaeology summary
+# ============================================================================================
+archaeology:
+  commits_scanned: 21
+  commits_touching_check_audit_py: [0be2770, 08238cd]
+  commits_touching_replay_sh: [0be2770, 7cb1f55]
+  commits_touching_schema_md: [0be2770, 08238cd, da8c315]
+  commits_touching_audit_yaml: [3441ba4, b24243d, 843c3ee, ba7d5e2]
+  commits_touching_card_01: [5a6889c]
+  observation: >-
+    9 of 11 signals trace to a single commit, 0be2770 (CARD-01), where check_audit.py, replay_card_commits.sh
+    and audit.schema.md were written together — every one of those is a doc↔code disagreement born in the same
+    commit (drift_origin spec_written_with_code), not rot over time. The two exceptions are SD-01 (ba7d5e2,
+    the re-recorded replay block) and SD-03 (content cards f8ef234 / 419a364 / eba9796 vs F-06). No signal is
+    older than 3 hours; none is pre_history.
+
+self_refutation:
+  - "SD-01: considered that exit:1 might be a genuine result on fix/iter-002 (e.g. a card file missing there). Rejected: the script's own JSON would then print ok:false and card_commits_rejected ≥ 1; the record says ok:true and 0. The two fields cannot come from one run."
+  - "SD-02: considered that '哪些环必须在场' could be read to include ring_unexpected. Rejected: schema.md:47 lists ring_unexpected as its own token and :27 says no *other* predicate narrows; the docstring's grouping is the code's reading, which is exactly the divergence."
+  - "SD-03: considered dropping as 'G3 content'. Kept: F-06 is a signed form decision with a literal 'any artifact' wording, the data records a narrower reading, and two of five parts record no reading at all — a factual gap, not a taste call."
+  - "SD-05: considered that rule 2(e)'s omission is a typo. That is a possible human judgment; the skill does not make it — three downstream readers vs one signed sentence is reported as-is."
+  - "SD-09: not executed against a synthetic rejected commit. Kept at high confidence because both tokens are literal string branches four lines apart."

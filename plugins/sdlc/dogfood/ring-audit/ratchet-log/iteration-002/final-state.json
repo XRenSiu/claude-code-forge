@@ -1,0 +1,20 @@
+{
+  "iteration": 2,
+  "state_decision": "NEEDS_HUMAN",
+  "blocking_findings_count": 0,
+  "non_blocking_p1_warnings": 6,
+  "merged_findings": 20,
+  "recurrences_of_iteration_001": 7,
+  "introduced_by_fix_round": 2,
+  "gaming_risk_score": 4.0,
+  "gaming_trajectory": [
+    3.5,
+    4.0
+  ],
+  "spec_drift_counter": 0,
+  "qa_decision": "GO",
+  "pm_overall": "partially_compliant (REQ-004 = KG-02), block_merge false",
+  "isolation": "medium",
+  "next_action": "g2-judge decode (score 4.0 > precedent bound 3.5; fix-introduced findings): FIX-003 + iteration-003 with card budget grant, or ship-as-reviewed with all findings in Known issues",
+  "written_at": "2026-09-05T19:12:50Z"
+}

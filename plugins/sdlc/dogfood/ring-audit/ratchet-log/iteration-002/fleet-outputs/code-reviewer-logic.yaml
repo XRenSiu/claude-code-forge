@@ -1,0 +1,309 @@
+# code-reviewer --focus=logic — acceptance-fleet iteration-002 (sdlc-ring-audit), re-run over the fixed head ba7d5e2.
+# Shape: plugins/sdlc/skills/code-reviewer/references/finding-schema.yaml (+ the four header fields COMMON.md requires).
+# Independence: no other evaluator output (either iteration), no .sdlc/**, no meta-judge file was read.
+code_review:
+  agent_role: logic
+  model: claude-fable-5-1
+  vendor: claude
+  isolation: medium
+  inputs_read:
+    - plugins/sdlc/skills/code-reviewer/SKILL.md
+    - plugins/sdlc/skills/code-reviewer/references/finding-schema.yaml
+    - plugins/sdlc/skills/code-reviewer/references/focus-areas.md
+    - plugins/sdlc/dogfood/ring-audit/check_audit.py
+    - plugins/sdlc/dogfood/ring-audit/render_audit.py
+    - plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh
+    - plugins/sdlc/dogfood/ring-audit/audit.schema.md
+    - plugins/sdlc/dogfood/ring-audit/audit.yaml
+    - plugins/sdlc/dogfood/ring-audit/AUDIT.md
+    - plugins/sdlc/dogfood/ring-audit/audit/rings-R0-R2-spine.yaml
+    - plugins/sdlc/dogfood/ring-audit/audit/rings-R3-R5.yaml
+    - plugins/sdlc/dogfood/ring-audit/audit/rings-R6.yaml
+    - plugins/sdlc/dogfood/ring-audit/audit/rings-R7-R8.yaml
+    - plugins/sdlc/dogfood/ring-audit/issue-body.md
+    - plugins/sdlc/dogfood/ring-audit/done_when.yaml
+    - "plugins/sdlc/dogfood/ring-audit/g1-record.md (## 签字版解释规则 1-3)"
+    - "plugins/sdlc/dogfood/ring-audit/derived/form-draft.md (F-04..F-17, F-20..F-24)"
+    - plugins/sdlc/dogfood/ring-audit/tests/ring-audit/test_check_audit.py
+    - plugins/sdlc/dogfood/ring-audit/tests/ring-audit/fixtures/MUTANTS.md
+    - "git diff 57ebf2b..ba7d5e2 -- plugins/sdlc/dogfood/ring-audit (card range)"
+    - "git diff 843c3ee..ba7d5e2 -- plugins/sdlc/dogfood/ring-audit (iteration-002 incremental)"
+    - "git show 843c3ee:plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh (pre-fix baseline, for the regression check only)"
+    - "git show 9ad5b9c:plugins/sdlc/dogfood/ring-audit/audit.yaml (recording commit of run_evidence.audited_dirs_diff)"
+  adversarial_mode: false
+  diff_source: "57ebf2b..ba7d5e2 -- plugins/sdlc/dogfood/ring-audit (incremental since iteration-001: 843c3ee..ba7d5e2, 54 hunks / 3125 lines)"
+  diff_total_hunks: 1974
+  diff_total_lines_changed: 28996
+  rules_loaded: []
+  repo_root: /Users/xrensiu/development/owner/claude-code-forge
+  iteration_seconds: 900
+  tool_calls_used: 18
+  tool_call_budget: 20
+  num_findings: 5
+  max_findings_limit: 5
+
+  findings:
+    - finding_id: cr-001
+      severity: P1
+      file: plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh
+      line_range: [82, 84]
+      category: boundary_condition_empty_input
+      root_cause: >-
+        The iteration-002 refactor collects commits into the bash array `shas` and then iterates
+        `for i in $(seq 0 $(( ${#shas[@]} - 1 )))`. When the range `main..HEAD` is empty the array is
+        empty, macOS/BSD `seq 0 -1` emits `0` and `-1`, and `${shas[$i]}` under `set -u` aborts with
+        "shas[$i]: unbound variable". The script exits 1 with ZERO bytes on stdout — violating its own
+        contract ("stdout is one JSON object"; exit 1 means a failed predicate, exit 2 means unreadable
+        input) and making the PSL-003 instrument unreadable exactly where AUDIT.md tells readers to re-run
+        it ("换分支或 rebase 之后必须重跑"). The pre-fix version at 843c3ee (a plain `while read` loop)
+        printed `{"card_commits": 0, ..., "ok": true}` and exited 0 on the same input, so this is a
+        regression introduced by commit 7cb1f55.
+      reproduction_scenario: >-
+        mkdir r && cd r && git init -q -b main . && git commit -q --allow-empty -m init &&
+        bash <repo>/plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh; echo $?
+        → stderr "replay_card_commits.sh: line 84: shas[$i]: unbound variable", stdout empty, exit 1.
+        Equivalent real-world trigger: run the script from the repo after the branch is merged to `main`
+        (RANGE_SPEC becomes `main..HEAD` == empty). Same command against 843c3ee's script → JSON, exit 0.
+      confidence: high
+      evidence:
+        - kind: read
+          file: plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh
+          lines: [21, 21]
+          observation: "`set -uo pipefail` — -u is what turns the empty-array index into an abort"
+        - kind: read
+          file: plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh
+          lines: [74, 88]
+          observation: "shas=() / cards=() built from `git log $RANGE_SPEC`; loop header `seq 0 $(( ${#shas[@]} - 1 ))`; body reads `${shas[$i]}`"
+        - kind: read
+          file: plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh
+          lines: [16, 16]
+          observation: "docstring contract: 'stdout is one JSON object; card_commits_touching_audited_dirs is the number REQ-007 reads'"
+        - kind: git_log
+          file: plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh
+          observation: "only two commits touch the file in the card range: 0be2770 (initial, while-read loop) and 7cb1f55 (iteration-002 fix, array + seq loop). Reproduced: old script on empty repo → JSON + exit 0; new script → 0 bytes + exit 1. `bash --version` = 3.2.57 (macOS default), `seq 0 -1` → '0 -1'."
+        - kind: grep
+          query: "replay_card_commits"
+          matches: 1
+          match_files: ["plugins/sdlc/dogfood/ring-audit/tests/ring-audit/test_check_audit.py"]
+          observation: "the only L5 test (test_AC_007_a) runs it in a twin repo with no `main`, so RANGE_SPEC=HEAD is never empty and the regression is not covered"
+      needs_codebase_check: false
+      suggested_change: >-
+        Guard the loops: `if [ "${#shas[@]}" -gt 0 ]; then for i in $(seq 0 $(( ${#shas[@]} - 1 ))); do ... done; fi`
+        (or iterate `for i in "${!shas[@]}"`, which yields nothing on an empty array under every bash/seq),
+        and add an L5 case where `main..HEAD` is empty expecting exit 0 and `card_commits: 0`.
+      tags: ["regression-since-843c3ee", "REQ-007", "PSL-003"]
+
+    - finding_id: cr-002
+      severity: P2
+      file: plugins/sdlc/dogfood/ring-audit/check_audit.py
+      line_range: [161, 168]
+      category: spec_text_mismatch_view_narrowing
+      root_cause: >-
+        With `--rings`, `wanted` becomes the listed rings only, so `ring_missing` is checked only for those
+        rings and the `ring_unexpected` loop is skipped entirely (`if selected_rings is None`). F-17 says
+        `--rings` limits ONLY `parts_without_assessment` (and where `--required-parts` is looked up) and
+        "不改任何既有谓词"; F-13's first predicate "Ring 集合 = {R0…R8, spine}" is an existing predicate and
+        is silently disabled under the view. The module docstring (line 15) and audit.schema.md document
+        the narrowing as intended, but that is the implementation describing itself, not the signed form.
+        Consequence: every AC-008..011-a invocation (all use `--rings`) returns exit 0 on a document that
+        is missing a ring or carries a ring outside the canonical ten; an F-14 twin run under a view that
+        excludes the deleted ring reports no `ring_missing` at all (only an incidental `orphan_gap`, and
+        only when that ring owns gaps).
+      reproduction_scenario: >-
+        (1) Copy audit.yaml, delete ring R7 and its gaps → `check_audit.py copy.yaml --rings R6` exits 0,
+        failed_predicates [] ; without `--rings` the same file exits 1 `ring_missing: R7`.
+        (2) Append `{id: R9, question: x, parts: [], missing: []}` to rings → `--rings R6` exits 0;
+        without `--rings` exits 1 `ring_unexpected`.
+        (3) `check_audit.py audit.yaml --rings R0,R1,R2,spine --variant delete-ring:R7` → failed_predicates
+        ['orphan_gap'] only; `ring_missing` absent although a ring was deleted.
+      confidence: high
+      evidence:
+        - kind: read
+          file: plugins/sdlc/dogfood/ring-audit/check_audit.py
+          lines: [151, 170]
+        - kind: read
+          file: plugins/sdlc/dogfood/ring-audit/derived/form-draft.md
+          lines: [35, 35]
+          observation: "F-17: '…parts_without_assessment 受 --rings 限定；不改任何既有谓词'"
+        - kind: read
+          file: plugins/sdlc/dogfood/ring-audit/derived/form-draft.md
+          lines: [31, 31]
+          observation: "F-13 exit-0 condition begins 'Ring 集合 = {R0…R8, spine}'"
+        - kind: read
+          file: plugins/sdlc/dogfood/ring-audit/check_audit.py
+          lines: [15, 16]
+          observation: "docstring: 'with --rings only the listed rings must attend' — the deviation is deliberate and documented, which does not make it match F-17"
+      needs_codebase_check: false
+      suggested_change: >-
+        Always check ring attendance against CANONICAL_RINGS (both `ring_missing` and `ring_unexpected`),
+        and let `selected_rings` only choose the `view` returned for parts_without_assessment /
+        required-parts lookup; update the docstring line 15 and audit.schema.md §检查脚本 accordingly.
+      tags: ["F-13", "F-17", "AC-008..011"]
+
+    - finding_id: cr-003
+      severity: P2
+      file: plugins/sdlc/dogfood/ring-audit/check_audit.py
+      line_range: [364, 374]
+      category: enum_not_enforced_predicate_bypass
+      root_cause: >-
+        Rule 3 is dispatched as `if kind == "script": … elif kind == "human" and gid not in HUMAN_GATES: …`.
+        A gates[] entry whose `kind` is anything else — `human_gate` (the natural copy of the Part kind),
+        a typo, or absent — falls through both branches and is never examined, so neither
+        `gate_not_declared` (G1 rule 3d / F-06 "human 仅 G1 / G2 / G3") nor `script_gate_rendered_as_door`
+        can fire for it, even when it carries `label: 门`. F-06 fixes Gate.kind to `script | human`, but
+        that enum is the one enum the script does not enforce (evidence.kind, implemented.verdict,
+        run_evidence verdict all are). The mutant fixture uses `kind: human`, so the L5 suite never
+        exercises the bypass. The renderer compounds it: `gate_label('merge')` for such an entry prints
+        "`merge`（未在 gates[] 登记）" although the id IS in gates[].
+      reproduction_scenario: >-
+        Append `{id: merge, kind: human_gate, label: 门}` (or `{id: merge, label: 门}` with no kind) to
+        gates[] in a copy of audit.yaml → `check_audit.py copy.yaml` exits 0, failed_predicates [].
+        Same entry with `kind: human` → exit 1 `gate_not_declared`.
+      confidence: high
+      evidence:
+        - kind: read
+          file: plugins/sdlc/dogfood/ring-audit/check_audit.py
+          lines: [357, 375]
+        - kind: read
+          file: plugins/sdlc/dogfood/ring-audit/g1-record.md
+          lines: [383, 383]
+          observation: "rule 3(d): 'fixture 若把 human.merge / human.harness-review 放进 gates[] → exit 1 gate_not_declared（F-06 枚举）' — no kind qualifier"
+        - kind: read
+          file: plugins/sdlc/dogfood/ring-audit/render_audit.py
+          lines: [129, 136]
+          observation: "gate_label(): unknown kind → '（未在 gates[] 登记）' even when the id is registered"
+        - kind: grep
+          query: "kind: human"
+          matches: 1
+          match_files: ["plugins/sdlc/dogfood/ring-audit/tests/ring-audit/fixtures/mutant_gate_not_declared.yaml"]
+          observation: "MUTANTS.md: 'gates[] gains human.merge' — the mutant uses the checked kind, so the off-enum path is untested"
+      needs_codebase_check: false
+      suggested_change: >-
+        Add a closed enum check: `if kind not in ("script", "human"): report.fail("gate_kind_outside_enum", …)`
+        (and treat any non-script gate with `id not in HUMAN_GATES` as `gate_not_declared`); make
+        render_audit.gate_label distinguish "registered with unknown kind" from "not in gates[]".
+      tags: ["F-06", "G1-rule-3d", "PSL-006"]
+
+    - finding_id: cr-004
+      severity: P2
+      file: plugins/sdlc/dogfood/ring-audit/check_audit.py
+      line_range: [258, 278]
+      category: spec_text_mismatch_over_strict_predicate
+      root_cause: >-
+        `resolve()` fails `unknown_gap_ref` when `gap.ring != ring_id`, and it is applied to BOTH
+        `rings[].missing[]` (line 301) and `parts[].fills[]` (line 278). G1 rule 2(e) is deliberately
+        asymmetric: "`missing[]` 里的每个键必在 `gaps[]` 且其 `ring` 一致；`fills[]` 里的每个键必在 `gaps[]`"
+        — the FILLS edge only requires existence. F-04 says a Gap is owned by exactly one Ring and may be
+        filled by many Parts, and says nothing about the fillers' rings. The code therefore forbids any
+        cross-ring FILLS edge (e.g. spine/`sdlc` filling a Control gap in R4, or R6/`human_gate.G3` filling
+        a Judgment gap in R7): the auditor's only ways round it are to leave the gap orphaned
+        (`orphan_gap`), list it in `missing[]` while a Part fills it (semantically false), or re-register
+        the same value object under the filler's ring (a different Gap per rule 2b). The message
+        "unknown_gap_ref … whose ring is 'R7'" also misnames a known gap as unknown. The docstring
+        (lines 28-29) and audit.schema.md line 80 assert the stricter reading; g1-record.md does not.
+      reproduction_scenario: >-
+        In a copy of audit.yaml append `R7/newly_identified/judgment+control/pr-body-product-order` to
+        R6/acceptance-fleet `fills[]` → exit 1 `unknown_gap_ref: R6/acceptance-fleet.fills references
+        R7/…, whose ring is 'R7'`. Under G1 rule 2(e) as written this edge is legal (the id exists in
+        gaps[]). No current Part in audit.yaml fills cross-ring, so the live document is unaffected.
+      confidence: medium
+      evidence:
+        - kind: read
+          file: plugins/sdlc/dogfood/ring-audit/check_audit.py
+          lines: [248, 304]
+        - kind: read
+          file: plugins/sdlc/dogfood/ring-audit/g1-record.md
+          lines: [370, 370]
+          observation: "rule 2(e) text — ring-consistency clause attached only to missing[]"
+        - kind: read
+          file: plugins/sdlc/dogfood/ring-audit/derived/form-draft.md
+          lines: [19, 19]
+          observation: "F-04: 'Gap 归属于恰一个 Ring' + '一个 Gap 可被多个 Part 填（N:N…）' — no filler-ring constraint"
+        - kind: grep
+          query: "cross-ring fills (scripted: gap.ring != part.ring over all parts[].fills[])"
+          matches: 0
+          observation: "audit.yaml has none today, so the over-strictness is latent, not a live false exit 1"
+      needs_codebase_check: false
+      suggested_change: >-
+        Pass a flag to `resolve()` so the ring check applies only to `missing[]`; for `fills[]` require
+        existence in gaps[] only, or — if the same-ring reading is what G3 wants — record it as an
+        explicit interpretation amendment in g1-record.md rather than only in the script docstring.
+      tags: ["G1-rule-2e", "F-04", "PSL-017"]
+
+    - finding_id: cr-005
+      severity: P2
+      file: plugins/sdlc/dogfood/ring-audit/render_audit.py
+      line_range: [509, 533]
+      category: projection_drops_contradicting_field
+      root_cause: >-
+        `run_evidence.audited_dirs_diff` in audit.yaml records `exit: 1` (line 3415) together with
+        `ok: true`, `card_commits_touching_audited_dirs: 0`, `card_commits_rejected: 0`. By the script's
+        own logic (`status=1` iff rejected>0 or overflow>0; `ok` = status==0) that combination cannot come
+        from one run, so the record is internally inconsistent — the field was already `exit: 1` at the
+        recording commit 9ad5b9c, and re-running the instrument at ba7d5e2 gives exit 0 / ok true, so
+        `exit` is the wrong field. The renderer's PSL-003 table projects `ok`, branch, head, range_spec,
+        snapshot_at, the four counts, and the per-commit rows, but neither `cmd` nor `exit`; AUDIT.md
+        therefore shows "回放结论 `ok: true`" with no trace of the recorded exit 1 (grep 'exit: 1'
+        AUDIT.md → 0). F-12 says the yaml wins on disagreement, but here the yaml disagrees with itself
+        and the human half (AC-006-a's `#run-evidence`) cannot reveal it. This is the same class the
+        iteration-002 fix addressed for check_runs (which DO render exit per run) — the replay record was
+        left without the same treatment.
+      reproduction_scenario: >-
+        `grep -nE '^    (exit|ok):' plugins/sdlc/dogfood/ring-audit/audit.yaml` → 3415 `exit: 1`,
+        3422 `ok: true` under audited_dirs_diff; `python3 render_audit.py audit.yaml -o /tmp/x.md &&
+        grep -c 'exit: 1' /tmp/x.md` → 0; `bash replay_card_commits.sh; echo $?` at ba7d5e2 → ok true,
+        exit 0 (13 card commits, 0 touching, 0 rejected).
+      confidence: high
+      evidence:
+        - kind: read
+          file: plugins/sdlc/dogfood/ring-audit/audit.yaml
+          lines: [3412, 3425]
+          observation: "cmd / exit: 1 / ok: true / card_commits_rejected: 0 in one record"
+        - kind: read
+          file: plugins/sdlc/dogfood/ring-audit/render_audit.py
+          lines: [509, 537]
+          observation: "diff.get(...) calls: instrument, ok, branch, head, range_spec, snapshot_at, sha_scope, card_commits, *_touching_*, *_rejected, non_card_*, snapshot_note, touches_audited_dirs_per_commit — no 'cmd', no 'exit'"
+        - kind: read
+          file: plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh
+          lines: [151, 175]
+          observation: "status=1 only if rejected>0 || overflow>0; \"ok\": status==0; exit $status — exit 1 with ok true is unreachable"
+        - kind: git_log
+          file: plugins/sdlc/dogfood/ring-audit/audit.yaml
+          observation: "git show 9ad5b9c:…/audit.yaml already carries exit: 1 + ok: true (lines 3394/3403), so the inconsistency predates the cherry-pick onto docs/1-sdlc-ring-audit"
+      needs_codebase_check: false
+      suggested_change: >-
+        Render `cmd` and `exit` in the PSL-003 table (as check_runs already does) and print a visible
+        "**登记 ≠ 现算**"-style flag when `exit != 0` and `ok` is true (or vice versa); correct the
+        recorded value to `exit: 0` after re-running the instrument on the branch.
+      tags: ["F-12", "F-15", "AC-006-a-evidence", "PSL-003"]
+
+  rationale: null
+
+  caveats:
+    adversarial_mode_caveat: null
+    diff_truncation_caveat: >-
+      The card-range diff has 1974 hunks; the ~1900 hunks in tests/ring-audit/fixtures/*.yaml and
+      ratchet-log/iteration-001/** were skipped as out of --focus=logic (fixture bodies, prior-iteration
+      logs). All hunks in check_audit.py, render_audit.py, replay_card_commits.sh, audit.schema.md,
+      audit.yaml (top-level registries + run_evidence) and the four audit/rings-*.yaml fragments were read.
+    rules_conflict_caveat: null
+    cross_vendor_unavailable_caveat: "Same-vendor (claude) review; no Codex/Gemini pass was run."
+
+  # Walked but not emitted (rebutted or below the P2 precision bar):
+  #  - audit.yaml ↔ four fragments merge: 42 parts / 73 gaps / 58 (artifact, producer) / 39 proposals / 10 rings identical
+  #    in both directions, no duplicate part, gap, artifact or proposal ids; gates[] 31 after the documented lock_done_when.py
+  #    dedupe; run_evidence / unenforced_rules / suspected_duplicate_pairs are the only assembly-level additions. Consistent.
+  #  - Rule 1 on the live data: card.allowed_files has three producers (implement, agent.card-implementer[alternatives_of],
+  #    agent.comment-fixer); the two unexempted ones both carry needed.verdict merge_candidate with merge_candidate_with
+  #    pointing at each other → legal per G1 rule 1; spurious_merge_candidate 0. done_when.yaml pair likewise. Consistent.
+  #  - render_audit.py key coverage: every part / assessment / dimension / gap / run_evidence key present in audit.yaml is
+  #    referenced by the renderer except naming.fit (redundant with naming.verdict, always equal here). AUDIT.md at HEAD is
+  #    byte-identical to a fresh render. All 39 proposals have destination ∈ {new_issue, skill_fix_list}, so the
+  #    three-bucket grouping drops none (a fourth destination value WOULD be silently dropped — P3, not emitted).
+  #  - `implemented: true` (whole dimension boolean) yields parts_missing + implemented_outside_enum, not boolean_implemented;
+  #    still exit 1, and the fixture/AC pin the verdict-level form → token-only mismatch, P3, not emitted.
+  #  - `--variant delete-ring:<unknown id>` silently deletes nothing and exits 0; F-14 twin detection then correctly reports
+  #    uncalibrated, so it fails safe — not emitted.
+  #  - id_collision_sentence() hard-codes the prefix "因为没有冲突：" even when it goes on to report collisions, and
+  #    unenforced_rules_notes() ends with a hand-written R017→R6/R7 sentence it claims to compute — P3 prose bugs, not emitted.
+  #  - Human ACs (AC-005-a / AC-006-a) are G3's; the evidence relevant to AC-006-a is cr-005.

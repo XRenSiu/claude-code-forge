@@ -1,0 +1,64 @@
+# L4 任务卡 — sdlc-ring-audit；合格标准：单独丢给一个没有任何上下文的 agent，它能干完。
+id: CARD-02
+title: 审计内容：Ring R0,R1,R2,spine 的每个 Part 一条三维 Assessment + 该环 missing（Gap 列表），写成 audit.yaml 片段
+req_ids:
+- REQ-008
+ac_ids:
+- AC-008-a
+- AC-008-b
+dos_slice:
+  objects:
+  - Ring
+  - Part
+  - Gap
+  - Artifact
+  - Gate
+  - Assessment
+  - Loop
+  invariants:
+  - R001
+  - R002
+  - R003
+  - R004
+  - R005
+  - R006
+  - R007
+allowed_files:
+- plugins/sdlc/dogfood/ring-audit/audit/rings-R0-R2-spine.yaml
+context_estimate_tokens: 36000
+depends_on:
+- CARD-01
+notes: '上下文自包含：只读 (1) 本卡；(2) sdlc_state.py show 的摘要；(3) 本卡 ac_ids 对应的 AC（done_when.yaml 只读）；(4) 形态草案 derived/form-draft.md（签字版 746c56ef…；F-13/F-17 是检查脚本接口，F-01…F-09 是记录形状）；(5) PSL-sdlc-ring-audit.md 的 Domain
+  Model / 规律索引；(6) allowed_files 内源码。不得读：ratchet-log/**、spec-robustness、评审 skill 的提示、其他卡、.sdlc/ 账本里评审者的发现。 交付一个只含 rings R0,R1,R2,spine 的 audit.yaml 片段（形状见 CARD-01 产出的 audit.schema.md）。必需 Part（AC 的 required_parts）：psl,
+  psl-derive, human_gate.G1, dos-extract, invariant-extract, issue, donewhen-extract, acceptance-spec, human_gate.G2, sdlc, asset.graph.yaml, asset.loops.yaml, asset.routing.yaml, asset.triggers.yaml；缺一个
+  → AC 不过。每个 Part：kind∈{skill,agent,asset,human_gate}；ring 由 graph.yaml Node.role 推出并把行号写进 ring_evidence（无节点的 Part 写 no_node 并按 ARCHITECTURE §1 落环；§1 与 Node.role 冲突写 role_conflict 并列两源，不调和——F-08/F-24）；provenance
+  authored|adopted（收编来源见 SKILL.md frontmatter 注释与 docs/design-notes.md）；artifact = graph.yaml Node.writes ∪ ARCHITECTURE §1 产物列（同一 Artifact 两个 producer 且非同阶段条件替代 → 两者 needed.verdict=merge_candidate；同阶段条件替代按
+  F-05 三条件判并记 alternatives_of）；gates = checked_by（verify 脚本 → kind script 渲染''闸''；G1/G2/G3/merge/harness-review → kind human 渲染''门''）；loop 引用 loops.yaml#id（只有 loop_back 端点或 generator/verifier 才需 loop_reason）。Assessment
+  三维各 {verdict, psl_ids[≥1], evidence[≥1 {kind∈{file,gate_json,smoke,run_record}, ref}]}：needed = deletion 测试在生命周期高度上读（写出撤掉后流水线会产出的具体错误产物或漏检，不接受''流程会断''）；填零个 Gap 原子 → overfill；contested 时并列两句、necessity_conflict
+  true；implemented ∈ {declared, compiled, verified}（无 verify 脚本无门 → declared 且 compiled/verified 各写 not_reached: <缺什么>；有 verify 脚本 + gate.json static_only → compiled；行为层跑过 → verified（本次除 dogfood 亲历的 sdlc_state.py
+  / verify_*.py 路径外都没有）；verified 附 calibrated: bool）；naming = {provenance, artifact_or_position, fit: fits|misfit（同词干或同义即 fits，F-03）, suggested_name?, rename: false}，收编不是免检。missing[]：该环上无 Part 填的 Gap {atoms,
+  source∈{lifecycle_blank, newly_identified, unenforced_rule}, necessity, deletion_test, evidence[], disposition}——来源：ARCHITECTURE §7 与 lifecycle.md 制品映射表的空白行（lifecycle_blank）、无 Gate 检的 Artifact 与本卡新识别（newly_identified）、dos.yaml
+  里 enforced_by ∈ {user_workflow, not_enforced} 的规则 R001/R008/R010/R017（unenforced_rule）。每维 psl_ids 只能引用 PSL 规律索引 001..017（内容层 008/009/012 可引）。自检：python3 plugins/sdlc/dogfood/ring-audit/check_audit.py plugins/sdlc/dogfood/ring-audit/audit/rings-R0-R2-spine.yaml
+  --psl plugins/sdlc/dogfood/ring-audit/PSL-sdlc-ring-audit.md --rings R0,R1,R2,spine --required-parts "psl, psl-derive, human_gate.G1, dos-extract, invariant-extract, issue, donewhen-extract, acceptance-spec,
+  human_gate.G2, sdlc, asset.graph.yaml, asset.loops.yaml, asset.routing.yaml, asset.triggers.yaml" 必须 exit 0。不得修改被审目录任何文件；发现的 skill 源码问题只写进 Assessment 的 evidence / disposition，不改 skill。　G1 签字版解释规则（2026-09-05，g1-record.md ## 签字版解释规则）覆盖本卡以下读法，以规则与 audit.schema.md 为准：(规则 1) 同一 Artifact 的双生产者若无 alternatives_of，则每个生产者的 needed.verdict 必须是 merge_candidate 并写 merge_candidate_with；不是双生产者的 Part 不得标 merge_candidate（spurious_merge_candidate）。(规则 2) 顶层 gaps[] 注册表每项 {id: <ring>/<source>/<atoms>/<slug>, ring, atoms, source, necessity, deletion_test, evidence[], disposition}；parts[].fills[] 与 rings[].missing[] 只放 gap id（同环）；fills == [] 的 Part 其 needed.verdict 必须是 overfill；无人填的 Gap 必在其环 missing[]。(规则 3) 顶层 gates[] 里 kind=human 的只有 G1/G2/G3；merge / harness-review 是 kind=human_gate 的 Part，不进 gates[]、不带 exercised；signer/signer_kind/authorization_ref 三元组不在 gates[]，随判决落在 run_evidence.gates[]（verdict ∈ pending|pass|reject|waived；非 pending 必有 signer 与 signer_kind；delegated_agent 必有 authorization_ref）。片段的 Part.gates 只写检该 Part 产物的 Gate id（脚本闸 = verify 脚本文件名；门 = G1|G2|G3）。'
+forbidden_files:
+- tests/**
+- '**/tests/**'
+- done_when.yaml
+- '**/done_when.yaml'
+- dos.yaml
+- '**/dos.yaml'
+- .done_when.lock
+- '**/.done_when.lock'
+- plugins/sdlc/skills/**
+- plugins/sdlc/agents/**
+- plugins/sdlc/docs/**
+- plugins/sdlc/dogfood/ring-audit/PSL-sdlc-ring-audit.md
+- plugins/sdlc/dogfood/ring-audit/derived/**
+- plugins/sdlc/dogfood/ring-audit/issue-body.md
+- plugins/sdlc/dogfood/ring-audit/g1-record.md
+- plugins/sdlc/dogfood/ring-audit/g2-record.md
+- .sdlc/**
+budget:
+  retries: 3
+mock_allowlist: []

@@ -1,0 +1,212 @@
+{
+  "_note": "M1 dedupe output for meta-judge iteration-002 (sdlc-ring-audit). 27 raw source records -> 20 merged findings (6 merges absorbing 7 records). Input to scripts/compute_confidence.py; confidence fields in meta-judge-output.yaml are pasted verbatim from its --json output. Drift-signal severities map medium->P2, low->P3; pm partially_compliant->P2; pm out_of_scope_observations carry no P-level or confidence field (null).",
+  "deduplicated_findings": [
+    {
+      "merged_finding_id": "mf-001",
+      "file": "plugins/sdlc/dogfood/ring-audit/audit.yaml",
+      "line_range": [3416, 3440],
+      "synthesized_severity": "P1",
+      "topic": "replay record head/branch/first-row sha 9ad5b9c not reachable from the reviewed branch; disclaimer instead of a resolving record",
+      "sources": [
+        {"role": "spec-gaming-detector", "finding_id": "gd-unc-002", "vendor": "claude", "confidence": "high"},
+        {"role": "pm-reviewer", "finding_id": "out_of_scope_observations[1]", "vendor": "claude", "confidence": null}
+      ]
+    },
+    {
+      "merged_finding_id": "mf-002",
+      "file": "plugins/sdlc/dogfood/ring-audit/audit.yaml",
+      "line_range": [3412, 3427],
+      "synthesized_severity": "P2",
+      "topic": "run_evidence.audited_dirs_diff records exit: 1 beside ok: true / 0 touching / 0 rejected — unreachable combination for the instrument",
+      "sources": [
+        {"role": "spec-drift-detector", "finding_id": "SD-01", "vendor": "claude", "confidence": "high"},
+        {"role": "spec-gaming-detector", "finding_id": "gd-unc-001", "vendor": "claude", "confidence": "high"},
+        {"role": "pm-reviewer", "finding_id": "out_of_scope_observations[0]", "vendor": "claude", "confidence": null}
+      ]
+    },
+    {
+      "merged_finding_id": "mf-003",
+      "file": "plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh",
+      "line_range": [82, 84],
+      "synthesized_severity": "P1",
+      "topic": "empty main..HEAD range -> seq 0 -1 -> unbound variable under set -u; zero-byte stdout, exit 1 (regression from 7cb1f55)",
+      "sources": [
+        {"role": "code-reviewer", "finding_id": "logic/cr-001", "vendor": "claude", "confidence": "high"}
+      ]
+    },
+    {
+      "merged_finding_id": "mf-004",
+      "file": "plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh",
+      "line_range": [69, 69],
+      "synthesized_severity": "P1",
+      "topic": "core.quotePath C-quoting of non-ASCII paths defeats the anchored AUDITED_RE grep",
+      "sources": [
+        {"role": "code-reviewer", "finding_id": "security/cr-002", "vendor": "claude", "confidence": "high"}
+      ]
+    },
+    {
+      "merged_finding_id": "mf-005",
+      "file": "plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh",
+      "line_range": [130, 131],
+      "synthesized_severity": "P1",
+      "topic": "second (footer-less) pass window starts at the oldest Card commit and needs card_commits>0; pre-Card commits and non-canonical footers invisible to both passes",
+      "sources": [
+        {"role": "code-reviewer", "finding_id": "security/cr-003", "vendor": "claude", "confidence": "high"}
+      ]
+    },
+    {
+      "merged_finding_id": "mf-006",
+      "file": "plugins/sdlc/dogfood/ring-audit/render_audit.py",
+      "line_range": [259, 259],
+      "synthesized_severity": "P1",
+      "topic": "residual table-row interpolations bypass cell()/code() (gaps[].atoms, gate_label gid, SOURCE_LABEL fallback, run.*, holdout, known_gaps id, duplicates, refs())",
+      "sources": [
+        {"role": "code-reviewer", "finding_id": "security/cr-001", "vendor": "claude", "confidence": "high"}
+      ]
+    },
+    {
+      "merged_finding_id": "mf-007",
+      "file": "plugins/sdlc/dogfood/ring-audit/check_audit.py",
+      "line_range": [388, 391],
+      "synthesized_severity": "P1",
+      "topic": "signer_kind enum {human, delegated_agent} not closed; authorization_ref required only for the literal delegated_agent (known gap KG-04)",
+      "sources": [
+        {"role": "code-reviewer", "finding_id": "security/cr-004", "vendor": "claude", "confidence": "high"}
+      ]
+    },
+    {
+      "merged_finding_id": "mf-008",
+      "file": "plugins/sdlc/dogfood/ring-audit/check_audit.py",
+      "line_range": [161, 168],
+      "synthesized_severity": "P2",
+      "topic": "--rings narrows ring_missing to the view and skips ring_unexpected entirely, contrary to F-17 '不改任何既有谓词'",
+      "sources": [
+        {"role": "code-reviewer", "finding_id": "logic/cr-002", "vendor": "claude", "confidence": "high"},
+        {"role": "spec-drift-detector", "finding_id": "SD-02", "vendor": "claude", "confidence": "high"}
+      ]
+    },
+    {
+      "merged_finding_id": "mf-009",
+      "file": "plugins/sdlc/dogfood/ring-audit/audit.yaml",
+      "line_range": [1348, 1860],
+      "synthesized_severity": "P2",
+      "topic": "F-06 cap: producers with checked_by [] artifacts recorded implemented=compiled (3 all-empty / 5 any-empty); no predicate; contradiction displayed in new checked_by column",
+      "sources": [
+        {"role": "spec-gaming-detector", "finding_id": "gd-unc-003", "vendor": "claude", "confidence": "medium"},
+        {"role": "spec-drift-detector", "finding_id": "SD-03", "vendor": "claude", "confidence": "high"}
+      ]
+    },
+    {
+      "merged_finding_id": "mf-010",
+      "file": "plugins/sdlc/dogfood/ring-audit/check_audit.py",
+      "line_range": [258, 278],
+      "synthesized_severity": "P2",
+      "topic": "resolve() applies the same-ring clause to parts[].fills[] although G1 rule 2(e) states it only for rings[].missing[]",
+      "sources": [
+        {"role": "code-reviewer", "finding_id": "logic/cr-004", "vendor": "claude", "confidence": "medium"},
+        {"role": "spec-drift-detector", "finding_id": "SD-05", "vendor": "claude", "confidence": "high"}
+      ]
+    },
+    {
+      "merged_finding_id": "mf-011",
+      "file": "plugins/sdlc/dogfood/ring-audit/check_audit.py",
+      "line_range": [394, 402],
+      "synthesized_severity": "P2",
+      "topic": "check_proposals tests proposal.source non-empty only; a dangling id exits 0 (known gap KG-02)",
+      "sources": [
+        {"role": "pm-reviewer", "finding_id": "REQ-004/partially_compliant", "vendor": "claude", "confidence": "high"},
+        {"role": "spec-drift-detector", "finding_id": "SD-04", "vendor": "claude", "confidence": "high"}
+      ]
+    },
+    {
+      "merged_finding_id": "mf-012",
+      "file": "plugins/sdlc/dogfood/ring-audit/render_audit.py",
+      "line_range": [509, 533],
+      "synthesized_severity": "P2",
+      "topic": "PSL-003 replay table projects ok/counts but neither cmd nor exit, so the record's exit:1 never reaches AUDIT.md",
+      "sources": [
+        {"role": "code-reviewer", "finding_id": "logic/cr-005", "vendor": "claude", "confidence": "high"}
+      ]
+    },
+    {
+      "merged_finding_id": "mf-013",
+      "file": "plugins/sdlc/dogfood/ring-audit/check_audit.py",
+      "line_range": [334, 336],
+      "synthesized_severity": "P2",
+      "topic": "any non-empty alternatives_of string exempts a second producer; none of F-05's three conditions checked",
+      "sources": [
+        {"role": "code-reviewer", "finding_id": "security/cr-005", "vendor": "claude", "confidence": "high"}
+      ]
+    },
+    {
+      "merged_finding_id": "mf-014",
+      "file": "plugins/sdlc/dogfood/ring-audit/check_audit.py",
+      "line_range": [364, 374],
+      "synthesized_severity": "P2",
+      "topic": "gates[].kind outside {script, human} falls through both rule-3 branches; gate_not_declared / script_gate_rendered_as_door cannot fire",
+      "sources": [
+        {"role": "code-reviewer", "finding_id": "logic/cr-003", "vendor": "claude", "confidence": "high"}
+      ]
+    },
+    {
+      "merged_finding_id": "mf-015",
+      "file": "plugins/sdlc/dogfood/ring-audit/check_audit.py",
+      "line_range": [153, 429],
+      "synthesized_severity": "P3",
+      "topic": "absent top-level registries (gates / proposals / run_evidence) read as empty with no predicate; schema doc says 缺一不可",
+      "sources": [
+        {"role": "spec-drift-detector", "finding_id": "SD-06", "vendor": "claude", "confidence": "high"}
+      ]
+    },
+    {
+      "merged_finding_id": "mf-016",
+      "file": "plugins/sdlc/dogfood/ring-audit/check_audit.py",
+      "line_range": [70, 72],
+      "synthesized_severity": "P3",
+      "topic": "exit-2 paths write nothing to stdout although the schema doc says stdout 恒为一个 JSON 对象",
+      "sources": [
+        {"role": "spec-drift-detector", "finding_id": "SD-08", "vendor": "claude", "confidence": "high"}
+      ]
+    },
+    {
+      "merged_finding_id": "mf-017",
+      "file": "plugins/sdlc/dogfood/ring-audit/audit.schema.md",
+      "line_range": [33, 44],
+      "synthesized_severity": "P3",
+      "topic": "schema doc lists six top-level registries; audit.yaml carries eight (suspected_duplicate_pairs, unenforced_rules); assembly notes omit unenforced_rules",
+      "sources": [
+        {"role": "spec-drift-detector", "finding_id": "SD-07", "vendor": "claude", "confidence": "high"}
+      ]
+    },
+    {
+      "merged_finding_id": "mf-018",
+      "file": "plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh",
+      "line_range": [112, 149],
+      "synthesized_severity": "P3",
+      "topic": "docs say any rejected replay prints whitelist_overflow; script emits replay_reject for non-overflow verify_commit rejections",
+      "sources": [
+        {"role": "spec-drift-detector", "finding_id": "SD-09", "vendor": "claude", "confidence": "high"}
+      ]
+    },
+    {
+      "merged_finding_id": "mf-019",
+      "file": "plugins/sdlc/dogfood/ring-audit/audit.schema.md",
+      "line_range": [11, 14],
+      "synthesized_severity": "P3",
+      "topic": "schema doc's 'differences from CARD-01 notes' block describes a card state rewritten away by 5a6889c",
+      "sources": [
+        {"role": "spec-drift-detector", "finding_id": "SD-10", "vendor": "claude", "confidence": "high"}
+      ]
+    },
+    {
+      "merged_finding_id": "mf-020",
+      "file": "plugins/sdlc/dogfood/ring-audit/audit.schema.md",
+      "line_range": [115, 149],
+      "synthesized_severity": "P3",
+      "topic": "disposition enum narrowed from F-16 {fix_list, issue, none} to {none, issue}; no predicate on disposition",
+      "sources": [
+        {"role": "spec-drift-detector", "finding_id": "SD-11", "vendor": "claude", "confidence": "high"}
+      ]
+    }
+  ]
+}

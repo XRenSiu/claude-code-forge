@@ -1,0 +1,25 @@
+{
+  "head": "ba7d5e2d2f3cc32da5e70a978c22db8f3feb6010",
+  "previous_iteration_head": "843c3ee60e39218074f8f358b3f3c373bfb5f596",
+  "spec_md_sha256": "2aa2e65d9ff67eb3f99211bc3040e5c7f0c429c5e3de9b2edb386bdd7b9d1b57",
+  "done_when_yaml_sha256": "fb5af3f06734070c98481b27901ca895febf3ce873086dcf2d1ebdd7db0ca367",
+  "spec_robustness_md_sha256": null,
+  "spec_robustness_note": "not produced this run \u2014 recorded as a gap (srg-*)",
+  "tests_directory_sha256": "439165b70979d8e374c0c663c0f8bfd1f028c453a3a7402d8a82bb4be79448ab",
+  "impl_root_sha256": "86d20e07cc52ad86e72f8c5947d3ccfe29683ed59c0d2ddd269572be32203c5d",
+  "impl_files": [
+    "plugins/sdlc/dogfood/ring-audit/check_audit.py",
+    "plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh",
+    "plugins/sdlc/dogfood/ring-audit/render_audit.py",
+    "plugins/sdlc/dogfood/ring-audit/audit.yaml",
+    "plugins/sdlc/dogfood/ring-audit/AUDIT.md",
+    "plugins/sdlc/dogfood/ring-audit/audit.schema.md",
+    "plugins/sdlc/dogfood/ring-audit/audit/rings-R0-R2-spine.yaml",
+    "plugins/sdlc/dogfood/ring-audit/audit/rings-R3-R5.yaml",
+    "plugins/sdlc/dogfood/ring-audit/audit/rings-R6.yaml",
+    "plugins/sdlc/dogfood/ring-audit/audit/rings-R7-R8.yaml"
+  ],
+  "lock_sha256": "1cb8516711dd1f16301e6a0c423b4a73bfd8596e3d3b9e83fe7515a3764ea0f7",
+  "form_draft_sha256": "746c56ef3e39e8e7089db0914bc01015b6dd522ef622c449e3d6260fbc10880d",
+  "impl_diff_lines": 838
+}

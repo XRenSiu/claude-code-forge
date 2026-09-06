@@ -457,6 +457,17 @@
             "rule_error",
             "none"
           ]
+        },
+        "signer_kind": {
+          "enum": [
+            "human",
+            "delegated_agent"
+          ],
+          "description": "human 亲签，或用户明确授权下的代签 agent（须有 authorization）"
+        },
+        "authorization": {
+          "type": "string",
+          "description": "代签授权：谁 / 何时 / 允许到哪一步"
         }
       }
     }

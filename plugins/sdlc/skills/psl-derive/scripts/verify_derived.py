@@ -41,7 +41,9 @@ def read(p):
 def psl_ids_and_vocab(psl_text):
     ids = set(PSL_ID_RE.findall(psl_text))
     # Domain Model vocabulary: capitalised identifiers / backticked names inside the Domain Model section
-    m = re.search(r"^#{1,3}\s*.*(domain\s*model|领域模型).*?$(.*?)(?=^#{1,3}\s|\Z)", psl_text, re.S | re.M | re.I)
+    # heading part must stay on one line ([^\n]) — under re.S a greedy `.*` would run to the LAST mention of
+    # "Domain Model" anywhere in the file and leave an empty body (found by dogfood 2026-09-05, I-05)
+    m = re.search(r"^#{1,3}[^\n]*(domain\s*model|领域模型)[^\n]*$\n(.*?)(?=^#{1,3}\s|\Z)", psl_text, re.S | re.M | re.I)
     body = m.group(2) if m else psl_text
     vocab = set(re.findall(r"`([A-Za-z][A-Za-z0-9_]{1,40})`", body)) | set(re.findall(r"\b([A-Z][a-zA-Z0-9]{2,40})\b", body))
     return ids, vocab
@@ -69,6 +71,11 @@ def main():
     decisions, cited = 0, set()
     if os.path.isfile(files["form-draft.md"]):
         for line in read(files["form-draft.md"]).splitlines():
+            if re.match(r"^\s*-\s*\[F-", line) and not re.match(r"^\s*-\s*\[F-\d+\]", line):
+                # a decision-looking line whose id the verifier cannot parse (e.g. F-13a) would otherwise be skipped
+                # silently — uncounted and its citation unchecked (dogfood 2026-09-05, I-47)
+                rejects.append(f"form-draft decision id not F-<digits>: {line.strip()[:60]} — suffixed ids bypass the pre-gate")
+                continue
             if re.match(r"^\s*-\s*\[F-\d+\]", line):
                 decisions += 1
                 m = DECISION_RE.match(line)
@@ -85,6 +92,8 @@ def main():
     # workflow
     if os.path.isfile(files["workflow.md"]):
         w = read(files["workflow.md"])
+        # blockquote lines are the template's own guidance and quote the banned tokens (dogfood 2026-09-05, I-04)
+        w = "\n".join(l for l in w.splitlines() if not l.lstrip().startswith(">"))
         hits = STEP_RE.findall(w)
         if hits:
             rejects.append(f"workflow.md contains named steps: {sorted(set(hits))[:4]} — write Σ/φ, not a procedure")

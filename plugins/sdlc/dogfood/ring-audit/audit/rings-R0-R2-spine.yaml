@@ -1,0 +1,1034 @@
+# audit.yaml 片段 — Ring R0 / R1 / R2 / 脊柱（CARD-02）
+#
+# 形状见 ../audit.schema.md（CARD-01 产物），判定在 ../check_audit.py。
+# 路径约定：本片段的 `psl` / `check` 与 CARD-06 装配后的 audit.yaml 同基准（ring-audit 根目录）；
+# 所有 evidence.ref 是仓库相对路径。本片段不写 run_evidence——它是 CARD-06 装配时填的整份文档级证据。
+#
+# 自检：
+#   python3 plugins/sdlc/dogfood/ring-audit/check_audit.py \
+#     plugins/sdlc/dogfood/ring-audit/audit/rings-R0-R2-spine.yaml \
+#     --psl plugins/sdlc/dogfood/ring-audit/PSL-sdlc-ring-audit.md \
+#     --rings R0,R1,R2,spine --required-parts "..."
+#
+# 本片段采用的两条解释（都在 Assessment 正文里写明，G3 可推翻）：
+#   ① F-06 的 declared 封顶按 Part 的**独占** Artifact 判（PSL 领域模型：Part 独占 0..1 Artifact）。
+#      共同生产或有争的 Artifact 若 checked_by 为空，仍照 F-06 抬出一条 Control Gap 进该环 missing，
+#      但不把一个独占产物有闸的 Part 压回 declared——否则 dos-extract 这种"主产物有闸、审计线无闸"
+#      的配件会被判成"只声明了"，比事实更不诚实（DP-1 要的是不高估，不是一律低估）。
+#   ② implemented 的 verified 一律未达：PSL State Machine 的"已验证"是"带 / 不带对比的行为层跑过"，
+#      本 Run 产出了 R0–R2 多个 skill 的产物，但没有任何一次带 / 不带 skill 的对比运行
+#      （各 skill gate.json 的 tier2_status 均为 NOT RUN）。产物存在不等于对比跑过。
+
+schema: audit/1
+feature: sdlc-ring-audit
+psl: PSL-sdlc-ring-audit.md
+check: check_audit.py
+
+rings:
+
+# =============================================================================
+# R0 世界
+# =============================================================================
+- id: R0
+  question: 这个产品为什么这样运转
+  parts:
+
+  - id: psl
+    kind: skill
+    ring: R0
+    ring_evidence: 'plugins/sdlc/skills/sdlc/assets/graph.yaml#L48-L53（Node.role=world → R0）'
+    provenance: adopted
+    loop: loops.yaml#lifecycle
+    loop_reason: 'graph.yaml#L301 的 loop_back（signal counterexample_cites_psl_rule）以 psl 为落点，环归属 lifecycle'
+    artifact: PSL-<feature>.md
+    gates: [verify_psl.py]
+    fills: [R0/newly_identified/knowledge+judgment/world-before-form]
+    assessment:
+      id: A-psl
+      state: evidenced
+      needed:
+        verdict: necessary
+        psl_ids: [PSL-002, PSL-016]
+        evidence:
+        - {kind: file, ref: 'plugins/sdlc/skills/psl/SKILL.md#缺口'}
+        - {kind: file, ref: 'plugins/sdlc/docs/ARCHITECTURE.md#1-九环与一根脊柱'}
+        deletion_test: 撤掉后引擎按字面实现需求——"按时间搜索记忆"交出一个 created_at 字段加日历筛选器，产物技术正确、产品错误；且这类世界层错误一路漏到 R6 验收才暴露，回流要走 routing 的 world 层（无自动上限）。
+      implemented:
+        verdict: compiled
+        psl_ids: [PSL-010, PSL-015]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/psl/scripts/verify_psl.py}
+        - {kind: gate_json, ref: 'plugins/sdlc/skills/psl/eval/gate.json#gate_pass'}
+        - {kind: run_record, ref: plugins/sdlc/dogfood/ring-audit/PSL-sdlc-ring-audit.md}
+        not_reached:
+          verified: 无带 / 不带 skill 的对比运行（gate.json tier2_status NOT RUN，T1–T5 未跑）；本 Run 产出了 PSL-sdlc-ring-audit.md，但产物存在不等于对比跑过，也没有 verify_psl.py 对它的运行记录。
+        gate_caveat: 'verify_psl.py 是"交付前必须跑"的声明式预门，未挂 hooks.json——gate.json fix_list 第一条即此（A''-1）。它构成 compiled，不构成不可跳过。'
+      naming:
+        verdict: fits
+        provenance: adopted
+        artifact_or_position: PSL-<feature>.md
+        fit: fits
+        rename: false
+        psl_ids: [PSL-014]
+        evidence:
+        - {kind: gate_json, ref: 'plugins/sdlc/skills/psl/eval/gate.json#imported_into_sdlc.from'}
+        - {kind: file, ref: 'plugins/sdlc/docs/design-notes.md#直接收编整-skill-复制进本插件正文保留加术语映射--接线'}
+        fit_reason: 收编自 looper v0.2.0，保留上游名；名字与独占产物 PSL-*.md 同词干，按 F-03 判 fits（收编不是免检，此处是真判过）。
+      disposition: none
+      adjudications: []
+
+  - id: psl-derive
+    kind: skill
+    ring: R0
+    ring_evidence: 'plugins/sdlc/skills/sdlc/assets/graph.yaml#L54-L59（Node.role=world → R0）'
+    provenance: authored
+    loop: null
+    artifact: derived/**
+    gates: [verify_derived.py, G1]
+    fills: [R0/newly_identified/judgment+control+capability/derivation-traceability]
+    assessment:
+      id: A-psl-derive
+      state: evidenced
+      needed:
+        verdict: necessary
+        psl_ids: [PSL-002, PSL-003]
+        evidence:
+        - {kind: file, ref: 'plugins/sdlc/skills/psl-derive/SKILL.md#缺口judgment--control--capability'}
+        - {kind: file, ref: 'plugins/sdlc/docs/design-notes.md#直接收编整-skill-复制进本插件正文保留加术语映射--接线'}
+        deletion_test: 撤掉后 derived/ 四文件不存在，形态在实现里"顺手"定；G1 拿不到可裁之物，门空转——验收时出现"AC 全绿但交付的不是要的形态"，且无法归因"推错了 vs 规律错了"（每条决策 ← PSL-ID 的锚消失）。
+      implemented:
+        verdict: compiled
+        psl_ids: [PSL-010, PSL-015]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/psl-derive/scripts/verify_derived.py}
+        - {kind: gate_json, ref: 'plugins/sdlc/skills/psl-derive/eval/gate.json#gate_pass'}
+        - {kind: run_record, ref: plugins/sdlc/dogfood/ring-audit/derived/form-draft.md}
+        not_reached:
+          verified: gate.json fix_list 明写 "L2：run N=3 isolated derivations on one real PSL and hold a real G1" 未做；本 Run 的 derived/ 有 v1/v2/v3 三稿，但那是同一推导者的三轮修订，不是 N 次隔离推导的分歧集，也不是带 / 不带 skill 的对比。
+      naming:
+        verdict: fits
+        provenance: authored
+        artifact_or_position: derived/**
+        fit: fits
+        rename: false
+        psl_ids: [PSL-014]
+        evidence:
+        - {kind: file, ref: 'plugins/sdlc/docs/design-notes.md#直接收编整-skill-复制进本插件正文保留加术语映射--接线'}
+        - {kind: file, ref: plugins/sdlc/skills/psl-derive/SKILL.md}
+        fit_reason: 新写（gate.json 无 imported_into_sdlc 块），按产物命名；derive 与产物目录 derived/ 同词干，F-03 判 fits。
+      disposition: none
+      adjudications: []
+
+  - id: human_gate.G1
+    kind: human_gate
+    ring: R0
+    ring_evidence: 'plugins/sdlc/skills/sdlc/assets/graph.yaml#L60-L66（Node.role=gate，非环角色；按 F-08 归其所检产物 derived/** 所在环 R0，并与 ARCHITECTURE.md §1 表 R0 门闸列的 G1 一致，两源不冲突）'
+    provenance: authored
+    loop: loops.yaml#lifecycle
+    loop_reason: 'graph.yaml#L301 的 loop_back 由 human.g1 出发，环归属 lifecycle'
+    artifact: g1-record.md
+    role: gate
+    gates: [sdlc_state.py]
+    fills: [R0/newly_identified/control/world-verdict-door]
+    assessment:
+      id: A-G1
+      state: evidenced
+      needed:
+        verdict: necessary
+        psl_ids: [PSL-006, PSL-003]
+        evidence:
+        - {kind: file, ref: 'plugins/sdlc/docs/ARCHITECTURE.md#32-三道门只能人签'}
+        - {kind: file, ref: plugins/sdlc/skills/sdlc/assets/g1_record.md}
+        deletion_test: 撤掉后形态草案由生产它的引擎自评通过（评估者 = 被评估者），PSL 与形态之间的分歧集无人裁；一次错误的形态推导直接进 issue 与契约，R2 之后每一件产物都建在它上面，返工要退回 world 层。
+      implemented:
+        verdict: compiled
+        psl_ids: [PSL-006, PSL-010]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/sdlc/assets/g1_record.md}
+        - {kind: gate_json, ref: 'plugins/sdlc/skills/sdlc/eval/gate.json#provenance.scripts_run.sdlc_state.py'}
+        - {kind: run_record, ref: plugins/sdlc/dogfood/ring-audit/g1-record.md}
+        not_reached:
+          verified: 门本身在本 Run 走过两轮（第一轮否决），但签字人是 delegated_agent 代签，不是人签；PSL-006 下代签不得渲染为人签，因此"人签的门跑通了"这一层没有证据。
+        gate_caveat: 'sdlc_state.py gate g1 检的是状态字段（pass 要求 world.derived_dir、reject 要求 attribution），不是 g1-record.md 的内容——是部分检，不是对产物的完整闸。'
+      naming:
+        verdict: fits
+        provenance: authored
+        artifact_or_position: G1（世界裁决门，ARCHITECTURE §1 R0 门闸列）
+        fit: fits
+        rename: false
+        psl_ids: [PSL-014]
+        evidence:
+        - {kind: file, ref: 'plugins/sdlc/docs/ARCHITECTURE.md#32-三道门只能人签'}
+        fit_reason: 名字是位置名（三道门里的第一道，裁世界），F-03 的"位置名"分支判 fits。
+      disposition: none
+      adjudications: []
+
+  missing:
+  - R0/lifecycle_blank/capability/psl-reference-lint
+  - R0/lifecycle_blank/control/g1-external-evidence
+
+# =============================================================================
+# R1 本体
+# =============================================================================
+- id: R1
+  question: 系统里有什么、叫什么、什么不可违反
+  parts:
+
+  - id: dos-extract
+    kind: skill
+    ring: R1
+    ring_evidence: 'plugins/sdlc/skills/sdlc/assets/graph.yaml#L69-L74（Node.role=knowledge → R1）'
+    provenance: adopted
+    loop: null
+    artifact: dos.yaml
+    gates: [verify_dos.py]
+    fills: [R1/newly_identified/knowledge+capability+judgment/shared-ontology]
+    assessment:
+      id: A-dos-extract
+      state: evidenced
+      needed:
+        verdict: necessary
+        psl_ids: [PSL-002, PSL-016]
+        evidence:
+        - {kind: file, ref: 'plugins/sdlc/skills/dos-extract/SKILL.md#the-gap-why-a-scan-is-not-an-ontology'}
+        - {kind: file, ref: 'plugins/sdlc/skills/sdlc/assets/graph.yaml#L304-L305'}
+        deletion_test: 撤掉后 issue 的 DOS 词表闭包没有解析源、卡的 dos_slice 没有来源，verify_issue.py --dos 与 lint_cards.py --dos 退化成不检；产出的 issue 与卡里同一个对象带三个名字，且"该转 PSL 轨"的客观触发（闭包失败）永远不会触发。
+      implemented:
+        verdict: compiled
+        psl_ids: [PSL-010, PSL-015]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/dos-extract/scripts/verify_dos.py}
+        - {kind: gate_json, ref: 'plugins/sdlc/skills/dos-extract/eval/gate.json#gate_pass'}
+        - {kind: run_record, ref: plugins/sdlc/dogfood/ring-audit/dos.yaml}
+        not_reached:
+          verified: gate.json tier2_status NOT RUN——需要 held-out repo 上带 / 不带 delta_exist 的对比；本 Run 产出了 dos.yaml 与 decisions.md，但没有对比臂。
+        no_gate_note: 'decisions.md（graph.yaml#L73 的第二个 writes）无任何闸——verify_dos.py 只在拒绝信息里提到它（scripts/verify_dos.py:67），不校验它。按 F-06 抬出 Gap R1/newly_identified/control/decisions-md-no-gate；按本片段解释 ①，独占产物 dos.yaml 有闸，故不把本 Part 压回 declared。'
+      naming:
+        verdict: fits
+        provenance: adopted
+        artifact_or_position: dos.yaml
+        fit: fits
+        rename: false
+        psl_ids: [PSL-014]
+        evidence:
+        - {kind: gate_json, ref: 'plugins/sdlc/skills/dos-extract/eval/gate.json#imported_into_sdlc.from'}
+        fit_reason: 收编自 looper v0.2.0，保留上游名；名字与独占产物 dos.yaml 同词干，F-03 判 fits。
+      disposition: none
+      adjudications: []
+
+  - id: invariant-extract
+    kind: skill
+    ring: R1
+    ring_evidence: 'plugins/sdlc/skills/sdlc/assets/graph.yaml#L75-L80（Node.role=knowledge → R1）'
+    provenance: adopted
+    loop: null
+    artifact: invariants/*.yaml
+    gates: [verify_card.py]
+    fills: [R1/newly_identified/judgment+control+capability/resident-invariants]
+    assessment:
+      id: A-invariant-extract
+      state: evidenced
+      needed:
+        verdict: necessary
+        psl_ids: [PSL-002, PSL-005]
+        evidence:
+        - {kind: file, ref: 'plugins/sdlc/skills/invariant-extract/SKILL.md#the-gap-why-the-engine-cant-just-read-them-off-the-code'}
+        - {kind: file, ref: 'plugins/sdlc/skills/sdlc/assets/graph.yaml#L306'}
+        deletion_test: 撤掉后从失败里学到的 □ 不变量没有落点，spec-compile 只剩 done_when 一个编译源；同一类事故第二次发生时账本里没有可引用的不变量卡，routing 把它当一次新失败在 card 层重跑——付过学费的知识不进制品。
+      implemented:
+        verdict: compiled
+        psl_ids: [PSL-010, PSL-015]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/invariant-extract/scripts/verify_card.py}
+        - {kind: gate_json, ref: 'plugins/sdlc/skills/invariant-extract/eval/gate.json#gate_pass'}
+        - {kind: run_record, ref: plugins/sdlc/dogfood/ring-audit/invariants/sdlc-plugin.card.yaml}
+        not_reached:
+          verified: gate.json tier2_status NOT RUN——需要一个带真实 failure.memory 的 Territory 上的带 / 不带对比；本 Run 产出了一张不变量卡，无对比臂。
+      naming:
+        verdict: fits
+        provenance: adopted
+        artifact_or_position: invariants/*.yaml
+        fit: fits
+        rename: false
+        psl_ids: [PSL-014]
+        evidence:
+        - {kind: gate_json, ref: 'plugins/sdlc/skills/invariant-extract/eval/gate.json#imported_into_sdlc.from'}
+        fit_reason: 收编自 looper v0.2.0，保留上游名；名字与独占产物 invariants/*.yaml 同词干，F-03 判 fits。
+      disposition: none
+      adjudications: []
+
+  missing:
+  - R1/lifecycle_blank/control/dos-proposal-reconcile
+  - R1/lifecycle_blank/knowledge+control/ontology-drift
+  - R1/lifecycle_blank/knowledge/dos-candidate-namespace
+  - R1/newly_identified/control/decisions-md-no-gate
+
+# =============================================================================
+# R2 契约
+# =============================================================================
+- id: R2
+  question: 什么算做完
+  parts:
+
+  - id: issue
+    kind: skill
+    ring: R2
+    ring_evidence: 'plugins/sdlc/skills/sdlc/assets/graph.yaml#L83-L88（Node.role=contract → R2）'
+    provenance: authored
+    loop: null
+    artifact: 'github:issue'
+    gates: [verify_issue.py]
+    fills: [R2/newly_identified/judgment+capability+control/falsifiable-task-seed]
+    assessment:
+      id: A-issue
+      state: evidenced
+      needed:
+        verdict: necessary
+        psl_ids: [PSL-002, PSL-003]
+        evidence:
+        - {kind: file, ref: 'plugins/sdlc/skills/issue/SKILL.md#缺口judgment--capability--control'}
+        - {kind: gate_json, ref: 'plugins/sdlc/skills/issue/eval/gate.json#provenance.scripts_run.verify_issue.py'}
+        deletion_test: 撤掉后需求原文直接当 issue body——"让搜索更快"这种任何实现都能通过的 issue 进入流水线；donewhen-extract 没有可证伪的源头，pr 的 AC→证据映射无基准，review 判"越界"也无基准。产出的是一条永远不会失败的验收线。
+      implemented:
+        verdict: compiled
+        psl_ids: [PSL-010, PSL-015]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/issue/scripts/verify_issue.py}
+        - {kind: gate_json, ref: 'plugins/sdlc/skills/issue/eval/gate.json#gate_pass'}
+        - {kind: run_record, ref: plugins/sdlc/dogfood/ring-audit/issue-body.md}
+        not_reached:
+          verified: gate.json fix_list 明写 gh issue create / edit 路径未跑（需要 live repo），DOS 闭包触发 PSL 轨这件事也只在 fixture 上验过，没有带 / 不带 skill 的对比。
+      naming:
+        verdict: fits
+        provenance: authored
+        artifact_or_position: 'github:issue'
+        fit: fits
+        rename: false
+        psl_ids: [PSL-014]
+        evidence:
+        - {kind: gate_json, ref: 'plugins/sdlc/skills/issue/eval/gate.json#provenance'}
+        - {kind: file, ref: 'plugins/sdlc/docs/design-notes.md#直接改编'}
+        fit_reason: 新写（gate.json 无 imported_into_sdlc 块；design-notes 把它列在"直接改编"——借的是 qanat 三纪律与 looper 双轨判据，不是整 skill 收编），按产物命名，F-03 判 fits。
+      disposition: none
+      adjudications: []
+
+  - id: donewhen-extract
+    kind: skill
+    ring: R2
+    ring_evidence: 'plugins/sdlc/skills/sdlc/assets/graph.yaml#L89-L94（Node.role=contract → R2）'
+    provenance: adopted
+    loop: null
+    artifact: done_when.yaml
+    gates: [verify_done_when.py, validate_done_when_v2.py, G2]
+    fills: [R2/newly_identified/judgment+capability+control/falsifiable-acceptance]
+    assessment:
+      id: A-donewhen-extract
+      state: evidenced
+      needed:
+        verdict: merge_candidate
+        merge_candidate_with: acceptance-spec
+        psl_ids: [PSL-001, PSL-002]
+        evidence:
+        - {kind: file, ref: 'plugins/sdlc/skills/sdlc/assets/graph.yaml#L26'}
+        - {kind: file, ref: 'plugins/sdlc/skills/sdlc/assets/graph.yaml#L89-L100'}
+        - {kind: file, ref: 'plugins/sdlc/docs/design-notes.md#2026-09-05-第二次整理按逻辑重拆用户要求产研自闭环自洽覆盖方方面面'}
+        - {kind: file, ref: 'plugins/sdlc/skills/donewhen-extract/SKILL.md#the-gap-why-the-engine-cant-just-paraphrase-the-issue'}
+        deletion_test: 撤掉后引擎把 issue 复述成 done_when——"信号诉求被兑现"这类不可证伪套话；G2 冻结的是一份任何产出都能通过的契约，A 档一票否决永远不触发，隐藏变体集也无从生成。配件本身必要，判 merge_candidate 是因为产物有争，不是因为不必要。
+        merge_reason: 'done_when.yaml 有两个非豁免生产者。按 F-05 三条件逐条判：(a) 满足——graph.yaml#L26 stage.contract 的 handled_by 同时含两者；(b) 不满足——两者之间没有带 when 守卫的 conditional 边（对照 L320-L321 implement→card-implementer/ratchet 那种真替代）；(c) 不满足——一个产 v2、一个产 v1 需经 convert_v1_to_v2.py 转，不是同 schema。三缺二 → 不豁免 → 双方都标 merge_candidate，审计者不当场裁掉一个。'
+      implemented:
+        verdict: compiled
+        psl_ids: [PSL-010, PSL-015]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/donewhen-extract/scripts/validate_done_when_v2.py}
+        - {kind: gate_json, ref: 'plugins/sdlc/skills/donewhen-extract/eval/gate.json#gate_pass'}
+        - {kind: run_record, ref: plugins/sdlc/dogfood/ring-audit/done_when.yaml}
+        not_reached:
+          verified: gate.json tier2_status NOT RUN——需要一批带 failure_memory 的真实 Issue 上的带 / 不带对比；本 Run 产出了 done_when.yaml 与 done_when_card.yaml，无对比臂。
+      naming:
+        verdict: fits
+        provenance: adopted
+        artifact_or_position: done_when.yaml
+        fit: fits
+        rename: false
+        psl_ids: [PSL-014]
+        evidence:
+        - {kind: gate_json, ref: 'plugins/sdlc/skills/donewhen-extract/eval/gate.json#imported_into_sdlc.from'}
+        fit_reason: 收编自 qanat，保留上游名；名字与独占产物 done_when.yaml 同词干（donewhen / done_when），F-23 把这一条点名为 fits 的样例。
+      disposition: issue
+      adjudications: []
+
+  - id: acceptance-spec
+    kind: skill
+    ring: R2
+    ring_evidence: 'plugins/sdlc/skills/sdlc/assets/graph.yaml#L95-L100（Node.role=contract → R2）'
+    provenance: adopted
+    loop: null
+    artifact: specs/<f>/spec.md
+    gates: [validate_done_when.py, G2]
+    fills: [R2/newly_identified/judgment+capability+control/falsifiable-acceptance]
+    assessment:
+      id: A-acceptance-spec
+      state: evidenced
+      needed:
+        verdict: merge_candidate
+        merge_candidate_with: donewhen-extract
+        psl_ids: [PSL-001, PSL-002]
+        evidence:
+        - {kind: file, ref: 'plugins/sdlc/skills/sdlc/assets/graph.yaml#L26'}
+        - {kind: file, ref: 'plugins/sdlc/skills/sdlc/assets/graph.yaml#L95-L100'}
+        - {kind: file, ref: 'plugins/sdlc/docs/ARCHITECTURE.md#2-制品链一个产物只有一个生产者'}
+        deletion_test: 撤掉后 EARS spec.md 与 spec-robustness.md 无人生产：spec-gaming-detector 失去它的输入（graph.yaml#L183 明列 spec-robustness.md 为 reads），pm-reviewer 的 REQ 归一化没有权威源，R6 少两条判据线。done_when.yaml 一侧不受影响（v2 由 donewhen-extract 独立产出）——这正是"两者只在 done_when.yaml 上争"的证据，也是 merge 只该合掉重叠面的理由。
+        merge_reason: 同 A-donewhen-extract 的 F-05 三条件判定；本 Part 的独占产物是 spec.md / spec-robustness.md，与 donewhen-extract 争的只有 done_when.yaml 这一件。
+      implemented:
+        verdict: declared
+        psl_ids: [PSL-015, PSL-010]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/acceptance-spec/SKILL.md}
+        - {kind: file, ref: plugins/sdlc/skills/acceptance-spec/}
+        - {kind: gate_json, ref: 'plugins/sdlc/skills/acceptance-spec/eval/gate.json#fix_list'}
+        not_reached:
+          compiled: 'no_gate——本 Part 独占的两件产物 specs/<f>/spec.md 与 specs/<f>/spec-robustness.md 的 checked_by 为空：全插件 31 个 scripts/*.py 里没有一个读 spec.md，spec-robustness.md 只在 verify_graph.py 的 FORBIDDEN_CARRY_TOKENS 里作为禁带词出现（scripts/verify_graph.py:31），不是被检。它自带的 validate_done_when.py 检的是它产的 v1 done_when.yaml——那件产物是与 donewhen-extract 有争的那件，不是它的独占产物。按 F-06 封顶 declared，审计者不得以"读了 SKILL.md 觉得能跑"抬到 compiled。'
+          verified: 无带 / 不带对比运行；gate.json fix_list 明写"L2：run inside a real /sdlc acceptance stage"未做。本 Run 根本没走 acceptance-spec 这条支路（dogfood 目录里无 spec.md）。
+        no_gate: 'specs/<f>/spec.md · specs/<f>/spec-robustness.md'
+      naming:
+        verdict: fits
+        provenance: adopted
+        artifact_or_position: specs/<f>/spec.md
+        fit: fits
+        rename: false
+        psl_ids: [PSL-014]
+        evidence:
+        - {kind: gate_json, ref: 'plugins/sdlc/skills/acceptance-spec/eval/gate.json#imported_into_sdlc.from'}
+        fit_reason: 收编自 done-when-pipeline v1.1.0，保留上游名；名字后半与独占产物 spec.md 同词干，按 F-03 判 fits。存疑但不判 misfit：名字前半的 "acceptance-" 指向的是与 donewhen-extract 有争的 done_when.yaml，而不是它的独占产物——这层不贴合已由 needed.merge_candidate 承载，F-03 明确要求不要把它再记一遍成 naming 噪声。
+      disposition: issue
+      adjudications: []
+
+  - id: human_gate.G2
+    kind: human_gate
+    ring: R2
+    ring_evidence: 'plugins/sdlc/skills/sdlc/assets/graph.yaml#L101-L107（Node.role=gate，非环角色；按 F-08 归其所检产物 done_when.yaml / .done_when.lock 所在环 R2，与 ARCHITECTURE.md §1 表 R2 门闸列的 G2 一致）'
+    provenance: authored
+    loop: null
+    artifact: .done_when.lock
+    role: gate
+    gates: [lock_done_when.py, sdlc_state.py]
+    fills: [R2/newly_identified/control/contract-freeze-door]
+    assessment:
+      id: A-G2
+      state: evidenced
+      needed:
+        verdict: necessary
+        psl_ids: [PSL-003, PSL-006]
+        evidence:
+        - {kind: file, ref: 'plugins/sdlc/docs/ARCHITECTURE.md#32-三道门只能人签'}
+        - {kind: file, ref: plugins/sdlc/skills/sdlc/scripts/lock_done_when.py}
+        deletion_test: 撤掉后判据不冻结，实现者可以在实现途中改 done_when 让自己变绿；.done_when.lock 不存在则 verify_commit.py 与 verify_pr.py 的锁校验全线空转，C6（测试非实现者写、写完锁）与 C7 防作弊清单里的锁那一项一起失效——产出的是一份"绿是因为线被挪了"的验收。
+      implemented:
+        verdict: compiled
+        psl_ids: [PSL-006, PSL-010]
+        evidence:
+        - {kind: gate_json, ref: 'plugins/sdlc/skills/sdlc/eval/gate.json#provenance.scripts_run.lock_done_when.py'}
+        - {kind: run_record, ref: plugins/sdlc/dogfood/ring-audit/.done_when.lock}
+        - {kind: file, ref: plugins/sdlc/skills/sdlc/assets/graph.yaml}
+        not_reached:
+          verified: 本 Run 的 G2 由 delegated_agent（g2-judge）代签，不是人签；PSL-006 下代签不渲染为人签，"人签的门跑通了"无证据。锁机制本身（sign --stage g2 / l5、篡改被拒、附提案放行）在 fixture 与本 Run 的 43 文件 l5 锁上都走过，那是 compiled 的证据，不是 verified 的。
+      naming:
+        verdict: fits
+        provenance: authored
+        artifact_or_position: G2（判据冻结门，ARCHITECTURE §1 R2 门闸列）
+        fit: fits
+        rename: false
+        psl_ids: [PSL-014]
+        evidence:
+        - {kind: file, ref: 'plugins/sdlc/docs/ARCHITECTURE.md#32-三道门只能人签'}
+        fit_reason: 位置名（三道门里的第二道，冻判据），F-03 的位置名分支判 fits。
+      disposition: none
+      adjudications: []
+
+  missing:
+  - R2/lifecycle_blank/knowledge+control/interface-contract
+  - R2/lifecycle_blank/control/clarify-round-budget
+  - R2/newly_identified/control/spec-md-no-gate
+
+# =============================================================================
+# 脊柱
+# =============================================================================
+- id: spine
+  question: 谁持有状态、记账、按层路由失败、把三道门编译成不可跳过、把图与环声明成数据（ARCHITECTURE §1 脊柱段；§1 表无脊柱行，没有"问题"列可取，此处取脊柱段的五件事）
+  parts:
+
+  - id: sdlc
+    kind: skill
+    ring: spine
+    ring_evidence: 'plugins/sdlc/skills/sdlc/assets/graph.yaml#L39-L45（Node.role=orchestrator → spine）'
+    provenance: authored
+    loop: loops.yaml#lifecycle
+    artifact: .sdlc/<slug>/state.json
+    role: orchestrator
+    gates: [sdlc_state.py]
+    fills: [spine/newly_identified/control+judgment+knowledge/cross-session-lifecycle-state]
+    assessment:
+      id: A-sdlc
+      state: evidenced
+      needed:
+        verdict: necessary
+        psl_ids: [PSL-004, PSL-002]
+        evidence:
+        - {kind: file, ref: 'plugins/sdlc/skills/sdlc/SKILL.md#缺口control--judgment--knowledge'}
+        - {kind: file, ref: 'plugins/sdlc/docs/ARCHITECTURE.md#1-九环与一根脊柱'}
+        deletion_test: 撤掉后状态活在引擎记忆里，换一次会话就丢；失败一律在实现层重试到上下文耗尽（世界层的错误被在 card 层重试二十次，这正是 routing.yaml 头注说的"默认行为是灾难性的"）；三道门退化成文档里的建议，advance 没有前置条件可检，产出的是一条无人能复现、无人能审计的流水线。
+      implemented:
+        verdict: compiled
+        psl_ids: [PSL-010, PSL-004]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/sdlc/scripts/sdlc_state.py}
+        - {kind: gate_json, ref: 'plugins/sdlc/skills/sdlc/eval/gate.json#gate_pass'}
+        - {kind: smoke, ref: 'plugins/sdlc/eval/smoke.sh（gate.json provenance.smoke：178 expectations，178 pass，2026-09-05）'}
+        - {kind: run_record, ref: plugins/sdlc/dogfood/ring-audit/.done_when.lock}
+        not_reached:
+          verified: 本 Run 亲历的是 sdlc 的原语路径（sdlc_state.py 的状态迁移、lock_done_when.py 的两段锁，证据即这份 .done_when.lock），不是带 / 不带 skill 的对比运行；gate.json fix_list 第一条"L2：run /sdlc end-to-end on one real TASK-track requirement in a fresh session"仍未做。原语跑过 ≠ 编排判断被验证。
+        calibration_note: '即使抬到 verified 也须附 calibrated: false——routing v2 的收敛阈值（fingerprint_history 6 / oscillation periods 2-3 / plateau_rounds 3）按 gate.json fix_list 是文献先验，未经真实运行校准（PSL-007）。'
+      naming:
+        verdict: fits
+        provenance: authored
+        artifact_or_position: 脊柱（ARCHITECTURE §1 的 /sdlc，持状态 · 记账 · 路由 · 编译门 · 声明图与环）
+        fit: fits
+        rename: false
+        psl_ids: [PSL-014]
+        evidence:
+        - {kind: file, ref: 'plugins/sdlc/docs/ARCHITECTURE.md#1-九环与一根脊柱'}
+        fit_reason: 位置名（这根脊柱本身就是生命周期），F-03 的位置名分支判 fits；它的产物是 state.json / ledger.md 而非叫 sdlc 的东西，但位置名分支不要求与产物同名。
+      disposition: none
+      adjudications: []
+
+  - id: asset.graph.yaml
+    kind: asset
+    ring: spine
+    ring_evidence: 'no_node（graph.yaml 里没有它自己的节点）+ ARCHITECTURE.md#1-九环与一根脊柱 脊柱段"把图与环声明成数据（graph.yaml / loops.yaml / triggers.yaml）"→ spine；F-08 明列四个数据资产为脊柱上的 Part。两源不冲突。'
+    provenance: authored
+    loop: null
+    artifact: skills/sdlc/assets/graph.yaml
+    gates: [verify_graph.py]
+    fills: [spine/newly_identified/knowledge/graph-as-data]
+    assessment:
+      id: A-asset.graph.yaml
+      state: evidenced
+      needed:
+        verdict: necessary
+        psl_ids: [PSL-011, PSL-002]
+        evidence:
+        - {kind: file, ref: 'plugins/sdlc/skills/sdlc/assets/graph.yaml#L1-L11'}
+        - {kind: file, ref: 'plugins/sdlc/docs/design-notes.md#2026-09-05-第三次整理loop-engineering--graph-engineering-的透镜v060'}
+        deletion_test: 撤掉后节点边界与边类型退回 ARCHITECTURE 的 ASCII 与 sdlc_state.py 的线性链两处，两处漂移无人发现；verify_graph.py 五条 lint 没有对象——首版 graph.yaml 被自己的 lint 抓到的那两个未标环归属的圈（"通过条件不可测的无界循环"）就会原样留在流水线里。
+      implemented:
+        verdict: compiled
+        psl_ids: [PSL-010, PSL-015]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/sdlc/scripts/verify_graph.py}
+        - {kind: gate_json, ref: 'plugins/sdlc/skills/sdlc/eval/gate.json#provenance.scripts_run.verify_graph.py'}
+        not_reached:
+          verified: 只有作者在 2026-09-05 的 smoke 记录（shipped graph 过五条 lint、6 个坏 fixture 各被拒），本 Run 没有跑过 verify_graph.py，更没有带 / 不带对比。
+      naming:
+        verdict: fits
+        provenance: authored
+        artifact_or_position: skills/sdlc/assets/graph.yaml
+        fit: fits
+        rename: false
+        psl_ids: [PSL-014]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/sdlc/assets/graph.yaml}
+        fit_reason: 数据资产的 Part 名就是它的产物文件名，字面相等，F-03 判 fits。
+      disposition: none
+      adjudications: []
+
+  - id: asset.loops.yaml
+    kind: asset
+    ring: spine
+    ring_evidence: 'no_node + ARCHITECTURE.md#1-九环与一根脊柱 脊柱段（图与环声明成数据）→ spine；F-08 明列。'
+    provenance: authored
+    loop: null
+    artifact: skills/sdlc/assets/loops.yaml
+    gates: [verify_loop.py]
+    fills: [spine/newly_identified/knowledge+control/loop-contract]
+    assessment:
+      id: A-asset.loops.yaml
+      state: evidenced
+      needed:
+        verdict: necessary
+        psl_ids: [PSL-011, PSL-004]
+        evidence:
+        - {kind: file, ref: 'plugins/sdlc/skills/sdlc/assets/loops.yaml#L1-L16'}
+        - {kind: file, ref: 'plugins/sdlc/docs/ARCHITECTURE.md#37-图与环是数据v060'}
+        deletion_test: 撤掉后六个环各说各话（retries / rounds / strikes / iterations / MAX_ROUNDS），没有一处能回答"现在哪个环在烧预算、烧到几成"；generator ≠ verifier 无处声明，自验证反模式（一个节点既生成又判定）不被任何 lint 拦，环会在自己判自己合格的情况下停下来。
+      implemented:
+        verdict: compiled
+        psl_ids: [PSL-010, PSL-015]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/sdlc/scripts/verify_loop.py}
+        - {kind: gate_json, ref: 'plugins/sdlc/skills/sdlc/eval/gate.json#provenance.scripts_run.verify_loop.py'}
+        not_reached:
+          verified: 同上，只有 2026-09-05 的作者 smoke（6 个环通过；generator==verifier / 缺 stop 键 / budget.ref 不可解析各被拒），本 Run 未跑，无对比臂。
+      naming:
+        verdict: fits
+        provenance: authored
+        artifact_or_position: skills/sdlc/assets/loops.yaml
+        fit: fits
+        rename: false
+        psl_ids: [PSL-014]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/sdlc/assets/loops.yaml}
+        fit_reason: Part 名即产物文件名，字面相等，F-03 判 fits。
+      disposition: none
+      adjudications: []
+
+  - id: asset.routing.yaml
+    kind: asset
+    ring: spine
+    ring_evidence: 'no_node + ARCHITECTURE.md#1-九环与一根脊柱 脊柱段"路由失败（routing.yaml v2，含收敛检测）"→ spine；F-08 明列。'
+    provenance: authored
+    loop: null
+    artifact: skills/sdlc/assets/routing.yaml
+    gates: []
+    fills: [spine/newly_identified/knowledge+judgment/failure-routing-table]
+    assessment:
+      id: A-asset.routing.yaml
+      state: evidenced
+      needed:
+        verdict: necessary
+        psl_ids: [PSL-008, PSL-004]
+        evidence:
+        - {kind: file, ref: 'plugins/sdlc/skills/sdlc/assets/routing.yaml#L1-L13'}
+        - {kind: file, ref: 'plugins/sdlc/docs/ARCHITECTURE.md#33-回流路由x2失败归层不原地重试'}
+        deletion_test: 撤掉后 sdlc_state.py fail 无表可查，失败一律归 card 层原地重试——世界层的错误在实现层被重试到预算耗尽，产出的是"重试二十次仍然错"的 diff；收敛检测（oscillation / plateau / impossible）没有参数可读，三种"再试也没用"都检不出来。
+      implemented:
+        verdict: declared
+        psl_ids: [PSL-015, PSL-010]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/sdlc/assets/routing.yaml}
+        - {kind: file, ref: 'plugins/sdlc/docs/ARCHITECTURE.md#7-覆盖矩阵与空白'}
+        not_reached:
+          compiled: 'no_gate——没有 verify_routing.py，也没有门挡：全插件 31 个 scripts/*.py 里没有一个校验 routing.yaml 自身；verify_loop.py 只解析 loops.yaml 的 budget.ref 能否在 routing.yaml 里找到落点，不检 rules 行的 layer / handler / action 是否合法，也不检 layers 与 budgets 的键是否对齐。ARCHITECTURE §7 的 X2 行只写"routing.yaml · sdlc_state fail | 已有"，闸列为空。'
+          verified: 无行为层运行记录，且收敛阈值按 gate.json fix_list 是文献先验、未校准（PSL-007）。
+        no_gate: skills/sdlc/assets/routing.yaml
+      naming:
+        verdict: fits
+        provenance: authored
+        artifact_or_position: skills/sdlc/assets/routing.yaml
+        fit: fits
+        rename: false
+        psl_ids: [PSL-014]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/sdlc/assets/routing.yaml}
+        fit_reason: Part 名即产物文件名，字面相等，F-03 判 fits。
+      disposition: issue
+      adjudications: []
+
+  - id: asset.triggers.yaml
+    kind: asset
+    ring: spine
+    ring_evidence: 'no_node + ARCHITECTURE.md#1-九环与一根脊柱 脊柱段（图与环声明成数据，含 triggers.yaml）→ spine；F-08 明列。'
+    provenance: authored
+    loop: null
+    artifact: skills/sdlc/assets/triggers.yaml
+    gates: []
+    fills: [spine/newly_identified/knowledge/loop-trigger-binding]
+    assessment:
+      id: A-asset.triggers.yaml
+      state: evidenced
+      needed:
+        verdict: necessary
+        psl_ids: [PSL-011, PSL-004]
+        evidence:
+        - {kind: file, ref: 'plugins/sdlc/skills/sdlc/assets/triggers.yaml#L1-L11'}
+        - {kind: file, ref: 'plugins/sdlc/docs/ARCHITECTURE.md#7-覆盖矩阵与空白'}
+        deletion_test: 撤掉后环的等待退回 pr-poll.sh 的 bash sleep 一种；无人值守 / headless 下每个环的 /goal 条件与"or stop after N turns"预算上限无处声明，产出的是要么根本不启动、要么停不下来的环，而且"哪些退出码必须回显到对话里"这条 /goal 陷阱无人记录。
+      implemented:
+        verdict: declared
+        psl_ids: [PSL-015, PSL-010]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/sdlc/assets/triggers.yaml}
+        - {kind: file, ref: 'plugins/sdlc/docs/ARCHITECTURE.md#7-覆盖矩阵与空白'}
+        not_reached:
+          compiled: 'no_gate——没有 verify_triggers.py，也没有门挡：ARCHITECTURE §7 的"环契约 / 图声明 / 触发绑定"行闸列只写 verify_loop / verify_graph / check-clean，triggers.yaml 不在任何一个的检查范围内；同一行还登记"Stop hook 只有模板"（assets/hooks/stop-clean-state.json 未安装），即它声明的绑定连安装状态都没被检。'
+          verified: 无行为层运行记录；三种绑定（interactive / unattended / headless）本 Run 一种都没走。
+        no_gate: skills/sdlc/assets/triggers.yaml
+      naming:
+        verdict: fits
+        provenance: authored
+        artifact_or_position: skills/sdlc/assets/triggers.yaml
+        fit: fits
+        rename: false
+        psl_ids: [PSL-014]
+        evidence:
+        - {kind: file, ref: plugins/sdlc/skills/sdlc/assets/triggers.yaml}
+        fit_reason: Part 名即产物文件名，字面相等，F-03 判 fits。
+      disposition: issue
+      adjudications: []
+
+  missing:
+  - spine/unenforced_rule/control/r001-single-producer
+  - spine/unenforced_rule/control/r008-human-signer
+  - spine/newly_identified/control/routing-yaml-no-verifier
+  - spine/newly_identified/control/triggers-yaml-no-verifier
+
+# =============================================================================
+# Gap 注册表（唯一真源；id = <ring>/<source>/<atoms>/<slug>）
+# =============================================================================
+gaps:
+
+# ---- R0 ----
+- id: R0/newly_identified/knowledge+judgment/world-before-form
+  ring: R0
+  atoms: [Knowledge, Judgment]
+  source: newly_identified
+  necessity: necessary
+  deletion_test: 没有配件把"这个产品为什么这样运转"写下来，引擎就用默认值把世界填掉，交出技术正确、产品错误的实现。
+  evidence:
+  - {kind: file, ref: 'plugins/sdlc/skills/psl/SKILL.md#缺口'}
+  disposition: none
+
+- id: R0/newly_identified/judgment+control+capability/derivation-traceability
+  ring: R0
+  atoms: [Judgment, Control, Capability]
+  source: newly_identified
+  necessity: necessary
+  deletion_test: PSL 到形态之间没有落文件的中间产物与 PSL-ID 追溯锚，G1 无物可裁，"推错了 vs 规律错了"无法归因。
+  evidence:
+  - {kind: file, ref: 'plugins/sdlc/skills/psl-derive/SKILL.md#缺口judgment--control--capability'}
+  disposition: none
+
+- id: R0/newly_identified/control/world-verdict-door
+  ring: R0
+  atoms: [Control]
+  source: newly_identified
+  necessity: necessary
+  deletion_test: 形态草案由生产它的引擎自评通过，评估者与被评估者不分离，错误的世界一路建到 R7。
+  evidence:
+  - {kind: file, ref: 'plugins/sdlc/docs/ARCHITECTURE.md#32-三道门只能人签'}
+  disposition: none
+
+- id: R0/lifecycle_blank/capability/psl-reference-lint
+  ring: R0
+  atoms: [Capability]
+  source: lifecycle_blank
+  necessity: necessary
+  deletion_test: PSL 内部的 PSL-ID 交叉引用断链不被发现；psl-derive 的"每条决策 ← PSL-ID"校验拿到的是一份自身引用就残缺的 PSL，锚看似成立实则指空。
+  evidence:
+  - {kind: file, ref: 'plugins/sdlc/docs/lifecycle.md#制品映射v12-制品--本插件--邻居--状态（产品级/功能级 PSL 行：已有，说明列"引用完整性 lint 未实现"）'}
+  disposition: issue
+
+- id: R0/lifecycle_blank/control/g1-external-evidence
+  ring: R0
+  atoms: [Control]
+  source: lifecycle_blank
+  necessity: necessary
+  deletion_test: G1 通过时"外部证据"只是记录模板里的一行 checklist，没有它照样 pass；本次审计只能以 substitute 顶替，门的证据强度不可度量，代签与人签在这一维上无差别。
+  evidence:
+  - {kind: file, ref: 'plugins/sdlc/docs/lifecycle.md#制品映射v12-制品--本插件--邻居--状态（G1 世界裁决 行：说明列"外部证据只是 checklist 项"）'}
+  - {kind: file, ref: plugins/sdlc/skills/sdlc/assets/g1_record.md}
+  disposition: issue
+
+# ---- R1 ----
+- id: R1/newly_identified/knowledge+capability+judgment/shared-ontology
+  ring: R1
+  atoms: [Knowledge, Capability, Judgment]
+  source: newly_identified
+  necessity: necessary
+  deletion_test: 没有共享词表，issue 的词表闭包与卡的 dos_slice 都没有解析源，同一个对象在三处三个名字。
+  evidence:
+  - {kind: file, ref: 'plugins/sdlc/skills/dos-extract/SKILL.md#the-gap-why-a-scan-is-not-an-ontology'}
+  disposition: none
+
+- id: R1/newly_identified/judgment+control+capability/resident-invariants
+  ring: R1
+  atoms: [Judgment, Control, Capability]
+  source: newly_identified
+  necessity: necessary
+  deletion_test: 从失败里学到的常驻不变量没有制品落点，同一类事故第二次发生时被当成新失败在 card 层重跑。
+  evidence:
+  - {kind: file, ref: 'plugins/sdlc/skills/invariant-extract/SKILL.md#the-gap-why-the-engine-cant-just-read-them-off-the-code'}
+  disposition: none
+
+- id: R1/lifecycle_blank/control/dos-proposal-reconcile
+  ring: R1
+  atoms: [Control]
+  source: lifecycle_blank
+  necessity: necessary
+  deletion_test: derived/dos-proposal.yaml（应然）与 dos.yaml（现状）分叉不被发现，R1 上并存两份本体；下游 --dos 解析到哪一份取决于谁先写，产出的卡切片可能建在被否决的那份本体上。
+  evidence:
+  - {kind: file, ref: 'plugins/sdlc/docs/ARCHITECTURE.md#7-覆盖矩阵与空白（X1 行：应然↔现状对账 空白）'}
+  - {kind: file, ref: 'plugins/sdlc/docs/lifecycle.md#制品映射v12-制品--本插件--邻居--状态（DOS 本体 + 闭包 行：部分）'}
+  disposition: issue
+
+- id: R1/lifecycle_blank/knowledge+control/ontology-drift
+  ring: R1
+  atoms: [Knowledge, Control]
+  source: lifecycle_blank
+  necessity: necessary
+  deletion_test: 代码演化后本体与代码分叉不被发现，dos.yaml 变成一份过期宪法；verify_issue.py --dos 拿过期词表判新 issue，闭包"通过"反而掩盖了真实的词表缺口。
+  evidence:
+  - {kind: file, ref: 'plugins/sdlc/docs/ARCHITECTURE.md#7-覆盖矩阵与空白（X1 行：ontology-drift 空白）'}
+  - {kind: file, ref: 'plugins/sdlc/docs/lifecycle.md#十个裁决在本插件里的落点（C5 drift 两义：ontology-drift 本体层 空白）'}
+  disposition: issue
+
+- id: R1/lifecycle_blank/knowledge/dos-candidate-namespace
+  ring: R1
+  atoms: [Knowledge]
+  source: lifecycle_blank
+  necessity: necessary
+  deletion_test: 新名词没有候选态可落，要么被硬塞进 dos.yaml 触发 ≤7 objects 的无条件拒绝，要么以非本体词在 issue 与卡里流通——两条路都让词表闭包检查失去意义。
+  evidence:
+  - {kind: file, ref: 'plugins/sdlc/docs/ARCHITECTURE.md#7-覆盖矩阵与空白（X1 行：candidate 命名空间 空白）'}
+  disposition: issue
+
+- id: R1/newly_identified/control/decisions-md-no-gate
+  ring: R1
+  atoms: [Control]
+  source: newly_identified
+  necessity: necessary
+  deletion_test: decisions.md 可以为空、可以与 dos.yaml 矛盾而无人发现；verify_dos.py 对 ">7 objects" 的无条件拒绝把豁免路径指向"人在 decisions.md 里写豁免"，但没有任何检查确认那条豁免真的被写下——一条指向空气的豁免路径。
+  evidence:
+  - {kind: file, ref: 'plugins/sdlc/skills/dos-extract/scripts/verify_dos.py#L67'}
+  - {kind: file, ref: 'plugins/sdlc/skills/sdlc/assets/graph.yaml#L73'}
+  disposition: issue
+
+# ---- R2 ----
+- id: R2/newly_identified/judgment+capability+control/falsifiable-task-seed
+  ring: R2
+  atoms: [Judgment, Capability, Control]
+  source: newly_identified
+  necessity: necessary
+  deletion_test: 需求原文直接成为 issue，任何实现都能"通过"，下游 done_when 没有源头、review 没有基准。
+  evidence:
+  - {kind: file, ref: 'plugins/sdlc/skills/issue/SKILL.md#缺口judgment--capability--control'}
+  disposition: none
+
+- id: R2/newly_identified/judgment+capability+control/falsifiable-acceptance
+  ring: R2
+  atoms: [Judgment, Capability, Control]
+  source: newly_identified
+  necessity: necessary
+  deletion_test: 本次验收停在愿望层（"信号诉求被兑现"），G2 冻结的是一份任何产出都能通过的契约，A 档一票否决永不触发。
+  evidence:
+  - {kind: file, ref: 'plugins/sdlc/skills/donewhen-extract/SKILL.md#the-gap-why-the-engine-cant-just-paraphrase-the-issue'}
+  - {kind: file, ref: 'plugins/sdlc/skills/acceptance-spec/SKILL.md#iron-rules-re-read-before-every-phase'}
+  disposition: none
+
+- id: R2/newly_identified/control/contract-freeze-door
+  ring: R2
+  atoms: [Control]
+  source: newly_identified
+  necessity: necessary
+  deletion_test: 判据不冻结，实现者可以改线让自己变绿；锁不存在则下游所有锁校验空转。
+  evidence:
+  - {kind: file, ref: 'plugins/sdlc/docs/ARCHITECTURE.md#32-三道门只能人签'}
+  disposition: none
+
+- id: R2/lifecycle_blank/knowledge+control/interface-contract
+  ring: R2
+  atoms: [Knowledge, Control]
+  source: lifecycle_blank
+  necessity: necessary
+  deletion_test: 观察边界与接口形状没有契约承载，verify_issue.py 只 flag observe 未解析；下游测试各按自己理解的接口写，红-绿在互不相容的接口假设上各自成立，集成时才炸。
+  evidence:
+  - {kind: file, ref: 'plugins/sdlc/docs/ARCHITECTURE.md#7-覆盖矩阵与空白（L2 接口契约 行：承载 —，状态 空白）'}
+  - {kind: file, ref: 'plugins/sdlc/docs/lifecycle.md#制品映射v12-制品--本插件--邻居--状态（接口契约 行）'}
+  disposition: issue
+
+- id: R2/lifecycle_blank/control/clarify-round-budget
+  ring: R2
+  atoms: [Control]
+  source: lifecycle_blank
+  necessity: necessary
+  deletion_test: 澄清轮次上限与假设台账只是 SKILL.md 里的判据，没编译进任何脚本；引擎可以问到第九轮，也可以一轮不问就收工并把未知当已知填进契约，台账空不空无人检。
+  evidence:
+  - {kind: file, ref: 'plugins/sdlc/docs/lifecycle.md#制品映射v12-制品--本插件--邻居--状态（澄清 + 假设台账 行：说明列"3 轮上限是判据，未编译"）'}
+  disposition: issue
+
+- id: R2/newly_identified/control/spec-md-no-gate
+  ring: R2
+  atoms: [Control]
+  source: newly_identified
+  necessity: necessary
+  deletion_test: spec.md 与 spec-robustness.md 可以是空壳、也可以与 done_when.yaml 互相矛盾而照样过 G2；spec-gaming-detector 拿到一份 surfaced_vectors 为空的输入，仍然会报"无作弊迹象"——一条永远绿的判据线。
+  evidence:
+  - {kind: file, ref: 'plugins/sdlc/skills/sdlc/assets/graph.yaml#L99'}
+  - {kind: file, ref: 'plugins/sdlc/skills/sdlc/assets/graph.yaml#L183'}
+  - {kind: file, ref: 'plugins/sdlc/docs/ARCHITECTURE.md#1-九环与一根脊柱（R2 行门闸列只有 verify_issue.py / verify_done_when.py / validate_done_when_v2.py / G2）'}
+  disposition: issue
+
+# ---- spine ----
+- id: spine/newly_identified/control+judgment+knowledge/cross-session-lifecycle-state
+  ring: spine
+  atoms: [Control, Judgment, Knowledge]
+  source: newly_identified
+  necessity: necessary
+  deletion_test: 状态在引擎记忆里换会话就丢；失败一律在实现层重试到上下文耗尽；三道门退化成建议。
+  evidence:
+  - {kind: file, ref: 'plugins/sdlc/skills/sdlc/SKILL.md#缺口control--judgment--knowledge'}
+  disposition: none
+
+- id: spine/newly_identified/knowledge/graph-as-data
+  ring: spine
+  atoms: [Knowledge]
+  source: newly_identified
+  necessity: necessary
+  deletion_test: 图写在文档 ASCII 与状态机代码两处，漂移无人发现；圈的环归属与节点写边界没有可检对象。
+  evidence:
+  - {kind: file, ref: 'plugins/sdlc/skills/sdlc/assets/graph.yaml#L4-L7'}
+  disposition: none
+
+- id: spine/newly_identified/knowledge+control/loop-contract
+  ring: spine
+  atoms: [Knowledge, Control]
+  source: newly_identified
+  necessity: necessary
+  deletion_test: 六个环各说各话，无处回答哪个环在烧预算；generator ≠ verifier 无处声明，自验证反模式无人拦。
+  evidence:
+  - {kind: file, ref: 'plugins/sdlc/skills/sdlc/assets/loops.yaml#L6-L7'}
+  disposition: none
+
+- id: spine/newly_identified/knowledge+judgment/failure-routing-table
+  ring: spine
+  atoms: [Knowledge, Judgment]
+  source: newly_identified
+  necessity: necessary
+  deletion_test: 失败默认塞回实现层重试，世界层错误在 card 层被重试到预算耗尽。
+  evidence:
+  - {kind: file, ref: 'plugins/sdlc/skills/sdlc/assets/routing.yaml#L3-L6'}
+  disposition: none
+
+- id: spine/newly_identified/knowledge/loop-trigger-binding
+  ring: spine
+  atoms: [Knowledge]
+  source: newly_identified
+  necessity: necessary
+  deletion_test: 环的等待只剩 bash sleep 一种，无人值守下每个环的停条件与预算上限无处声明。
+  evidence:
+  - {kind: file, ref: 'plugins/sdlc/skills/sdlc/assets/triggers.yaml#L3-L8'}
+  disposition: none
+
+- id: spine/unenforced_rule/control/r001-single-producer
+  ring: spine
+  atoms: [Control]
+  source: unenforced_rule
+  necessity: necessary
+  deletion_test: 两个节点写同一产物不被任何脚本拒绝——verify_graph.py 只检 writes 有界，不检 writes 的交集；provenance 与回滚归属含混，而且这条宪法的违例只能靠人读图发现。本次审计正是靠审计自己的 check_audit.py 的 double_producer 谓词才把 done_when.yaml 的双生产者抓出来，插件自身没有这条闸。
+  evidence:
+  - {kind: file, ref: 'plugins/sdlc/dogfood/ring-audit/dos.yaml#L376-L379（R001 enforced_by user_workflow）'}
+  - {kind: file, ref: 'plugins/sdlc/skills/sdlc/assets/graph.yaml#L26'}
+  disposition: issue
+
+- id: spine/unenforced_rule/control/r008-human-signer
+  ring: spine
+  atoms: [Control]
+  source: unenforced_rule
+  necessity: necessary
+  deletion_test: 门的 verdict 由谁签没有脚本核对，agent 代签与人签在状态里形状相同；本次 dogfood 的 G1 与 G2 就是 delegated_agent 代签，只靠记录里的一行字自证——"三道门只能人签"这条宪法在机器一侧完全没有承载。
+  evidence:
+  - {kind: file, ref: 'plugins/sdlc/dogfood/ring-audit/dos.yaml#L404-L407（R008 enforced_by user_workflow）'}
+  - {kind: file, ref: 'plugins/sdlc/docs/ARCHITECTURE.md#32-三道门只能人签'}
+  disposition: issue
+
+- id: spine/newly_identified/control/routing-yaml-no-verifier
+  ring: spine
+  atoms: [Control]
+  source: newly_identified
+  necessity: necessary
+  deletion_test: routing.yaml 的 rules 行写错 layer、漏 handler、或 budgets 的键与 layers 不对齐，都不在写入时报错，只在 fail 那一刻以"路由到错的层"的形式静默生效——错误的回流层会把世界层的错误安静地在 card 层重试到预算耗尽，症状与"实现者不行"完全一样。
+  evidence:
+  - {kind: file, ref: plugins/sdlc/skills/sdlc/assets/routing.yaml}
+  - {kind: file, ref: 'plugins/sdlc/docs/ARCHITECTURE.md#7-覆盖矩阵与空白（X2 行闸列为空）'}
+  disposition: issue
+
+- id: spine/newly_identified/control/triggers-yaml-no-verifier
+  ring: spine
+  atoms: [Control]
+  source: newly_identified
+  necessity: necessary
+  deletion_test: triggers.yaml 的绑定引用了不存在的 predicate_scripts、或漏掉"or stop after N turns"，都只在无人值守跑的那一次显形，表现为环不停或环不启动；同一行还登记 Stop hook 只有模板未安装，即声明的绑定连安装状态都没被检。
+  evidence:
+  - {kind: file, ref: plugins/sdlc/skills/sdlc/assets/triggers.yaml}
+  - {kind: file, ref: 'plugins/sdlc/docs/ARCHITECTURE.md#7-覆盖矩阵与空白（环契约 / 图声明 / 触发绑定 行：闸列只有 verify_loop / verify_graph / check-clean）'}
+  disposition: issue
+
+# =============================================================================
+# Artifact 注册表（一条 = 一个 (产物, 生产者) 对）
+# =============================================================================
+artifacts:
+- {id: PSL-<feature>.md, producer: psl, checked_by: [verify_psl.py]}
+- {id: derived/**, producer: psl-derive, checked_by: [verify_derived.py, G1]}
+- {id: g1-record.md, producer: human_gate.G1, checked_by: [sdlc_state.py]}
+- {id: dos.yaml, producer: dos-extract, checked_by: [verify_dos.py]}
+- {id: decisions.md, producer: dos-extract, checked_by: []}
+- {id: invariants/*.yaml, producer: invariant-extract, checked_by: [verify_card.py]}
+- {id: 'github:issue', producer: issue, checked_by: [verify_issue.py]}
+- {id: done_when.yaml, producer: donewhen-extract, checked_by: [verify_done_when.py, validate_done_when_v2.py, G2]}
+- {id: done_when.yaml, producer: acceptance-spec, checked_by: [validate_done_when.py, G2]}
+- {id: specs/<f>/spec.md, producer: acceptance-spec, checked_by: []}
+- {id: specs/<f>/spec-robustness.md, producer: acceptance-spec, checked_by: []}
+- {id: .done_when.lock, producer: human_gate.G2, checked_by: [lock_done_when.py, sdlc_state.py]}
+- {id: .sdlc/<slug>/state.json, producer: sdlc, checked_by: [sdlc_state.py]}
+- {id: .sdlc/<slug>/ledger.md, producer: sdlc, checked_by: [sdlc_state.py]}
+- {id: .sdlc/<slug>/trace.jsonl, producer: sdlc, checked_by: [trace.py]}
+- {id: skills/sdlc/assets/graph.yaml, producer: asset.graph.yaml, checked_by: [verify_graph.py]}
+- {id: skills/sdlc/assets/loops.yaml, producer: asset.loops.yaml, checked_by: [verify_loop.py]}
+- {id: skills/sdlc/assets/routing.yaml, producer: asset.routing.yaml, checked_by: []}
+- {id: skills/sdlc/assets/triggers.yaml, producer: asset.triggers.yaml, checked_by: []}
+
+# =============================================================================
+# Gate 设计视图（门 / 闸）—— 签字三元组住在 run_evidence，不在这里
+# =============================================================================
+gates:
+- {id: G1, kind: human, label: 门, checks: [derived/**]}
+- {id: G2, kind: human, label: 门, checks: [done_when.yaml, .done_when.lock]}
+- {id: verify_psl.py, kind: script, label: 闸, ref: plugins/sdlc/skills/psl/scripts/verify_psl.py}
+- {id: verify_derived.py, kind: script, label: 闸, ref: plugins/sdlc/skills/psl-derive/scripts/verify_derived.py}
+- {id: verify_dos.py, kind: script, label: 闸, ref: plugins/sdlc/skills/dos-extract/scripts/verify_dos.py}
+- {id: verify_card.py, kind: script, label: 闸, ref: plugins/sdlc/skills/invariant-extract/scripts/verify_card.py}
+- {id: verify_issue.py, kind: script, label: 闸, ref: plugins/sdlc/skills/issue/scripts/verify_issue.py}
+- {id: verify_done_when.py, kind: script, label: 闸, ref: plugins/sdlc/skills/donewhen-extract/scripts/verify_done_when.py}
+- {id: validate_done_when_v2.py, kind: script, label: 闸, ref: plugins/sdlc/skills/donewhen-extract/scripts/validate_done_when_v2.py}
+- {id: validate_done_when.py, kind: script, label: 闸, ref: plugins/sdlc/skills/acceptance-spec/scripts/validate_done_when.py}
+- {id: lock_done_when.py, kind: script, label: 闸, ref: plugins/sdlc/skills/sdlc/scripts/lock_done_when.py}
+- {id: sdlc_state.py, kind: script, label: 闸, ref: plugins/sdlc/skills/sdlc/scripts/sdlc_state.py}
+- {id: trace.py, kind: script, label: 闸, ref: plugins/sdlc/skills/sdlc/scripts/trace.py}
+- {id: verify_graph.py, kind: script, label: 闸, ref: plugins/sdlc/skills/sdlc/scripts/verify_graph.py}
+- {id: verify_loop.py, kind: script, label: 闸, ref: plugins/sdlc/skills/sdlc/scripts/verify_loop.py}
+
+# =============================================================================
+# 提案（每条必有 source：一个 Assessment id 或 Gap id）
+# =============================================================================
+proposals:
+- id: P-02-01
+  source: A-acceptance-spec
+  destination: new_issue
+  text: 'done_when.yaml 有两个非豁免生产者（donewhen-extract / acceptance-spec，F-05 三条件只满足 (a)）。建议以 done_when.yaml v2 为唯一契约，acceptance-spec 的契约出口收敛为"产 spec.md + 经 convert_v1_to_v2.py 交棒"，或反向合并。审计不当场裁，交 G3 与一次 G2 变更提案。'
+- id: P-02-02
+  source: R2/newly_identified/control/spec-md-no-gate
+  destination: new_issue
+  text: 'specs/<f>/spec.md 与 spec-robustness.md 无任何闸。建议加 verify_spec.py（EARS 句型 + REQ-ID 稳定性 + 与 done_when.yaml 的 REQ 覆盖对账），或在 §1 表里显式登记"无闸"并把其生产者的 implemented 钉在 declared。'
+- id: P-02-03
+  source: spine/newly_identified/control/routing-yaml-no-verifier
+  destination: new_issue
+  text: 'routing.yaml 无自身验证器。建议加 verify_routing.py：rules 行的 signal / layer / handler / action 在封闭集内、layers 与 budgets 键对齐、impossible_reporters 全部是图里存在的节点、每个 signal 被 loops.yaml 的某个环声明。'
+- id: P-02-04
+  source: spine/newly_identified/control/triggers-yaml-no-verifier
+  destination: new_issue
+  text: 'triggers.yaml 无自身验证器。建议扩 verify_loop.py 或新增 verify_triggers.py：每个 loop 在 loops.yaml 内、kind 与该环的 trigger 一致、predicate_scripts 指向存在的文件、每个 unattended 绑定含 "or stop after" 预算子句。'
+- id: P-02-05
+  source: R1/newly_identified/control/decisions-md-no-gate
+  destination: new_issue
+  text: 'decisions.md 无闸，而 verify_dos.py 的 ">7 objects" 拒绝把豁免路径指向它。建议 verify_dos.py 增加一项：objects > 7 时要求同目录 decisions.md 存在且含对应豁免条目，否则拒——否则这是一条指向空气的豁免路径。'
+- id: P-02-06
+  source: spine/unenforced_rule/control/r008-human-signer
+  destination: new_issue
+  text: 'R008（三道门只能人签，enforced_by user_workflow）在机器一侧无承载。建议 sdlc_state.py gate 记录 signer_kind 并对 delegated_agent 强制 authorization_ref（与 check_audit.py 的 delegated_without_authorization_ref 谓词同形），至少让代签留下不可省略的痕迹。'
+- id: P-02-07
+  source: A-psl
+  destination: skill_fix_list
+  text: 'verify_psl.py 是声明式预门（SKILL.md 写"交付前必须跑"，无 hooks.json 绑定），gate.json fix_list 已自列为 A''-1。本次审计只据此判 compiled，不判"被门挡"。'
+- id: P-02-08
+  source: R0/lifecycle_blank/capability/psl-reference-lint
+  destination: new_issue
+  text: 'PSL 引用完整性 lint 未实现（lifecycle.md 自列）。它是 psl-derive 的 PSL-ID 追溯校验的前提：一份自身引用残缺的 PSL 会让"每条决策 ← PSL-ID"的锚看似成立实则指空。'

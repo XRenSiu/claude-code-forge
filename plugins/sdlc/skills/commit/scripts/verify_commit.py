@@ -26,6 +26,7 @@ on non-trivial diffs.
 """
 import argparse
 import fnmatch
+import hashlib
 import json
 import re
 import subprocess
@@ -66,9 +67,17 @@ def matches_any(path, patterns):
 
 def glob_match(path, pat):
     if pat.endswith("/**"):
-        return path == pat[:-3] or path.startswith(pat[:-3] + "/")
+        base = pat[:-3]
+        if base.startswith("**/"):          # "**/tests/**": any directory named tests at any depth
+            seg = base[3:]
+            return ("/" + path).find("/" + seg + "/") >= 0
+        return path == base or path.startswith(base + "/")
     if "**" in pat:
         return fnmatch.fnmatch(path, pat) or fnmatch.fnmatch(path, pat.replace("**/", "")) or fnmatch.fnmatch(path, pat.replace("**", "*"))
+    if "/" not in pat:
+        # a bare name (done_when.yaml, .done_when.lock) means "that file wherever it lives" — the contract validator
+        # demands the bare form, so without this fallback a nested contract's forbidden set matched nothing (dogfood 2026-09-05, I-38)
+        return fnmatch.fnmatch(path, pat) or fnmatch.fnmatch(path.rsplit("/", 1)[-1], pat)
     return fnmatch.fnmatch(path, pat)
 
 
@@ -79,6 +88,12 @@ def main():
     ap.add_argument("--proposal-glob", default="change-proposal-*.md"); ap.add_argument("--max-added", type=int, default=800)
     ap.add_argument("--range")
     a = ap.parse_args()
+    # --range must name two endpoints: `git diff <one-ref>` is legal but means "worktree vs ref", and the
+    # landing-content hash below would then read the WRONG side, letting a tampered locked file hash equal to
+    # its own pre-change blob and drop out of `touched` (fail-open on the G2 lock; dogfood pre-review cr-001).
+    if a.range is not None and ".." not in a.range:   # "" is not "no range" — it must not fall through to staged mode
+        sys.stderr.write(f"verify_commit: --range needs A..B (got {a.range!r}); a single ref would compare the wrong side of the lock\n")
+        sys.exit(2)
     rejects, flags = [], []
 
     branch = git("rev-parse", "--abbrev-ref", "HEAD", check=False).strip() or "?"
@@ -182,7 +197,22 @@ def main():
         except Exception as e:
             sys.stderr.write(f"verify_commit: cannot read lock: {e}\n"); sys.exit(2)
         locked = {e["path"] for e in lock.get("files", [])}
-        touched = [f for f in files if f in locked or any(f.startswith(l.rstrip("/") + "/") for l in locked)]
+        locked_sha = {e["path"]: e.get("sha256") for e in lock.get("files", [])}
+
+        def staged_sha256(path):
+            # the content about to land: index blob in staged mode, the range head's blob in --range mode
+            # `A..` and `A...` are legal git ranges whose right endpoint defaults to HEAD; the split then yields
+            # "" and `git show :path` would read the INDEX — the wrong side again (pre-review cr-004).
+            head = (re.split(r"[.]{2,3}", a.range)[-1].strip() or "HEAD") if getattr(a, "range", None) else None
+            ref = f"{head}:{path}" if head else f":{path}"
+            r = subprocess.run(["git", "show", ref], capture_output=True)
+            return hashlib.sha256(r.stdout).hexdigest() if r.returncode == 0 else None
+
+        # committing the frozen bytes themselves (first add, or an unchanged file in a range) is not a change of a
+        # locked file — compare the landing content's hash with the lock (dogfood 2026-09-05, I-52)
+        touched = [f for f in files
+                   if (f in locked or any(f.startswith(l.rstrip("/") + "/") for l in locked))
+                   and not (f in locked_sha and locked_sha[f] and staged_sha256(f) == locked_sha[f])]
         proposals_staged = [f for f in files if fnmatch.fnmatch(f.split("/")[-1], a.proposal_glob)]
         if touched and not proposals_staged:
             rejects.append(f"locked file(s) in diff without a change proposal: {touched} (G2 lock; add {a.proposal_glob})")

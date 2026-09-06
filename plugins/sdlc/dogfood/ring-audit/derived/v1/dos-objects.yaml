@@ -1,0 +1,276 @@
+# =============================================================================
+# DOS 提案（部分）— sdlc-ring-audit
+# derivation_run: 1 of 3
+# source_psl: plugins/sdlc/dogfood/ring-audit/PSL-sdlc-ring-audit.md
+# 只含 objects / relationships / rules 三节。对象名全部取自 PSL Domain Model 的七个实体，
+# 不造 PSL 没有的实体（提案 / 运行 / 证据 / 源码问题 见 form-draft.md 的 "PSL 欠定"）。
+# =============================================================================
+
+objects:
+  Ring:
+    description: "生命周期的一段（R0 世界 … R8 学习）或脊柱；每环回答一个问题"
+    type: "aggregate_root"
+    properties:
+      id:
+        type: "string"
+        required: true
+        description: "R0..R8 或 spine，共十个"
+    identity_rule: "由 id 唯一标识；十个 Ring 在 audit.yaml 里必须全部出现，含只有空白态 Part 的 Ring（PSL-011, PSL-017）"
+
+  Part:
+    description: "环上的一个可命名单元：skill / agent / script / asset / human-gate / loop"
+    type: "entity"
+    properties:
+      name:
+        type: "string"
+        required: true
+      kind:
+        type: "enum[skill, agent, script, asset, human_gate, loop]"
+        required: true
+      ring:
+        type: "ref Ring"
+        required: true
+      loop:
+        type: "ref Loop | null"
+        required: false
+        description: "0..1，loops.yaml#id"
+      gaps:
+        type: "list[enum[Knowledge, Capability, Judgment, Control]]"
+        required: true
+        description: "可为空集；空集 = 过填（PSL-002, PSL-016）"
+      artifact:
+        type: "ref Artifact | null"
+        required: false
+        description: "0..1，独占（PSL-001）"
+      state:
+        type: "enum[blank, declared, compiled, verified, calibrated]"
+        required: true
+        description: "三态实现的阶梯，不是布尔（PSL-010）"
+      trace:
+        type: "list[append-only]"
+        required: true
+        description: "逆向流转（脚本被删、门被绕）追加于此，不覆盖 state 历史（PSL-005）"
+    identity_rule: "由 ring + name 唯一标识；同名 Part 出现在两个 Ring 视为两个 Part，各自受审"
+    lifecycle: "空白 → 已声明 → 已编译 → 已验证 → 已校准；逆向合法但必须追加 trace"
+
+  Gap:
+    description: "引擎自己给不出的那部分：Knowledge / Capability / Judgment / Control 之一"
+    type: "entity"
+    properties:
+      ring:
+        type: "ref Ring"
+        required: true
+      atom:
+        type: "enum[Knowledge, Capability, Judgment, Control]"
+        required: true
+      state:
+        type: "enum[identified_no_part, has_part]"
+        required: true
+      necessity:
+        type: "enum[needed, not_needed]"
+        required: true
+      deletion_reason:
+        type: "string"
+        required: true
+        description: "一句话：撤掉承载它的配件，引擎会怎么做错（PSL-002）"
+    identity_rule: "由 ring + atom + 一句话描述唯一标识；lifecycle 空白登记以 identified_no_part 态登入，不与空白态 Part 合并"
+    lifecycle: "未识别 → 已识别无配件 → 有配件；长期停在'已识别无配件' = lifecycle 的空白登记（PSL-017）"
+
+  Artifact:
+    description: "Part 独占生产的东西；一产物一生产者"
+    type: "entity"
+    properties:
+      name:
+        type: "string"
+        required: true
+      producer:
+        type: "ref Part"
+        required: true
+        description: "恰 1；第二个声明者不建第二条记录，而是在两个 Part 上各落一条合并候选 Finding（PSL-001）"
+      gates:
+        type: "list[ref Gate]"
+        required: true
+        description: "0..n；为空即违反 PSL-015，成为 producer 的 Finding"
+    identity_rule: "由 name 唯一标识"
+
+  Gate:
+    description: "检 Artifact 的脚本（机械闸）或只能人签的门（G1 / G2 / G3）"
+    type: "entity"
+    properties:
+      id:
+        type: "string"
+        required: true
+      kind:
+        type: "enum[script, human]"
+        required: true
+      script:
+        type: "path | null"
+        required: false
+        description: "kind = script 时必填"
+      signed_by:
+        type: "string | null"
+        required: false
+        description: "kind = human 时必填：人名或代签 agent（PSL-006）"
+      delegation_record:
+        type: "path | null"
+        required: false
+        description: "signed_by 为代签 agent 时必填"
+    identity_rule: "由 id 唯一标识；G1 / G2 / G3 三个 human Gate 固定存在"
+
+  Finding:
+    description: "对一个 Part 的四维判定，每维带 verdict、PSL-ID 与证据"
+    type: "entity"
+    properties:
+      part:
+        type: "ref Part"
+        required: true
+      missing:
+        type: "dimension {verdict, psl_ids: list[PSL-ID] ≥1, evidence: list[path] ≥1}"
+        required: true
+      needed:
+        type: "dimension {verdict: needed|overfill|contested, psl_ids ≥1, evidence ≥1, deletion_sentence}"
+        required: true
+      implemented:
+        type: "dimension {verdict: blank|declared|compiled|verified|calibrated, psl_ids ≥1, evidence per rung}"
+        required: true
+      naming:
+        type: "dimension {origin: authored|adopted, fit: fits|misfit, suggested_name|null, psl_ids ≥1, evidence ≥1}"
+        required: true
+      destination:
+        type: "enum[skill_fix_list, new_issue, no_action]"
+        required: true
+        description: "报告末尾的提案清单是本字段的投影，不是独立实体"
+      state:
+        type: "enum[candidate, evidenced, adjudicated]"
+        required: true
+    identity_rule: "由 part 唯一标识（一对一）"
+    lifecycle: "候选 → 有证据 → 已裁决；无证据不进报告；裁决追加、不覆盖（PSL-005）"
+
+  Loop:
+    description: "Part 所属的环契约（loops.yaml#id），有 generator / verifier / stop"
+    type: "entity"
+    properties:
+      id:
+        type: "string"
+        required: true
+      generator:
+        type: "string"
+        required: true
+      verifier:
+        type: "string"
+        required: true
+      stop:
+        type: "string"
+        required: true
+    identity_rule: "由 loops.yaml#id 唯一标识；PSL-011：环是数据，本审计只引用不重写"
+
+relationships:
+  - subject: "Ring"
+    verb: "CONTAINS"
+    object: "Part"
+    cardinality: "1:N"
+    inverse: "BELONGS_TO_RING"
+    description: "Ring 含 1..n Part；空白态 Part 也算"
+
+  - subject: "Ring"
+    verb: "HOSTS"
+    object: "Gap"
+    cardinality: "1:N"
+    inverse: "LOCATED_IN"
+    description: "Gap 落在某一环上；一环没有 Part 承载的 Gap 即该环的'缺少'"
+
+  - subject: "Part"
+    verb: "FILLS"
+    object: "Gap"
+    cardinality: "N:N"
+    inverse: "FILLED_BY"
+    description: "Part 填 0..n Gap，0 = 过填（PSL-002）；一个 Gap 能否被多个 Part 填 PSL 未定，暂按 N:N"
+
+  - subject: "Part"
+    verb: "PRODUCES"
+    object: "Artifact"
+    cardinality: "1:1"
+    inverse: "PRODUCED_BY"
+    description: "Part 侧 0..1（0 = 它是门或编排者），Artifact 侧恰 1（PSL-001）"
+
+  - subject: "Gate"
+    verb: "CHECKS"
+    object: "Artifact"
+    cardinality: "N:N"
+    inverse: "CHECKED_BY"
+    description: "Artifact 被 0..n Gate 检；0 即违反 PSL-015"
+
+  - subject: "Loop"
+    verb: "CONTAINS"
+    object: "Part"
+    cardinality: "1:N"
+    inverse: "BELONGS_TO_LOOP"
+    description: "Part 属于 0..1 Loop（PSL-011）"
+
+  - subject: "Finding"
+    verb: "JUDGES"
+    object: "Part"
+    cardinality: "1:1"
+    inverse: "JUDGED_BY"
+    description: "每个 Part 恰一个 Finding，四维各引用 ≥ 1 条 PSL 规律"
+
+rules:
+  - id: "R001"
+    statement: "一个 Artifact 必须有且只有一个 producer Part；两个 Part 声明同一 Artifact 时，两者的 Finding 各落一条'合并候选'，不静默去重"
+    rationale: "PSL-001 一个产物只有一个生产者；两个配件争同一产物 = 合并候选"
+    enforced_by: "system"
+
+  - id: "R002"
+    statement: "Part.gaps 为空集的 Part 判为过填；'需要'只以 deletion 测试裁，不以某环配件多少裁"
+    rationale: "PSL-002 配件的存在理由是填引擎自己填不了的缺口；PSL-016 缺口四原子。gaps 非空可机检，归类对不对是 G1 / G3 的残差"
+    enforced_by: "system"
+
+  - id: "R003"
+    statement: "Finding.implemented 只能取 blank / declared / compiled / verified / calibrated 之一，不得是布尔；未达的阶显式写出"
+    rationale: "PSL-010 静态过审 ≠ 有效；'已实现'是声明 / 编译 / 验证三态"
+    enforced_by: "system"
+
+  - id: "R004"
+    statement: "Finding 四维各自必须有 ≥ 1 个 PSL-ID（001..017）和 ≥ 1 个证据路径；缺任一维的 Finding 停在 candidate 态，不进报告，也不删除"
+    rationale: "PSL-010 三态各要证据；PSL-005 账本只增，候选不回滚"
+    enforced_by: "system"
+
+  - id: "R005"
+    statement: "每个 Artifact 必须被至少一道 Gate 检（脚本）或挡（人签门）；Artifact.gates 为空时在 producer 的 Finding 上落一条"
+    rationale: "PSL-015 每个环节的产物要么被脚本检，要么被门挡"
+    enforced_by: "system"
+
+  - id: "R006"
+    statement: "Finding.naming 先定 origin 再定 fit；adopted 的 Part 保留上游名即判 fits；misfit 只产出 suggested_name，任何记录里不得出现重命名动作"
+    rationale: "PSL-014 命名两来路：新写按产物或位置命名；收编保留上游名；建议不等于重命名"
+    enforced_by: "user_workflow"
+
+  - id: "R007"
+    statement: "kind = human 的 Gate 必须有 signed_by；signed_by 为代签 agent 时必须有 delegation_record；检查脚本只核对存在性，不得替任何门签字"
+    rationale: "PSL-006 三道门只能人签；--autopilot 免逐步确认不免门"
+    enforced_by: "system"
+
+  - id: "R008"
+    statement: "state = identified_no_part 的 Gap 必须出现在报告的'缺少'节；不得把它记成 has_part 或省略；'缺少'节为空时仍必须存在"
+    rationale: "PSL-017 空白诚实登记，不装作已有"
+    enforced_by: "system"
+
+  - id: "R009"
+    statement: "审计不修改任何被审 Part 的 SKILL.md / agent.md / 脚本 / gate.json；发现的问题只能进 skill-issues.md 与 Finding.destination"
+    rationale: "PSL-003 判据先于代码；评估者与被评估者分离；审计者不改被审对象"
+    enforced_by: "user_workflow"
+
+  - id: "R010"
+    statement: "Part 的逆向流转与 Finding 的裁决必须以追加 trace 条目记录，不得覆盖既有 state"
+    rationale: "PSL-005 账本只增；产物可回滚，判据与失败记录不回滚"
+    enforced_by: "system"
+
+  - id: "R011"
+    statement: "audit.yaml 必须含全部十个 Ring 键（R0..R8 + spine）；检查脚本对完整文件 exit 0，对删掉任一 Ring 的变体 exit 1；终止由脚本给出"
+    rationale: "PSL-011 图与环是数据；PSL-004 预算与终止由脚本强制，不由引擎记忆维护"
+    enforced_by: "system"
+
+  - id: "R012"
+    statement: "检查脚本 exit 0 不构成审计有效的证据；审计自身的 implemented 阶记为 compiled，Finding 停在 evidenced，直到 G1 / G3 的人裁决"
+    rationale: "PSL-010 静态过审 ≠ 有效；PSL-007 未校准的标准不当证据"
+    enforced_by: "not_enforced"

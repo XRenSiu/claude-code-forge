@@ -1,0 +1,23 @@
+{
+  "level": "medium",
+  "reason": "cross-vendor unavailable: `codex` on PATH but its native binary is missing (spawn ENOENT); gemini absent; docker present but extreme not requested. Medium = evaluators run on different Claude sizes than the implementers (implementers: card-implementer agents on opus).",
+  "implementers": {
+    "model": "claude-opus-5 (sdlc:card-implementer)",
+    "sessions": "fresh per card, own git worktree"
+  },
+  "roles": {
+    "code-reviewer-security": "claude-fable-5-1",
+    "code-reviewer-logic": "claude-fable-5-1",
+    "code-reviewer-perf": "claude-sonnet-5",
+    "qa-reviewer": "claude-sonnet-5",
+    "pm-reviewer": "claude-fable-5-1",
+    "spec-drift-detector": "claude-fable-5-1 (real from iteration 2: history exists)",
+    "spec-gaming-detector": "claude-fable-5-1",
+    "meta-judge": "claude-fable-5-1"
+  },
+  "no_cross_talk": "7 outputs written to separate files; evaluators told not to read fleet-outputs/ or .sdlc/",
+  "caveat": "orchestrator (fable) also authored prompts; evaluators are separate sessions with no implementer context",
+  "iteration": 2,
+  "previous_iteration": "iteration-001 @ 843c3ee",
+  "gaming_baseline_score": 3.5
+}

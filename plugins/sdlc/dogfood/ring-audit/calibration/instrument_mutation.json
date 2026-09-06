@@ -1,0 +1,322 @@
+{
+ "tool": "hand-rolled instrument mutants (mutmut/cosmic-ray not installed)",
+ "worktree": "/private/tmp/claude-501/-Users-xrensiu-development-owner-claude-code-forge/3ac9e320-c93c-4410-b8d7-4ebb34317d97/scratchpad/wt",
+ "total_mutants": 30,
+ "killed": 23,
+ "survived": [
+  "M03",
+  "M04",
+  "M07",
+  "M14",
+  "M22",
+  "M23",
+  "M28"
+ ],
+ "not_applied": [],
+ "mutation_score": 0.767,
+ "results": [
+  {
+   "id": "M01",
+   "desc": "exit always 0",
+   "status": "killed",
+   "killed_by": [
+    "test_AC_001_a_F13_double_producer_unacknowledged_exit1_double_producer",
+    "test_AC_001_a_F13_spurious_merge_candidate_exit1_spurious_merge_candidate",
+    "test_AC_001_b_F14_variant_delete_ring_R6_exit1",
+    "test_AC_001_b_ring_removed_exit1_ring_missing"
+   ],
+   "n_failing": 24,
+   "secs": 4.6
+  },
+  {
+   "id": "M02",
+   "desc": "ring_missing off",
+   "status": "killed",
+   "killed_by": [
+    "test_AC_001_b_F14_variant_delete_ring_R6_exit1",
+    "test_AC_001_b_ring_removed_exit1_ring_missing"
+   ],
+   "n_failing": 2,
+   "secs": 4.6
+  },
+  {
+   "id": "M03",
+   "desc": "ring_unexpected off",
+   "status": "SURVIVED",
+   "killed_by": [],
+   "n_failing": 0,
+   "secs": 4.5
+  },
+  {
+   "id": "M04",
+   "desc": "parts_missing off",
+   "status": "SURVIVED",
+   "killed_by": [],
+   "n_failing": 0,
+   "secs": 4.5
+  },
+  {
+   "id": "M05",
+   "desc": "psl_id_missing off",
+   "status": "killed",
+   "killed_by": [
+    "test_AC_002_b_empty_psl_ids_exit1_psl_id_missing"
+   ],
+   "n_failing": 1,
+   "secs": 4.6
+  },
+  {
+   "id": "M06",
+   "desc": "psl_id_unknown off",
+   "status": "killed",
+   "killed_by": [
+    "test_AC_002_a_F13_unknown_psl_id_exit1_dims_with_unknown_psl_id_1"
+   ],
+   "n_failing": 1,
+   "secs": 4.6
+  },
+  {
+   "id": "M07",
+   "desc": "evidence_missing off",
+   "status": "SURVIVED",
+   "killed_by": [],
+   "n_failing": 0,
+   "secs": 4.6
+  },
+  {
+   "id": "M08",
+   "desc": "evidence_kind enum off",
+   "status": "killed",
+   "killed_by": [
+    "test_AC_002_a_F13_evidence_kind_outside_enum_exit1"
+   ],
+   "n_failing": 1,
+   "secs": 4.6
+  },
+  {
+   "id": "M09",
+   "desc": "evidence_ref_empty off",
+   "status": "killed",
+   "killed_by": [
+    "test_AC_002_a_F13_evidence_ref_empty_exit1"
+   ],
+   "n_failing": 1,
+   "secs": 4.6
+  },
+  {
+   "id": "M10",
+   "desc": "boolean_implemented off",
+   "status": "killed",
+   "killed_by": [
+    "test_AC_003_b_boolean_implemented_exit1_boolean_implemented"
+   ],
+   "n_failing": 1,
+   "secs": 4.5
+  },
+  {
+   "id": "M11",
+   "desc": "rename_true off",
+   "status": "killed",
+   "killed_by": [
+    "test_AC_003_a_F13_rename_true_exit1_count1"
+   ],
+   "n_failing": 1,
+   "secs": 4.6
+  },
+  {
+   "id": "M12",
+   "desc": "rings_without_missing_key off",
+   "status": "killed",
+   "killed_by": [
+    "test_AC_004_a_F13_ring_without_missing_key_exit1_count1"
+   ],
+   "n_failing": 1,
+   "secs": 4.5
+  },
+  {
+   "id": "M13",
+   "desc": "unknown_gap_ref (absent) off",
+   "status": "killed",
+   "killed_by": [
+    "test_AC_004_a_F13_unknown_gap_ref_exit1_unknown_gap_ref"
+   ],
+   "n_failing": 1,
+   "secs": 4.6
+  },
+  {
+   "id": "M14",
+   "desc": "unknown_gap_ref (cross-ring) off",
+   "status": "SURVIVED",
+   "killed_by": [],
+   "n_failing": 0,
+   "secs": 4.6
+  },
+  {
+   "id": "M15",
+   "desc": "overfill_unmarked off",
+   "status": "killed",
+   "killed_by": [
+    "test_AC_004_a_F13_overfill_unmarked_exit1_overfill_unmarked"
+   ],
+   "n_failing": 1,
+   "secs": 4.5
+  },
+  {
+   "id": "M16",
+   "desc": "orphan_gap off",
+   "status": "killed",
+   "killed_by": [
+    "test_AC_004_a_F13_orphan_gap_exit1_orphan_gaps_1"
+   ],
+   "n_failing": 1,
+   "secs": 4.6
+  },
+  {
+   "id": "M17",
+   "desc": "double_producer always acknowledged",
+   "status": "killed",
+   "killed_by": [
+    "test_AC_001_a_F13_double_producer_unacknowledged_exit1_double_producer"
+   ],
+   "n_failing": 1,
+   "secs": 4.6
+  },
+  {
+   "id": "M18",
+   "desc": "alternatives_of no longer exempts",
+   "status": "killed",
+   "killed_by": [
+    "test_AC_001_a_complete_exit0_rings10_parts_total42",
+    "test_AC_002_a_complete_dims_psl_and_evidence_counts_zero",
+    "test_AC_003_a_complete_implemented_and_rename_counts_zero",
+    "test_AC_004_a_complete_missing_key_orphan_and_source_counts_zero"
+   ],
+   "n_failing": 8,
+   "secs": 4.6
+  },
+  {
+   "id": "M19",
+   "desc": "spurious_merge_candidate off",
+   "status": "killed",
+   "killed_by": [
+    "test_AC_001_a_F13_spurious_merge_candidate_exit1_spurious_merge_candidate"
+   ],
+   "n_failing": 1,
+   "secs": 4.6
+  },
+  {
+   "id": "M20",
+   "desc": "gate_not_declared off",
+   "status": "killed",
+   "killed_by": [
+    "test_AC_006_a_F13_gate_not_declared_exit1_gate_not_declared"
+   ],
+   "n_failing": 1,
+   "secs": 4.6
+  },
+  {
+   "id": "M21",
+   "desc": "script_gate_rendered_as_door off",
+   "status": "killed",
+   "killed_by": [
+    "test_AC_006_a_F13_script_gate_rendered_as_door_exit1"
+   ],
+   "n_failing": 1,
+   "secs": 4.6
+  },
+  {
+   "id": "M22",
+   "desc": "gate_verdict_outside_enum off",
+   "status": "SURVIVED",
+   "killed_by": [],
+   "n_failing": 0,
+   "secs": 4.6
+  },
+  {
+   "id": "M23",
+   "desc": "signer required only on pass (pre-08238cd)",
+   "status": "SURVIVED",
+   "killed_by": [],
+   "n_failing": 0,
+   "secs": 4.6
+  },
+  {
+   "id": "M24",
+   "desc": "delegated_without_authorization_ref off",
+   "status": "killed",
+   "killed_by": [
+    "test_AC_006_a_F13_run_evidence_delegated_agent_without_authorization_ref_exit1"
+   ],
+   "n_failing": 1,
+   "secs": 4.6
+  },
+  {
+   "id": "M25",
+   "desc": "proposal_without_source off",
+   "status": "killed",
+   "killed_by": [
+    "test_AC_004_b_proposal_without_source_exit1_proposal_without_source"
+   ],
+   "n_failing": 1,
+   "secs": 4.6
+  },
+  {
+   "id": "M26",
+   "desc": "required_part_missing off",
+   "status": "killed",
+   "killed_by": [
+    "test_AC_008_b_required_part_removed_R0_R2_spine_exit1_required_part_missing",
+    "test_AC_009_b_required_part_removed_R3_R5_exit1_required_part_missing",
+    "test_AC_010_b_required_part_removed_R6_exit1_required_part_missing",
+    "test_AC_011_b_required_part_removed_R7_R8_exit1_required_part_missing"
+   ],
+   "n_failing": 4,
+   "secs": 4.8
+  },
+  {
+   "id": "M27",
+   "desc": "--variant delete-ring no-op",
+   "status": "killed",
+   "killed_by": [
+    "test_AC_001_b_F14_variant_delete_ring_R6_exit1"
+   ],
+   "n_failing": 1,
+   "secs": 4.6
+  },
+  {
+   "id": "M28",
+   "desc": "--rings view ignored",
+   "status": "SURVIVED",
+   "killed_by": [],
+   "n_failing": 0,
+   "secs": 4.6
+  },
+  {
+   "id": "M29",
+   "desc": "parts_total off by one",
+   "status": "killed",
+   "killed_by": [
+    "test_AC_001_a_complete_exit0_rings10_parts_total42"
+   ],
+   "n_failing": 1,
+   "secs": 4.6
+  },
+  {
+   "id": "M30",
+   "desc": "rings count off by one",
+   "status": "killed",
+   "killed_by": [
+    "test_AC_001_a_complete_exit0_rings10_parts_total42"
+   ],
+   "n_failing": 1,
+   "secs": 4.6
+  }
+ ],
+ "run": {
+  "at": "2026-09-05T15:41Z",
+  "head": "08238cd",
+  "tests_bytes": "e217d10 (tests/ring-audit overlaid before commit; identical bytes)",
+  "command": "python3 calibration/instrument_mutants.py <worktree> <out.json>",
+  "worktree": "detached git worktree at 08238cd (scratchpad), never the shared checkout"
+ }
+}

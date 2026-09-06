@@ -1,0 +1,10 @@
+0863c057947917bd6c6aaf2e7ce8af42c5c1224bb4937e3eeb84deee6e3b7fc4  plugins/sdlc/dogfood/ring-audit/check_audit.py
+c993a29fc5b631dc44b4c663a24e4a267f9d10bbe6705f1754e887fe891403ff  plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh
+74bb359794d96119058d3e4c3cbd0e69ec891a7e0749f06105169f27a53c30a9  plugins/sdlc/dogfood/ring-audit/render_audit.py
+a7a2846cb1f464db038826db12dbff00f3c9c52d7441d477b2a64bd70d8de13d  plugins/sdlc/dogfood/ring-audit/audit.yaml
+4b64626fec5dcb3eb5a23a41755f556796d2365ac67f3a8a51950ad0174ea68a  plugins/sdlc/dogfood/ring-audit/AUDIT.md
+eb29af9c323b5a3137cd08f64115bef8fb622598c8187ad114c77631a36541c9  plugins/sdlc/dogfood/ring-audit/audit.schema.md
+1e1d3df0fa231e6ac37ee02620794592c19624e9eee7e448d8855a5cf096494e  plugins/sdlc/dogfood/ring-audit/audit/rings-R0-R2-spine.yaml
+09fecca7ae641453280752a09325b2ff918ffb29a5eb48c843c202d33f828e9f  plugins/sdlc/dogfood/ring-audit/audit/rings-R3-R5.yaml
+9d1d6d1377233985ad3d41876130898f93b405e6c14dabf5d229dc68ca556844  plugins/sdlc/dogfood/ring-audit/audit/rings-R6.yaml
+4c993a0afce0309b82f651d708d373257db0d97f2d900f1d4f31e6eff2b6ffc6  plugins/sdlc/dogfood/ring-audit/audit/rings-R7-R8.yaml

@@ -1,0 +1,6 @@
+agent_role: spec-drift-detector
+vendor: claude
+model: none
+iteration: 1
+note: placeholder — drift detection needs history; no previous iteration (acceptance-fleet dispatch matrix rule)
+findings: []

@@ -1,0 +1,236 @@
+# done_when.yaml v2 — sdlc-ring-audit（契约；G2 签它）
+# 来源：issue-body.md 的 Acceptance 段（AC 已是 v2 形状），由 donewhen-extract 的三纪律复核：
+#   形容词→阈值（无形容词，全部数值 / 枚举）；happy 带 unhappy 孪生（AC-00x-b）；矛盾检查（无两条 AC 对同一 given 期望相反）；
+#   覆盖检查（REQ-001..011 每条至少一 AC；用户四问 缺少/需要/实现/命名 → REQ-004+008..011 / 005 / 003 / 005；PSL A1–A8 → 见 g2-record）。
+schema: 2
+feature: sdlc-ring-audit
+based_on: [REQ-001, REQ-002, REQ-003, REQ-004, REQ-005, REQ-006, REQ-007, REQ-008, REQ-009, REQ-010, REQ-011]
+# REQ-008..011：按环组的内容 REQ（R0–R2+spine / R3–R5 / R6 / R7–R8）。加它们的原因是 L4 的两条 lint 同时成立——REQ 一卡一主 与 上下文 ≤ 40k——
+# 而审计内容的最小读集 > 100k token，单张卡装不下；契约层的 REQ 粒度必须与实现分区对齐（这是本次 dogfood 的一条发现）。G2 修订后复核（E-8..E-10）：不接受硬编码下界，改为可复算的 required_parts 名单 + parts_total 40。
+created_at: 2026-09-05T14:30:00Z
+created_by: donewhen-extract
+track: psl
+
+acceptance:
+  - id: AC-001-a
+    req: REQ-001
+    kind: mechanical
+    ears_type: event
+    observe: "cli:check-audit"
+    given: { input: "complete audit.yaml", psl: "PSL-sdlc-ring-audit index 001..017",
+             required_parts: "agent.card-implementer, agent.comment-fixer, agent.fix-verifier, agent.pr-reviewer, agent.review-triager" }
+    expect: { exit: 0, rings: 10, parts_total: 42, parts_without_assessment: 0, required_parts_missing: 0 }
+    paired_with: AC-001-b
+  - id: AC-001-b
+    req: REQ-001
+    kind: mechanical
+    ears_type: unwanted
+    observe: "cli:check-audit"
+    given: { input: "audit.yaml with one ring entry removed" }
+    expect: { exit: 1, error: ring_missing }
+    paired_with: AC-001-a
+  - id: AC-002-a
+    req: REQ-002
+    kind: mechanical
+    ears_type: event
+    observe: "cli:check-audit"
+    given: { input: "complete audit.yaml", psl: "PSL-sdlc-ring-audit index 001..017" }
+    expect: { dims_without_psl_id: 0, dims_with_unknown_psl_id: 0, dims_without_evidence: 0 }
+    paired_with: AC-002-b
+  - id: AC-002-b
+    req: REQ-002
+    kind: mechanical
+    ears_type: unwanted
+    observe: "cli:check-audit"
+    given: { input: "audit.yaml with one assessment dimension whose psl_ids is empty" }
+    expect: { exit: 1, error: psl_id_missing }
+    paired_with: AC-002-a
+  - id: AC-003-a
+    req: REQ-003
+    kind: mechanical
+    ears_type: event
+    observe: "cli:check-audit"
+    given: { input: "complete audit.yaml" }
+    expect: { boolean_implemented: 0, implemented_outside_enum: 0, rename_true: 0 }
+    paired_with: AC-003-b
+  - id: AC-003-b
+    req: REQ-003
+    kind: mechanical
+    ears_type: unwanted
+    observe: "cli:check-audit"
+    given: { input: "audit.yaml with implemented set to a boolean on one part" }
+    expect: { exit: 1, error: boolean_implemented }
+    paired_with: AC-003-a
+  - id: AC-004-a
+    req: REQ-004
+    kind: mechanical
+    ears_type: event
+    observe: "cli:check-audit"
+    given: { input: "complete audit.yaml" }
+    expect: { rings_without_missing_key: 0, orphan_gaps: 0, proposals_without_source: 0 }
+    paired_with: AC-004-b
+  - id: AC-004-b
+    req: REQ-004
+    kind: mechanical
+    ears_type: unwanted
+    observe: "cli:check-audit"
+    given: { input: "audit.yaml with one proposal lacking a source assessment or gap id" }
+    expect: { exit: 1, error: proposal_without_source }
+    paired_with: AC-004-a
+  - id: AC-005-a
+    req: REQ-005
+    kind: human
+    observe: "ui:AUDIT.md#ring-tables"
+    statement: >-
+      每个 Part 行给出 Gap 原子集合、独占 Artifact（或 role gate | orchestrator）、检它的 Gate（script 写"闸"、human 写"门"）与 Loop；
+      needed 判定的 deletion 测试写出撤掉它后流水线会产出的具体错误产物或漏检（不接受"流程会断"一类泛语）；
+      naming 判定先写来路（authored | adopted）再写贴合，misfit 时给建议名且建议名比原名更贴产物或位置并标"不重命名"；
+      疑似重复的 Part 对（至少 pr-review vs code-reviewer、donewhen-extract vs acceptance-spec）带 Artifact 对照与 distinct_exits | merge_candidate | alternatives_of 裁决；
+      每环表末尾的 missing 行带来源标签（lifecycle_blank | newly_identified | unenforced_rule）、necessity 与 deletion 一句
+    judge: tech
+    evidence: checklist
+  - id: AC-006-a
+    req: REQ-006
+    kind: human
+    observe: "ui:AUDIT.md#run-evidence"
+    statement: >-
+      run_evidence 节列出 G1 / G2 / G3 的签字人、signer_kind 与授权引用，signer_kind = delegated_agent 的门不渲染为"人签"；
+      列出 check-audit 对 audit.yaml 的 exit 0 与对删环变体的 exit 1 两次运行记录（缺变体记录时 exit 0 标 uncalibrated，A6 的回答如实带出该标记）；
+      列出 Card-footer 提交对三个被审目录的 git diff --stat 记录（为空）与 skill-issues.md 的路径；外部证据的替代品标 substitute，不渲染为用户验证
+    judge: product
+    evidence: checklist
+  - id: AC-007-a
+    req: REQ-007
+    kind: mechanical
+    ears_type: event
+    observe: "cli:verify-commit"
+    given: { input: "each commit carrying a `Card: CARD-xx` footer on the feature branch, replayed as --range <sha>^..<sha> --card <its card>" }
+    expect: { exit: 0, card_commits_touching_audited_dirs: 0 }
+    paired_with: AC-007-b
+  - id: AC-007-b
+    req: REQ-007
+    kind: mechanical
+    ears_type: unwanted
+    observe: "cli:verify-commit"
+    given: { input: "a Card commit whose diff modifies a file under plugins/sdlc/skills/**" }
+    expect: { exit: 1, error: whitelist_overflow }
+    paired_with: AC-007-a
+  - id: AC-008-a
+    req: REQ-008
+    kind: mechanical
+    ears_type: event
+    observe: "cli:check-audit"
+    given: { input: "complete audit.yaml", rings: "R0,R1,R2,spine",
+             required_parts: "psl, psl-derive, human_gate.G1, dos-extract, invariant-extract, issue, donewhen-extract, acceptance-spec, human_gate.G2, sdlc, asset.graph.yaml, asset.loops.yaml, asset.routing.yaml, asset.triggers.yaml" }
+    expect: { exit: 0, parts_without_assessment: 0, required_parts_missing: 0 }
+    paired_with: AC-008-b
+  - id: AC-008-b
+    req: REQ-008
+    kind: mechanical
+    ears_type: unwanted
+    observe: "cli:check-audit"
+    given: { input: "audit.yaml with one required part of rings R0,R1,R2,spine removed", rings: "R0,R1,R2,spine" }
+    expect: { exit: 1, error: "required_part_missing" }
+    paired_with: AC-008-a
+  - id: AC-009-a
+    req: REQ-009
+    kind: mechanical
+    ears_type: event
+    observe: "cli:check-audit"
+    given: { input: "complete audit.yaml", rings: "R3,R4,R5",
+             required_parts: "test-suite-generator, spec-compile, calibrate, plan-cards, implement, commit, ratchet" }
+    expect: { exit: 0, parts_without_assessment: 0, required_parts_missing: 0 }
+    paired_with: AC-009-b
+  - id: AC-009-b
+    req: REQ-009
+    kind: mechanical
+    ears_type: unwanted
+    observe: "cli:check-audit"
+    given: { input: "audit.yaml with one required part of rings R3,R4,R5 removed", rings: "R3,R4,R5" }
+    expect: { exit: 1, error: "required_part_missing" }
+    paired_with: AC-009-a
+  - id: AC-010-a
+    req: REQ-010
+    kind: mechanical
+    ears_type: event
+    observe: "cli:check-audit"
+    given: { input: "complete audit.yaml", rings: "R6",
+             required_parts: "acceptance-fleet, code-reviewer, qa-reviewer, pm-reviewer, spec-drift-detector, spec-gaming-detector, meta-judge, pr-review, human_gate.G3" }
+    expect: { exit: 0, parts_without_assessment: 0, required_parts_missing: 0 }
+    paired_with: AC-010-b
+  - id: AC-010-b
+    req: REQ-010
+    kind: mechanical
+    ears_type: unwanted
+    observe: "cli:check-audit"
+    given: { input: "audit.yaml with one required part of ring R6 removed", rings: "R6" }
+    expect: { exit: 1, error: "required_part_missing" }
+    paired_with: AC-010-a
+  - id: AC-011-a
+    req: REQ-011
+    kind: mechanical
+    ears_type: event
+    observe: "cli:check-audit"
+    given: { input: "complete audit.yaml", rings: "R7,R8",
+             required_parts: "pr, review-loop, release, retro, tune, human_gate.merge, human_gate.harness-review" }
+    expect: { exit: 0, parts_without_assessment: 0, required_parts_missing: 0 }
+    paired_with: AC-011-b
+  - id: AC-011-b
+    req: REQ-011
+    kind: mechanical
+    ears_type: unwanted
+    observe: "cli:check-audit"
+    given: { input: "audit.yaml with one required part of rings R7,R8 removed", rings: "R7,R8" }
+    expect: { exit: 1, error: "required_part_missing" }
+    paired_with: AC-011-a
+
+existence:                                # 只留观察边界（C2）：文件级存在性下放到卡的 allowed_files
+  - cli: check-audit
+  - cli: verify-commit
+  - ui: AUDIT.md#ring-tables
+  - ui: AUDIT.md#run-evidence
+
+behavior:                                 # tests-manifest 种子；L5 由 test-suite-generator 填并二次锁
+  unit_tests: { example_based: [], property_based: [] }
+  integration_tests: { example_based: [], property_based: [] }
+  e2e_tests: []
+  thresholds:
+    rings: "== 10"
+    dims_with_psl_id_ratio: ">= 1.0"
+    card_commits_touching_audited_dirs: "== 0"
+    parts_total: "== 42"                  # 28 skill（27 环上 + sdlc）+ 5 agent + 5 human_gate（graph.yaml 全部 kind=human 节点，按签字版 F-08：G1/G2/G3 + merge + harness-review）+ 4 脊柱数据资产；G1 第三轮补签的警示已对齐
+    required_parts_by_ring_group: "R0-R2+spine: 14 names; R3-R5: 7; R6: 9; R7-R8: 7（含 human_gate.merge → R7、human_gate.harness-review → R8，签字版 F-08）— 名单见 AC-008..011-a given；agent 5 个不分组（环归属是审计输出，F-08 / F-24），挂 AC-001-a"
+    mutation_kill_rate: ">= 0.70"        # /calibrate 的 mutation 镜：变体族 = F-13 全部谓词（≥ 10 族：删环 / 清空 psl_ids / unknown psl_id / evidence kind 越界或 ref 空 /
+                                         # 布尔化 implemented / implemented 枚举外 / rename=true / 去 source / 双生产者非 alternatives_of / orphan gap / missing 键缺失 /
+                                         # human Gate 无 signer / delegated 无 authorization_ref / script Gate 渲染为"门"），不是只取 unwanted AC 自身（G2 E-6）
+  threshold_source: "PSL γ 约束（rings、psl_id、被审目录）+ Acceptance A6 / A8；mutation 阈值取 sdlc 默认 team floor，变体族按 F-13 谓词全集（G2 附条件接受）；required_parts 来源 ARCHITECTURE §1 表 skill 列 + 门列人签门 + 脊柱四资产 + agents/*.md 目录清单（2026-09-05 快照）"
+
+rules:                                    # meta-judge 规则源
+  - "any P0 finding blocks merge"
+  - "any card commit touching plugins/sdlc/skills, plugins/sdlc/agents or plugins/sdlc/docs is a P0 (PSL-003)"
+  - "an Assessment dimension without a PSL-ID or without Evidence is a P0 (PSL-010)"
+  - "human ACs AC-005-a / AC-006-a route to G3; they are never auto-passed"
+
+constraints:
+  forbidden_paths:                        # G2 E-7：保留验证器要的字面项，补对本次嵌套路径生效的写法与 G1 签字版形态
+    - tests/**
+    - "**/tests/**"
+    - done_when.yaml
+    - "**/done_when.yaml"
+    - dos.yaml
+    - "**/dos.yaml"
+    - .done_when.lock
+    - "**/.done_when.lock"
+    - plugins/sdlc/skills/**
+    - plugins/sdlc/agents/**
+    - plugins/sdlc/docs/**
+    - plugins/sdlc/dogfood/ring-audit/PSL-sdlc-ring-audit.md
+    - plugins/sdlc/dogfood/ring-audit/derived/**
+    - plugins/sdlc/dogfood/ring-audit/issue-body.md
+    - plugins/sdlc/dogfood/ring-audit/g1-record.md
+    - plugins/sdlc/dogfood/ring-audit/g2-record.md
+    - .sdlc/**
+  mock_allowlist: []
+
+budgets: { card_retries: 3, plan_reflows: 2, task_reflows: 2 }
+spec_drift_threshold: { max_fix_loops_before_escalation: 3 }

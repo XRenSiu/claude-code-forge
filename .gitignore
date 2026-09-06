@@ -63,3 +63,6 @@ coverage/
 # package-lock.json
 # yarn.lock
 # pnpm-lock.yaml
+
+# sdlc runtime state (archive lives in specs/<slug>/ or the dogfood dir)
+.sdlc/

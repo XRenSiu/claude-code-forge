@@ -1,0 +1,8 @@
+verified at HEAD f11f0e2: all 10 implementation files byte-equal to the iteration-003 impl-snapshot (4ddb362); commits after 4ddb362 are docs-only (skill-issues.md, pr-body.md)
+re-verified at e4d3166 (after merging origin/main): all 10 implementation files still byte-equal to the 4ddb362 snapshot
+
+after G3 (C-1): at 79b4736+ the shipped bytes DIFFER from the 4ddb362 snapshot in exactly 2 file(s): ['plugins/sdlc/dogfood/ring-audit/audit.yaml', 'plugins/sdlc/dogfood/ring-audit/AUDIT.md'].
+Reason: G3's hard pre-merge condition C-1 — write the G3 signature triple into run_evidence.gates[G3] and re-render AUDIT.md deterministically.
+Everything else remains byte-equal (8/10). The change adds a gate verdict that did not exist at review time; it is
+machine-accepted by check_audit.py's human_gates_without_signer / delegated_without_authorization_ref predicates (both 0) and AUDIT.md is a
+byte-stable render of audit.yaml (re-render produces an identical file). G3 reviewed audit.yaml c82dfc8e… / AUDIT.md 962cc2f6… at head 79b4736.

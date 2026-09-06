@@ -1,0 +1,698 @@
+[
+  {
+    "merged_finding_id": "mf-001",
+    "file": "plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh",
+    "line_range": [
+      60,
+      154
+    ],
+    "synthesized_severity": "P1",
+    "mechanism": "two footer matchers disagree on case (card_footer_of case-sensitive L61 vs has_card_footer case-insensitive L146); a `card: CARD-01` commit is in neither pass",
+    "sources": [
+      {
+        "role": "code-reviewer",
+        "focus": "security",
+        "finding_id": "cr-001",
+        "vendor": "claude",
+        "confidence": "high",
+        "severity": "P1",
+        "line_range": [
+          60,
+          63
+        ]
+      },
+      {
+        "role": "code-reviewer",
+        "focus": "logic",
+        "finding_id": "cr-002",
+        "vendor": "claude",
+        "confidence": "high",
+        "severity": "P1",
+        "line_range": [
+          145,
+          147
+        ]
+      },
+      {
+        "role": "spec-drift-detector",
+        "finding_id": "DS-03",
+        "vendor": "claude",
+        "confidence": "high",
+        "severity": "medium->P2",
+        "line_range": [
+          61,
+          146
+        ]
+      },
+      {
+        "role": "spec-gaming-detector",
+        "finding_id": "gd-002",
+        "vendor": "claude",
+        "confidence": "high",
+        "severity": "P2",
+        "line_range": [
+          145,
+          154
+        ]
+      }
+    ],
+    "confidence": 1.0,
+    "confidence_boost": 0.5,
+    "weight_terms": {
+      "distinct_roles": 3,
+      "distinct_vendors": 1,
+      "role_bonus": 0.4,
+      "vendor_bonus": 0.0,
+      "single_source_single_vendor_penalty": 0.0,
+      "self_confidence_adj": 0.1
+    },
+    "blocking": false,
+    "rules_triggered": [],
+    "recurrence_of": "iteration-002/mf-005",
+    "recurrence_kind": "recurred_in_new_form_after_partial_fix",
+    "fix_induced": true,
+    "fix_induced_attribution": "a2deb83 (CARD-01) — spec-gaming-detector gd-002 tags [fix-pressure-induced, regression] with commit_introducing a2deb83; spec-drift-detector DS-03 commit_introducing_drift a2deb83; code-reviewer-security cr-001 git_log evidence names a2deb83 as the commit that added has_card_footer with grep -qiE while leaving card_footer_of case-sensitive"
+  },
+  {
+    "merged_finding_id": "mf-002",
+    "file": "plugins/sdlc/dogfood/ring-audit/render_audit.py",
+    "line_range": [
+      533,
+      555
+    ],
+    "synthesized_severity": "P1",
+    "mechanism": "PSL-003 table row hard-coded '自第一个 Card 提交起' while the scanned window is merge-base(main,HEAD)..HEAD; non_card_range_spec and non_card_commits_touching[] never rendered",
+    "sources": [
+      {
+        "role": "code-reviewer",
+        "focus": "logic",
+        "finding_id": "cr-001",
+        "vendor": "claude",
+        "confidence": "high",
+        "severity": "P1",
+        "line_range": [
+          533,
+          535
+        ]
+      },
+      {
+        "role": "spec-drift-detector",
+        "finding_id": "DS-01",
+        "vendor": "claude",
+        "confidence": "high",
+        "severity": "medium->P2",
+        "line_range": [
+          533,
+          535
+        ]
+      },
+      {
+        "role": "spec-gaming-detector",
+        "finding_id": "gd-unc-001",
+        "vendor": "claude",
+        "confidence": "high",
+        "severity": "P2",
+        "line_range": [
+          533,
+          555
+        ]
+      },
+      {
+        "role": "pm-reviewer",
+        "finding_id": "out_of_scope_observations[0]",
+        "vendor": "claude",
+        "confidence": null,
+        "severity": null,
+        "line_range": [
+          533,
+          533
+        ]
+      }
+    ],
+    "confidence": 1.0,
+    "confidence_boost": 0.5,
+    "weight_terms": {
+      "distinct_roles": 4,
+      "distinct_vendors": 1,
+      "role_bonus": 0.4,
+      "vendor_bonus": 0.0,
+      "single_source_single_vendor_penalty": 0.0,
+      "self_confidence_adj": 0.1
+    },
+    "blocking": false,
+    "rules_triggered": [],
+    "recurrence_of": null,
+    "recurrence_kind": null,
+    "fix_induced": true,
+    "fix_induced_attribution": "a2deb83 widened the window, 4ddb362 (CARD-06) re-recorded the data and touched the same render table without updating L533 — spec-gaming-detector gd-unc-001 commit_introducing 4ddb362, tags [fix-pressure-induced]; spec-drift-detector DS-01 commit_introducing_drift a2deb83 with 4ddb362 as additional_contributing; code-reviewer-logic cr-001 git_log names both",
+    "related_to": "iteration-002/mf-012 (same file, overlapping line 533; predecessor mechanism 'renderer never projects the record exit field' is CLOSED this iteration — see closed_from_previous. Not marked recurrence_of because the omitted field is different: exit is now rendered, non_card_range_spec and non_card_commits_touching[] are not)"
+  },
+  {
+    "merged_finding_id": "mf-003",
+    "file": "plugins/sdlc/dogfood/ring-audit/check_audit.py",
+    "line_range": [
+      394,
+      402
+    ],
+    "synthesized_severity": "P2",
+    "mechanism": "check_proposals tests proposal.source for non-emptiness only; a dangling id exits 0 (KG-02); gd-001 generalises the fixture-width pattern to KG-01/03/04",
+    "sources": [
+      {
+        "role": "spec-gaming-detector",
+        "finding_id": "gd-001",
+        "vendor": "claude",
+        "confidence": "high",
+        "severity": "P2",
+        "line_range": [
+          394,
+          402
+        ]
+      },
+      {
+        "role": "pm-reviewer",
+        "finding_id": "REQ-004/partially_compliant",
+        "vendor": "claude",
+        "confidence": "high",
+        "severity": "partially_compliant->P2",
+        "line_range": [
+          394,
+          402
+        ]
+      },
+      {
+        "role": "spec-drift-detector",
+        "finding_id": "DS-06",
+        "vendor": "claude",
+        "confidence": "high",
+        "severity": "low->P3",
+        "line_range": [
+          397,
+          402
+        ]
+      }
+    ],
+    "confidence": 1.0,
+    "confidence_boost": 0.5,
+    "weight_terms": {
+      "distinct_roles": 3,
+      "distinct_vendors": 1,
+      "role_bonus": 0.4,
+      "vendor_bonus": 0.0,
+      "single_source_single_vendor_penalty": 0.0,
+      "self_confidence_adj": 0.1
+    },
+    "blocking": false,
+    "rules_triggered": [],
+    "recurrence_of": "iteration-002/mf-011",
+    "recurrence_kind": "recurred_unchanged_known_gap",
+    "fix_induced": false,
+    "known_gap": "KG-02 (+ KG-01 / KG-03 / KG-04 generalised by gd-001's fixture-width pattern)"
+  },
+  {
+    "merged_finding_id": "mf-004",
+    "file": "plugins/sdlc/dogfood/ring-audit/check_audit.py",
+    "line_range": [
+      258,
+      278
+    ],
+    "synthesized_severity": "P2",
+    "mechanism": "resolve() applies the same-ring clause to fills[] although G1 rule 2(e) states it for missing[] only",
+    "sources": [
+      {
+        "role": "code-reviewer",
+        "focus": "logic",
+        "finding_id": "cr-003",
+        "vendor": "claude",
+        "confidence": "high",
+        "severity": "P2",
+        "line_range": [
+          265,
+          278
+        ]
+      },
+      {
+        "role": "spec-drift-detector",
+        "finding_id": "DS-05",
+        "vendor": "claude",
+        "confidence": "high",
+        "severity": "low->P3",
+        "line_range": [
+          258,
+          278
+        ]
+      }
+    ],
+    "confidence": 0.8,
+    "confidence_boost": 0.3,
+    "weight_terms": {
+      "distinct_roles": 2,
+      "distinct_vendors": 1,
+      "role_bonus": 0.2,
+      "vendor_bonus": 0.0,
+      "single_source_single_vendor_penalty": 0.0,
+      "self_confidence_adj": 0.1
+    },
+    "blocking": false,
+    "rules_triggered": [],
+    "recurrence_of": "iteration-002/mf-010",
+    "recurrence_kind": "recurred_unchanged",
+    "fix_induced": false,
+    "known_gap": "KG-08 (mutant_gap_ref_wrong_ring, open → change-proposal-002)"
+  },
+  {
+    "merged_finding_id": "mf-005",
+    "file": "plugins/sdlc/dogfood/ring-audit/audit.yaml",
+    "line_range": [
+      3459,
+      3459
+    ],
+    "synthesized_severity": "P3",
+    "mechanism": "skill_issues_count hand-written as 67 with a comment claiming grep -c; the grep yields 69 at 4ddb362",
+    "sources": [
+      {
+        "role": "spec-drift-detector",
+        "finding_id": "DS-07",
+        "vendor": "claude",
+        "confidence": "high",
+        "severity": "low->P3",
+        "line_range": [
+          3459,
+          3459
+        ]
+      },
+      {
+        "role": "pm-reviewer",
+        "finding_id": "out_of_scope_observations[1]",
+        "vendor": "claude",
+        "confidence": null,
+        "severity": null,
+        "line_range": [
+          3459,
+          3459
+        ]
+      }
+    ],
+    "confidence": 0.8,
+    "confidence_boost": 0.3,
+    "weight_terms": {
+      "distinct_roles": 2,
+      "distinct_vendors": 1,
+      "role_bonus": 0.2,
+      "vendor_bonus": 0.0,
+      "single_source_single_vendor_penalty": 0.0,
+      "self_confidence_adj": 0.1
+    },
+    "blocking": false,
+    "rules_triggered": [],
+    "recurrence_of": null,
+    "recurrence_kind": null,
+    "fix_induced": false,
+    "fix_induced_attribution": "NOT fix-induced: spec-drift-detector DS-07 blames b87dc58 (iteration-001 trace docs commit, 67→68) and 092ff0d (68→69); the value was correct when written at 3441ba4"
+  },
+  {
+    "merged_finding_id": "mf-006",
+    "file": "plugins/sdlc/dogfood/ring-audit/check_audit.py",
+    "line_range": [
+      364,
+      374
+    ],
+    "synthesized_severity": "P2",
+    "mechanism": "gates[].kind not validated against {script, human}; any other kind is exempt from gate_not_declared and script_gate_rendered_as_door",
+    "sources": [
+      {
+        "role": "code-reviewer",
+        "focus": "security",
+        "finding_id": "cr-002",
+        "vendor": "claude",
+        "confidence": "high",
+        "severity": "P2",
+        "line_range": [
+          364,
+          374
+        ]
+      }
+    ],
+    "confidence": 0.4,
+    "confidence_boost": -0.1,
+    "weight_terms": {
+      "distinct_roles": 1,
+      "distinct_vendors": 1,
+      "role_bonus": 0.0,
+      "vendor_bonus": 0.0,
+      "single_source_single_vendor_penalty": -0.2,
+      "self_confidence_adj": 0.1
+    },
+    "blocking": false,
+    "rules_triggered": [],
+    "recurrence_of": "iteration-002/mf-014",
+    "recurrence_kind": "recurred_unchanged",
+    "fix_induced": false
+  },
+  {
+    "merged_finding_id": "mf-007",
+    "file": "plugins/sdlc/dogfood/ring-audit/audit.schema.md",
+    "line_range": [
+      36,
+      49
+    ],
+    "synthesized_severity": "P2",
+    "mechanism": "schema names six top-level registries; audit.yaml carries eight (unenforced_rules, suspected_duplicate_pairs) consumed by the renderer and ignored by the checker",
+    "sources": [
+      {
+        "role": "spec-drift-detector",
+        "finding_id": "DS-02",
+        "vendor": "claude",
+        "confidence": "high",
+        "severity": "medium->P2",
+        "line_range": [
+          36,
+          49
+        ]
+      }
+    ],
+    "confidence": 0.4,
+    "confidence_boost": -0.1,
+    "weight_terms": {
+      "distinct_roles": 1,
+      "distinct_vendors": 1,
+      "role_bonus": 0.0,
+      "vendor_bonus": 0.0,
+      "single_source_single_vendor_penalty": -0.2,
+      "self_confidence_adj": 0.1
+    },
+    "blocking": false,
+    "rules_triggered": [],
+    "recurrence_of": "iteration-002/mf-017",
+    "recurrence_kind": "recurred_unchanged",
+    "fix_induced": false
+  },
+  {
+    "merged_finding_id": "mf-008",
+    "file": "plugins/sdlc/dogfood/ring-audit/render_audit.py",
+    "line_range": [
+      624,
+      637
+    ],
+    "synthesized_severity": "P3",
+    "mechanism": "assembly_notes() claims '一处不漏' with a 5-row table; the merge also added top-level unenforced_rules[] which has no row",
+    "sources": [
+      {
+        "role": "code-reviewer",
+        "focus": "logic",
+        "finding_id": "cr-004",
+        "vendor": "claude",
+        "confidence": "high",
+        "severity": "P3",
+        "line_range": [
+          624,
+          637
+        ]
+      }
+    ],
+    "confidence": 0.4,
+    "confidence_boost": -0.1,
+    "weight_terms": {
+      "distinct_roles": 1,
+      "distinct_vendors": 1,
+      "role_bonus": 0.0,
+      "vendor_bonus": 0.0,
+      "single_source_single_vendor_penalty": -0.2,
+      "self_confidence_adj": 0.1
+    },
+    "blocking": false,
+    "rules_triggered": [],
+    "recurrence_of": null,
+    "recurrence_kind": null,
+    "fix_induced": false,
+    "related_to": "iteration-002/mf-017 stated the same assembly-notes omission inside an audit.schema.md finding; iteration-003 splits it by file, so this render_audit.py finding is new at this file"
+  },
+  {
+    "merged_finding_id": "mf-009",
+    "file": "plugins/sdlc/dogfood/ring-audit/audit.yaml",
+    "line_range": [
+      0,
+      0
+    ],
+    "synthesized_severity": "P2",
+    "mechanism": "three Parts (R6/human_gate.G3, R7/agent.pr-reviewer, R8/tune) record implemented compiled while every artifact they produce has checked_by []; F-06 cap has no predicate",
+    "sources": [
+      {
+        "role": "spec-gaming-detector",
+        "finding_id": "gd-unc-002",
+        "vendor": "claude",
+        "confidence": "medium",
+        "severity": "P2",
+        "line_range": [
+          0,
+          0
+        ]
+      }
+    ],
+    "confidence": 0.3,
+    "confidence_boost": -0.2,
+    "weight_terms": {
+      "distinct_roles": 1,
+      "distinct_vendors": 1,
+      "role_bonus": 0.0,
+      "vendor_bonus": 0.0,
+      "single_source_single_vendor_penalty": -0.2,
+      "self_confidence_adj": 0.0
+    },
+    "blocking": false,
+    "rules_triggered": [],
+    "recurrence_of": "iteration-002/mf-009",
+    "recurrence_kind": "recurred_unchanged",
+    "fix_induced": false
+  },
+  {
+    "merged_finding_id": "mf-010",
+    "file": "plugins/sdlc/dogfood/ring-audit/check_audit.py",
+    "line_range": [
+      165,
+      168
+    ],
+    "synthesized_severity": "P3",
+    "mechanism": "with --rings the ring_unexpected loop is skipped entirely, against F-17 '不改任何既有谓词'",
+    "sources": [
+      {
+        "role": "spec-drift-detector",
+        "finding_id": "DS-04",
+        "vendor": "claude",
+        "confidence": "high",
+        "severity": "low->P3",
+        "line_range": [
+          165,
+          168
+        ]
+      }
+    ],
+    "confidence": 0.4,
+    "confidence_boost": -0.1,
+    "weight_terms": {
+      "distinct_roles": 1,
+      "distinct_vendors": 1,
+      "role_bonus": 0.0,
+      "vendor_bonus": 0.0,
+      "single_source_single_vendor_penalty": -0.2,
+      "self_confidence_adj": 0.1
+    },
+    "blocking": false,
+    "rules_triggered": [],
+    "recurrence_of": "iteration-002/mf-008",
+    "recurrence_kind": "recurred_unchanged",
+    "fix_induced": false,
+    "known_gap": "none — spec-drift-detector DS-04 drift_notes explicitly separates this from KG-05 ('a related but distinct observation about test coverage, not about --rings')"
+  },
+  {
+    "merged_finding_id": "mf-011",
+    "file": "plugins/sdlc/dogfood/ring-audit/render_audit.py",
+    "line_range": [
+      573,
+      574
+    ],
+    "synthesized_severity": "P3",
+    "mechanism": "holdout attested_by_kind falls back to the raw yaml string instead of the closed SIGNER_KIND_RENDER map",
+    "sources": [
+      {
+        "role": "code-reviewer",
+        "focus": "security",
+        "finding_id": "cr-003",
+        "vendor": "claude",
+        "confidence": "high",
+        "severity": "P3",
+        "line_range": [
+          573,
+          574
+        ]
+      }
+    ],
+    "confidence": 0.4,
+    "confidence_boost": -0.1,
+    "weight_terms": {
+      "distinct_roles": 1,
+      "distinct_vendors": 1,
+      "role_bonus": 0.0,
+      "vendor_bonus": 0.0,
+      "single_source_single_vendor_penalty": -0.2,
+      "self_confidence_adj": 0.1
+    },
+    "blocking": false,
+    "rules_triggered": [],
+    "recurrence_of": "iteration-002/mf-006",
+    "recurrence_kind": "residual_after_partial_fix",
+    "fix_induced": false,
+    "recurrence_note": "line ranges do not overlap ([259,259] vs [573,574]) but iteration-002/mf-006's root_cause enumerated this exact site: 'the whole holdout block at L570-577 (attested_by_kind is echoed raw when it is not the literal delegated_agent, contrary to the closed-map rule stated for SIGNER_KIND_RENDER at L41)'. 4ddb362 routed ten interpolation sites through cell()/code(); this one kept its raw fallback."
+  },
+  {
+    "merged_finding_id": "mf-012",
+    "file": "plugins/sdlc/dogfood/ring-audit/check_audit.py",
+    "line_range": [
+      70,
+      72
+    ],
+    "synthesized_severity": "P3",
+    "mechanism": "die() writes nothing to stdout on exit 2 although audit.schema.md says stdout is always one JSON object",
+    "sources": [
+      {
+        "role": "spec-drift-detector",
+        "finding_id": "DS-08",
+        "vendor": "claude",
+        "confidence": "high",
+        "severity": "low->P3",
+        "line_range": [
+          70,
+          72
+        ]
+      }
+    ],
+    "confidence": 0.4,
+    "confidence_boost": -0.1,
+    "weight_terms": {
+      "distinct_roles": 1,
+      "distinct_vendors": 1,
+      "role_bonus": 0.0,
+      "vendor_bonus": 0.0,
+      "single_source_single_vendor_penalty": -0.2,
+      "self_confidence_adj": 0.1
+    },
+    "blocking": false,
+    "rules_triggered": [],
+    "recurrence_of": "iteration-002/mf-016",
+    "recurrence_kind": "recurred_unchanged",
+    "fix_induced": false
+  },
+  {
+    "merged_finding_id": "mf-013",
+    "file": "plugins/sdlc/dogfood/ring-audit/audit.schema.md",
+    "line_range": [
+      115,
+      149
+    ],
+    "synthesized_severity": "P3",
+    "mechanism": "disposition enum is {fix_list, issue, none} in F-16 but {none, issue} in audit.schema.md; no predicate enforces either",
+    "sources": [
+      {
+        "role": "spec-drift-detector",
+        "finding_id": "DS-09",
+        "vendor": "claude",
+        "confidence": "medium",
+        "severity": "low->P3",
+        "line_range": [
+          115,
+          149
+        ]
+      }
+    ],
+    "confidence": 0.3,
+    "confidence_boost": -0.2,
+    "weight_terms": {
+      "distinct_roles": 1,
+      "distinct_vendors": 1,
+      "role_bonus": 0.0,
+      "vendor_bonus": 0.0,
+      "single_source_single_vendor_penalty": -0.2,
+      "self_confidence_adj": 0.0
+    },
+    "blocking": false,
+    "rules_triggered": [],
+    "recurrence_of": "iteration-002/mf-020",
+    "recurrence_kind": "recurred_unchanged",
+    "fix_induced": false
+  },
+  {
+    "merged_finding_id": "mf-014",
+    "file": "plugins/sdlc/dogfood/ring-audit/audit.schema.md",
+    "line_range": [
+      11,
+      14
+    ],
+    "synthesized_severity": "P3",
+    "mechanism": "schema preamble describes three CARD-01 note divergences that 5a6889c removed; the 'supersedes' clause has nothing left to override",
+    "sources": [
+      {
+        "role": "spec-drift-detector",
+        "finding_id": "DS-10",
+        "vendor": "claude",
+        "confidence": "high",
+        "severity": "low->P3",
+        "line_range": [
+          11,
+          14
+        ]
+      }
+    ],
+    "confidence": 0.4,
+    "confidence_boost": -0.1,
+    "weight_terms": {
+      "distinct_roles": 1,
+      "distinct_vendors": 1,
+      "role_bonus": 0.0,
+      "vendor_bonus": 0.0,
+      "single_source_single_vendor_penalty": -0.2,
+      "self_confidence_adj": 0.1
+    },
+    "blocking": false,
+    "rules_triggered": [],
+    "recurrence_of": "iteration-002/mf-019",
+    "recurrence_kind": "recurred_unchanged",
+    "fix_induced": false
+  },
+  {
+    "merged_finding_id": "mf-015",
+    "file": "plugins/sdlc/dogfood/ring-audit/render_audit.py",
+    "line_range": [
+      243,
+      435
+    ],
+    "synthesized_severity": "P3",
+    "mechanism": "the F-02 / F-10 / F-11 rendering literals (已验证（未校准） / 无 Part / 本次无 for rings) do not exist in render_audit.py; all three paths are unexercised today",
+    "sources": [
+      {
+        "role": "spec-drift-detector",
+        "finding_id": "DS-11",
+        "vendor": "claude",
+        "confidence": "medium",
+        "severity": "low->P3",
+        "line_range": [
+          243,
+          435
+        ]
+      }
+    ],
+    "confidence": 0.3,
+    "confidence_boost": -0.2,
+    "weight_terms": {
+      "distinct_roles": 1,
+      "distinct_vendors": 1,
+      "role_bonus": 0.0,
+      "vendor_bonus": 0.0,
+      "single_source_single_vendor_penalty": -0.2,
+      "self_confidence_adj": 0.0
+    },
+    "blocking": false,
+    "rules_triggered": [],
+    "recurrence_of": null,
+    "recurrence_kind": null,
+    "fix_induced": false
+  }
+]

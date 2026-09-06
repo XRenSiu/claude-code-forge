@@ -1,0 +1,84 @@
+agent_role: perf
+model: claude-sonnet-5
+vendor: claude
+isolation: medium
+inputs_read:
+  - plugins/sdlc/skills/code-reviewer/SKILL.md
+  - plugins/sdlc/skills/code-reviewer/references/finding-schema.yaml
+  - plugins/sdlc/skills/code-reviewer/references/focus-areas.md (# --focus=perf section)
+  - git diff 57ebf2b..843c3ee -- plugins/sdlc/dogfood/ring-audit (full impl diff, 54 files)
+  - plugins/sdlc/dogfood/ring-audit/check_audit.py (full file, new in this diff)
+  - plugins/sdlc/dogfood/ring-audit/render_audit.py (full file, new in this diff)
+  - plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh (full file, new in this diff)
+  - plugins/sdlc/dogfood/ring-audit/calibration/instrument_mutants.py (full file, new in this diff)
+  - plugins/sdlc/dogfood/ring-audit/tests/ring-audit/test_check_audit.py (diff hunks only)
+
+code_review:
+  agent_role: perf
+  model: claude-sonnet-5
+  vendor: claude
+  adversarial_mode: false
+  diff_source: "57ebf2b..843c3ee -- plugins/sdlc/dogfood/ring-audit"
+  diff_total_hunks: 1955
+  diff_total_lines_changed: 26213      # 21572 insertions + 4641 deletions, git diff --shortstat
+  rules_loaded: []
+  repo_root: /Users/xrensiu/development/owner/claude-code-forge
+  iteration_seconds: 480
+  tool_calls_used: 11
+  tool_call_budget: 20
+  num_findings: 0
+  max_findings_limit: 5
+
+  findings: []
+
+  rationale: >
+    Walked every hunk in the diff that is actual logic (not data). Of 54 changed files, 50 are YAML/Markdown
+    data (audit.yaml, AUDIT.md, audit/rings-*.yaml, cards/*.yaml, test fixtures, calibration reports,
+    tests-manifest.yaml, RED_BASELINE.txt) with no executable code path — out of scope for --focus=perf, which
+    only asks "will this be slow/expensive at realistic scale" of running code. The four executable artifacts
+    are all wholly new files, so every line in them is "changed":
+
+    (1) check_audit.py (487 lines) — a battery of predicate checks (check_rings/check_parts/check_dimensions/
+    check_gaps/check_artifacts/check_gates/check_proposals/check_required_parts) over one in-memory audit.yaml
+    document. Every pass is a single linear scan or a dict-keyed lookup (by_id, gaps, part_by_id, grouped) —
+    no nested scan over the same collection, no N+1 I/O (the only file read is the one audit.yaml + optional
+    PSL.md, both read once via load_yaml/load_psl_index before any loop). The realistic scale here is the
+    document's own size: 10 rings, dozens of Parts, ~73 Gaps, ~58 artifact entries (per assembly_notes.py
+    counts) — a one-shot CLI gate run against a checked-in document, not a request handler or service loop.
+    No unbounded accumulator, no uncapped retry/recursion.
+
+    (2) render_audit.py (679 lines) — pure string/list assembly from the same in-memory document, run once
+    per invocation, output written once to AUDIT.md. The one candidate hot spot is Doc.compare_pair() (called
+    from duplicates_section() for each entry of suspected_duplicate_pairs[]), which does a linear scan of
+    self.artifacts inside artifacts_of() for each of the two Part names in a pair — O(pairs * artifacts).
+    At the document's actual scale (2 known suspected-duplicate pairs, ~58 artifacts) that is single-digit-ms
+    work; flagging it as a perf finding would require an "LLM intuition says it's slow" call the skill
+    explicitly forbids (focus-areas.md perf guidance: downgrade or drop when scale can't be estimated as a
+    real risk). No caching layer, no repeated parse of the same YAML, no per-row I/O.
+
+    (3) replay_card_commits.sh (121 lines) — for each branch commit carrying a `Card:` footer, shells out to
+    `git log -1`, `git diff --name-only`, and `python3 verify_commit.py` once each. This is a per-commit
+    subprocess pattern, which would be a legitimate N+1-shaped concern in a server/CI path processing an
+    unbounded commit history, but here the loop bound is `git log main..HEAD` on a short-lived feature branch
+    (single digits to low tens of Card commits per audit run) invoked once as an audit instrument, not on a
+    hot path. String concatenation of `records` per iteration is technically O(n^2) in bash, but n is the same
+    small commit count — not worth a P2/P3 given the skill's confidence bar.
+
+    (4) calibration/instrument_mutants.py (58 lines) — for each of 30 hand-rolled mutants, writes the mutated
+    source and shells out to run the 34-method unittest suite once, then restores the original. This is
+    inherently O(mutants * test-suite-runtime) by design (that is what mutation testing is), run manually/
+    offline as a calibration instrument, not part of any served path.
+
+    No sync I/O inside a request/response path exists anywhere in this diff — there is no server; every
+    script is a CLI tool invoked once per audit run. No cache-key bugs, no missing-index patterns (no
+    database), no algorithmic complexity above the input's own bounded size. Nothing here crosses the P0-P3
+    perf bar defined in focus-areas.md at the scale this code actually runs at.
+
+  caveats:
+    adversarial_mode_caveat: null
+    diff_truncation_caveat: >
+      The 50 non-code (YAML/MD data) files in the diff were confirmed to be data via `git diff --stat` and
+      spot-read but not walked hunk-by-hunk for perf, since --focus=perf targets executable logic; this is a
+      scoping decision, not a truncation of tool budget.
+    rules_conflict_caveat: null
+    cross_vendor_unavailable_caveat: null

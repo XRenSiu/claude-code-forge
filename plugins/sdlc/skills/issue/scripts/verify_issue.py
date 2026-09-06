@@ -245,8 +245,11 @@ def main():
         elif objs or invs:
             flags.append("Depends on DOS declared but no --dos given — closure unchecked")
     if track == "psl":
-        links = kv_lines(secs.get("links", ""))
-        if not links.get("g1") or links["g1"].strip().lower() in ("none", "<path 或 none>"):
+        # the template writes `- PSL: <p>　G1: <p>　related: <n>` on ONE line, so kv_lines() sees a single `psl` key;
+        # pull the three keys out with a regex instead (dogfood 2026-09-05, I-07)
+        links_text = secs.get("links", "")
+        links = {m.group(1).lower(): m.group(2) for m in re.finditer(r"\b(PSL|G1|related)\s*:\s*([^\s　]+)", links_text)}
+        if not links.get("g1") or links["g1"].strip().lower() in ("none", "<path", "<path 或 none>"):
             flags.append("PSL track without a G1 record path in Links — the issue should be created after G1")
     flags.append("needs_semantic_review: are these ACs the narrowest falsifiable conditions for THIS run? does the unhappy twin cover the right edge?")
 

@@ -1,0 +1,284 @@
+issue_ref: (pending — created after G1)
+territory_id: sdlc-plugin
+purpose:
+  name: ring audit of the sdlc plugin
+  kpi: rings == 10; parts_total == 42; dims_with_psl_id_ratio >= 1.0; card_commits_touching_audited_dirs == 0
+  aspect_focus:
+  - correctness
+  - reversibility
+mode: auto
+risk_class: low
+clauses:
+- id: DW-001
+  source_ac: AC-001-a
+  statement: WHEN complete audit.yaml THE SYSTEM SHALL report exit 0, rings 10, parts_total 42, parts_without_assessment 0, required_parts_missing 0
+  ears_type: event
+  given: '{''input'': ''complete audit.yaml'', ''psl'': ''PSL-sdlc-ring-audit index 001..017'', ''required_parts'': ''agent.card-implementer, agent.comment-fixer,
+    agent.fix-verifier, agent.pr-reviewer, agent.review-triage'
+  when: complete audit.yaml
+  then: exit 0, rings 10, parts_total 42, parts_without_assessment 0, required_parts_missing 0
+  threshold: exit == 0, rings == 10, parts_total == 42, parts_without_assessment == 0, required_parts_missing == 0
+  threshold_source: kpi
+  paired_with: DW-002
+  verify: command
+  based_on: ''
+  disposition: draft
+- id: DW-002
+  source_ac: AC-001-b
+  statement: WHEN audit.yaml with one ring entry removed THE SYSTEM SHALL reject with exit 1, error ring_missing
+  ears_type: unwanted
+  given: '{''input'': ''audit.yaml with one ring entry removed''}'
+  when: audit.yaml with one ring entry removed
+  then: exit 1, error ring_missing
+  threshold: exit == 1
+  threshold_source: kpi
+  paired_with: DW-001
+  verify: command
+  based_on: ''
+  disposition: draft
+- id: DW-003
+  source_ac: AC-002-a
+  statement: WHEN complete audit.yaml THE SYSTEM SHALL report dims_without_psl_id 0, dims_with_unknown_psl_id 0, dims_without_evidence 0
+  ears_type: event
+  given: '{''input'': ''complete audit.yaml'', ''psl'': ''PSL-sdlc-ring-audit index 001..017''}'
+  when: complete audit.yaml
+  then: dims_without_psl_id 0, dims_with_unknown_psl_id 0, dims_without_evidence 0
+  threshold: dims_without_psl_id == 0, dims_with_unknown_psl_id == 0, dims_without_evidence == 0
+  threshold_source: kpi
+  paired_with: DW-004
+  verify: command
+  based_on: ''
+  disposition: draft
+- id: DW-004
+  source_ac: AC-002-b
+  statement: WHEN audit.yaml with one assessment dimension whose psl_ids is empty THE SYSTEM SHALL reject with exit 1, error psl_id_missing
+  ears_type: unwanted
+  given: '{''input'': ''audit.yaml with one assessment dimension whose psl_ids is empty''}'
+  when: audit.yaml with one assessment dimension whose psl_ids is empty
+  then: exit 1, error psl_id_missing
+  threshold: exit == 1
+  threshold_source: kpi
+  paired_with: DW-003
+  verify: command
+  based_on: ''
+  disposition: draft
+- id: DW-005
+  source_ac: AC-003-a
+  statement: WHEN complete audit.yaml THE SYSTEM SHALL report boolean_implemented 0, implemented_outside_enum 0, rename_true 0
+  ears_type: event
+  given: '{''input'': ''complete audit.yaml''}'
+  when: complete audit.yaml
+  then: boolean_implemented 0, implemented_outside_enum 0, rename_true 0
+  threshold: boolean_implemented == 0, implemented_outside_enum == 0, rename_true == 0
+  threshold_source: kpi
+  paired_with: DW-006
+  verify: command
+  based_on: ''
+  disposition: draft
+- id: DW-006
+  source_ac: AC-003-b
+  statement: WHEN audit.yaml with implemented set to a boolean on one part THE SYSTEM SHALL reject with exit 1, error boolean_implemented
+  ears_type: unwanted
+  given: '{''input'': ''audit.yaml with implemented set to a boolean on one part''}'
+  when: audit.yaml with implemented set to a boolean on one part
+  then: exit 1, error boolean_implemented
+  threshold: exit == 1
+  threshold_source: kpi
+  paired_with: DW-005
+  verify: command
+  based_on: ''
+  disposition: draft
+- id: DW-007
+  source_ac: AC-004-a
+  statement: WHEN complete audit.yaml THE SYSTEM SHALL report rings_without_missing_key 0, orphan_gaps 0, proposals_without_source 0
+  ears_type: event
+  given: '{''input'': ''complete audit.yaml''}'
+  when: complete audit.yaml
+  then: rings_without_missing_key 0, orphan_gaps 0, proposals_without_source 0
+  threshold: rings_without_missing_key == 0, orphan_gaps == 0, proposals_without_source == 0
+  threshold_source: kpi
+  paired_with: DW-008
+  verify: command
+  based_on: ''
+  disposition: draft
+- id: DW-008
+  source_ac: AC-004-b
+  statement: WHEN audit.yaml with one proposal lacking a source assessment or gap id THE SYSTEM SHALL reject with exit 1, error proposal_without_source
+  ears_type: unwanted
+  given: '{''input'': ''audit.yaml with one proposal lacking a source assessment or gap id''}'
+  when: audit.yaml with one proposal lacking a source assessment or gap id
+  then: exit 1, error proposal_without_source
+  threshold: exit == 1
+  threshold_source: kpi
+  paired_with: DW-007
+  verify: command
+  based_on: ''
+  disposition: draft
+- id: DW-009
+  source_ac: AC-005-a
+  statement: 'WHEN the report is read THE SYSTEM SHALL show: 每个 Part 行给出 Gap 原子集合、独占 Artifact（或 role gate | orchestrator）、检它的 Gate（script 写"闸"、human 写"门"）与 Loop；
+    needed 判定的 deletion 测试写出撤掉它后流水线会产出的具体错误产物或漏检（不接受"流程会断"一类泛语）； naming 判定先写来路（authored | adopted）再写贴合，misfit 时给建议名且建议名比原名更贴产物或位置并标"不重命名"； 疑似重复的 Part 对（至少 pr-review
+    vs code-reviewer、donewhen-extract vs acceptance-spec）带 Artifact 对照与 distinct_exits | merge_candidate | alternatives_of 裁决； 每环表末尾的 missing 行带来源标签（lifecycle_blank
+    | newly_identified | unenforced_rule）、necessity 与 deletion 一句'
+  ears_type: ubiquitous
+  given: ui:AUDIT.md#ring-tables
+  when: report read
+  then: 每个 Part 行给出 Gap 原子集合、独占 Artifact（或 role gate | orchestrator）、检它的 Gate（script 写"闸"、human 写"门"）与 Loop； needed 判定的 deletion 测试写出撤掉它后流水线会产出的具体错误产物或漏检（不接受"流程会断"一类泛语）；
+    naming 判定先写来路（authored | adopted）再写贴合，misfit 时给建议名且建议名比原名更贴产物或位置并标"不重命名"； 疑似重复的 Part 对（至少 pr-review vs code-reviewer、donewhen-extract vs acceptance-spec）带 Artifact
+    对照与 distinct_exits | merge_candidate | alternatives_of 裁决； 每环表末尾的 missing 行带来源标签（lifecycle_blank | newly_identified | unenforced_rule）、necessity 与 deletion 一句
+  threshold: checklist all items ticked (== 100%)
+  threshold_source: kpi
+  paired_with: ''
+  verify: checklist
+  based_on: ''
+  disposition: draft
+- id: DW-010
+  source_ac: AC-006-a
+  statement: 'WHEN the report is read THE SYSTEM SHALL show: run_evidence 节列出 G1 / G2 / G3 的签字人、signer_kind 与授权引用，signer_kind = delegated_agent 的门不渲染为"人签"； 列出 check-audit
+    对 audit.yaml 的 exit 0 与对删环变体的 exit 1 两次运行记录（缺变体记录时 exit 0 标 uncalibrated，A6 的回答如实带出该标记）； 列出 Card-footer 提交对三个被审目录的 git diff --stat 记录（为空）与 skill-issues.md 的路径；外部证据的替代品标
+    substitute，不渲染为用户验证'
+  ears_type: ubiquitous
+  given: ui:AUDIT.md#run-evidence
+  when: report read
+  then: run_evidence 节列出 G1 / G2 / G3 的签字人、signer_kind 与授权引用，signer_kind = delegated_agent 的门不渲染为"人签"； 列出 check-audit 对 audit.yaml 的 exit 0 与对删环变体的 exit 1 两次运行记录（缺变体记录时
+    exit 0 标 uncalibrated，A6 的回答如实带出该标记）； 列出 Card-footer 提交对三个被审目录的 git diff --stat 记录（为空）与 skill-issues.md 的路径；外部证据的替代品标 substitute，不渲染为用户验证
+  threshold: checklist all items ticked (== 100%)
+  threshold_source: kpi
+  paired_with: ''
+  verify: checklist
+  based_on: ''
+  disposition: draft
+- id: DW-011
+  source_ac: AC-007-a
+  statement: 'WHEN each commit carrying a `Card: CARD-xx` footer on the feature branch, replayed as --range <sha>^..<sha> --card <its card> THE SYSTEM SHALL report
+    exit 0, card_commits_touching_audited_dirs 0'
+  ears_type: event
+  given: '{''input'': ''each commit carrying a `Card: CARD-xx` footer on the feature branch, replayed as --range <sha>^..<sha> --card <its card>''}'
+  when: 'each commit carrying a `Card: CARD-xx` footer on the feature branch, replayed as --range <sha>^..<sha> --card <its card>'
+  then: exit 0, card_commits_touching_audited_dirs 0
+  threshold: exit == 0, card_commits_touching_audited_dirs == 0
+  threshold_source: kpi
+  paired_with: DW-012
+  verify: command
+  based_on: ''
+  disposition: draft
+- id: DW-012
+  source_ac: AC-007-b
+  statement: WHEN a Card commit whose diff modifies a file under plugins/sdlc/skills/** THE SYSTEM SHALL reject with exit 1, error whitelist_overflow
+  ears_type: unwanted
+  given: '{''input'': ''a Card commit whose diff modifies a file under plugins/sdlc/skills/**''}'
+  when: a Card commit whose diff modifies a file under plugins/sdlc/skills/**
+  then: exit 1, error whitelist_overflow
+  threshold: exit == 1
+  threshold_source: kpi
+  paired_with: DW-011
+  verify: command
+  based_on: ''
+  disposition: draft
+- id: DW-013
+  source_ac: AC-008-a
+  statement: WHEN complete audit.yaml THE SYSTEM SHALL report exit 0, parts_without_assessment 0, required_parts_missing 0
+  ears_type: event
+  given: '{''input'': ''complete audit.yaml'', ''rings'': ''R0,R1,R2,spine'', ''required_parts'': ''psl, psl-derive, human_gate.G1, dos-extract, invariant-extract,
+    issue, donewhen-extract, acceptance-spec, human_gate.G2, '
+  when: complete audit.yaml
+  then: exit 0, parts_without_assessment 0, required_parts_missing 0
+  threshold: exit == 0, parts_without_assessment == 0, required_parts_missing == 0
+  threshold_source: kpi
+  paired_with: DW-014
+  verify: command
+  based_on: ''
+  disposition: draft
+- id: DW-014
+  source_ac: AC-008-b
+  statement: WHEN audit.yaml with one required part of rings R0,R1,R2,spine removed THE SYSTEM SHALL reject with exit 1, error required_part_missing
+  ears_type: unwanted
+  given: '{''input'': ''audit.yaml with one required part of rings R0,R1,R2,spine removed'', ''rings'': ''R0,R1,R2,spine''}'
+  when: audit.yaml with one required part of rings R0,R1,R2,spine removed
+  then: exit 1, error required_part_missing
+  threshold: exit == 1
+  threshold_source: kpi
+  paired_with: DW-013
+  verify: command
+  based_on: ''
+  disposition: draft
+- id: DW-015
+  source_ac: AC-009-a
+  statement: WHEN complete audit.yaml THE SYSTEM SHALL report exit 0, parts_without_assessment 0, required_parts_missing 0
+  ears_type: event
+  given: '{''input'': ''complete audit.yaml'', ''rings'': ''R3,R4,R5'', ''required_parts'': ''test-suite-generator, spec-compile, calibrate, plan-cards, implement,
+    commit, ratchet''}'
+  when: complete audit.yaml
+  then: exit 0, parts_without_assessment 0, required_parts_missing 0
+  threshold: exit == 0, parts_without_assessment == 0, required_parts_missing == 0
+  threshold_source: kpi
+  paired_with: DW-016
+  verify: command
+  based_on: ''
+  disposition: draft
+- id: DW-016
+  source_ac: AC-009-b
+  statement: WHEN audit.yaml with one required part of rings R3,R4,R5 removed THE SYSTEM SHALL reject with exit 1, error required_part_missing
+  ears_type: unwanted
+  given: '{''input'': ''audit.yaml with one required part of rings R3,R4,R5 removed'', ''rings'': ''R3,R4,R5''}'
+  when: audit.yaml with one required part of rings R3,R4,R5 removed
+  then: exit 1, error required_part_missing
+  threshold: exit == 1
+  threshold_source: kpi
+  paired_with: DW-015
+  verify: command
+  based_on: ''
+  disposition: draft
+- id: DW-017
+  source_ac: AC-010-a
+  statement: WHEN complete audit.yaml THE SYSTEM SHALL report exit 0, parts_without_assessment 0, required_parts_missing 0
+  ears_type: event
+  given: '{''input'': ''complete audit.yaml'', ''rings'': ''R6'', ''required_parts'': ''acceptance-fleet, code-reviewer, qa-reviewer, pm-reviewer, spec-drift-detector,
+    spec-gaming-detector, meta-judge, pr-review, human_ga'
+  when: complete audit.yaml
+  then: exit 0, parts_without_assessment 0, required_parts_missing 0
+  threshold: exit == 0, parts_without_assessment == 0, required_parts_missing == 0
+  threshold_source: kpi
+  paired_with: DW-018
+  verify: command
+  based_on: ''
+  disposition: draft
+- id: DW-018
+  source_ac: AC-010-b
+  statement: WHEN audit.yaml with one required part of ring R6 removed THE SYSTEM SHALL reject with exit 1, error required_part_missing
+  ears_type: unwanted
+  given: '{''input'': ''audit.yaml with one required part of ring R6 removed'', ''rings'': ''R6''}'
+  when: audit.yaml with one required part of ring R6 removed
+  then: exit 1, error required_part_missing
+  threshold: exit == 1
+  threshold_source: kpi
+  paired_with: DW-017
+  verify: command
+  based_on: ''
+  disposition: draft
+- id: DW-019
+  source_ac: AC-011-a
+  statement: WHEN complete audit.yaml THE SYSTEM SHALL report exit 0, parts_without_assessment 0, required_parts_missing 0
+  ears_type: event
+  given: '{''input'': ''complete audit.yaml'', ''rings'': ''R7,R8'', ''required_parts'': ''pr, review-loop, release, retro, tune, human_gate.merge, human_gate.harness-review''}'
+  when: complete audit.yaml
+  then: exit 0, parts_without_assessment 0, required_parts_missing 0
+  threshold: exit == 0, parts_without_assessment == 0, required_parts_missing == 0
+  threshold_source: kpi
+  paired_with: DW-020
+  verify: command
+  based_on: ''
+  disposition: draft
+- id: DW-020
+  source_ac: AC-011-b
+  statement: WHEN audit.yaml with one required part of rings R7,R8 removed THE SYSTEM SHALL reject with exit 1, error required_part_missing
+  ears_type: unwanted
+  given: '{''input'': ''audit.yaml with one required part of rings R7,R8 removed'', ''rings'': ''R7,R8''}'
+  when: audit.yaml with one required part of rings R7,R8 removed
+  then: exit 1, error required_part_missing
+  threshold: exit == 1
+  threshold_source: kpi
+  paired_with: DW-019
+  verify: command
+  based_on: ''
+  disposition: draft
