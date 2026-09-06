@@ -41,6 +41,8 @@ golden-file 逐字节比对 `AUDIT.md`；`atoms` / id 含 `|` 的 fixture；`sig
 - I-76 → CLAUDE.md 版本同步规则编译成 `/commit` 或 `/pr` 的机械检查
 - I-80 → 修 fail-open 的回归孪生必须附变异证明（把旧实现装回去，孪生必须变红）
 - cr-003 / I-77 → `verify_derived.py` 的引用行剥离限定在前言
+- I-82 → `pr-poll.sh` 的 `checks_green` 拆三态（`green` / `none_configured` / `red`），`done` 不得把「没配 check」判成绿
+- **I-83（G3 补裁）→ `review.done` 拆成 `done` / `waived` 封闭枚举，或强制 `waiver_ref` 指向账本事件 id**；与 KG-01（waived 无 waiver_ref）、gate 的 `--authorization` 自由文本是同一个病：布尔字段宣布完成，限定语躲在没人解析的散文里
 
 ## E. G3 的 Open Questions（需要人定，不由本提案单独决）
 
