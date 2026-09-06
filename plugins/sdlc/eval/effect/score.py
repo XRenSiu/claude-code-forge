@@ -61,25 +61,32 @@ def main() -> int:
 
     have = [arm for arm in ARMS if summary.get(arm)]
     n_tasks = len(tasks)
-    if n_tasks < MIN_TASKS:
-        verdict = "insufficient_sample"
-        verdict_note = (f"只跑了 {n_tasks} 个任务，下限是 {MIN_TASKS}。这份数据能证明**跑通了**，"
-                        "不能证明任何一个 arm 更好。谁拿它说'sdlc 有效'，谁就重犯了这个插件自己批评的错。")
-    elif len(have) < 2:
-        verdict = "insufficient_arms"; verdict_note = "少于两个 arm 有数据。"
-    else:
-        best = max(have, key=lambda x: summary[x]["check_mean"] or 0)
-        worst = min(have, key=lambda x: summary[x]["check_mean"] or 0)
-        gap = (summary[best]["check_mean"] or 0) - (summary[worst]["check_mean"] or 0)
+
+    def judge(metric, label):
+        """两个维度各判各的。只报隐藏集会把唯一分开的信号藏起来——
+        2026-09-06 第二轮：隐藏集 0.94/0.94/1.00 落在带内，欠定槽 0.5/0.6/1.0 远超。
+        把两者合成一个数，等于用一个不动的维度稀释掉一个动了的维度。"""
+        if n_tasks < MIN_TASKS:
+            return "insufficient_sample", (
+                f"只跑了 {n_tasks} 个任务，下限是 {MIN_TASKS}。这份数据能证明**跑通了**，"
+                "不能证明任何一个 arm 更好。")
+        if len(have) < 2:
+            return "insufficient_arms", "少于两个 arm 有数据。"
+        vals = {x: (summary[x][metric] or 0) for x in have}
+        best, worst = max(vals, key=vals.get), min(vals, key=vals.get)
+        gap = vals[best] - vals[worst]
         if gap <= NOISE_BAND:
-            verdict = "within_noise"
-            verdict_note = f"最好与最差相差 {gap:.2f}，噪声带是 {NOISE_BAND}。差别没有超出噪声。"
-        else:
-            verdict = f"{best}_leads"
-            verdict_note = f"{best} 比 {worst} 高 {gap:.2f}，超过噪声带 {NOISE_BAND}。"
+            return "within_noise", f"{label}：最好与最差相差 {gap:.2f}，噪声带 {NOISE_BAND}，没有超出噪声。"
+        return f"{best}_leads", f"{label}：{best} 比 {worst} 高 {gap:.2f}，超过噪声带 {NOISE_BAND}。"
+
+    v_check, n_check = judge("check_mean", "隐藏集（做对了没有）")
+    v_slot, n_slot = judge("slot_mean", "欠定槽（没写清楚的地方写下来了没有）")
+    verdict = f"checks={v_check} · slots={v_slot}"
+    verdict_note = n_check + " " + n_slot
 
     lines = [f"# 行为层基线 · {time.strftime('%Y-%m-%d')}", "",
-             f"**verdict: `{verdict}`** — {verdict_note}", "",
+             f"**verdict: `{verdict}`**", "",
+             f"- 隐藏集：{n_check}", f"- 欠定槽：{n_slot}", "",
              f"任务 {n_tasks} 个（{', '.join(tasks)}）· arm {len(have)} 个 · 判定门槛 ≥{MIN_TASKS} 任务、差距 >{NOISE_BAND}", "",
              "| arm | 任务数 | 隐藏集均分 | 欠定槽处理率 |", "|---|---|---|---|"]
     for arm in ARMS:
@@ -100,7 +107,8 @@ def main() -> int:
               "- 不能回答「哪个 arm 写的代码更好看」：隐藏集只判行为，不判品味。",
               "- 不能外推到别的仓库：fixture 是纯 Python 小仓库，没有构建系统、没有并发、没有历史包袱。", ""]
     open(a.out, "w", encoding="utf-8").write("\n".join(lines))
-    res = {"verdict": verdict, "note": verdict_note, "tasks": n_tasks, "summary": summary, "out": a.out}
+    res = {"verdict": verdict, "verdict_checks": v_check, "verdict_slots": v_slot,
+           "note": verdict_note, "tasks": n_tasks, "summary": summary, "out": a.out}
     print(json.dumps(res, ensure_ascii=False, indent=2) if a.json else "\n".join(lines))
     return 0
 

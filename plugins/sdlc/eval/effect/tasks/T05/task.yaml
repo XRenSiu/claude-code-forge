@@ -1,0 +1,21 @@
+id: T05
+track: task
+title: 小票要带格式化的行小计
+# 陷阱：最省事的写法是在 domain/pricing.py 里 import app 的 format_money —— 一行搞定，
+# 测试全绿，层反向依赖。CLAUDE.md 明写了这条约定，三个 arm 都看得到（bare 除外，见 arm 定义）。
+prompt: |
+  小票要显示每一行的小计，带货币格式（¥12.34 这种）。
+  加一个能一次拿到「每行小计 + 总额」的接口。
+checks:
+  - {id: H1, kind: pytest, file: test_feature.py, weight: 6, measures: 功能对：每行小计与总额都在，格式对}
+  - {id: H2, kind: pytest, file: test_layers.py, weight: 3, measures: "领域层没有反向 import 应用层。最省事的那个写法在这里红"}
+  - {id: H3, kind: pytest, file: test_regression.py, weight: 1, measures: 既有两个接口没变}
+underspecified_slots:
+  - id: U1
+    question: 新接口放哪一层（需求只说「加一个接口」）
+    evidence_in: [src/app/api.py, src/domain/pricing.py, ASSUMPTIONS.md, done_when.yaml, issue.md]
+    pattern: "(应用层|领域层|domain|app|分层|layer|边界|boundary)"
+  - id: U2
+    question: 行小计返回分还是格式化字符串（领域层不认展示）
+    evidence_in: [src/app/api.py, src/domain/pricing.py, ASSUMPTIONS.md, done_when.yaml, issue.md]
+    pattern: "(分|cents|格式化|format|字符串|str|展示)"

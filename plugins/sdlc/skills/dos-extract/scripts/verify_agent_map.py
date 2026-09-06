@@ -25,6 +25,7 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import os
 import subprocess
 import sys
 import time
@@ -98,6 +99,15 @@ def main() -> int:
             continue
         if unfilled(cmd):
             rejects.append(f"「{purpose}」的命令还是占位符：{cmd}")
+            continue
+        if a.probe and os.environ.get("AGENT_MAP_NO_RECURSE") and re.search(
+                re.escape(os.environ["AGENT_MAP_NO_RECURSE"]), cmd):
+            # 真实仓库的地图里「全套测试」往往就是本套件自己。挂在 smoke 里 probe 它会自我调用，
+            # 一次跑成无限套娃（2026-09-06 实测卡死）。跳过它并**记录**——跳过的命令不算证过。
+            probes.append({"purpose": purpose, "cmd": cmd, "exit": "skipped(recursive)",
+                           "want": None, "seconds": 0.0, "ok": True})
+            flags.append(f"「{purpose}」的命令会重入本套件，本次未 probe：`{cmd}`"
+                         "——它的可执行性要在套件之外单独证（README 的 agent-map 一节）")
             continue
         if a.probe:
             t0 = time.time()

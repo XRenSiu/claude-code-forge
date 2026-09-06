@@ -11,7 +11,7 @@ description: >-
   改契约或世界（/retro 的提案去向）、改代码（/implement）、改 skill 正文（skill-evolve 邻居）、单次 bug 根因。
   前置：`specs/*/` ≥ 2 个归档（少于 2 个只记基线）。
 argument-hint: "<archive_root> [--pr-watch .sdlc/pr-watch] [--ratchet-logs DIR] [--out tune/harness-proposals-<date>.yaml] [--min-features 2]"
-version: 0.1.0
+version: 0.3.0
 user-invocable: true
 ---
 
@@ -72,6 +72,22 @@ deletion 测试：撤掉本 skill，引擎会在某次 review 跑到 exit 30 后
 - `assets/harness_proposals_template.yaml` —— 产物形状与字段说明。
 - 上游脚本：`../sdlc/scripts/sdlc_state.py loops`（当前活跃环的预算消耗）、`../sdlc/scripts/trace.py why`（逃逸缺陷归因链）、
   `../retro/scripts/metrics.py`（基线）。
+
+## 评审精确率（v0.3.0）
+
+`/tune` 一直只看 sycophancy 代理（ACCEPT 率 ≥ 0.95 = 修复方太顺从）。反方向那种病没人看：
+**评审方乱开枪**。Greptile 2026 的独立复核测到抓 bug 率 82% 的工具精确率只有 36.5%——
+316 条评论里 111 条挑刺、56 条是错的。一个 40% 时候是错的评审者，消耗的注意力比它省下的多。
+
+两者不能混进一个指标，因为它们把同一个数往相反方向拉：
+
+| 病 | 代理 | 提案落到哪 |
+|---|---|---|
+| 修复方顺从 | ACCEPT / 已裁决 ≥ 0.95（≥ 5 条） | `review-loop.fix_list`：审一遍那些 ACCEPT |
+| 评审方误报 | 精确率 = 1 − REJECT / 已裁决 < 0.6（≥ 5 条） | `acceptance-fleet.evaluators.cross_vendor`（把该槽换成非本家）+ `pr-review.b_tier_thresholds` |
+
+REJECT 意味着这条评审主张被验证后不成立——那是评审方的误报，不是修复方的顺从。
+两条提案都进封闭 target 集，都只出 diff，都由人开 PR。
 
 ## 门（γ）
 

@@ -1,13 +1,17 @@
 #!/usr/bin/env bash
 # 回放取锁的两臂对照（I-104）。$1 = 仓库根，$2 = delete_lock | no_lock_history
 set -u
-REPO="$1"; MODE="$2"
+SRC="$1"; MODE="$2"
+# $1 可以是仓库根（有 plugins/sdlc/）也可以是插件根本身。变异自检把插件复制成
+# <tmp>/mutant/sdlc/，那里没有 plugins/ 这一层——写死仓库布局会让基线在副本里必红，
+# 而一次红基线上的变异证明什么都证明不了（smoke.sh 自己会拒绝跑）。2026-09-06。
+if [ -d "$SRC/plugins/sdlc" ]; then PLUGIN="$SRC/plugins/sdlc"; else PLUGIN="$SRC"; fi
 T="$(cd "$(mktemp -d)" && pwd -P)"; cd "$T" || exit 9
 git init -q .; git config user.email t@t; git config user.name t
 RA="plugins/sdlc/dogfood/ring-audit"
 mkdir -p "$RA/cards" plugins/sdlc/skills/commit/scripts
-cp "$REPO/$RA/replay_card_commits.sh" "$RA/"
-cp "$REPO/plugins/sdlc/skills/commit/scripts/verify_commit.py" plugins/sdlc/skills/commit/scripts/
+cp "$PLUGIN/dogfood/ring-audit/replay_card_commits.sh" "$RA/"
+cp "$PLUGIN/skills/commit/scripts/verify_commit.py" plugins/sdlc/skills/commit/scripts/
 printf 'card: CARD-01\nallowed_files:\n  - "gate.py"\n  - ".done_when.lock"\n' > "$RA/cards/CARD-01.yaml"
 echo "print('gate')" > gate.py
 git add -A; git commit -qm "chore: base"

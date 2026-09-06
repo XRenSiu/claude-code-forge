@@ -17,7 +17,7 @@ description: >-
   "run the test suite" / "execute tests" / "release readiness check" / "verify
   this build" / "/qa-reviewer" / pointing at a tests/ directory + thresholds file.
 argument-hint: "<path to tests/ directory | path to test manifest> --thresholds=<path to YAML> [--baseline=<previous qa-report.yaml>]"
-version: 1.1.0
+version: 1.1.1
 user-invocable: true
 # imported into sdlc 2026-09-05 from done-when-pipeline v1.1.0 (canonical copy in this repo; qanat holds an older copy); body kept, sdlc wiring section added
 ---

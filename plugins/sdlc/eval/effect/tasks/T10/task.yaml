@@ -1,0 +1,19 @@
+id: T10
+track: psl
+title: 运营说置顶不好用
+prompt: |
+  运营反馈置顶不好用：想置顶一个活动公告，活动结束了还挂在顶上；
+  有时候两个人各置顶一条，谁在上面看运气。改 src/feed.py。
+checks:
+  - {id: H1, kind: pytest, file: test_semantics.py, weight: 5, measures: "领域模型：置顶是一段有起止、有优先级、有归属的关系，不是一个布尔字段。布尔模型在这两条上给相反答案"}
+  - {id: H2, kind: pytest, file: test_naive_trap.py, weight: 2, measures: "布尔 pinned 还是不是唯一的判据"}
+  - {id: H3, kind: pytest, file: test_human_routed.py, weight: 3, measures: "不可判的部分被路由：同优先级撞车谁赢、置顶上限几条——写明谁裁决"}
+underspecified_slots:
+  - id: U1
+    question: 两条置顶优先级相同时谁在上面（需求说"看运气"，没说该怎样）
+    evidence_in: [src/feed.py, ASSUMPTIONS.md, done_when.yaml, issue.md, PSL.md]
+    pattern: "(优先级|priority|并列|tie|相同时|冲突|conflict)"
+  - id: U2
+    question: 最多能同时置顶几条
+    evidence_in: [src/feed.py, ASSUMPTIONS.md, done_when.yaml, issue.md, PSL.md]
+    pattern: "(上限|最多|max|limit|几条|数量)"

@@ -1,0 +1,21 @@
+id: T06
+track: psl
+title: 按"上个月"搜索记忆
+# PSL 轨的典型失败：照字面做，交出 created_at + 日历筛选器——技术正确、产品错误。
+# 隐藏集不判形态，判两件事：领域模型有没有被证伪，以及不可判的部分有没有被路由。
+prompt: |
+  用户想按"上个月"这类相对时间搜索自己的记忆。加上这个能力。
+  改 src/memory.py。
+checks:
+  - {id: H1, kind: pytest, file: test_semantics.py, weight: 5, measures: "领域模型：一条昨天补录、上个月发生的记忆，属不属于「上个月」。朴素模型（按写入时间）在这里给相反的答案"}
+  - {id: H2, kind: pytest, file: test_naive_trap.py, weight: 2, measures: "朴素实现的痕迹：只按 created_at 过滤、或把 happened_at 为空的记忆当成没有时间直接丢掉"}
+  - {id: H3, kind: pytest, file: test_human_routed.py, weight: 3, measures: "不可判的部分被路由了：产物里有一条写明谁来裁决的开放问题（时区？跨月的事件？没有 happened_at 的怎么排）。悄悄替产品拍板的在这里红"}
+underspecified_slots:
+  - id: U1
+    question: happened_at 为空的记忆怎么办（回退到 created_at / 排除 / 单列）
+    evidence_in: [src/memory.py, ASSUMPTIONS.md, done_when.yaml, issue.md, PSL.md]
+    pattern: "(happened_at|回退|fallback|为空|None|缺失|missing)"
+  - id: U2
+    question: "「上个月」按谁的时区（用户没说）"
+    evidence_in: [src/memory.py, ASSUMPTIONS.md, done_when.yaml, issue.md, PSL.md]
+    pattern: "(时区|timezone|tz|UTC|本地时间|local)"

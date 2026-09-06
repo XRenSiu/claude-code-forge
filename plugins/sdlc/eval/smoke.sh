@@ -1191,8 +1191,8 @@ expect "qa_facts: a non-qa document is refused" 1 bash -c "printf 'gaming_assess
 # I-104: 回放要用**父提交**的锁——"这条提交动手时生效的规则"。取提交自己树里的锁，
 # 会让一条在同一个 diff 里删掉 .done_when.lock 的提交免检；从工作区探测锁是否存在，
 # 会让分支尖上删锁直接短路整条检查。两臂缺一不可：删锁的必须被拒，从无锁的历史必须放行。
-expect "replay: deleting the lock in the same commit does not exempt it (I-104)" 1 bash "$ROOT/eval/fixtures/replay_lock_arm.sh" "$ROOT/../.." delete_lock
-expect "replay: a commit from before any lock existed still passes (I-104 twin)" 0 bash "$ROOT/eval/fixtures/replay_lock_arm.sh" "$ROOT/../.." no_lock_history
+expect "replay: deleting the lock in the same commit does not exempt it (I-104)" 1 bash "$ROOT/eval/fixtures/replay_lock_arm.sh" "$ROOT" delete_lock
+expect "replay: a commit from before any lock existed still passes (I-104 twin)" 0 bash "$ROOT/eval/fixtures/replay_lock_arm.sh" "$ROOT" no_lock_history
 
 # I-105 / I-106: 锚点识别面已经连栽四次，每一次都是"我认得的那部分全绿"。隔离预审每一轮都手工
 # 跑一个**不共用实现**的交叉核对，并且正是它反复抓住这一族。手工的东西下一轮就会忘 —— 固化。
@@ -1277,6 +1277,24 @@ expect "effect: a hidden set that leaked before the arm's last edit contaminates
   bash -c "w=\"$TMP/eff3\"; rm -rf \"\$w\"; python3 '$ROOT/eval/effect/run.py' prepare T01 --arm bare --workdir \"\$w\" >/dev/null; mkdir -p \"\$w/T01-bare/tests_hidden\"; sleep 1; touch \"\$w/T01-bare/src/export.py\"; python3 '$ROOT/eval/effect/run.py' collect T01 --arm bare --workdir \"\$w\" >/dev/null 2>&1; python3 -c \"import json;d=json.load(open('\$w/.score-T01-bare/result.json'));assert d['contaminated'] is True and d['leak_after_work'] is False, d\""
 expect "effect: a leak after the arm stopped working does not void the run (twin)" 0 \
   bash -c "w=\"$TMP/eff4\"; rm -rf \"\$w\"; python3 '$ROOT/eval/effect/run.py' prepare T01 --arm bare --workdir \"\$w\" >/dev/null; sleep 1; mkdir -p \"\$w/T01-bare/tests_hidden\"; python3 '$ROOT/eval/effect/run.py' collect T01 --arm bare --workdir \"\$w\" >/dev/null 2>&1; python3 -c \"import json;d=json.load(open('\$w/.score-T01-bare/result.json'));assert d['contaminated'] is False and d['leak_after_work'] is True, d\""
+
+# ---- 跨供应商接线：从"强烈建议"变成可检查的分配 + 留痕 ----
+expect "evaluators: the two highest blind-spot slots get a non-home vendor when one exists" 0 \
+  bash -c "printf 'version: 1\\nvendors:\\n  - {id: claude, probe: \"true\"}\\n  - {id: other, probe: \"true\"}\\nslots:\\n  - {skill: spec-gaming-detector, blind_spot_rank: 1}\\n  - {skill: code-reviewer, blind_spot_rank: 2}\\n  - {skill: meta-judge, blind_spot_rank: 6}\\nmax_slots_per_vendor: 2\\n' > \"$TMP/ev.yaml\"; python3 '$S/acceptance-fleet/scripts/pick_evaluators.py' --evaluators \"$TMP/ev.yaml\" --out \"$TMP/ea.yaml\" --json | python3 -c \"import json,sys;d=json.load(sys.stdin);a={x['skill']:x for x in d['assignment']};assert a['spec-gaming-detector']['cross_vendor'] and a['code-reviewer']['cross_vendor'], d;assert not a['meta-judge']['cross_vendor'], 'cap must stop the third slot'\""
+expect "evaluators: a home-only environment records the caveat instead of claiming cross-vendor" 0 \
+  bash -c "printf 'version: 1\\nvendors:\\n  - {id: claude, probe: \"true\"}\\n  - {id: nope, probe: \"exit 1\"}\\nslots:\\n  - {skill: spec-gaming-detector, blind_spot_rank: 1}\\nmax_slots_per_vendor: 3\\n' > \"$TMP/ev2.yaml\"; python3 '$S/acceptance-fleet/scripts/pick_evaluators.py' --evaluators \"$TMP/ev2.yaml\" --out \"$TMP/ea2.yaml\" --json | python3 -c \"import json,sys;d=json.load(sys.stdin);assert d['cross_vendor_slots']==0 and d['same_vendor_caveats']==1, d;assert 'same_vendor_caveat' in d['assignment'][0], d\""
+
+# ---- reviewer 精确率：与 sycophancy 反向的另一种病，不能混在一个指标里 ----
+expect "tune: a reviewer whose claims keep failing verification produces a cross-vendor proposal" 0 \
+  bash -c "t=\"$TMP/tn\"; rm -rf \"\$t\"; mkdir -p \"\$t/a/f1\" \"\$t/a/f2\" \"\$t/w\"; for f in f1 f2; do python3 -c \"import json;json.dump({'slug':'x','track':'task','stage':'archive','counters':{'card':0,'plan':0,'task':0,'ontology':0,'world':0},'gates':{},'waivers':[],'review':{'rounds':2}}, open('\$t/a/'+'\$f'+'/state.json','w'))\"; printf '# l\\n' > \"\$t/a/\$f/ledger.md\"; done; for n in 57 58; do python3 -c \"import json,sys;n=sys.argv[1];json.dump({'pr':int(n),'comments':[{'verdict':'REJECT'}]*5+[{'verdict':'ACCEPT'}]*2}, open('\$t/w/pr-'+n+'.json','w'));json.dump({'rounds':2}, open('\$t/w/pr-'+n+'.counters.json','w'))\" \$n; done; python3 '$S/tune/scripts/tune.py' \"\$t/a\" --pr-watch \"\$t/w\" --min-features 2 | python3 -c \"import json,sys,re;d=json.loads(re.search(r'\\{.*\\}', sys.stdin.read(), re.S).group(0));ts=[p['target'] for p in d['proposals']];assert 'acceptance-fleet.evaluators.cross_vendor' in ts, ts\""
+expect "tune: a high ACCEPT rate is sycophancy, not low precision (twin — the two must not collapse)" 0 \
+  bash -c "t=\"$TMP/tn2\"; rm -rf \"\$t\"; mkdir -p \"\$t/a/f1\" \"\$t/a/f2\" \"\$t/w\"; for f in f1 f2; do python3 -c \"import json;json.dump({'slug':'x','track':'task','stage':'archive','counters':{'card':0,'plan':0,'task':0,'ontology':0,'world':0},'gates':{},'waivers':[],'review':{'rounds':2}}, open('\$t/a/'+'\$f'+'/state.json','w'))\"; printf '# l\\n' > \"\$t/a/\$f/ledger.md\"; done; for n in 57 58; do python3 -c \"import json,sys;n=sys.argv[1];json.dump({'pr':int(n),'comments':[{'verdict':'ACCEPT'}]*6}, open('\$t/w/pr-'+n+'.json','w'));json.dump({'rounds':2}, open('\$t/w/pr-'+n+'.counters.json','w'))\" \$n; done; python3 '$S/tune/scripts/tune.py' \"\$t/a\" --pr-watch \"\$t/w\" --min-features 2 | python3 -c \"import json,sys,re;d=json.loads(re.search(r'\\{.*\\}', sys.stdin.read(), re.S).group(0));ts=[p['target'] for p in d['proposals']];assert 'review-loop.fix_list' in ts and 'acceptance-fleet.evaluators.cross_vendor' not in ts, ts\""
+
+# ---- agent-map 防腐：真实地图必须一直是 probe 得过的（自递归的那条被识别并记录，不算证过）----
+expect "agent-map: the repo's own map still passes a real probe" 0 \
+  env AGENT_MAP_NO_RECURSE=smoke.sh python3 "$S/dos-extract/scripts/verify_agent_map.py" "$ROOT/../../agent-map.md" --repo "$ROOT/../.." --probe --timeout 90
+expect "agent-map: the recursive command is recorded as skipped, not as proved" 0 \
+  bash -c "env AGENT_MAP_NO_RECURSE=smoke.sh python3 '$S/dos-extract/scripts/verify_agent_map.py' '$ROOT/../../agent-map.md' --repo '$ROOT/../..' --probe --timeout 90 --json | python3 -c \"import json,sys;d=json.load(sys.stdin);sk=[p for p in d['probes'] if p['exit']=='skipped(recursive)'];assert sk, 'the self-referential command should be marked skipped';assert any('未 probe' in f for f in d['flags']), d['flags']\""
 
 echo
 echo "smoke: $pass passed, $fail failed${ONLY:+, $skipped skipped (--only $ONLY)}  (tmp: $TMP)"

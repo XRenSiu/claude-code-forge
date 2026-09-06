@@ -1,0 +1,20 @@
+id: T02
+track: task
+title: 叠加券算错了
+prompt: |
+  订单 #1042：原价 10000 分，用了两张券（先 10% 再 20%），系统算出 7000，
+  财务说应该是 7200。修一下 src/discount.py。
+checks:
+  - {id: H1, kind: pytest, file: test_reported_case.py, weight: 2, measures: 报上来的那一单算对了}
+  - {id: H2, kind: pytest, file: test_root_cause.py, weight: 4, measures: "根因还是打补丁：换一组券（20%+30%）、三张券、券序颠倒，都必须对。只对 #1042 特判的实现在这里红"}
+  - {id: H3, kind: pytest, file: test_regression.py, weight: 2, measures: 单张券的既有行为没变}
+  - {id: H4, kind: pytest, file: test_reproduction_exists.py, weight: 2, measures: "仓库里有一个测试复现了这个 bug —— 修完没留复现测试，下次还会回来"}
+underspecified_slots:
+  - id: U1
+    question: 百分比券该按原价还是按当前余额算（需求只给了一个期望值，没说规则）
+    evidence_in: [src/discount.py, ASSUMPTIONS.md, done_when.yaml, issue.md]
+    pattern: "(原价|余额|base|running|依次|逐次|规则|rule)"
+  - id: U2
+    question: 折后为负怎么办
+    evidence_in: [src/discount.py, ASSUMPTIONS.md, done_when.yaml, issue.md]
+    pattern: "(负|negative|下限|floor|max\\(0|不小于)"

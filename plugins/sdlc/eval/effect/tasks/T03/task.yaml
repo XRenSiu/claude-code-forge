@@ -1,0 +1,21 @@
+id: T03
+track: task
+title: 两条限流规则打架
+# 这道题只有一件事可测：需求**自相矛盾**（每分钟 100 次，但任何 10 秒窗口不超过 5 次
+# ⇒ 每分钟上限其实是 30）。静默挑一条实现的，与把矛盾摆出来的，产物不一样。
+prompt: |
+  限流放宽：每分钟允许 100 次，同时任何 10 秒窗口内不超过 5 次。
+  改 src/limiter.py，别动 allow() 的签名。
+checks:
+  - {id: H1, kind: pytest, file: test_stricter_wins.py, weight: 4, measures: "两条规则同时生效，且严的那条真的挡得住（10 秒内第 6 次必须拒）"}
+  - {id: H2, kind: pytest, file: test_conflict_documented.py, weight: 3, measures: "矛盾被写下来了：产物里有一处说明两条规则冲突、以及实际上限是多少。静默挑一条的在这里红"}
+  - {id: H3, kind: pytest, file: test_regression.py, weight: 3, measures: 既有构造参数与滑窗行为没被改坏}
+underspecified_slots:
+  - id: U1
+    question: 两条规则冲突时哪条赢（需求把两条并列给了，没说）
+    evidence_in: [src/limiter.py, ASSUMPTIONS.md, done_when.yaml, issue.md]
+    pattern: "(冲突|矛盾|conflict|更严|stricter|以.{0,4}为准|上限.{0,6}30|实际上限)"
+  - id: U2
+    question: 被拒的请求要不要留痕（计数 / 日志），需求没提
+    evidence_in: [src/limiter.py, ASSUMPTIONS.md, done_when.yaml, issue.md]
+    pattern: "(拒绝|rejected|denied|计数|counter|日志|log|留痕)"

@@ -140,20 +140,29 @@ def cmd_collect(a):
         checks.append({"id": c["id"], "weight": w, "passed": passed, "seconds": round(time.time() - t0, 1),
                        "measures": c.get("measures", ""), "tail": "; ".join(tail)[:160]})
 
+    # 欠定槽只在 **arm 新增的内容** 里找证据。曾经在整份文件里找 —— fixture 自带的 CLAUDE.md
+    # 与源码注释就能命中，一个没干活的 arm 也拿满分（2026-09-06 预检抓到：T05 未干活 2/2）。
+    # 「写下来了」指的是这次写下来的，不是仓库本来就有的。
+    added = {}
+    for f in {x for sl in t.get("underspecified_slots", []) for x in sl.get("evidence_in", [])}:
+        fp = os.path.join(d, f)
+        if not os.path.isfile(fp):
+            continue
+        tracked = sh(["git", "ls-files", "--error-unmatch", f], cwd=d).returncode == 0
+        if tracked:
+            out = sh(["git", "diff", "-U0", "HEAD", "--", f], cwd=d).stdout
+            added[f] = "\n".join(l[1:] for l in out.splitlines()
+                                  if l.startswith("+") and not l.startswith("+++"))
+        else:
+            added[f] = open(fp, encoding="utf-8", errors="replace").read()
     slots = []
-    for s in t.get("underspecified_slots", []):
+    for sl in t.get("underspecified_slots", []):
         hit, where = False, None
-        for f in s.get("evidence_in", []):
-            p = os.path.join(d, f)
-            if os.path.isfile(p):
-                try:
-                    body = open(p, encoding="utf-8", errors="replace").read()
-                except OSError:
-                    continue
-                if re.search(s["pattern"], body):
-                    hit, where = True, f
-                    break
-        slots.append({"id": s["id"], "question": s["question"], "addressed": hit, "found_in": where})
+        for f in sl.get("evidence_in", []):
+            if re.search(sl["pattern"], added.get(f, "")):
+                hit, where = True, f
+                break
+        slots.append({"id": sl["id"], "question": sl["question"], "addressed": hit, "found_in": where})
 
     r = sh(["git", "diff", "--stat", "HEAD"], cwd=d)
     res = {"task": a.task, "arm": a.arm, "dir": arm_dir, "scored_in": d,

@@ -19,6 +19,10 @@ Rules of the loop (compiled):
   - fewer than --min-features archives → baseline stats only, proposals: [] , note: insufficient_samples
   - every proposal has target ∈ TARGETS, current, proposed, evidence[≥1], expected_delta, risk, verify_by, delivered_as
   - sycophancy proxy: ACCEPT / (ACCEPT+REJECT+REPLY+ESCALATE) ≥ 0.95 over ≥ 5 threads → review-loop fix_list
+  - reviewer precision: 1 - REJECT/judged. 低精确率与 sycophancy 是相反方向的两种病，别混在一个指标里：
+    ACCEPT 太高 = 修复方太顺从；REJECT 太高 = 评审方乱开枪（Greptile 实测 82% 召回但 36.5% 精确，
+    316 条评论里 111 条挑刺、56 条是错的）。精确率 < 0.6（≥ 5 条已裁决）→ 提案落到评审侧，
+    并建议把该槽换成非本家供应商（pick_evaluators.py 的分配是可执行的对象）
   - a budget is proposed lower only if NO feature ever touched it; higher only if ≥ 50% of features exhausted it AND
     no repeat/oscillation/plateau escalation happened at that layer (those escalations were right, not budget-starved)
 Exit 0 always (reporting tool); 2 on IO error.
@@ -36,6 +40,7 @@ TARGETS = {
     "routing.budgets.<track>.<key>", "routing.fingerprint_repeat_limit", "routing.plateau_rounds",
     "review-loop.MAX_ROUNDS", "review-loop.MAX_THREAD_STRIKES", "acceptance-fleet.isolation_min",
     "pr-review.b_tier_thresholds", "code-reviewer.focus_allocation", "<skill>.fix_list",
+    "acceptance-fleet.evaluators.cross_vendor",
 }
 LAYER_KEY = {"card": "card_retries", "plan": "plan_reflows", "task": "task_reflows", "ontology": "ontology_reflows"}
 
@@ -159,6 +164,10 @@ def main():
             prs.append({
                 "pr": prn, "rounds": int(counters.get("rounds", len(ev.get("rounds") or []))),
                 "verdicts": dist, "judged": judged, "accept_rate": accept_rate,
+                # 精确率 = 站得住的主张 / 已裁决的主张。REJECT 意味着这条评审主张被验证后不成立，
+                # 那是**评审方**的误报，不是修复方的顺从——两者要分开数，否则一个指标同时被两种病拉扯。
+                "precision": round((judged - dist["REJECT"]) / judged, 3) if judged else None,
+                "low_precision": bool(judged >= 5 and judged and (judged - dist["REJECT"]) / judged < 0.6),
                 "sycophancy_suspect": bool(judged >= 5 and accept_rate is not None and accept_rate >= 0.95),
                 "threads_at_strike_limit": sum(1 for v in strikes.values() if int(v) >= max_strikes),
                 "strike_threads": len(strikes),
@@ -201,6 +210,7 @@ def main():
                    "rounds": [p["rounds"] for p in prs], "max_rounds_used": max([p["rounds"] for p in prs], default=None),
                    "hit_round_budget": sum(1 for p in prs if p["rounds"] >= max_rounds),
                    "sycophancy_suspects": [p["pr"] for p in prs if p["sycophancy_suspect"]],
+                   "low_precision_prs": [p["pr"] for p in prs if p["low_precision"]],
                    "threads_at_strike_limit": sum(p["threads_at_strike_limit"] for p in prs),
                    "verdicts": {k: sum(p["verdicts"][k] for p in prs) for k in ("ACCEPT", "REJECT", "REPLY", "ESCALATE", "SKIPPED")}},
         "ratchet": {"runs": len(ratchet), "rounds": [r["rounds"] for r in ratchet]},
@@ -264,6 +274,23 @@ def main():
                     [f"PR #{prn}: ACCEPT {p['verdicts']['ACCEPT']}/{p['judged']} judged threads ({round(100 * p['accept_rate'])}%) — REJECT is legitimate and expected; 95%+ ACCEPT over ≥5 threads is the sycophancy proxy (SWE-Review)"],
                     "REJECT share > 0 on the next PR with ≥5 threads", "none — a fix_list entry", "review-loop gate.json fix_list carries the item until an L2 audit closes it",
                     "gate.json fix_list", {"kind": "gate_fix_list", "skill": "review-loop", "item": f"L2: audit ACCEPT verdicts on PR #{prn} — {p['verdicts']['ACCEPT']}/{p['judged']} ACCEPT; check whether any should have been REJECT/REPLY (sycophancy proxy)"})
+            for prn in rv["low_precision_prs"]:
+                p_ = next(x for x in prs if x["pr"] == prn)
+                add("acceptance-fleet.evaluators.cross_vendor", "rank1/rank2 slots per evaluators.yaml",
+                    f"force a non-home vendor on the reviewer slot for PR #{prn}'s focus",
+                    [f"PR #{prn}: precision {p_['precision']} — {p_['verdicts']['REJECT']}/{p_['judged']} judged claims did not survive verification; "
+                     "a reviewer that is wrong 40%+ of the time costs more attention than it saves (Greptile 2026: 82% recall, 36.5% precision)"],
+                    "precision ≥ 0.6 on the next PR with ≥5 judged threads",
+                    "low — the assignment is recorded either way; if no other vendor is available the caveat is what changes, not the verdict",
+                    "next tune: precision rises above 0.6 or the same-vendor caveat explains why it cannot",
+                    "PR", {"kind": "evaluator_assignment", "pr": prn, "prefer_cross_vendor": True})
+                add("pr-review.b_tier_thresholds", None, f"raise the evidence bar for PR #{prn}'s focus",
+                    [f"PR #{prn}: {p_['verdicts']['REJECT']}/{p_['judged']} claims rejected on verification — "
+                     "P0/P1 already require reproduction; the misses are concentrated below that line"],
+                    "fewer REJECT verdicts without losing ACCEPTs", "medium — a higher bar drops true findings too",
+                    "next tune: REJECT share falls while ACCEPT count holds", "PR",
+                    {"kind": "gate_fix_list", "skill": "pr-review",
+                     "item": f"precision {p_['precision']} on PR #{prn}: audit which tier the rejected claims came from"})
             if rv["threads_at_strike_limit"] and rv["threads_at_strike_limit"] * 2 >= rv["prs"]:
                 add("review-loop.fix_list", None, "strike limit reached on ≥50% of PRs — audit REJECT evidence quality before raising MAX_THREAD_STRIKES",
                     [f"{rv['threads_at_strike_limit']} thread(s) frozen at MAX_THREAD_STRIKES={max_strikes} across {rv['prs']} PRs"],

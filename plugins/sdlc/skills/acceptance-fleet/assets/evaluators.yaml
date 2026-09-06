@@ -1,0 +1,28 @@
+# evaluators.yaml — 谁来当评估者（数据，不是 prompt 里的一句"强烈建议"）。
+#
+# 缺口：spec-gaming-detector 与 code-reviewer 的正文都写着「强烈建议跨供应商」，但没有任何接线：
+# 没有地方声明有哪些供应商可用、没有脚本决定这一轮谁审、也没有一处记录这轮到底是不是跨供应商审的。
+# 一条只写在正文里的建议，在真实运行里等于不存在——这正是本插件反复批评的那种"声明式纪律"。
+#
+# 同源盲区最高的两个槽（blind_spot_rank 1 与 2）优先分给非本家供应商；
+# 分不到就**留痕**（same_vendor_caveat），不是静默降级。
+
+version: 1
+
+# 探测方式：命令存在即视为可用。不猜、不问、不假设。
+vendors:
+  - {id: claude, probe: "true", note: "本家；实现者也是它时构成同源"}
+  - {id: codex,  probe: "command -v codex", note: "OpenAI Codex CLI（本仓库装了 codex 插件）"}
+  - {id: gemini, probe: "command -v gemini", note: "Google Gemini CLI"}
+
+# 同源盲区排名：数字越小越该换供应商。
+slots:
+  - {skill: spec-gaming-detector, blind_spot_rank: 1, why: "作弊模式就是实现者自己的倾向，本家审本家最容易看不见"}
+  - {skill: code-reviewer,        blind_spot_rank: 2, why: "对抗式 diff 审查；同源模型对同源写法的坏味道脱敏"}
+  - {skill: qa-reviewer,          blind_spot_rank: 3, why: "真跑测试，结论由退出码定，供应商影响小"}
+  - {skill: spec-drift-detector,  blind_spot_rank: 4, why: "比对文本与代码事实，供应商影响小"}
+  - {skill: pm-reviewer,          blind_spot_rank: 5, why: "逐条需求合规，供应商影响小"}
+  - {skill: meta-judge,           blind_spot_rank: 6, why: "只综合不重审；换供应商收益最低"}
+
+# 一个供应商最多领几个槽（避免"全换成 codex"这种把同源盲区平移过去的分配）。
+max_slots_per_vendor: 3

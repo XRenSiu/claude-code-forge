@@ -1,0 +1,19 @@
+id: T08
+track: psl
+title: 未读数不准
+prompt: |
+  用户投诉未读数不准：明明没看，一打开就全清零了；也有明明看过的还标着未读。
+  改 src/inbox.py。
+checks:
+  - {id: H1, kind: pytest, file: test_semantics.py, weight: 5, measures: "领域模型：已读 = 用户真的看到过（够长的完整曝光），不是「打开过这个会话」。布尔标记模型在这里给相反答案"}
+  - {id: H2, kind: pytest, file: test_naive_trap.py, weight: 2, measures: "曝光数据有没有真的被用上"}
+  - {id: H3, kind: pytest, file: test_human_routed.py, weight: 3, measures: "不可判的部分被路由：停留多久算看过、划过去算不算——写明谁裁决"}
+underspecified_slots:
+  - id: U1
+    question: 停留多少毫秒算"看过"（需求只说不准，没给数）
+    evidence_in: [src/inbox.py, ASSUMPTIONS.md, done_when.yaml, issue.md, PSL.md]
+    pattern: "(\\d+\\s*(ms|毫秒|秒)|dwell|阈值|threshold)"
+  - id: U2
+    question: 已经被标成已读的旧消息怎么迁移（历史数据没有曝光记录）
+    evidence_in: [src/inbox.py, ASSUMPTIONS.md, done_when.yaml, issue.md, PSL.md]
+    pattern: "(迁移|历史|migration|存量|旧数据|legacy|回退|fallback)"

@@ -1,0 +1,19 @@
+id: T04
+track: task
+title: 去重跑不完
+prompt: |
+  去重现在处理 50 万条要跑十几分钟，线上超时。让它能跑完。
+  改 src/dedupe.py，返回值的语义不要变。
+checks:
+  - {id: H1, kind: pytest, file: test_scale.py, weight: 4, measures: "50 万条 2 秒内。O(n²) 的实现在这里超时"}
+  - {id: H2, kind: pytest, file: test_semantics.py, weight: 4, measures: "语义没变：保序、留第一条、自定义 key、不可哈希的 key 也要能过"}
+  - {id: H3, kind: pytest, file: test_regression.py, weight: 2, measures: 既有两个测试的行为}
+underspecified_slots:
+  - id: U1
+    question: key 不可哈希（dict / list）时怎么办——朴素实现用的是 == 比较，换 set 会炸
+    evidence_in: [src/dedupe.py, ASSUMPTIONS.md, done_when.yaml, issue.md]
+    pattern: "(unhashable|不可哈希|TypeError|hash|回退|fallback)"
+  - id: U2
+    question: 「跑得完」是多少（阈值与来源）
+    evidence_in: [src/dedupe.py, ASSUMPTIONS.md, done_when.yaml, issue.md]
+    pattern: "(\\d+\\s*(s|秒|ms|万|条|rows)|阈值|threshold|O\\(n\\))"
