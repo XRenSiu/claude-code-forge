@@ -13,7 +13,7 @@
 | mf-011 / KG-02 | AC-004-b 的 `source` 是"键非空"还是"可解析" | 键非空 | AC-004-b given 措辞；G3 已实测 39/39 可解析 |
 | mf-013 / srg-005 | `alternatives_of` 任意非空即豁免，还是须过 F-05 三条件 | 任意非空 | F-05 三条件 |
 | mf-020 / 第 2 项 | `disposition` 枚举以 F-16 还是 `audit.schema.md` 为准 | schema | F-16 `fix_list \| issue \| none` |
-| **mf-009（G3 已裁）** | F-06 封顶按"任一 Artifact"还是"独占 Artifact" | 三处记 compiled | **G3 裁：三处应为 declared**（R6/human_gate.G3、R7/agent.pr-reviewer、R8/tune），底线由 16/26/0 变 19/23/0。字节按纪律 defer，不在本 PR 改 |
+| ~~**mf-009（G3 已裁）**~~ **已落地** | F-06 封顶按"任一 Artifact"还是"独占 Artifact" | ~~三处记 compiled~~ → **三处已改为 declared** | G3 裁定生效：R6/human_gate.G3、R7/agent.pr-reviewer、R8/tune 各写 `not_reached.compiled` 说明为什么无闸；`AUDIT.md` 重渲染后自算的底线为 **19 declared / 23 compiled / 0 verified**。仍留在本表里的是**读法本身**：F-06 的"任一 vs 独占"要进 G1 解释轮并编成谓词（G3 Open Question 1），否则下次同样的分歧还得再裁一遍 |
 
 G3 的 Open Question 1 同属此段：若接受其裁法，`checked_by == [] ⇒ implemented ≤ declared` 应编进 `check_audit.py`，且需与 F-17 对账。
 

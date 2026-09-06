@@ -1345,13 +1345,14 @@ rings:
         - {kind: file, ref: plugins/sdlc/skills/sdlc/scripts/sdlc_state.py#L279-L280}
         deletion_test: '撤掉后四态里的 NEEDS_HUMAN 无处落地。human AC（UI/UX 意图、架构取舍）、pm-reviewer 的 requires_human_verification 清单、以及"在当前契约下不可能"的升级报告都没有收件人，acceptance-fleet 只能把它们降级成 FIX 发回实现者——实现者拿到一个他判不了的判断题，于是猜一个改法，猜错的那一次以全绿合入。这就是"机器判不了的地方"被机器判了：三道门存在的位置，正是机器判断不被信任的位置。'
       implemented:
-        verdict: compiled
+        verdict: declared
         psl_ids: [PSL-006, PSL-010]
         evidence:
         - {kind: file, ref: plugins/sdlc/skills/sdlc/scripts/sdlc_state.py#L278-L281}
         - {kind: file, ref: plugins/sdlc/skills/sdlc/scripts/sdlc_state.py#L394-L395}
         - {kind: file, ref: plugins/sdlc/skills/sdlc/scripts/sdlc_state.py#L297-L298}
         not_reached:
+          compiled: "F-06 封顶（G3 裁定，mf-009）：本 Part 登记的每一个 Artifact 的 checked_by 都为空——g3-record.md 没有任何脚本检其形状，cmd_gate 对 G3 的 pass 也不检任何输入。既然产物无闸，producer 不得高于 declared。原记 compiled 系按\"有 sdlc_state.py gate 这条命令\"读，G3 裁定该读法把\"有命令\"当成了\"有闸\"。"
           verified: '本次 Run 的 G3 还没到（卡面状态摘要：stage = implement），没有真人签过。而且即便签了也不构成对 R6 产物的行为层校验：cmd_gate 对 G3 pass 不检任何输入——对比 G1 pass 要求 world.derived_dir 是个存在的目录、G2 pass 要求 lock.path 是个存在的文件（sdlc_state.py#L384-L392），G3 那一支是空的。见 gap R6/newly_identified/control/g3-pass-has-no-input-precondition。'
       naming:
         verdict: fits
@@ -1621,13 +1622,14 @@ rings:
           条目无 file:line 锚点的 PR body（verify_pr.py --pre-review 会拒，于是 --pre-review 这条路直接不可用）；
           具体漏检 —— 本可在 push 前修掉的 P0 全部推到 reviewer 侧，review 轮次上移。
       implemented:
-        verdict: compiled
+        verdict: declared
         psl_ids: [PSL-010, PSL-015]
         evidence:
         - {kind: gate_json, ref: 'plugins/sdlc/skills/pr/eval/gate.json#provenance.scripts_run.verify_pr.py --pre-review'}
         - {kind: file, ref: 'plugins/sdlc/skills/pr/scripts/verify_pr.py#L194'}
         - {kind: file, ref: 'plugins/sdlc/agents/pr-reviewer.md#L22-L25'}
         not_reached:
+          compiled: "F-06 封顶（G3 裁定，mf-009）：其独占产物 findings.yaml（pre-review）的 checked_by 为空——verify_pr.py --pre-review 检的是下游 PR 正文的 Known issues 段，不是本 agent 的 findings 文件本身。原记 compiled 的理由（下游有闸）被 G3 裁为不成立：封顶看的是本产物有没有闸。"
           verified: >-
             gate.json fix_list 第 3 条 "L2: run /pr --pre-review once with agents/pr-reviewer.md in a fresh
             context and check survivors land in Known issues" 未做 —— 隔离预审从未真跑过。
@@ -1857,13 +1859,14 @@ rings:
           （层错了，不是预算不够，SKILL.md#L46）这一类会被读成预算问题，环的参数朝错误方向爬山，
           且 harness 改动绕过人（PSL-013）。
       implemented:
-        verdict: compiled
+        verdict: declared
         psl_ids: [PSL-010, PSL-015]
         evidence:
         - {kind: file, ref: 'plugins/sdlc/skills/tune/scripts/apply_proposal.py#L100-L114'}
         - {kind: file, ref: 'plugins/sdlc/skills/tune/scripts/tune.py#L302'}
         - {kind: gate_json, ref: 'plugins/sdlc/skills/tune/eval/gate.json#gate_pass=static_only'}
         not_reached:
+          compiled: "F-06 封顶（G3 裁定，mf-009）：harness-proposals.yaml 与 *.patch 的 checked_by 均为空；tune.py 自身除 IO 错误外恒 exit 0（SKILL.md 自陈是报告工具），apply_proposal.py 只出 diff 不写目标文件。无非零退出路径即无闸，故封顶 declared。"
           verified: >-
             gate.json fix_list 第 1 条 "run on ≥2 real archives + a real .sdlc/pr-watch" 未做；
             只在 2 归档 + 2 PR 的 fixture 上跑过。
