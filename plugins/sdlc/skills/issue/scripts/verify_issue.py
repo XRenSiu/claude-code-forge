@@ -29,6 +29,7 @@ twin covers the RIGHT edge; these ACs are the narrowest falsifiable conditions f
 """
 import argparse
 import json
+import os
 import re
 import sys
 
@@ -87,6 +88,7 @@ def is_vague(s):
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("body"); ap.add_argument("--dos"); ap.add_argument("--kind", choices=["feature", "bug", "escape"], default="feature")
+    ap.add_argument("--g1", help="G1 record; on the PSL track the issue text is checked against the negations it writes down (dogfood I-45)")
     a = ap.parse_args()
     try:
         md = open(a.body, encoding="utf-8").read()
@@ -251,6 +253,41 @@ def main():
         links = {m.group(1).lower(): m.group(2) for m in re.finditer(r"\b(PSL|G1|related)\s*:\s*([^\s　]+)", links_text)}
         if not links.get("g1") or links["g1"].strip().lower() in ("none", "<path", "<path 或 none>"):
             flags.append("PSL track without a G1 record path in Links — the issue should be created after G1")
+        elif a.g1 or os.path.isfile(links["g1"]):
+            # The issue restates the signed form in prose, and prose drifts. Three rounds of this run's
+            # G1 each caught the issue body using a word the signed form had explicitly rejected — a
+            # unit of judgement the form ruled out, or an inference the form ruled invalid. Nothing
+            # mechanical was watching, so a human read it three times. Now the negations the G1 record
+            # writes down are checked against the text that quotes them (dogfood I-45).
+            g1_path = a.g1 or links["g1"]
+            try:
+                g1_text = open(g1_path, encoding="utf-8").read()
+            except OSError as e:
+                flags.append(f"G1 record named in Links but unreadable ({e}) — cross-check skipped")
+                g1_text = ""
+            # The negation list must be MECHANICAL. This run's G1 wrote its refusals in prose
+            # ("AC-004-b used the rejected word …") and a human had to catch the drift three times.
+            # A checker cannot parse prose reliably, so the g1_record template carries a dedicated
+            # section and this reads exactly that: one term per list item, nothing inferred.
+            banned, in_sec = [], False
+            for line in g1_text.splitlines():
+                if line.startswith("#"):
+                    in_sec = bool(re.search(r"(明确不做|不做的事|否决词表|explicitly not doing|rejected terms)", line, re.I))
+                    continue
+                if in_sec:
+                    m = re.match(r"^\s*[-*]\s+(?:\*\*)?`?([^`*\n]+?)`?(?:\*\*)?\s*(?:—|--|:|：).*$|^\s*[-*]\s+(?:\*\*)?`?([^`*\n]+?)`?(?:\*\*)?\s*$", line)
+                    if m:
+                        t = (m.group(1) or m.group(2) or "").strip()
+                        if len(t) >= 2:
+                            banned.append(t)
+            if not banned:
+                flags.append(f"G1 record {g1_path} has no machine-readable 「明确不做」 section — the "
+                             "issue's wording cannot be checked against what the signed form refused")
+            watched = "\n".join(secs.get(k, "") for k in ("assumptions", "acceptance", "intent", "scope"))
+            for term in dict.fromkeys(banned):
+                if term and term in watched:
+                    flags.append(f"issue text uses `{term}`, which the G1 record lists under 明确不做 "
+                                 f"({g1_path}) — restate it in the signed form's own words or reopen G1")
     flags.append("needs_semantic_review: are these ACs the narrowest falsifiable conditions for THIS run? does the unhappy twin cover the right edge?")
 
     out = {"verdict": "REJECT" if rejects else "PASS", "track": track, "force_track": force_track,

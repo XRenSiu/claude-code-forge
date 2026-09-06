@@ -112,6 +112,10 @@ cards/CARD-xx.yaml          # L4 任务卡
 specs/<slug>/               # 归档（metrics.py 的数据源）
 ```
 
+`.sdlc/` 是**运行时状态，不入库**——把它加进仓库的 `.gitignore`。真正要留下的是 `specs/<slug>/`：
+`sdlc_state.py archive` 在收尾时把状态、账本、trace 与契约一起复制过去，retro 的 `metrics.py` 只读那里。
+两者搞混的后果是：要么把每一次门的中间态提交进历史，要么归档为空、下一次 retro 没有基线可比（dogfood I-01）。
+
 ## 与邻居的关系（缺席不阻塞）
 
 - `forge-teams` / `pdforge`：实现侧的并行 / TDD 执行器（L6），有则用
