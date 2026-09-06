@@ -278,6 +278,31 @@ expect "strike 1 ok" 0 bash -c "MAX_THREAD_STRIKES=2 bash '$PP' strike 7 PRRT_x 
 expect "strike 2 → exit 31 (freeze)" 31 bash -c "MAX_THREAD_STRIKES=2 bash '$PP' strike 7 PRRT_x >/dev/null"
 expect "counters file valid json" 0 bash -c "jq -e . .sdlc/pr-watch/pr-7.counters.json >/dev/null"
 expect "corrupt counters self-heal" 0 bash -c "echo '{bad' > .sdlc/pr-watch/pr-7.counters.json && MAX_ROUNDS=9 bash '$PP' round 7 | grep -q '\"rounds\": 1'"
+# dogfood 2026-09-06 (I-82): an empty statusCheckRollup meant "no CI configured", not "all checks green";
+# folding both into checks_green=true made the third clause of the termination predicate vacuously true.
+expect "checks green → done, reason says green (I-82)" 0 bash -c "bash '$PP' predicate 7 APPROVED 0 green 3 false | grep -q '\"reason\": \"approved_resolved_green\"'"
+expect "no CI configured is NOT rendered as green (I-82)" 0 bash -c "bash '$PP' predicate 7 APPROVED 0 none_configured 0 false | python3 -c \"import json,sys; d=json.load(sys.stdin); assert d['done'] is True; assert d['checks']=='none_configured'; assert d['checks_green'] is False; assert d['reason']=='approved_resolved_no_checks'; assert 'vacuous' in d['checks_note']\""
+expect "red checks block convergence (I-82)" 20 bash -c "bash '$PP' predicate 7 APPROVED 0 red 2 false >/dev/null"
+expect "unreadable rollup is not green either (I-82)" 20 bash -c "bash '$PP' predicate 7 APPROVED 0 unknown 0 false >/dev/null"
+# dogfood 2026-09-06 (I-69): GitHub forbids a PR author approving their own PR, so a single-maintainer
+# repo can never reach APPROVED — the default predicate cannot converge there at all.
+expect "default predicate still demands APPROVED (I-69: solo is never the default)" 20 bash -c "bash '$PP' predicate 7 null 0 green 3 false >/dev/null"
+expect "solo without a recorded self-review round does not converge (I-69)" 20 bash -c "SELF_REVIEW=1 bash '$PP' predicate 7 null 0 green 3 false | grep -q no_isolated_self_review_round; SELF_REVIEW=1 bash '$PP' predicate 7 null 0 green 3 false >/dev/null"
+git init -q -b feat/9-demo . 2>/dev/null; git config user.name t; git config user.email t@t
+git commit -q --allow-empty -m "chore: init" 2>/dev/null
+printf 'findings: []\na_tier_survivors: 0\n' > clean-findings.yaml
+printf 'findings:\n  - id: cr-001\n    tier: A\n    note: real blocker\n' > dirty-findings.yaml
+expect "selfreview refuses an empty findings file (I-69)" 1 bash -c ": > empty.yaml && bash '$PP' selfreview 7 empty.yaml >/dev/null 2>&1"
+expect "selfreview records the round, its A-tier count and the sha it ran on (I-69)" 0 bash -c "bash '$PP' selfreview 7 clean-findings.yaml pr-reviewer-r1 | python3 -c \"import json,sys; d=json.load(sys.stdin); assert d['rounds']==1; assert d['last']['a_tier']==0; assert len(d['last']['head_sha'])==40\""
+expect "solo converges once a clean isolated round is on record (I-69)" 0 bash -c "SELF_REVIEW=1 bash '$PP' predicate 7 null 0 green 3 false | grep -q '\"reason\": \"solo_converged_green\"'"
+expect "--solo flag is equivalent to SELF_REVIEW=1 (I-69)" 0 bash -c "bash '$PP' predicate 7 null 0 green 3 false --solo >/dev/null"
+# the same facts that converge under --solo must NOT converge without it: solo never becomes the default
+expect "solo is not the default — same facts, no flag, still not converged (I-69)" 20 bash -c "bash '$PP' predicate 7 null 0 green 3 false >/dev/null"
+expect "solo still refuses CHANGES_REQUESTED (I-69)" 20 bash -c "SELF_REVIEW=1 bash '$PP' predicate 7 CHANGES_REQUESTED 0 green 3 false | grep -q '\"changes_requested\"'; SELF_REVIEW=1 bash '$PP' predicate 7 CHANGES_REQUESTED 0 green 3 false >/dev/null"
+expect "solo still refuses unresolved threads (I-69)" 20 bash -c "SELF_REVIEW=1 bash '$PP' predicate 7 null 2 green 3 false >/dev/null"
+expect "an A-tier survivor blocks solo convergence (I-69)" 20 bash -c "bash '$PP' selfreview 7 dirty-findings.yaml >/dev/null && SELF_REVIEW=1 bash '$PP' predicate 7 null 0 green 3 false | grep -q self_review_a_tier_survivors; SELF_REVIEW=1 bash '$PP' predicate 7 null 0 green 3 false >/dev/null"
+# stricter than APPROVED: a GitHub approval survives later pushes, a recorded self-review round does not
+expect "a commit after the round makes it stale (I-69)" 20 bash -c "bash '$PP' selfreview 7 clean-findings.yaml >/dev/null && git commit -q --allow-empty -m 'fix(x): later work' && SELF_REVIEW=1 bash '$PP' predicate 7 null 0 green 3 false | grep -q self_review_stale; SELF_REVIEW=1 bash '$PP' predicate 7 null 0 green 3 false >/dev/null"
 popd >/dev/null
 
 echo "== psl / verify_psl.py (imported from looper)"
