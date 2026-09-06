@@ -22,6 +22,8 @@ Usage:
   trace.py impact <target> [...]                                                 # forwards: what implements / depends on it
   trace.py render [--since ISO] [...]                                            # mermaid flowchart to stdout
   trace.py lint   [--routing routing.yaml] [--base DIR] [...]                    # edge types ∈ closed set; targets resolvable
+                  # legal targets: event ids · contract anchors · routing rules · graph nodes · existing paths
+                  # · actors (human:/agent:/bare name from the ledger's `by`) · git commits resolvable from --base
 
 Exit 0 ok · 1 lint reject / target not found · 2 usage/IO.
 """
@@ -29,10 +31,15 @@ import argparse
 import json
 import os
 import re
+import subprocess
 import sys
 
 EDGE_TYPES = {"caused_by", "decided_by", "supersedes", "implements", "references", "depends_on", "rejected_alternative"}
-ANCHOR_RE = re.compile(r"^(CARD-\d+|AC-[\w-]+|REQ-[\w-]+|PSL-[\w-]+|DOS-[\w-]+|ev-\d+|routing\.R\d+|human:[\w.@-]+|github:[\w/#-]+)$")
+# `agent:` sits beside `human:` because sdlc_state.py writes both (a gate signed by a delegated agent is
+# traced as agent:<by>) — a lint that flags what the writer emits is noise the real dangling ref hides in.
+ANCHOR_RE = re.compile(r"^(CARD-\d+|AC-[\w-]+|REQ-[\w-]+|PSL-[\w-]+|DOS-[\w-]+|ev-\d+|routing\.R\d+"
+                       r"|human:[\w.@-]+|agent:[\w.@-]+|github:[\w/#-]+)$")
+SHA_RE = re.compile(r"^[0-9a-f]{7,40}$")
 
 
 def die(msg, code=2):
@@ -204,6 +211,26 @@ def cmd_render(a, evs):
 FILE_LIKE = re.compile(r"^[\w./-]+\.(md|ya?ml|json|lock|tsv|txt|patch|py|sh|ts|tsx|js)$")
 
 
+def actor_names(evs, nodes):
+    """Who can legally be pointed at without a prefix: the graph's own nodes plus everyone the ledger has
+    recorded as acting (`by`). `fail --by acceptance-fleet` writes a bare `decided_by: acceptance-fleet`,
+    so the writer's own vocabulary has to be in the lint's legal set."""
+    return {str(e["by"]) for e in evs if e.get("by")} | {str(n) for n in nodes if n}
+
+
+def is_commit(sha, cwd):
+    """A 7–40 hex target that git resolves to a commit. Unresolvable ones are a warning, not a reject:
+    an archived trace linted outside its repository cannot verify a sha it correctly recorded."""
+    if not SHA_RE.match(sha):
+        return None
+    try:
+        r = subprocess.run(["git", "-C", cwd or ".", "cat-file", "-e", f"{sha}^{{commit}}"],
+                           capture_output=True, text=True)
+        return r.returncode == 0
+    except (OSError, ValueError):
+        return False
+
+
 def graph_node_ids(path):
     try:
         import yaml
@@ -231,6 +258,7 @@ def cmd_lint(a, evs, path):
         except Exception:
             pass
     base = a.base or os.path.dirname(os.path.abspath(path))
+    actors = actor_names(evs, nodes)
     for e in evs:
         if not e.get("id") or not e.get("kind") or not e.get("at"):
             rejects.append(f"event missing id/kind/at: {e}")
@@ -249,14 +277,22 @@ def cmd_lint(a, evs, path):
                 if routing_rules and core.split(".", 1)[1] not in routing_rules:
                     rejects.append(f"{e.get('id')}: unknown routing rule {tgt!r}")
                 continue
-            if ANCHOR_RE.match(core) or ANCHOR_RE.match(anchor(tgt)) or core in nodes or core.startswith(("human:", "github:", "git:")):
+            if ANCHOR_RE.match(core) or ANCHOR_RE.match(anchor(tgt)) or core in nodes or core.startswith(("human:", "agent:", "github:", "git:")):
+                continue
+            if core in actors:   # a bare actor: a graph node, or someone the ledger records as acting
                 continue
             if os.path.exists(os.path.join(base, core)) or os.path.exists(core):
+                continue
+            commit = is_commit(core, base)
+            if commit:
+                continue
+            if commit is False:
+                warns.append(f"{e.get('id')}: commit {tgt!r} not found from {base} (an archived trace may outlive its repository)")
                 continue
             if FILE_LIKE.match(core):
                 warns.append(f"{e.get('id')}: artifact {tgt!r} not found under {base} (archives need not copy every artifact)")
                 continue
-            rejects.append(f"{e.get('id')}: dangling target {tgt!r} (not an event id, contract anchor, routing rule, graph node, or existing path)")
+            rejects.append(f"{e.get('id')}: dangling target {tgt!r} (not an event id, contract anchor, routing rule, graph node, actor, git commit, or existing path)")
     out = {"verdict": "REJECT" if rejects else "PASS", "events": len(evs), "rejects": rejects, "warnings": warns}
     print(json.dumps(out, ensure_ascii=False, indent=2))
     sys.exit(1 if rejects else 0)

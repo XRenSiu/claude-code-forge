@@ -473,6 +473,19 @@ expect "trace why AC-003-a walks 3 hops to hidden_variant_fail" 0 bash -c "pytho
 expect "trace impact AC-003-a reaches the escape" 0 bash -c "python3 '$SSG/trace.py' impact AC-003-a --trace '$S/retro/eval/fixtures/feat-a/trace.jsonl' | grep -q 'escape'"
 TB="$TMP/trace_bad.jsonl"; printf '%s\n' '{"id":"ev-0001","at":"t","kind":"fail","refs":[{"type":"related_to","target":"CARD-01"}]}' '{"id":"ev-0002","at":"t","kind":"reflow","refs":[{"type":"caused_by","target":"ev-0099"}]}' > "$TB"
 expect "trace lint: unknown edge type + dangling event rejected" 1 py "$SSG/trace.py" lint --trace "$TB"
+# dogfood 2026-09-06 (I-65): sdlc_state.py writes actor refs (agent:/human:/a bare name from the `by` column)
+# and git shas; a lint that flags its own writer is permanent noise a real dangling ref would drown in
+TA="$TMP/trace_actors.jsonl"; SHA="$(git rev-parse HEAD)"
+printf '%s\n' \
+  "{\"id\":\"ev-0001\",\"at\":\"t\",\"kind\":\"gate\",\"by\":\"g1-judge\",\"refs\":[{\"type\":\"decided_by\",\"target\":\"agent:g1-judge\"}]}" \
+  "{\"id\":\"ev-0002\",\"at\":\"t\",\"kind\":\"gate\",\"by\":\"alice\",\"refs\":[{\"type\":\"decided_by\",\"target\":\"human:alice\"}]}" \
+  "{\"id\":\"ev-0003\",\"at\":\"t\",\"kind\":\"fail\",\"by\":\"acceptance-fleet\",\"refs\":[{\"type\":\"decided_by\",\"target\":\"acceptance-fleet\"}]}" \
+  "{\"id\":\"ev-0003b\",\"at\":\"t\",\"kind\":\"gate\",\"by\":\"g2-judge\",\"refs\":[{\"type\":\"decided_by\",\"target\":\"g2-judge\"}]}" \
+  "{\"id\":\"ev-0004\",\"at\":\"t\",\"kind\":\"card\",\"by\":\"engine\",\"refs\":[{\"type\":\"references\",\"target\":\"$SHA\"},{\"type\":\"references\",\"target\":\"${SHA:0:7}\"}]}" > "$TA"
+expect "trace lint: actor refs and resolvable shas are not dangling (I-65)" 0 py "$SSG/trace.py" lint --trace "$TA" --base "$ROOT"
+TA2="$TMP/trace_actors_dangling.jsonl"; cat "$TA" > "$TA2"
+printf '%s\n' "{\"id\":\"ev-0005\",\"at\":\"t\",\"kind\":\"note\",\"by\":\"engine\",\"refs\":[{\"type\":\"references\",\"target\":\"not-an-actor-or-anything\"}]}" >> "$TA2"
+expect "trace lint: a genuinely dangling target is still rejected (I-65)" 1 py "$SSG/trace.py" lint --trace "$TA2" --base "$ROOT"
 
 echo "== tune / tune.py + apply_proposal.py (P4)"
 TU="$S/tune/scripts"; FXT="$S/tune/eval/fixtures"
