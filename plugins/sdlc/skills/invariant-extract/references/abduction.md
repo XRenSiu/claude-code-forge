@@ -37,6 +37,8 @@
 
 5. **标置信度。** 窄而直接的 → 高;宽、跨多系统、或需要假设链才成立的 → 低。**低置信 / 高风险的
    只提案(NEEDS_HUMAN),不自动入卡**(见 anti_patterns 失败模式②)。
+   这条对**两栏都成立**:可覆盖默认栏里的低置信条目同样是 `disposition: propose`,不是 `carded`。
+   "可以被合法覆盖"讲的是它落地后的强度,不是它现在够不够格落地。`verify_card.py` 检这一条。
 
 每条候选含 `{候选规则, 来源 obstacle, 投影 aspect, 置信度, 最窄性理由}`,落进卡的
 hard_invariants / overridable_defaults 候选栏(`assets/invariant_card.yaml`)。

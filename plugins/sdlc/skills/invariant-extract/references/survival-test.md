@@ -72,6 +72,23 @@
 由跨领地比较 / 立法者裁定是否升 R00x。升宪法是立法行为,不是这把刀的权限(起草书记员,不是立法者)。
 purpose-independent 的候选**不该**在每块领地里重溯一遍、复制进每张卡——那是把宪法摊薄成 N 份副本。
 
+### 裁决:窄化形式可落卡,通用形式只标嫌疑(一处表达)
+
+上面那句"不复制进每张卡"说的是**通用形式**,不是说这条规则在本领地失效——两者常常同时成立,
+以前没写清楚,落卡的人只能猜。裁决如下,`verify_card.py` 已按此硬检:
+
+| 形式 | 去处 | 例 |
+|---|---|---|
+| **领地窄化形式**(带本领地限定,由本领地的失败揭示) | 照常落 `hard_invariants` / `overridable_defaults`,`altitude: territory` | "WHILE 本 Run 开着,不得改喂本 Run 闸门的 verify_*.py" |
+| **通用形式**(去掉领地限定后仍成立) | 只写 `constitution_promotion_suspects`,`routed_to: legislation` | "评审者不得在评审进行中修改被评审对象" |
+
+两者不是重复,差的是**作用域**;用 `narrowed_card_id` 把嫌疑指回它的窄化形式,读的人一眼看到这是一条
+规则的两个高度,不是两条规则。
+
+**并且:条目上的 `altitude` 只能是 `territory`。** 早先模板允许 `altitude: proposed_to_constitution`,
+它和顶层 `constitution_promotion_suspects` 节表达同一件事,两处会漂。保留节,取消条目上的那个值——
+`verify_card.py` 对条目上的 `proposed_to_constitution` 直接 reject 并指回本节。
+
 ---
 
 ## 三、强度分类

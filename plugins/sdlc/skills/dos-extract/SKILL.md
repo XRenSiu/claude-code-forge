@@ -90,24 +90,55 @@ docs-win priority, and `open_questions` is non-empty (a DOS with none is dishone
   (class/type/table names, API path segments) and verbs, with example locations. Named-table
   output so classification has clean material. It exists; the engine runs it — the body does
   not narrate a call sequence.
+  **Two channels.** Class/type declarations in TS/JS/Py/Go/Rust/Java/Kotlin, *and* (on by
+  default) YAML/JSON: `$defs` keys, JSON-Schema `properties` children, `enum` members, and
+  discriminator (`kind`/`type`) values, plus plain mapping keys down to `--key-depth`. Each
+  noun carries its source tag, and the report puts *declarations* above *plain keys* — a repo
+  whose objects live in schemas, not classes, otherwise scores **zero nouns** and the operator
+  falls back to hand-counting. `--exclude` takes path-segment **names, matched at any depth**,
+  not globs.
+- **`scripts/count_terms.py`** — the docs channel's counting primitive: a terms file (canonical
+  label = variants, literal or `/regex/`) × named corpus globs → a reproducible count table with
+  `file:line` evidence. `01b_docs_terms.md`'s frequencies are a measurement, not a recollection.
+- **`scripts/reconcile_dos.py`** — the X1 as-is ↔ to-be comparison as a *product*: emits
+  `dos-reconciled.yaml`, the as-is DOS with each mapped to-be name folded into `synonyms:`, so
+  one closure source accepts both vocabularies. It never invents a mapping — unmapped to-be
+  objects and same-id/different-statement rule conflicts come back as human judgments.
+- **`scripts/dos_closure.py`** — import-only: the single definition of "what a DOS term resolves
+  to" (canonical key, or a declared `objects.<X>.synonyms` / `rules[].aliases` entry). Both
+  `verify_issue.py --dos` and `lint_cards.py --dos` import it, so closure means one thing on
+  both sides of the seam.
 - **`assets/dos_template.yaml`** — the named 12-section output structure (so a value cannot
-  land in the wrong section). **`assets/decisions_template.md`** — the audit-trail shape.
+  land in the wrong section). **`assets/decisions_template.md`** — the audit-trail shape,
+  including the `## Naming waivers` section `verify_dos.py --decisions` reads.
 - **`assets/docs_extraction_prompt.md`** — the procedure + output format for the docs scan.
 
 ## The exit — mechanical pre-gate, then the real guarantee
 
-`scripts/verify_dos.py <dos.yaml>` is the **mechanical pre-gate** — and it checks the
-*product*, not mere well-formedness (it rejects UI/impl-suffixed object names, undeclared
-relationship refs, >7 objects). Run it before presenting. It **rejects** on:
+`scripts/verify_dos.py <dos.yaml> [--decisions decisions.md]` is the **mechanical pre-gate** —
+and it checks the *product*, not mere well-formedness (it rejects UI/impl-suffixed object names,
+undeclared relationship refs, >7 objects). Run it before presenting. It **rejects** on:
 
 - >7 objects → **reject** (a justification for exceeding is a human waiver recorded in
   `decisions.md`; the script does not auto-detect it — it errs strict, the judge relaxes);
-- every object in `relationships` is declared in `objects`; every relationship has both
-  cardinality sides;
-- no object name carries a UI/impl suffix (`*Card`, `*Repository`, `*Service`, …);
+- every object in `relationships` is declared in `objects` (a declared synonym resolves, with
+  a flag to prefer the canonical name); every relationship has both cardinality sides;
+- no object name is **compounded** on a UI/impl primitive (`TopicCard`, `UserRepository`) —
+  non-waivable;
+- an object name that **IS** a whole primitive (`Card`, `Modal`, `Service`) rejects too, but is
+  **waivable**: `--decisions decisions.md` reads a `## Naming waivers` bullet, or `--waive Card`
+  for an ad-hoc call. The heuristic exists for `TopicCard`; a whole word can be a real domain
+  object, and *renaming the domain to satisfy the heuristic breaks downstream closure* — every
+  consumer resolves the operator's actual vocabulary against this file;
+- a `properties.<p>.derived_from` that is present but empty;
 - the load-bearing sections (`objects` / `relationships` / `rules`) present — omission rejects;
   the softer six are reported as `info`, not rejected;
 - `open_questions` non-empty.
+
+It also emits **warnings** that never touch the exit code: `dos.yaml` past `--max-lines` (800)
+or past a ~100-lines-per-object budget, and object descriptions that are empty, still a template
+placeholder, or longer than a sentence. `references/methodology.md` §6 has stated the 300-500-line
+target for 6 objects all along; nothing measured it, so a 719-line draft passed clean.
 
 The semantic half — is this *really* a business object? did Judgment 2 merge correctly? does
 each `agent_guidelines.must_not` trace to an anti-pattern or rule? — is a judge call against
@@ -134,7 +165,12 @@ artifacts live in a `.dos-extract/` workspace; finals copy to the project root.
 ## High-risk — never do (non-waivable)
 
 - **Never promote a UI element or an infra-suffixed name to a business object** (`TopicCard`,
-  `UserRepository` are not objects).
+  `UserRepository` are not objects). A *whole* primitive is the one waivable case — `Card` alone
+  can be a real domain word — and the waiver is recorded in `decisions.md`, never assumed.
+- **Never rename a domain object to get past the suffix heuristic.** The rename looks free and is
+  not: every downstream closure check resolves the team's real vocabulary against this file, so
+  the rename either breaks closure or forces a `synonyms:` entry anyway. Waive, or record the
+  synonym — the DOS is the team's language, not the verifier's.
 - **Never let code vocabulary win over docs for naming** unless docs are demonstrably stale —
   and then flag it loudly in `decisions.md` + `open_questions`.
 - **Never exceed 7 core objects without a documented justification** (it usually means
@@ -166,11 +202,22 @@ artifacts live in a `.dos-extract/` workspace; finals copy to the project root.
 
 - **X1 DOS 生命周期的现状本体一源**：产出的 `dos.yaml` 是 `/issue --dos`（依赖 DOS 词表闭包）与
   `lint_cards.py --dos`（卡的 dos_slice 闭包）的解析源；闭包失败 = 客观触发 PSL 轨。
+  两个消费者都 import `scripts/dos_closure.py`，所以**闭包认 `objects.<X>.synonyms` 与 `rules[].aliases`**：
+  收编来的词表（qanat 的 `Territory` / `Run` / `MemoryAsset`）要么写进 synonyms 成为闭包源，
+  要么在术语映射表里写明"不参与闭包"——只活在映射表里而下游按 key 闭包，是本次实测咬人的地方。
 - **应然本体**（`/psl-derive` 的 `dos-proposal.yaml`，同一 schema `assets/dos_template.yaml`）与本 skill 的现状本体
-  逐条对账：一致 → 采纳；名异实同 → 同义词表；实质冲突 → 人裁决。对账 skill 与 ontology-drift 尚未实现（登记为空白），
-  目前由人在 G1 记录里对账。
+  逐条对账。对账的**产物是文件不是散文**：`scripts/reconcile_dos.py --as-is dos.yaml --to-be
+  derived/dos-proposal.yaml --map "<to_be>=<as_is>,…" --output dos-reconciled.yaml`。
+  一致 → `identical`；名异实同 → 折进 `synonyms`（下游一份闭包源同时认两套词）；
+  应然有而现状无 → `unmapped_to_be`，进 `open_questions` 等人裁决，脚本不替你造映射；
+  同 id 不同语义的规则 → `rule_conflicts`，同样是人的活。对账表本身仍在 G1 记录里，
+  但 `dos-reconciled.yaml` 让 lint / verify 不必再被手工指到某份提案文件上。
+- **YAML / Markdown 为主的仓库**（插件、基础设施、schema-first 服务）：`inventory.py` 的结构化通道
+  出 `$defs` / schema property / enum / 判别值，docs 通道用 `count_terms.py` 出可复现计数；
+  代码通道抽出 0 个名词是**关于这个仓库的事实**，照实写进 `decisions.md`（模板已留位置），
+  不要装作有一张剪枝表。
 - **agent 无写权**：`dos.yaml` 进 G2 锁与卡的 `forbidden_files`；改本体走变更提案（本体层回流）。
-- 路径记入 `sdlc_state.py set world.dos=…`。
+- 路径记入 `sdlc_state.py set world.dos=…`（由编排者记，不是本 skill 的执行者）。
 
 ## Exit gate for this skill itself
 

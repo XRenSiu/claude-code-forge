@@ -29,6 +29,24 @@ that make extraction mechanical where it can be, and the gates a candidate must 
 before it lands. **It does not prescribe a step order — the engine sequences the work;
 what follows are the gaps to fill and the gates that must hold, in any order.**
 
+## 术语映射（在 sdlc 里怎么读这份文件）
+
+本 skill 引自 qanat 仓库，正文保留其领域词汇；在 sdlc 里按下表读。**Territory 与 Run 两行是承重的**：
+按字面读 dos.yaml 的 `Run`（一次 issue → PR 的交付）会把"这个插件自己被改"的那些失败全部投影为 ∅，
+溯因通道当场掏空。
+
+| 原文 | sdlc 里的对应物 |
+|---|---|
+| Territory（领地） | 一块有单一责任的区域：一个 `dos.yaml` 的 `bounded_contexts.current_context`，或一个插件 / 一个环 / 一个 skill 族。**"插件即领地"是合法读法**——它有 name、有 kpi、有 scope |
+| Territory.name / kpi | 该区域的一句话责任 + 它的直接度量。插件领地：`README` 的一句话定位 + 它守的东西（每步产物可检或被人签的门挡住） |
+| Run（一次执行） | **该领地的任一次被调用**，不只是交付。对插件领地有两类：① 交付 Run = `.sdlc/<slug>/` 一个 slug；② dogfood Run = 用这套 skill 改这套 skill 自己的一次。□ 要活得过**两类**，这是 `--cross-territory` 之外最容易漏的宽度 |
+| 失败记忆 failure.memory | 见下面「接线」的清单：`ledger.md` 的 `fail` / `deviation` 行、`escape-defects.md`、G3 记录、dogfood 的 `skill-issues.md`。**不含** `gate.json` 的 `fix_list`（那是登记的缺口，见下） |
+| obstacle_ref | 上面任一条的稳定 id：`ledger:fail#3`、trace 事件 id（`ev-0005`）、`skill-issues.md` 的 `I-nn`、逃逸缺陷编号 |
+| R001 / R002 / R00x | **dos.yaml `rules` 段的 id**（sdlc：R001 单生产者、R002 单契约 schema …）。qanat 原文里 R001=评估者隔离、R002=闸门资产只能人签，**在本插件里不要这样读**——那两条在 sdlc 是「信息隔离」与「G2/G3 人签」，不是编号 |
+| 立法收件箱 / 立法者签字 | `assets/change_proposal.md` 变更提案 → **G2**（`lock_done_when.py sign`）；账本 `ledger.md` 记 propose |
+| MemoryAsset | 归档目录 `specs/<slug>/` 里的测试集 / rubric；failure_memory 见上 |
+| daemon / 运行时 | 本地测试与 CI；`/sdlc` 的 acceptance 阶段 |
+
 ## The gap (why the engine can't just read them off the code)
 
 A composite of three atoms: **Judgment** (what counts as a real □), **Control** (the
@@ -66,7 +84,8 @@ the code, it is in `failure.memory`. The gap is real; it is the abductive channe
   *every* Territory's purpose is constitution, not territory-level (see cross-territory).
 - **Division of labor (no whole-card generator).** dos-extract → ontology / boundary /
   system constitution. **invariant-extract → the □ column (here).** acceptance-spec →
-  `done_when`. Binding / autonomy / ownership → human-set at 设立 (R002). There is no
+  `done_when`. Binding / autonomy / ownership → human-set when the Territory is established.
+  There is no
   monolithic "territory-spec"; assembling the card is the engine's job, not a skill.
 
 ## What counts as a correct invariant (the criteria — declared, not sequenced)
@@ -105,14 +124,25 @@ These are the Judgment fences. They hold whenever a candidate is evaluated, in a
 
 `scripts/verify_card.py <card.yaml> [--dos dos.yaml]` is the **mechanical pre-gate** — and it
 checks the *product*, not mere well-formedness: it rejects auto-installed hard invariants
-(R002), entries with no provenance, and ◊ candidates smuggled onto the card. Run it before
+(they land only behind the human-signed G2 gate), entries with no provenance, and ◊ candidates
+smuggled onto the card. Run it before
 anything lands. It rejects on:
 
 - every entry has provenance (execution_point or obstacle_ref) — else **reject**;
 - strength ∈ {hard, overridable}; hard entries are `disposition: propose` (never auto-carded);
+- `confidence: low` ⇒ `disposition: propose` **in either column** (`references/abduction.md` §5);
 - aspect present; statement non-empty (EARS *shape* is a judge call — flagged, not mechanically rejected);
-- no entry duplicates an existing `dos.yaml` R00x id (dedup, not re-legislate);
+- `altitude`, where present, is `territory` — the constitutional suspicion is recorded once, in
+  `constitution_promotion_suspects`, not twice (see the ruling in `references/survival-test.md` §2.5);
+- no entry duplicates an existing `dos.yaml` R00x id (dedup, not re-legislate); a **re-wording** of
+  one is flagged by statement similarity, since exact-match dedup catches nothing a paraphrase evades;
+- `channel_2_input.failure_memory_count > 0` carries `sources` — a bare integer is unfalsifiable;
+- every `registered_gaps` entry declares `destination ∈ {done_when, issue, backlog}`;
 - flags any entry lacking `survival_test: pass` for the human/judge's semantic call.
+
+The report prints `projected_out_obstacles` / `deduped_against_constitution` /
+`constitution_promotion_suspects` / `conflicts_for_legislation` counts, so a card that skipped
+the abductive channel does not print the same shape as one that worked it.
 
 The semantic half (does it truly survive □/◊ under purpose? is it the narrowest rule on
 the right aspect?) is a judge call against the same criteria above — `verify_card.py`
@@ -128,7 +158,8 @@ The engine runs the extraction; these gates do not move:
 - **Propose, don't install — the seam.** The human checkpoint sits at the judgment →
   legislation boundary. **Hard invariants and broad/high-risk abductions are PROPOSE-only**
   (`NEEDS_HUMAN` → legislation inbox); they enter `Territory.invariants` only after a human
-  signs (R002 — gate assets only humans sign). The skill is a drafting clerk, not a legislator.
+  signs — in sdlc that signature is **G2**, on a `change_proposal.md`. The skill is a drafting
+  clerk, not a legislator.
 - **`done_when` for the extraction.** Extraction is done when: the Territory is bound and
   its purpose pulled; both channels have been worked (or the dry channel is explicitly
   recorded, not faked); every surviving candidate has provenance, a □/◊ verdict, and a
@@ -141,7 +172,7 @@ The engine runs the extraction; these gates do not move:
 
 ## High-risk — never do (non-waivable)
 
-- **Never auto-install a hard invariant.** Hard □ enters only by human signature (R002).
+- **Never auto-install a hard invariant.** Hard □ enters only by human signature at G2.
 - **Never card a candidate without provenance.** No execution point and no real failure → out.
 - **Never promote to R00x inside a single-Territory run.** Cross-territory evidence + a
   legislator do that; a single run can only *flag* a purpose-independent suspect.
@@ -189,10 +220,21 @@ The engine runs the extraction; these gates do not move:
 
 - **X1 的常驻不变量**：消费 `/dos-extract` 的 `dos.yaml`；抽出的 □ 不变量卡（`verify_card.py` 过门）交
   `/spec-compile` 编成 fitness fn / property 测试；硬不变量 propose-only，签字走 G2（`change_proposal.md`）。
-- **失败记忆的来源**：`.sdlc/<slug>/ledger.md` 的 `fail` 行、`escape-defects.md`、G3 记录——逃逸缺陷是最可靠的
-  "有不变量存在"信号（R12 路由：人归因后回到本体层再抽一次）。
+- **失败记忆的来源**，按本插件实测的产出量排（dogfood 2026-09-05）：
+  1. `<plugin>/dogfood/**/skill-issues.md` —— 自审跑出来的缺陷清单，本次最厚的一源；
+  2. `.sdlc/<slug>/ledger.md` 的 **`deviation` 行** + `trace.jsonl` 对应事件 —— "为了往下走，我破了自己的规矩"
+     是溯因的富矿，而 `fail` 行在一次顺利的运行里可能一条都没有；
+  3. `.sdlc/<slug>/ledger.md` 的 `fail` 行；
+  4. `escape-defects.md` / G3 记录 —— 逃逸缺陷是最可靠的"有不变量存在"信号（R12 路由：人归因后回到本体层再抽一次）。
+- **登记的缺口不是违反**：`eval/gate.json` 的 `fix_list`（本插件 52 条里绝大多数是"L2 从未跑过"这类登记）
+  说的是**还没做**，不是**做错了**。取反一件没做过的事得不到 □，只得到一句"应该去做"——那是 ◊。
+  这些进卡的 `registered_gaps`，`destination: done_when|issue|backlog` 必填，**不喂 hard_invariants**。
+- **通道二输入要可核对**：`channel_2_input` 写 `sources`（每源 ref / entries / kind）与 `snapshot_at`。
+  失败记忆在一次运行里会长（本次 `skill-issues.md` 从 6 行涨到 16 行），只写一个整数，别人重跑对不上。
 - **◊ 候选**（本次验收）→ `/donewhen-extract`（本插件），不是 acceptance-spec 专属。
-- 路径记入 `sdlc_state.py set world.invariants=…`。
+- **谁写状态**：`world.invariants` 由**编排者**（`/sdlc` 主会话）在卡过门后记入
+  `sdlc_state.py set world.invariants=…`。执行本 skill 的实现者写白名单只覆盖 `invariants/`，`.sdlc/` 不在其中；
+  让实现者写状态既会撞白名单执行器，也会让"谁记的"这件事失去单一来源。
 
 ## Exit gate for this skill itself
 
