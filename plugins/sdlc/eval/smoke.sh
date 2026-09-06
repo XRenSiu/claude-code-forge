@@ -94,6 +94,32 @@ expect "ledger has waiver row" 0 bash -c "grep -q '| waiver |' .sdlc/demo/ledger
 # dogfood 2026-09-06 (I-57): state.schema.json defines lock.stage, so the l5 re-sign must be able to record it
 expect "set lock.stage=l5 (I-57)" 0 bash -c "python3 '$SS' set lock.stage=l5 >/dev/null && python3 -c \"import json; assert json.load(open('.sdlc/demo/state.json'))['lock']['stage']=='l5'\""
 expect "lock.stage outside the g2|l5 enum refused (I-57)" 1 py "$SS" set lock.stage=nope
+# dogfood 2026-09-06 (I-67): a waiver needs no stage transition to hang on; `waive` prints the id to cite
+expect "waive records a standalone waiver + ledger event (I-67)" 0 bash -c "python3 '$SS' waive --signal hidden_variant_fail --reason 'holdout 6/10 accepted as a ratchet item' --by g2-judge --fingerprint d1fc8380957b > '$TMP/waive.json' && python3 -c \"
+import json
+assert json.load(open('$TMP/waive.json'))['event'].startswith('ev-')
+w=json.load(open('.sdlc/demo/state.json'))['waivers']
+assert any(x.get('signal')=='hidden_variant_fail' and x.get('fingerprint')=='d1fc8380957b' for x in w), w\""
+expect "waive by a delegated agent without --authorization refused (I-67)" 1 py "$SS" waive --signal card_test_fail --reason r --by proxy-bot --signer-kind delegated_agent
+# dogfood 2026-09-06 (I-70): a hand-written row must be able to cite the fail it excuses, not describe it in prose
+expect "ledger --fingerprint / --card land on the trace event (I-70)" 0 bash -c "python3 '$SS' ledger --kind note --note 'the waiver above excuses this fail' --fingerprint d1fc8380957b --card CARD-01 >/dev/null && python3 -c \"
+import json
+ev=[json.loads(l) for l in open('.sdlc/demo/trace.jsonl') if l.strip()][-1]
+assert ev.get('fingerprint')=='d1fc8380957b' and ev.get('card')=='CARD-01', ev\""
+# dogfood 2026-09-06 (I-83): the review exit is a closed enum, and 'waived' / any exit_reason must cite a waiver event
+expect "review.done=waived without a waiver_ref refused (I-83)" 1 py "$SS" set review.done=waived
+expect "review.done=true beside a free-text exit_reason refused (I-83)" 1 py "$SS" set review.exit_reason="waived by a judge, not passed"
+expect "review.waiver_ref must resolve to a trace event (I-83)" 1 py "$SS" set review.done=waived review.waiver_ref=ev-9999
+expect "review.done outside the closed enum refused (I-83)" 1 py "$SS" set review.done=maybe
+expect "waived review exit citing its waiver event accepted (I-83)" 0 bash -c "WID=\$(python3 '$SS' waive --signal review_non_convergence --reason 'APPROVED unobtainable: the author cannot approve their own PR' --by human | python3 -c 'import json,sys; print(json.load(sys.stdin)[\"event\"])') && python3 '$SS' set review.done=waived review.waiver_ref=\$WID review.exit_reason='structural non-convergence' >/dev/null && python3 -c \"
+import json
+r=json.load(open('.sdlc/demo/state.json'))['review']
+assert r['done']=='waived' and r['waiver_ref'].startswith('ev-'), r\""
+expect "prereqs: a waived review exit still opens g3, an open one does not (I-83)" 0 python3 -c "
+import importlib.util; spec=importlib.util.spec_from_file_location('ss','$SS'); ss=importlib.util.module_from_spec(spec); spec.loader.exec_module(ss)
+assert ss.prereqs({'stage':'review','review':{'done':'waived','waiver_ref':'ev-0001'},'gates':{}},'g3')==[]
+assert ss.prereqs({'stage':'review','review':{'done':True},'gates':{}},'g3')==[]
+assert ss.prereqs({'stage':'review','review':{},'gates':{}},'g3'), 'an open review must not open g3'"
 expect "state.json never hand-edited: json valid" 0 python3 -c "import json;json.load(open('.sdlc/demo/state.json'))"
 popd >/dev/null
 

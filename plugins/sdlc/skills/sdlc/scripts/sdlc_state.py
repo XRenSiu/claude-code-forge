@@ -20,11 +20,16 @@ Usage:
   sdlc_state.py card    [--slug S] CARD-xx --status todo|doing|done|blocked [--commit SHA] [--ac AC-id ...]
   sdlc_state.py fail    [--slug S] --signal SIG [--card CARD-xx] [--fingerprint FP | --evidence TEXT]
                         [--score X] [--by REPORTER] [--routing PATH]   # -> route decision JSON + counters + ledger
+  sdlc_state.py waive   [--slug S] --signal SIG --reason R --by WHO
+                        [--signer-kind human|delegated_agent] [--authorization TEXT]
+                        [--fingerprint FP] [--card CARD-xx] [--layer L] [--stage S] [--scope TEXT] [--ref type:target ...]
+                        # a waiver WITHOUT a transition; prints the event id to cite as a waiver_ref
   sdlc_state.py report  [--slug S] --path FAILURE_REPORT.md            # clears pending.failure_report
   sdlc_state.py check-clean [--slug S] [--as-hook]                     # exit 0 clean / 1 dirty; --as-hook prints Stop-hook JSON
   sdlc_state.py graph   check|next|render [--graph PATH] [--full]      # execution graph as data (assets/graph.yaml)
   sdlc_state.py loops   [--slug S] [--loops PATH] [--pr-watch DIR] [--ratchet-dir DIR]   # budget consumption per loop
-  sdlc_state.py ledger  [--slug S] --kind K --note TEXT [--signal S] [--layer L] [--decision D] [--by B] [--ref type:target ...]
+  sdlc_state.py ledger  [--slug S] --kind K --note TEXT [--signal S] [--layer L] [--decision D] [--by B]
+                        [--fingerprint FP] [--card CARD-xx] [--ref type:target ...]
   sdlc_state.py archive [--slug S] --to DIR               # copy state + ledger + trace + listed artifacts
 
 Exit codes: 0 ok · 1 rejected (transition invalid / prerequisite unmet / bad key / dirty) · 2 usage/IO error.
@@ -39,6 +44,8 @@ Mechanical guarantees (the non-waivable half):
     repeat (same fp N×), oscillation (period-2/3 cycle), plateau (--score stale N rounds) and refuses
     impossible_under_contract from anyone not in routing.impossible_reporters; escalation sets
     pending.failure_report which check-clean / the Stop-hook template refuse to end a session on
+  - a waiver is a first-class record: `waive` writes one without a transition and prints its event id, and
+    `review.done` is a closed enum whose "waived" (or any exit_reason) must cite that id as review.waiver_ref
   - `graph check` asserts ORDER == assets/graph.yaml stages (data and code watch each other)
 Semantic half (a judge / a human, never this script): whether the candidate layer is the RIGHT layer.
 """
@@ -66,7 +73,7 @@ SETTABLE = {
     "cards.dir", "cards.lint_passed",
     "acceptance.evaluation_result", "acceptance.meets_done_when", "acceptance.skipped_reason",
     "pr.number", "pr.url", "pr.size_class", "pr.pre_review_rounds",
-    "review.done", "review.exit_reason", "review.rounds",
+    "review.done", "review.exit_reason", "review.rounds", "review.waiver_ref",
     "merge.sha", "merge.merged_at",
     "gates.g3.required",
     "world.psl", "world.derived_dir", "world.dos", "world.invariants", "world.form_draft_sha256",
@@ -74,6 +81,9 @@ SETTABLE = {
     "release.version", "release.tag", "release.notes", "release.done", "release.skipped_reason",
 }
 LOCK_STAGES = ("g2", "l5")
+# how the review ring exited, as a closed enum instead of a boolean with the qualification in free text
+# (dogfood 2026-09-06, I-83). Legacy `true` reads as "done"; "waived" and any exit_reason need a waiver_ref.
+REVIEW_EXITS = ("done", "waived")
 LAYER_COUNTERS = ["card", "plan", "task", "ontology", "world"]
 BUDGET_KEY = {"card": "card_retries", "plan": "plan_reflows", "task": "task_reflows",
               "ontology": "ontology_reflows", "world": "world_reflows"}
@@ -193,6 +203,23 @@ def ledger_append(root, slug, kind, note="", stage=None, signal="", layer="", fi
     return trace_append(root, slug, ev)
 
 
+def trace_event_ids(root, slug):
+    """Every event id already written to trace.jsonl — the resolvable target set for a waiver_ref."""
+    tp = trace_path(root, slug)
+    ids = set()
+    if os.path.isfile(tp):
+        with open(tp, encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    ids.add(json.loads(line).get("id"))
+                except Exception:
+                    continue
+    return ids
+
+
 def parse_refs(items):
     out = []
     for it in items or []:
@@ -220,6 +247,39 @@ def set_path(st, dotted, value):
     for k in parts[:-1]:
         cur = cur.setdefault(k, {})
     cur[parts[-1]] = value
+
+
+def review_exit(st):
+    """How the review ring exited: "done" | "waived" | None (still open). Legacy `true` == "done"."""
+    v = get_path(st, "review.done")
+    if v is True:
+        return "done"
+    return v if v in REVIEW_EXITS else None
+
+
+def check_review(st, root, slug):
+    """The exit kind is the state, not a sentence beside it (I-83).
+
+    `review.done` is a closed enum (legacy boolean true still reads as "done"). A "waived" exit — or any
+    `exit_reason` prose qualifying a "done" one — must cite `review.waiver_ref`, a ledger event id that
+    resolves in trace.jsonl. That is the difference between "this was waived" being machine-readable and
+    it hiding in a free-text field no script reads.
+    """
+    v = get_path(st, "review.done")
+    if v is not None and v is not True and v is not False and v not in REVIEW_EXITS:
+        die(f"review.done must be true|false|{'|'.join(REVIEW_EXITS)} (closed enum), got {v!r}", 1)
+    kind = review_exit(st)
+    if kind is None:
+        return
+    reason, ref = get_path(st, "review.exit_reason"), get_path(st, "review.waiver_ref")
+    if (kind == "waived" or reason) and not ref:
+        why = "a waived exit" if kind == "waived" else "an exit_reason qualifying a done exit"
+        die(f"{why} requires review.waiver_ref=<ledger event id>: record the waiver first "
+            "(`waive --signal review --reason … --by …` prints the id). A qualification no script reads is "
+            "not an exit condition (I-83)", 1)
+    if ref and ref not in trace_event_ids(root, slug):
+        die(f"review.waiver_ref {ref!r} does not resolve to an event in trace.jsonl "
+            "(`waive` / `ledger` print the id they wrote)", 1)
 
 
 def coerce(v):
@@ -275,12 +335,12 @@ def prereqs(st, target):
     elif target == "review":
         need(get_path(st, "pr.number"), "pr.number set")
     elif target == "g3":
-        need(get_path(st, "review.done") is True, "review.done true")
+        need(review_exit(st), "review.done recorded (true | done | waived; a waived exit needs review.waiver_ref)")
     elif target == "merge":
         if get_path(st, "gates.g3.required", True):
             need(get_path(st, "gates.g3.verdict") in ("pass", "waived"), "G3 verdict pass — run `gate g3`")
         else:
-            need(get_path(st, "review.done") is True, "review.done true")
+            need(review_exit(st), "review.done recorded (true | done | waived; a waived exit needs review.waiver_ref)")
     elif target == "release":
         need(get_path(st, "merge.sha"), "merge.sha set")
     elif target == "archive":
@@ -347,6 +407,8 @@ def cmd_set(a):
         if k in ("contract.done_when", "lock.path", "acceptance.evaluation_result", "world.derived_dir", "world.dos"):
             refs.append({"type": "references", "target": v})
         changed.append(k)
+    if any(k.startswith("review.") for k in changed):
+        check_review(st, a.root, a.slug)   # validated before the merge: a rejected proposal never lands
     save(a.root, a.slug, st)
     ledger_append(a.root, a.slug, "set", ", ".join(a.pairs), stage=st["stage"], refs=refs)
     print(json.dumps({"ok": True, "changed": changed}, ensure_ascii=False))
@@ -772,11 +834,47 @@ def cmd_loops(a):
         print(f"| {r['loop']} | {r['level']} | {r['timescale']} | {r['generator']} → {r['verifier']} | {r['used']}/{r['budget']} | {r['pct'] if r['pct'] is not None else '-'} | {r['trigger']} | {r['note']} |")
 
 
+def cmd_waive(a):
+    """A waiver without a transition to hang it on (dogfood 2026-09-06, I-67).
+
+    `advance --force` couples the waiver to a stage skip, so the commonest case — a budget is spent, a
+    signal is accepted as a ratchet item, the stage does not move — had no way to be recorded. dos.yaml and
+    the G1 rules both cite "a waiver record in state.json"; this is the command that writes one, and it
+    prints the event id so `review.waiver_ref` / audit.yaml `verdict: waived` can point at it.
+    """
+    st = load(a.root, a.slug)
+    if a.signer_kind == "delegated_agent" and not a.authorization:
+        die("--signer-kind delegated_agent requires --authorization <who/when/what allowed the delegation>", 1)
+    stage = a.stage or st["stage"]
+    rec = {"stage": stage, "signal": a.signal, "reason": a.reason, "at": now(),
+           "signer": a.by, "signer_kind": a.signer_kind}
+    for k, v in (("layer", a.layer), ("card", a.card), ("fingerprint", a.fingerprint),
+                 ("authorization", a.authorization), ("scope", a.scope)):
+        if v:
+            rec[k] = v
+    st.setdefault("waivers", []).append(rec)
+    save(a.root, a.slug, st)
+    signer_ref = f"human:{a.by}" if a.signer_kind == "human" else f"agent:{a.by}"
+    refs = [{"type": "decided_by", "target": signer_ref}] + parse_refs(a.ref)
+    if a.card:
+        refs.append({"type": "references", "target": a.card})
+    extra = {"signer_kind": a.signer_kind}
+    for k, v in (("card", a.card), ("authorization", a.authorization), ("scope", a.scope)):
+        if v:
+            extra[k] = v
+    wid = ledger_append(a.root, a.slug, "waiver", a.reason, stage=stage, signal=a.signal, layer=a.layer or "",
+                        fingerprint=a.fingerprint or "", decision="waived", by=a.by, refs=refs, extra=extra)
+    print(json.dumps({"ok": True, "event": wid, "signal": a.signal, "stage": stage,
+                      "waivers": len(st["waivers"])}, ensure_ascii=False))
+
+
 def cmd_ledger(a):
     st = load(a.root, a.slug)
-    ledger_append(a.root, a.slug, a.kind, a.note, stage=st["stage"], signal=a.signal or "", layer=a.layer or "",
-                  decision=a.decision or "", by=a.by or "engine", refs=parse_refs(a.ref))
-    print(json.dumps({"ok": True}, ensure_ascii=False))
+    extra = {"card": a.card} if a.card else None
+    eid = ledger_append(a.root, a.slug, a.kind, a.note, stage=st["stage"], signal=a.signal or "", layer=a.layer or "",
+                        fingerprint=a.fingerprint or "", decision=a.decision or "", by=a.by or "engine",
+                        refs=parse_refs(a.ref), extra=extra)
+    print(json.dumps({"ok": True, "event": eid}, ensure_ascii=False))
 
 
 def cmd_archive(a):
@@ -817,11 +915,16 @@ def main():
     s = P("card"); s.add_argument("card"); s.add_argument("--status", required=True, choices=["todo", "doing", "done", "blocked"]); s.add_argument("--commit"); s.add_argument("--ac", action="append")
     s = P("fail"); s.add_argument("--signal", required=True); s.add_argument("--card"); s.add_argument("--fingerprint"); s.add_argument("--evidence")
     s.add_argument("--score", type=float); s.add_argument("--by"); s.add_argument("--routing")
+    s = P("waive"); s.add_argument("--signal", required=True); s.add_argument("--reason", required=True); s.add_argument("--by", required=True)
+    s.add_argument("--signer-kind", choices=["human", "delegated_agent"], default="human"); s.add_argument("--authorization")
+    s.add_argument("--fingerprint"); s.add_argument("--card"); s.add_argument("--layer"); s.add_argument("--stage"); s.add_argument("--scope")
+    s.add_argument("--ref", action="append")
     s = P("report"); s.add_argument("--path", required=True); s.add_argument("--by")
     s = P("check-clean"); s.add_argument("--as-hook", action="store_true")
     s = P("graph"); s.add_argument("action", choices=["check", "next", "render"]); s.add_argument("--graph"); s.add_argument("--full", action="store_true")
     s = P("loops"); s.add_argument("--loops"); s.add_argument("--routing"); s.add_argument("--pr-watch"); s.add_argument("--ratchet-dir"); s.add_argument("--json", action="store_true")
     s = P("ledger"); s.add_argument("--kind", required=True); s.add_argument("--note", required=True); s.add_argument("--signal"); s.add_argument("--layer"); s.add_argument("--decision"); s.add_argument("--by"); s.add_argument("--ref", action="append")
+    s.add_argument("--fingerprint"); s.add_argument("--card")
     s = P("archive"); s.add_argument("--to", required=True)
 
     a = p.parse_args()
@@ -835,8 +938,8 @@ def main():
         return cmd_loops(a)
     a.slug = resolve_slug(a.root, a.slug)
     return {"show": cmd_show, "set": cmd_set, "advance": cmd_advance, "gate": cmd_gate, "card": cmd_card,
-            "fail": cmd_fail, "report": cmd_report, "check-clean": cmd_check_clean, "graph": cmd_graph,
-            "ledger": cmd_ledger, "archive": cmd_archive}[a.cmd](a)
+            "fail": cmd_fail, "waive": cmd_waive, "report": cmd_report, "check-clean": cmd_check_clean,
+            "graph": cmd_graph, "ledger": cmd_ledger, "archive": cmd_archive}[a.cmd](a)
 
 
 if __name__ == "__main__":
