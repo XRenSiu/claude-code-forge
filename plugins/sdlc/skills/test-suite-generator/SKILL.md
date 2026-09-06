@@ -17,7 +17,7 @@ description: >-
   test suite" / "build verification battery" / "/test-suite-generator" /
   pointing at any specs/<feature>/ directory.
 argument-hint: "<path to specs/<feature>/ or path to done_when.yaml>"
-version: 1.1.0
+version: 1.2.0
 user-invocable: true
 # imported into sdlc 2026-09-05 from done-when-pipeline v1.1.0 (canonical copy in this repo; qanat holds an older copy); body kept, sdlc wiring section added
 ---
@@ -56,6 +56,8 @@ Do not narrate further — just walk the sub-steps.
     The matrix is a *sanity-check on the contract*, not an override of it. But the deviations need to be visible so Step 5/6 reviewers can decide whether to push back on Step 3 or accept the choice.
 
 14. **A check over an empty set never passes.** Under `schema: 2` the contract's `behavior:` is an empty seed and the test list lives in `tests/<feature>/tests-manifest.yaml`; `--manifest` is a first-class input to `check_verbatim_names.py` and `derive_counts.py`. Pointed at the contract alone, both exit 2 rather than printing `0/0 ✓` or `0 unit tests` — a success report over an empty set is a claim of coverage nobody verified, and it arrives in the shape of evidence. Same rule for any gate you write: if it cannot fail, it is not a gate. See §4-A for the matching `existence:` change (v2 `cli:` / `ui:` boundaries).
+
+15. **A test that cannot tell the two implementations apart is worse than no test.** It claims coverage nobody has. Two mechanical consequences: the RED baseline is captured in a clean checkout of HEAD (`scripts/capture_red_baseline.py`), never in a working tree a parallel implementer is writing into; and every regression test for a fail-open bug ships with the mutation output that proves it goes red against the old code (`smoke.sh --mutate`). See §4-E.
 
 ---
 
@@ -343,14 +345,32 @@ Per skillwise THEORY.md §3, the mechanical sub-parts ship as runnable primitive
 - `scripts/gen_existence.py` — emits the fail-fast `existence.sh` (4-A); forces `set -euo pipefail`, the no-`if` helper, and the broad export regex. Maps v1 kinds and the v2 `cli:` / `ui:` observation boundaries (`--cli` / `--ui` / `--ui-anchor`).
 - `scripts/derive_counts.py` — derives the canonical test counts from `done_when.yaml` or, under v2, `--manifest tests-manifest.yaml` (kills the headline/README count-divergence bug).
 - `scripts/check_verbatim_names.py` — asserts every contract test name appears verbatim in the generated files (iron rule 9 traceability gate); `--manifest` for v2, and an empty name set is a failure.
+- `scripts/capture_red_baseline.py` — captures the RED baseline in a `git worktree` checkout of HEAD and writes the clean-tree evidence into the file; `--verify` re-checks a recorded baseline for that evidence.
 
 ## Wiring in sdlc
 
 - **L5 test implementation, after PLAN, batch-by-card.** Run it per `cards/CARD-xx.yaml` (`ac_ids` is the batch);
   generated files go under `tests/<feature>/` which every card's `forbidden_files` already lists — implementers cannot
   edit them, `verify_commit.py --card` enforces it.
-- **Red-green evidence.** Each new test must fail on the base commit before the implementation commit; record it in
-  the commit body (`/commit` references/conventions.md). No script yet (registered blank).
+- **A v2 contract carries no test list.** `schema: 2` keeps `behavior:` as an empty seed; the list this skill produces
+  lives in `tests/<feature>/tests-manifest.yaml` and is locked with `tests/**`. So `--manifest` is a legal, expected
+  input to both `check_verbatim_names.py` and `derive_counts.py`, and `gen_existence.py` reads the v2 `existence:`
+  block of observation boundaries (`cli:` / `ui:` / `route:` / …), never `file:` / `function:`.
+- **Red-green evidence, captured in a clean checkout.** Each new test must fail on the base commit before the
+  implementation commit. Capture it with the primitive, never by running the suite in the working tree:
+
+  ```
+  python scripts/capture_red_baseline.py tests/<feature>/run_tests.sh \
+      --out tests/<feature>/RED_BASELINE.txt --version <this SKILL's frontmatter version>
+  python scripts/capture_red_baseline.py --verify tests/<feature>/RED_BASELINE.txt
+  ```
+
+  It runs the suite inside `git worktree add --detach <tmp> HEAD`, asserts `git status --porcelain` is empty **there**,
+  and records both that evidence and what the outer working tree had that was excluded. A baseline taken in the working
+  tree measures files no commit contains: in the ring-audit run a parallel implementer's untracked `check_audit.py`
+  turned the instrument-absent truth of `34 FAIL` into a recorded `19 ok / 15 FAIL`, and nothing in the artefact said
+  which tree it had measured (I-62). Record the baseline in the commit body (`/commit` references/conventions.md);
+  `--verify` is what makes "captured clean" checkable instead of claimed.
 - **Merges with `/spec-compile`.** spec-compile routes clauses by decidability (fitness fn / property / judge program);
   this skill derives the pyramid from `done_when.yaml`. Both write into `tests-manifest.yaml` (test → AC map, never frozen).
 - **Not load-bearing until `/calibrate`.** Mutation-config output (4-E) is the input to calibrate's mirror ①.

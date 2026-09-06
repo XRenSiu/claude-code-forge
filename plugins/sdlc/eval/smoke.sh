@@ -363,6 +363,23 @@ expect "check_verbatim_names: a name missing from the tests dir still → 1 unde
 expect "derive_counts: v2 behavior seed alone → rejected, not '0 unit tests' (I-54)" 2 py "$TSG/derive_counts.py" "$DW2"
 expect "derive_counts: --manifest gives 4 existence / 32 unit / 2 integration / 0 e2e (I-54)" 0 bash -c "python3 '$TSG/derive_counts.py' '$DW2' --manifest '$MF2' --json | python3 -c \"import json,sys; d=json.load(sys.stdin); assert d=={'existence':4,'unit_total':32,'unit_example':32,'unit_property':0,'integration_total':2,'integration_example':2,'integration_property':0,'e2e':0}, d\""
 
+# I-62: the RED baseline must measure a checkout of HEAD, not the working tree a parallel
+# implementer is writing into. Scenario: the suite is committed, the instrument is NOT.
+RB="$TMP/redbase"; mkdir -p "$RB/repo/tests"; pushd "$RB/repo" >/dev/null
+git init -q -b main .
+printf '#!/usr/bin/env bash\ntest -f instrument.py && echo "instrument PRESENT" || echo "instrument ABSENT"\nexit 1\n' > tests/run_tests.sh
+git add -A && git -c user.name=t -c user.email=t@t commit -qm "test: suite before the instrument exists"
+echo "print(1)" > instrument.py     # the parallel implementer's untracked file
+CRB="$TSG/capture_red_baseline.py"
+expect "capture_red_baseline: untracked instrument does not vote on the baseline (I-62)" 0 bash -c "python3 '$CRB' tests/run_tests.sh --out '$RB/RED_BASELINE.txt' >/dev/null && grep -q 'instrument ABSENT' '$RB/RED_BASELINE.txt' && grep -q 'git status --porcelain (clean checkout): <empty>' '$RB/RED_BASELINE.txt' && grep -q 'instrument.py' '$RB/RED_BASELINE.txt'"
+expect "capture_red_baseline: records the runner's own exit, does not propagate it (I-62)" 0 bash -c "grep -q 'runner exit: 1' '$RB/RED_BASELINE.txt'"
+expect "capture_red_baseline --verify: a baseline with the evidence passes (I-62)" 0 py "$CRB" --verify "$RB/RED_BASELINE.txt"
+grep -v 'clean_checkout:\|porcelain (clean checkout)' "$RB/RED_BASELINE.txt" > "$RB/NO_EVIDENCE.txt"
+expect "capture_red_baseline --verify: a baseline without the evidence is rejected (I-62)" 1 py "$CRB" --verify "$RB/NO_EVIDENCE.txt"
+sed 's/porcelain (clean checkout): <empty>/porcelain (clean checkout): ?? instrument.py/' "$RB/RED_BASELINE.txt" > "$RB/DIRTY_EVIDENCE.txt"
+expect "capture_red_baseline --verify: evidence that says the tree was dirty is rejected (I-62)" 1 py "$CRB" --verify "$RB/DIRTY_EVIDENCE.txt"
+popd >/dev/null
+
 # I-80: the suite must be able to prove its own expectations kill their mutants. Skipped inside a
 # --mutate child run (SMOKE_NESTED) — otherwise the self-check would recurse into itself.
 if [[ -z "${SMOKE_NESTED:-}" ]]; then
