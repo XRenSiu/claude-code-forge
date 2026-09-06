@@ -3387,10 +3387,14 @@ run_evidence:
     authorization_ref: .done_when.lock#authorization
     at: '2026-09-05T14:58:31Z'
   - gate: G3
-    verdict: pending
-    signer: null
-    signer_kind: null
-    authorization_ref: null
+    verdict: pass
+    signer: g3-judge
+    signer_kind: delegated_agent
+    authorization_ref: "plugins/sdlc/dogfood/ring-audit/g3-record.md — user instruction 2026-09-05: '需要人审核的地方，请你弄一个子agent代替我审核一下'；代签，非人签。该记录自陈：G3 的 pass 无输入前置、--authorization 无人核对，故其效力来自记录中列出的可重跑复现，不来自盖章本身"
+    at: "2026-09-06"
+    ac_005_a: pass
+    ac_006_a: pass
+    reviewed_at_head: 79b4736
 
   # 外部证据是替代品，不是用户验证（F-15）。
   external_evidence:
@@ -3456,7 +3460,7 @@ run_evidence:
       output: ''
       lines: 0
   skill_issues: plugins/sdlc/dogfood/ring-audit/skill-issues.md
-  skill_issues_count: 67          # grep -c '^| I-' plugins/sdlc/dogfood/ring-audit/skill-issues.md
+  skill_issues_count: 81          # grep -c '^| I-' plugins/sdlc/dogfood/ring-audit/skill-issues.md — 快照，取于 G3 签字时的 head；该命令随本 run 继续记缺陷而给出更大的数（G3 C-3）
 
   # 以下三块逐字复制自 calibration/known_gaps.yaml（calibrate 阶段的已接受声明）。
   # 措辞禁止无限定的 "calibrated"。

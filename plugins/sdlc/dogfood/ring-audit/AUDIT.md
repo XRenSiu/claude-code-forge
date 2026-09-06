@@ -932,7 +932,7 @@
 |---|---|---|---|---|---|---|
 | `G1` | **pass** | `g1-judge` | `delegated_agent` | **代签（delegated）** | g1-record.md#签字性质 (user instruction 2026-09-05: '需要人审核的地方，请你弄一个子agent代替我审核一下') | `2026-09-05T14:59:49Z` |
 | `G2` | **pass** | `g2-judge` | `delegated_agent` | **代签（delegated）** | .done_when.lock#authorization | `2026-09-05T14:58:31Z` |
-| `G3` | **pending** | — | — | — | — | — |
+| `G3` | **pass** | `g3-judge` | `delegated_agent` | **代签（delegated）** | plugins/sdlc/dogfood/ring-audit/g3-record.md — user instruction 2026-09-05: '需要人审核的地方，请你弄一个子agent代替我审核一下'；代签，非人签。该记录自陈：G3 的 pass 无输入前置、--authorization 无人核对，故其效力来自记录中列出的可重跑复现，不来自盖章本身 | `2026-09-06` |
 
 ### check-audit 的两次运行（F-14 校准孪生）
 
@@ -1001,7 +1001,7 @@ git diff --stat 0be2770^..HEAD -- plugins/sdlc/skills plugins/sdlc/agents plugin
 
 ### skill 源码问题
 
-路径：`plugins/sdlc/dogfood/ring-audit/skill-issues.md` — 67 条（`grep -c '^| I-'`）。
+路径：`plugins/sdlc/dogfood/ring-audit/skill-issues.md` — 81 条（`grep -c '^| I-'`）。
 
 ### 这把尺子校准到什么程度
 
@@ -1089,5 +1089,5 @@ R017 归到的两个环不是装配当时预判的 R3 / R8（上表现算的结�
 
 ### 铁律
 
-check-audit 的 exit 0 说的是**这份文档的形状齐全**，不是「九环做到位了」。42 个配件里 16 个停在 `declared`、26 个停在 `compiled`，**没有一个到 `verified`**；三道门里 2 道代签（delegated）、1 道未决；外部证据是 `substitute`。
+check-audit 的 exit 0 说的是**这份文档的形状齐全**，不是「九环做到位了」。42 个配件里 16 个停在 `declared`、26 个停在 `compiled`，**没有一个到 `verified`**；三道门里 3 道代签（delegated）；外部证据是 `substitute`。
 这份报告能不能当结论，由 G3 的人看完上面这些标记之后决定。

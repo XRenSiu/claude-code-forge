@@ -27,12 +27,12 @@ Closes #1
 bash plugins/sdlc/dogfood/ring-audit/tests/ring-audit/run_tests.sh          # existence=ok unittest=ok | Ran 34 tests | OK
 bash plugins/sdlc/dogfood/ring-audit/tests/ring-audit/mutation.sh           # baseline_exit 0, killed 24/24, kill_rate 1.0
 python3 plugins/sdlc/dogfood/ring-audit/check_audit.py plugins/sdlc/dogfood/ring-audit/audit.yaml --psl plugins/sdlc/dogfood/ring-audit/PSL-sdlc-ring-audit.md --required-parts "agent.card-implementer, agent.comment-fixer, agent.fix-verifier, agent.pr-reviewer, agent.review-triager"   # exit 0 · rings 10 · parts_total 42 · failed_predicates []
-python3 plugins/sdlc/dogfood/ring-audit/check_audit.py plugins/sdlc/dogfood/ring-audit/audit.yaml --psl plugins/sdlc/dogfood/ring-audit/PSL-sdlc-ring-audit.md --variant delete-ring:R6   # exit 1 · ring_missing (F-14 twin)
+python3 plugins/sdlc/dogfood/ring-audit/check_audit.py plugins/sdlc/dogfood/ring-audit/audit.yaml --psl plugins/sdlc/dogfood/ring-audit/PSL-sdlc-ring-audit.md --required-parts "agent.card-implementer, agent.comment-fixer, agent.fix-verifier, agent.pr-reviewer, agent.review-triager" --variant delete-ring:R6   # exit 1 · ring_missing（与 audit.yaml#check_runs[1] 逐字相同）
 bash plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh                 # ok true · every Card commit inside its whitelist · touches_audited_dirs 0
 bash plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh   # AC-007-a 的证据：card_commits_touching_audited_dirs 0（卡范围仪器；原始 git diff 见下）
 git diff --stat 0be2770^..a2deb83 -- plugins/sdlc/skills plugins/sdlc/agents plugins/sdlc/docs   # 记录时（a2deb83）为空；此后的非 Card 偏差提交会让同一命令对 HEAD 非空——见 Known issues G
 python3 plugins/sdlc/skills/calibrate/scripts/verify_calibration.py plugins/sdlc/dogfood/ring-audit/calibration_report.yaml   # meta_gate PASS · instrument mutation 0.767 · holdout 6/10 with 4 known gaps
-bash plugins/sdlc/eval/smoke.sh                                             # 193 expectations (190 + 3 cr-001 twins)
+bash plugins/sdlc/eval/smoke.sh                                             # 196 passed, 0 failed
 ```
 
 - Red-green: `tests/ring-audit/RED_BASELINE.txt` — 30/30 red at c729f76 (instrument absent), rev 2 19 ok / 15 FAIL at 57ebf2b (pre-ruling instrument present, attributed line by line); 34/34 green from 0be2770
@@ -102,7 +102,13 @@ bash plugins/sdlc/eval/smoke.sh                                             # 19
 
 - 清单：AUDIT.md golden-file 字节比对；atoms / id 含 `|` 的 fixture；signer_kind 人签 / agent 变体；含 CJK 路径与重命名移出的孪生仓库；空 main..HEAD 范围须 exit 0 + card_commits 0；小写 footer 提交须恰好出现在一遍里 — `plugins/sdlc/dogfood/ring-audit/ratchet-log/iteration-003/needs-human.md:1`
 
-**D. 交给 G3 的裁项**
+**D. G3 已裁（`g3-record.md`，代签 g3-judge，AC-005-a / AC-006-a 均 pass；10 accept / 3 reject / 8 defer）**
+
+- **mf-009 G3 裁定不利于实现**：R6/human_gate.G3、R7/agent.pr-reviewer、R8/tune 记 compiled 而其每个 Artifact 的 checked_by 皆空 → **应为 declared**，底线由 16 declared / 26 compiled 变为 **19 / 23 / 0 verified**。按纪律 defer，不在本 PR 改字节 — `plugins/sdlc/dogfood/ring-audit/change-proposal-002-scope.md:1`
+- G3 自陈其效力不来自盖章：**G3 的 pass 无输入前置**，`--authorization` 只是无人核对的自由文本，故本签字的分量全部来自记录里可被任何人重跑的复现 — `plugins/sdlc/dogfood/ring-audit/g3-record.md:1`
+- 所有 defer 项的去处：`plugins/sdlc/dogfood/ring-audit/change-proposal-002-scope.md:1`
+
+**D2. 原交给 G3 的裁项（已裁完）**
 
 - mf-009 F-06 封顶：R6/human_gate.G3、R7/agent.pr-reviewer、R8/tune 记 compiled 而其每个 Artifact 的 checked_by 皆空 — `plugins/sdlc/dogfood/ring-audit/audit.yaml:1348`
 - `g3-input.md` 第 1–20 项 + 三轮解码补充；AC-005-a / AC-006-a 待 G3，从不渲染为 passed — `plugins/sdlc/dogfood/ring-audit/g3-input.md:1`
