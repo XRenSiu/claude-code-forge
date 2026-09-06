@@ -1,0 +1,221 @@
+review:
+  target: PR#3 (fix/sdlc-issues-002)
+  head_sha: 51169acece265d3a63ebff72e92b4221e02f645f
+  reviewer: agents/pr-reviewer.md（隔离上下文，只读）
+  round: 3
+  scope: 对 round-2 五条发现的处置做独立确认，外加一次回归扫描
+  mergeable: "with_fixes"
+  a_tier_survivors: 0
+  tier_summary: { A: 0, B: 1, C: 0 }
+
+  rationale: >-
+    round-2 的五条全部独立复核为已修，逐条用我自己的复现命令跑过，不采信处置说明。
+    新开一条 B（同类残留，不阻塞）。所有变异都在 git archive 出来的独立镜像里做，
+    仓库工作树全程干净。
+
+  verification:
+    at_head: 51169acece265d3a63ebff72e92b4221e02f645f
+    working_tree: clean
+    commands:
+      - cmd: check_audit.py（主臂，--required-parts 五个 agent）
+        exit: 0
+        output: "ok true · rings 10 · parts_total 42 · errors 0"
+      - cmd: check_audit.py --variant delete-ring:R6
+        exit: 1
+        output: "ok false · ring_missing R6"
+      - cmd: python3 -m pytest plugins/sdlc/dogfood/ring-audit/tests/ring-audit/ -q
+        exit: 0
+        output: "52 passed in 11.61s"
+      - cmd: bash plugins/sdlc/eval/smoke.sh
+        exit: 0
+        output: "393 passed, 0 failed（round-2 时 391，+2 即 I-98 孪生）"
+      - cmd: check_anchors.py verify
+        exit: 0
+        output: "走到 501 个行号锚点 · 锁里比对了 501 个 · SAME 501"
+
+  # ---------------------------------------------------------------- 五条处置的独立确认
+  disposition_confirmed:
+
+    - id: F-1
+      tier_was: A
+      verdict: 确认已修
+      how_i_checked: >-
+        跑的是 round-2 里那条**原本会静默放过**的探针：镜像树给 verify_dos.py 顶部插 3 行，
+        再把该文件唯一那个全限定锚点抹掉，只留裸锚点。round-2 时这条探针给出 428 SAME / exit 0。
+      result: |
+        EXIT=1
+        走到 500 个行号锚点 · 锁里比对了 500 个
+          SAME 495 · MOVED 5
+          MOVED  verify_dos.py#L73-L96（dos-extract） — 原文整段移到 L76-L99
+          MOVED  verify_dos.py#L182-L185（dos-extract） — 原文整段移到 L185-L188
+          MOVED  verify_dos.py#L167-L189（dos-extract） — 原文整段移到 L170-L192
+      note: >-
+        三个裸锚点全部被抓到，且归属正确（归给了左边最近的 verify_dos.py）。
+        归属规则（同值块内左邻文件名、遇新映射键作废）在代码里读过，不是靠输出反推。
+        汇总行「走到 N · 锁里比对了 M」也确认存在，N≠M 时会打印差额行。
+
+    - id: F-2
+      tier_was: B
+      verdict: 确认已修
+      how_i_checked: 两条独立探针，一条造 AMBIGUOUS、一条造 UNRESOLVED，各自单独跑。
+      result: |
+        # AMBIGUOUS：把 tune.py 锁住的那行下移一行并在文件尾复制一份
+        EXIT=1   SAME 499 · AMBIGUOUS 2
+        # UNRESOLVED：在 audit.yaml 顶层插一个左边没有任何文件名的裸锚点
+        EXIT=1   SAME 501 · UNRESOLVED 1
+                 覆盖 501/502 —— 差额是未入锁的锚点，别把绿灯读成全覆盖
+      note: >-
+        两支都退非零。第一次跑 UNRESOLVED 探针时我的注入串没匹配上、根本没落进文件，
+        得到一个假的 exit 0；重做后才是上面这个结果。记下来是因为「探针没生效」和
+        「探针生效但没抓到」在输出上长得一样，这正是本轮该防的那类错。
+
+    - id: F-3
+      tier_was: B
+      verdict: 确认已修（含我自己跑的变异证明）
+      how_i_checked: >-
+        先跑取值矩阵，再把判断改回 `not r.get(k)` 做反向变异，看孪生期望是否真的变红。
+      result: |
+        # 取值矩阵（HEAD）
+        no / "no" / "no (A-tier)" / with-warnings / yes / off / false  -> 全部 0
+        整个 mergeable 字段缺失                                        -> 1
+        # 反向变异（把 r.get(k) is None or == "" 改回 not r.get(k)）
+        mergeable:no under mutant -> 1
+        FAIL  [got 1 want 0] solo selfreview accepts mergeable: no — it is a verdict, not a missing field (I-98)
+        PASS  [1] solo selfreview still refuses a review block with no mergeable at all (I-98 twin)
+      note: >-
+        孪生是承重的：装回旧实现，正向那条立刻变红，反向那条仍绿。
+        代码注释把失效机理写清楚了（YAML 1.1 把裸 no 读成 False；
+        压力朝着更宽松的判词）。这条也并列写进了 R7/agent.pr-reviewer 的判词，核过。
+
+    - id: F-4
+      tier_was: B
+      verdict: 确认已修
+      how_i_checked: 现算 len(gaps)，比对字面量与 AUDIT.md 的投影行。
+      result: |
+        gaps: {closed: 0, added: 7, total_before: 73, total_after: 80
+        len(gaps)= 80
+        | 缺口 | 73 → **80**（新增 7） |
+      note: 73 + 7 = 80 现在能算平；closed 从投影里整个去掉，不再有「判断词被排版成计数项」。
+
+    - id: F-5
+      tier_was: C
+      verdict: 确认已修（两半都验了）
+      how_i_checked: >-
+        I-94 看撤回措辞；run_evidence 的变异数字**按它自己给出的插入点逐个复跑**——
+        这才是「可复现」的检验，光看措辞不算。
+      result: |
+        I-94 | ~~审计的引用目标~~ → **登记错误，已撤回** |
+        # 复跑 run_evidence 记的插入点（graph.yaml 第 5 / 240 / 300 行）
+        insert@5   -> EXIT=1  SAME 347  MOVED 137  GONE 2  AMBIGUOUS 15
+        insert@240 -> EXIT=1  SAME 439  MOVED  59  GONE 1  AMBIGUOUS 2
+        insert@300 -> EXIT=1  SAME 458  MOVED  43  GONE 0
+      note: >-
+        MOVED 137 / 59 / 43 与 GONE 2 / 1 / 0 全部逐字对上。
+        round-2 报的就是「不带插入点的定值不可复现」，现在带了插入点，我复现成功——
+        这条从「不可核对的断言」变成了「可核对的断言」，是本轮质量最高的一处修复。
+
+  # ---------------------------------------------------------------- 本轮新开
+  findings:
+
+    - id: F-6
+      tier: B
+      file: plugins/sdlc/dogfood/ring-audit/check_anchors.py
+      line: 108
+      claim: >-
+        还有第四种引用写法没进扫描：斜杠串联的 `file#L187/#L311`。第一个成员入锁，
+        `/` 后面的第二个成员被静默丢掉，从不入锁、从不校验、也不算 UNRESOLVED。
+      mechanism: >-
+        裸锚点那一支带负向后顾 `(?<![\w./-])#L`，把紧跟在 `/` 后面的 `#L311` 排除掉；
+        它前面又不是文件名 token，所以全限定那一支也不匹配。两支都不收，于是它连
+        UNRESOLVED 都不算——正是 F-1 修好的那个失效模式在另一种写法上的复现。
+        连带一处：新加的「走到 N · 锁里比对了 M」量的是**走到 vs 入锁**，
+        量不到**文件里有 vs 走到**。这一类漏扫因此对汇总行也是隐形的：
+        它既不进 N 也不进 M，两个数仍然相等，绿灯照亮。
+      reproduction: |
+        # 1) 找出这种写法，并查第二个成员在不在锁里
+        grep -oE '[A-Za-z0-9_.-]+\.(py|md|yaml|sh)#L[0-9]+(-L?[0-9]+)?/#L[0-9]+(-L?[0-9]+)?' \
+          plugins/sdlc/dogfood/ring-audit/audit.yaml | sort | uniq -c
+        python3 -c "
+        import json;L=json.load(open('plugins/sdlc/dogfood/ring-audit/anchors.lock'))['entries']
+        for k in ['plugins/sdlc/skills/acceptance-fleet/SKILL.md#L187',
+                  'plugins/sdlc/skills/acceptance-fleet/SKILL.md#L311',
+                  'plugins/sdlc/skills/sdlc/scripts/sdlc_state.py#L980',
+                  'plugins/sdlc/skills/sdlc/scripts/sdlc_state.py#L988']:
+            print(('IN LOCK ' if k in L else 'MISSING '), k)"
+
+        # 2) 端到端：在 L187 之后、L311 之前插 3 行，让第二个成员漂走
+        python3 - <<'PY'
+        p='plugins/sdlc/skills/acceptance-fleet/SKILL.md'
+        L=open(p,encoding='utf-8').read().splitlines(keepends=True)
+        L[200:200]=["\n","<!-- MUTANT -->\n","\n"]
+        open(p,'w',encoding='utf-8').writelines(L)
+        PY
+        python3 plugins/sdlc/dogfood/ring-audit/check_anchors.py verify
+      evidence: |
+        # 1) 四处这种写法，两个唯一键不在锁里：
+        1 next_iteration.py#L101/#L214-L216
+        1 sdlc_state.py#L980/#L988
+        2 SKILL.md#L187/#L311
+        IN LOCK   plugins/sdlc/skills/acceptance-fleet/SKILL.md#L187
+        MISSING   plugins/sdlc/skills/acceptance-fleet/SKILL.md#L311
+        IN LOCK   plugins/sdlc/skills/sdlc/scripts/sdlc_state.py#L980
+        MISSING   plugins/sdlc/skills/sdlc/scripts/sdlc_state.py#L988
+        # （next_iteration.py#L214-L216 恰好在锁里，因为它在别处还有一次全限定写法。）
+
+        # 2) 端到端：SKILL.md 的 L311 内容确实换了人——
+        #    插入前 L311 = "├── meta-judge-output.yaml               # synthesized verdict"
+        #    插入后 L311 = "│   ├── qa-measurements.yaml             # qa_facts.py projection ..."
+        #    而 audit.yaml 正是拿 #L311 佐证「acceptance-fleet 的目录契约写 meta-judge-output.yaml」。
+        #    check_anchors 的输出里没有任何一行提到 #L311：
+        EXIT=1
+        走到 501 个行号锚点 · 锁里比对了 501 个
+          SAME 500 · MOVED 1
+          MOVED  plugins/sdlc/skills/acceptance-fleet/SKILL.md#L237-L256（sdlc） — 原文整段移到 L240-L259
+        # 只抓到同文件里另一个全限定锚点；#L311 的漂移无声通过。
+
+        # 3) 账也对不平：文件里 #L 出现 506 次，dos_anchors 排除 4 次 → 应走到 502，实走 501。
+        #    run_evidence 现在写「差额是 dos_anchors 那类匹配模式」，只解释了 4，没解释这 1。
+      fix: >-
+        把裸锚点那一支的负向后顾从 `(?<![\w./-])` 收窄为 `(?<![\w.-])`，
+        即允许 `/` 之后紧跟的 `#L`；`last_file` 的继承规则原样适用，
+        `#L187/#L311` 两个成员就都归给同一个文件。加一对孪生期望
+        （串联写法两个成员都要入锁 / 第二个成员漂走必须变红），并跑一次反向变异。
+        另外把「走到 N · 锁里比对了 M」升级成三元：文件里 P · 走到 N · 入锁 M，
+        P 由一条独立于 SCAN 的粗计数（`#L\d+` 出现次数减去 NOT_A_REFERENCE 行）得出——
+        用同一个正则去量自己的覆盖率，永远量不出自己没认出的那部分。
+      why_not_a: >-
+        只有 2 个唯一键不在锁里（F-1 是 78 个），且 exit 1 的整套判定、
+        UNRESOLVED 计入非零、汇总行差额披露都已就位，同类新写法进来会被这套机制接住大半。
+        它不构成一票否决，但它和 F-1 是同一个根因的两次发作，所以值得在
+        「用同一把尺子量自己的覆盖率」这一层上一次修掉。
+
+  # ---------------------------------------------------------------- 查过但不算发现
+  not_findings:
+    - >-
+      走到 501 / 入锁 501 属实：我按代码里的 SCAN 与 NOT_A_REFERENCE 自己复算了一遍，
+      模拟走到数同为 501，与工具自报一致。
+    - >-
+      「dos_anchors 是匹配模式不是引用、应予排除」属实：render_audit.py 确实拿
+      unenforced_rules[].dos_anchors 去 gaps[].evidence[].ref 现算，
+      NOT_A_REFERENCE 命中的 4 行正是 R001 / R008 / R010 / R017 四条规则。排除是对的。
+    - >-
+      smoke 391 → 393 属实，且新增两条就是 I-98 的孪生（smoke.sh 内可见其名）。
+      正向那条在反向变异下变红，我自己跑出来的，不是转述。
+    - >-
+      「前一轮 105 处重定位漏了裸锚点、其中 7 处仍停在旧行号、修的过程中自己改错 3 处、
+      总数改成 112」——这是关于修复**过程**的陈述，我无法从仓库独立复核（那些中间状态
+      没有提交）。可复核的是**终局**：501 个锚点全部 SAME，我逐一跑过变异确认这个绿是承重的。
+      建议此类过程数字要么附可复核的锚（提交或 diff），要么就不写进证据档。
+    - >-
+      两处抬档（R6/qa-reviewer、R7/agent.pr-reviewer）本轮未重新裁决，维持 round-2 结论：
+      维持两处。F-3 的修复反而加强了 R7 那一处——它所倚的闸现在不会误拒合法的否定判词了。
+
+  # ---------------------------------------------------------------- 本轮记录本身的效力
+  self_attestation_caveat: >-
+    与 round-2 同：本轮 a_tier_survivors = 0，登记它会让 solo 谓词在 A 档这一项上放行。
+    正因如此更要说清——这条记录仍然不是合入凭证。I-95 未修，计数器任何进程都能加；
+    本审查者与作者同模型、同 session 世系，隔离的是上下文不是先验；
+    且我审的仍然包含登记我的那条路径（pr-poll.sh selfreview 本轮刚因 F-3 改过）。
+    A=0 说明的是「这一轮没找到一票否决级的问题」，不是「这份 PR 已被独立担保」。
+    合不合由人决定；若要合，建议把 F-6 与 I-95 一起写进 PR 的已知问题段，
+    而不是让它们随绿灯消失。

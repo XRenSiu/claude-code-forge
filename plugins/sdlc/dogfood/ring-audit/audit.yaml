@@ -3681,6 +3681,10 @@ proposals:
   source: R6/newly_identified/control/gate-json-not-synced-with-smoke-coverage
   destination: skill_fix_list
   text: 'acceptance-fleet 长出了两个真闸（next_iteration.py / qa_facts.py）并有 smoke 覆盖，而它的 eval/gate.json 仍写 gate_pass=static_only、scripts_run 为空对象。证据档比代码旧，读 gate.json 的人会低估它的承重。收件人：acceptance-fleet 的 eval/gate.json。'
+- id: P-RA-08
+  source: spine/unenforced_rule/control/r008-human-signer
+  destination: skill_fix_list
+  text: '`lock_done_when.py verify` 在被锁文件有改动时判 changed_with_proposal 放行，而它认的"提案"是目录下存在任何一份 change-proposal-*.md，不核对它是否针对本次改动——两份历史提案足以让今后任何一次锁内改动过闸。建议：提案里写明本次覆盖的文件清单，verify 比对改动集是否被某一份提案完全覆盖；或要求提案文件本身在同一 diff 里是新增/修改。登记为 I-100，本轮不改：改它要动 change-proposal-003 赖以生效的那条判据，同一提交里既改判据又用判据放行自己，是把裁判和运动员合一。'
 - id: P-RA-07
   source: spine/newly_identified/control/evidence-anchors-unprotected
   destination: skill_fix_list
@@ -3798,8 +3802,8 @@ run_evidence:
       unchanged: 389
       instrument: plugins/sdlc/dogfood/ring-audit/check_anchors.py
       lock: plugins/sdlc/dogfood/ring-audit/anchors.lock
-      verified: 'check_anchors.py verify → 501/501 SAME, exit 0（走到的 501 个锚点全部在锁里；文件里 #L 出现 506 次，差额是 dos_anchors 那类匹配模式，非引用，已显式排除）。变异的**不依赖插入点的表述**：往被引文件任意位置插一行 → 插入点之前的锚点仍判 SAME，之后的判 MOVED，跨越插入点的区间判 GONE，**exit 1**。要留具体数字就必须写明插在第几行：插 graph.yaml 第 5 / 240 / 300 行后，MOVED 分别 137 / 59 / 43，GONE 2 / 1 / 0。把 MOVED 写成一个不带插入点的定值就是不可复现的断言（PR #3 预审 F-1 / F-5 指出，原文曾写死 123 MOVED + 1 GONE）。'
-      coverage_history: '三种行引用写法是分三次才收齐的，每一次的「全绿」都曾读起来像全覆盖：第一版只认带路径的 #L（432 个）；7f4a897 补上冒号式（3 处）；本次补上正文里最常见的裸 #L —— 文件名在句子前半句点过、括号里只剩行号（78 处）。裸写这一类是隔离预审 F-1 抓出来的，它同时暴露出前一轮「105 处重定位」漏掉了这批：其中 7 处至今仍停在旧行号，本次一并修正，重定位总数 105 → 112。'
+      verified: 'check_anchors.py verify → 505/505 SAME, exit 0（走到的锚点全部在锁里；差额是 dos_anchors 那类匹配模式，非引用，已显式排除）。变异的**不依赖插入点的表述**：往被引文件任意位置插一行 → 插入点之前的锚点仍判 SAME，之后的判 MOVED，跨越插入点的区间判 GONE，**exit 1**。要留具体数字就必须写明插在第几行：插 graph.yaml 第 5 / 240 / 300 行后，MOVED 分别 137 / 59 / 43，GONE 2 / 1 / 0。把 MOVED 写成一个不带插入点的定值就是不可复现的断言（PR #3 预审 F-1 / F-5 指出，原文曾写死 123 MOVED + 1 GONE）。'
+      coverage_history: '四种行引用写法是分四次才收齐的，每一次的「全绿」都曾读起来像全覆盖：第一版只认带路径的 #L（432 个）；7f4a897 补上冒号式（3 处）；补上正文里最常见的裸 #L —— 文件名在句子前半句点过、括号里只剩行号（78 处）；最后补上斜杠串联写法里 `/` 后面那个成员（4 处，其中 3 处是修上一条时自己写进去的）。裸写那一类是隔离预审 round-2 F-1 抓出来的，串联那一类是 round-3 F-6，它同时暴露出前一轮「105 处重定位」漏掉了这批：其中 7 处至今仍停在旧行号，本次一并修正，重定位总数 105 → 112。'
       instrument_note: 修完不留工具，下一次插一行又全烂而且没人知道——所以把重定位的做法落成了 snapshot / verify 两个子命令。它还不在 check_audit.py 里，见 P-RA-07。
       note: 'graph.yaml 本轮插入 agent.pr-reviewer 节点（+10 行）与两条边（+2 行），插入点之后的锚点分两段位移，算术会算错，故一律按内容重定位。'
     gaps: {closed: 0, added: 7, total_before: 73, total_after: 80, note: '73 + 7 = 80，表里每个数都能从 audit.yaml 现算。六条来自四份 delta；第七条 spine/newly_identified/control/evidence-anchors-unprotected 是落 delta 的过程本身暴露的——修锚点时发现没有任何机械物防这种漂移。另有 1 条（R1/lifecycle_blank/control/dos-proposal-reconcile）被判为**机械半边已填**并挂上了 FILLS 边、从 R1.missing 移出，但它仍在 gaps[] 里，因为编排半边（进图、有上游强制它跑）未完——所以 closed 记 0，不记 1。原先写 closed:1 与 73→80 并列，读者做减法会得 79（PR #3 预审 F-4）'}

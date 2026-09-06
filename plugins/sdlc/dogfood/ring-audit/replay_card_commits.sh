@@ -115,9 +115,22 @@ for i in "${!shas[@]}"; do                       # "${!a[@]}" expands to nothing
     overflow=$((overflow + 1))
   else
     args=(python3 "$VERIFY" --range "$range" --card "$card_file")
-    [ -n "$LOCK" ] && args+=(--lock "$LOCK")
+    # 用**这条提交当时**的锁，不是工作区里的锁。拿今天的锁去回放昨天的提交，
+    # 等于每次 l5 重签都追溯性地推翻过去每一条判决：一个提交在落地时合法，
+    # 之后有人把某个文件加进冻结集，它就变成了"改了锁内文件却没带提案"。
+    # PSL-003 这件量具的读数必须只取决于被审的那次提交，不取决于此刻的锁（I-101）。
+    commit_lock=""
+    if [ -n "$LOCK" ]; then
+      lock_rel="${LOCK#$REPO_ROOT/}"
+      if git -C "$REPO_ROOT" cat-file -e "$sha:$lock_rel" 2>/dev/null; then
+        commit_lock="$(mktemp)"
+        git -C "$REPO_ROOT" show "$sha:$lock_rel" > "$commit_lock" 2>/dev/null || commit_lock=""
+      fi
+    fi
+    [ -n "$commit_lock" ] && args+=(--lock "$commit_lock")
     out="$("${args[@]}" 2>&1)"
     rc=$?
+    [ -n "$commit_lock" ] && rm -f "$commit_lock"
     if [ "$rc" -ne 0 ]; then
       rejected=$((rejected + 1))
       if printf '%s' "$out" | grep -qi 'whitelist overflow'; then overflow=$((overflow + 1)); fi

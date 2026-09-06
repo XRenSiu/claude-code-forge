@@ -209,6 +209,10 @@
       "lines": 20,
       "sha": "5813378341ae0a31"
     },
+    "plugins/sdlc/skills/acceptance-fleet/SKILL.md#L311": {
+      "lines": 1,
+      "sha": "423a9e6503c64a0b"
+    },
     "plugins/sdlc/skills/acceptance-fleet/SKILL.md#L73": {
       "lines": 1,
       "sha": "4b6497a1a882d0fd"
@@ -1038,6 +1042,10 @@
       "sha": "2d00460f55e0f5f0"
     },
     "plugins/sdlc/skills/sdlc/scripts/sdlc_state.py#L980": {
+      "lines": 1,
+      "sha": "69bcf313426e6c86"
+    },
+    "plugins/sdlc/skills/sdlc/scripts/sdlc_state.py#L988": {
       "lines": 1,
       "sha": "69bcf313426e6c86"
     },

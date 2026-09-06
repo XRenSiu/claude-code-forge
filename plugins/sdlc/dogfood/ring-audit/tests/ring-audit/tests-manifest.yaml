@@ -33,6 +33,8 @@ behavior:
       - test_AC_001_a_F05_alternatives_of_all_stamped_exit1_spurious_alternatives_of
       - test_AC_002_a_complete_dims_psl_and_evidence_counts_zero
       - test_AC_002_b_empty_psl_ids_exit1_psl_id_missing
+      - test_AC_002_b_empty_psl_file_exit2_not_silently_green
+      - test_AC_002_b_no_psl_flag_still_runs
       - test_AC_002_a_F13_unknown_psl_id_exit1_dims_with_unknown_psl_id_1
       - test_AC_002_a_F13_evidence_kind_outside_enum_exit1
       - test_AC_002_a_F13_evidence_ref_empty_exit1
@@ -160,7 +162,8 @@ test_to_ac:                             # traceability (AC → tests); F13 famil
              test_AC_001_a_F05_alternatives_of_single_producer_exit1_spurious_alternatives_of, test_AC_001_a_F05_alternatives_of_all_stamped_exit1_spurious_alternatives_of]
   AC-001-b: [test_AC_001_b_ring_removed_exit1_ring_missing, test_AC_001_b_F14_variant_delete_ring_R6_exit1]
   AC-002-a: [test_AC_002_a_complete_dims_psl_and_evidence_counts_zero, test_AC_002_a_F13_unknown_psl_id_exit1_dims_with_unknown_psl_id_1, test_AC_002_a_F13_evidence_kind_outside_enum_exit1, test_AC_002_a_F13_evidence_ref_empty_exit1]
-  AC-002-b: [test_AC_002_b_empty_psl_ids_exit1_psl_id_missing]
+  AC-002-b: [test_AC_002_b_empty_psl_ids_exit1_psl_id_missing, test_AC_002_b_empty_psl_file_exit2_not_silently_green,
+             test_AC_002_b_no_psl_flag_still_runs]
   AC-003-a: [test_AC_003_a_complete_implemented_and_rename_counts_zero, test_AC_003_a_F13_implemented_outside_enum_exit1_count1, test_AC_003_a_F13_rename_true_exit1_count1,
              test_AC_003_a_F06_implemented_above_gate_cap_exit1, test_AC_003_a_F06_nonexclusive_ungated_artifact_exit0, test_AC_003_a_F06_exclusive_artifact_unregistered_exit1]
   AC-003-b: [test_AC_003_b_boolean_implemented_exit1_boolean_implemented]

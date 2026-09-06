@@ -261,6 +261,31 @@ class TestREQ002(CheckAuditBase):
         # AC-002-b: one assessment dimension whose psl_ids is empty → exit 1, error psl_id_missing
         self.assert_fail(FIX / "mutant_psl_id_missing.yaml", "psl_id_missing")
 
+    def test_AC_002_b_empty_psl_file_exit2_not_silently_green(self):
+        # AC-002-b, the reading side (I-99, change-proposal-003).  `psl_id_unknown` was guarded by
+        # `elif psl_ids:`, so an EMPTY PSL made the closed-set check evaporate and the document passed.
+        # A wrong PSL failed loudly; an empty one went green.  Refuse the empty ruler instead.
+        import tempfile as _tf
+        with _tf.TemporaryDirectory() as td:
+            empty = Path(td) / "empty-psl.md"
+            empty.write_text("", encoding="utf-8")
+            cmd = ["python3", str(CHECK), str(COMPLETE), "--psl", str(empty)]
+            r = subprocess.run(cmd, capture_output=True, text=True, cwd=str(REPO))
+            ctx = self._ctx(r.returncode, r.stdout, r.stderr, " ".join(cmd))
+            self.assertEqual(r.returncode, 2, "an empty PSL must be refused (exit 2), not tolerated" + ctx)
+            self.assertIn("规律索引", r.stderr, "the refusal must name what is missing" + ctx)
+
+    def test_AC_002_b_no_psl_flag_still_runs(self):
+        # The twin: NOT passing --psl is "no ruler supplied" and stays legal (the closed-set check is
+        # skipped, psl_index_size null).  Only "a ruler with nothing on it" is refused.  Conflating the
+        # two is the shape of the bug this pair pins.
+        cmd = ["python3", str(CHECK), str(COMPLETE)]
+        r = subprocess.run(cmd, capture_output=True, text=True, cwd=str(REPO))
+        ctx = self._ctx(r.returncode, r.stdout, r.stderr, " ".join(cmd))
+        self.assertEqual(r.returncode, 0, "omitting --psl must stay legal" + ctx)
+        obj = parse_json(r.stdout)
+        self.assertIsNone(obj.get("psl_index_size"), "no ruler → psl_index_size null, not 0" + ctx)
+
     def test_AC_002_a_F13_unknown_psl_id_exit1_dims_with_unknown_psl_id_1(self):
         # F-13 "psl_ids 都在 PSL 规律索引内": PSL-099 is not in index 001..017 → exit 1, dims_with_unknown_psl_id 1
         obj, ctx = self.assert_fail(FIX / "mutant_psl_id_unknown.yaml", None)

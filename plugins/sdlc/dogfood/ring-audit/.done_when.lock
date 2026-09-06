@@ -1,10 +1,10 @@
 {
   "version": 1,
   "stage": "l5",
-  "signed_by": "g2-judge",
+  "signed_by": "reaudit-orchestrator",
   "signer_kind": "delegated_agent",
-  "authorization": "user instruction 2026-09-05 '需要人审核的地方，请你弄一个子agent代替我审核一下' + 2026-09-06 '需要人做的你就帮我做了当做人做的' — l5 re-sign #3 after change-proposal-002 (G1 interpretation round 2, seven rulings); isolated test author and instrument implementer agree 52/52; gate scripts frozen alongside the contract per I-30",
-  "signed_at": "2026-09-06T07:45:14+00:00",
+  "authorization": "用户 2026-09-06：把所有没有完成的都完成，需要人做的你就帮我做了当做人做的（代签，非人签）；变更提案 change-proposal-003.md（check_audit.py + replay_card_commits.sh + test_check_audit.py + tests-manifest.yaml）",
+  "signed_at": "2026-09-06T10:07:57+00:00",
   "files": [
     {
       "path": "plugins/sdlc/dogfood/ring-audit/done_when.yaml",
@@ -288,22 +288,22 @@
     },
     {
       "path": "plugins/sdlc/dogfood/ring-audit/tests/ring-audit/test_check_audit.py",
-      "sha256": "630f51bca44104c42254f76268520efae28a4b94e1daaf5050ec973aa5ec900e",
+      "sha256": "beb07516e44205027b1c063e1120372b07d4e8b9821e68295d5de315c215f593",
       "role": "contract"
     },
     {
       "path": "plugins/sdlc/dogfood/ring-audit/tests/ring-audit/tests-manifest.yaml",
-      "sha256": "65320db1ae1fafdc7d0099cff00cf811decbf7425790b8c5efe52095b01838e2",
+      "sha256": "885e335f9adeaab17ba7d29512cc5c3f86e9fba847dd35a473d81a9dcf1d212f",
       "role": "contract"
     },
     {
       "path": "plugins/sdlc/dogfood/ring-audit/check_audit.py",
-      "sha256": "6aecb9514a60d4b4b6a289ee221af2da503634fc2510778f89fca0bc5279ae8f",
+      "sha256": "acd64aad5ff4961744c76ba3cdd5fff2a1ec7b9dbea83614654197248b4204aa",
       "role": "gate"
     },
     {
       "path": "plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh",
-      "sha256": "f731da22882eba7f5483c13c94ea66f692714b4cabce75ae4fdfebec605d6cb7",
+      "sha256": "dd87baedcd712e28d2809f1ed8e7a471c61242d090d83a4f0e2bc722d7493bc8",
       "role": "gate"
     }
   ],

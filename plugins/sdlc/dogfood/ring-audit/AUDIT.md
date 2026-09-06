@@ -11,7 +11,7 @@
 | 规律来源 | `plugins/sdlc/dogfood/ring-audit/PSL-sdlc-ring-audit.md` |
 | check-audit 对本文档 | exit 0 |
 | check-audit 删环变体 | exit 1（F-14 校准孪生已记录） |
-| 规模 | 10 环 · 42 配件 · 80 缺口 · 39 处登记为缺少 · 58 条产物-生产者 · 46 条提案 |
+| 规模 | 10 环 · 42 配件 · 80 缺口 · 39 处登记为缺少 · 58 条产物-生产者 · 47 条提案 |
 
 ## 读法
 
@@ -877,7 +877,7 @@
 
 ## proposals
 
-46 条。每条都必须指向一个已识别的 Assessment 或 Gap（DP-2：补的理由不能是「这环显得单薄」）——`proposal_without_source` 就是这条的闸。
+47 条。每条都必须指向一个已识别的 Assessment 或 Gap（DP-2：补的理由不能是「这环显得单薄」）——`proposal_without_source` 就是这条的闸。
 按 destination 分组：
 
 ### new_issue（29）
@@ -914,7 +914,7 @@
 | `P-RA-04` | `R6/newly_identified/knowledge+control/ratchet-log-filenames-diverge-from-graph` | ratchet-log 的文件名两处不一致，已被三轮真实 run 坐实：落地的是 fleet-outputs/{code-reviewer-security,qa-reviewer,pm-reviewer,…}.yaml 与 meta-judge-output.yaml，而 graph.yaml 写的是 ratchet-log/iteration-NNN/{code-review-*,qa-review,…}.yaml 与 final-verdict.yaml——目录层级、文件基名都不同。任何按 graph.yaml 找文件的下游都会扑空。定一个名并全线改齐（与 P-R6-05 是同一件事的两半）。 |
 | `P-RA-06` | `R7/newly_identified/judgment/solo-a-tier-count-not-from-the-contract` | 单人仓库替代谓词把「该轮 A 档存活 = 0」当作 APPROVED 的替代必要条件，但 A 档的数怎么来没有契约：脚本取 findings 文件里显式的 a_tier_survivors，没有就数 tier: A / severity: P0 的条目——两种数法可能给出不同的数，而写 findings 的是被审方自己的预审 agent。建议把 A 档判据写进 done_when 或 agents/pr-reviewer.md 的输出契约，让这个数有来源。 |
 
-### skill_fix_list（17）
+### skill_fix_list（18）
 
 | id | source | 提案 |
 |---|---|---|
@@ -934,6 +934,7 @@
 | `P-RA-01` | `R2/newly_identified/control/gaming-band-unvalidated-at-r2` | done_when.yaml 新增的 gaming_risk_threshold（done_below / block_at_or_above）在 R2 无人校验：acceptance-spec 的 validate_done_when.py 与 donewhen-extract 的 validate_done_when_v2.py 都不认识这个字段，唯一校验它的是 R6 的 next_iteration.py。后果是一份倒挂的阈值（done_below=7 / block_at_or_above=3）在 R2 判 clean、被 G2 冻进锁，直到 R6 第一次 ratchet 才炸——那时改契约的代价从"写契约时改一行"变成"解冻一份已签字的契约"。建议把这条校验前移到 v2 校验器。收件人：donewhen-extract 的 eval/gate.json fix_list。 |
 | `P-RA-03` | `R6/newly_identified/control/drift-consumer-flag-not-updated` | spec-drift-detector 的输入契约被单边改了而它自己不知道：acceptance-fleet 现在按 skill-dispatch-matrix.md 传 --qa-measurements 并明令禁止 --qa-report，而 spec-drift-detector/SKILL.md 的参数表仍只定义 --qa-report、铁律 8 仍指导用它。调度方与被调度方对同一个 flag 说两件事。建议改齐 SKILL.md，或让调度矩阵与参数表同源。收件人：spec-drift-detector 的 eval/gate.json fix_list。 |
 | `P-RA-05` | `R6/newly_identified/control/gate-json-not-synced-with-smoke-coverage` | acceptance-fleet 长出了两个真闸（next_iteration.py / qa_facts.py）并有 smoke 覆盖，而它的 eval/gate.json 仍写 gate_pass=static_only、scripts_run 为空对象。证据档比代码旧，读 gate.json 的人会低估它的承重。收件人：acceptance-fleet 的 eval/gate.json。 |
+| `P-RA-08` | `spine/unenforced_rule/control/r008-human-signer` | `lock_done_when.py verify` 在被锁文件有改动时判 changed_with_proposal 放行，而它认的"提案"是目录下存在任何一份 change-proposal-*.md，不核对它是否针对本次改动——两份历史提案足以让今后任何一次锁内改动过闸。建议：提案里写明本次覆盖的文件清单，verify 比对改动集是否被某一份提案完全覆盖；或要求提案文件本身在同一 diff 里是新增/修改。登记为 I-100，本轮不改：改它要动 change-proposal-003 赖以生效的那条判据，同一提交里既改判据又用判据放行自己，是把裁判和运动员合一。 |
 | `P-RA-07` | `spine/newly_identified/control/evidence-anchors-unprotected` | 把 check_anchors.py 的 verify 并进 check_audit.py，让"锚点还指着同一段字"和 orphan_gap / gate_cap 一样成为报告自身的判定条件之一（新增失败谓词 anchor_drift）。要走变更提案 + l5 重签，因为 check_audit.py 是 role=gate 的冻结脚本。并进去之前，anchors.lock 的刷新要跟 audit.yaml 的改动同一个提交，否则锁自己就是过期证据。收件人：ring-audit 的 tests-manifest 与 check_audit.py 的变更提案。 |
 
 ### no_action（0）
@@ -1114,7 +1115,7 @@ CARD-06 只做装配。四个片段的正文逐字保留（同一段 YAML 在片
 | 5 | `run_evidence.calibration_wording` / `holdout` / `known_gaps` 逐字复制 | 它们是 calibrate 阶段的已接受声明 | 未改一字，含「never the unqualified word 'calibrated'」这条措辞禁令 |
 
 **其余全部为空**：没有新增、删除或改写任何 Part、Assessment、Gap、Artifact、Gate、Proposal；
-没有解决任何片段间的内容冲突（因为没有冲突：80 个 Gap、58 条产物-生产者、46 条提案的 id 两两不撞）。
+没有解决任何片段间的内容冲突（因为没有冲突：80 个 Gap、58 条产物-生产者、47 条提案的 id 两两不撞）。
 
 ### 装配核对：PSL-017 三种来源都登记了吗
 

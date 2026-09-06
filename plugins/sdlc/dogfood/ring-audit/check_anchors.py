@@ -99,6 +99,7 @@ NOT_A_REFERENCE = re.compile(r"^\s*(?:-\s+)?.*\bdos_anchors:")
 #   `path/to/file.py#L12` / `#L12-L20` / `#L12–20`   —— evidence 的 ref 惯用
 #   `path/to/file.py:12` / `:12-20`                   —— 正文散句里惯用
 #   `（#L73-L96）`  文件名在句子前半句点过，括号里只剩行号 —— 正文里最常见的一种
+#   `file.py#L980/#L988`  同一文件的两处用斜杠串联 —— `/` 后面那个也是独立锚点
 # 第三种是本工具第一版与第二版都漏掉的那 78 处（PR #3 预审 F-1）：它们连 UNRESOLVED 都不算，
 # 静默跳过，于是「432/432 全绿」读起来像全覆盖，实际只覆盖了带文件名的那部分。
 # 归属规则：裸锚点归给**同一个值块里、它左边最近一次出现的文件名**；归不出来就记 UNRESOLVED，
@@ -109,7 +110,7 @@ SCAN = re.compile(
     rf"(?P<fname>{FILE_RE})"
     rf"(?:#L(?P<qa>\d+)(?:(?P<qd>[-–])L?(?P<qb>\d+))?"
     rf"|:(?P<ca>\d+)(?:(?P<cd>[-–])(?P<cb>\d+))?(?![\d/]))?"
-    rf"|(?<![\w./-])#L(?P<ba>\d+)(?:(?P<bd>[-–])L?(?P<bb>\d+))?")
+    rf"|(?<![\w.-])(?P<slash>/)?#L(?P<ba>\d+)(?:(?P<bd>[-–])L?(?P<bb>\d+))?")
 # 新的映射键起一行时，"最近的文件名"作废——跨判词继承会把锚点归到毫不相干的文件上。
 NEW_KEY = re.compile(r"^\s*(?:-\s+)?[A-Za-z_][\w.<>+-]*:(?:\s|$)")
 PART_ID = re.compile(r"^\s*-?\s*id:\s*([A-Za-z0-9_.<>-]+)\s*$")
@@ -185,9 +186,13 @@ def walk_anchors(audit_path, skills, on_anchor):
                 else:
                     return m.group(0)     # 只是提到一个文件名，不是锚点
             else:
+                # 裸锚点，含 `file.py#L980/#L988` 里 `/` 后面那个成员——它归给同一个文件名。
+                # 第一版的前瞻里排除了 `/`，于是串联写法只有第一个成员入锁，第二个从不校验、
+                # 也不算 UNRESOLVED：同一族的第四种形态（PR #3 预审 F-6）。
                 name = last_file[0]
                 style, a, dash, b = "bare", int(m.group("ba")), m.group("bd"), m.group("bb")
             b = int(b) if b else a
+            slash = bool(m.group("slash"))
             path = resolve(name, part[0], skills) if name else None
             r = on_anchor(name, path, a, b, dash, part[0], style)
             return r if r is not None else m.group(0)
@@ -302,8 +307,10 @@ def cmd_verify(args):
                 if style == "colon":
                     return f"{name}:{na}" + (f"{dash}{nb}" if dash else "")
                 if style == "bare":
-                    # 裸锚点原样是裸的：补上文件名会改写审计的行文
-                    return f"#L{na}" + (f"{dash}L{nb}" if dash else "")
+                    # 裸锚点原样是裸的：补上文件名会改写审计的行文。
+                    # 串联成员要带回它自己的 `/`，否则两个锚点会被粘成一个。
+                    lead = "/" if slash else ""
+                    return f"{lead}#L{na}" + (f"{dash}L{nb}" if dash else "")
                 return f"{name}#L{na}" + (f"{dash}L{nb}" if dash else "")
             return None
         if not hits:

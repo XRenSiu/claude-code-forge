@@ -122,7 +122,15 @@ def load_yaml(path, what):
 
 
 def load_psl_index(path):
-    """The closed set of PSL ids the audit may cite: the `- PSL-NNN …` entries of the 规律索引 section."""
+    """The closed set of PSL ids the audit may cite: the `- PSL-NNN …` entries of the 规律索引 section.
+
+    An EMPTY index is refused, not tolerated.  `psl_id_unknown` used to be guarded by `elif psl_ids:`,
+    so a truncated or empty PSL made the whole closed-set check evaporate and the document passed —
+    a wrong PSL failed loudly (126 unknown ids) while an empty one went green.  The emptier the
+    evidence, the greener the result: exactly backwards.  verify_psl.py already rejects a PSL with no
+    PSL-NNN id (I-02); this is the same rule on the reading side (I-99, PR #3 pre-review's lesson that
+    an empty validator exits 0).
+    """
     try:
         with open(path, encoding="utf-8") as fh:
             text = fh.read()
@@ -143,6 +151,10 @@ def load_psl_index(path):
                 ids.add(m.group(1))
     if not ids:                                  # no index section: fall back to every id the PSL mentions
         ids = set(PSL_ID_RE.findall(text))
+    if not ids:
+        die(f"PSL has no `- PSL-NNN` entry under 规律索引: {path} — an empty closed set silently "
+            f"disables psl_id_unknown, so it is refused rather than tolerated (I-99)")
+
     return ids
 
 
@@ -249,7 +261,7 @@ def check_dimensions(all_parts, psl_ids, report):
             if not ids:
                 report.bump("dims_without_psl_id")
                 report.fail("psl_id_missing", where)
-            elif psl_ids:
+            elif psl_ids is not None:
                 unknown = [i for i in ids if i not in psl_ids]
                 if unknown:
                     report.bump("dims_with_unknown_psl_id")
@@ -646,7 +658,9 @@ def main(argv=None):
     if not isinstance(doc, dict):
         die(f"cannot read audit: {args.audit} is not a YAML mapping")
 
-    psl_ids = load_psl_index(args.psl) if args.psl else set()
+    # None = 没给尺子（--psl 未传，closed-set 检查照旧跳过）；空集 = 给了把坏尺子（load_psl_index 已经 die）。
+    # 这两件事必须分开：混为一谈正是 I-99 那个 fail-open 的形状。
+    psl_ids = load_psl_index(args.psl) if args.psl else None
     selected_rings = split_csv(args.rings) if args.rings else None
     required_parts = split_csv(args.required_parts) if args.required_parts else None
 
@@ -665,7 +679,7 @@ def main(argv=None):
     out.update({
         "audit": args.audit,
         "psl": args.psl,
-        "psl_index_size": len(psl_ids),
+        "psl_index_size": len(psl_ids) if psl_ids is not None else None,
         "rings_viewed": selected_rings if selected_rings is not None else CANONICAL_RINGS,
         "variant": args.variant,
         "ok": not predicates,
