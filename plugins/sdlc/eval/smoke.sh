@@ -107,6 +107,14 @@ ok = set(re.findall(r'[\x27\x22]([a-z_]+_error)[\x27\x22]',
 assert named == ok, (sorted(named), sorted(ok))
 ATTREOF
 expect "the G1 template and sdlc_state.py name the same attribution values (I-22)" 0 py "$TMP/attr_agree.py" "$S/sdlc/assets/g1_record.md" "$S/sdlc/scripts/sdlc_state.py"
+# dogfood 2026-09-06 (I-22, second half): a rejection with two honest causes records both, and the
+# world counter still moves by exactly one — counting both would stop it meaning "the world changed".
+ATTR="$TMP/attr"; mkdir -p "$ATTR"; pushd "$ATTR" >/dev/null
+py "$S/sdlc/scripts/sdlc_state.py" init --slug t --title T --track psl >/dev/null
+expect "a reject records a secondary cause beside the primary (I-22)" 0 bash -c "python3 '$S/sdlc/scripts/sdlc_state.py' gate --slug t g1 --verdict reject --by g1 --attribution rule_error --secondary-attribution derivation_error >/dev/null && python3 -c \"import json; g=json.load(open('.sdlc/t/state.json')); assert g['gates']['g1']['secondary_attribution']==['derivation_error'] and g['counters']['world']==1, g\""
+expect "a secondary equal to the primary is refused (I-22)" 1 py "$S/sdlc/scripts/sdlc_state.py" gate --slug t g1 --verdict reject --by g1 --attribution rule_error --secondary-attribution rule_error
+expect "a secondary without a primary is refused (I-22)" 1 py "$S/sdlc/scripts/sdlc_state.py" gate --slug t g2 --verdict reject --by g2 --secondary-attribution rule_error
+popd >/dev/null
 expect "an unfilled G1 template yields no terms and says the wording cannot be checked (I-45)" 0 bash -c "python3 '$S/issue/scripts/verify_issue.py' '$PSLI2' --dos '$FX/dos.yaml' --g1 '$G1T' | grep -q 'no machine-readable'"
 
 echo "== plan-cards / lint_cards.py"

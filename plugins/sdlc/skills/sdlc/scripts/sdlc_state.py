@@ -16,6 +16,7 @@ Usage:
   sdlc_state.py advance [--slug S] <stage> [--force --reason R]
   sdlc_state.py gate    [--slug S] <g1|g2|g3> --verdict pass|reject|waived --by NAME
                         [--record PATH] [--attribution derivation_error|rule_error|none]
+                        [--secondary-attribution derivation_error|rule_error]…  (recorded, never counted)
                         [--signer-kind human|delegated_agent] [--authorization TEXT]   # delegated requires authorization
   sdlc_state.py card    [--slug S] CARD-xx --status todo|doing|done|blocked [--commit SHA] [--ac AC-id ...]
   sdlc_state.py fail    [--slug S] --signal SIG [--card CARD-xx] [--fingerprint FP | --evidence TEXT]
@@ -503,6 +504,19 @@ def cmd_gate(a):
         g["attribution"] = a.attribution
     elif a.verdict == "pass":
         g.pop("attribution", None)   # a stale reject attribution must not sit beside a pass (dogfood 2026-09-05, I-51)
+    # A rejection often has more than one layer of cause — this run had one that was honestly both a
+    # rule error and a derivation error. Recording only the primary loses the second; counting both
+    # would make the world-layer number stop meaning "how many times the world changed". So secondary
+    # causes are recorded here and never reach the counter below (dogfood I-22).
+    sec = [x for x in (a.secondary_attribution or []) if x != a.attribution]
+    if len(sec) != len(a.secondary_attribution or []):
+        die("--secondary-attribution repeats the primary — a duplicate is not a second layer", 1)
+    if sec:
+        if not a.attribution or a.attribution == "none":
+            die("--secondary-attribution needs a primary --attribution: the primary is what routes and counts", 1)
+        g["secondary_attribution"] = sec
+    elif a.verdict == "pass":
+        g.pop("secondary_attribution", None)
     # only a rule_error is a world-layer error (the PSL itself was wrong); a derivation_error re-derives with the
     # same PSL and must not inflate the world counter (dogfood 2026-09-05, I-34)
     if a.gate == "g1" and a.verdict == "reject" and a.attribution == "rule_error":
@@ -961,6 +975,8 @@ def main():
     s = P("advance"); s.add_argument("stage"); s.add_argument("--force", action="store_true"); s.add_argument("--reason")
     s = P("gate"); s.add_argument("gate", choices=["g1", "g2", "g3"]); s.add_argument("--verdict", required=True, choices=["pass", "reject", "waived"])
     s.add_argument("--by", required=True); s.add_argument("--record"); s.add_argument("--attribution", choices=["derivation_error", "rule_error", "none"])
+    s.add_argument("--secondary-attribution", action="append", choices=["derivation_error", "rule_error"], default=[],
+                   help="a further cause that also holds; recorded, never counted (dogfood I-22)")
     s.add_argument("--signer-kind", choices=["human", "delegated_agent"], default="human"); s.add_argument("--authorization")
     s = P("card"); s.add_argument("card"); s.add_argument("--status", required=True, choices=["todo", "doing", "done", "blocked"]); s.add_argument("--commit"); s.add_argument("--ac", action="append")
     s = P("fail"); s.add_argument("--signal", required=True); s.add_argument("--card"); s.add_argument("--fingerprint"); s.add_argument("--evidence")

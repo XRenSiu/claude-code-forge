@@ -260,11 +260,19 @@ def main():
             # mechanical was watching, so a human read it three times. Now the negations the G1 record
             # writes down are checked against the text that quotes them (dogfood I-45).
             g1_path = a.g1 or links["g1"]
-            try:
-                g1_text = open(g1_path, encoding="utf-8").read()
-            except OSError as e:
-                flags.append(f"G1 record named in Links but unreadable ({e}) — cross-check skipped")
-                g1_text = ""
+            # Interpretations issued AFTER the signature live in their own file, because the g2 lock
+            # freezes the record and an interpretation changes no signed byte (I-60). A refusal is a
+            # refusal whichever of the two it landed in, so read both.
+            sources = [g1_path]
+            interp = os.path.join(os.path.dirname(g1_path) or ".", "g1-interpretations.md")
+            if os.path.isfile(interp):
+                sources.append(interp)
+            g1_text = ""
+            for src in sources:
+                try:
+                    g1_text += open(src, encoding="utf-8").read() + "\n"
+                except OSError as e:
+                    flags.append(f"G1 record {src} named but unreadable ({e}) — cross-check incomplete")
             # The negation list must be MECHANICAL. This run's G1 wrote its refusals in prose
             # ("AC-004-b used the rejected word …") and a human had to catch the drift three times.
             # A checker cannot parse prose reliably, so the g1_record template carries a dedicated
@@ -281,13 +289,13 @@ def main():
                         if len(t) >= 2:
                             banned.append(t)
             if not banned:
-                flags.append(f"G1 record {g1_path} has no machine-readable 「明确不做」 section — the "
+                flags.append(f"G1 record{'s' if len(sources) > 1 else ''} {', '.join(sources)} has no machine-readable 「明确不做」 section — the "
                              "issue's wording cannot be checked against what the signed form refused")
             watched = "\n".join(secs.get(k, "") for k in ("assumptions", "acceptance", "intent", "scope"))
             for term in dict.fromkeys(banned):
                 if term and term in watched:
                     flags.append(f"issue text uses `{term}`, which the G1 record lists under 明确不做 "
-                                 f"({g1_path}) — restate it in the signed form's own words or reopen G1")
+                                 f"({' + '.join(sources)}) — restate it in the signed form's own words or reopen G1")
     flags.append("needs_semantic_review: are these ACs the narrowest falsifiable conditions for THIS run? does the unhappy twin cover the right edge?")
 
     out = {"verdict": "REJECT" if rejects else "PASS", "track": track, "force_track": force_track,
