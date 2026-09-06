@@ -49,6 +49,10 @@
 | `verify_commit.py` 单 ref / 空 range / `A..` 三种形态 | 单 ref **exit 2**、空 range **exit 2**、`A..` 正确解析（`#L94` 用 `is not None`、`#L206` 右端缺省取 HEAD） | cr-001 / cr-004 / fix-verifier 两条 NEW_ISSUES 的修法**确在分支上** |
 | `bash plugins/sdlc/eval/smoke.sh` | **196 passed, 0 failed** | pr-body Verification 段仍写 193（见条件 C-4） |
 | `gh pr view 2` | draft · MERGEABLE · `statusCheckRollup: []` · reviewDecision 空 | 证实 Known issues G 段「checks_green 是空转」属实 |
+| `pr-poll.sh done 2` | **exit 20** · `{done:false, reviewDecision:"", unresolved_count:0, checks_green:true}` | 证实 review 豁免的机械前提（补裁一） |
+| 读 `pr-poll.sh#L278-L283` | `rollup == 0` 直接置 `checks_green=true` | 空转**追到源头**：仪器把"没配检查"与"检查全过"折成同一个 true（补裁二） |
+| 全量 grep「检查通过 / checks pass / 评审通过 / approved」 | 三份交付物**零命中** | 记录守住了「豁免 ≠ 通过」「空转的绿 ≠ 通过」 |
+| C-1 / C-3 执行后重跑 check_audit + 重渲染比对 | exit 0 · 签字类谓词全 0 · `AUDIT.md` 与重渲染**字节相同** | 条件执行结果经复核，非采信（补裁三） |
 
 ### 本判官**没有**验证什么
 
@@ -124,7 +128,7 @@ mf-009（三个 Part 记 `compiled` 而其产物 `checked_by` 皆空）我裁**�
 |---|---|---|---|
 | 1 | G1 签字人 / signer_kind / 授权引用 | ✅ | `g1-judge` · `delegated_agent` · `g1-record.md#签字性质`（含授权原文） |
 | 2 | G2 同上 | ✅ | `g2-judge` · `delegated_agent` · `.done_when.lock#authorization` |
-| 3 | G3 同上 | ✅ **有条件** | 冻结字节里 G3 = `pending`，signer / signer_kind / authorization 均为 `—`。**这是签字时点唯一可能且诚实的状态**：要求我在自己尚未裁决的字节里先看到自己的签名，是时序上不可能的自指。三元组由本记录补齐 → **条件 C-1** |
+| 3 | G3 同上 | ✅ **已落地** | 判读时冻结字节里 G3 = `pending`（这是签字时点唯一可能且诚实的状态：要求我在自己尚未裁决的字节里先看到自己的签名，是时序上不可能的自指）。条件 C-1 随后执行，**我复核了执行结果而非采信**：G3 现为 `pass` / `g3-judge` / `delegated_agent`，授权引用指向本记录，渲染为 **代签（delegated）**，`AUDIT.md` 系确定性重渲染而非手改（见补裁三） |
 | 4 | delegated_agent 不渲染为「人签」 | ✅ | 全部渲染为 **代签（delegated）**；小节导语直书「**本次三道门没有一道是人签**」；`check_audit.py` 报 `delegated_without_authorization_ref: 0`、`human_gates_without_signer: 0` |
 | 5 | check-audit 对 audit.yaml 的 exit 0 记录 | ✅ | 完整命令（**含 `--psl`**）+ 观察值；**本判官重跑逐字一致** |
 | 6 | 删环变体 exit 1 记录（`--variant delete-ring:<id>`） | ✅ | 完整命令（**含 `--psl`**）+ 观察值；**本判官重跑逐字一致**，含 orphan_gaps 18 / required_parts_missing 2 这两个连带谓词与 twin_note 的解释 |
@@ -171,6 +175,81 @@ AC-006-a 判的是产品层的**如实上报**。我把自己独立发现的每�
   （坏解析器照样全绿），已重建为「暂存冻结字节 + 篡改留在 range 头」并用三个历史 bug 逐个变异证明（各杀 2 / 1 / 3 条）。
   我复现了修法确在分支上（`verify_commit.py#L94` 的 `is not None`、`#L206` 的右端缺省取 HEAD；单 ref 与空 range 均 **exit 2**）。
   一次运行肯把自己写的测试判为装饰性并重做，是本 run 证据纪律的最强正例。
+
+### 补裁一：review 环是**豁免**，不是**通过**
+
+签字前补读 `.sdlc/sdlc-ring-audit/state.json#review` 与账本 122 / 123 / 125 / 126 行。这是 AC-006-a
+同一类判据（代签不得渲染为人签 · static_only 不得渲染为 verified · **豁免不得渲染为通过**），故单列。
+
+**我亲自复现**：`bash plugins/sdlc/skills/review-loop/scripts/pr-poll.sh done 2` → **exit 20**，
+输出 `{"done": false, "reviewDecision": "", "unresolved_count": 0, "checks_green": true}`。豁免的机械前提属实。
+
+| 判据 | 判 | 证据 |
+|---|---|---|
+| 状态里说的是豁免而非通过 | ✅ | `review.exit_reason` 开头即 `structural_non_convergence (I-69)`，正文写明 `Waived by g2-judge (delegated_agent)`；账本 123 行的 event 类型就是 **`waiver`**，不是 pass |
+| 豁免有范围与钉住条件 | ✅ | `scope this run and this head only`；钉在 efd45ac，且**确实按钉住条件在 79b4736 重录**（账本 125 / 126 行），重录时重跑了 pr-poll done / verify_pr --pre-review / smoke |
+| 不可获得性有理由，不是"跑不出来就算了" | ✅ | APPROVED 不可得的**结构性**原因：GitHub 禁止作者批准自己的 PR + 单协作者仓库。这是 harness 前提问题，非本 run 回避评审 |
+| 评审实质是否真的交付了 | ✅ | 两轮隔离 pr-reviewer + 一轮独立 fix-verifier，在**本 PR 自己的验证器修复里**抓出 5 个缺陷，0 条 A 档存活。我复现了修法确在分支上、smoke **196 passed / 0 failed** |
+| 合并权限没有被代签吞掉 | ✅ | `merge remains a human action after G3`；账本 123 行：`PR stays draft; marking ready-for-review and merging are the user's actions, not the delegated judge's` |
+
+**裁决：accept。** 一道拿不到的门被显式豁免、写明范围、钉住 head、并在 head 变动后重录，
+同时把"评审实质在别处交付"的证据摆出来——这是豁免该有的样子。**它没有被写成"评审通过"**。
+
+⚠️ 但记一条**形状**上的隐患：`state.json` 里 `review.done` 是 **`true`**。诚实的内容全在
+`exit_reason` 这个**自由文本**字段里，没有任何脚本会去读它。这与本记录开头指出的
+「代签授权只是自由文本」是**同一个病**：布尔字段说"完成了"，限定语躲在旁边一段没人解析的散文里。
+→ 建议进 change-proposal-002：`review.done` 拆成 `done | waived` 的封闭枚举，或强制 `waiver_ref`
+（与 KG-01「waived 无 waiver_ref」正是同一个洞）。
+
+### 补裁二：`checks_green: true` 是空转，记录守住了这个区分
+
+**我把空转追到了源头**（不止采信记录的自述）：`pr-poll.sh#L278-L283`
+
+```
+rollup="$(gh pr view "$PR" --json statusCheckRollup -q '.statusCheckRollup | length' ...)"
+checks_green=false
+if [[ "$rollup" == "0" ]]; then
+  checks_green=true          # ← 一个都没有，判定为绿
+elif gh pr checks "$PR" >/dev/null 2>&1; then
+  checks_green=true
+fi
+```
+
+**仪器把"一个检查都没配"与"检查全过"折成了同一个 `true`。** 我复现 `gh pr view 2` 的
+`statusCheckRollup` 确为 `[]`，本仓库没有任何 CI。所以这个字段在本仓库**恒为 true 且不携带任何信息**。
+
+| 判据 | 判 | 证据 |
+|---|---|---|
+| 记录有没有把它写成"检查通过" | ✅ **没有** | 我对 `AUDIT.md` / `pr-body.md` / `audit.yaml` 全量 grep「checks pass / 检查通过 / review passed / 评审通过 / approved」：**零命中**。唯一的 `approved` 命中是审计自己识别的缺口 `merged-sha-vs-approved-head`（即"没人核对批准过的 head"），本身就是自曝其短 |
+| 有没有主动标注空转 | ✅ | `state.json` 与账本两处都写 `checks_green true (VACUOUS — statusCheckRollup is empty; no CI checks are configured on this repository, which is not the same as checks passing)`；账本 123 行加了禁令 `never to be rendered as 'checks passed'`；pr-body Known issues G 中文照写「**空转**……全文任何地方都不得写成后者」 |
+
+**裁决：accept。** 这与 AC-006-a 的核心判据同构：`delegated_agent` 不得渲染为人签、`substitute`
+不得渲染为用户验证、**空转的绿不得渲染为通过**。三处这份记录都守住了。
+
+**但仪器本身是缺陷**，应记为 skill 源码问题并进 change-proposal-002：
+`pr-poll.sh` 必须区分 `no_checks_configured` 与 `checks_passed`，否则任何未配 CI 的仓库都会
+自动满足终止谓词的第三项——这正是 R017「静态过审 ≠ 有效」在 R7 的一次真实发作，
+而 `dos.yaml` 里 R017 的 `enforced_by` 恰恰就是 `user_workflow`。
+
+### 补裁三：C-1 / C-3 已被执行，我复核了执行结果
+
+签字过程中编排者按本记录的条件改了 `audit.yaml` 并重渲染。**我没有采信，逐项复核**：
+
+| 复核 | 结果 |
+|---|---|
+| 改动范围 | `audit.yaml` **仅 2 个 hunk**（G3 签字三元组 + `skill_issues_count`），无夹带 |
+| `AUDIT.md` 是否手改 | **否** — 重新渲染后与仓库中的文件**字节完全相同** |
+| `check_audit.py` 对新字节 | **exit 0**；`human_gates_without_signer: 0` · `delegated_without_authorization_ref: 0` · `gate_verdict_outside_enum: 0` · `script_gates_rendered_as_door: 0` |
+| G3 行渲染 | **代签（delegated）**，授权引用指向本记录并**自带"效力不来自盖章本身"这句限定**；无一处写成人签 |
+| 「铁律」段是否跟着更新 | 是 — 由「2 道代签、1 道未决」自动变为「**3 道代签（delegated）**」。诚实 |
+| 环表有没有被动过 | **没有**，AC-005-a 的 14 框结论完全不受影响 |
+
+**C-1 与 C-3 判为已完成。** 两条残留，均入 change-proposal-002（不阻断）：
+1. G3 的 `at` 是裸日期 `2026-09-06`，而 G1 / G2 是完整 ISO 时间戳——粒度不一致，且无谓词检查。
+2. 该 gate 条目新增了形态外的三个键（`ac_005_a` / `ac_006_a` / `reviewed_at_head`），
+   与第 14 / 19 项裁的是同一类；我同样**接受为记录辅助**，形态登记 defer。
+3. `AUDIT.md` 中 `human_gate.G3` 的 `not_reached` 文本仍写「本次 Run 的 G3 还没到（stage = implement）」——
+   前半句已过期，但其承重结论「**没有真人签过**」现在依然为真。方向是低报不是高报，故不阻断。
 
 ---
 
@@ -254,12 +333,13 @@ AC-006-a 判的是产品层的**如实上报**。我把自己独立发现的每�
 
 | id | 条件 | 为什么 |
 |---|---|---|
-| **C-1** | 把 `audit.yaml#run_evidence.gates[G3]` 更新为 `verdict: pass` · `signer: g3-judge` · `signer_kind: delegated_agent` · `authorization_ref` 指向本记录，然后**用 `render_audit.py` 重渲染** `AUDIT.md`（确定性，不得手改） | 否则报告将永远显示 G3 `pending` 却对外称 G3 已过——那才是真的不诚实。`check_audit.py` 的 `human_gates_without_signer` / `delegated_without_authorization_ref` 两条谓词可机械验收这次更新 |
-| **C-2** | 把 mf-009（三处 compiled → declared）、mf-002（`AUDIT.md:976` 的错标）、第 18 项的 adjudication 更新，一并列进 **change-proposal-002** | 都是改冻结字节的项，按纪律 defer；但必须**有去处**，不能就此消失 |
-| **C-3** | 更新 `skill_issues_count`（记 67，现 `grep -c '^| I-'` 得 **81**），或在该单元格标为"记录时快照" | 记录的是"用这条命令数出来的值"，而该命令现在给出另一个数 |
-| **C-4** | 更新 pr-body Verification 段的 smoke 计数（写 193，实测 **196 passed, 0 failed**）；该段的删环孪生命令缺 `--required-parts`（仍 exit 1，但与 `audit.yaml` 记录的命令不同字） | PR 正文是 AC-006-a 披露义务的落点，其可复现命令应当能逐字复现 |
+| **C-1** ✅ **已完成并复核** | 把 `audit.yaml#run_evidence.gates[G3]` 更新为 `verdict: pass` · `signer: g3-judge` · `signer_kind: delegated_agent` · `authorization_ref` 指向本记录，然后**用 `render_audit.py` 重渲染** `AUDIT.md`（确定性，不得手改） | 否则报告将永远显示 G3 `pending` 却对外称 G3 已过——那才是真的不诚实。**执行结果经我复核**：仅 2 hunk、无夹带；`check_audit.py` exit 0 且 `human_gates_without_signer` / `delegated_without_authorization_ref` 均为 0；`AUDIT.md` 与重渲染字节相同；G3 渲染为代签，「铁律」段自动更正为「3 道代签」 |
+| **C-2** ⏳ 未办 | 把 mf-009（三处 compiled → declared）、mf-002（`AUDIT.md:976` 的错标）、第 18 项的 adjudication、以及**补裁一/二新增的两项**（`review.done` 应拆成 `done \| waived` 封闭枚举或强制 `waiver_ref`；`pr-poll.sh` 必须区分 `no_checks_configured` 与 `checks_passed`）一并列进 **change-proposal-002** | 都是改冻结字节或改被审 skill 的项，按纪律 defer；但必须**有去处**，不能就此消失 |
+| **C-3** ✅ **已完成并复核** | 更新 `skill_issues_count`（原记 67） | 现为 **81**，并在同一行注明是"取于 G3 签字时 head 的快照、该命令会随本 run 继续记缺陷而增大"。方向正确 |
+| **C-4** ⏳ 未办 | 更新 pr-body Verification 段的 smoke 计数（写 193，实测 **196 passed, 0 failed**）；该段的删环孪生命令缺 `--required-parts`（仍 exit 1，但与 `audit.yaml` 记录的命令不同字） | PR 正文是 AC-006-a 披露义务的落点，其可复现命令应当能逐字复现 |
 
-C-1 是**硬条件**：它是本判决在字节上的落地。C-2 至 C-4 是记录卫生，不改变任何判定方向。
+C-1 是**硬条件**，已落地并经复核。C-3 同已完成。C-2 / C-4 是记录卫生与去处登记，不改变任何判定方向，
+可在 merge 前补。**四条都不构成 blocking_reasons**：C-1 / C-3 已办，C-2 / C-4 不改变任何 AC 的成立与否。
 
 ---
 
@@ -275,8 +355,18 @@ C-1 是**硬条件**：它是本判决在字节上的落地。C-2 至 C-4 是记
    若 `--authorization` 收成"指向一份人写的授权文件并检存在"，至少代签会留下不可省略的痕迹。
 5. **review 环在单人仓库里结构性不可收敛**（作者不能批准自己的 PR，`pr-poll.sh done` 的 APPROVED 项永不成立）。
    这不是本次的缺陷，是 harness 的设计前提问题——`review-loop` 需要一个单协作者模式，否则它在这类仓库里永远跑不完（I-69）。
+   本次的处理（显式豁免 + 钉 head + 评审实质在别处交付）是对的，但**豁免不能变成常态**：
+   下一个 run 若还是同样地豁免，就该改 harness 而不是再写一份豁免。
 6. **没有任何 CI。** `statusCheckRollup` 为空，我已复现。记录已诚实标注"checks_green 是空转"，
    但这意味着本仓库的所有"绿"都来自本地手跑。这是比本次任何一条 finding 都更基础的空隙。
+7. **`pr-poll.sh` 把"没配检查"判成绿**（`#L278-L283`：`rollup == 0 → checks_green=true`）。
+   在任何未配 CI 的仓库里，终止谓词的第三项**恒真且零信息**。这是 R017「静态过审 ≠ 有效」
+   在 R7 的一次真实发作，而 R017 的 `enforced_by` 恰恰是 `user_workflow`。建议改为三态
+   （`passed | failed | none_configured`），并让 `done` 拒绝 `none_configured`。
+8. **"完成"类布尔字段普遍缺封闭枚举。** `review.done: true` 的限定语（豁免、空转、不可收敛）
+   全躲在 `exit_reason` 这个没人解析的自由文本里；`--authorization` 也是自由文本；
+   KG-01 说的 `waived` 无 `waiver_ref` 是第三例。**同一个病三处发作**：
+   布尔说"过了"，真相在旁边一段散文里。建议统一收成封闭枚举 + 必填引用字段。
 
 ---
 
