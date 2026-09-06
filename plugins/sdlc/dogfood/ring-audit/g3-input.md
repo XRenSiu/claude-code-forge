@@ -53,3 +53,9 @@
 - mf-011：holdout 见证单元格把 `attested_by_kind` 原样打出（本次值 delegated_agent，渲染正确，但未走封闭映射）。
 - **隔离披露**：drift 本轮的 11 条信号是在能看到 qa 报告的情况下产出的（其 `--qa-report` 参数与 fleet 的无串扰铁律冲突，I-71）；g2-judge 裁为有界接受，未打折。
 - gaming 轨迹实为 [3.5, 4.0, 4.0]**持平**（检测器被编排者的任务文件错传基线 3.5，I-72）。
+
+## PR 预审（round 1）引发的两条 A 档修复与记录差额（2026-09-06，G3 必读）
+- **cr-001（A，已修）** `verify_commit.py` 的 I-52 落地内容豁免在 `--range` 不含 `..` 时读基线侧 → 被篡改的被锁文件 PASS（锁门 fail-open）。修：单 ref 直接 exit 2 + 二/三点式取落地侧；smoke 190 → 193。偏差提交 e198e0e（PSL L122-123）。
+- **cr-002（A，已修）** 七个 `plugins/sdlc/skills/**` 文件改了而三处 version 不动 → 装 0.6.0 的用户收不到修复。代签判官裁为 scope (a)：版本行是同一豁免的收尾（无 Assessment 依赖版本字段，无行号型证据锚）。chore 提交 0cf6b1a，六文件各一行。
+- **cr-003（B，不修，作为 Known issue + 跟进 PR）** `verify_derived.py` 的 I-04 修法剥掉 workflow.md 全文引用行，整篇引用块的工作流零命中通过；本 run 的 PASS 仍成立。
+- **记录差额（G3 裁 AC-006-a 前必看）**：`audit.yaml` / `AUDIT.md` 冻结在 iteration-003 的字节，`non_card_commits_touching_audited_dirs` = **4**；分支现况 **6**（多出 e198e0e、0cf6b1a）。六条分类见 `commit-table.md` 与 pr-body 的 Known issues G 段。**Card 提交触碰被审目录仍为 0**。AUDIT.md 未重渲染（字节稳定不变量 + 它是被评审的那份）。

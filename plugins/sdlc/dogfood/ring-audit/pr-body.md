@@ -5,7 +5,7 @@ sdlc 插件的第一次完整生命周期 dogfood：用插件自己的九环流�
 ## Scope
 
 - do: 按环组织的审计报告 AUDIT.md；同构的 audit.yaml；检查脚本 check-audit（含删环变体自校准）；每配件三维 Assessment（needed / implemented / naming，每维 ≥1 PSL-ID 与 ≥1 Evidence）；每环 missing；run_evidence（含 known_gaps 11 项与 holdout 摘要）；提案清单（每条有 source）；L5 测试套件 + 变异 + 校准报告；沿途修掉的 6 处 verifier / gate 缺陷（fix(sdlc) 提交，非 Card）
-- dont: 不重命名任何 skill / agent；不修改被审的 SKILL.md / gate.json / 脚本内容（fix(sdlc) 提交只改验证脚本的缺陷，且不在 Card 内）；不实现本次识别出的缺少配件；不给确定性配件套世界模型；不把 static_only / delegated 写成更强
+- dont: 不重命名任何 skill / agent；不修改被审的 SKILL.md / gate.json / 脚本**内容**。例外有二，均为非 Card 提交并经代签契约判官按 PSL-003 的 L122-123 豁免逐条裁定：① `fix(sdlc)` 提交只修**验证脚本自身的缺陷**（本次 4 条：587f371 / ebe270d / c729f76 / e198e0e）；② 一条 `chore` 版本 bump（0cf6b1a）把 CLAUDE.md 要求的三处 version 同步到位——六个文件各一行 version，不动任何被审散文、不移动任何行号；不实现本次识别出的缺少配件；不给确定性配件套世界模型；不把 static_only / delegated 写成更强
 
 ## Linked issue
 
@@ -31,7 +31,7 @@ python3 plugins/sdlc/dogfood/ring-audit/check_audit.py plugins/sdlc/dogfood/ring
 bash plugins/sdlc/dogfood/ring-audit/replay_card_commits.sh                 # ok true · every Card commit inside its whitelist · touches_audited_dirs 0
 git diff --stat 0be2770^..HEAD -- plugins/sdlc/skills plugins/sdlc/agents plugins/sdlc/docs   # (empty — AC-007-a)
 python3 plugins/sdlc/skills/calibrate/scripts/verify_calibration.py plugins/sdlc/dogfood/ring-audit/calibration_report.yaml   # meta_gate PASS · instrument mutation 0.767 · holdout 6/10 with 4 known gaps
-bash plugins/sdlc/eval/smoke.sh                                             # 190 expectations
+bash plugins/sdlc/eval/smoke.sh                                             # 193 expectations (190 + 3 cr-001 twins)
 ```
 
 - Red-green: `tests/ring-audit/RED_BASELINE.txt` — 30/30 red at c729f76 (instrument absent), rev 2 19 ok / 15 FAIL at 57ebf2b (pre-ruling instrument present, attributed line by line); 34/34 green from 0be2770
@@ -128,6 +128,10 @@ bash plugins/sdlc/eval/smoke.sh                                             # 19
 - 无 footer 提交的合法性（nh-003 裁决）与逐提交分类（28 条：Card 11 · 偏差 3 · 编排者文档 11 · peer 3） — `plugins/sdlc/dogfood/ring-audit/commit-table.md:1`
 - 所有评审均为 claude 厂商，编排者撰写评审提示；隔离为协议级而非 OS 级 — `plugins/sdlc/dogfood/ring-audit/ratchet-log/iteration-003/isolation.json:1`
 - 报告底线：0 verified / 26 compiled / 16 declared；三道门两道代签；G3 待定 — `plugins/sdlc/dogfood/ring-audit/AUDIT.md:1`
+- **记录与现况的差额（出 PR 前的两条偏差提交）**：`AUDIT.md` / `audit.yaml` 冻结在 iteration-003 评审过的字节，其中 `non_card_commits_touching_audited_dirs` 记的是 **4**；分支现况是 **6**——多出 e198e0e（cr-001 锁门 fail-open 修复）与 0cf6b1a（版本 bump）。六条的分类：587f371 / ebe270d / c729f76 / e198e0e = PSL L122-123 的验证器偏差提交，0cf6b1a = 版本同步（同一豁免的收尾），bf3f13e = peer 的报告提交。**Card 提交触碰被审目录仍为 0**（AC-007 成立，现场复现可得）。AUDIT.md 未重渲染——它是被评审过的那份 — `plugins/sdlc/dogfood/ring-audit/commit-table.md:1`
+- **cr-003（B 档，本 PR 相对 origin/main 引入的回归）**：`verify_derived.py` 的 I-04 修法把 workflow.md 全文的引用行都剥掉再扫，整篇用 `> ` 引起来的工作流零命中通过；本次 run 的 PASS 仍成立（其 workflow.md 有真实非引用内容）。修法与 nh-004 的测试清单一并进合并后的跟进 PR — `plugins/sdlc/skills/psl-derive/scripts/verify_derived.py:95`
+- **cr-001（A 档，出 PR 前已修）**：`verify_commit.py` 的落地内容豁免会在 `--range` 不含 `..` 时读到基线侧，被篡改的被锁文件因此 PASS；已改为拒绝单 ref 并按二/三点式取落地侧，smoke +3 — `plugins/sdlc/skills/commit/scripts/verify_commit.py:196`
+- **cr-002（A 档，出 PR 前已修）**：七个 skills 文件改了而三处 version 未动，装着 0.6.0 的用户收不到修复；已 bump 至 0.7.0（skill 各自 0.1.1 / 0.3.0）。该规则没有机械门是本次抓到的流程缺口 — `plugins/sdlc/dogfood/ring-audit/skill-issues.md:76`
 
 ## Notes
 
