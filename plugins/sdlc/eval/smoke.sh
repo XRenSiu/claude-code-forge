@@ -138,6 +138,15 @@ git rm -q --cached done_when.yaml && git -c user.name=t -c user.email=t@t commit
 expect "first add of the exact locked content passes the lock check (I-52)" 0 py "$VC" --msg "docs(contract): add frozen contract" --lock .done_when.lock
 git -c user.name=t -c user.email=t@t commit -q -m "docs(contract): add frozen contract"
 git reset -q . ; git checkout -q -- done_when.yaml; rm -f change-proposal-001.md
+# dogfood 2026-09-06 (pre-review cr-001): the landing-content exemption must read the RANGE HEAD, never the base.
+# A one-ref --range is legal for `git diff` but ambiguous here, so it is refused instead of silently comparing
+# the wrong side (which let a tampered locked file hash equal to its own pre-change blob and pass).
+echo "# smuggled" >> done_when.yaml
+git add done_when.yaml && git -c user.name=t -c user.email=t@t commit -q -m "chore(contract): smuggle"
+expect "tampered locked file in an A..B range is rejected (cr-001 twin)" 1 py "$VC" --msg "chore(contract): smuggle" --lock .done_when.lock --range HEAD~1..HEAD --allow-main
+expect "single-ref --range refused, never fail-open (cr-001)" 2 py "$VC" --msg "chore(contract): smuggle" --lock .done_when.lock --range main --allow-main
+expect "three-dot range resolves the head side (cr-001)" 1 py "$VC" --msg "chore(contract): smuggle" --lock .done_when.lock --range HEAD~1...HEAD --allow-main
+git reset -q --hard HEAD~1 >/dev/null
 popd >/dev/null
 
 echo "== pr / verify_pr.py"

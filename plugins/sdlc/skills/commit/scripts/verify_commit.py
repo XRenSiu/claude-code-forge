@@ -88,6 +88,12 @@ def main():
     ap.add_argument("--proposal-glob", default="change-proposal-*.md"); ap.add_argument("--max-added", type=int, default=800)
     ap.add_argument("--range")
     a = ap.parse_args()
+    # --range must name two endpoints: `git diff <one-ref>` is legal but means "worktree vs ref", and the
+    # landing-content hash below would then read the WRONG side, letting a tampered locked file hash equal to
+    # its own pre-change blob and drop out of `touched` (fail-open on the G2 lock; dogfood pre-review cr-001).
+    if a.range and ".." not in a.range:
+        sys.stderr.write(f"verify_commit: --range needs A..B (got {a.range!r}); a single ref would compare the wrong side of the lock\n")
+        sys.exit(2)
     rejects, flags = [], []
 
     branch = git("rev-parse", "--abbrev-ref", "HEAD", check=False).strip() or "?"
@@ -195,7 +201,7 @@ def main():
 
         def staged_sha256(path):
             # the content about to land: index blob in staged mode, the range head's blob in --range mode
-            ref = f"{a.range.split('..')[-1]}:{path}" if getattr(a, "range", None) else f":{path}"
+            ref = f"{re.split(r'[.]{2,3}', a.range)[-1]}:{path}" if getattr(a, "range", None) else f":{path}"
             r = subprocess.run(["git", "show", ref], capture_output=True)
             return hashlib.sha256(r.stdout).hexdigest() if r.returncode == 0 else None
 
