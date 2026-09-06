@@ -262,6 +262,15 @@ expect "count_terms: reproducible per-group counts + file:line evidence (I-12)" 
 expect "count_terms: a term matching nothing exits 1, not silently 0 (I-12)" 1 py "$DXS/count_terms.py" --terms "$TMP/terms.txt" --root "$S/dos-extract" --group fixtures='eval/fixtures/*.yaml'
 expect "count_terms: word boundaries keep PR out of PROPOSAL (I-12)" 0 bash -c "mkdir -p '$TMP/ct' && printf 'PROPOSAL and PROPRIETARY\n' > '$TMP/ct/a.md' && printf 'PR\n' >> '$TMP/ct/a.md' && printf 'PR\n' > '$TMP/terms2.txt' && python3 '$DXS/count_terms.py' --terms '$TMP/terms2.txt' --root '$TMP/ct' --corpus '*.md' --json | python3 -c \"import json,sys; d=json.load(sys.stdin); assert d['terms']['PR']['total']==1, d['terms']['PR']\""
 
+echo "== dos closure honours synonyms (I-15) — verify_issue.py + lint_cards.py"
+SYNI="$TMP/syn_issue.md"; sed -e 's/objects: \[Memory, Era\]/objects: [Memory, Period]/' -e 's/invariants: \[R003\]/invariants: [INV-ERA-1]/' "$S/issue/eval/fixtures/good_issue.md" > "$SYNI"
+expect "verify_issue: the team's word closes through a declared synonym (I-15)" 0 py "$S/issue/scripts/verify_issue.py" "$SYNI" --dos "$FXO/dos_with_synonyms.yaml"
+expect "verify_issue: the same word fails closure when the synonym is not declared (I-15)" 1 py "$S/issue/scripts/verify_issue.py" "$SYNI" --dos "$FXO/dos_without_synonyms.yaml"
+SYNC="$TMP/syn_cards"; cp -R "$S/plan-cards/eval/fixtures/cards_good" "$SYNC"
+sed -i.bak -e 's/objects: \[Memory, Era\]/objects: [Memory, Period]/' -e 's/invariants: \[R003\]/invariants: [INV-ERA-1]/' "$SYNC"/CARD-*.yaml && rm -f "$SYNC"/*.bak
+expect "lint_cards: a card slice written in the team's word closes through synonyms (I-15/I-49)" 0 py "$S/plan-cards/scripts/lint_cards.py" "$SYNC" --spec "$S/sdlc/eval/fixtures/spec.md" --done-when "$S/sdlc/eval/fixtures/done_when.yaml" --dos "$FXO/dos_with_synonyms.yaml"
+expect "lint_cards: the same slice fails closure without the synonyms (I-15/I-49)" 1 py "$S/plan-cards/scripts/lint_cards.py" "$SYNC" --spec "$S/sdlc/eval/fixtures/spec.md" --done-when "$S/sdlc/eval/fixtures/done_when.yaml" --dos "$FXO/dos_without_synonyms.yaml"
+
 echo "== invariant-extract / verify_card.py (imported from looper)"
 FXI="$S/invariant-extract/eval/fixtures"
 IXV="$S/invariant-extract/scripts/verify_card.py"

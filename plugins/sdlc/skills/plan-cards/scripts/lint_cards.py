@@ -29,6 +29,7 @@ import fnmatch
 import glob
 import json
 import os
+import pathlib
 import re
 import sys
 
@@ -36,6 +37,16 @@ try:
     import yaml
 except ImportError:
     sys.stderr.write("lint_cards.py needs PyYAML: pip install pyyaml\n")
+    sys.exit(2)
+
+# DOS closure means the same thing here and in verify_issue.py: one resolver, owned by
+# dos-extract (the skill that writes dos.yaml). See dos-extract/scripts/dos_closure.py.
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[2] / "dos-extract" / "scripts"))
+try:
+    import dos_closure
+except ImportError:  # pragma: no cover - layout error, not a user error
+    sys.stderr.write("lint_cards.py: cannot import dos-extract/scripts/dos_closure.py "
+                     "(expected at ../../dos-extract/scripts/ relative to this script)\n")
     sys.exit(2)
 
 SHARED_BASENAMES = {"package.json", "package-lock.json", "pnpm-lock.yaml", "yarn.lock", "Cargo.lock",
@@ -167,21 +178,26 @@ def main():
                 if not any(path_glob_match(sb, f) for f in forb):
                     flags.append(f"{cid} neither owns nor forbids shared file {sb}")
 
-    # 3. DOS closure
+    # 3. DOS closure — resolved through dos-extract's shared closure module, so a term
+    #    recorded as an object `synonyms:` / rule `aliases:` entry closes (dogfood I-15/I-49:
+    #    the cards spoke the docs' vocabulary, the DOS keyed the objects differently, and the
+    #    linter had to be pointed at a hand-picked proposal file instead).
     if a.dos:
-        dos = load_yaml(a.dos)
-        objs = set((dos.get("objects") or {}).keys()) if isinstance(dos.get("objects"), dict) else \
-            {o.get("name") for o in (dos.get("objects") or []) if isinstance(o, dict)}
-        rules = dos.get("rules") or []
-        rule_ids = {r.get("id") for r in rules if isinstance(r, dict)} | {r for r in rules if isinstance(r, str)}
+        closure = dos_closure.closure_from_dos(load_yaml(a.dos), a.dos)
         for cid, c in cards.items():
             sl = c.get("dos_slice") or {}
             for o in sl.get("objects") or []:
-                if o not in objs:
+                canon = closure.resolve_object(o)
+                if canon is None:
                     rejects.append(f"{cid} dos_slice.objects `{o}` not declared in dos.yaml (closure)")
+                elif canon != o:
+                    flags.append(f"{cid} dos_slice.objects `{o}` closes as a synonym of `{canon}`")
             for r in sl.get("invariants") or []:
-                if r not in rule_ids:
+                canon = closure.resolve_rule(r)
+                if canon is None:
                     rejects.append(f"{cid} dos_slice.invariants `{r}` not a declared rule id (closure)")
+                elif canon != r:
+                    flags.append(f"{cid} dos_slice.invariants `{r}` closes as an alias of `{canon}`")
     else:
         info.append("DOS closure unchecked (no --dos)")
 

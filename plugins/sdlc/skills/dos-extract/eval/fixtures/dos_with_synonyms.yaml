@@ -1,0 +1,13 @@
+# Closure source carrying the team's real vocabulary alongside the canonical keys
+# (I-15 / I-49). `Period` and `时代` mean `Era`; `INV-ERA-1` is R003 under the
+# imported vocabulary. dos_closure.py resolves both, so `/issue --dos` and
+# `lint_cards.py --dos` accept the words the operator actually writes.
+objects:
+  Memory: { description: "a captured moment" }
+  Era:
+    description: "a period with scenes"
+    synonyms: ["Period", "时代"]
+rules:
+  - id: R003
+    statement: "an Era has >= 1 Memory"
+    aliases: ["INV-ERA-1"]
