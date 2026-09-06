@@ -59,14 +59,20 @@ The pre-v1.0 fleet had 12 iron rules. Most of them migrated into the individual 
 
 1. **Implementation agent MUST NOT see evaluator prompts.** Single highest-leverage anti-gaming guarantee. Structurally enforce one of four isolation levels (see `references/evaluation-isolation-levels.md`); minimum acceptable is "medium" (different model sizes, no shared session). If you cannot guarantee at least medium isolation, **refuse the run** — do not proceed and pretend.
 2. **No agent-to-agent debate.** *Judging with Many Minds* (Dartmouth/Yale 2025). The 6 review skills spawn independently, give findings independently, are aggregated by `/meta-judge` which does NOT re-review. Never let two review skills see each other's outputs while still forming opinions. This is the responsibility of THIS orchestrator — `/meta-judge` enforces the hard wall on its side, but acceptance-fleet enforces the parallel-spawn no-cross-talk on its side.
-3. **Ratchet is four-state, not two.** `DONE / FIX / SPEC_DRIFT / GAMING_RISK`:
-   - `DONE` — `/meta-judge` returned PASS AND `gaming_risk_score < 3` AND no `surfaced_vector` from `spec-robustness.md` triggered.
+
+   **The one exception, and it is a projection, not a pass-through (I-71).** `/spec-drift-detector` needs qa's *measurements* to judge non-functional drift (a latency budget cannot be checked without a latency number). It never receives `qa-reviewer.yaml`. The orchestrator runs `scripts/qa_facts.py <qa-reviewer.yaml> --output <iter>/fleet-outputs/qa-measurements.yaml` and passes that file. The script is an allowlist: counts, coverages, durations, layers run, mutation totals cross; `decision`, `decision_reasons`, `findings`, `num_findings`, `maintenance_issues`, `regressions`, `caveats` and `mutation.surviving_mutants[].hint` do not, and it refuses to write a file that still carries one. A fact is not an opinion — the drift detector learns that the integration layer took 145s, never that qa called it a P0.
+
+   **How `/meta-judge` weights a drift finding that cites the qa measurements.** As ONE source, never two. qa and drift both looking at the same number is shared input, not independent corroboration, so such a finding gets no multi-source confidence boost; if the measurement is its only evidence, the single-source penalty applies as usual. The orchestrator states this in the `--context` JSON (`shared_inputs`, see S2), so `/meta-judge` receives it as data and needs no special-casing. A drift finding that quotes a qa *finding*, severity or verdict is an isolation breach: the projection makes it impossible to obtain honestly, so treat it as fabricated evidence and discard the finding.
+3. **Ratchet is four-state, not two.** `DONE / FIX / SPEC_DRIFT / GAMING_RISK`. The two gaming thresholds are configuration, not prose: `GAMING_DONE_BELOW` (default 3) and `GAMING_BLOCK_AT` (default 7) come from `done_when.yaml.gaming_risk_threshold` via `scripts/next_iteration.py` — see S0. Everything below names them instead of quoting numbers.
+   - `DONE` — `/meta-judge` returned PASS AND `gaming_risk_score < GAMING_DONE_BELOW` AND no `surfaced_vector` from `spec-robustness.md` triggered.
    - `FIX` — `/meta-judge` returned BLOCK_MERGE with clear findings; emit fix-prompt and feed back to implementation agent (a separate session — see rule 1). Increment iteration counter.
    - `SPEC_DRIFT` — PBT counterexamples consistent with REQ text recur across N iterations (default N from `spec_drift_threshold.max_fix_loops_before_escalation`, fallback 3), OR `surfaced_vector` repeatedly triggered with no fix path, OR `/spec-drift-detector` reports recurring drift signals. **Do not patch code.** Return control to `/acceptance-spec` to narrow the REQ.
-   - `GAMING_RISK` — `gaming_risk_score >= 7` from `/spec-gaming-detector`. **Do not patch code.** Trigger spec strengthening: list the gaming vectors that landed, hand back to `/acceptance-spec`.
+   - `GAMING_RISK` — `gaming_risk_score >= GAMING_BLOCK_AT` from `/spec-gaming-detector`. **Do not patch code.** Trigger spec strengthening: list the gaming vectors that landed, hand back to `/acceptance-spec`.
    - When `/meta-judge` returns NEEDS_HUMAN, the orchestrator surfaces the question and waits — does NOT auto-pick a ratchet state.
+   - The band `GAMING_DONE_BELOW <= score < GAMING_BLOCK_AT` is neither clean nor blocking, and it is NOT a gap: S3 rule F decides it. Before v1.1.0 no rule covered it, and a run that scored 3.5 and then 4.0 had to be adjudicated by hand both times.
 4. **Every iteration writes a complete ratchet-log entry.** Persistence is not optional — it is the substrate for debugging, training-data reuse, and audit (ISO 26262 / SOC 2). Empty entries on no-op iterations are still written. See `references/ratchet-log-format.md` for the directory layout.
 5. **`spec-robustness.md` is a first-class input.** Pass through to `/spec-gaming-detector` via `--spec-robustness=<path>`. If `spec-robustness.md` is missing, S2.5 didn't run; warn the user, set `/spec-gaming-detector` to maximum suspicion mode (no `--spec-robustness` arg → its iron rule 10 takes over).
+6. **No cross-iteration parameter is typed by hand.** `--baseline-score`, `--history`, `--baseline`, `--prev-review` and the two gaming thresholds all come out of `scripts/next_iteration.py <ratchet-log-dir> <N>`, which reads them from iteration N-1's own outputs. Never copy a number from the previous iteration's task file: in the sdlc-ring-audit run a template edit moved the label from iteration-001 to iteration-002 and left the number at 3.5 when the real score was 4.0, so a flat gaming trajectory read as rising and the detector had to catch its own orchestrator. A number and the path it came from must be produced by the same read. If the script exits 1, **do not dispatch** — a missing predecessor means every carried parameter would be a guess.
 
 The other rules from v0.x (cross-vendor preference, rebuttal step, schema discipline, gaming-detector-every-iteration) are now enforced *inside* the review skills. The orchestrator trusts them.
 
@@ -110,8 +116,25 @@ The skill exits at S4 in DONE / FIX / SPEC_DRIFT / GAMING_RISK states. NEEDS_HUM
    - No way to spawn fresh sessions → **refuse** with explanation
    Record in `ratchet-log/iteration-NNN/isolation.json`.
 4. Determine iteration number by scanning existing `ratchet-log/` entries. None → iteration 1. Otherwise next sequential.
-5. Read `done_when.yaml.spec_drift_threshold.max_fix_loops_before_escalation` (default 3). Store as `SPEC_DRIFT_TRIGGER`.
+5. Derive every cross-iteration parameter and every threshold in one call (iron rule 6):
+
+   ```bash
+   eval "$(scripts/next_iteration.py "$RATCHET_LOG" "$N" --done-when "$SPEC_DIR/done_when.yaml")"
+   ```
+
+   That sets `ITER_DIR`, `PREV_ITER_DIR`, `PREV_SNAPSHOT`, `PREV_GAMING_SCORE`, `PREV_QA_REPORT`, `PREV_PM_REVIEW`, `GAMING_TRAJECTORY`, `GAMING_DONE_BELOW`, `GAMING_BLOCK_AT`, `PREV_GAMING_BAND`, `SPEC_DRIFT_TRIGGER` and `BASELINE_DISCREPANCY`. Absent values come back empty, so `${VAR:+--flag="$VAR"}` drops the flag. **Exit 1 means stop** — the predecessor is missing or the configured band is empty, and dispatching would mean guessing. A non-empty `BASELINE_DISCREPANCY` is not fatal but goes into `isolation.json` and the iteration report: it says an earlier iteration was dispatched on a number that disagrees with the log.
 6. Read `spec-robustness.md` if present.
+7. Copy `dispatch-params.sh` (the script's stdout) into `ratchet-log/iteration-NNN/` so the next reader can see what this iteration was actually handed.
+
+**Thresholds are configuration.** `done_when.yaml` may carry:
+
+```yaml
+gaming_risk_threshold:
+  done_below: 3            # DONE requires gaming_risk_score strictly below this
+  block_at_or_above: 7     # GAMING_RISK at or above this
+```
+
+Both are optional and default to 3 / 7. `next_iteration.py` rejects a contract where `done_below > block_at_or_above`, because that configuration recreates exactly the hole rule F exists to close.
 
 One-line user output: "acceptance-fleet: starting iteration N with `<level>` isolation; <6 skills will be dispatched>".
 
@@ -128,10 +151,12 @@ Brief overview:
 | `/code-reviewer --focus=security --adversarial` | impl diff (HEAD~1..HEAD if available) | `code-reviewer-security.yaml` |
 | `/code-reviewer --focus=logic` | impl diff | `code-reviewer-logic.yaml` |
 | `/code-reviewer --focus=perf` (cheap layer) | impl diff | `code-reviewer-perf.yaml` |
-| `/qa-reviewer` | `tests/<feature>/`, `--thresholds=<spec_dir>/done_when.yaml`, `--baseline=<prev iteration>` | `qa-reviewer.yaml` |
-| `/pm-reviewer` | `<spec_dir>/spec.md`, `<impl-root>`, `--severity-marks=<critical REQs>` | `pm-reviewer.yaml` |
-| `/spec-drift-detector` | `<spec_dir>/spec.md`, `<impl-root>` | `spec-drift-detector.yaml` |
-| `/spec-gaming-detector` | `<spec_dir>/spec.md`, `<impl-root>`, `--spec-robustness=<spec_dir>/spec-robustness.md` (if present), `--history=<prev iteration>/impl-snapshot.tar.gz` | `spec-gaming-detector.yaml` |
+| `/qa-reviewer` | `tests/<feature>/`, `--thresholds=<spec_dir>/done_when.yaml`, `--baseline="$PREV_QA_REPORT"` | `qa-reviewer.yaml` |
+| `/pm-reviewer` | `<spec_dir>/spec.md`, `<impl-root>`, `--severity-marks=<critical REQs>`, `--prev-review="$PREV_PM_REVIEW"` | `pm-reviewer.yaml` |
+| `/spec-drift-detector` | `<spec_dir>/spec.md`, `<impl-root>`, `--qa-measurements=<iter>/fleet-outputs/qa-measurements.yaml` (the `qa_facts.py` projection — never the qa report) | `spec-drift-detector.yaml` |
+| `/spec-gaming-detector` | `<spec_dir>/spec.md`, `<impl-root>`, `--spec-robustness=<spec_dir>/spec-robustness.md` (if present), `--history="$PREV_SNAPSHOT"`, `--baseline-score="$PREV_GAMING_SCORE"` | `spec-gaming-detector.yaml` |
+
+Every `$PREV_*` above comes from S0's `next_iteration.py` call. Typing one of these values by hand is iron rule 6's failure mode.
 
 **Parallelism note.** All 7 dispatch calls (3 code-reviewer focuses + qa/pm/drift/gaming) happen in the same dispatch. Do NOT serialize "fast first, slow after" — that wastes wall clock without helping any skill see new information.
 
@@ -151,8 +176,13 @@ Invoke `/meta-judge` with:
 ```
 /meta-judge <reviews_source=ratchet-log/iteration-NNN/fleet-outputs/> \
             --rules=<spec_dir>/done_when.yaml \
-            --context='{"feature":"<feature_name>","iteration":N,"is_hotfix":false}'
+            --context='{"feature":"<feature_name>","iteration":N,"is_hotfix":false,
+                        "shared_inputs":[{"from":"qa-reviewer","to":"spec-drift-detector",
+                                          "file":"fleet-outputs/qa-measurements.yaml",
+                                          "kind":"measurements_only"}]}'
 ```
+
+`shared_inputs` is how iron rule 2's projection reaches `/meta-judge` as data: a drift finding whose evidence is that file counts as one source, not two, and a drift finding that cites qa's findings or verdict is an isolation breach rather than corroboration.
 
 `/meta-judge` writes `meta-judge-output.yaml` to `ratchet-log/iteration-NNN/`. The orchestrator reads this back for S3.
 
@@ -171,7 +201,7 @@ A. /meta-judge state_decision == NEEDS_HUMAN
    → ratchet state: NEEDS_HUMAN
    → surface the needs_human_items, wait for user input, re-run S3.
 
-B. /spec-gaming-detector gaming_risk_score >= 7
+B. /spec-gaming-detector gaming_risk_score >= GAMING_BLOCK_AT
    OR gaming_risk_trajectory shows monotonic growth ≥ 2 per iteration for 2+ iterations
    OR a surfaced_vector triggered for 2+ consecutive iterations
    → ratchet state: GAMING_RISK
@@ -187,13 +217,38 @@ D. /meta-judge state_decision == BLOCK_MERGE
    → generate fix-prompt.md from meta-judge's blocking deduplicated_findings (cap 8 per references/fix-prompt-template.md).
 
 E. /meta-judge state_decision == PASS
-   AND /spec-gaming-detector gaming_risk_score < 3
+   AND /spec-gaming-detector gaming_risk_score < GAMING_DONE_BELOW
    AND no recurring drift or gaming patterns from B/C
    → ratchet state: DONE
    → archive iteration; tell user the loop is complete.
+
+F. /meta-judge state_decision == PASS
+   AND GAMING_DONE_BELOW <= gaming_risk_score < GAMING_BLOCK_AT     (the elevated band)
+   → split on the trajectory, using PREV_GAMING_SCORE from S0 (never a hand-typed baseline):
+     F1. score strictly below PREV_GAMING_SCORE  → ratchet state: FIX
+         The loop is converging on its own. Emit the fix-prompt from meta-judge's non-blocking
+         findings that overlap the gaming detector's evidence — as ordinary findings. Never name
+         the score, the band, or an RHD pattern in the prompt (references/fix-prompt-template.md
+         rule 1: telling the implementer what is being watched teaches it to game around that).
+     F2. flat, rising, or no previous score (iteration 1)  → ratchet state: NEEDS_HUMAN
+         Surface /spec-gaming-detector's `spec_robustness_gaps:` verbatim as the question. The
+         code is clean by meta-judge's reading; what the score is describing is a SOFT CONTRACT,
+         and no amount of patching code closes a contract gap. The human either accepts the
+         residual risk on the record or sends the contract back to /acceptance-spec.
+
+G. gaming_risk_score is unavailable (detector skipped, errored, or emitted no score)
+   → ratchet state: NEEDS_HUMAN
+   → never treat a missing score as 0. An absent measurement is not a clean one.
 ```
 
+A–G are exhaustive: /meta-judge returns exactly PASS / BLOCK_MERGE / NEEDS_HUMAN, and for PASS the
+three score bands (below GAMING_DONE_BELOW, between, at or above GAMING_BLOCK_AT) plus "no score" cover
+every case. If you ever find yourself deciding a ratchet state by hand, that is a defect in this table —
+record it rather than adjudicating quietly.
+
 `SPEC_DRIFT_TRIGGER` defaults to 3 (from `done_when.yaml.spec_drift_threshold.max_fix_loops_before_escalation`).
+`GAMING_DONE_BELOW` / `GAMING_BLOCK_AT` default to 3 / 7 (from `done_when.yaml.gaming_risk_threshold`).
+All three are emitted by `scripts/next_iteration.py`; S3 reads the variables, not the contract.
 
 ---
 
@@ -202,7 +257,7 @@ E. /meta-judge state_decision == PASS
 ### DONE
 
 1. Write `ratchet-log/iteration-NNN/final-state.json` with verdict.
-2. Tell the user: "Iteration N complete. /meta-judge: PASS. gaming_risk_score = X (under threshold 3). <K> findings deduped, <M> non-blocking, 0 blocking. Acceptance fleet exits."
+2. Tell the user: "Iteration N complete. /meta-judge: PASS. gaming_risk_score = X (under GAMING_DONE_BELOW = <value>). <K> findings deduped, <M> non-blocking, 0 blocking. Acceptance fleet exits."
 3. End the skill.
 
 ### FIX
@@ -221,12 +276,12 @@ E. /meta-judge state_decision == PASS
 ### GAMING_RISK
 
 1. Write `ratchet-log/iteration-NNN/gaming-risk-report.md`. Include the gaming vectors that landed (from `/spec-gaming-detector.detected_patterns:`), the `spec_robustness_gaps:` block (concrete contract fixes), suggested `done_when.yaml.behavior.thresholds:` adjustments.
-2. Tell the user: "Iteration N → GAMING_RISK. gaming_risk_score = X (threshold 7). Patterns: <list>. Contract has structural gaps the implementer is exploiting. Re-invoke `/acceptance-spec` with this report as the brief — S2.5 will close the surfaced vectors. Do NOT continue patching code."
+2. Tell the user: "Iteration N → GAMING_RISK. gaming_risk_score = X (GAMING_BLOCK_AT = <value>). Patterns: <list>. Contract has structural gaps the implementer is exploiting. Re-invoke `/acceptance-spec` with this report as the brief — S2.5 will close the surfaced vectors. Do NOT continue patching code."
 3. End the skill.
 
 ### NEEDS_HUMAN
 
-1. Write `ratchet-log/iteration-NNN/needs-human.md` listing each question verbatim from `/meta-judge.needs_human_items:`.
+1. Write `ratchet-log/iteration-NNN/needs-human.md` listing each question verbatim from `/meta-judge.needs_human_items:`. When the state came from rule F2 or G instead of rule A, the questions are the orchestrator's own — `spec_robustness_gaps:` verbatim (F2) or "the gaming score is missing and was not assumed to be zero" (G) — and the file says which rule raised them.
 2. Tell the user: "Iteration N → NEEDS_HUMAN. /meta-judge cannot decide. Required: <list>. Answer in your next message; I'll re-run the classifier with your answer folded in."
 3. Do NOT end the skill — wait for user input, then resume at S3.
 
@@ -240,6 +295,7 @@ Write the full iteration directory per `references/ratchet-log-format.md`. At mi
 ratchet-log/iteration-NNN/
 ├── timestamp.txt
 ├── isolation.json                       # which model went to which sub-skill
+├── dispatch-params.sh                   # verbatim stdout of scripts/next_iteration.py for this iteration
 ├── input-manifest.json                  # checksums of spec / done_when / tests
 ├── impl-snapshot.tar.gz                 # for next iteration's --history
 ├── impl-diff.patch                      # vs previous iteration
@@ -249,6 +305,7 @@ ratchet-log/iteration-NNN/
 │   ├── code-reviewer-perf.yaml
 │   ├── qa-reviewer.yaml
 │   ├── pm-reviewer.yaml
+│   ├── qa-measurements.yaml             # qa_facts.py projection — the only qa bytes drift ever sees
 │   ├── spec-drift-detector.yaml
 │   └── spec-gaming-detector.yaml
 ├── meta-judge-output.yaml               # synthesized verdict
@@ -341,3 +398,5 @@ into the implementer carries `fix_prompt` — `verify_graph.py` lint 3 rejects a
 - `references/ratchet-log-format.md` — the full ratchet-log/iteration-NNN/ directory layout + field reference
 - `references/fix-prompt-template.md` — the structure of fix-prompt.md emitted on FIX state
 - `references/skill-dispatch-matrix.md` — how acceptance-fleet maps v0.x roles → v1.0+ skill invocations, with model + cross-vendor allocation per skill
+- `scripts/next_iteration.py <ratchet-log-dir> <N> [--done-when PATH] [--format sh|json]` — derives every cross-iteration parameter and the two gaming thresholds from iteration N-1's outputs; exit 1 when the predecessor is missing or the band is empty (iron rule 6 / I-72)
+- `scripts/qa_facts.py <qa-reviewer.yaml> --output <qa-measurements.yaml>` (and `--check <file>`) — projects the qa report down to measurements so `/spec-drift-detector` never sees another reviewer's findings (iron rule 2's exception / I-71)

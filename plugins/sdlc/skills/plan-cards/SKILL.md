@@ -3,8 +3,9 @@ name: plan-cards
 description: >-
   补引擎自己给不出的缺口：把一份冻结的判据契约拆成"单独丢给一个没有任何上下文的 agent 也能干完"的
   任务卡——每张卡带 REQ 归属、AC 子集、DOS 切片、可改/禁改文件白名单、上下文预估与预算；以及三项
-  机器校验（REQ 全覆盖且无重复归属 · 卡间无文件写冲突含共享文件归属 · 名词能被 DOS 切片解析）与
-  上下文 ≤ 40k 必拆的 lint，全部编译在 lint_cards.py。Use when: "拆任务卡" / "PLAN" / "拆成能并行做的卡" /
+  机器校验（REQ 全覆盖且无重复归属 · 卡间无文件写冲突含共享文件归属 · 名词能被 DOS 切片解析）、
+  上下文 ≤ 40k 必拆的 lint、以及"投影与其数据源同卡"（渲染/报告脚本必须声明 reads_from，跨卡要
+  depends_on + 接缝说明），全部编译在 lint_cards.py。Use when: "拆任务卡" / "PLAN" / "拆成能并行做的卡" /
   "split into cards" / "task cards" / 契约已 G2 冻结、准备实现之前。NOT for: 写契约（/donewhen-extract）、
   写测试（/test-suite-generator）、实现卡（/implement）。前置：`.done_when.lock` 存在（G2 已签）。
 argument-hint: "<specs/<feature>/ 或 done_when.yaml> [--spec spec.md] [--dos dos.yaml] [--out cards/] [--max-context 40000]"
@@ -36,20 +37,26 @@ implement` 要求 `cards.lint_passed`）。
 - **共享文件**（lockfile / 配置 / 路由表 / schema）要么归一张卡，要么全部禁改——"卡间无写冲突"必须覆盖它们。
 - **卡级验收 ≠ 需求级验收**：每张卡只跑 AC 子集；所有卡完成后必须整体跑一次（`/acceptance-fleet`）。
 - **`depends_on`** 只表示依赖顺序（Σ 第 1 格），不是执行脚本；无依赖的卡可并行。
+- **投影与其数据源同卡**：渲染 / 报告脚本与它读的数据在一张卡里，否则没人能原子地同时改数据的形状与它的
+  标签。跨卡是例外，例外要 `reads_from` + `depends_on` + `notes` 里的接缝风险三样齐全（lint 项 6）。
 - **上下文预估**：卡 + 相关源码 + AC 子集 + 测试 > 40k → 必拆（lint，不是备注）。
+- **这条 40k 会反压契约**：一个 REQ 的实现读集若超 40k，"REQ 一卡一主"与"≤ 40k"同时成立就无解。
+  **G2 冻结前**就要按分区把这类 REQ 拆开；G2 之后再拆要走变更提案 + 重新签锁。
 - **关于用户的 Σ**："拆细一点"= 上下文预算更小，不是更多卡；"一张卡做完"= 合法，但仍要过 lint。
 
 ## 判据（φ）
 
-- `lint_cards.py` 三项 + 上下文 + `ac_ids` 存在性 + `allowed_files` 非空 → 全过。
+- `lint_cards.py` 三项 + 上下文 + `ac_ids` 存在性 + `allowed_files` 非空 + 投影/数据源同卡 → 全过。
 - 残差（人 / judge）：卡是否真的自包含；`allowed_files` 是否最小；上下文预估是否诚实。
 
 ## 原语（Π）
 
-- `scripts/lint_cards.py <cards_dir> [--spec spec.md] [--done-when done_when.yaml] [--dos dos.yaml] [--max-context N]`
+- `scripts/lint_cards.py <cards_dir> [--spec spec.md] [--done-when done_when.yaml] [--dos dos.yaml] [--max-context N] [--repo-root DIR] [--projection-pattern RE]`
   —— exit 0 / 1 / 2。**进 implement 前必须跑**，过了 `sdlc_state.py set cards.lint_passed=true`。
+  给 `--repo-root` 时会读渲染脚本本身核验 `reads_from`，声明因此可核验而非自述。
 - `assets/card_template.yaml` —— 卡的具名字段。
-- `references/splitting.md` —— 拆分启发式（按观察边界 / 按 DOS 对象 / 先契约后 UI）、共享文件处置、上下文估算法。
+- `references/splitting.md` —— 拆分启发式（按观察边界 / 按 DOS 对象 / 先契约后 UI / 投影与数据源同卡）、
+  共享文件处置、上下文估算法、以及 L4 对契约层 REQ 粒度的反压。
 
 ## 门（γ）
 

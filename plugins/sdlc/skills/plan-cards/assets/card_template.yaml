@@ -18,6 +18,8 @@ forbidden_files:                # 禁改。默认继承 done_when.constraints.fo
 context_estimate_tokens: 0      # 超 40000 必须再拆（lint 项，不是备注）
 budget:
   retries: 3                    # 单卡预算；同指纹重复 = 无进展，不等 3 次直接升级（routing.yaml R02）
+reads_from: []                  # 本卡的代码读、但不一定拥有的数据文件。卡里有渲染/报告脚本时必填（lint 项 6）：
+                                # 数据在本卡 = 原子；在别的卡 = 必须 depends_on 那张卡且 notes 写明接缝风险。
 depends_on: []                  # 其他 CARD-id；只表示依赖顺序（Σ 第 1 格），不是执行脚本
 mock_allowlist: []              # 允许 mock 的外部边界（继承 done_when.constraints.mock_allowlist）
 notes: ""                       # 给无上下文 agent 的必要背景（自包含；不引用对话）

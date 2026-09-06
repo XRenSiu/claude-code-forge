@@ -90,6 +90,13 @@ echo "== plan-cards / lint_cards.py"
 FX="$S/sdlc/eval/fixtures"
 expect "bad cards rejected (dup REQ, overlap, missing REQ-003, ac_ids, dos closure, context)" 1 py "$S/plan-cards/scripts/lint_cards.py" "$S/plan-cards/eval/fixtures/cards_bad" --spec "$FX/spec.md" --done-when "$FX/done_when.yaml" --dos "$FX/dos.yaml"
 expect "good cards pass" 0 py "$S/plan-cards/scripts/lint_cards.py" "$S/plan-cards/eval/fixtures/cards_good" --spec "$FX/spec.md" --done-when "$FX/done_when.yaml" --dos "$FX/dos.yaml"
+# I-73: a projection and its data source must not straddle a card seam — no implementer can change both
+# sides atomically, and in the ring-audit run 4 of 12 fix-round findings came from exactly that.
+PC="$S/plan-cards/eval/fixtures"
+expect "cards: projection owning its data (or declaring the seam) passes (I-73)" 0 py "$S/plan-cards/scripts/lint_cards.py" "$PC/cards_projection_good" --spec "$FX/spec.md" --done-when "$FX/done_when.yaml" --dos "$FX/dos.yaml"
+expect "cards: projection across a card seam rejected, undeclared reads_from rejected (I-73)" 0 bash -c "python3 '$S/plan-cards/scripts/lint_cards.py' '$PC/cards_projection_bad' --spec '$FX/spec.md' --done-when '$FX/done_when.yaml' --dos '$FX/dos.yaml' > '$TMP/pc_bad.json'; [ \$? = 1 ] || exit 9; python3 -c \"import json; r=json.load(open('$TMP/pc_bad.json'))['rejects']; j=' | '.join(r); assert 'CARD-02 renders' in j and 'audit.yaml' in j and 'CARD-01 owns it' in j and 'does not depends_on CARD-01' in j, j; assert 'CARD-03 owns projection script' in j and 'declares no' in j and 'reads_from' in j, j\""
+expect "cards: a declared seam with no note in notes is rejected (I-73)" 1 bash -c "mkdir -p '$TMP/pcnote' && cp '$PC/cards_projection_good/'*.yaml '$TMP/pcnote/' && python3 -c \"import yaml; p='$TMP/pcnote/CARD-02.yaml'; d=yaml.safe_load(open(p)); d.pop('notes', None); yaml.safe_dump(d, open(p,'w'), allow_unicode=True)\" && python3 '$S/plan-cards/scripts/lint_cards.py' '$TMP/pcnote' --spec '$FX/spec.md' --done-when '$FX/done_when.yaml' --dos '$FX/dos.yaml'"
+expect "cards: --repo-root reads the script and catches an undeclared source (I-73)" 0 bash -c "python3 '$S/plan-cards/scripts/lint_cards.py' '$PC/cards_projection_bad' --spec '$FX/spec.md' --done-when '$FX/done_when.yaml' --dos '$FX/dos.yaml' --repo-root '$PC/repo' > '$TMP/pc_scan.json'; [ \$? = 1 ] || exit 9; python3 -c \"import json; r=json.load(open('$TMP/pc_scan.json'))['rejects']; j=' | '.join(r); assert 'commit-window.json' in j and 'owned by CARD-01' in j and 'undeclared seam' in j, j\""
 
 echo "== sdlc / lock_done_when.py"
 L="$TMP/lock"; mkdir -p "$L"; cp "$FX/done_when.yaml" "$L/"; pushd "$L" >/dev/null
@@ -683,6 +690,11 @@ popd >/dev/null
 
 echo "== retro / trace metrics (P3)"
 expect "metrics: escape chain + contract rework from trace.jsonl" 0 bash -c "python3 '$S/retro/scripts/metrics.py' '$S/retro/eval/fixtures' --json '$TMP/m.json' >/dev/null && python3 -c \"import json; d=json.load(open('$TMP/m.json')); t=d['totals']; assert t['escape_chains']==1 and t['avg_escape_chain_depth']==3.0 and t['escape_root_layers']=={'task':1} and t['contract_rework_ratio']==0.25, t\""
+# I-84: the interception metric must count gate REJECT events from the history (ledger.md, else trace.jsonl),
+# not state.json's final verdict — feat-b passed G1 in the end after being rejected twice, and the old
+# implementation reported 0 interceptions for exactly that shape.
+expect "metrics: G1 interceptions counted from gate history, not the final verdict (I-84)" 0 bash -c "python3 '$S/retro/scripts/metrics.py' '$S/retro/eval/fixtures' --json '$TMP/mg.json' >/dev/null && python3 -c \"import json; d=json.load(open('$TMP/mg.json')); t=d['totals']; f={r['feature']: r for r in d['features']}; assert t['g1_interceptions']==3, t; assert t['gate_rejections']=={'g1':3,'g2':1,'g3':0}, t; assert t['gate_decisions']=={'g1':4,'g2':4,'g3':2}, t; assert t['g1_interception_rate']==0.75, t; assert f['feat-b']['g1']=='pass' and f['feat-b']['gate_rejections']=={'g1':2,'g2':1,'g3':0}, f['feat-b']\""
+expect "metrics: ledger is primary, trace is the fallback, state-only is labelled (I-84)" 0 bash -c "python3 '$S/retro/scripts/metrics.py' '$S/retro/eval/fixtures' --json '$TMP/mg2.json' >/dev/null && python3 -c \"import json; d=json.load(open('$TMP/mg2.json')); t=d['totals']; f={r['feature']: r for r in d['features']}; assert f['feat-b']['gate_source']=='ledger' and f['feat-a']['gate_source']=='trace' and f['feat-c']['gate_source']=='state(final-verdict-only)', f; assert t['gate_history_unavailable']==['feat-c'], t\""
 expect "trace why AC-003-a walks 3 hops to hidden_variant_fail" 0 bash -c "python3 '$SSG/trace.py' why AC-003-a --trace '$S/retro/eval/fixtures/feat-a/trace.jsonl' | grep -q 'hidden_variant_fail'"
 expect "trace impact AC-003-a reaches the escape" 0 bash -c "python3 '$SSG/trace.py' impact AC-003-a --trace '$S/retro/eval/fixtures/feat-a/trace.jsonl' | grep -q 'escape'"
 TB="$TMP/trace_bad.jsonl"; printf '%s\n' '{"id":"ev-0001","at":"t","kind":"fail","refs":[{"type":"related_to","target":"CARD-01"}]}' '{"id":"ev-0002","at":"t","kind":"reflow","refs":[{"type":"caused_by","target":"ev-0099"}]}' > "$TB"
@@ -713,6 +725,25 @@ expect "apply_proposal --dry-run: MAX_ROUNDS diff against pr-poll.sh" 0 bash -c 
 expect "apply_proposal --patch writes patch, target untouched" 0 bash -c "before=\$(md5 -q '$S/review-loop/scripts/pr-poll.sh' 2>/dev/null || md5sum '$S/review-loop/scripts/pr-poll.sh' | cut -d' ' -f1); python3 '$TU/apply_proposal.py' '$TMP/tune.yaml' --id P-1 --skills-root '$S' --patch '$TMP/p1.patch' >/dev/null && test -s '$TMP/p1.patch' && after=\$(md5 -q '$S/review-loop/scripts/pr-poll.sh' 2>/dev/null || md5sum '$S/review-loop/scripts/pr-poll.sh' | cut -d' ' -f1) && [ \"\$before\" = \"\$after\" ]"
 expect "apply_proposal: gate_fix_list kind produces gate.json diff" 0 bash -c "python3 '$TU/apply_proposal.py' '$TMP/tune.yaml' --id P-2 --skills-root '$S' 2>/dev/null | grep -q 'audit ACCEPT'"
 expect "apply_proposal: unknown id rejected" 1 py "$TU/apply_proposal.py" "$TMP/tune.yaml" --id P-99 --skills-root "$S"
+
+echo "== acceptance-fleet / next_iteration.py + qa_facts.py"
+AF="$S/acceptance-fleet/scripts"; FXA="$S/acceptance-fleet/eval/fixtures"; RL="$FXA/ratchet-log"
+# I-72: the baseline comes from iteration N-1's own output. The fixture reproduces the real defect —
+# iteration-003 recorded baseline_score 3.5 while iteration-002 actually produced 4.0.
+expect "next_iteration: baseline derived from iteration N-1, not the task file (I-72)" 0 bash -c "python3 '$AF/next_iteration.py' '$RL' 3 --format json 2>/dev/null | python3 -c \"import json,sys; d=json.load(sys.stdin); assert d['PREV_GAMING_SCORE']=='4', d; assert d['PREV_ITER_DIR'].endswith('iteration-002'), d; assert d['GAMING_TRAJECTORY']=='3.5,4', d; assert d['PREV_SNAPSHOT'].endswith('iteration-002/impl-snapshot.tar.gz'), d; assert d['PREV_QA_REPORT'].endswith('iteration-002/fleet-outputs/qa-reviewer.yaml'), d; assert d['PREV_PM_REVIEW'].endswith('iteration-002/fleet-outputs/pm-reviewer.yaml'), d\""
+expect "next_iteration: a recorded baseline that disagrees with the log is named (I-72)" 0 bash -c "python3 '$AF/next_iteration.py' '$RL' 3 --format json 2>/dev/null | python3 -c \"import json,sys; d=json.load(sys.stdin); b=d['BASELINE_DISCREPANCY']; assert 'iteration-003' in b and '3.5' in b and 'iteration-002' in b, b\""
+expect "next_iteration: iteration 1 carries nothing forward" 0 bash -c "python3 '$AF/next_iteration.py' '$RL' 1 --format json 2>/dev/null | python3 -c \"import json,sys; d=json.load(sys.stdin); assert d['PREV_ITER_DIR']=='' and d['PREV_GAMING_SCORE']=='' and d['PREV_GAMING_BAND']=='unknown', d\""
+expect "next_iteration: missing predecessor refuses to dispatch" 1 py "$AF/next_iteration.py" "$RL" 9
+expect "next_iteration: shell output is eval-able and sets the vars" 0 bash -c "eval \"\$(python3 '$AF/next_iteration.py' '$RL' 3 2>/dev/null)\"; [ \"\$PREV_GAMING_SCORE\" = 4 ] && [ \"\$GAMING_BLOCK_AT\" = 7 ] && [ \"\$PREV_GAMING_BAND\" = elevated ]"
+# I-68: the two ratchet-band thresholds are configuration, read from done_when.yaml, not literals in prose.
+expect "next_iteration: gaming band read from done_when.yaml (I-68)" 0 bash -c "python3 '$AF/next_iteration.py' '$RL' 3 --done-when '$FXA/done_when_bands.yaml' --format json 2>/dev/null | python3 -c \"import json,sys; d=json.load(sys.stdin); assert d['GAMING_DONE_BELOW']=='5' and d['GAMING_BLOCK_AT']=='6', d; assert d['PREV_GAMING_BAND']=='clean', d; assert d['SPEC_DRIFT_TRIGGER']=='4', d\""
+expect "next_iteration: inverted band rejected — it would leave scores with no rule (I-68)" 1 py "$AF/next_iteration.py" "$RL" 3 --done-when "$FXA/done_when_bad_bands.yaml"
+# I-71: drift may read qa's measurements, never its findings, severities or decision.
+expect "qa_facts: projection keeps measurements, drops findings/decision (I-71)" 0 bash -c "python3 '$AF/qa_facts.py' '$FXA/qa-reviewer-full.yaml' --output '$TMP/qam.yaml' >/dev/null && python3 -c \"import yaml; m=yaml.safe_load(open('$TMP/qam.yaml'))['qa_measurements']; assert m['scope']['tests_executed']==245 and m['mutation']['kill_rate']==0.758 and m['results']['integration']['duration_seconds']==145, m; assert not ({'decision','decision_reasons','findings','num_findings','maintenance_issues','regressions','caveats'} & set(m)), sorted(m); assert 'hint' not in m['mutation']['surviving_mutants'][0], m['mutation']; assert set(m['provenance']['omitted_keys'])>={'decision','findings','caveats'}, m['provenance']\""
+expect "qa_facts --check: a clean projection passes" 0 bash -c "python3 '$AF/qa_facts.py' '$FXA/qa-reviewer-full.yaml' --output '$TMP/qam2.yaml' >/dev/null && python3 '$AF/qa_facts.py' --check '$TMP/qam2.yaml'"
+expect "qa_facts --check: a smuggled decision/finding is caught (I-71)" 1 py "$AF/qa_facts.py" --check "$FXA/qa-measurements-leaky.yaml"
+expect "qa_facts --check: findings buried inside a measurement subtree are caught too" 1 py "$AF/qa_facts.py" --check "$FXA/qa-measurements-nested-leak.yaml"
+expect "qa_facts: a non-qa document is refused" 1 bash -c "printf 'gaming_assessment:\\n  gaming_risk_score: 4.0\\n' > '$TMP/notqa.yaml' && python3 '$AF/qa_facts.py' '$TMP/notqa.yaml'"
 
 echo
 echo "smoke: $pass passed, $fail failed${ONLY:+, $skipped skipped (--only $ONLY)}  (tmp: $TMP)"

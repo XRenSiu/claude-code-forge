@@ -50,7 +50,7 @@ deletion 测试：撤掉本 skill，让引擎"把这个需求做完提 PR"。它
 | X1 本体（任一轨，有存量代码时） | `dos.yaml` + 不变量卡 | /dos-extract · /invariant-extract（本插件） | 闭包检查与卡的 dos_slice 的解析源；应然本体（dos-proposal）与现状本体对账在 G1 记录里做 |
 | issue | GitHub issue（TASK 雏形：EARS + AC v2 + 假设台账 + 依赖 DOS） | /issue | 没有 issue 就没有 `Closes #N`；AC 在这里第一次被写下 |
 | branch | `<type>/<issue>-<slug>` | 你 | 不在 main 上做事 |
-| contract | `done_when.yaml`（+ `contract.yaml` 条件触发） | /donewhen-extract（AC 优先）或 /acceptance-spec（EARS spec.md 形态），都在本插件 | 判据契约，方案盲写；阈值溯源、happy/unhappy 配对、矛盾与覆盖两检；S2.5 自对抗留痕给 spec-gaming |
+| contract | `done_when.yaml`（+ `contract.yaml` 条件触发） | /donewhen-extract（AC 优先）或 /acceptance-spec（EARS spec.md 形态），都在本插件 | 判据契约，方案盲写；阈值溯源、happy/unhappy 配对、矛盾与覆盖两检；S2.5 自对抗留痕给 spec-gaming。**REQ 粒度须能按 ≤ 40k 的卡切分**——L4 的"REQ 一卡一主 + ≤ 40k"是反压，读集超 40k 的 REQ 在这里按分区拆最便宜，G2 之后要走变更提案 |
 | G2 | `.done_when.lock`（stage g2） | **人**签，`lock_done_when.py sign --stage g2`；`advance g2` 先跑 `validate_done_when_v2.py` | 签完就锁：冻结的是判据不是测试名（C1）；L5 测试写完再签一次（stage l5，C6）；之后改锁内文件必须附变更提案 |
 | cards | `cards/CARD-xx.yaml` | /plan-cards（`lint_cards.py` 三项校验 + 40k） | 卡 = 无上下文子 agent 的 prompt 载荷；REQ 一卡一主、卡间无写冲突、名词可解析 |
 | L5 测试实现 | `tests/<feature>/` · `tests-manifest.yaml` · `compile_manifest.yaml` · `calibration_report.yaml` | /test-suite-generator（按卡分批的五层金字塔）+ /spec-compile（可判性阶梯）→ /calibrate，都在本插件 | 非实现者写、写完锁；未校准的标准不承重 |

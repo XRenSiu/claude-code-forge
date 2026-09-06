@@ -1,0 +1,12 @@
+# The ring-audit defect: the projection is here, the window it renders is in CARD-01, and nothing ties
+# them together. No implementer can change both sides atomically.
+id: CARD-02
+title: audit renderer
+req_ids: [REQ-002]
+ac_ids: [AC-002-a]
+dos_slice: { objects: [Era], invariants: [] }
+allowed_files: ["scripts/render_audit.py"]
+forbidden_files: ["tests/**", "done_when.yaml", "package.json"]
+reads_from: ["audit.yaml"]
+context_estimate_tokens: 11000
+budget: { retries: 3 }

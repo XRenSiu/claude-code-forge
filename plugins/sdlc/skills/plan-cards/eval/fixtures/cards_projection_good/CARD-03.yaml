@@ -1,0 +1,11 @@
+# A directory glob whose name contains "reports". It is NOT a projection script — the rule matches the
+# basename of literal script paths only, so a UI/report directory never has to declare reads_from.
+id: CARD-03
+title: reports ui
+req_ids: [REQ-003]
+ac_ids: [AC-003-a]
+dos_slice: { objects: [Era], invariants: [] }
+allowed_files: ["src/reports/**"]
+forbidden_files: ["tests/**", "done_when.yaml", "package.json"]
+context_estimate_tokens: 9000
+budget: { retries: 3 }
