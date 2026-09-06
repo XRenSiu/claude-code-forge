@@ -91,6 +91,9 @@ expect "advance release" 0 py "$SS" advance release
 expect "advance archive refused (release not done)" 1 py "$SS" advance archive
 expect "set release.done → advance archive" 0 bash -c "python3 '$SS' set release.version=0.1.0 release.tag=v0.1.0 release.done=true >/dev/null && python3 '$SS' advance archive"
 expect "ledger has waiver row" 0 bash -c "grep -q '| waiver |' .sdlc/demo/ledger.md"
+# dogfood 2026-09-06 (I-57): state.schema.json defines lock.stage, so the l5 re-sign must be able to record it
+expect "set lock.stage=l5 (I-57)" 0 bash -c "python3 '$SS' set lock.stage=l5 >/dev/null && python3 -c \"import json; assert json.load(open('.sdlc/demo/state.json'))['lock']['stage']=='l5'\""
+expect "lock.stage outside the g2|l5 enum refused (I-57)" 1 py "$SS" set lock.stage=nope
 expect "state.json never hand-edited: json valid" 0 python3 -c "import json;json.load(open('.sdlc/demo/state.json'))"
 popd >/dev/null
 

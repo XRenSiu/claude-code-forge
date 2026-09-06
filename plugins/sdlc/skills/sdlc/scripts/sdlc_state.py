@@ -62,7 +62,7 @@ SETTABLE = {
     "issue.number", "issue.url", "issue.kind",
     "branch.name", "branch.base",
     "contract.done_when", "contract.contract_yaml", "contract.source",
-    "lock.path", "lock.signed_by", "lock.signed_at",
+    "lock.path", "lock.signed_by", "lock.signed_at", "lock.stage",
     "cards.dir", "cards.lint_passed",
     "acceptance.evaluation_result", "acceptance.meets_done_when", "acceptance.skipped_reason",
     "pr.number", "pr.url", "pr.size_class", "pr.pre_review_rounds",
@@ -73,6 +73,7 @@ SETTABLE = {
     "contract.compile_manifest", "contract.calibration_report", "contract.tests_manifest",
     "release.version", "release.tag", "release.notes", "release.done", "release.skipped_reason",
 }
+LOCK_STAGES = ("g2", "l5")
 LAYER_COUNTERS = ["card", "plan", "task", "ontology", "world"]
 BUDGET_KEY = {"card": "card_retries", "plan": "plan_reflows", "task": "task_reflows",
               "ontology": "ontology_reflows", "world": "world_reflows"}
@@ -338,6 +339,8 @@ def cmd_set(a):
             die(f"key not settable: {k} (allowed: {sorted(SETTABLE)})", 1)
         if k == "track" and v not in ("psl", "task"):
             die("track must be psl|task", 1)
+        if k == "lock.stage" and v not in LOCK_STAGES:
+            die(f"lock.stage must be {'|'.join(LOCK_STAGES)} (the two signing stages)", 1)
         set_path(st, k, coerce(v))
         if k == "track":
             st["gates"]["g1"]["required"] = (v == "psl")
