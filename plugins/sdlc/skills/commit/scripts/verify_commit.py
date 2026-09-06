@@ -91,7 +91,7 @@ def main():
     # --range must name two endpoints: `git diff <one-ref>` is legal but means "worktree vs ref", and the
     # landing-content hash below would then read the WRONG side, letting a tampered locked file hash equal to
     # its own pre-change blob and drop out of `touched` (fail-open on the G2 lock; dogfood pre-review cr-001).
-    if a.range and ".." not in a.range:
+    if a.range is not None and ".." not in a.range:   # "" is not "no range" — it must not fall through to staged mode
         sys.stderr.write(f"verify_commit: --range needs A..B (got {a.range!r}); a single ref would compare the wrong side of the lock\n")
         sys.exit(2)
     rejects, flags = [], []

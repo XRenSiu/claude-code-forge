@@ -146,10 +146,15 @@ git add done_when.yaml && git -c user.name=t -c user.email=t@t commit -q -m "cho
 expect "tampered locked file in an A..B range is rejected (cr-001 twin)" 1 py "$VC" --msg "chore(contract): smuggle" --lock .done_when.lock --range HEAD~1..HEAD --allow-main
 expect "single-ref --range refused, never fail-open (cr-001)" 2 py "$VC" --msg "chore(contract): smuggle" --lock .done_when.lock --range main --allow-main
 expect "three-dot range resolves the head side (cr-001)" 1 py "$VC" --msg "chore(contract): smuggle" --lock .done_when.lock --range HEAD~1...HEAD --allow-main
-# dogfood 2026-09-06 (pre-review cr-004): `A..` and `A...` are legal ranges whose right endpoint defaults to
-# HEAD; splitting on the separator yields "" and `git show :path` would read the INDEX — the wrong side again.
-expect "open-ended A.. range still rejects the tamper (cr-004)" 1 py "$VC" --msg "chore(contract): smuggle" --lock .done_when.lock --range "HEAD~1.." --allow-main
-expect "open-ended A... range still rejects the tamper (cr-004)" 1 py "$VC" --msg "chore(contract): smuggle" --lock .done_when.lock --range "HEAD~1..." --allow-main
+# dogfood 2026-09-06 (pre-review cr-004 + fix-verifier): `A..` / `A...` are legal ranges whose right endpoint
+# defaults to HEAD; splitting on the separator yields "" and `git show :path` reads the INDEX — the wrong side.
+# The mutant only shows itself when the index differs from the range head, so stage the FROZEN bytes while the
+# tamper sits at HEAD. (The first version of these twins committed the tamper, leaving index == HEAD, and passed
+# on the buggy resolver too — a decorative test. fix-verifier caught it; this is the shape that kills the mutant.)
+git checkout -q HEAD~1 -- done_when.yaml && git add done_when.yaml
+expect "open-ended A.. reads the range head, not the index (cr-004)" 1 py "$VC" --msg "chore(contract): smuggle" --lock .done_when.lock --range "HEAD~1.." --allow-main
+expect "open-ended A... reads the range head, not the index (cr-004)" 1 py "$VC" --msg "chore(contract): smuggle" --lock .done_when.lock --range "HEAD~1..." --allow-main
+expect "empty --range is refused, not treated as staged mode (fix-verifier)" 2 py "$VC" --msg "chore(contract): smuggle" --lock .done_when.lock --range "" --allow-main
 git reset -q --hard HEAD~1 >/dev/null
 popd >/dev/null
 
