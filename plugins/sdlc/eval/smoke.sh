@@ -85,6 +85,15 @@ expect "bug kind without Repro rejected" 1 py "$S/issue/scripts/verify_issue.py"
 # dogfood 2026-09-05 (I-07): one-line Links (template shape) with a G1 path must not flag "without a G1 record path"
 PSLI="$TMP/psl_issue.md"; sed -e 's/- track: task/- track: psl/' -e 's|G1: none|G1: g1-record.md|' "$FX/good_issue.md" > "$PSLI"
 expect "psl-track issue with G1 path on the one-line Links carries no G1 flag (I-07)" 0 bash -c "python3 '$S/issue/scripts/verify_issue.py' '$PSLI' --dos '$FX/dos.yaml' | python3 -c \"import json,sys; d=json.load(sys.stdin); assert d['verdict']=='PASS' and not any('G1 record path' in f for f in d['flags']), d['flags']\""
+# dogfood 2026-09-06 (I-45): the issue restates the signed form in prose and prose drifts — three G1
+# rounds caught the body reusing wording the form had refused, with nothing mechanical watching. The
+# refusals are read from a DECLARED section, never parsed out of prose.
+G1REC="$TMP/g1_negations.md"
+printf '# G1\n\n## 明确不做\n\n- `%s` — 本次否决该说法\n- adopted ⇒ fits\n\n## 其他\n' "vague-term-xyz" > "$G1REC"
+BODYN="$TMP/issue_uses_refused.md"; sed 's|## Intent|## Intent\n\nvague-term-xyz 是本次的判定单位。|' "$PSLI" > "$BODYN"
+expect "issue reusing a word the G1 record refused is flagged (I-45)" 0 bash -c "python3 '$S/issue/scripts/verify_issue.py' '$BODYN' --dos '$FX/dos.yaml' --g1 '$G1REC' | python3 -c \"import json,sys; d=json.load(sys.stdin); assert any('明确不做' in f and 'vague-term-xyz' in f for f in d['flags']), d['flags']\""
+expect "a G1 record with no 明确不做 section says so, rather than passing silently (I-45)" 0 bash -c "printf '# G1\n\n## 四问\n' > '$TMP/g1_bare.md'; python3 '$S/issue/scripts/verify_issue.py' '$PSLI' --dos '$FX/dos.yaml' --g1 '$TMP/g1_bare.md' | python3 -c \"import json,sys; d=json.load(sys.stdin); assert any('no machine-readable' in f for f in d['flags']), d['flags']\""
+expect "the shipped g1_record template carries the section the check reads (I-45)" 0 bash -c "grep -q '^## 明确不做' '$S/sdlc/assets/g1_record.md'"
 
 echo "== plan-cards / lint_cards.py"
 FX="$S/sdlc/eval/fixtures"
@@ -645,6 +654,36 @@ expect "file-path existence rejected (C2)" 1 py "$S/donewhen-extract/scripts/val
 expect "convert v1 example → v2 skeleton written" 0 py "$S/donewhen-extract/scripts/convert_v1_to_v2.py" "$EX/done_when.yaml" --out "$TMP/converted.v2.yaml" --spec "$EX/spec.md"
 expect "converted skeleton fails v2 validation until ACs are completed (honest)" 1 py "$S/donewhen-extract/scripts/validate_done_when_v2.py" "$TMP/converted.v2.yaml"
 expect "converted skeleton keeps v1 tests as manifest + moves file existence to cards_hint" 0 bash -c "python3 -c \"import yaml; d=yaml.safe_load(open('$TMP/converted.v2.yaml')); assert d['schema']==2 and d['cards_hint']['allowed_files'] and d['behavior']['unit_tests']['example_based'] and not any('file' in e for e in d['existence'])\""
+# dogfood 2026-09-06 (I-08 / I-40 / I-41 / I-55): G2's own record listed six criteria this validator
+# passed over, so the gate did by eye what a script should do. These are those criteria compiled.
+V2T="$TMP/v2_twin_not_selfsufficient.yaml"
+python3 -c "
+import yaml,sys
+d=yaml.safe_load(open('$FXV/v2_good.yaml'))
+happy=next(a for a in d['acceptance'] if a.get('kind')=='mechanical' and a.get('ears_type','event')!='unwanted')
+twin=next(a for a in d['acceptance'] if a.get('paired_with')==happy['id'] or (a.get('ears_type')=='unwanted' and a.get('observe')==happy['observe']))
+happy['given']=dict(happy.get('given') or {}); happy['given']['seeded_rows']='120'
+twin['given']={'input':'empty query'}
+yaml.safe_dump(d,open('$V2T','w'),allow_unicode=True,sort_keys=False)
+"
+expect "unwanted twin whose given drops its pair's context is rejected (I-55)" 1 py "$S/donewhen-extract/scripts/validate_done_when_v2.py" "$V2T"
+V2S="$TMP/v2_vague_statement.yaml"
+python3 -c "
+import yaml
+d=yaml.safe_load(open('$FXV/v2_good.yaml'))
+d['acceptance'].append({'id':'AC-900-a','req':d['based_on'][0],'kind':'human','observe':'ui:dashboard#tiles','statement':'the page feels fast and the copy is friendly','judge':'product','evidence':'checklist'})
+yaml.safe_dump(d,open('$V2S','w'),allow_unicode=True,sort_keys=False)
+"
+expect "human AC statement with an adjective and no number is rejected (I-08)" 1 py "$S/donewhen-extract/scripts/validate_done_when_v2.py" "$V2S"
+V2F="$TMP/v2_form.md"; printf '# form\n\n- [F-01] the checker prints exit and rings_viewed ← PSL-001\n' > "$V2F"
+expect "an expect key the signed form never names is rejected (I-40)" 1 py "$S/donewhen-extract/scripts/validate_done_when_v2.py" "$FXV/v2_good.yaml" --form-draft "$V2F"
+expect "human ACs on one boundary with different judges are flagged (I-41)" 0 bash -c "python3 -c \"
+import yaml
+d=yaml.safe_load(open('$FXV/v2_good.yaml'))
+for j in ('product','tech'):
+    d['acceptance'].append({'id':'AC-91'+j[0]+'-a','req':d['based_on'][0],'kind':'human','observe':'ui:one#place','statement':'p95 under 200ms on the tile grid','judge':j,'evidence':'checklist'})
+yaml.safe_dump(d,open('$TMP/v2_mixed_judges.yaml','w'),allow_unicode=True,sort_keys=False)
+\"; python3 '$S/donewhen-extract/scripts/validate_done_when_v2.py' '$TMP/v2_mixed_judges.yaml' | python3 -c \"import json,sys; d=json.load(sys.stdin); assert any('mixed judges' in f for f in d['flags']), d['flags']\""
 
 echo "== sdlc / lock_done_when.py two-stage"
 L2="$TMP/lock2"; mkdir -p "$L2/tests"; cp "$FXV/v2_good.yaml" "$L2/done_when.yaml"; echo "test('x')" > "$L2/tests/a.test.ts"; pushd "$L2" >/dev/null
