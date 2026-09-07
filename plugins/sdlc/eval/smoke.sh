@@ -259,6 +259,133 @@ assert ss.prereqs({'stage':'review','review':{},'gates':{}},'g3'), 'an open revi
 expect "state.json never hand-edited: json valid" 0 python3 -c "import json;json.load(open('.sdlc/demo/state.json'))"
 popd >/dev/null
 
+# ---------------------------------------------------------------------------------------------
+# v0.12.0 · 广度网格（sizing.yaml.stages）+ 解释日记 + plan / doctor / autonomy
+# 借鉴 AI-DLC 2.0 的 scope grid / memory.md 四格 / 自治阶梯，见 docs/reports/aidlc-gap-2026-09-07.md
+# ---------------------------------------------------------------------------------------------
+echo "== sdlc / verify_sizing.py（网格与代码互相断言）"
+VS="$S/sdlc/scripts/verify_sizing.py"; SZ="$S/sdlc/assets/sizing.yaml"
+expect "shipped sizing grid passes all 7 checks" 0 py "$VS" "$SZ"
+mk_sizing() { python3 -c "
+import sys, yaml
+d = yaml.safe_load(open(sys.argv[1], encoding='utf-8'))
+exec(sys.argv[3])
+yaml.safe_dump(d, open(sys.argv[2], 'w', encoding='utf-8'), allow_unicode=True)
+" "$SZ" "$2" "$1"; }
+# L3: 广度旋钮不许把门拧掉
+mk_sizing "d['stages']['S']['skip'].append({'stage':'g2','why':'省事'})" "$TMP/sz_gate.yaml"
+expect "a grid that skips a human gate is rejected (L3)" 1 py "$VS" "$TMP/sz_gate.yaml"
+# L5: 极性——漏填得到的必须是较严的路径
+mk_sizing "d['stages']['M']['skip']=[{'stage':'acceptance','why':'x'}]" "$TMP/sz_fallback.yaml"
+expect "a grid whose fallback tier skips a stage is rejected (L5 polarity)" 1 py "$VS" "$TMP/sz_fallback.yaml"
+# L4: 没有理由的跳过 = 无法被撤销的豁免
+mk_sizing "d['stages']['S']['skip'][0]['why']=''" "$TMP/sz_nowhy.yaml"
+expect "a skip without a why is rejected (L4)" 1 py "$VS" "$TMP/sz_nowhy.yaml"
+# L6: needs 与 when 一致——这条让「早定档给不出 S」可证而不是注释
+mk_sizing "[r for r in d['rules'] if r['id']=='SZ-05'][0]['needs']=['acs']" "$TMP/sz_needs.yaml"
+expect "a rule whose needs disagrees with when is rejected (L6)" 1 py "$VS" "$TMP/sz_needs.yaml"
+# L1: 写了一个不存在的阶段名，看起来配了其实永远不命中
+mk_sizing "d['stages']['S']['skip'].append({'stage':'nosuchstage','why':'x'})" "$TMP/sz_bad.yaml"
+expect "a grid naming a stage outside ORDER is rejected (L1)" 1 py "$VS" "$TMP/sz_bad.yaml"
+
+echo "== sdlc / 体量网格的极性与跳过"
+GR="$TMP/grid"; mkdir -p "$GR"; pushd "$GR" >/dev/null
+cp "$FX/done_when.yaml" done_when.yaml
+py "$SS" init --slug g --title "三行修复" --track task >/dev/null
+# 极性①：手设的档位一扇门也打不开
+expect "a hand-set tier grants no skip (size_source=manual)" 0 bash -c "python3 '$SS' set --slug g intake.size=S >/dev/null && python3 '$SS' plan --slug g --json | python3 -c \"
+import json,sys; d=json.load(sys.stdin)
+assert d['tier']=='S' and d['size_source']=='manual', d
+assert d['skipped']=={} and d['stages_total']==15, 'a tier set by hand must open nothing'\""
+# 极性②：还没有 diff 时定档，结构上够不到 S
+expect "early sizing cannot reach S (SZ-05 needs files)" 0 bash -c "python3 '$SS' size --slug g --acs 2 --human-acs 0 --early --commit | python3 -c \"
+import json,sys; d=json.load(sys.stdin)
+assert d['size_source']=='derived_early' and d['tier']=='M', d
+assert d['rule']=='SZ-06', 'the S rule must not fire without files'\""
+# 用证据换来的 S：网格生效，两个阶段被跳，每个都留一条有理由的账本行
+expect "a derived S tier skips cards + acceptance" 0 bash -c "python3 '$SS' size --slug g --files 2 --acs 2 --human-acs 0 --commit | python3 -c \"
+import json,sys; d=json.load(sys.stdin)
+assert d['tier']=='S' and d['size_source']=='derived', d
+assert sorted(d['skips'])==['acceptance','cards'], d['skips']
+assert all(d['skips'].values()), 'every skip carries its why'\""
+expect "the grid walks g2 → implement → pr and records a typed exemption per skipped stage" 0 bash -c "
+set -e
+python3 '$SS' set --slug g issue.number=9 >/dev/null; python3 '$SS' advance --slug g track >/dev/null
+python3 '$SS' advance --slug g issue >/dev/null; python3 '$SS' advance --slug g branch >/dev/null
+python3 '$SS' set --slug g branch.name=fix/9-x >/dev/null; python3 '$SS' advance --slug g contract >/dev/null
+python3 '$SS' set --slug g contract.done_when=done_when.yaml >/dev/null
+python3 '$SS' advance --slug g g2 >/dev/null
+python3 '$S/sdlc/scripts/lock_done_when.py' sign --signer-kind human --by human done_when.yaml >/dev/null
+python3 '$SS' set --slug g lock.path=.done_when.lock >/dev/null
+python3 '$SS' gate --slug g g2 --verdict pass --signer-kind human --by human >/dev/null
+python3 '$SS' advance --slug g implement >/dev/null
+python3 '$SS' advance --slug g pr >/dev/null
+python3 -c \"
+import json
+st=json.load(open('.sdlc/g/state.json')); assert st['stage']=='pr', st['stage']
+assert st['acceptance']['skipped_by']=='size_tier', st['acceptance']
+rows=[l for l in open('.sdlc/g/ledger.md') if '| size_exemption |' in l]
+assert len(rows)==2, rows
+assert any('cards' in r for r in rows) and any('acceptance' in r for r in rows), rows\""
+# 飞行中重定档：已经走过的阶段冻结，不能被追认为跳过
+expect "recompose refuses skips for stages already passed" 0 bash -c "python3 '$SS' size --slug g --files 2 --acs 2 --human-acs 0 --commit | python3 -c \"
+import json,sys; d=json.load(sys.stdin)
+assert sorted(d.get('recompose_refused') or [])==['acceptance','cards'], d
+assert d['skips']=={}, 'a stage already walked cannot be retro-actively skipped'\""
+popd >/dev/null
+
+echo "== sdlc / 解释日记（四格 · 门禁仪式 · 下轮生效）"
+NT="$TMP/notes"; mkdir -p "$NT"; pushd "$NT" >/dev/null
+py "$SS" init --slug n --title T --track task >/dev/null
+expect "notes: the four headings exist and open questions are marked non-promotable" 0 bash -c "
+python3 '$SS' note --slug n --kind interpretation --text '契约说空输入，我按空字符串实现' >/dev/null
+python3 '$SS' note --slug n --kind open_question --text 'exit code 2 还是 65' >/dev/null
+python3 '$SS' note --slug n --kind tradeoff --text '没加缓存' >/dev/null
+out=\$(python3 '$SS' notes --slug n --for-gate g2)
+for h in Interpretations Deviations Tradeoffs 'Open questions'; do echo \"\$out\" | grep -q \"\$h\" || exit 9; done
+echo \"\$out\" | grep -q '不晋升' || exit 9
+echo \"\$out\" | grep -q '契约说空输入，我按空字符串实现' || exit 9"
+expect "an open question cannot be promoted" 1 py "$SS" note --slug n --promote n-0002 --to project --by human
+expect "promotion lands in project.md and does NOT take effect this run" 0 bash -c "
+python3 '$SS' note --slug n --promote n-0001 --to project --by human >/dev/null
+grep -q 'n-0001' .sdlc/learnings/project.md || exit 9
+python3 -c \"
+import json
+st=json.load(open('.sdlc/n/state.json'))
+assert st['notes']['promoted']==['n-0001'], st['notes']
+assert 'learnings' not in st, 'a rule promoted mid-run must not take effect in that run'\""
+expect "the NEXT run compiles the promoted rule at init (learning is next-round)" 0 bash -c "python3 '$SS' init --slug n2 --title T2 --track task | python3 -c \"
+import json,sys; d=json.load(sys.stdin)
+assert d['learnings']['rules']==1, d
+assert d['learnings']['sha256'], d\""
+expect "notes.md is append-only: promotion rewrote no line of it" 0 bash -c "test \$(grep -c '^- \[n-' .sdlc/n/notes.md) = 3"
+popd >/dev/null
+
+echo "== sdlc / autonomy · card skipped · plan · doctor"
+AU="$TMP/auto"; mkdir -p "$AU/cards"; pushd "$AU" >/dev/null
+py "$SS" init --slug a --title T --track task >/dev/null
+expect "autonomy is recorded in state, and never trades away a gate" 0 bash -c "python3 '$SS' autonomy --slug a --level auto_until_failure --by human | python3 -c \"
+import json,sys; d=json.load(sys.stdin)
+assert d['gates_still_human']==['g1','g2','g3'] and d['failure_still_interrupts'] is True, d\" && python3 -c \"
+import json; assert json.load(open('.sdlc/a/state.json'))['autonomy']['level']=='auto_until_failure'\""
+printf 'id: CARD-01\n' > cards/CARD-01.yaml
+printf 'id: CARD-02\ndepends_on: [CARD-01]\n' > cards/CARD-02.yaml
+py "$SS" set --slug a cards.dir=cards >/dev/null
+expect "card --status skipped without --reason refused" 1 py "$SS" card --slug a CARD-01 --status skipped
+expect "a skipped card names the dependents it will drag down" 0 bash -c "python3 '$SS' card --slug a CARD-01 --status skipped --reason '上游接口未定' | python3 -c \"
+import json,sys; d=json.load(sys.stdin)
+assert d['dependents_likely_to_fail']==['CARD-02'], d
+assert 'warning' in d, d\""
+expect "plan on an underived tier says so instead of implying a light path" 0 bash -c "python3 '$SS' plan --slug a --json | python3 -c \"
+import json,sys; d=json.load(sys.stdin)
+assert d['skipped']=={} and d['stages_total']==15, d
+assert 'note' in d and 'not derived' in d['note'], d\""
+expect "doctor runs and is advisory (never a fourth gate)" 0 bash -c "python3 '$SS' doctor --slug a --json | python3 -c \"
+import json,sys; d=json.load(sys.stdin)
+assert d['ok'] is True, d['findings']
+assert all(f['severity'] in ('info','warn') for f in d['findings']), d['findings']\""
+popd >/dev/null
+
 echo "== retro / metrics.py"
 expect "metrics export" 0 py "$S/retro/scripts/metrics.py" "$S/retro/eval/fixtures" --md "$TMP/metrics.md"
 
@@ -647,6 +774,33 @@ expect "count_terms: reproducible per-group counts + file:line evidence (I-12)" 
 expect "count_terms: a term matching nothing exits 1, not silently 0 (I-12)" 1 py "$DXS/count_terms.py" --terms "$TMP/terms.txt" --root "$S/dos-extract" --group fixtures='eval/fixtures/*.yaml'
 expect "count_terms: word boundaries keep PR out of PROPOSAL (I-12)" 0 bash -c "mkdir -p '$TMP/ct' && printf 'PROPOSAL and PROPRIETARY\n' > '$TMP/ct/a.md' && printf 'PR\n' >> '$TMP/ct/a.md' && printf 'PR\n' > '$TMP/terms2.txt' && python3 '$DXS/count_terms.py' --terms '$TMP/terms2.txt' --root '$TMP/ct' --corpus '*.md' --json | python3 -c \"import json,sys; d=json.load(sys.stdin); assert d['terms']['PR']['total']==1, d['terms']['PR']\""
 
+echo "== dos-extract / verify_vocabulary.py (跨制品术语漂移，B 档)"
+VFX="$FXO/vocab"
+# I-92: 本体一直只在 issue 的「依赖 DOS」字段上当闸；下游制品的散文谁也没检。
+# 变异证明（--mutate，各自杀掉自己的变异体）：
+#   "return finish(a, facts, 3)" → "…, 0)"              杀 3 条：两种 exit 3 成因 + --require-ontology
+#   near_miss 不再计入 counted                            杀 2 条：transaction 那条 + 卡的散文那条
+#   md_segments 不再抹围栏块（t = blank(...) → t = text）  杀 1 条：假阳性闸
+#   给 --out 加回缺省路径                                  杀 1 条：不给 --out 不许落文件
+expect "vocab: 全用本体词的制品 0 发现" 0 py "$DXS/verify_vocabulary.py" --dos "$VFX/dos.yaml" "$VFX/artifacts/clean.md" --out "$TMP/vocab_clean.yaml"
+expect "vocab: transaction ⊊ BankingTransaction 是 near_miss 且计入 (I-92)" 0 bash -c "python3 '$DXS/verify_vocabulary.py' --dos '$VFX/dos.yaml' '$VFX/artifacts/nearmiss.md' --out '$TMP/vocab_nm.yaml' --json > '$TMP/vocab_nm.json'; [ \$? = 1 ] || exit 9; python3 -c \"import json; d=json.load(open('$TMP/vocab_nm.json')); f=[x for x in d['findings'] if x['term']=='transaction']; assert f, [x['term'] for x in d['findings']]; assert f[0]['severity']=='near_miss' and f[0]['counted'] and f[0]['neighbour']=='BankingTransaction', f[0]\""
+expect "vocab: 制品自己声明 out-of-domain 的词不报" 0 py "$DXS/verify_vocabulary.py" --dos "$VFX/dos.yaml" "$VFX/artifacts/outofdomain.md" --out "$TMP/vocab_ood.yaml"
+expect "vocab: 代码标识符 / 路径 / 围栏块 / URL 一个都不报（假阳性闸）" 0 bash -c "python3 '$DXS/verify_vocabulary.py' --dos '$VFX/dos.yaml' '$VFX/artifacts/codey.md' --out '$TMP/vocab_code.yaml' --json > '$TMP/vocab_code.json'; [ \$? = 0 ] || exit 9; python3 -c \"import json; d=json.load(open('$TMP/vocab_code.json')); assert d['findings']==[], d['findings']\""
+expect "vocab: 契约里的 banking_transaction 与不存在的 R003 都被抓到" 0 bash -c "python3 '$DXS/verify_vocabulary.py' --dos '$VFX/dos.yaml' '$VFX/artifacts/done_when.yaml' --out '$TMP/vocab_dw.yaml' --json > '$TMP/vocab_dw.json'; [ \$? = 1 ] || exit 9; python3 -c \"import json; d=json.load(open('$TMP/vocab_dw.json')); t={x['term']:x for x in d['findings']}; assert t['banking_transaction']['severity']=='near_miss', t; assert t['R003']['severity']=='unresolved_rule' and t['R003']['counted'], t\""
+expect "vocab: 卡的 dos_slice 不重复报（那是 lint_cards 的活），notes 的散文照报" 0 bash -c "python3 '$DXS/verify_vocabulary.py' --dos '$VFX/dos.yaml' '$VFX/artifacts/CARD-01.yaml' --out '$TMP/vocab_card.yaml' --json > '$TMP/vocab_card.json'; [ \$? = 1 ] || exit 9; python3 -c \"import json; d=json.load(open('$TMP/vocab_card.json')); t=[x['term'] for x in d['findings']]; assert 'NotARealObject' not in t and 'R999' not in t, t; assert 'transaction' in t, t\""
+expect "vocab: 没有 dos.yaml = 未评估 exit 3，不是通过（极性）" 3 py "$DXS/verify_vocabulary.py" --dos "$VFX/nope.yaml" "$VFX/artifacts/clean.md" --out "$TMP/vocab_none.yaml"
+expect "vocab: 有 dos.yaml 但 objects 为空，仍是 exit 3" 3 py "$DXS/verify_vocabulary.py" --dos "$VFX/dos_no_terms.yaml" "$VFX/artifacts/clean.md" --out "$TMP/vocab_empty.yaml"
+expect "vocab: --require-ontology 把 3 变成 1（当闸用的姿势）" 1 py "$DXS/verify_vocabulary.py" --dos "$VFX/nope.yaml" "$VFX/artifacts/clean.md" --require-ontology --out "$TMP/vocab_req.yaml"
+expect "vocab: 一个制品都没给 = 用法错误 exit 2" 2 py "$DXS/verify_vocabulary.py" --dos "$VFX/dos.yaml" --out "$TMP/vocab_usage.yaml"
+expect "vocab: unknown 缺省不计入退出码，--count-unknown 才计入" 0 py "$DXS/verify_vocabulary.py" --dos "$VFX/dos.yaml" "$VFX/artifacts/infra.md" --out "$TMP/vocab_inf0.yaml"
+expect "vocab: --count-unknown 让频次佐证的生词计入" 1 py "$DXS/verify_vocabulary.py" --dos "$VFX/dos.yaml" "$VFX/artifacts/infra.md" --count-unknown --out "$TMP/vocab_inf1.yaml"
+expect "vocab: decisions.md 的 Vocabulary waivers 段清掉它们（与 verify_dos 同一套约定）" 0 py "$DXS/verify_vocabulary.py" --dos "$VFX/dos.yaml" "$VFX/artifacts/infra.md" --count-unknown --waivers "$VFX/decisions.md" --out "$TMP/vocab_inf2.yaml"
+expect "vocab: 反向信号——本体声明了没人用的词被报出来" 0 bash -c "python3 '$DXS/verify_vocabulary.py' --dos '$VFX/dos.yaml' '$VFX/artifacts/clean.md' --out '$TMP/vocab_un.yaml' --json > '$TMP/vocab_un.json' && python3 -c \"import json; d=json.load(open('$TMP/vocab_un.json')); u=[x['label'] for x in d['unused_ontology']]; assert 'R002' not in u and 'Account' not in u, u\""
+expect "vocab: 真实 dogfood 本体上计入的发现为 0（阈值不是靠噪音撑起来的）" 0 bash -c "python3 '$DXS/verify_vocabulary.py' --dos '$ROOT/dogfood/ring-audit/dos.yaml' '$ROOT/dogfood/ring-audit/done_when.yaml' '$ROOT/dogfood/ring-audit/cards/CARD-*.yaml' '$ROOT/dogfood/ring-audit/issue-body.md' '$ROOT/dogfood/ring-audit/pr-body.md' --out '$TMP/vocab_dog.yaml' --json > '$TMP/vocab_dog.json'; [ \$? = 0 ] || exit 9; python3 -c \"import json; d=json.load(open('$TMP/vocab_dog.json')); assert d['counted_findings']==0, [f['term'] for f in d['findings'] if f['counted']]; n=[f['term'] for f in d['findings']]; assert 'Ring' in n and 'Part' in n, n\""
+# 团队实测：从插件根随手跑一次，会在仓库根留下一个没人要的 vocabulary-facts.yaml。
+# --out 缺省不落地，这条盯着它。
+expect "vocab: 不给 --out 时不在工作区落文件" 0 bash -c "cd \"$TMP\" && rm -f vocabulary-facts.yaml && python3 '$DXS/verify_vocabulary.py' --dos '$VFX/dos.yaml' '$VFX/artifacts/nearmiss.md' >/dev/null; [ \$? = 1 ] || exit 9; [ ! -e vocabulary-facts.yaml ] || exit 8"
+
 echo "== dos-extract / reconcile_dos.py + dos_closure.py (X1 as-is ↔ to-be)"
 # dogfood 2026-09-05 (I-49): the reconciliation existed only as prose in the G1 record, so the
 # card linter had to be pointed at a proposal file by hand.
@@ -831,6 +985,32 @@ methods = len(re.findall(r'def (test_\\w+)', open('$TD3/test_check_audit.py', en
 assert d['unit_total'] + d['integration_total'] == methods, (d, methods)
 assert d['unit_example'] + d['unit_property'] == d['unit_total'], d
 assert d['existence'] > 0, d
+\""
+# v0.12.0 · 测试量是第三个旋钮，与广度 / 深度正交（sizing.yaml.tiers.<档>.test_strategy）。
+# 它是**地板不是天花板**：写多了不报错，写少了 exit 4——而 exit 4 与「空 behavior」的 exit 2
+# 必须分得开，一个是量不够，一个是配置错。
+expect "derive_counts --strategy: the floor is computed from the contract, not from the strategy name" 0 bash -c "python3 '$TSG/derive_counts.py' '$DW2' --manifest '$MF2' --strategy minimal --json | python3 -c \"
+import json, sys
+d = json.load(sys.stdin)
+assert d['strategy'] == 'minimal' and isinstance(d['floor'], int), d
+assert d['behaviour_written'] >= d['floor'], d
+assert 'mechanical AC' in d['floor_why'], d['floor_why']
+\""
+expect "derive_counts --strategy: below the floor exits 4, distinct from the empty-behaviour 2" 4 bash -c "
+python3 -c \"
+import yaml
+m = yaml.safe_load(open('$MF2', encoding='utf-8'))
+b = m.setdefault('behavior', {})
+b['unit_tests'] = {'example_based': ['only_one'], 'property_based': []}
+b['integration_tests'] = {'example_based': [], 'property_based': []}
+b['e2e_tests'] = []
+yaml.safe_dump(m, open('$TMP/mf_thin.yaml', 'w', encoding='utf-8'), allow_unicode=True)
+\"
+python3 '$TSG/derive_counts.py' '$DW2' --manifest '$TMP/mf_thin.yaml' --strategy standard"
+expect "derive_counts --strategy comprehensive sets no arithmetic floor" 0 bash -c "python3 '$TSG/derive_counts.py' '$DW2' --manifest '$TMP/mf_thin.yaml' --strategy comprehensive --json | python3 -c \"
+import json, sys
+d = json.load(sys.stdin)
+assert d['floor'] is None and '五层金字塔' in d['floor_why'], d
 \""
 
 # I-62: the RED baseline must measure a checkout of HEAD, not the working tree a parallel
@@ -1187,6 +1367,44 @@ expect "qa_facts --check: a clean projection passes" 0 bash -c "python3 '$AF/qa_
 expect "qa_facts --check: a smuggled decision/finding is caught (I-71)" 1 py "$AF/qa_facts.py" --check "$FXA/qa-measurements-leaky.yaml"
 expect "qa_facts --check: findings buried inside a measurement subtree are caught too" 1 py "$AF/qa_facts.py" --check "$FXA/qa-measurements-nested-leak.yaml"
 expect "qa_facts: a non-qa document is refused" 1 bash -c "printf 'gaming_assessment:\\n  gaming_risk_score: 4.0\\n' > '$TMP/notqa.yaml' && python3 '$AF/qa_facts.py' '$TMP/notqa.yaml'"
+
+# 一次被截断的审查留下的是一份**短而干净**的报告 —— 与"走完全程、什么也没发现"在字节层面无法
+# 区分，/meta-judge 会从它合成出 PASS。不变量 14 的 agent 侧：缺标记走严路，不走宽路。
+VRC="$AF/verify_review_complete.py"; RC="$FXA/review-complete"
+expect "review-complete: a complete fleet passes" 0 \
+  py "$VRC" "$RC/complete" --size M --out "$TMP/rc-complete.yaml"
+expect "review-complete: a missing expected review is unevaluated, not a pass (exit 3)" 3 \
+  py "$VRC" "$RC/complete" --size L --out "$TMP/rc-missing.yaml"
+expect "review-complete: a truncated review with no completion marker is unevaluated (exit 3)" 3 \
+  py "$VRC" "$RC/truncated" --size M --out "$TMP/rc-trunc.yaml"
+expect "review-complete: an explicit incomplete is a real negative verdict (exit 1)" 1 \
+  py "$VRC" "$RC/incomplete" --size M --out "$TMP/rc-inc.yaml"
+expect "review-complete: --require-complete turns unevaluated into a rejection (3 -> 1)" 1 \
+  py "$VRC" "$RC/truncated" --size M --require-complete --out "$TMP/rc-req.yaml"
+# 两个数字产生于不同时刻，所以它们能互相指证：声明 3 条、落盘 1 条 = 落盘被截断。
+expect "review-complete: findings_count disagreeing with the findings is caught (exit 3)" 3 \
+  py "$VRC" "$RC/mismatch" --size M --out "$TMP/rc-mismatch.yaml"
+expect "review-complete: the mismatch is named as a count disagreement, not a generic failure" 0 \
+  bash -c "python3 '$VRC' '$RC/mismatch' --size M --out '$TMP/rc-mm2.yaml' --json 2>/dev/null | python3 -c \"import json,sys; d=json.load(sys.stdin); r=[x for x in d['reviews'] if x['file']=='qa-reviewer.yaml'][0]; assert r['status']=='count_mismatch' and r['declared_findings']==3 and r['actual_findings']==1, r\""
+# 孪生：显式声明的省略不是沉默的截断，否则每一次 --skip 都会把闸染红，闸就会被绕过。
+expect "review-complete: a declared skip is not a truncation (twin)" 0 \
+  bash -c "d=\"$TMP/rc-skip\"; rm -rf \"\$d\"; cp -R '$RC/complete' \"\$d\"; printf 'skipped: user_requested\\nsignals: []\\n' > \"\$d/spec-drift-detector.yaml\"; python3 '$VRC' \"\$d\" --expect qa-reviewer,spec-gaming-detector,spec-drift-detector --out '$TMP/rc-skip.yaml'"
+# /meta-judge M0 对这个目录做 *.yaml glob —— 凡躺在这里的它都会读，所以凡躺在这里的都要检。
+expect "review-complete: a truncated file outside the expected set is still checked (meta-judge globs it)" 3 \
+  bash -c "d=\"$TMP/rc-extra\"; rm -rf \"\$d\"; cp -R '$RC/complete' \"\$d\"; cp '$RC/truncated/spec-gaming-detector.yaml' \"\$d/code-reviewer-perf.yaml\"; python3 '$VRC' \"\$d\" --expect qa-reviewer,spec-gaming-detector --out '$TMP/rc-extra.yaml'"
+# 没有期望集，"没有缺文件"是一句没人能核对的话 —— 与退出码 3 同一条道理。
+expect "review-complete: a directory with no declared expected set is unevaluated" 3 \
+  bash -c "python3 '$VRC' '$RC/complete' --out '$TMP/rc-noexpect.yaml'"
+# --clear 清的是槽位不是字节：陈旧裁决让位，失败记录不回滚（不变量 5 / ratchet-log-format 的删除禁令）。
+expect "review-complete --clear: the stale output is moved into stale/, not deleted" 0 \
+  bash -c "d=\"$TMP/rc-clear\"; rm -rf \"\$d\"; cp -R '$RC/incomplete' \"\$d\"; python3 '$VRC' \"\$d\" --clear \"\$d/spec-gaming-detector.yaml\" >/dev/null && [ ! -f \"\$d/spec-gaming-detector.yaml\" ] && [ -f \"\$d/stale/spec-gaming-detector.attempt-1.yaml\" ]"
+expect "review-complete --clear: a path outside the given directory is refused" 2 \
+  bash -c "d=\"$TMP/rc-clear2\"; rm -rf \"\$d\"; cp -R '$RC/complete' \"\$d\"; printf 'x: 1\\n' > '$TMP/rc-outside.yaml'; python3 '$VRC' \"\$d\" --clear '$TMP/rc-outside.yaml'"
+expect "review-complete --clear: ../ traversal out of the directory is refused (twin)" 2 \
+  bash -c "d=\"$TMP/rc-clear3\"; rm -rf \"\$d\"; cp -R '$RC/complete' \"\$d\"; printf 'x: 1\\n' > '$TMP/rc-outside.yaml'; python3 '$VRC' \"\$d\" --clear \"\$d/../rc-outside.yaml\""
+# 一次审查只准重派一次：第二次仍不完整必须显形，否则"最多一次"只是散文。
+expect "review-complete: a second incomplete after a re-dispatch is reported as exhausted" 0 \
+  bash -c "d=\"$TMP/rc-exh\"; rm -rf \"\$d\"; cp -R '$RC/incomplete' \"\$d\"; python3 '$VRC' \"\$d\" --clear \"\$d/spec-gaming-detector.yaml\" >/dev/null; cp '$RC/incomplete/spec-gaming-detector.yaml' \"\$d/\"; python3 '$VRC' \"\$d\" --size M --out '$TMP/rc-exh.yaml' --json 2>/dev/null | python3 -c \"import json,sys; d=json.load(sys.stdin); assert d['redispatch_exhausted']==['spec-gaming-detector.yaml'], d\""
 
 # I-104: 回放要用**父提交**的锁——"这条提交动手时生效的规则"。取提交自己树里的锁，
 # 会让一条在同一个 diff 里删掉 .done_when.lock 的提交免检；从工作区探测锁是否存在，

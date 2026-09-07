@@ -33,6 +33,21 @@ model: opus
 `mergeable` 给结论：`yes | no (A-tier) | with-warnings (B-tier)`。同一供应商同尺寸做对抗式审查时
 在 `caveats.single_vendor_caveat` 写明。
 
+**末尾必须有完成标记**（顶层，与 findings 同级）：
+
+```yaml
+review_complete:
+  status: complete            # complete | incomplete
+  findings_count: <N>         # 必须等于 findings 的条数
+  reason: <text>              # status: incomplete 时必填
+```
+
+turn / 工具预算 / 上下文在走完 diff 之前耗尽 → `status: incomplete` + 说清停在哪
+（"读到 hunk 7/19 时预算耗尽"）。**没跑完的审查必须自己说没跑完，不许交一份短而干净的报告**——
+`findings: []` + `rationale` 是"走完了、没发现"，不是"没走完"，两者在字节层面无法区分，
+调用方只能靠这个标记分辨（`skills/acceptance-fleet/scripts/verify_review_complete.py` 检它，
+缺标记记 `unevaluated`，不记通过）。
+
 ## 绝不
 
 - 绝不修改被审代码；绝不发评论 / approve；绝不把发现直接交给实现者（交给调用方，由它做 fix-prompt）。

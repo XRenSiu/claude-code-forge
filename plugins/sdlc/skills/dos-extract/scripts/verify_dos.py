@@ -69,11 +69,14 @@ UI_IMPL_SUFFIXES = ("Card", "Modal", "Drawer", "Toast", "Panel", "Repository", "
 PLACEHOLDER_RE = re.compile(r"^\s*(#|<|TODO|TBD|例[:：]|\.\.\.)", re.IGNORECASE)
 
 
-def parse_waivers(path):
-    """Read `## Naming waivers` bullets out of decisions.md.
+def parse_waivers(path, section_title="naming waivers"):
+    """Read `## <section_title>` bullets out of decisions.md.
 
     A bullet's waived name is the first backticked token, or the first word if the
     bullet has no backticks. Free prose after it is the justification the judge reads.
+    `section_title` exists so there is ONE waiver-bullet convention in this skill:
+    `verify_dos.py` reads `## Naming waivers`, `verify_vocabulary.py` imports this and
+    reads `## Vocabulary waivers` — same shape, same parser, one thing for the human to learn.
     """
     waived = {}
     try:
@@ -84,7 +87,7 @@ def parse_waivers(path):
     section = None
     for line in text.splitlines():
         if line.startswith("#"):
-            section = "naming waivers" in line.lower()
+            section = section_title.lower() in line.lower()
             continue
         if not section:
             continue

@@ -139,7 +139,7 @@ scripts/qa_facts.py "$ITER_DIR/fleet-outputs/qa-reviewer.yaml" \
 
 ### `/spec-drift-detector`
 
-**Invoke from iteration 2 onward** (no baseline in iteration 1; drift detection needs history). For iteration 1, output a placeholder file with `findings: []` and proceed.
+**Invoke from iteration 2 onward** (no baseline in iteration 1; drift detection needs history). For iteration 1, write a placeholder that says so — `skipped: no baseline before iteration 2` plus `signals: []` — and proceed. A placeholder with an empty findings list and nothing else is indistinguishable from a drift detector that ran and found nothing, which is the confusion S1.5 exists to prevent; `skipped:` is a declaration, silence is not.
 
 ```bash
 /spec-drift-detector "$SPEC_DIR/spec.md" "$IMPL_ROOT" \
@@ -186,7 +186,30 @@ judgments do not. `qa_facts.py --check <file>` re-verifies any file before it is
 
 ---
 
-## After all 7 sub-skills complete
+## After all 7 sub-skills complete, before /meta-judge
+
+Run the completeness gate (S1.5 of the orchestrator's phase map). Every output above must carry a
+`review_complete:` block; this is what decides whether the dispatch produced verdicts at all.
+
+```bash
+python3 scripts/verify_review_complete.py "$ITER_DIR/fleet-outputs/" \
+  --size "$SIZE" \
+  --out "$ITER_DIR/review-completeness.yaml"
+```
+
+| Setting | Value |
+|---|---|
+| Output → | `review-completeness.yaml` (iteration root, not `fleet-outputs/`) |
+| Model | none — this is a script, and that is the point: the judgement "did this review finish" must not itself be a review |
+| Exit | 0 all complete → run `/meta-judge` · 1 an explicit `incomplete` · 3 missing / unparseable / unmarked / `findings_count` disagreement · 2 usage |
+| On 1 or 3 | `--clear` the offending output (it moves to `fleet-outputs/stale/`), re-dispatch **that one review only** with the same arguments this matrix gives it, re-run the gate. At most one re-dispatch per review per iteration; a second failure is recorded and forces S3 rule A0 |
+
+The expected set follows the dispatch above: `--size M` is `qa-reviewer` + `spec-gaming-detector`,
+`--size L` is all seven. When `--skip` narrowed the dispatch, pass the actual set with
+`--expect a,b,c` — the suppressed skills' `{skipped: user_requested}` files still satisfy the gate,
+because a declared omission is not a silent truncation.
+
+## Then run /meta-judge
 
 Run `/meta-judge` (S2 of the orchestrator's phase map):
 
@@ -250,6 +273,6 @@ The user can suppress sub-skills via:
 /acceptance-fleet "$SPEC_DIR/" --skip=spec-drift-detector,code-reviewer-perf
 ```
 
-Suppressed skills emit `<skill>.yaml` with `{skipped: user_requested, findings: []}`. `/meta-judge` proceeds with the available subset; the resulting `final_verdict.caveats.suppressed_skills:` lists what was skipped.
+Suppressed skills emit `<skill>.yaml` with `{skipped: user_requested, findings: []}` — the `skipped:` key is what the S1.5 completeness gate reads to tell a declared omission from a truncated run, so a suppressed skill must still write its file. `/meta-judge` proceeds with the available subset; the resulting `final_verdict.caveats.suppressed_skills:` lists what was skipped.
 
 Don't suppress `/qa-reviewer` or `/pm-reviewer` — those are the contract's load-bearing checks. The orchestrator refuses if either is in the skip list.

@@ -1,0 +1,5 @@
+# 被截断的那一份：短、干净、没有标记 —— 与「走完全程、什么也没发现」在字节层面无法区分。
+gaming_assessment:
+  agent_role: spec-gaming-detector
+  gaming_risk_score: 0
+  detected_patterns: []

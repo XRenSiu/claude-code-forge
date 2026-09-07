@@ -18,7 +18,7 @@ description: >-
   "check spec vs code consistency" / "is the documentation still accurate" /
   "look for spec drift" / "/spec-drift-detector" / pointing at a doc + impl.
 argument-hint: "<spec_source> <code_paths> [--history-depth=<N commits to scan back>]"
-version: 1.0.1
+version: 1.1.0
 user-invocable: true
 # imported into sdlc 2026-09-05 from done-when-pipeline v1.1.0 (canonical copy in this repo; qanat holds an older copy); body kept, sdlc wiring section added
 ---
@@ -194,6 +194,19 @@ Recommendation logic:
 Write to `--output` per `references/finding-schema.yaml`.
 
 User sees: "spec-drift-detector: <N> signals (timing: <a>, behavior: <b>, contract: <c>); recommendations: <update_spec: x, fix_code: y, needs_human: z>."
+
+**Every output carries a completion marker.** Add a top-level `review_complete:` block as the last thing you write, and — because this skill's signal list has no fixed name in `references/finding-schema.yaml` — say where the signals are with `findings_key:`:
+
+```yaml
+review_complete:
+  status: complete                       # complete | incomplete
+  findings_count: <N>                    # MUST equal the number of entries in the list below
+  findings_key: drift_signals.signals    # dotted path to the emitted signal list
+  reason: <text>                         # REQUIRED when status: incomplete
+```
+
+Write it with `status: incomplete` and a reason whenever the archaeology, the claim walk, or the comparison ran out of turns or budget before finishing — **a partial run must say so rather than hand back a short clean report.** Drift's own habit of dropping wishy-washy signals (D3) makes this especially load-bearing: a run that stopped early and a run that dropped everything both end at `signals: []`, and only the marker separates them. When the orchestrator invokes this skill in iteration 1 with no baseline, the placeholder it writes says `skipped: no baseline before iteration 2` instead — a declared omission, not a silent one. `/acceptance-fleet` S1.5 runs `scripts/verify_review_complete.py` over this; a missing marker is recorded as `unevaluated`, never as a pass.
+
 
 ---
 

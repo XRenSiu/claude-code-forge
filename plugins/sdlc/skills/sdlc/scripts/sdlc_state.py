@@ -13,13 +13,21 @@ Usage:
   sdlc_state.py init    --slug S --title T [--track psl|task] [--root .sdlc]
   sdlc_state.py show    [--slug S] [--root .sdlc]
   sdlc_state.py set     [--slug S] key=value ...          # dotted keys, whitelisted (see SETTABLE)
-  sdlc_state.py size    [--slug S] [--files N --acs M --human-acs K | --base REF] [--commit]
+  sdlc_state.py size    [--slug S] [--files N --acs M --human-acs K | --base REF | --from-issue BODY.md]
+                        [--early] [--commit]                # --early: 还没 diff 时定档，永远够不到 S
+  sdlc_state.py plan    [--slug S] [--json]                 # 启动前的有效规模：跑几个阶段、几道门、跳了什么
+  sdlc_state.py doctor  [--slug S] [--json]                 # 装置健康度；建议性，从不阻断门禁
+  sdlc_state.py note    [--slug S] --kind interpretation|deviation|tradeoff|open_question --text T
+  sdlc_state.py note    [--slug S] --promote n-0001 --to project --by NAME    # Open questions 不可晋升
+  sdlc_state.py notes   [--slug S] [--for-gate g1|g2|g3] [--json]             # 门禁仪式：逐字呈现
+  sdlc_state.py autonomy [--slug S] --level ask_each|auto_until_gate|auto_until_failure --by NAME
   sdlc_state.py advance [--slug S] <stage> [--force --reason R]
   sdlc_state.py gate    [--slug S] <g1|g2|g3> --verdict pass|reject|waived --by NAME
                         [--record PATH] [--attribution derivation_error|rule_error|none]
                         [--secondary-attribution derivation_error|rule_error]…  (recorded, never counted)
                         [--signer-kind human|delegated_agent] [--authorization TEXT]   # delegated requires authorization
-  sdlc_state.py card    [--slug S] CARD-xx --status todo|doing|done|blocked [--commit SHA] [--ac AC-id ...]
+  sdlc_state.py card    [--slug S] CARD-xx --status todo|doing|done|blocked|skipped [--reason R]
+                        [--commit SHA] [--ac AC-id ...]     # skipped 必须给理由，并列出会被拖累的卡
   sdlc_state.py fail    [--slug S] --signal SIG [--card CARD-xx] [--fingerprint FP | --evidence TEXT]
                         [--score X] [--by REPORTER] [--routing PATH]   # -> route decision JSON + counters + ledger
   sdlc_state.py waive   [--slug S] --signal SIG --reason R --by WHO
@@ -49,6 +57,12 @@ Mechanical guarantees (the non-waivable half):
   - a waiver is a first-class record: `waive` writes one without a transition and prints its event id, and
     `review.done` is a closed enum whose "waived" (or any exit_reason) must cite that id as review.waiver_ref
   - `graph check` asserts ORDER == assets/graph.yaml stages (data and code watch each other)
+  - the breadth knob is a grid, not an if: `assets/sizing.yaml.stages` says which stages a tier skips,
+    `never_skippable` says which no tier may, and a skip is only granted to a tier derived from evidence
+    (size_source ∈ derived / derived_early) — `set intake.size=S` opens nothing. verify_sizing.py asserts
+    the grid against ORDER and against the prerequisites this file implements
+  - learning is compiled at `init`, never mid-run: notes promoted to project rules take effect on the NEXT
+    run (the gates you already signed correspond to one stable rule set — same reason as invariant 13)
 Semantic half (a judge / a human, never this script): whether the candidate layer is the RIGHT layer.
 """
 import argparse
@@ -57,6 +71,7 @@ import glob
 import hashlib
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -330,8 +345,46 @@ def coerce(v):
         return v
 
 
+# ---- the breadth knob: which stages this run actually executes -------------------------------
+# 借鉴 AI-DLC 2.0 的 scope grid（11 种 scope × 33 stage 编译成网格，bugfix 只跑 9 个）。
+# 这里的网格小得多（3 档 × 15 阶段），但性质相同：**跑哪些阶段是数据，不是散在 prereqs() 里的 if**。
+# 极性与整个插件一致：跳过要用证据换。default / manual 的档位一个阶段也跳不掉。
+def effective_skips(st, sizing=None):
+    """→ {stage: why}。这次运行实际跳过的阶段，附每条的理由。
+
+    三重保险，任何一重不成立就跳不了：
+      ① 档位必须是**推导**来的（size_source ∈ derived / derived_early）。`set intake.size=S`
+         把来源打成 manual，一扇门也打不开——手设的档位拿不到豁免（v0.10.0 的极性，原样保留）。
+      ② 阶段不能在 never_skippable 里。三道门与不可逆动作在那张表里，即使 sizing.yaml 被改错
+         也拦得住——数据出错时脚本站在严的那一侧。
+      ③ 每条 skip 必须写 why。没有理由的跳过在复盘时无法被质疑，也就无法被撤销。
+    """
+    if sizing is None:
+        try:
+            sizing = load_sizing()
+        except SystemExit:
+            return {}
+    if (st.get("intake") or {}).get("size_source") not in ("derived", "derived_early"):
+        return {}
+    tier = (st.get("intake") or {}).get("size")
+    never = set(((sizing.get("never_skippable") or {}).get("stages")) or [])
+    out = {}
+    for row in ((sizing.get("stages") or {}).get(tier) or {}).get("skip") or []:
+        s, why = row.get("stage"), (row.get("why") or "").strip()
+        if s in ORDER and s not in never and why:
+            out[s] = why
+    return out
+
+
+def jumped_stages(st, target, skips):
+    """从当前阶段跳到 target 时被越过的阶段（不含两端）。"""
+    ci, ti = ORDER.index(st["stage"]), ORDER.index(target)
+    return [s for s in ORDER[ci + 1:ti] if s in skips] if ti > ci else []
+
+
 # ---- prerequisites: checked against state, never against the model's claim ------------------
-def prereqs(st, target):
+def prereqs(st, target, skips=None):
+    skips = effective_skips(st) if skips is None else skips
     unmet = []
     need = lambda cond, msg: (None if cond else unmet.append(msg))
     if target == "track":
@@ -359,21 +412,25 @@ def prereqs(st, target):
         need(get_path(st, "gates.g2.verdict") == "pass", "G2 verdict pass — run `gate g2`")
         need(get_path(st, "lock.path") and os.path.isfile(get_path(st, "lock.path")), "lock.path exists")
     elif target == "implement":
-        need(get_path(st, "cards.lint_passed") is True, "cards.lint_passed true (lint_cards.py)")
-        need(get_path(st, "cards.items"), "at least one card registered (`card CARD-xx --status todo`)")
+        # 卡的前置只在 cards 阶段真的跑了的时候要求。cards 被网格跳掉时，实现者的输入是契约的
+        # AC 本身——那是 S 档 skip 的 why 里写明的交换条件，不是这里悄悄放松。
+        if "cards" not in skips:
+            need(get_path(st, "cards.lint_passed") is True, "cards.lint_passed true (lint_cards.py)")
+            need(get_path(st, "cards.items"), "at least one card registered (`card CARD-xx --status todo`)")
     elif target == "acceptance":
-        items = get_path(st, "cards.items", {}) or {}
-        pending = [k for k, v in items.items() if v.get("status") != "done"]
-        need(not pending, f"all cards done (pending: {pending})")
+        if "cards" not in skips:
+            items = get_path(st, "cards.items", {}) or {}
+            pending = [k for k, v in items.items() if v.get("status") not in ("done", "skipped")]
+            need(not pending, f"all cards done or skipped (pending: {pending})")
         need(not get_path(st, "pending.failure_report"), "pending failure report written (`report --path …`)")
     elif target == "pr":
-        ok = get_path(st, "acceptance.evaluation_result") or get_path(st, "acceptance.skipped_reason")
-        # 第三条路：sizing.yaml 的 S 档豁免整体验收。只认 size_source=derived——
-        # 缺省的 M 不给豁免，手设的 S 也不给（size_source 不在 SETTABLE 里，只有 `size --commit` 能写）。
-        if not ok and get_path(st, "intake.size") == "S" and get_path(st, "intake.size_source") == "derived":
-            ok = True
+        # 整体验收要么真跑了、要么被显式留痕跳过、要么被网格跳掉（网格的跳过在 advance 里
+        # 会写成一条有类型的 size_exemption 账本行，不是无声的空白）。
+        ok = (get_path(st, "acceptance.evaluation_result") or get_path(st, "acceptance.skipped_reason")
+              or "acceptance" in skips)
         need(ok, "acceptance.evaluation_result path OR acceptance.skipped_reason "
-                 "(or a derived size=S tier — `size --files N --acs M --commit`)")
+                 "(or a derived tier whose grid skips acceptance — `size --files N --acs M --commit`)")
+        need(not get_path(st, "pending.failure_report"), "pending failure report written (`report --path …`)")
     elif target == "review":
         need(get_path(st, "pr.number"), "pr.number set")
     elif target == "g3":
@@ -392,13 +449,18 @@ def prereqs(st, target):
     return unmet
 
 
-def next_allowed(st, target):
+def next_allowed(st, target, skips=None):
     cur = st["stage"]
     ci, ti = ORDER.index(cur), ORDER.index(target)
     if ti == ci + 1:
         return True
     # legal skip: g3 not required → review → merge
     if cur == "review" and target == "merge" and get_path(st, "gates.g3.required", True) is False:
+        return True
+    # legal skip: 体量网格。中间被越过的每一个阶段都必须在这一档的 skip 集合里——
+    # 越过一个不在网格里的阶段仍然是越级，仍然要 --force + --reason，仍然记成 waiver。
+    skips = effective_skips(st) if skips is None else skips
+    if ti > ci + 1 and all(s in skips for s in ORDER[ci + 1:ti]):
         return True
     return False
 
@@ -421,10 +483,23 @@ def cmd_init(a):
         # 缺省 M：漏填得到较严的路径。S 档的豁免只能由 `size --commit` 用证据换（sizing.yaml）。
         "intake": {"size": "M", "size_source": "default", "size_evidence": {}},
         "waivers": [], "assumptions": [], "artifacts": {},
+        "notes": {"promoted": []},
     }
+    # 学习**下轮生效**：上一轮晋升到 project 的规则在这里被编译进来（记下路径 + 内容哈希 + 条数）。
+    # 跑动中晋升的规则不影响本轮——你前面批准过的门对应的是当时那套规则集合，框架不在跑动中抽掉地基。
+    lp = learnings_path(a.root)
+    if os.path.isfile(lp):
+        body = open(lp, encoding="utf-8").read()
+        st["learnings"] = {"path": lp, "sha256": hashlib.sha256(body.encode("utf-8")).hexdigest(),
+                           "rules": len([l for l in body.splitlines() if l.startswith("- [n-")]),
+                           "compiled_at": now()}
     save(a.root, a.slug, st)
-    ledger_append(a.root, a.slug, "init", f"title={a.title} track={st['track']}", stage="intake")
+    ledger_append(a.root, a.slug, "init", f"title={a.title} track={st['track']}"
+                  + (f" | learnings compiled: {st['learnings']['rules']} rules from {lp}" if st.get("learnings") else ""),
+                  stage="intake")
     out = {"ok": True, "state": sp}
+    if st.get("learnings"):
+        out["learnings"] = st["learnings"]
     gap = gitignore_gap(a.root)
     if gap:
         out["warning"] = gap
@@ -471,10 +546,13 @@ def cmd_advance(a):
     st = load(a.root, a.slug)
     if a.stage not in ORDER:
         die(f"unknown stage {a.stage}; stages: {ORDER}", 1)
+    skips = effective_skips(st)
+    jumped = jumped_stages(st, a.stage, skips)
     problems = []
-    if not next_allowed(st, a.stage):
-        problems.append(f"not the next stage after {st['stage']} (order: {' → '.join(ORDER)})")
-    problems += prereqs(st, a.stage)
+    if not next_allowed(st, a.stage, skips):
+        problems.append(f"not the next stage after {st['stage']} (order: {' → '.join(ORDER)}"
+                        + (f"; this tier may skip {sorted(skips)}" if skips else "") + ")")
+    problems += prereqs(st, a.stage, skips)
     if problems and not a.force:
         print(json.dumps({"ok": False, "stage": st["stage"], "target": a.stage, "unmet": problems},
                          ensure_ascii=False, indent=2))
@@ -491,22 +569,33 @@ def cmd_advance(a):
         refs.append({"type": "decided_by", "target": wid})
     prev = st["stage"]
     st["stage"] = a.stage
-    # S 档对整体验收的豁免：写成有类型、可数的记录（不是一句自由文本的借口），/retro 按档分桶数逃逸缺陷。
-    exempted = None
-    if (a.stage == "pr" and get_path(st, "intake.size") == "S"
+    # 网格跳过的每一个阶段都写成一条有类型、可数的记录（不是一句自由文本的借口）——
+    # /retro 按档分桶数逃逸缺陷，靠的就是这些行。豁免不留痕就不是豁免，是遗漏。
+    ev = get_path(st, "intake.size_evidence", {}) or {}
+    tier = get_path(st, "intake.size")
+    # 被越过的阶段之外，还有一种豁免：**进了这个阶段却空手走人**。整体验收是唯一有下游可见产物的
+    # 可跳阶段，所以 stage=acceptance 却既没有 evaluation_result 也没有 skipped_reason 就去 pr 时，
+    # 用的同样是网格的豁免，同样要留痕。少了这一条，「走到验收再空手离开」是一条不留任何记录的路
+    # ——而 /retro 正是靠这些行按档分桶数逃逸缺陷的（既有用例在这里抓到了本轮的回归）。
+    if (a.stage == "pr" and prev == "acceptance" and "acceptance" in skips
             and not get_path(st, "acceptance.evaluation_result")
             and not get_path(st, "acceptance.skipped_reason")):
-        ev = get_path(st, "intake.size_evidence", {}) or {}
-        exempted = (f"size=S exemption (rule {ev.get('rule', '?')}: files={ev.get('files')} acs={ev.get('acs')} "
-                    f"human_acs={ev.get('human_acs')}) — sizing.yaml S 档豁免 acceptance-fleet")
-        set_path(st, "acceptance.skipped_reason", exempted)
-        set_path(st, "acceptance.skipped_by", "size_tier")
+        jumped = jumped + ["acceptance"]
+    exempted = []
+    for s in jumped:
+        note = (f"size={tier} grid skips `{s}` (rule {ev.get('rule', '?')}: files={ev.get('files')} "
+                f"acs={ev.get('acs')} human_acs={ev.get('human_acs')}) — {skips[s]}")
+        exempted.append({"stage": s, "note": note})
+        if s == "acceptance":   # 下游（metrics.py / verify_pr.py）读这两个字段判"验收去哪了"
+            set_path(st, "acceptance.skipped_reason", note)
+            set_path(st, "acceptance.skipped_by", "size_tier")
     save(a.root, a.slug, st)
     ledger_append(a.root, a.slug, "advance", f"{prev} → {a.stage}", stage=a.stage, refs=refs)
-    if exempted:
-        ledger_append(a.root, a.slug, "size_exemption", exempted, stage=a.stage, decision="S")
+    for x in exempted:
+        ledger_append(a.root, a.slug, "size_exemption", x["note"], stage=a.stage, decision=tier)
     print(json.dumps({"ok": True, "from": prev, "to": a.stage, "waived": bool(problems),
-                      **({"size_exemption": exempted} if exempted else {})}, ensure_ascii=False))
+                      **({"size_exemption": [x["note"] for x in exempted]} if exempted else {})},
+                     ensure_ascii=False))
 
 
 def cmd_gate(a):
@@ -564,11 +653,34 @@ def cmd_gate(a):
     print(json.dumps({"ok": True, "gate": a.gate, "verdict": a.verdict}, ensure_ascii=False))
 
 
+def card_dependents(cards_dir, card):
+    """→ 声明 depends_on 里含 card 的卡。跳过一张卡时，依赖它的那些多半也会失败——
+    这句警告必须**当场**给出，而不是等它们一张张红给你看（AI-DLC 的 [S] 标记：
+    跳过是三选一里最贵的一个，因为它的代价不落在被跳的那张卡上）。"""
+    out = []
+    if not cards_dir or not os.path.isdir(cards_dir):
+        return out
+    for p in sorted(glob.glob(os.path.join(cards_dir, "*.yaml")) + glob.glob(os.path.join(cards_dir, "*.yml"))):
+        d = load_yaml(p) or {}
+        dep = d.get("depends_on") or []
+        if isinstance(dep, str):
+            dep = [dep]
+        if card in dep:
+            out.append(d.get("id") or os.path.splitext(os.path.basename(p))[0])
+    return out
+
+
 def cmd_card(a):
     st = load(a.root, a.slug)
     items = st.setdefault("cards", {}).setdefault("items", {})
     c = items.setdefault(a.card, {"status": "todo", "retries": 0, "commits": []})
+    if a.status == "skipped" and not a.reason:
+        die("`--status skipped` requires --reason. 跳过是失败三选一（重试 / 跳过 / 中止）里最贵的一个："
+            "它把代价推给依赖它的卡，而那笔代价没有理由就无法在复盘时被追回", 1)
     c["status"] = a.status
+    if a.status == "skipped":
+        c["skip_reason"] = a.reason
+    dependents = card_dependents(get_path(st, "cards.dir"), a.card) if a.status == "skipped" else []
     sha = resolve_commit(a.commit)
     if sha:
         commits = c.setdefault("commits", [])
@@ -580,11 +692,19 @@ def cmd_card(a):
     if sha:
         refs = [{"type": "implements", "target": a.card}] + [{"type": "implements", "target": ac} for ac in (a.ac or [])]
         extra["sha"] = sha
-    ledger_append(a.root, a.slug, "card", f"{a.card} → {a.status}" + (f" commit {sha}" if sha else ""),
+    ledger_append(a.root, a.slug, "card",
+                  f"{a.card} → {a.status}" + (f": {a.reason}" if a.reason else "") + (f" commit {sha}" if sha else "")
+                  + (f" | dependents likely to fail: {dependents}" if dependents else ""),
                   stage=st["stage"], refs=refs, extra=extra)
     out = {"ok": True, "card": a.card, "status": a.status}
     if sha:
         out["commit"] = sha
+    if a.status == "skipped":
+        out["reason"] = a.reason
+        out["dependents_likely_to_fail"] = dependents
+        if dependents:
+            out["warning"] = (f"{len(dependents)} card(s) declare depends_on {a.card} — skipping it means they "
+                              "will most likely fail too. Skip them deliberately or fix this one.")
     print(json.dumps(out, ensure_ascii=False))
 
 
@@ -597,7 +717,12 @@ def load_sizing(path=None):
 
 
 def derive_size(sizing, *, track, files, acs, human_acs):
-    """→ (tier, rule_id, why)。规则按顺序求值，第一条命中即定档；没有形容词，只有可数的量。"""
+    """→ (tier, rule_id, why)。规则按顺序求值，第一条命中即定档；没有形容词，只有可数的量。
+
+    缺一个量的规则不会命中：`files_max: 3` 在 files=None 时求值为假，不是为真。这条性质是
+    「早定档给不出 S」的全部依据——S 的唯一入口 SZ-05 要 files，而 intake / issue 阶段没有 diff。
+    sizing.yaml 的 `needs:` 把这件事写成可检的声明，`verify_sizing.py` 会核它与 `when:` 一致。
+    """
     for r in sizing["rules"]:
         w = r.get("when") or {}
         ok = True
@@ -629,11 +754,40 @@ def count_acs(done_when):
     return len(acc), sum(1 for x in acc if isinstance(x, dict) and x.get("kind") == "human")
 
 
+def acs_from_issue(path):
+    """→ (total, human) 或 die。数 AC 的**同一次读**要同时给出数字和它的来路。
+
+    不自己解析 issue 的 markdown：verify_issue.py 已经解析并校验了那个 AC v2 块，它的
+    `acceptance_stats` 就是权威。一个自己写的第二个解析器迟早与它分叉，而分叉出来的那个数
+    会被用来换豁免。issue 本身没过 verify_issue.py 时拒绝取数——形状不对的块数出来的数不可信。
+    """
+    vi = os.path.join(HERE, "..", "..", "issue", "scripts", "verify_issue.py")
+    if not os.path.isfile(vi):
+        die(f"verify_issue.py not found at {vi} — cannot count ACs from an issue body", 2)
+    r = subprocess.run([sys.executable, vi, path], capture_output=True, text=True)
+    try:
+        doc = json.loads(r.stdout)
+    except Exception:
+        die(f"verify_issue.py produced no parsable JSON for {path}:\n{r.stderr.strip() or r.stdout.strip()}", 2)
+    if doc.get("rejects"):
+        die(f"{path} does not pass verify_issue.py ({len(doc['rejects'])} rejects) — an AC count read out of a "
+            "malformed acceptance block is a guess, and a guess must not buy a tier. Fix the issue first:\n  - "
+            + "\n  - ".join(doc["rejects"][:5]), 1)
+    s = doc.get("acceptance_stats") or {}
+    return s.get("total"), s.get("human")
+
+
 def cmd_size(a):
     st = load(a.root, a.slug)
     sizing = load_sizing(a.sizing)
     files, acs, human = a.files, a.acs, a.human_acs
     src = {"files": "--files", "acs": "--acs", "human_acs": "--human-acs"}
+    if (acs is None or human is None) and a.from_issue:
+        i_acs, i_human = acs_from_issue(a.from_issue)
+        if acs is None and i_acs is not None:
+            acs, src["acs"] = i_acs, f"verify_issue:{a.from_issue}"
+        if human is None and i_human is not None:
+            human, src["human_acs"] = i_human, f"verify_issue:{a.from_issue}"
     dw = get_path(st, "contract.done_when")
     if (acs is None or human is None) and dw and os.path.isfile(dw):
         c_acs, c_human = count_acs(dw)
@@ -646,25 +800,313 @@ def cmd_size(a):
         if code == 0:
             files, src["files"] = len([l for l in out.splitlines() if l.strip()]), f"git diff {a.base}...HEAD"
     missing = [k for k, v in (("files", files), ("acs", acs)) if v is None]
-    if missing and not a.allow_unknown:
-        die(f"cannot derive a tier without {missing} — pass --files/--acs, or --base <ref> and a contract, "
-            "or --allow-unknown to record the fallback tier. An unmeasured tier is a guess, and a guess "
-            "that grants exemptions is worse than the default.", 1)
+    # 早定档（v0.12.0）：intake / issue 阶段还没有 diff，files 必然缺。允许在这里定档，但
+    # 来源记成 derived_early —— 而 S 档的唯一入口 SZ-05 需要 files，所以早定档在结构上
+    # 只能把你推向 L 或留在 M，给不出任何豁免。这不是额外加的限制，是这组规则本来的形状。
+    if missing and not (a.early or a.allow_unknown):
+        die(f"cannot derive a tier without {missing} — pass --files/--acs, --from-issue <body.md>, or "
+            "--base <ref> with a contract; use --early to size before there is a diff (a tier derived "
+            "without files can never reach S), or --allow-unknown to record the fallback tier. "
+            "An unmeasured tier is a guess, and a guess that grants exemptions is worse than the default.", 1)
     tier, rule_id, why = derive_size(sizing, track=st.get("track"), files=files, acs=acs, human_acs=human)
+    source = "derived_early" if (a.early and missing) else "derived"
     ev = {"files": files, "acs": acs, "human_acs": human, "sources": src,
           "rule": rule_id, "why": why, "at": now()}
-    out = {"ok": True, "tier": tier, "rule": rule_id, "why": why, "evidence": ev,
-           "tier_process": (sizing["tiers"].get(tier) or {}).get("process"),
-           "exempt": (sizing["tiers"].get(tier) or {}).get("exempt") or [],
+    tconf = sizing["tiers"].get(tier) or {}
+    probe = dict(st)
+    probe["intake"] = {**(st.get("intake") or {}), "size": tier, "size_source": source}
+    grid = effective_skips(probe, sizing)
+    out = {"ok": True, "tier": tier, "rule": rule_id, "why": why, "evidence": ev, "size_source": source,
+           "skips": grid, "depth": tconf.get("depth"), "test_strategy": tconf.get("test_strategy"),
            "committed": False}
     if a.commit:
+        prev_tier, prev_src = get_path(st, "intake.size"), get_path(st, "intake.size_source")
+        # 飞行中重定档：只能改尚未开始的阶段。落在身后的 skip 一律丢弃并留痕——
+        # 一次已经付过的 G2 不会因为重定档被追认为"其实不用签"（sizing.yaml recompose）。
+        ci = ORDER.index(st["stage"])
+        stale = sorted(s for s in grid if ORDER.index(s) <= ci)
+        if stale:
+            out["recompose_refused"] = stale
+            for s in stale:
+                grid.pop(s, None)
+            st.setdefault("intake", {})["skips_frozen"] = stale
         st.setdefault("intake", {})
-        st["intake"].update({"size": tier, "size_source": "derived", "size_evidence": ev})
+        st["intake"].update({"size": tier, "size_source": source, "size_evidence": ev})
         save(a.root, a.slug, st)
-        ledger_append(a.root, a.slug, "size", f"tier={tier} by {rule_id} ({why}) | files={files} acs={acs} human_acs={human}",
+        ledger_append(a.root, a.slug, "size",
+                      f"tier={tier} by {rule_id} ({why}) | files={files} acs={acs} human_acs={human} | source={source}",
                       stage=st["stage"], decision=tier)
-        out["committed"] = True
+        if prev_tier and prev_src != "default" and prev_tier != tier:
+            ledger_append(a.root, a.slug, "size_recompose",
+                          f"{prev_tier} → {tier} at stage={st['stage']}"
+                          + (f" | skips refused because already passed: {stale}" if stale else ""),
+                          stage=st["stage"], decision=tier)
+        out["committed"], out["skips"] = True, grid
     print(json.dumps(out, ensure_ascii=False, indent=2))
+
+
+# ---- plan: 启动前把这次运行的有效规模算出来，而不是跑到一半才知道 ------------------------
+# 借鉴 AI-DLC 2.0：它从编译网格算出本次跑几个 stage、几道门禁、几处扇出，**启动前**告诉你。
+# 这里同样从网格算，不是估的。一个说不出自己要花多少道门的流程，人只能靠猜决定要不要走它。
+def cmd_plan(a):
+    st = load(a.root, a.slug)
+    sizing = load_sizing(a.sizing)
+    skips = effective_skips(st, sizing)
+    tier = get_path(st, "intake.size")
+    tconf = (sizing.get("tiers") or {}).get(tier) or {}
+    cur = ORDER.index(st["stage"])
+    run = [s for s in ORDER if s not in skips]
+    gates = [g for g in ("g1", "g2", "g3") if get_path(st, f"gates.{g}.required", False)]
+    out = {
+        "slug": st["slug"], "track": st.get("track"), "stage": st["stage"],
+        "tier": tier, "size_source": get_path(st, "intake.size_source"),
+        "depth": tconf.get("depth"), "test_strategy": tconf.get("test_strategy"),
+        "autonomy": get_path(st, "autonomy.level", "unset"),
+        "stages_total": len(run), "stages_done": len([s for s in run if ORDER.index(s) < cur]),
+        "stages_remaining": [s for s in run if ORDER.index(s) > cur],
+        "skipped": skips,
+        "human_gates": gates, "human_gates_count": len(gates),
+        "gate_verdicts": {g: get_path(st, f"gates.{g}.verdict") for g in gates},
+        "fleet_subset": tconf.get("fleet_subset"),
+    }
+    if get_path(st, "intake.size_source") in (None, "default", "manual"):
+        out["note"] = ("tier is not derived — no stage is skipped and no exemption applies. "
+                       "Run `size --from-issue <body.md> --early --commit` (before there is a diff) or "
+                       "`size --base <ref> --commit` (after) to earn a tier with evidence.")
+    if a.json:
+        print(json.dumps(out, ensure_ascii=False, indent=2))
+        return
+    print(f"slug={out['slug']} track={out['track']} stage={out['stage']}")
+    print(f"tier={tier} ({out['size_source']}) · depth={out['depth']} · test_strategy={out['test_strategy']} "
+          f"· autonomy={out['autonomy']}")
+    print(f"stages: {out['stages_total']} to run ({out['stages_done']} done) · human gates: {len(gates)} "
+          f"{ {g: out['gate_verdicts'][g] for g in gates} }")
+    if skips:
+        print("skipped by the size grid:")
+        for s, why in sorted(skips.items(), key=lambda kv: ORDER.index(kv[0])):
+            print(f"  - {s}: {why}")
+    if out.get("note"):
+        print(f"note: {out['note']}")
+    print("remaining: " + " → ".join(out["stages_remaining"]))
+
+
+# ---- doctor: 这套装置现在健康吗（建议性，从不阻断） ----------------------------------------
+# 借鉴 AI-DLC 的 --doctor：按需查漂移，从不阻断门禁。它不进 advance 的前置条件——
+# 一个会阻断的 doctor 会变成第四道门，而这个插件只有三道门。
+def cmd_doctor(a):
+    findings = []
+    def add(sev, what, hint):
+        findings.append({"severity": sev, "check": what, "hint": hint})
+    try:
+        import yaml  # noqa: F401
+    except ImportError:
+        add("error", "pyyaml", "pip install pyyaml — 契约校验、图 / 环 / 网格 lint 全都要它")
+    for name, rel in (("verify_graph", "verify_graph.py"), ("verify_loop", "verify_loop.py"),
+                      ("verify_sizing", "verify_sizing.py"), ("trace", "trace.py"),
+                      ("lock_done_when", "lock_done_when.py")):
+        if not os.path.isfile(os.path.join(HERE, rel)):
+            add("error", name, f"missing script: {os.path.join(HERE, rel)}")
+    for name, rel in (("validate_done_when_v2", "../../donewhen-extract/scripts/validate_done_when_v2.py"),
+                      ("lint_cards", "../../plan-cards/scripts/lint_cards.py"),
+                      ("verify_issue", "../../issue/scripts/verify_issue.py"),
+                      ("verify_commit", "../../commit/scripts/verify_commit.py"),
+                      ("metrics", "../../retro/scripts/metrics.py")):
+        if not os.path.isfile(os.path.join(HERE, rel)):
+            add("error", name, f"missing sibling script: {rel}")
+    for label, script, args in (("graph", "verify_graph.py", [os.path.join(ASSETS, "graph.yaml")]),
+                                ("loops", "verify_loop.py", [os.path.join(ASSETS, "loops.yaml")]),
+                                ("sizing", "verify_sizing.py", [os.path.join(ASSETS, "sizing.yaml")])):
+        p = os.path.join(HERE, script)
+        if os.path.isfile(p):
+            r = subprocess.run([sys.executable, p] + args, capture_output=True, text=True)
+            if r.returncode != 0:
+                add("error", f"{label} lint", (r.stdout or r.stderr).strip().splitlines()[-1][:200] if (r.stdout or r.stderr) else "non-zero exit")
+    for tool, hint in (("git", "这条流水线的每一步都在 git 里"), ("gh", "issue / PR / review 都走 gh；`gh auth login`")):
+        if not shutil.which(tool):
+            add("warn", tool, f"not on PATH — {hint}")
+    settings = os.path.join(os.getcwd(), ".claude", "settings.json")
+    hook_ok = False
+    if os.path.isfile(settings):
+        try:
+            hook_ok = "check-clean" in open(settings, encoding="utf-8").read()
+        except OSError:
+            pass
+    if not hook_ok:
+        add("info", "stop hook", "check-clean 的 Stop hook 没装（assets/hooks/stop-clean-state.json 是模板，"
+                                 "有意不自动安装）。装上之后，卡还 doing 且工作区脏、或升级后没写失败报告，就结束不了 session")
+    if a.slug or os.path.isdir(a.root):
+        try:
+            st = load(a.root, resolve_slug(a.root, a.slug))
+            if get_path(st, "pending.failure_report"):
+                add("warn", "pending failure report", "有一次升级还没写失败报告（`report --path …`）")
+            if get_path(st, "intake.size_source") in ("default", None):
+                add("info", "tier", "档位还是缺省 M（没有证据）。`plan` 会告诉你这意味着一个阶段也跳不掉")
+        except SystemExit:
+            pass
+    order = {"error": 0, "warn": 1, "info": 2}
+    findings.sort(key=lambda f: order[f["severity"]])
+    bad = [f for f in findings if f["severity"] == "error"]
+    if a.json:
+        print(json.dumps({"ok": not bad, "findings": findings}, ensure_ascii=False, indent=2))
+    else:
+        if not findings:
+            print("doctor: 无发现。")
+        for f in findings:
+            print(f"[{f['severity']}] {f['check']}: {f['hint']}")
+        print(f"\ndoctor 是建议性的，从不阻断门禁（{len(bad)} error / "
+              f"{len([f for f in findings if f['severity'] == 'warn'])} warn）。")
+    sys.exit(1 if bad else 0)
+
+
+# ---- notes: 解释日记（四格）+ 门禁仪式 + 下轮生效 ------------------------------------------
+# 借鉴 AI-DLC 2.0 的 memory.md：账本记的是**已经发生的错**（失败 / 回流 / 裁决 / 豁免），
+# 记不到"规格含糊处 agent 当场做了什么选择"。那一条通道这个插件原来一条都没有：
+# divergence.py 抓的是事前 N 份草案的分歧，抓不到实现中途的默认填充。
+#
+# 四个格子的分法照抄，因为它分得对：前三个是可固化的知识，第四个明确**不晋升**——
+# open question 是研究项，不是规则。作用域默认最窄，且**没有 org 通道**（也照抄）。
+NOTE_KINDS = ("interpretation", "deviation", "tradeoff", "open_question")
+NOTE_HEADINGS = {"interpretation": "Interpretations", "deviation": "Deviations",
+                 "tradeoff": "Tradeoffs", "open_question": "Open questions"}
+PROMOTABLE = ("interpretation", "deviation", "tradeoff")
+NOTE_RE = re.compile(r"^- \[(n-\d{4,})\] (\S+) · stage=(\S+) · (.*)$")
+
+
+def notes_path(root, slug):
+    return os.path.join(paths(root, slug)[0], "notes.md")
+
+
+def learnings_path(root):
+    return os.path.join(root, "learnings", "project.md")
+
+
+def read_notes(root, slug):
+    p = notes_path(root, slug)
+    if not os.path.isfile(p):
+        return []
+    out, cur = [], None
+    for line in open(p, encoding="utf-8").read().splitlines():
+        if line.startswith("## "):
+            cur = {v: k for k, v in NOTE_HEADINGS.items()}.get(line[3:].strip())
+        m = NOTE_RE.match(line)
+        if m and cur:
+            out.append({"id": m.group(1), "at": m.group(2), "stage": m.group(3),
+                        "text": m.group(4), "kind": cur})
+    return out
+
+
+def cmd_note(a):
+    st = load(a.root, a.slug)
+    if a.promote:
+        return promote_note(a, st)
+    if not a.kind or not a.text:
+        die("note requires --kind and --text (or --promote <id> --to project --by <human>)", 2)
+    existing = read_notes(a.root, a.slug)
+    nid = f"n-{len(existing) + 1:04d}"
+    p = notes_path(a.root, a.slug)
+    if not os.path.isfile(p):
+        body = ("# notes — 本次运行的观察日志（脚本追加，不手工编辑）\n\n"
+                "> 四个格子的分法是有意的：前三格是可固化的知识，**Open questions 不晋升**——\n"
+                "> 它是研究项，不是规则。门禁前 `notes --for-gate <g>` 把每一行逐字念给签字人，\n"
+                "> 不改写、不做「有趣度」筛选；分类是签字人唯一要做的事。\n\n"
+                + "".join(f"## {NOTE_HEADINGS[k]}\n\n" for k in NOTE_KINDS))
+        atomic_write(p, body)
+    text = open(p, encoding="utf-8").read()
+    head = f"## {NOTE_HEADINGS[a.kind]}\n"
+    if head not in text:
+        text += f"\n{head}\n"
+    row = f"- [{nid}] {now()} · stage={st['stage']} · {a.text.strip()}\n"
+    i = text.index(head) + len(head)
+    j = text.find("\n## ", i)
+    j = len(text) if j == -1 else j
+    block = text[i:j].rstrip("\n")
+    atomic_write(p, text[:i] + (block + "\n" if block else "") + row + "\n" + text[j:].lstrip("\n"))
+    ledger_append(a.root, a.slug, "note", f"[{nid}] {a.kind}: {a.text.strip()}", stage=st["stage"],
+                  refs=[{"type": "references", "target": nid}])
+    print(json.dumps({"ok": True, "id": nid, "kind": a.kind, "file": p}, ensure_ascii=False))
+
+
+def promote_note(a, st):
+    if not a.to or not a.by:
+        die("--promote requires --to project and --by <human> (作用域默认最窄；没有 org 通道)", 2)
+    if a.to != "project":
+        die("--to must be `project` — 这里没有 team / org 通道。一条学习先在最窄的作用域上被用过，"
+            "才谈得上往外提；提升是人在仓库之间做的事，不是这个脚本的权限", 1)
+    rows = {n["id"]: n for n in read_notes(a.root, a.slug)}
+    n = rows.get(a.promote)
+    if not n:
+        die(f"unknown note {a.promote} (see `notes`)", 1)
+    if n["kind"] not in PROMOTABLE:
+        die(f"{a.promote} is an open question — open questions do not get promoted. 它是研究项，不是规则；"
+            "要它变成规则，先把它答了，再作为 interpretation / deviation / tradeoff 记一条", 1)
+    already = set(get_path(st, "notes.promoted", []) or [])
+    if a.promote in already:
+        die(f"{a.promote} already promoted", 1)
+    lp = learnings_path(a.root)
+    os.makedirs(os.path.dirname(lp), exist_ok=True)
+    if not os.path.isfile(lp):
+        atomic_write(lp, "# project learnings — 下一轮生效的规则\n\n"
+                         "> 本轮不生效：这一轮你已经在对话里纠正过了。新规则写在盘上，等下一次 `init`\n"
+                         "> 编译进去，从第一个阶段起生效。理由与不变量 13 同源——跑动中改规则会让\n"
+                         "> 前面已经批准过的门失去意义，你当时批准的是另一套前提。\n\n")
+    with open(lp, "a", encoding="utf-8") as fh:
+        fh.write(f"- [{n['id']}] ({n['kind']}) {n['text']}  \n"
+                 f"  <sub>promoted by {a.by} at {now()} from {st['slug']} stage={n['stage']}</sub>\n")
+    st.setdefault("notes", {}).setdefault("promoted", []).append(a.promote)
+    save(a.root, a.slug, st)
+    ledger_append(a.root, a.slug, "note_promoted", f"[{a.promote}] → project ({n['kind']}): {n['text']}",
+                  stage=st["stage"], by=a.by, decision="project",
+                  refs=[{"type": "decided_by", "target": f"human:{a.by}"}])
+    print(json.dumps({"ok": True, "promoted": a.promote, "to": lp,
+                      "effective": "next run (init compiles it)"}, ensure_ascii=False))
+
+
+def cmd_notes(a):
+    st = load(a.root, a.slug)
+    rows = read_notes(a.root, a.slug)
+    promoted = set(get_path(st, "notes.promoted", []) or [])
+    if a.json:
+        print(json.dumps({"notes": [dict(r, promoted=(r["id"] in promoted)) for r in rows],
+                          "for_gate": a.for_gate}, ensure_ascii=False, indent=2))
+        return
+    if not rows:
+        print("notes: 空。`note --kind interpretation|deviation|tradeoff|open_question --text …` 记一条。")
+        print("空不等于没发生——规格含糊处的选择没被记下来，只是没人看见它。")
+        return
+    if a.for_gate:
+        print(f"# {a.for_gate.upper()} 门禁仪式 — 逐字呈现，不改写、不筛选\n")
+    for k in NOTE_KINDS:
+        sel = [r for r in rows if r["kind"] == k]
+        print(f"## {NOTE_HEADINGS[k]} ({len(sel)})"
+              + ("   ← 不晋升：研究项，不是规则" if k == "open_question" else ""))
+        for r in sel:
+            mark = " [已晋升]" if r["id"] in promoted else ""
+            print(f"  [{r['id']}] stage={r['stage']} · {r['text']}{mark}")
+        print()
+    if a.for_gate:
+        print("签字人要做的唯一分类：上面哪几条该变成下一轮的规则？")
+        print("  晋升：`note --promote n-000X --to project --by <你>`（Open questions 不可晋升）")
+        print("还有什么要留给下次的吗？（自由文本通道，永远问一次）")
+        print("  `note --kind interpretation|deviation|tradeoff|open_question --text \"…\"`")
+
+
+def cmd_autonomy(a):
+    """自治阶梯：整个流程只问一次，答案记进 state，`--resume` 之后仍然有效。
+
+    借鉴 AI-DLC 的坑一修法：别每一步都问（保姆），也别攒到最后（审不动）。
+    与原来的 `--autopilot` 的差别是它**不是一个 CLI flag**：flag 每次调用都要重给，
+    恢复会话就丢；记进 state 的答案跨会话活着，而且能被 /retro 数。
+
+    三档都不改门：G1/G2/G3 永远要人签（不变量 6）。自治调的是"逐步确认"，不是"谁签字"。
+    """
+    st = load(a.root, a.slug)
+    st.setdefault("autonomy", {}).update({"level": a.level, "by": a.by, "at": now()})
+    save(a.root, a.slug, st)
+    ledger_append(a.root, a.slug, "autonomy", f"level={a.level}", stage=st["stage"], by=a.by,
+                  decision=a.level, refs=[{"type": "decided_by", "target": f"human:{a.by}"}])
+    print(json.dumps({"ok": True, "level": a.level,
+                      "gates_still_human": ["g1", "g2", "g3"],
+                      "failure_still_interrupts": True}, ensure_ascii=False))
 
 
 def run_git(args):
@@ -1058,6 +1500,9 @@ def cmd_archive(a):
     os.makedirs(a.to, exist_ok=True)
     copied = []
     srcs = [sp, lp] + ([trace_path(a.root, a.slug)] if os.path.isfile(trace_path(a.root, a.slug)) else [])
+    # notes.md 归档：解释日记是 /retro 唯一能读到"规格含糊处当时怎么选的"的地方。
+    # 不归档它，下一次复盘就只剩下失败记录——只知道撞了墙，不知道当初为什么往那边走。
+    srcs += [p for p in [notes_path(a.root, a.slug)] if os.path.isfile(p)]
     # the contract is not an "artifact" entry, yet retro/metrics.py reads done_when.yaml FROM the archive to
     # compute the human-AC ratio — leaving it behind made that metric empty for every run (I-85)
     srcs += [p for p in (get_path(st, k) for k in CONTRACT_FILES) if p and os.path.isfile(p)]
@@ -1103,9 +1548,28 @@ def main():
     s = P("size"); s.add_argument("--files", type=int); s.add_argument("--acs", type=int)
     s.add_argument("--human-acs", type=int, dest="human_acs"); s.add_argument("--base",
                    help="git ref: 用 diff 数改动文件数，而不是引擎报一个数")
+    s.add_argument("--from-issue", dest="from_issue",
+                   help="issue body 文件：AC 数与 human AC 数从 verify_issue.py 的 acceptance_stats 里读，"
+                        "数字和它的来路由同一次读产生；issue 没过 verify_issue.py 就拒绝取数")
+    s.add_argument("--early", action="store_true",
+                   help="还没有 diff 时定档（source=derived_early）。S 的唯一入口需要 files，"
+                        "所以早定档在结构上只能推向 L 或留在 M，给不出豁免")
     s.add_argument("--commit", action="store_true", help="把档位与证据写进 state（否则只推荐）")
     s.add_argument("--allow-unknown", action="store_true"); s.add_argument("--sizing")
-    s = P("card"); s.add_argument("card"); s.add_argument("--status", required=True, choices=["todo", "doing", "done", "blocked"]); s.add_argument("--commit"); s.add_argument("--ac", action="append")
+    s = P("plan"); s.add_argument("--sizing"); s.add_argument("--json", action="store_true")
+    s = P("doctor"); s.add_argument("--json", action="store_true")
+    s = P("note"); s.add_argument("--kind", choices=list(NOTE_KINDS)); s.add_argument("--text")
+    s.add_argument("--promote", help="note id，晋升成下一轮的项目规则（Open questions 不可晋升）")
+    s.add_argument("--to", choices=["project"], help="作用域只有 project：没有 team / org 通道")
+    s.add_argument("--by")
+    s = P("notes"); s.add_argument("--for-gate", dest="for_gate", choices=["g1", "g2", "g3"],
+                                   help="门禁仪式：逐字念每一行，不改写不筛选")
+    s.add_argument("--json", action="store_true")
+    s = P("autonomy"); s.add_argument("--level", required=True,
+                                      choices=["ask_each", "auto_until_gate", "auto_until_failure"])
+    s.add_argument("--by", required=True)
+    s = P("card"); s.add_argument("card"); s.add_argument("--status", required=True, choices=["todo", "doing", "done", "blocked", "skipped"]); s.add_argument("--commit"); s.add_argument("--ac", action="append")
+    s.add_argument("--reason", help="`--status skipped` 必填：跳过把代价推给依赖它的卡")
     s = P("fail"); s.add_argument("--signal", required=True); s.add_argument("--card"); s.add_argument("--fingerprint"); s.add_argument("--evidence")
     s.add_argument("--score", type=float); s.add_argument("--by"); s.add_argument("--routing")
     s = P("waive"); s.add_argument("--signal", required=True); s.add_argument("--reason", required=True); s.add_argument("--by", required=True)
@@ -1132,9 +1596,12 @@ def main():
         return cmd_graph(a)
     if a.cmd == "loops":
         return cmd_loops(a)
+    if a.cmd == "doctor" and not (a.slug or os.path.isdir(a.root)):
+        return cmd_doctor(a)   # doctor 在没有任何 run 的仓库里也要能跑：它查的是装置，不是这一次运行
     a.slug = resolve_slug(a.root, a.slug)
     return {"show": cmd_show, "set": cmd_set, "advance": cmd_advance, "gate": cmd_gate, "card": cmd_card,
-            "size": cmd_size,
+            "size": cmd_size, "plan": cmd_plan, "doctor": cmd_doctor,
+            "note": cmd_note, "notes": cmd_notes, "autonomy": cmd_autonomy,
             "fail": cmd_fail, "waive": cmd_waive, "report": cmd_report, "check-clean": cmd_check_clean,
             "graph": cmd_graph, "ledger": cmd_ledger, "archive": cmd_archive}[a.cmd](a)
 

@@ -18,6 +18,10 @@ final_verdict:
       vendor: <claude | openai | google>
       finding_count: <int>
       schema_valid: <bool>
+      completion: <complete | incomplete | skipped | unmarked>
+      # completion comes from the review's own review_complete: block (M0 step 6).
+      # `incomplete` / `unmarked` force NEEDS_HUMAN — a reviewer who did not report
+      # is not a reviewer who reported nothing.
   rules_loaded:                                    # parsed rules from --rules
     - condition: <text>
       severity: <blocking | conditional | informational | needs-human>
@@ -104,6 +108,10 @@ final_verdict:
     cross_vendor_unavailable: <bool>
     tool_call_limit_warned: <bool>                 # M3 hit the 5-read budget
     schema_violations: [<text>, ...]               # any review file had schema issues
+    completeness_unverified: <bool>                # no review-completeness.yaml beside the reviews
+                                                   # (standalone use). On a PASS this must also be
+                                                   # repeated verbatim in decision_reasons.
+    incomplete_reviews: [<file>, ...]              # reviews that declared they did not finish
 
 # ====== EXAMPLE OUTPUT (BLOCK_MERGE state) ======
 
@@ -114,11 +122,11 @@ final_verdict:
   reviews_source: ratchet-log/iteration-003/fleet-outputs/
   rules_source: specs/subscription-cancellation/done_when.yaml
   reviews_loaded:
-    - { role: code-reviewer, file: code-reviewer-security.yaml, vendor: claude, finding_count: 1, schema_valid: true }
-    - { role: code-reviewer, file: code-reviewer-logic-cross.yaml, vendor: openai, finding_count: 2, schema_valid: true }
-    - { role: qa-reviewer, file: qa-reviewer.yaml, vendor: claude, finding_count: 1, schema_valid: true }
-    - { role: pm-reviewer, file: pm-reviewer.yaml, vendor: claude, finding_count: 1, schema_valid: true }
-    - { role: spec-gaming-detector, file: gaming-detector.yaml, vendor: claude, finding_count: 1, schema_valid: true }
+    - { role: code-reviewer, file: code-reviewer-security.yaml, vendor: claude, finding_count: 1, schema_valid: true, completion: complete }
+    - { role: code-reviewer, file: code-reviewer-logic-cross.yaml, vendor: openai, finding_count: 2, schema_valid: true, completion: complete }
+    - { role: qa-reviewer, file: qa-reviewer.yaml, vendor: claude, finding_count: 1, schema_valid: true, completion: complete }
+    - { role: pm-reviewer, file: pm-reviewer.yaml, vendor: claude, finding_count: 1, schema_valid: true, completion: complete }
+    - { role: spec-gaming-detector, file: gaming-detector.yaml, vendor: claude, finding_count: 1, schema_valid: true, completion: complete }
   rules_loaded:
     - { condition: "any P0 finding blocks merge", severity: blocking, applies_to: any-reviewer, parsed_predicate: {field: severity, op: ==, value: P0, action: block}, source: done_when.yaml }
     - { condition: "mutation_kill_rate >= 0.7", severity: blocking, applies_to: qa-reviewer, parsed_predicate: {field: mutation_kill_rate, op: ">=", value: 0.7}, source: done_when.yaml }
@@ -181,3 +189,5 @@ final_verdict:
     cross_vendor_unavailable: false
     tool_call_limit_warned: false
     schema_violations: []
+    completeness_unverified: false
+    incomplete_reviews: []

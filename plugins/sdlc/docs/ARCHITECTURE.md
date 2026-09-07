@@ -135,7 +135,7 @@ intake → track → issue → branch → contract → g2 → cards → implemen
 | 档 | 检查项 | 执行者 | 效力 |
 |---|---|---|---|
 | A 机械 | 测试 / lint / 类型 / secrets / 白名单 / 锁 / 新增依赖 / REQ 覆盖 / 隐藏集 / 契约硬命中 / 有复现的缺陷 / **结构（复杂度增量 · 重复块 · 依赖方向）** | 脚本、`qa-reviewer`（含 `verify_structure.py`）、`spec-gaming-detector`（硬）、`pr-review` 缺陷类 | 一票否决；结构闸 exit 3 = 未检，按未检记录不按通过 |
-| B 结构 | 复杂度 / 重复 / 公共 API 变更 / diff 体量 / spec-drift / gaming 软命中 | `code-reviewer`、`spec-drift-detector`、`pr-review` | 超阈值告警，有界可进 |
+| B 结构 | 复杂度 / 重复 / 公共 API 变更 / diff 体量 / spec-drift / gaming 软命中 / **跨制品术语漂移** | `code-reviewer`、`spec-drift-detector`、`pr-review`、`verify_vocabulary.py` | 超阈值告警，有界可进；术语传感器 exit 3 = 没有本体，按未检记不按通过 |
 | C 判断 | human AC / 架构意图 / 可读性 | `pm-reviewer`（只路由）、`meta-judge`、`pr-review` C 档 | 请求人工（G3） |
 
 ### 3.6 账本与非对称回滚
@@ -284,9 +284,16 @@ derived/ · PSL-<x>.md · dos.yaml          releases/vX.Y.Z.md · CHANGELOG.md �
 11. **图与环是数据，不是散文**：节点有写范围，每个圈有环契约，评估者到实现者只带 fix_prompt，人节点有恢复绑定——`verify_graph.py` 检。
 12. **收敛 ≠ 正确**：repeat / oscillation / plateau 都是"换层"的信号，不是"再试一次"的理由；`impossible` 只能由评估者说。
 13. **harness 改动经人**：`/tune` 只出 diff；routing / 脚本默认值 / fix_list 的改动都是 PR。
-14. **声明了但没求值 ≠ 通过**（v0.10.0）：契约承诺了一条判据而分析器跑不了，结果是 `unevaluated`
-    （`verify_structure.py` 退出码 3），调用方按"未检"记录。一把没跑的尺子不许报绿；连"一个文件都没数出来"
-    也算没跑——那次假绿是本轮自己的孪生用例抓到的。
+14. **声明了但没求值 ≠ 通过**（v0.10.0；v0.12.0 扩到 agent）：契约承诺了一条判据而**求值者没跑完**，
+    结果是 `unevaluated`，调用方按"未检"记录。一把没跑的尺子不许报绿；连"一个文件都没数出来"也算没跑——
+    那次假绿是本轮自己的孪生用例抓到的。求值者是脚本还是 LLM 不改变这条规则，只改变它怎么被检出来：
+    - **脚本**：分析器缺席 → `verify_structure.py` 退出码 3。
+    - **agent**（六个审查 skill、`agents/` 下的隔离子 agent）：一次被截断的审查留下的是一份**短而干净**的
+      报告，与"走完全程、什么也没发现"在字节层面无法区分。所以每份产物自带 `review_complete:` 标记
+      （`status` + `findings_count`，两个数字产生于不同时刻，对不上就是截断的证据），
+      `verify_review_complete.py` 在 meta-judge 之前判它，退出码 3 同义。缺标记走严路，不走宽路。
+    一次审查最多重派一次，重派前把陈旧产物移进 `stale/`（不删——失败记录不回滚，规则 5）；
+    第二次仍不完整就记 A 档 `unevaluated`，DONE 不成立。
 15. **缺省不给豁免**（v0.10.0）：`intake.size` 缺省 M，S 档跳过整体验收的豁免只认 `size_source=derived`，
     手设的档位拿不到。漏填得到的是较严的路径——**一个靠遗漏就能打开的门不是门**。
 
@@ -305,9 +312,10 @@ derived/ · PSL-<x>.md · dos.yaml          releases/vX.Y.Z.md · CHANGELOG.md �
 | L6 实现 · 白名单 · 指纹 | implement · commit · ratchet · sdlc_state fail | 已有 |
 | L7 A/B/C · G3 | acceptance-fleet 六 skill · meta-judge · pr-review · gate g3 | 已有；`meets_done_when` 比对脚本**空白** |
 | L8 合入 · 交付 · 逃逸 | pr · review-loop · release · issue --escape | 已有 |
-| X1 DOS 生命周期 | dos-extract · invariant-extract · dos-proposal | 部分：应然↔现状对账、candidate 命名空间、ontology-drift **空白** |
+| X1 DOS 生命周期 | dos-extract · invariant-extract · dos-proposal · `verify_vocabulary.py`（B 档） | 部分：应然↔现状对账已有（`reconcile_dos.py`）；**ontology-drift 补上了「制品→本体」这一向**——契约 / 卡 / spec / issue / PR body 的散文里出现、本体解析不了的名词，现在有传感器。仍空白：**「本体→代码」那一向**（本体改了、实现没跟上，没人检）、本体版本演进与 candidate 命名空间 |
 | X2 路由 · 预算 | routing.yaml · sdlc_state fail | 已有 |
 | **结构性质量（A 档）** | `constraints.structure` · `verify_structure.py` | 已有（v0.10.0）；unevaluated 有独立退出码 |
+| **审查完成度（A 档）** | `review_complete:` 标记 · `verify_review_complete.py`（fleet S1.5） | 已有（v0.12.0）；缺标记 / 缺文件 / 数目不符都是退出码 3，不是通过 |
 | **仓库地图** | `agent_map_template.md` · `verify_agent_map.py --probe` · `slice_agent_map.py` | 已有（v0.10.0） |
 | **TASK 轨模糊度信号** | `divergence.py`（N 份隔离草案） | 已有（v0.10.0） |
 | **体量分档** | `sizing.yaml` · `sdlc_state.py size` | 已有（v0.10.0） |

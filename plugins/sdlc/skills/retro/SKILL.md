@@ -8,7 +8,7 @@ description: >-
   出问题" / "度量" / 一个或多个 feature 归档之后。NOT for: 单次 bug 的根因（/adversarial-debugging 类）、
   改 skill 本身（skill-evolve 邻居）。前置：`specs/*/` 至少一个归档。
 argument-hint: "[--archive specs/] [--since YYYY-MM-DD] [--out retro/retro-<date>.md]"
-version: 0.4.0
+version: 0.5.0
 user-invocable: true
 ---
 
@@ -27,7 +27,11 @@ deletion 测试：撤掉本 skill，引擎会写"这次沟通不够充分，下�
 
 - **数据全部来自归档，不需要额外埋点**：`specs/<slug>/state.json`（阶段时间戳、分层计数、门的裁决、豁免）、
   `ledger.md`（每次失败与路由）、`done_when.yaml`（human AC 占比）、`escape-defects.md`、`releases/*.md`、
-  `.sdlc/pr-watch/*.json`（review 轮次与 verdict 分布）。
+  `.sdlc/pr-watch/*.json`（review 轮次与 verdict 分布）、**`notes.md`（v0.12：解释日记四格）**。
+- **账本与日记问的不是同一个问题**。账本记**已经发生的错**（失败 / 回流 / 裁决 / 豁免），日记记
+  **规格含糊处当场做了什么选择**（Interpretations / Deviations / Tradeoffs / Open questions）。
+  一次逃逸缺陷的因果链走到头如果落在"当时按默认理解填了"，那条记录只可能在日记里——账本里没有它，
+  因为当时没人认为那是个错。复盘时两份一起读：账本给"哪层病了"，日记给"当初为什么往那边走"。
 - **指标与它诊断的层**：
 
   | 指标 | 数据源 | 高了说明哪层病 |
@@ -41,6 +45,8 @@ deletion 测试：撤掉本 skill，引擎会写"这次沟通不够充分，下�
   | **按体量分桶的逃逸缺陷率**（v0.4） | state.intake.size + escape-defects | S 档豁免了整体验收，它的逃逸率如果不低于 M，说明分档标准定错了——分档对不对由逃逸缺陷回答，不由拍脑袋回答 |
   | **size_exemption 次数**（v0.4） | ledger 的 size_exemption 行 | 每一次都是一次"这次不跑六审"的决定；数它，别让它变成默认 |
   | **agent-map 候选**（v0.4） | ledger 的失败指纹 + 逃逸缺陷 | 同一个坑绊倒第二个实现者 = 它该进 `agent-map.md` 的「已知陷阱」并带上这条 ledger 行做来路 |
+  | **未晋升的 interpretation 数**（v0.5） | `notes.md` 的四格 + `state.notes.promoted` | 每条 interpretation 都是一次"规格没说、我替它决定了"。**长期不晋升也不复现**说明那次含糊无关紧要；**同一条含义反复出现在多次运行的日记里**说明契约层缺一条判据——提案落 `ac` 或 `dos` |
+  | **Open questions 的存量**（v0.5） | `notes.md` 第四格 | 它们不晋升，所以只会堆着。堆到第三次还在问同一件事 = 它不是研究项，是一条没人肯写的判据 |
   | lead time | created_at → merged_at | 与轮次一起看，单看无意义 |
   | 逃逸缺陷因果链（v0.6） | trace.jsonl：escape → caused_by* → 根 | 深度与根的层直接回答"为什么门没拦住"；根在 task = 契约；根在 gate = 人签时没看到 |
   | 契约返工率（v0.6） | trace.jsonl：`supersedes done_when.yaml#AC-*` / AC 总数 | 高 = G2 之前判据写得太早或太松 |

@@ -9,7 +9,7 @@ description: >-
   "split into cards" / "task cards" / 契约已 G2 冻结、准备实现之前。NOT for: 写契约（/donewhen-extract）、
   写测试（/test-suite-generator）、实现卡（/implement）。前置：`.done_when.lock` 存在（G2 已签）。
 argument-hint: "<specs/<feature>/ 或 done_when.yaml> [--spec spec.md] [--dos dos.yaml] [--out cards/] [--max-context 40000]"
-version: 0.4.0
+version: 0.5.0
 user-invocable: true
 ---
 
@@ -54,6 +54,12 @@ implement` 要求 `cards.lint_passed`）。
 - `scripts/lint_cards.py <cards_dir> [--spec spec.md] [--done-when done_when.yaml] [--dos dos.yaml] [--max-context N] [--repo-root DIR] [--projection-pattern RE]`
   —— exit 0 / 1 / 2。**进 implement 前必须跑**，过了 `sdlc_state.py set cards.lint_passed=true`。
   给 `--repo-root` 时会读渲染脚本本身核验 `reads_from`，声明因此可核验而非自述。
+- `../dos-extract/scripts/verify_vocabulary.py --dos dos.yaml cards/CARD-*.yaml` —— **B 档术语传感器**。
+  `lint_cards.py` 的第 3 项只闭包 `dos_slice.objects` / `dos_slice.invariants`（**结构化字段，作者主动列出来的**）；
+  卡的 `title` 与 `notes` 是散文，从来没人检——而实现者拿到的**全部输入就是这张卡**，
+  卡里出现一个本体解析不了的名词，是整条流水线上代价最高的一次漂移：实现者会自己给它挑一个意思，
+  而这个意思要到验收才对得上。两者不重叠：结构化归 `lint_cards.py`（拒），散文归传感器（告警）。
+  exit 0 / 1（超阈值）/ 2（IO）/ **3（没有 dos.yaml = 未检，不是通过；`--require-ontology` 变 1）**。
 - `assets/card_template.yaml` —— 卡的具名字段。
 - `references/splitting.md` —— 拆分启发式（按观察边界 / 按 DOS 对象 / 先契约后 UI / 投影与数据源同卡）、
   共享文件处置、上下文估算法、以及 L4 对契约层 REQ 粒度的反压。
@@ -71,13 +77,19 @@ implement` 要求 `cards.lint_passed`）。
 
 - **前置**：`.done_when.lock` 存在（契约冻结后才拆卡，否则卡的 AC 子集没有对象）。
 - **done_when**：`lint_cards.py` exit 0 ∧ 每张卡 `sdlc_state.py card CARD-xx --status todo` 登记 ∧ `cards.lint_passed=true`。
+- **B 档（告警，不挡）**：`verify_vocabulary.py --dos dos.yaml cards/CARD-*.yaml` 的计入发现记进账本。
+  超阈值不阻止进 implement——术语漂移是告警不是否决——但它是"卡该不该重写一句话"的输入，
+  且 exit 3（没有本体）必须按**未检**记，不许记成通过。
 - 卡的修改（重拆）= 方案层回流：`sdlc_state.py fail --signal same_card_same_fingerprint` 之后重拆，账本留痕。
 
 ## 失败机制
 
 - lint 报 REQ 未覆盖 → 补卡或把 REQ 收进已有卡，不删 REQ。
 - lint 报写冲突 → 收窄 glob 或把共享文件归一张卡并在其余卡 `forbidden_files` 列出。
-- lint 报闭包失败 → 卡里的名词不在 dos.yaml：要么改用 DOS 词，要么先走本体层（`/dos-extract` 更新 / 变更提案）。
+- lint 报闭包失败 → 卡的 `dos_slice` 名词不在 dos.yaml：要么改用 DOS 词，要么先走本体层（`/dos-extract` 更新 / 变更提案）。
+- 传感器报 near_miss → 卡的散文里写了本体词的**省略式**（`transaction` 之于 `BankingTransaction`）或
+  另一种写法（`work_unit` 之于 `WorkUnit`）：改卡用本体的词，或去 `dos.yaml` 把它写进 `synonyms:`。
+  **不要靠调阈值让它闭嘴**——同义词是声明出来的，不是猜出来的（`dos_closure.py` 的铁律）。
 - 上下文超限 → 按 `references/splitting.md` 再拆；不要调大 `--max-context`。
 
 ## 高危黑名单（不可豁免）
@@ -89,7 +101,8 @@ implement` 要求 `cards.lint_passed`）。
 
 ## 接线
 
-上游：G2（`.done_when.lock`）、`/donewhen-extract` / `/acceptance-spec`（REQ 与 AC）、`/dos-extract`（词表）。
+上游：G2（`.done_when.lock`）、`/donewhen-extract` / `/acceptance-spec`（REQ 与 AC）、`/dos-extract`（词表 +
+`verify_vocabulary.py` 传感器）。
 下游：`/implement`（按卡）、`/test-suite-generator`（按卡分批）、`/commit --card`、`/sdlc`（`cards.items`）。
 
 ## 本 skill 自身的出口门

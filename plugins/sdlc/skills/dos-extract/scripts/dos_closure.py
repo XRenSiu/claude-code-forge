@@ -67,6 +67,29 @@ class Closure:
             return t not in self.objects and t in self.object_aliases
         return t not in self.rules and t in self.rule_aliases
 
+    def vocabulary(self, kind="object"):
+        """The declared vocabulary as `label -> (canonical, kind)` — canonical names AND synonyms.
+
+        `resolve_*` answers "does this word close?"; this answers "which words ARE the
+        contract?". `verify_vocabulary.py` needs the second question to say what an
+        unresolved term is CLOSE TO, and to report ontology entries no artifact uses.
+        Keeping it here means both questions read the same `objects` / `rules` shape —
+        a second parser living in the sensor is how the sensor and the gate start
+        disagreeing about what a term is.
+        """
+        out = {}
+        if kind in ("object", "both"):
+            for name in self.objects:
+                out[name] = (name, "object")
+            for alias, canon in self.object_aliases.items():
+                out.setdefault(alias, (canon, "object"))
+        if kind in ("rule", "both"):
+            for rid in self.rules:
+                out[rid] = (rid, "rule")
+            for alias, canon in self.rule_aliases.items():
+                out.setdefault(alias, (canon, "rule"))
+        return out
+
     @property
     def object_names(self):
         return set(self.objects)

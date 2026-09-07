@@ -1,0 +1,11 @@
+schema: 2
+feature: settlement
+acceptance:
+  - id: AC-001-a
+    req: REQ-001
+    kind: mechanical
+    observe: "cli:post"
+    given: { input: "一笔平衡的 BankingTransaction" }
+    expect: { exit: 0 }
+    statement: WHEN 一笔 banking_transaction 入队 THE SYSTEM SHALL 按 R003 记账并回执。
+    notes: settlement_batch 的窗口按 R002 冻结。

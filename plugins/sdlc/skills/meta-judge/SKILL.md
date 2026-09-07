@@ -23,7 +23,7 @@ description: >-
   verdict" / "decide merge based on findings" / "/meta-judge" / pointing at
   a directory of review outputs.
 argument-hint: "<reviews_source: directory or list> --rules=<path> [--context=<json with PR metadata>]"
-version: 1.1.0
+version: 1.2.0
 user-invocable: true
 # imported into sdlc 2026-09-05 from done-when-pipeline v1.1.0 (canonical copy in this repo; qanat holds an older copy); body kept, sdlc wiring section added
 ---
@@ -46,6 +46,8 @@ Do not narrate further — just walk the phases.
    - Re-grading an evaluator's verdict by independently looking at the code.
    - Spawning additional evaluators or re-prompting existing ones.
    - "Helpful" additions like "I also noticed..." — if you noticed it, you violated rule 1.
+
+   **The hard wall has a price, and this is who pays it (v1.2.0).** Precisely because you may not go and look, you cannot make up for a review that never finished. A truncated review leaves a short, clean file that is byte-for-byte indistinguishable from a thorough one that found nothing — and rule 1 forbids the one move that could tell them apart. So the distinction is settled upstream and handed to you as data: `/acceptance-fleet` S1.5 runs `scripts/verify_review_complete.py` and writes `review-completeness.yaml` next to the reviews, and each review carries its own `review_complete:` block. **Never synthesize a PASS over a review recorded there as `incomplete` or `unevaluated`.** An absent verdict is not a clean verdict; a reviewer who did not report is not a reviewer who reported nothing. `state_decision` in that case is `NEEDS_HUMAN`, with the review named and its reason quoted verbatim in `needs_human_items[]`. This is the same rule as invariant 14 ("declared but not evaluated ≠ passed"), applied to an LLM instead of an analyzer — and it is not a special case of rule 7, it is rule 1's own consequence.
 2. **Four actions ONLY: dedupe, weight, arbitrate, classify.** See `references/synthesis-protocol.md` for the operational detail. Any output not derivable from these four actions is out of scope.
 3. **No multi-agent debate.** *Judging with Many Minds* (Dartmouth/Yale 2025, arXiv 2505.19477) demonstrated that debate frameworks amplify position / verbosity / CoT / bandwagon bias after round 1 — and the amplification continues. Meta-judge frameworks demonstrably resist this. The whole point of this skill is to be the non-debating alternative. NEVER spawn an "agent to argue against" any finding.
 4. **4-Eyes Principle.** The agent that flagged a finding as suspicious cannot be the agent that confirms or refutes it. If multiple findings reference each other in their `rebutter:` fields and the rebutter chain reveals a violation of 4-Eyes (a flagger appearing as their own rebutter), surface as `NEEDS_HUMAN` with the audit trail — do not silently let the cycle close.
@@ -98,8 +100,9 @@ These five phases map 1:1 to iron rule 2's four actions (M1-M4) plus persistence
 3. Validate each file's schema against the expected schema for its role. Schema violations: re-prompt the *user* with which file failed, stop the run. Meta-judge does not "infer" the missing fields.
 4. Read `--rules`. See `references/rules-source-formats.md` for the parser per format. Parse into an internal flat list of `Rule(condition, severity, applies_to)` records.
 5. If `--context` provided, parse the JSON. Common fields used: `is_hotfix` (relaxes P2 tolerance), `target_audience` (informs which rules apply).
+6. **Establish that the reviews you were given actually finished.** Read `review-completeness.yaml` if it sits beside `<reviews_source>` (the fleet writes it at the iteration root), and read each review's own `review_complete:` block. Record per review in `reviews_loaded[].completion:` one of `complete` / `incomplete` / `skipped` / `unmarked`. Any `incomplete` or `unmarked` review, or a `review-completeness.yaml` whose `verdict:` is not `pass`, is carried into M4 as a NEEDS_HUMAN condition — you cannot resolve it, because resolving it would mean going and looking (rule 1). If `review-completeness.yaml` is absent (standalone use, no fleet), set `caveats.completeness_unverified: true` and repeat it verbatim in `decision_reasons` on a PASS: "nobody checked whether these reviews ran to completion" is a fact the reader needs, and leaving it unsaid is how a truncated review becomes a green one.
 
-Output a one-line bootstrap summary: "meta-judge: <N> reviews loaded, <K> rules from <source>, <M> findings to synthesize".
+Output a one-line bootstrap summary: "meta-judge: <N> reviews loaded (<C> complete, <U> unverified), <K> rules from <source>, <M> findings to synthesize".
 
 ---
 
@@ -165,7 +168,7 @@ Apply the four-state classifier (see `references/synthesis-protocol.md` § "Acti
 
 | State | Condition |
 |---|---|
-| `NEEDS_HUMAN` | Any unresolved arbitration OR `pm-reviewer` `requires_human_verification` OR cross-vendor disagreement on P0/P1 with comparable evidence OR rule cannot be evaluated |
+| `NEEDS_HUMAN` | Any review whose M0 `completion:` is `incomplete` or `unmarked` (or a `review-completeness.yaml` verdict that is not `pass`) OR any unresolved arbitration OR `pm-reviewer` `requires_human_verification` OR cross-vendor disagreement on P0/P1 with comparable evidence OR rule cannot be evaluated |
 | `BLOCK_MERGE` | Any rule fires with severity `blocking` OR aggregate severity policy violated |
 | `PASS` | All rules pass, no blocking findings, no unresolved NEEDS_HUMAN |
 
@@ -205,6 +208,7 @@ NOT available:
 ## When to refuse / redirect
 
 - **No review files provided** — refuse. Meta-judge has nothing to synthesize.
+- **A review file is present but incomplete or unmarked** — do NOT refuse and do NOT drop it. Load it, keep whatever findings it does carry, and classify `NEEDS_HUMAN` per rule 1. Dropping it turns "one reviewer did not finish" back into "one fewer reviewer", which is the exact erasure the completion marker exists to prevent.
 - **All review files are from a single reviewer** — meta-judge can still run (dedupe + classify) but emits a `caveats.single_reviewer:` flag. The user should know meta-judge's cross-vendor weighting added nothing here.
 - **`--rules` unparseable** — refuse, return the recognized formats. Do not invent rules.
 - **User asks meta-judge to "look at this PR"** — refuse, redirect to `/code-reviewer`. Meta-judge synthesizes existing reviews; it doesn't review.

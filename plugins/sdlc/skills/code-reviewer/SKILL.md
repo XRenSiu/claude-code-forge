@@ -17,7 +17,7 @@ description: >-
   Triggers: "review this PR" / "look at this diff" / "find bugs in this code" /
   "security review" / "/code-reviewer" / pointing at a diff or branch.
 argument-hint: "<path to diff file | git ref (e.g. HEAD~3..HEAD) | path to code directory> [--focus=security|logic|perf|style|all] [--rules=<path>]"
-version: 1.0.0
+version: 1.1.0
 user-invocable: true
 # imported into sdlc 2026-09-05 from done-when-pipeline v1.1.0 (canonical copy in this repo; qanat holds an older copy); body kept, sdlc wiring section added
 ---
@@ -170,6 +170,17 @@ code_review:
       needs_codebase_check: false
       suggested_change: "Insert verifyOwnership(sub_id, current_user) before line 47"
 ```
+
+**Every output carries a completion marker.** Add a top-level `review_complete:` block — outside the `code_review:` block — as the last thing you write:
+
+```yaml
+review_complete:
+  status: complete            # complete | incomplete
+  findings_count: <N>         # MUST equal the number of entries in `code_review.findings`
+  reason: <text>              # REQUIRED when status: incomplete — e.g. "hit the tool budget at REQ-004"
+```
+
+Write it with `status: incomplete` and a reason whenever you ran out of turns, tool budget, or context before finishing the walk — **a partial review must say so rather than hand back a short clean report.** The two numbers are what make this checkable: `findings_count` is written from what you have in hand, the list is what actually reached disk, and a truncated write makes them disagree. `/acceptance-fleet` S1.5 runs `scripts/verify_review_complete.py` over this; a missing marker is recorded as `unevaluated`, never as a pass.
 
 When `findings: []`, the `rationale:` field replaces the `findings:` list:
 

@@ -1,0 +1,12 @@
+# 一份跑完了的审查：标记显式，两个数字对得上。
+qa_report:
+  agent_role: qa-reviewer
+  decision: GO
+  num_findings: 1
+  findings:
+    - finding_id: qa-001
+      severity: P2
+      file: src/billing/cancel.py
+review_complete:
+  status: complete
+  findings_count: 1

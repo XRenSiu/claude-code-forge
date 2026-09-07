@@ -96,6 +96,19 @@ gaming_assessment:
     trend_warning: <text | null>                 # monotonic growth alert
     large_diff_caveat: <text | null>             # diff was >1000 hunks; may be noisy
 
+# ====== COMPLETION MARKER (top level, sibling of `gaming_assessment:`) ======
+# Required on every emitted file. A truncated review leaves a short, clean report that is
+# byte-for-byte indistinguishable from a thorough one that found nothing; this block is the
+# only thing that separates them. /acceptance-fleet S1.5 checks it with
+# scripts/verify_review_complete.py — a missing marker is recorded as `unevaluated`, never
+# as a pass, and a findings_count that disagrees with the list is treated as truncation.
+
+review_complete:
+  status: <complete | incomplete>
+  findings_count: <int>          # MUST equal len(gaming_assessment.detected_patterns)
+  reason: <text>                 # REQUIRED when status: incomplete (what stopped the run)
+  attempt: <int>                 # OPTIONAL — 1 on first dispatch, 2 after a re-dispatch
+
 # ====== EXAMPLE OUTPUT ======
 
 gaming_assessment:

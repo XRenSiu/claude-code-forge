@@ -35,7 +35,10 @@ ratchet-log/iteration-NNN/
 │   ├── edge-case-hunter.yaml
 │   ├── e2e-explorer.yaml
 │   ├── qa-measurements.yaml       # scripts/qa_facts.py projection of qa-reviewer.yaml
-│   └── spec-gaming-detector.yaml
+│   ├── spec-gaming-detector.yaml
+│   └── stale/                     # outputs cleared before a re-dispatch — moved, never deleted
+│       └── <name>.attempt-N.yaml
+├── review-completeness.yaml       # scripts/verify_review_complete.py facts (S1.5)
 ├── rebuttals/
 │   └── <originating-finding-id>.yaml
 ├── meta-judge-output.yaml
@@ -68,6 +71,24 @@ The verbatim stdout of `scripts/next_iteration.py <ratchet-log-dir> <N> --done-w
 `scripts/qa_facts.py`'s projection of `qa-reviewer.yaml`, and the only qa bytes `/spec-drift-detector` is allowed to read (iron rule 2's stated exception). Measurements only: counts, coverages, durations, layers run, mutation totals. `decision`, `decision_reasons`, `findings`, `num_findings`, `maintenance_issues`, `regressions`, `caveats` and each surviving mutant's `hint` are omitted, and the omitted key list is recorded in the file's own `provenance:` block.
 
 The `fleet-outputs/` names above still show the v0.x role files; the authoritative per-skill filenames are in `skill-dispatch-matrix.md`.
+
+### `review-completeness.yaml`
+The S1.5 gate's facts: for each expected fleet output, whether it arrived, whether it carries a
+`review_complete:` marker, whether its declared `findings_count` matches the findings actually in the
+file, and how many prior attempts sit in `fleet-outputs/stale/`. Its `verdict:` is `pass` /
+`incomplete` / `unevaluated`, and the last of those is the point of the file: a review that was
+dispatched and produced nothing usable is recorded as an A-tier `unevaluated` entry rather than
+quietly counted as a reviewer who found nothing. Written before `/meta-judge` is invoked — the whole
+value is that it exists *upstream* of the synthesis it constrains.
+
+### `fleet-outputs/stale/`
+Where `verify_review_complete.py --clear` puts an output before the orchestrator re-dispatches that
+review. Re-dispatching over the stale file would leave a verdict written against the *previous* code
+sitting at the expected filename, where the next stage reads it as covering the new work; deleting it
+would erase the record that the first attempt did not finish, which the § "What MUST NOT be deleted"
+rule below and invariant 5 (failure records do not roll back) both forbid. So it is moved, named
+`<name>.attempt-N.yaml`, and its presence is what makes "at most one re-dispatch per review" countable
+instead of merely asserted.
 
 ### `input-manifest.json`
 Checksums of every input file the iteration consumed, so we can reconstruct exactly what the evaluators saw even if files change later.
@@ -125,6 +146,7 @@ The compact summary used by anything that needs the iteration's verdict without 
   "gaming_band": "elevated",
   "gaming_thresholds": {"done_below": 3, "block_at_or_above": 7},
   "ratchet_rule": "F1",
+  "unevaluated_reviews": [],
   "spec_drift_counter": 0,
   "duration_seconds_total": 487,
   "cost_usd_estimated": 0.72,
@@ -141,6 +163,8 @@ Exactly one of these, depending on `state_decision`:
 - `needs-human.md` — when `NEEDS_HUMAN`. The specific questions requiring human input.
 
 If the state is `DONE`, no state-specific report — the iteration directory itself is the artifact.
+
+`unevaluated_reviews` (required from v1.4.0 on) lists every review that was dispatched and never came back with a usable verdict, each as `{file, reason, attempts}` copied verbatim from `review-completeness.yaml`. Empty is the normal case; non-empty forces S3 rule A0 (NEEDS_HUMAN) and makes DONE unavailable. It is a separate key from `blocking_findings_count` on purpose — zero blocking findings out of five reviewers is a different fact from zero blocking findings out of four reviewers and one silence.
 
 `gaming_band` (`clean` / `elevated` / `blocking` / `unknown`), `gaming_thresholds` and `ratchet_rule` (which lettered rule in SKILL.md S3 decided this state) are required from v1.1.0 on. They exist so an iteration's state can be re-derived from the log instead of taken on trust: an `elevated` band with no `ratchet_rule` means somebody adjudicated by hand, which is a defect in the S3 table and should be recorded as one.
 
@@ -184,6 +208,9 @@ This is the substrate for spotting "findings that take many iterations to fix" (
 
 - No iteration directory may be deleted by the skill itself.
 - No file inside an iteration directory may be truncated by the skill itself.
+- No fleet output may be *deleted* to make room for a re-dispatch. `verify_review_complete.py --clear`
+  moves it into `fleet-outputs/stale/` and refuses to touch anything outside the `fleet-outputs/`
+  directory it was handed.
 - No screenshot may be downsampled or compressed by the skill itself.
 
 The user may garbage-collect old iteration directories manually; the skill does not.

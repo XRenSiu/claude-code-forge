@@ -18,7 +18,7 @@ description: |
   constitution from a static repo. Do NOT use for: a single Territory's resident
   invariants (that is invariant-extract), or task-level acceptance criteria (acceptance-spec).
 argument-hint: "[repo path] [--auto]"
-version: 0.5.0
+version: 0.6.0
 user-invocable: true
 # imported into sdlc 2026-09-05 from looper v0.2.0; body kept, sdlc wiring added (see 接线 / 术语映射)
 ---
@@ -105,9 +105,37 @@ docs-win priority, and `open_questions` is non-empty (a DOS with none is dishone
   one closure source accepts both vocabularies. It never invents a mapping — unmapped to-be
   objects and same-id/different-statement rule conflicts come back as human judgments.
 - **`scripts/dos_closure.py`** — import-only: the single definition of "what a DOS term resolves
-  to" (canonical key, or a declared `objects.<X>.synonyms` / `rules[].aliases` entry). Both
-  `verify_issue.py --dos` and `lint_cards.py --dos` import it, so closure means one thing on
-  both sides of the seam.
+  to" (canonical key, or a declared `objects.<X>.synonyms` / `rules[].aliases` entry).
+  `verify_issue.py --dos`, `lint_cards.py --dos` and `verify_vocabulary.py` all import it, so
+  closure means one thing on every side of the seam. `Closure.vocabulary()` is the same file's
+  answer to the *other* question — which words ARE the contract — so the drift sensor never
+  grows a second, subtly different reader of `objects:` / `rules:`.
+- **`scripts/verify_vocabulary.py`** — the **cross-artifact terminology sensor (B-tier)**. Closure
+  used to run in exactly one place: an issue's `依赖 DOS:` field, plus a card's structured
+  `dos_slice`. Everything downstream — a contract's `statement`, a card's `notes`, `spec.md`, an
+  issue body, a PR body — could introduce a domain noun `dos.yaml` cannot resolve and nothing
+  noticed. That is the semantic drift AI-DLC pays for at runtime, one corrected word at a time,
+  because it has no ontology to check against. This one does, so the check is mechanical:
+
+      verify_vocabulary.py --dos dos.yaml done_when.yaml 'cards/CARD-*.yaml' spec.md pr-body.md \
+                          [--out .sdlc/<slug>/vocabulary-facts.yaml]
+
+  Output: each unresolved domain term with `file:line` and its **closest resolvable neighbour**
+  (`transaction` ≈ `BankingTransaction` — the high-value finding), plus the inverse signal
+  (ontology entries no artifact uses; weaker evidence, printed, never counted).
+  Exit `0` clean · `1` above threshold · `2` usage/IO · `3` **unevaluated** — no `dos.yaml`, or
+  no usable term table. A repo with no ontology has not PASSED a terminology check, it simply
+  was not checked; `--require-ontology` turns 3 into 1 for the gate posture.
+  **The design problem is false positives**, and the conservatism is explicit and configurable:
+  a stopword list, code/path/fenced-block filtering, prose-field-only reading of YAML, an
+  artifact's own `<!-- out-of-domain: … -->` / `out_of_domain:` declaration, `--waive` and a
+  `## Vocabulary waivers` section in `decisions.md` (the same bullet convention `verify_dos.py`
+  reads), and a corroboration rule: a term is a finding only when it near-misses the ontology,
+  or occurs `--min-occurrences` times (that second class does not gate unless `--count-unknown`).
+  `--out` has **no default**: a B-tier sensor gets run ad hoc from wherever you happen to be, and a
+  facts file nobody asked for is a file that gets committed by accident. Ask for it, or use `--json`.
+  The precision/recall trade-offs, and which of them were bought with a real dogfood run, are
+  in the script's docstring.
 - **`assets/dos_template.yaml`** — the named 12-section output structure (so a value cannot
   land in the wrong section). **`assets/decisions_template.md`** — the audit-trail shape,
   including the `## Naming waivers` section `verify_dos.py --decisions` reads.
@@ -220,8 +248,14 @@ DOS 说的是「系统里有什么、叫什么、什么不可违反」。它不�
 
 ## 接线（在 sdlc 里的位置）
 
-- **X1 DOS 生命周期的现状本体一源**：产出的 `dos.yaml` 是 `/issue --dos`（依赖 DOS 词表闭包）与
-  `lint_cards.py --dos`（卡的 dos_slice 闭包）的解析源；闭包失败 = 客观触发 PSL 轨。
+- **X1 DOS 生命周期的现状本体一源**：产出的 `dos.yaml` 是 `/issue --dos`（依赖 DOS 词表闭包）、
+  `lint_cards.py --dos`（卡的 dos_slice 闭包）与 `verify_vocabulary.py`（**全部下游制品的散文**）
+  的解析源；闭包失败 = 客观触发 PSL 轨。
+  三个消费者分工不重叠：前两个查**声明**（作者主动列出来的名词），第三个查**散文**——
+  契约的 statement、卡的 notes、spec、issue / PR body。本体在生命周期里因此有两个时刻：
+  **写下来**（本 skill 的产出，`verify_dos.py` 把关）与**被遵守**（`verify_vocabulary.py` 持续
+  测量）。只有第一个而没有第二个，本体会安静地过期——这正是 AI-DLC 2.0 没有本体、
+  只能靠事后学习循环一次记一个词所付的代价；有本体却不拿它当传感器，等于自愿退化到那个位置。
   两个消费者都 import `scripts/dos_closure.py`，所以**闭包认 `objects.<X>.synonyms` 与 `rules[].aliases`**：
   收编来的词表（qanat 的 `Territory` / `Run` / `MemoryAsset`）要么写进 synonyms 成为闭包源，
   要么在术语映射表里写明"不参与闭包"——只活在映射表里而下游按 key 闭包，是本次实测咬人的地方。

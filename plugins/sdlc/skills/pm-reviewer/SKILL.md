@@ -20,7 +20,7 @@ description: >-
   validation" / "EARS verification" / "/pm-reviewer" / pointing at a spec +
   code.
 argument-hint: "<requirements_source> <code_source> [--severity-marks=<critical-req-ids-list>]"
-version: 1.0.1
+version: 1.1.0
 user-invocable: true
 # imported into sdlc 2026-09-05 from done-when-pipeline v1.1.0 (canonical copy in this repo; qanat holds an older copy); body kept, sdlc wiring section added
 ---
@@ -183,6 +183,18 @@ After per-REQ judgments are complete:
 ## P4 — Emit pm-review.yaml
 
 Write to `--output` per `references/finding-schema.yaml`. User sees a one-line summary: "pm-reviewer: <fully>/<partial>/<not>/<needs-human> verdicts; block_merge=<bool>".
+
+**Every output carries a completion marker.** Add a top-level `review_complete:` block — outside the `pm_review:` block — as the last thing you write:
+
+```yaml
+review_complete:
+  status: complete            # complete | incomplete
+  findings_count: <N>         # MUST equal the number of entries in `pm_review.per_req_compliance`
+  reason: <text>              # REQUIRED when status: incomplete — e.g. "hit the tool budget at REQ-004"
+```
+
+Write it with `status: incomplete` and a reason whenever you ran out of turns, tool budget, or context before finishing the walk — **a partial review must say so rather than hand back a short clean report.** The two numbers are what make this checkable: `findings_count` is written from what you have in hand, the list is what actually reached disk, and a truncated write makes them disagree. `/acceptance-fleet` S1.5 runs `scripts/verify_review_complete.py` over this; a missing marker is recorded as `unevaluated`, never as a pass.
+
 
 ---
 

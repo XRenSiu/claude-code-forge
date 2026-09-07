@@ -1,0 +1,11 @@
+id: CARD-01
+title: 实现 SettlementBatch 的轧差
+req_ids: [REQ-001]
+ac_ids: [AC-001-a]
+dos_slice:
+  objects: [NotARealObject]
+  invariants: [R999]
+allowed_files:
+  - src/ledger/NotAnObjectEither.py
+context_estimate_tokens: 12000
+notes: 每个 transaction 进 batch 前按 R001 校验；SettlementBatch 关闭后不可改。

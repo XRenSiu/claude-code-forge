@@ -1,4 +1,4 @@
-# sdlc (v0.6.0)
+# sdlc (v0.12.0)
 
 完整的软件开发生命周期，分三段。上半段建世界：PSL → 推导产物 → G1 人裁决。
 下半段收敛交付：issue → 分支 → 判据冻结 → 任务卡 → 按卡实现与提交 → PR → review 跟进 → 合入归档 → 逃逸缺陷登记。
@@ -28,6 +28,16 @@
 | `/release` | L8 交付：SemVer 推导、changelog ↔ tag ↔ notes 一致、回滚先于部署、验证绿才完成 | `verify_release.py` | 模型可 |
 | `/retro` | X3 学习：基线 → 回流分布 + 逃逸缺陷因果链 + 契约返工率 → 提案落层（psl / dos / invariant / ac / routing / skill） | `metrics.py` | 模型可 |
 | `/tune`（新） | X3 harness 闭环：六个环的 trace → 环参数提案（routing 预算 / 指纹阈值 / MAX_ROUNDS / 隔离等级 / fix_list，封闭集）→ diff / patch → 人开 PR；样本 < 2 只记基线 | `tune.py` `apply_proposal.py`（只出 diff） | 模型可 |
+
+> v0.12.0：按 AWS AI-DLC 2.0 的一手研究对照补五条缺口（[`docs/reports/aidlc-gap-2026-09-07.md`](docs/reports/aidlc-gap-2026-09-07.md)）。
+> **广度成为网格**（`sizing.yaml` v2 的 `stages:` + `never_skippable`，`verify_sizing.py` 七条 lint 让它与
+> `sdlc_state.py` 的 ORDER / prereqs 互相断言——原来 S 档声明豁免两项、代码只实现一项，且无人发现）；
+> 深度与测试量成为另外两个正交旋钮（测试量是下界，`derive_counts.py --strategy` 检，exit 4）；
+> 早定档 + 飞行中重定档（`size --from-issue --early`，结构上够不到 S；已走过的阶段冻结）；
+> **解释日记** `notes.md` 四格 + 门禁逐字仪式 + 晋升下轮生效（Open questions 不晋升，没有 org 通道）；
+> 自治阶梯 `autonomy`（只问一次、跨会话、不代签门）与跳过的依赖警告；`plan` / `doctor`；
+> reviewer 截断契约（`verify_review_complete.py`，把不变量 14 从脚本扩到 agent）；
+> 跨制品术语 sensor（`verify_vocabulary.py`，B 档）。
 
 > v0.10.0 实现了 `docs/reports/raising-the-floor-2026-09-05` 的五条缺口：A 档加结构闸
 > （`constraints.structure` + `verify_structure.py`，声明了但没法求值 = exit 3，不是通过）；`dos-extract` 产
@@ -107,6 +117,15 @@
 /sdlc "用户可以按相对时间搜索记忆" --track task
 /sdlc --resume memory-time-search
 
+# 三个旋钮与两条新通道（v0.12），单点也能用
+python3 skills/sdlc/scripts/sdlc_state.py plan                                 # 这次跑几个阶段、几道门、跳了什么
+python3 skills/sdlc/scripts/sdlc_state.py doctor                               # 装置健康度（建议性，从不阻断）
+python3 skills/sdlc/scripts/verify_sizing.py                                   # 体量网格与代码互相断言
+python3 skills/sdlc/scripts/sdlc_state.py note --kind interpretation --text …  # 含糊处当场做了什么选择
+python3 skills/sdlc/scripts/sdlc_state.py notes --for-gate g2                  # 门禁仪式：逐字念，不筛选
+python3 skills/dos-extract/scripts/verify_vocabulary.py --dos dos.yaml …       # 跨制品术语漂移（B 档）
+python3 skills/acceptance-fleet/scripts/verify_review_complete.py …            # 审查没跑完 ≠ 没发现问题
+
 # 五处新配件（v0.10–0.11），单点也能用
 python3 skills/sdlc/scripts/sdlc_state.py size --base origin/main --commit    # 体量分档（缺省 M，S 要证据换）
 python3 skills/qa-reviewer/scripts/verify_structure.py --done-when done_when.yaml --base origin/main
@@ -119,7 +138,9 @@ python3 skills/acceptance-fleet/scripts/pick_evaluators.py                      
 
 ```
 .sdlc/<slug>/state.json     # 充分统计量（脚本拥有；不手改）
-.sdlc/<slug>/ledger.md      # 只增不删的账本
+.sdlc/<slug>/ledger.md      # 只增不删的账本（记已经发生的错）
+.sdlc/<slug>/notes.md       # 解释日记四格（记含糊处当场做了什么选择）——只增不删
+.sdlc/learnings/project.md  # 晋升后的项目规则；下一次 init 才编译进去（本轮不生效）
 .sdlc/pr-watch/pr-<N>.*     # review-loop 的水位线 / 计数器 / 证据日志
 cards/CARD-xx.yaml          # L4 任务卡
 .done_when.lock             # G2 冻结

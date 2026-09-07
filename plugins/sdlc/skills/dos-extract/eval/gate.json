@@ -72,7 +72,17 @@
       "changes": "inventory.py: YAML/JSON structured channel ($defs / schema-property / enum-value / kind-value / key), declarations-before-keys report, --exclude semantics documented; new count_terms.py (reproducible docs counts), reconcile_dos.py (dos-reconciled.yaml), dos_closure.py (one synonym-aware resolver, imported by verify_issue.py and lint_cards.py); verify_dos.py: whole-word waiver via decisions.md `## Naming waivers`, compounds stay non-waivable, derived_from check, size and description warnings; templates: synonyms / aliases / translation_notes / derived_from, zero-noun guidance, waiver section",
       "smoke": "24 new expectations, each proven to kill a mutant that reinstates the pre-fix behaviour"
     },
-    "2026-09-06 raising-the-floor: implemented the report's gaps; see plugins/sdlc/docs/reports/"
+    "2026-09-06 raising-the-floor: implemented the report's gaps; see plugins/sdlc/docs/reports/",
+    {
+      "date": "2026-09-07",
+      "source": "plugins/sdlc/docs/reports/ — AI-DLC 2.0 对照：它最大的结构缺口是没有本体，所以溯源传感器只能检「引用在不在」，检不了「术语一致不一致」；补偿手段是事后学习循环，一次一个词。sdlc 有本体，却只在 issue 的「依赖 DOS」字段上当过闸。",
+      "changes": "new verify_vocabulary.py（跨制品术语传感器，B 档）：读 dos.yaml + 契约 / 卡 / spec / issue / PR body 的**散文**，报解析不掉的领域名词（file:line + 最近的可解析邻居）与本体里无人使用的词；dos_closure.py 增 Closure.vocabulary()（「哪些词就是契约本身」，与 resolve_* 同源，传感器因此不必自建第二个 objects/rules 读法）；verify_dos.py 的 parse_waivers 增 section_title 参数，`## Naming waivers` 与 `## Vocabulary waivers` 共用一个解析器。",
+      "exit_codes": "0 干净 · 1 计入的发现超阈值 · 2 用法/IO · 3 没有本体或词表为空 = **未评估**（--require-ontology 变 1）。极性与 verify_structure.py 一致：一把没跑的尺子不许报绿。",
+      "false_positive_discipline": "三重保守：形状过滤（PascalCase / 首字母大写 / snake_case，全大写缩写不进）、语境过滤（围栏块 / 行内代码 / URL / 路径 / YAML 只读散文字段 / 跳过 dos_slice / 全句首大写词丢弃）、佐证要求（near_miss 要与复合标识符成真子集或归一化相同；unknown 要 ≥ --min-occurrences 且缺省不计入退出码）。反方向（候选 ⊋ 本体词）与短语型 synonyms 的 token 判定都是**实跑砍掉的**，见下。",
+      "first_real_run": "dogfood/ring-audit：首版对 done_when.yaml + 6 张卡 + issue/pr body 报 18 条 near_miss，其中 15 条假阳性（`run_evidence` ⊋ `Run`、`gate_json` ⊋ `Gate` 这类含本体词的普通字段名，以及把 `skill node` / `done_when.yaml` 这类短语 / 文件名 synonym 切成 token 后产生的 `skill` / `yaml`）。改法：只有**复合标识符**参与 token 判定，且只认「候选 ⊊ 本体词」一个方向；unknown 通道再加两条（语料自己当结构键用的词、散文里的 snake_case）。改后：对 dos.yaml **计入发现 0**，note 5 条且 5 条全真（Ring / Part / Gap / Artifact / Assessment —— 卡说的是 derived/dos-proposal.yaml 的应然词表，正是已登记的 I-15 / I-49）；换成 --dos derived/dos-proposal.yaml 后这 5 条全部解析掉，只剩 1 条真 note（`Card`）。",
+      "overlap_with_lint_cards": "不重叠。lint_cards.py 第 3 项只闭包卡的 **dos_slice.objects / dos_slice.invariants**（结构化字段，拒）；本传感器跳过整个 dos_slice 子树，只读 title / notes 的**散文**（告警）。",
+      "smoke": "16 条新期望（含 exit 3 的两种成因、--require-ontology、假阳性闸、与 lint_cards 不重复、真实 dogfood 上计入发现为 0）"
+    }
   ],
   "script_smoke": {
     "verify_agent_map.py": {

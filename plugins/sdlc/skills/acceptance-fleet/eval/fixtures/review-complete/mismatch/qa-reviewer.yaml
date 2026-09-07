@@ -1,0 +1,12 @@
+# 标记说 3 条，落盘只落了 1 条：两个数字产生于不同时刻，对不上就是截断的直接证据。
+qa_report:
+  agent_role: qa-reviewer
+  decision: GO
+  num_findings: 3
+  findings:
+    - finding_id: qa-001
+      severity: P2
+      file: src/billing/cancel.py
+review_complete:
+  status: complete
+  findings_count: 3

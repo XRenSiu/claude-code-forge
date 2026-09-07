@@ -1,0 +1,9 @@
+# 显式的否定裁决：跑不完就说跑不完。
+gaming_assessment:
+  agent_role: spec-gaming-detector
+  gaming_risk_score: 0
+  detected_patterns: []
+review_complete:
+  status: incomplete
+  findings_count: 0
+  reason: review did not complete within turn budget

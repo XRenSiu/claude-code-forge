@@ -17,7 +17,7 @@ description: >-
   test suite" / "build verification battery" / "/test-suite-generator" /
   pointing at any specs/<feature>/ directory.
 argument-hint: "<path to specs/<feature>/ or path to done_when.yaml>"
-version: 1.2.0
+version: 1.3.0
 user-invocable: true
 # imported into sdlc 2026-09-05 from done-when-pipeline v1.1.0 (canonical copy in this repo; qanat holds an older copy); body kept, sdlc wiring section added
 ---
@@ -309,6 +309,7 @@ Both the counts line above AND the same counts in the generated `tests/<feature>
 python scripts/derive_counts.py <done_when.yaml>          # human line + table
 python scripts/derive_counts.py <done_when.yaml> --json    # machine
 python scripts/derive_counts.py <done_when.yaml> --manifest tests/<feature>/tests-manifest.yaml   # v2
+python scripts/derive_counts.py <done_when.yaml> --manifest <m.yaml> --strategy minimal|standard|comprehensive
 ```
 
 Same v2 rule as the traceability gate above: behaviour counts come from the manifest, the `existence:` count from whichever document declares one. An empty `behavior:` with no `--manifest` exits 2 rather than reporting `0 unit tests` — a zero pasted into a README is a fabricated count, not a small one.
@@ -344,6 +345,16 @@ Per skillwise THEORY.md §3, the mechanical sub-parts ship as runnable primitive
 
 - `scripts/gen_existence.py` — emits the fail-fast `existence.sh` (4-A); forces `set -euo pipefail`, the no-`if` helper, and the broad export regex. Maps v1 kinds and the v2 `cli:` / `ui:` observation boundaries (`--cli` / `--ui` / `--ui-anchor`).
 - `scripts/derive_counts.py` — derives the canonical test counts from `done_when.yaml` or, under v2, `--manifest tests-manifest.yaml` (kills the headline/README count-divergence bug).
+  `--strategy` (v0.12) checks the count against the tier's **test-volume floor** (`sizing.yaml`
+  `tiers.<tier>.test_strategy`), the third knob — orthogonal to breadth (which stages run) and to
+  depth (how detailed each artifact is), because "full documentation + minimal tests" is a legal
+  combination and test volume must not be held hostage by documentation detail. It is a **floor,
+  never a ceiling**: writing more than the floor is fine, writing fewer exits 4 — kept distinct from
+  the empty-behaviour exit 2, because "not enough tests" and "misconfigured" are different failures.
+  The floor is computed from the contract (`minimal` = one sampling point per mechanical AC, plus one
+  happy path per observation boundary — the Nyquist reading), never guessed from the strategy's name;
+  `comprehensive` sets no arithmetic floor at all, because its lower bound is "every layer of the
+  pyramid is non-empty", which is a criterion, not a number.
 - `scripts/check_verbatim_names.py` — asserts every contract test name appears verbatim in the generated files (iron rule 9 traceability gate); `--manifest` for v2, and an empty name set is a failure.
 - `scripts/capture_red_baseline.py` — captures the RED baseline in a `git worktree` checkout of HEAD and writes the clean-tree evidence into the file; `--verify` re-checks a recorded baseline for that evidence.
 

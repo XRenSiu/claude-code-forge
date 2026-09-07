@@ -154,7 +154,8 @@
                   "todo",
                   "doing",
                   "done",
-                  "blocked"
+                  "blocked",
+                  "skipped"
                 ]
               },
               "retries": {
@@ -168,6 +169,10 @@
                 "items": {
                   "type": "string"
                 }
+              },
+              "skip_reason": {
+                "type": "string",
+                "description": "`--status skipped` 必填。跳过把代价推给依赖它的卡，没有理由就无法在复盘时被追回"
               }
             }
           }
@@ -185,6 +190,10 @@
         },
         "skipped_reason": {
           "type": "string"
+        },
+        "skipped_by": {
+          "type": "string",
+          "description": "谁跳过的整体验收。`size_tier` = 体量网格（有 size_exemption 账本行与理由）"
         }
       }
     },
@@ -477,6 +486,89 @@
       "properties": {
         "failure_report": {
           "type": "boolean"
+        }
+      }
+    },
+    "intake": {
+      "type": "object",
+      "description": "体量分档：广度旋钮的输入与它换来的东西。极性不可反转——缺省 M，跳过要用证据换",
+      "properties": {
+        "size": {
+          "enum": [
+            "S",
+            "M",
+            "L"
+          ]
+        },
+        "size_source": {
+          "enum": [
+            "default",
+            "manual",
+            "derived",
+            "derived_early"
+          ],
+          "description": "只有 derived / derived_early 能拿到该档的 skip。default（缺省）与 manual（手设）一个阶段也跳不掉——一个靠遗漏或手写就能打开的门不是门。derived_early 是还没有 diff 时定的档：S 的唯一入口需要 files，所以它在结构上够不到 S"
+        },
+        "size_evidence": {
+          "type": "object",
+          "description": "定档用的四个可数量、每个量的来路、命中的规则 id"
+        },
+        "skips_frozen": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "飞行中重定档时被拒绝的 skip：那些阶段已经走过了。一次已经付过的 G2 不会因为重定档被追认为「其实不用签」"
+        }
+      }
+    },
+    "autonomy": {
+      "type": "object",
+      "description": "自治阶梯：整个流程只问一次，答案记进 state，--resume 之后仍然有效。三档都不改门——G1/G2/G3 永远要人签（不变量 6），失败永远中断",
+      "properties": {
+        "level": {
+          "enum": [
+            "ask_each",
+            "auto_until_gate",
+            "auto_until_failure"
+          ]
+        },
+        "by": {
+          "type": "string"
+        },
+        "at": {
+          "type": "string"
+        }
+      }
+    },
+    "notes": {
+      "type": "object",
+      "description": "解释日记（notes.md）的索引。日记本身只增不删；晋升状态记在这里，所以晋升不用回头改写日记的任何一行",
+      "properties": {
+        "promoted": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "已晋升成项目规则的 note id。Open questions 不在此列——它们不晋升"
+        }
+      }
+    },
+    "learnings": {
+      "type": "object",
+      "description": "本次运行**启动时**编译进来的项目规则（init 写，之后不动）。跑动中晋升的规则不影响本轮——你前面批准过的门对应的是当时那套规则集合，框架不在跑动中抽掉地基（同不变量 13）",
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "sha256": {
+          "type": "string"
+        },
+        "rules": {
+          "type": "integer"
+        },
+        "compiled_at": {
+          "type": "string"
         }
       }
     }

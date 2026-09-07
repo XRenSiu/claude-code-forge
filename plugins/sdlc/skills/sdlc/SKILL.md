@@ -12,7 +12,7 @@ description: >-
   只想发 PR（/pr）、只想审别人的 PR（/pr-review）、只想盯一个已有 PR 的评论（/review-loop）——
   单点动作直接用对应 skill，进流水线反而慢。前置：git 仓库内、gh 已认证、python3。
 argument-hint: "<需求一句话 | 需求文件路径 | #issue> [--track psl|task] [--resume <slug>] [--autopilot] [--dry-run]"
-version: 0.6.0
+version: 0.7.0
 user-invocable: true
 # 只能由人显式调起：它会建 issue、开分支、发 PR、自动回帖——都是公开且部分不可逆的动作，
 # 不能因为对话里出现"需求""流程"就被模型自行调起。它是编排者，没有别的 skill 依赖它。
@@ -175,6 +175,11 @@ deletion 测试：撤掉本 skill，让引擎"把这个需求做完提 PR"。它
 - `scripts/sdlc_state.py` — init / show / set / advance / gate / card / fail / report / check-clean / graph check|next|render /
   loops / ledger / archive（`--help`）。`fail` 多了 `--score` 与 `--by`；`loops` 一屏看六个环的预算消耗；`check-clean --as-hook`
   是 Stop hook 的出口（模板 `assets/hooks/stop-clean-state.json`，不自动安装）。
+  v0.12.0 新增：`size --from-issue|--early`（早定档 + 飞行中重定档）、`plan`（启动前的有效规模）、
+  `doctor`（装置健康度，建议性、从不阻断、不进 `advance` 的前置条件——会阻断的 doctor 就是第四道门）、
+  `note` / `notes --for-gate`（解释日记与门禁仪式）、`autonomy`（自治阶梯）、`card --status skipped --reason`。
+- `scripts/verify_sizing.py` — 体量网格的 lint（七条）。L7 直接 `import sdlc_state` 用**真的那份** `next_allowed`
+  把每一档的剩余路径走一遍：自己写第二份迟早与真的那份分叉，而分叉出来的那份会说"网格没问题"（同 `graph check`）。
 - `scripts/lock_done_when.py` — `sign --stage g2|l5` / A 档 `verify`（exit 0 / 1 reject / 2 changed_with_proposal）。
 - `scripts/verify_graph.py` / `scripts/verify_loop.py` / `scripts/trace.py why|impact|render|lint` — 图 / 环 / 迹的 lint 与查询。
 - `assets/graph.yaml`（52 节点 · 67 边）· `assets/loops.yaml`（六个环）· `assets/triggers.yaml`（每个环绑到 `/goal` `/loop`
@@ -196,25 +201,75 @@ deletion 测试：撤掉本 skill，让引擎"把这个需求做完提 PR"。它
 `<skill_dir>` = 本文件所在目录的绝对路径；插件根 = `<skill_dir>/../..`。脚本一律 `python3`/`bash`
 显式调用，不 chmod（目录可能只读）。
 
-## 体量分档（v0.3.0：`assets/sizing.yaml`）
+## 三个旋钮：广度 / 深度 / 测试量（`assets/sizing.yaml` v2）
 
 一套流程不分任务大小是 spec 工具的通病（Böckeler 2026 对 Kiro / spec-kit 的批评）。三行 bug 修复
 走完 issue → 契约 → G2 → 卡 → 六审，成本高到没人愿意用，于是整条流水线被绕过——**一条被绕过的
 流水线抬不高任何人的下限**。
 
+v0.12.0 起这是三个**正交**旋钮（借鉴 AI-DLC 2.0，见 `../../docs/reports/aidlc-gap-2026-09-07.md`）。
+它们的强制力不同，文档不假装它们一样：
+
+| 旋钮 | 是什么 | 谁强制 |
+|---|---|---|
+| 广度 | 跑哪些阶段（`stages:` 网格） | `next_allowed` / `prereqs` 按网格放行；`verify_sizing.py` 七条 lint |
+| 测试量 | 验多少（`test_strategy`） | **下界**：`derive_counts.py --strategy`，低于地板 exit 4 |
+| 深度 | 每个阶段产出多细（`depth`） | **只是声明**给 skill 读的输入。没有脚本能判"这份文档够不够细"——写在这里是为了不假装它是闸 |
+
 ```
-sdlc_state.py size --files 3 --acs 2 --human-acs 0        # 只推荐
-sdlc_state.py size --base origin/main --commit            # 从 diff 与契约里数，写进 state
+sdlc_state.py size --from-issue issue-body.md --early --commit   # 还没 diff：只能推向 L 或留在 M
+sdlc_state.py size --base origin/main --commit                   # 有 diff 之后：这里才够得到 S
+sdlc_state.py plan                                               # 这次跑几个阶段、几道门、跳了什么、为什么
 ```
 
-推导规则是数据（`sizing.yaml` 六条，按顺序求值）：PSL 轨 / 有 human AC / AC ≥ 8 / 改动 ≥ 15 文件 → L；
+推导规则是数据（六条，按顺序求值）：PSL 轨 / 有 human AC / AC ≥ 8 / 改动 ≥ 15 文件 → L；
 AC ≤ 2 且改动 ≤ 3 文件且 TASK 轨 → S；其余 M。输入只有四个可数的量，**没有形容词**。
+AC 数从 `verify_issue.py` 的 `acceptance_stats` 或契约里读，files 从 `git diff` 数——
+**数字和它的来路由同一次读产生**，issue 没过 `verify_issue.py` 就拒绝取数。
 
-**极性不可反转**：`init` 时 `intake.size = M`、`size_source = default`。S 档的豁免（跳过
-acceptance-fleet）只认 `size_source = derived`——手设的档位拿不到（`set intake.size=…` 会把来源打回
-`manual`，而 `size_source` 根本不在 SETTABLE 里）。漏填得到的是较严的路径，**一个靠遗漏就能打开的门
-不是门**。豁免生效时 `advance pr` 写一条有类型的 `size_exemption` 进账本，`/retro` 按档分桶数逃逸缺陷——
-分档对不对，由下一次逃逸缺陷回答，不由拍脑袋回答。
+**极性不可反转（三重）**：① `init` 时 `size = M` / `size_source = default`；② skip 只认
+`size_source ∈ {derived, derived_early}`，`set intake.size=S` 把来源打回 `manual`，一扇门也打不开；
+③ `never_skippable` 里的阶段任何档都不能跳——**三道门在里面**，广度旋钮拧不掉门（不变量 6）。
+漏填得到的是较严的路径，**一个靠遗漏就能打开的门不是门**。
+
+**早定档给不出 S，是规则本来的形状而不是额外的限制**：S 的唯一入口需要 files，而缺一个量的规则不会
+命中。`needs:` 把这件事写成声明，`verify_sizing.py` L6 核它与 `when:` 一致——从注释变成可证的性质。
+
+**飞行中重定档只能改尚未开始的阶段**：落在当前阶段身后的 skip 一律丢弃并记 `size_recompose`。
+一次已经付过的 G2 不会因为重定档被追认为"其实不用签"。
+
+每个被跳的阶段写一条有类型的 `size_exemption` 进账本（带那条 skip 的 why），`/retro` 按档分桶数逃逸
+缺陷——分档对不对，由下一次逃逸缺陷回答，不由拍脑袋回答。
+
+## 解释日记（v0.12.0：`notes.md` 四格）
+
+账本记的是**已经发生的错**（失败 / 回流 / 裁决 / 豁免），记不到"规格含糊处当场做了什么选择"。
+`divergence.py` 抓的是事前 N 份隔离草案的分歧，抓不到实现中途的默认填充。那条通道是这个：
+
+```
+sdlc_state.py note --kind interpretation|deviation|tradeoff|open_question --text "…"
+sdlc_state.py notes --for-gate g2            # 门禁仪式：逐字念，不改写、不筛选
+sdlc_state.py note --promote n-0001 --to project --by <你>
+```
+
+四格的分法照抄 AI-DLC，因为它分得对：前三格是可固化的知识，**Open questions 明确不晋升**——
+它是研究项不是规则，脚本硬拒。作用域只有 `project`，**没有 team / org 通道**：提升是人在仓库之间
+做的事，不是这个脚本的权限。晋升状态记在 `state.notes.promoted`，所以晋升不用回头改写日记的任何
+一行——日记只增不删。
+
+**下轮生效**：`init` 读 `.sdlc/learnings/project.md` 并记下哈希与条数。跑动中晋升的规则不影响本轮——
+你前面批准过的门对应的是当时那套规则集合，框架不在跑动中抽掉地基（同不变量 13）。
+
+## 自治阶梯（v0.12.0）
+
+```
+sdlc_state.py autonomy --level ask_each|auto_until_gate|auto_until_failure --by <你>
+```
+
+整个流程只问一次，答案记进 state，`--resume` 之后仍然有效。与 `--autopilot` 的差别是它**不是一个
+CLI flag**——flag 每次调用都要重给，恢复会话就丢；记进 state 的答案跨会话活着，而且能被 `/retro` 数。
+**三档都不改门**：G1/G2/G3 永远要人签，**失败永远中断**。失败时的三选一是：重试 / 跳过
+（`card --status skipped --reason …`，脚本当场列出会被拖累的卡）/ 中止。
 
 ## 高危黑名单（不可豁免）
 
@@ -222,7 +277,13 @@ acceptance-fleet）只认 `size_source = derived`——手设的档位拿不到�
 - **绝不以实现者身份报 `impossible_under_contract`**；绝不在 `pending.failure_report` 为真时结束 session 而不写报告。
 - **绝不删账本行**。回滚只回滚产物。
 - **绝不在 G2 之后改被锁文件而不附变更提案**；绝不用改测试的方式让测试过；绝不把 v1（测试名）契约当判据冻结。
-- **绝不代人签门**：G1/G2/G3 的 `--by` 必须是人名；`--autopilot` 也不代签。
+- **绝不代人签门**：G1/G2/G3 的 `--by` 必须是人名；`--autopilot` 与 `autonomy` 的任何一档都不代签。
+- **绝不手设档位换豁免**：`set intake.size=S` 得到的是 `size_source=manual`，一个阶段也跳不掉。
+  要轻量路径就把量数出来（`size --from-issue` / `--base`）。
+- **绝不晋升 Open question**：它是研究项不是规则。要它变成规则，先把它答了，再作为
+  interpretation / deviation / tradeoff 记一条。
+- **绝不在门禁仪式上筛选日记**：`notes --for-gate` 逐字念每一行。做「有趣度」筛选的那一刻，
+  被筛掉的那条就是下次撞的墙。
 - **绝不 force-push / rebase 已推送分支**（毁 review 锚点）；绝不直接在 main 提交。
 - **绝不把评审提示词给实现子 agent**；绝不让实现者自评 `meets_done_when`。
 - **绝不因预算耗尽"再试一次"**——写失败报告，交人。

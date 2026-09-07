@@ -20,7 +20,7 @@ description: >-
   Triggers: "is this code gaming the spec?" / "check for reward hacking" /
   "gaming risk audit" / "/spec-gaming-detector" / pointing at a spec + code.
 argument-hint: "<spec_source> <artifact_source> [--history=<previous artifact snapshot or git ref>] [--spec-robustness=<path>]"
-version: 1.1.0
+version: 1.2.0
 user-invocable: true
 # imported into sdlc 2026-09-05 from done-when-pipeline v1.1.0 (canonical copy in this repo; qanat holds an older copy); body kept, sdlc wiring section added
 ---
@@ -162,6 +162,18 @@ The trend is sometimes more important than the absolute score: a score going 2 �
 ## G5 — Emit gaming-risk.yaml
 
 Write to `--output` per `references/finding-schema.yaml`. User sees a one-line summary: "spec-gaming-detector: score <N>/10 (was <baseline> last iteration, trend: <up|down|stable>); <K> patterns detected, <M> spec gaps surfaced."
+
+**Every output carries a completion marker.** Add a top-level `review_complete:` block — outside the `gaming_assessment:` block — as the last thing you write:
+
+```yaml
+review_complete:
+  status: complete            # complete | incomplete
+  findings_count: <N>         # MUST equal the number of entries in `gaming_assessment.detected_patterns`
+  reason: <text>              # REQUIRED when status: incomplete — e.g. "hit the tool budget at REQ-004"
+```
+
+Write it with `status: incomplete` and a reason whenever you ran out of turns, tool budget, or context before finishing the walk — **a partial review must say so rather than hand back a short clean report.** The two numbers are what make this checkable: `findings_count` is written from what you have in hand, the list is what actually reached disk, and a truncated write makes them disagree. `/acceptance-fleet` S1.5 runs `scripts/verify_review_complete.py` over this; a missing marker is recorded as `unevaluated`, never as a pass.
+
 
 ---
 

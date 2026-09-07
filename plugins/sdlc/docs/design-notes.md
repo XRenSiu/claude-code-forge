@@ -121,6 +121,39 @@
 跨供应商评估在正文里是「强烈建议」而没有任何接线（现在是 `evaluators.yaml` + `pick_evaluators.py`，
 分不到非本家就留 `same_vendor_caveat`）。
 
+## 2026-09-07 第五次整理：对照 AWS AI-DLC 2.0 的一手研究（v0.12.0）
+
+对照对象是 AI-DLC 的方法论白皮书、开源博客与 2.0 GA 官方文档树，不是二手解读。结论与取舍写在
+`docs/reports/aidlc-gap-2026-09-07.md`；这里只记设计判断。
+
+- **抄什么**：AI-DLC 的 scope grid（11 scope × 33 stage 编译成网格）→ `sizing.yaml` 的 `stages:` 网格；
+  它的三个正交旋钮（广度 / 深度 / 测试量，"完整文档 + 最少测试"是合法组合）→ `stages` / `depth` /
+  `test_strategy`；它的 memory.md 四格（Interpretations / Deviations / Tradeoffs / Open questions，
+  门禁前逐字呈现、Open questions 不晋升、默认最窄作用域、无 org 通道、本轮不生效下轮编译）→ `notes.md`
+  与 `note` / `notes --for-gate`；它的阶梯提问（整个流程只问一次自治程度，答案记进状态、恢复后仍有效）
+  → `autonomy`；它的失败三选一里的 `[S]` 标记（跳过要警告依赖它的会一起失败）→ `card --status skipped`
+  的 `dependents_likely_to_fail`；它的 reviewer 截断契约（裁决不可用 = 门禁上可见的发现项）→
+  `verify_review_complete.py`；它的 `--doctor`（从不阻断）→ `doctor`。
+- **改编而非照搬**：
+  - **深度旋钮诚实降级**。AI-DLC 的 Minimal / Standard / Comprehensive 在它那里是控制平面编译进去的；
+    这边没有任何脚本能判"这份文档够不够细"，所以 `depth` 只写成声明，并在 SKILL.md 与 sizing.yaml 里
+    **明说它的强制力与广度不同**。假装它是闸，比没有它更坏。
+  - **测试量做成下界不做上界**。策略是地板：写多了不报错，写少了 exit 4，且 exit 4 与"空 behavior"的
+    exit 2 分开——一个是量不够，一个是配置错。minimal 的地板从契约算（AC 数 + 观察边界数），不从策略名猜。
+  - **早定档不加限制，让它从规则的形状里落出来**。S 的唯一入口需要 files，缺一个量的规则不会命中，
+    所以早定档结构上够不到 S。`needs:` + `verify_sizing.py` L6 把这条从注释变成可证的性质。
+  - **`verify_sizing.py` L7 直接 import 真的那份 `next_allowed`**。自己写第二份迟早分叉，而分叉出来的
+    那份会说"网格没问题"。与 `graph check` 同源。
+- **不做**：不挂 PostToolUse / PreToolUse hook（旧决定不变）；**不加第四道门**——走通骨架的早期信心
+  检查点在 AI-DLC 那里是个门，在这里与"三道门 ≠ 五个 human 节点"直接冲突，这一轮只做了阶梯与三选一
+  那一半；**不做 team / org 规则层**——多层链与"准入时冲突解析"是配套的，只做层不做冲突检查会得到一个
+  "规则矛盾时看谁读得晚"的系统，要做一起做；不自己解析 issue markdown 数 AC（`verify_issue.py` 的
+  `acceptance_stats` 是权威，第二个解析器分叉出来的数会被用来换豁免）。
+- **这一轮的教训**：一条 v0.10.0 留下的既有冒烟用例（"a derived S grants the fleet exemption"）当场抓住了
+  新代码的一个洞——"走到 acceptance 再空手离开"网格会放行却不留账本行。那条用例的 setup 在新语义下
+  测的是另一个场景，而正是那个场景暴露了洞。**一条看起来"该更新一下"的旧用例，先假设它在说一件你
+  没想到的事。**
+
 ## 有意不做的
 
 - 不做 hooks：把 `verify_*.py` 挂成 PreToolUse 会拦所有 git commit，对非 sdlc 场景过填；留给用户按仓库决定。

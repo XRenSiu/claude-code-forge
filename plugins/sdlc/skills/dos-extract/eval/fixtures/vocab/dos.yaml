@@ -1,0 +1,28 @@
+meta:
+  version: 0.1.0
+  domain: retail banking
+scope:
+  in_scope: [ledger, settlement]
+objects:
+  BankingTransaction:
+    description: 一次记账动作，借贷双记。
+    synonyms: ["记账", "posting"]
+  Account:
+    description: 资金归属的最小主体。
+    synonyms: ["账户"]
+  SettlementBatch:
+    description: 一批在同一清算窗口内轧差的记账。
+    synonyms: ["清算批次"]
+relationships:
+  - subject: BankingTransaction
+    verb: posts_to
+    object: Account
+    cardinality: many-to-one
+rules:
+  - id: R001
+    statement: 每笔 BankingTransaction 借贷金额必须相等。
+  - id: R002
+    statement: 已进入 SettlementBatch 的记账不可改。
+    aliases: [R-002]
+open_questions:
+  - 跨币种记账的舍入归属未定。

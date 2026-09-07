@@ -17,7 +17,7 @@ description: >-
   "run the test suite" / "execute tests" / "release readiness check" / "verify
   this build" / "/qa-reviewer" / pointing at a tests/ directory + thresholds file.
 argument-hint: "<path to tests/ directory | path to test manifest> --thresholds=<path to YAML> [--baseline=<previous qa-report.yaml>]"
-version: 1.1.1
+version: 1.2.0
 user-invocable: true
 # imported into sdlc 2026-09-05 from done-when-pipeline v1.1.0 (canonical copy in this repo; qanat holds an older copy); body kept, sdlc wiring section added
 ---
@@ -194,6 +194,18 @@ Conditional means "the user must accept the risk explicitly." It is not a soft n
 ## L8 — Emit qa-report.yaml
 
 Write the full structured output to `--output` (default `./qa-report.yaml`). Schema in `references/finding-schema.yaml`. The user sees a final one-line summary: "qa-reviewer: decision=<X>, genuine_failures=<N>, maintenance_issues=<M>, mutation_kill_rate=<R>".
+
+**Every output carries a completion marker.** Add a top-level `review_complete:` block — outside the `qa_report:` block — as the last thing you write:
+
+```yaml
+review_complete:
+  status: complete            # complete | incomplete
+  findings_count: <N>         # MUST equal the number of entries in `qa_report.findings`
+  reason: <text>              # REQUIRED when status: incomplete — e.g. "hit the tool budget at REQ-004"
+```
+
+Write it with `status: incomplete` and a reason whenever you ran out of turns, tool budget, or context before finishing the walk — **a partial review must say so rather than hand back a short clean report.** The two numbers are what make this checkable: `findings_count` is written from what you have in hand, the list is what actually reached disk, and a truncated write makes them disagree. `/acceptance-fleet` S1.5 runs `scripts/verify_review_complete.py` over this; a missing marker is recorded as `unevaluated`, never as a pass.
+
 
 ---
 

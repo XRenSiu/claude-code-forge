@@ -1,0 +1,8 @@
+# 标记也允许写在角色块里（位置宽松，存在与否严格）。
+gaming_assessment:
+  agent_role: spec-gaming-detector
+  gaming_risk_score: 2
+  detected_patterns: []
+  review_complete:
+    status: complete
+    findings_count: 0

@@ -15,7 +15,7 @@ description: |
   (that is invariant-extract), compiling done_when into tests/rubric (that is spec-compile),
   or proving the compiled ruler is correct (that is calibrate).
 argument-hint: "<issue id / signal id / intent text> [--template <contract_template_id>] [--auto]"
-version: 0.4.0
+version: 0.5.0
 user-invocable: true
 # imported into sdlc 2026-09-05 from qanat/.claude/skills; body kept, sdlc wiring added (see 接线 / 术语映射)
 ---
@@ -125,6 +125,16 @@ HTML disciplines are the load-bearing three; full procedures in `references/give
 - **The intent scan** is documented patterns for harvesting candidate conditions from the Issue +
   its `failure_memory` (last-N for this template/Territory) + the contract template's prior done_when.
   Patterns: `references/given-when-then.md`. (Engine-runnable; not welded into a sequence.)
+- **The terminology sensor** (`../dos-extract/scripts/verify_vocabulary.py --dos dos.yaml done_when.yaml`)
+  reads the contract's *prose* slots — `statement`, `given`, `expect`, `notes` — and reports every
+  domain noun `dos.yaml` cannot resolve, with `file:line` and its closest resolvable neighbour.
+  A threshold makes an adjective falsifiable; **it does not make the noun in it mean one thing**.
+  `WHEN 一笔 banking_transaction 入队 THE SYSTEM SHALL …` is perfectly falsifiable and still
+  ambiguous if the ontology keys it `BankingTransaction` and nobody declared the synonym — and
+  **G2 freezes this contract**, so the ambiguity is frozen with it and every downstream card,
+  test and reviewer inherits it. B-tier: it warns, it does not veto. Exit `0` / `1` above
+  threshold / `2` IO / **`3` unevaluated** — no ontology means the contract's vocabulary was NOT
+  checked, which is a thing to record, never a pass (`--require-ontology` turns 3 into 1).
 
 ## 分歧集：把「这需求写清楚了没有」从自评变成可核对的信号（v0.2.0）
 
@@ -243,6 +253,10 @@ The engine runs the extraction; these gates do not move:
   happy/unhappy 配对、矛盾与覆盖两检），没有 done-when-pipeline 的 `/acceptance-spec` 时它就是契约产出者。
   产物路径记入 `sdlc_state.py set contract.done_when=… contract.source=donewhen-extract`。
 - **G2 之前**：卡是草案；`lock_done_when.py sign` 之后才冻结。改动走变更提案。
+  **签之前跑一次术语传感器**（`verify_vocabulary.py --dos dos.yaml done_when.yaml`）：
+  G2 冻结的是判据，判据里的名词跟着一起冻。签完再发现契约把 `transaction` 和 `BankingTransaction`
+  当两个词用，改它就要走变更提案 + 重新签锁——这是这条线上最贵的一次返工。
+  传感器 exit 3（本仓库没有 dos.yaml）按**未检**记进 G2 记录，不许写成"术语已核"。
 - **常驻不变量候选 → `/invariant-extract`**（本插件）；编译成测试 / 评判程序 → `/spec-compile`；证明尺子承重 → `/calibrate`。
 - **失败记忆的来源**：`.sdlc/<slug>/ledger.md` 的 `fail` 行与 `escape-defects.md`；`based_on` 引它们的行。
 
