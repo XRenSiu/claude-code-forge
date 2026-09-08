@@ -1,0 +1,53 @@
+# donewhen-extract 输出:一次任务的 done_when 验收卡(候选)
+# 这是落卡阶段的主产物。每条候选都是可证伪的 本次验收 谓词,带阈值、happy/unhappy 配对、溯源。
+# 注意:本卡是「Contract 草案」,不是已签合同 —— done_when 骑在 Contract 模板上,
+#       模板是闸门资产,只能人签(R002);高风险/改模板的条款 PROPOSE-only 走变更提案 / G2 签字（AI-DLC）。
+# 落点:投影为 dos.yaml Contract.done_when[](结构化条目 {id, statement, ears_type?, verify?, based_on?})。
+
+issue_ref: ""                    # 催生本卡的 Issue / Signal id
+territory_id: ""                 # 绑定的领地(取景框来源)
+contract_template_id: ""         # 若实例化自模板,继承其稳定 REQ-ID
+purpose:                         # 取景框 = name + kpi + 模板;贯穿全程的透镜
+  name: ""                       # 一句话责任(Territory.name)
+  kpi: ""                        # Territory.kpi —— 阈值/aspect 的来源
+  aspect_focus: []               # 本次任务主要投在哪些维度:correctness | latency | cost | safety …
+extracted_at: ""                 # 由 skill 运行时间戳回填(运行后,不在脚本里取时间)
+mode: interactive                # interactive | auto
+risk_class: low                  # low | medium | high —— 决定签约走自动签还是 PROPOSE-only
+
+# —— done_when 条款(本次验收,可证伪,Given/When/Then,EARS 表面) ——
+clauses:
+  - id: DW-001                   # 稳定 REQ-ID(模板内稳定、instance 继承,供 G2/failure_memory 按条追踪)
+    statement: ""                # EARS:WHEN/WHILE/IF … THE SYSTEM SHALL …
+    ears_type: event             # ubiquitous | event | state | unwanted | optional
+    given: ""                    # 前置/上下文(状态前提)
+    when: ""                     # 触发(事件/条件)
+    then: ""                     # 可证伪的可观测结果
+    threshold: ""                # 纪律①:形容词换成的数字阈值(无阈值的定性条款此处必须留证据来源)
+    threshold_source: ""         # 阈值溯源:kpi | slo:<ref> | failure_memory:<id> | (空→needs_semantic_review)
+    paired_with: ""              # 纪律②:happy↔unhappy 互指的对方 id(event/state 类必须有)
+    verify: command              # command | checklist | rubric(逐条核验意图,交给 spec-compile 分流)
+    based_on: ""                 # 复利溯源:催生本条的 MemoryAsset:failure_memory id(从 Issue 直出则空)
+    disposition: draft           # draft(随合同签约落地) | propose(高风险/改模板,走变更提案 / G2 签字（AI-DLC）)
+
+# —— 踢给 invariant-extract 的 常驻不变量 候选(能活过未来不相关 Run,不属本卡) ——
+kicked_to_invariant:
+  - statement: ""
+    why_box: ""                  # 为什么对每个 Run 都成立 = 常驻不变量
+    handoff_to: invariant-extract
+
+# —— 出口两检的记录(纪律③) ——
+exit_checks:
+  contradiction:
+    machine_pass: false          # verify_done_when.py 成对极性扫描是否过
+    suspected_pairs: []          # 疑似矛盾的 (a_id, b_id) 对(reject,待人/judge 解除)
+    semantic_note: ""            # SMT 式/区间一致性的 judge 结论(接 Z3 则填 UNSAT 证据)
+  coverage:
+    machine_pass: false          # 每条 event happy 有 unwanted 兄弟 + kpi 维有条款覆盖
+    uncovered_aspects: []        # 零条款覆盖的 kpi 维(flag)
+    explicitly_out_of_scope: []  # 本 Run 显式不覆盖的场景(不假装覆盖过)
+
+# —— 与已有 done_when / 模板的去重记录 ——
+deduped_against_template:
+  - candidate: ""
+    matched_req_id: ""           # 已是模板里的哪条 REQ-ID,故合并/收紧而非新增

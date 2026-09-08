@@ -1,0 +1,83 @@
+# triggers.yaml — 每个环由什么触发、怎么绑到 Claude Code 原生原语
+#
+# 为什么存在：AI-DLC 的环原来只有一种触发——pr-poll.sh 的 bash sleep。Claude Code 现在有四个原生原语：
+#   /goal <condition>   上一轮结束就评估；独立小模型判 Met / Not yet met / Impossible；只看 transcript
+#   /loop [interval]    时间间隔或模型自定节奏（ScheduleWakeup）
+#   Stop hook           每轮结束；脚本（确定性）或 prompt（模型判）
+#   /schedule           云端 cron routine，不依赖打开的 session
+# 环的"等待"交给它们，环的"谓词"仍然是 AI-DLC 自己的脚本（pr-poll.sh done / verify_commit.py / aidlc_state.py show）。
+#
+# 通用陷阱：/goal 的评估者不跑命令、不读文件——条件里引用的每个退出码 / 测试结果都必须回显到对话里。
+# 通用预算：条件末尾永远带 "or stop after N turns"，N 取该环在 loops.yaml / routing.yaml 的预算。
+
+version: 1
+
+triggers:
+  - loop: card_retry
+    kind: turn_end
+    bindings:
+      interactive: >-
+        /goal CARD-xx 的 ac_ids 对应测试全绿（把测试命令与输出回显）且最近一次
+        `python3 <plugin>/skills/commit/scripts/verify_commit.py --card cards/CARD-xx.yaml --lock .done_when.lock` 回显 exit 0，
+        且 `aidlc_state.py card CARD-xx --status done` 已执行；or stop after <routing budgets.<track>.card_retries> turns
+      unattended: 同上，在 auto mode 下运行（/goal 不改变权限模式）
+      headless: claude -p "/goal <同上>" --output-format stream-json --verbose
+    predicate_scripts: [verify_commit.py, aidlc_state.py card, 测试入口]
+    caveats:
+      - 每轮失败要 `aidlc_state.py fail --signal card_test_fail --card CARD-xx --fingerprint <摘要>` 并把返回的 escalate 字段回显——评估者据此判 Impossible
+      - 子 agent / 后台命令未结束时 /goal 延迟评估（30 分钟起 check-in）；卡实现不该有后台任务
+
+  - loop: review_loop
+    kind: event
+    bindings:
+      interactive: >-
+        /loop 5m bash <skill_dir>/scripts/pr-poll.sh snapshot <PR>   （有活动时按 SKILL.md 裁决；无活动 exit 20 直接等下一拍）
+        或长阻塞：bash pr-poll.sh watch <PR> 45 480（Bash 工具 timeout ≥ 600000ms）
+      unattended: >-
+        /goal `bash <skill_dir>/scripts/pr-poll.sh done <PR>` 回显 exit 0 或 exit 10，或该 PR 存在 REJECT 悬而未决且已汇报（合法不收敛，exit 20）；
+        or stop after <MAX_ROUNDS> turns
+      headless: >-
+        /schedule 一条 routine：每 30 分钟 `claude -p "/review-loop <PR>"`；水位线与计数器在 .aidlc/pr-watch 跨 session 延续
+    predicate_scripts: [pr-poll.sh done, pr-poll.sh snapshot, pr-poll.sh threads]
+    caveats:
+      - review-loop 是 disable-model-invocation：任何绑定都以人显式启动为前提
+      - watch 的 MAX_WAIT 必须 < Bash 工具超时；/loop 与 /goal 路径不受此限
+      - 首轮对已存在 PR 会吐出全部历史评论，先过 SKILL.md 的过滤判据
+
+  - loop: acceptance_ratchet
+    kind: after
+    bindings:
+      interactive: 所有卡 done 后手动 /acceptance-fleet specs/<f>/
+      unattended: >-
+        /goal `aidlc_state.py show` 回显所有卡 status == done 且 ratchet-log/iteration-NNN/final-state.json 存在且 state ∈ {DONE, NEEDS_HUMAN}；
+        or stop after <task_reflows + plan_reflows> turns
+    predicate_scripts: [aidlc_state.py show, final-state.json]
+    caveats:
+      - 隔离等级 ≥ medium 是前置；同 session 跑实现与验收 = Level 0，acceptance-fleet 拒绝运行
+
+  - loop: ratchet
+    kind: turn_end
+    bindings:
+      interactive: ratchet 的 master 循环本身就是 turn_end 环；/goal 条件 = ratchet.md 的 done_when.success 加 "or stop after <budget> turns"
+    predicate_scripts: [evaluate.sh, results.tsv]
+
+  - loop: lifecycle
+    kind: manual
+    bindings:
+      interactive: /ai-dlc "<需求>" --track task|psl；中断后 /ai-dlc --resume <slug>
+      stop_hook: >-
+        assets/hooks/stop-clean-state.json（模板，不自动安装）：每轮结束跑 `aidlc_state.py check-clean --as-hook`，
+        有卡 doing 且工作区脏、或 escalate 后失败报告未写 → block 并把原因喂回
+    predicate_scripts: [aidlc_state.py advance, aidlc_state.py check-clean]
+    caveats:
+      - 三道门只能人签；任何触发绑定都不能代签
+
+  - loop: hill_climb
+    kind: cron
+    bindings:
+      headless: /schedule 每周一 `claude -p "/tune specs/ --pr-watch .aidlc/pr-watch"`；产物是提案 + patch，不改任何文件
+      interactive: /tune specs/
+    predicate_scripts: [tune.py, apply_proposal.py --dry-run]
+    caveats:
+      - 归档 < 2 个只出基线不出提案（insufficient_samples）
+      - 提案永不自动生效：routing / SKILL.md / gate.json 的改动都是 PR，human.harness-review 合

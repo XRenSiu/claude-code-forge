@@ -2,7 +2,7 @@
 name: techdoc
 description: "Use when you need a technical proposal, design doc, ADR, postmortem, or decision memo written from a brief so that it reads the way a senior engineer writes one — opens with the triggering incident and a number, states the decision in one sentence, kills the obvious alternatives with specific reasons, lists consequences including the bad ones, spells out rollout/rollback, ends on open questions — instead of the AI default (background paragraph, bulleted benefits, balanced options, 'comprehensive testing', 综上所述). 写技术方案 / 写设计文档 / 写 ADR / 写复盘 / 出个方案 / design doc / RFC / proposal. Chinese or English. NOT for API reference, README installation sections, or user manuals (those are tables and steps); NOT for polishing an existing draft (use /humanize)."
 argument-hint: "<一句到一段的 brief，或 brief 文件路径> [--genre proposal|design|adr|postmortem|memo] [--reader <谁读>] [--materials <路径…>] [--voice <voice.md>] [--lang zh|en] [--out <路径>]"
-version: 0.1.0
+version: 0.1.1
 user-invocable: true
 ---
 
@@ -109,7 +109,7 @@ memo 全散文、目标之外禁 bullet。
 
 - `/humanize`（本插件）：本 skill 的出口闸门就是它的闸门；已有草稿直接用它。
 - `/voice-profile`（本插件）：有 `.humanize/voice.md` 时自动加载。
-- `looper` 的 `/psl`、`sdlc` 的 `/issue`（如果安装了）：体验性需求先写 PSL 再写方案；方案里的验收可直接引用 issue 的 done_when。缺席不阻塞。
+- `looper` 的 `/psl`、`ai-dlc` 的 `/issue`（如果安装了）：体验性需求先写 PSL 再写方案；方案里的验收可直接引用 issue 的 done_when。缺席不阻塞。
 
 ## 本 skill 自身的出口门
 

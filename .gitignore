@@ -64,5 +64,6 @@ coverage/
 # yarn.lock
 # pnpm-lock.yaml
 
-# sdlc runtime state (archive lives in specs/<slug>/ or the dogfood dir)
-.sdlc/
+# ai-dlc runtime state (archive lives in specs/<slug>/ or the dogfood dir)
+.aidlc/
+.sdlc/          # 改名前的运行时目录；仍可能存在于旧 checkout 里

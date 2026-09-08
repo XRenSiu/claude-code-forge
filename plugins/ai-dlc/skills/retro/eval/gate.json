@@ -1,0 +1,35 @@
+{
+  "skill": "plugins/ai-dlc/skills/retro",
+  "tier": "production",
+  "evaluated_layers": [
+    "structural"
+  ],
+  "gate_pass": "static_only",
+  "structural": {
+    "findings": [],
+    "failure_taxonomy": {
+      "underfill": 0,
+      "overfill": 0,
+      "wrong-layer": 0,
+      "wrong-route": 0,
+      "no-exit": 0,
+      "seam-misplacement": 0
+    },
+    "waived_count": 0
+  },
+  "effect": null,
+  "discrimination": null,
+  "fix_list": [
+    "L2: run on ≥2 archived features and check every proposal has target/change/verify_by and reaches its destination (proposal file / Open Questions / gate fix_list)"
+  ],
+  "provenance": {
+    "date": "2026-09-05",
+    "evaluator": "AUTHOR-RUN structural pass: skillwise lint_skill.py L0 + plugins/ai-dlc/eval/smoke.sh. NOT a decorrelated read, NOT an L2 run.",
+    "scripts_run": {
+      "metrics.py": "exports lead time / rounds / reflow distribution / G1 rate / human-AC ratio / escapes / waivers from a fixture archive (moved here from ai-dlc/scripts)",
+      "metrics.py (v0.6.0)": "reads trace.jsonl: escape causal chain depth 3 → root fail/task; contract rework 1/4 = 0.25 on fixture"
+    },
+    "why_it_exists": "2026-09-05 re-split: the reference lifecycle had no carrier skill for L4 plan / L6 implement / L8 delivery / X3 learning; see docs/design-notes.md",
+    "v0.6.0": "two trace-derived metrics added; downstream /tune wired"
+  }
+}

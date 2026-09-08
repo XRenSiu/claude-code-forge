@@ -1,0 +1,41 @@
+{
+  "skill": "plugins/ai-dlc/skills/plan-cards",
+  "tier": "production",
+  "evaluated_layers": [
+    "structural"
+  ],
+  "gate_pass": "static_only",
+  "structural": {
+    "findings": [],
+    "failure_taxonomy": {
+      "underfill": 0,
+      "overfill": 0,
+      "wrong-layer": 0,
+      "wrong-route": 0,
+      "no-exit": 0,
+      "seam-misplacement": 0
+    },
+    "waived_count": 0
+  },
+  "effect": null,
+  "discrimination": null,
+  "fix_list": [
+    "L2: split one real frozen contract into cards and hand a card to card-implementer in a fresh session; check it finishes without asking for context"
+  ],
+  "provenance": {
+    "date": "2026-09-05",
+    "evaluator": "AUTHOR-RUN structural pass: skillwise lint_skill.py L0 + plugins/ai-dlc/eval/smoke.sh. NOT a decorrelated read, NOT an L2 run.",
+    "scripts_run": {
+      "lint_cards.py": "bad card set rejected on 6 independent breaches (dup REQ, glob overlap, missing REQ-003, ac_ids not in done_when, dos closure, context>40k); good set passes (moved here from ai-dlc/scripts)"
+    },
+    "why_it_exists": "2026-09-05 re-split: the reference lifecycle had no carrier skill for L4 plan / L6 implement / L8 delivery / X3 learning; see docs/design-notes.md"
+  },
+  "script_smoke": {
+    "slice_agent_map.py": {
+      "slice by allowed_files": "6 directory rows → 1, 4 forbidden rows → 2, 4 traps → 1; commands always kept in full"
+    }
+  },
+  "dogfood_fixes": [
+    "2026-09-06 raising-the-floor: implemented the report's gaps; see plugins/ai-dlc/docs/reports/"
+  ]
+}

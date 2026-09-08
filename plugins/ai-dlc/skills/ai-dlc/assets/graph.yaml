@@ -1,0 +1,374 @@
+# graph.yaml — AI-DLC 的执行图（声明，不是运行时）
+#
+# 谁读它：scripts/verify_graph.py（lint 五条）· scripts/aidlc_state.py graph next|render|check
+# 为什么存在：图原来写在 docs/ARCHITECTURE.md 的 ASCII 里和 aidlc_state.py 的线性链里，两处会漂移，
+# 且"每个圈都有预算、评估者到实现者的边只带 fix_prompt、人节点有恢复绑定"这些性质没人检。
+# 这份文件把节点边界（reads / must_not_read / writes / authority）、边类型（sequential / conditional /
+# fan_out / fan_in / loop_back / interrupt / handoff）、环归属（loop → loops.yaml）写成数据。
+#
+# 约定：阶段节点 id = stage.<name>；skill 节点 id = <skill 名>；agent = agent.<名>；人 = human.<名>。
+# 信息可见性 ≠ 执行顺序（puppyone）：一条边能把控制权交过去，不等于能把信息交过去——看 carries。
+
+version: 1
+
+# 与 aidlc_state.py ORDER 互相断言（graph check）：这里的顺序就是阶段节点 sequential 边的顺序。
+stages: [intake, track, issue, branch, contract, g2, cards, implement, acceptance, pr, review, g3, merge, release, archive]
+
+# 评估者 → 实现者 的边只允许携带这些（verify_graph.py lint 3）
+carries_allowed_to_implementer: [fix_prompt, accepted_claim]
+
+nodes:
+  # ---------- 阶段节点（控制流；handled_by 指向真正干活的节点） ----------
+  - {id: stage.intake,     kind: stage, handled_by: [ai-dlc]}
+  - {id: stage.track,      kind: stage, handled_by: [issue]}
+  - {id: stage.issue,      kind: stage, handled_by: [issue]}
+  - {id: stage.branch,     kind: stage, handled_by: [ai-dlc]}
+  - {id: stage.contract,   kind: stage, handled_by: [donewhen-extract, acceptance-spec]}
+  - {id: stage.g2,         kind: stage, handled_by: [human.g2]}
+  - {id: stage.cards,      kind: stage, handled_by: [plan-cards]}
+  - {id: stage.implement,  kind: stage, handled_by: [implement, agent.card-implementer, ratchet, commit]}
+  - {id: stage.acceptance, kind: stage, handled_by: [acceptance-fleet]}
+  - {id: stage.pr,         kind: stage, handled_by: [pr]}
+  - {id: stage.review,     kind: stage, handled_by: [review-loop]}
+  - {id: stage.g3,         kind: stage, handled_by: [human.g3]}
+  - {id: stage.merge,      kind: stage, handled_by: [human.merge]}
+  - {id: stage.release,    kind: stage, handled_by: [release]}
+  - {id: stage.archive,    kind: stage, handled_by: [ai-dlc]}
+
+  # ---------- 脊柱 ----------
+  - id: ai-dlc
+    kind: skill
+    role: orchestrator
+    reads: [.aidlc/<slug>/state.json, .aidlc/<slug>/ledger.md, assets/routing.yaml, assets/graph.yaml, assets/loops.yaml]
+    writes: [.aidlc/<slug>/state.json, .aidlc/<slug>/ledger.md, .aidlc/<slug>/trace.jsonl, specs/<slug>/**]
+    authority: {commit: false, post: false, resolve: false, sign: false, merge: false}
+    loop: lifecycle
+
+  # ---------- R0 世界 ----------
+  - id: psl
+    kind: skill
+    role: world
+    reads: [需求原文, 现有 PSL]
+    writes: [PSL-*.md]
+    authority: {commit: false}
+  - id: psl-derive
+    kind: skill
+    role: world
+    reads: [PSL-*.md]
+    writes: [derived/**]
+    authority: {commit: false}
+  - id: human.g1
+    kind: human
+    role: gate
+    reads: [derived/**, divergence.md]
+    writes: [g1-record.md]
+    authority: {sign: true}
+    resume_binding: [world.derived_dir, gates.g1.verdict]
+
+  # ---------- R1 本体 ----------
+  - id: dos-extract
+    kind: skill
+    role: knowledge
+    reads: [src/**, docs/**]
+    writes: [dos.yaml, decisions.md]
+    authority: {commit: false}
+  - id: invariant-extract
+    kind: skill
+    role: knowledge
+    reads: [失败记忆, src/**, dos.yaml]
+    writes: [invariants/*.yaml]
+    authority: {commit: false}
+
+  # ---------- R2 契约 ----------
+  - id: issue
+    kind: skill
+    role: contract
+    reads: [需求 / bug / 逃逸缺陷, dos.yaml]
+    writes: [github:issue]
+    authority: {post: true}
+  - id: donewhen-extract
+    kind: skill
+    role: contract
+    reads: [github:issue, dos.yaml]
+    writes: [done_when.yaml]
+    authority: {commit: false}
+  - id: acceptance-spec
+    kind: skill
+    role: contract
+    reads: [需求原文]
+    writes: [specs/<f>/spec.md, specs/<f>/done_when.yaml, specs/<f>/spec-robustness.md]
+    authority: {commit: false}
+  - id: human.g2
+    kind: human
+    role: gate
+    reads: [done_when.yaml, contract.yaml]
+    writes: [.done_when.lock]
+    authority: {sign: true}
+    resume_binding: [contract.done_when, lock.path, gates.g2.verdict]
+
+  # ---------- R3 标准 ----------
+  - id: test-suite-generator
+    kind: skill
+    role: standard
+    reads: [done_when.yaml, cards/CARD-*.yaml]
+    writes: [tests/<f>/**, tests-manifest.yaml]
+    authority: {commit: false}
+  - id: spec-compile
+    kind: skill
+    role: standard
+    reads: [done_when.yaml, invariants/*.yaml]
+    writes: [compile_manifest.yaml, eval_cases/**]
+    authority: {commit: false}
+  - id: calibrate
+    kind: skill
+    role: standard
+    reads: [compile_manifest.yaml, tests/<f>/**]
+    writes: [calibration_report.yaml]
+    must_not_read: [implementer_session]
+    authority: {commit: false}
+
+  # ---------- R4 计划 ----------
+  - id: plan-cards
+    kind: skill
+    role: planner
+    reads: [done_when.yaml, dos.yaml, spec.md]
+    writes: [cards/CARD-*.yaml]
+    authority: {commit: false}
+
+  # ---------- R5 实现 ----------
+  - id: implement
+    kind: skill
+    role: implementer
+    reads: [cards/CARD-xx.yaml, state.summary, ac_subset, red_baseline, card.allowed_files]
+    must_not_read: [ratchet-log/**, spec-robustness.md, evaluator_prompts, hidden_set, other_cards, ledger.findings]
+    writes: [card.allowed_files]
+    authority: {commit: true, post: false, resolve: false, sign: false}
+    loop: card_retry
+  - id: agent.card-implementer
+    kind: agent
+    role: implementer
+    reads: [card_context.md]
+    must_not_read: [ratchet-log/**, spec-robustness.md, evaluator_prompts, hidden_set, other_cards]
+    writes: [card.allowed_files]
+    authority: {commit: true}
+    loop: card_retry
+  - id: ratchet
+    kind: skill
+    role: implementer
+    reads: [ratchet.md, learnings.md, dead-ends.md]
+    must_not_read: [evaluate_criteria.md 的评分细节, test_data/**]
+    writes: [experiment_dir/**]
+    authority: {commit: true}
+    loop: ratchet
+  - id: commit
+    kind: skill
+    role: implementer
+    reads: [git:staged, cards/CARD-xx.yaml, .done_when.lock]
+    writes: [git:commit]
+    authority: {commit: true}
+
+  # ---------- R6 验收 ----------
+  - id: acceptance-fleet
+    kind: skill
+    role: evaluator
+    reads: [specs/<f>/**, impl_dir, tests/<f>/**]
+    must_not_read: [implementer_session]
+    writes: [ratchet-log/iteration-NNN/**]
+    authority: {commit: false}
+    loop: acceptance_ratchet
+  - {id: code-reviewer,         kind: skill, role: evaluator, reads: [diff], writes: [ratchet-log/iteration-NNN/code-review-*.yaml], authority: {commit: false}}
+  - {id: qa-reviewer,           kind: skill, role: evaluator, reads: [tests/<f>/**, impl_dir], writes: [ratchet-log/iteration-NNN/qa-review.yaml], authority: {commit: false}}
+  - {id: pm-reviewer,           kind: skill, role: evaluator, reads: [spec.md, impl_dir], writes: [ratchet-log/iteration-NNN/pm-review.yaml], authority: {commit: false}}
+  - {id: spec-drift-detector,   kind: skill, role: evaluator, reads: [spec.md, impl_dir, git:log], writes: [ratchet-log/iteration-NNN/drift.yaml], authority: {commit: false}}
+  - {id: spec-gaming-detector,  kind: skill, role: evaluator, reads: [done_when.yaml, spec-robustness.md, impl_dir], writes: [ratchet-log/iteration-NNN/gaming.yaml], authority: {commit: false}}
+  - id: meta-judge
+    kind: skill
+    role: evaluator
+    reads: [ratchet-log/iteration-NNN/*-review*.yaml, rules_source]
+    must_not_read: [impl_dir]          # 硬墙：不复审代码
+    writes: [ratchet-log/iteration-NNN/final-verdict.yaml]
+    authority: {commit: false}
+  - id: pr-review
+    kind: skill
+    role: evaluator
+    reads: [diff, PR body Scope]
+    writes: [.aidlc/review/*.yaml, github:review]
+    authority: {post: true, approve: false}
+  - id: human.g3
+    kind: human
+    role: gate
+    reads: [failure-report-*.md, human AC 清单, 假设台账]
+    writes: [g3-record.md]
+    authority: {sign: true}
+    resume_binding: [acceptance.evaluation_result, gates.g3.verdict, pending.failure_report]
+
+  # ---------- R7 交付 ----------
+  - id: pr
+    kind: skill
+    role: delivery
+    reads: [git:base..head, done_when.yaml, cards/**]
+    writes: [github:pr]
+    authority: {post: true, merge: false}
+  - id: review-loop
+    kind: skill
+    role: delivery
+    reads: [github:pr-comments, .aidlc/pr-watch/**]
+    writes: [.aidlc/pr-watch/pr-N.json, github:reply, github:resolve]
+    authority: {commit: true, post: true, resolve: true, approve: false, merge: false}
+    loop: review_loop
+  - id: agent.review-triager
+    kind: agent
+    role: evaluator
+    reads: [pr comments, diff]
+    writes: [triage.yaml]
+    authority: {commit: false}
+  - id: agent.comment-fixer
+    kind: agent
+    role: implementer
+    reads: [accepted_claim, card.allowed_files]
+    must_not_read: [triage.yaml 的其他线程, verifier 判据]
+    writes: [card.allowed_files]
+    authority: {commit: true}
+  - id: agent.fix-verifier
+    kind: agent
+    role: evaluator
+    reads: [claim, fix diff, test entry]
+    must_not_read: [fixer_session]
+    writes: [verify.yaml]
+    authority: {commit: false}
+  - id: agent.pr-reviewer
+    kind: agent
+    role: evaluator
+    # The audit found this node missing while agents/pr-reviewer.md and /pr --pre-review both exist,
+    # so the graph said four agents where the plugin ships five (dogfood I-16). A node absent from the
+    # graph is a node no lint, no loop and no ring assignment can see.
+    reads: [git:base..head, CLAUDE.md, pr scope]
+    must_not_read: [implementer_session, ratchet-log/**]
+    writes: [pre-review/round-N.findings.yaml]
+    authority: {commit: false, post: false, approve: false}
+  - id: human.merge
+    kind: human
+    role: gate
+    reads: [github:pr]
+    writes: [github:merge]
+    authority: {merge: true}
+    resume_binding: [pr.number, review.done]
+  - id: release
+    kind: skill
+    role: delivery
+    reads: [git:log, CHANGELOG.md]
+    writes: [CHANGELOG.md, releases/vX.Y.Z.md, git:tag]
+    authority: {push_tag: true}
+
+  # ---------- R8 学习 ----------
+  - id: retro
+    kind: skill
+    role: learning
+    reads: [specs/*/**, escape-defects.md, .aidlc/pr-watch/*.json]
+    writes: [retro/retro-<date>.md, metrics.json, change-proposal-*.md]
+    authority: {commit: false}
+    loop: lifecycle
+  - id: tune
+    kind: skill
+    role: learning
+    reads: [specs/*/**, .aidlc/pr-watch/**, ratchet-log/**, assets/routing.yaml, assets/loops.yaml]
+    writes: [tune/harness-proposals-<date>.yaml, tune/*.patch]
+    must_not_read: [implementer_session]
+    authority: {commit: false}
+    loop: hill_climb
+  - id: human.harness-review
+    kind: human
+    role: gate
+    reads: [tune/harness-proposals-<date>.yaml, tune/*.patch]
+    writes: [github:pr]
+    authority: {merge: true}
+    resume_binding: [proposal.id]
+
+edges:
+  # ---------- 脊柱：阶段 sequential（守卫 = aidlc_state.py prereqs(<stage>)） ----------
+  - {from: stage.intake,     to: stage.track,      type: sequential, guard: prereq.track}
+  - {from: stage.track,      to: stage.issue,      type: sequential, guard: prereq.issue}
+  - {from: stage.issue,      to: stage.branch,     type: sequential, guard: prereq.branch}
+  - {from: stage.branch,     to: stage.contract,   type: sequential, guard: prereq.contract}
+  - {from: stage.contract,   to: stage.g2,         type: sequential, guard: prereq.g2}
+  - {from: stage.g2,         to: stage.cards,      type: sequential, guard: prereq.cards}
+  - {from: stage.cards,      to: stage.implement,  type: sequential, guard: prereq.implement}
+  - {from: stage.implement,  to: stage.acceptance, type: sequential, guard: prereq.acceptance}
+  - {from: stage.acceptance, to: stage.pr,         type: sequential, guard: prereq.pr}
+  - {from: stage.pr,         to: stage.review,     type: sequential, guard: prereq.review}
+  - {from: stage.review,     to: stage.g3,         type: sequential, guard: prereq.g3}
+  - {from: stage.g3,         to: stage.merge,      type: sequential, guard: prereq.merge}
+  - {from: stage.merge,      to: stage.release,    type: sequential, guard: prereq.release}
+  - {from: stage.release,    to: stage.archive,    type: sequential, guard: prereq.archive}
+  # 合法跳过：G3 不必需（显式 set 留痕）
+  - {from: stage.review, to: stage.merge, type: conditional, when: "gates.g3.required == false", guard: prereq.merge}
+
+  # ---------- 双轨分叉与 G1 中断 ----------
+  - {from: stage.track, to: psl,        type: conditional, when: "track == psl ∨ dos_closure_fail"}
+  - {from: psl,         to: psl-derive, type: handoff, carries: [PSL-*.md]}
+  - {from: psl-derive,  to: human.g1,   type: interrupt, carries: [derived/**, divergence.md]}
+  - {from: human.g1,    to: stage.issue, type: handoff, carries: [g1-record.md, form_draft_sha256]}
+  - {from: human.g1,    to: psl,        type: loop_back, signal: counterexample_cites_psl_rule, loop: lifecycle, carries: [attribution]}
+
+  # ---------- 本体与标准的接线 ----------
+  - {from: dos-extract,        to: issue,                type: handoff, carries: [dos.yaml]}                 # 词表闭包的解析源
+  - {from: dos-extract,        to: plan-cards,           type: handoff, carries: [dos.yaml]}                 # 卡的 dos_slice
+  - {from: invariant-extract,  to: spec-compile,         type: handoff, carries: [invariants/*.yaml]}
+  - {from: spec-compile,       to: calibrate,            type: handoff, carries: [compile_manifest.yaml]}
+  - {from: calibrate,          to: acceptance-fleet,     type: handoff, carries: [calibration_report.yaml]}  # 未校准的标准不当证据
+  - {from: test-suite-generator, to: calibrate,          type: handoff, carries: [tests/<f>/**]}
+
+  # ---------- 契约 → 人签 → 锁 ----------
+  - {from: issue,            to: donewhen-extract, type: handoff, carries: [github:issue]}
+  - {from: donewhen-extract, to: human.g2,         type: interrupt, carries: [done_when.yaml]}
+  - {from: acceptance-spec,  to: human.g2,         type: interrupt, carries: [done_when.yaml]}
+  - {from: human.g2,         to: plan-cards,       type: handoff, carries: [.done_when.lock]}
+  - {from: plan-cards,       to: test-suite-generator, type: handoff, carries: [cards/CARD-*.yaml]}
+  - {from: test-suite-generator, to: implement,    type: handoff, carries: [red_baseline, tests locked]}
+
+  # ---------- 实现侧执行器 ----------
+  - {from: implement,              to: agent.card-implementer, type: conditional, when: "executor == agent", carries: [card_context.md]}
+  - {from: implement,              to: ratchet,                type: conditional, when: "executor == ratchet", carries: [ratchet.md]}
+  - {from: agent.card-implementer, to: commit,                 type: handoff, carries: [git:staged, Card footer]}
+  - {from: ratchet,                to: ratchet,                type: loop_back, signal: ratchet_round, loop: ratchet}
+  - {from: ratchet,                to: commit,                 type: handoff, carries: [git:staged]}
+  - {from: pr,                     to: pr-review,              type: handoff, carries: [github:pr, Scope]}   # reviewer 一侧
+  - {from: pr-review,              to: review-loop,            type: handoff, carries: [github:review]}     # 评论进入作者的 review 环
+
+  # ---------- 实现环（自环 + 升级回边） ----------
+  - {from: stage.implement, to: stage.implement, type: loop_back, signal: card_test_fail, loop: card_retry}
+  - {from: stage.implement, to: stage.cards,     type: loop_back, signal: same_card_same_fingerprint, loop: card_retry}
+  - {from: stage.implement, to: stage.cards,     type: loop_back, signal: oscillation_detected, loop: card_retry}
+  - {from: stage.implement, to: stage.cards,     type: loop_back, signal: plateau, loop: card_retry}
+  - {from: stage.implement, to: human.g3,        type: interrupt, signal: whitelist_overflow}
+  - {from: stage.implement, to: stage.contract,  type: loop_back, signal: lock_hash_mismatch, loop: lifecycle, carries: [change-proposal-*.md]}
+
+  # ---------- 验收：扇出 / 扇入 / 四态 ----------
+  - {from: acceptance-fleet, to: [code-reviewer, qa-reviewer, pm-reviewer, spec-drift-detector, spec-gaming-detector], type: fan_out, carries: [impl_dir, specs/<f>/**]}
+  - {from: [code-reviewer, qa-reviewer, pm-reviewer, spec-drift-detector, spec-gaming-detector], to: meta-judge, type: fan_in, merge: dedupe_weight_arbitrate_classify, carries: [findings]}
+  - {from: meta-judge,       to: acceptance-fleet, type: loop_back, signal: iteration_complete, loop: acceptance_ratchet, carries: [final-verdict.yaml]}   # 一次迭代收口
+  - {from: acceptance-fleet, to: stage.implement,  type: loop_back, signal: card_test_fail, loop: acceptance_ratchet, carries: [fix_prompt]}     # FIX
+  - {from: acceptance-fleet, to: stage.contract,   type: loop_back, signal: pbt_fail_n3_consistent_with_req, loop: acceptance_ratchet, carries: [drift_report]}  # SPEC_DRIFT
+  - {from: acceptance-fleet, to: stage.contract,   type: loop_back, signal: impossible_under_contract, loop: acceptance_ratchet, carries: [impossibility_evidence]}
+  - {from: acceptance-fleet, to: human.g3,         type: interrupt, signal: human_ac_pending, carries: [gaming_report, human AC 清单]}       # GAMING_RISK / NEEDS_HUMAN
+
+  # ---------- 交付：PR → review 环 → 人合 → release ----------
+  - {from: pr,          to: review-loop,           type: handoff, carries: [github:pr, Scope]}
+  - {from: stage.review, to: stage.review,         type: loop_back, signal: review_round, loop: review_loop}
+  - {from: review-loop, to: agent.review-triager,  type: handoff, carries: [pr comments]}
+  - {from: agent.review-triager, to: agent.comment-fixer, type: handoff, carries: [accepted_claim]}
+  - {from: pr,                   to: agent.pr-reviewer,  type: conditional, guard: flag.pre_review, carries: [diff, scope]}   # /pr --pre-review
+  - {from: agent.pr-reviewer,     to: pr,                 type: loop_back, signal: pre_review_round_done, loop: review_loop, carries: [surviving findings]}   # 存活发现进 Known issues
+  - {from: agent.comment-fixer,  to: agent.fix-verifier,  type: handoff, carries: [fix diff, commit sha]}
+  - {from: agent.fix-verifier,   to: review-loop,        type: loop_back, signal: iteration_complete, loop: review_loop, carries: [verdict]}   # 一次迭代收口
+  - {from: stage.review, to: human.g3,             type: interrupt, signal: review_thread_strike_limit}
+  - {from: stage.review, to: human.g3,             type: interrupt, signal: b_tier_warning_over_threshold}
+  - {from: human.g3,     to: human.merge,          type: handoff, carries: [g3-record.md]}
+  - {from: human.merge,  to: release,              type: handoff, carries: [merge sha]}
+
+  # ---------- 学习：逃逸 → retro → 契约 / 世界；trace → tune → harness（经人） ----------
+  - {from: stage.archive, to: retro,          type: handoff, carries: [specs/<slug>/**]}
+  - {from: retro,         to: stage.contract, type: loop_back, signal: escape_defect, loop: lifecycle, carries: [change-proposal-*.md]}
+  - {from: retro,         to: tune,           type: handoff, carries: [metrics.json]}
+  - {from: tune,          to: human.harness-review, type: interrupt, carries: [harness-proposals, patch]}
+  - {from: human.harness-review, to: ai-dlc,    type: loop_back, signal: harness_change_merged, loop: hill_climb, carries: [routing.yaml diff, gate.json fix_list]}

@@ -1,0 +1,58 @@
+{
+  "skill": "plugins/ai-dlc/skills/ai-dlc",
+  "tier": "production",
+  "evaluated_layers": [
+    "structural"
+  ],
+  "gate_pass": "static_only",
+  "structural": {
+    "findings": [],
+    "failure_taxonomy": {
+      "underfill": 0,
+      "overfill": 0,
+      "wrong-layer": 0,
+      "wrong-route": 0,
+      "no-exit": 0,
+      "seam-misplacement": 0
+    },
+    "waived_count": 0
+  },
+  "effect": null,
+  "discrimination": null,
+  "fix_list": [
+    "L2: run /ai-dlc end-to-end on one real TASK-track requirement in a fresh session (Skill list must pick up AI-DLC@claude-code-forge) and record the archive dir",
+    "blank (registered in references/stages.md): red-green evidence script; meets_done_when comparison script; contract.yaml schema; ontology-drift; psl-derive",
+    "Stop hook: assets/hooks/stop-clean-state.json is a template (not installed); check-clean --as-hook exercised, the hook wiring itself is not",
+    "graph.yaml vs ORDER: P1 keeps both and asserts equality (graph check); decide before P2 closes which one is the source (lean: graph.yaml, advance reads it)",
+    "convergence thresholds (fingerprint_history 6, oscillation periods 2–3, plateau_rounds 3) are literature priors; calibrate after the first real run"
+  ],
+  "provenance": {
+    "date": "2026-09-05",
+    "evaluator": "AUTHOR-RUN structural pass: (a) skillwise evaluate-skill/scripts/lint_skill.py L0 (0 blocking on every skill; the two '▲ description' items are a linter artifact — it reads only the first line of a folded `>-` description, the full text carries 'Use when:'), (b) plugins/ai-dlc/eval/smoke.sh — 178 expectations, 178 pass on fixtures (suite covers 27 scripts across the plugin). NOT a decorrelated 2-judge read, NOT an L2 with/without run. Do not read this as certification.",
+    "smoke": "bash plugins/ai-dlc/eval/smoke.sh → 178 passed, 0 failed (2026-09-05, v0.6.0: +47 expectations for graph/loops lint, convergence, check-clean, trace, --pre-review, tune)",
+    "harness_note": "scripts exercised in temp git repos / temp dirs; gh-networked paths (issue create, pr create, pr-poll watch/threads/resolve/done, post_review real post) NOT exercised — they need a live repo/PR",
+    "scripts_run": {
+      "aidlc_state.py": "init/advance/set/gate/card/fail/archive: transition order enforced (skip refused), prerequisites checked against state (issue.number, lock.path, cards.lint_passed, cards done, evaluation/skip reason), --force requires --reason and writes a waiver row to ledger.md, G2 pass refused without lock.path, G1 reject refused without attribution, same-fingerprint 2nd failure → escalate:true, whitelist_overflow → escalate_to human, unknown signal refused; argparse bug (--slug after subcommand unrecognized) found by smoke and fixed same-day; advance g2 refuses a v1-shaped contract (validate_done_when_v2.py compiled in); release stage: archive refused until release.done or skipped_reason",
+      "lock_done_when.py": "sign --stage g2 → verify ok; tampered done_when.yaml → exit 1; same tamper + change-proposal → exit 2; re-sign --stage l5 with tests/**; tampered locked test → exit 1",
+      "verify_graph.py": "shipped graph passes 5 lints (52 nodes / 67 edges); 6 bad fixtures generated in smoke each rejected (unbounded writes, loop_back without loop, evaluator→implementer carrying findings, human without resume_binding, fan_in without merge, cycle without loop_back → SCC named)",
+      "verify_loop.py": "6 loops pass; generator==verifier / missing stop key / unresolvable budget.ref rejected",
+      "aidlc_state.py (v0.6.0)": "graph check ORDER==stages; graph render mermaid; fail: A B A B → derived oscillation_detected → plan; --score ×4 flat → plateau → plan; impossible_under_contract by implementer refused, by acceptance-fleet → R16 task/human; pending.failure_report set on escalate, check-clean exit 1 / --as-hook block JSON, report clears; doing card + dirty tree → exit 1; loops --json 6 rows; ledger --ref bogus type refused; archive copies trace.jsonl",
+      "trace.py": "why/impact/render/lint on retro fixture (3-hop causal chain AC change ← reflow ← hidden_variant_fail; impact reaches escape); lint rejects unknown edge type + dangling event id, warns on artifacts absent from archive"
+    },
+    "moved": "lint_cards.py → plan-cards/scripts, metrics.py → retro/scripts (2026-09-05 re-split)",
+    "v0.6.0": "P1–P4 of docs/proposals/loop-graph-engineering.md implemented 2026-09-05; all still static_only"
+  },
+  "script_smoke": {
+    "aidlc_state.py size (v0.6)": {
+      "init": "intake.size=M / size_source=default — omission gives the stricter path",
+      "no counted input": "exit 1 — an unmeasured tier is a guess",
+      "human AC present": "L (SZ-02) even on a 2-file change",
+      "derived S": "grants the acceptance-fleet exemption, recorded as a typed size_exemption ledger line",
+      "hand-set S (twin)": "no exemption — set intake.size resets size_source to manual",
+      "size_source": "not in SETTABLE — only the derivation writes it"
+    }
+  },
+  "dogfood_fixes": [
+    "2026-09-06 raising-the-floor: implemented the report's gaps; see plugins/ai-dlc/docs/reports/"
+  ]
+}

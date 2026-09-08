@@ -1,0 +1,11 @@
+<type>(<scope>): <imperative subject, ≤72 chars, no trailing period>
+
+<why this change exists; what alternative was rejected and why;
+ wrap at ~100 chars. Omit the body only for trivially self-explanatory changes.>
+
+<optional: BREAKING CHANGE: <what breaks and how to migrate>>
+<optional: Red-green: tests/<x>.test.ts failed on <base-sha>, passes on this commit>
+<optional: untested — 未找到测试入口 | pre-existing failure: <test name>>
+
+Refs #<issue>          (or Closes #<issue> on the final commit of the branch)
+Card: CARD-xx          (when running under /ai-dlc)

@@ -1,0 +1,72 @@
+{
+  "skill": "plugins/ai-dlc/skills/donewhen-extract",
+  "tier": "production",
+  "evaluated_layers": [
+    "structural"
+  ],
+  "gate_pass": "static_only",
+  "structural": {
+    "findings": [],
+    "failure_taxonomy": {
+      "underfill": 0,
+      "overfill": 0,
+      "wrong-layer": 0,
+      "wrong-route": 0,
+      "no-exit": 0,
+      "seam-misplacement": 0
+    },
+    "waived_count": 0
+  },
+  "effect": null,
+  "discrimination": null,
+  "fix_list": [],
+  "provenance": {
+    "date": "2026-06-24",
+    "evaluator": "EMULATED — independent general-purpose judges applying skillwise docs/THEORY.md §1-4 + write-skill construction invariants + shared/effect-gate.md. NOT a run of the installed evaluate-skill skill (it is not installed in this project). Do not read this as an official skillwise certification.",
+    "rounds": 2,
+    "round1": {
+      "judges": 1,
+      "blocking": [
+        "no-exit / overclaim: verify_done_when.py enforced 纪律② (every happy event/state clause has an unhappy twin) by checking paired_with was a non-empty STRING only — it never RESOLVED the reference, so a dangling pointer and two mutually-pairing happy clauses both passed MECHANICALLY_CLEAN (exit 0), defeating the skill's #1 non-waivable rule"
+      ],
+      "verdict": "fail (structural)"
+    },
+    "round2": {
+      "judges": "1 fresh (4-eyes: confirmer != original flagger)",
+      "blocking_closure": "closed — 纪律② now resolves paired_with into by_id: rejects empty / dangling / twin-not-unhappy (ears_type!=unwanted AND non-negative polarity); 纪律③-b coverage resolves bidirectionally; orphan-unwanted clauses caught",
+      "scripts_run": {
+        "verify_done_when.py": "exit 1 on empty template; exit 1 on dangling-pointer card; exit 1 on two-happy-mutual-pair; exit 0 on a genuine happy+unwanted pair; exit 1 on vague-no-threshold (纪律①) and on a real same-trigger contradiction (纪律③-a). Confirmed product-level rejects, not well-formedness; a legitimate happy/unhappy pair is correctly NOT flagged as a contradiction."
+      },
+      "non_blocking_noted": [
+        "a fully-orphaned happy clause draws both a 纪律② and a 纪律③ reject (overlapping rules, same clause named clearly) — judged acceptable, not confusing"
+      ],
+      "verdict": "pass (structural / Tier-1)"
+    },
+    "tier2_status": "NOT RUN — no held-out Issue set + executor available. Per effect-gate.md a production-tier skill with the effect layer required-but-unrun resolves to static_only: structurally sound, effectiveness unverified. To finish: run with/without delta_exist on >=1 real Issue carrying failure_memory (does the skill produce more falsifiable, better-paired done_when than the engine alone?)."
+  },
+  "imported_into_aidlc": {
+    "date": "2026-09-05",
+    "from": "qanat/.claude/skills",
+    "changes": "body kept; added 术语映射 (qanat-derived only) + 接线（在 AI-DLC 里的位置）; support files: 立法收件箱/daemon wording mapped to AI-DLC change proposal / local tests+CI",
+    "smoke_2026_09_05": "verify_done_when.py: paired+thresholded card pass; vague-without-threshold reject",
+    "aidlc_additions": {
+      "validate_done_when_v2.py": "v2 contract validates; v1-shaped rejected; file-path existence rejected (C2)",
+      "convert_v1_to_v2.py": "acceptance-spec example → v2 skeleton (schema 2, tests kept as manifest, file existence → cards_hint); skeleton honestly fails v2 validation until ACs are completed",
+      "references/done-when-v2-schema.yaml": "the single contract schema of AI-DLC"
+    }
+  },
+  "script_smoke": {
+    "divergence.py": {
+      "three disagreeing drafts": "exit 1 must_clarify, 6 divergences each carrying the question to ask",
+      "identical drafts (twin)": "exit 0 — not always-red",
+      "single draft": "exit 2 — one draft has no divergence to show"
+    },
+    "validate_done_when_v2.py (v0.4)": {
+      "structure block shape": "unknown key / non-numeric threshold / layer without may_import → REJECT",
+      "no structure block": "flag, not reject — but the flag says A-tier will not check structural decay"
+    }
+  },
+  "dogfood_fixes": [
+    "2026-09-06 raising-the-floor: implemented the report's gaps; see plugins/ai-dlc/docs/reports/"
+  ]
+}

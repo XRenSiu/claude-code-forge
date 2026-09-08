@@ -1,0 +1,429 @@
+# AI-DLC 架构：是什么、如何运转、如何使用
+
+> 一句话：**AI-DLC 是一条产研自闭环的流水线——世界 → 契约 → 标准 → 计划 → 实现 → 验收 → 交付 → 学习，每一步的产物要么被脚本检，
+> 要么被一道只能人签的门挡住；失败按层回流而不是原地重试；账本只增不删，逃逸缺陷回到世界层校准。**
+> 它对齐 *Spec Loop v1.2 × done_when Pipeline* 的全部环节（U1–U3/G1、L1–L8/G2/G3、X1–X3），写法遵循 skillwise 四原子，
+> 运行时遵循 SKILL.state（状态文件是充分统计量）与 WikiSkill（账本非对称回滚）。
+
+---
+
+## 0. 整体逻辑：五个部件怎么拼成一件东西
+
+前身叫 `sdlc`，2026-09-08 改名 AI-DLC。经过 v0.6 → v1.0 五轮增补，零件多了，容易只见零件不见整体。
+这一节是唯一一处说"它们合起来是什么"的地方；后面各节是它的展开。
+
+**它要解决的问题只有一句话**：AI 的产出速度已经超过人的验证速度，所以流程的目标函数不是"加快产出"，
+是"降低验证成本"。下面每一个部件都是这一句的推论——判断一条新规则该不该加，就问它降不降低验证成本。
+
+```
+                    ┌─────────────── ① 一条主干（做什么，按什么顺序）───────────────┐
+                    │  intake → track → issue → branch → contract → G2 → cards →      │
+                    │  implement → acceptance → pr → review → G3 → merge → release    │
+                    └────────────────────────────────────────────────────────────────┘
+                              ▲                                        │
+      ② 三个正交旋钮（跑多少）  │                                        │  ③ 六个环（卡住了怎么办）
+      广度：跑哪些阶段  [强制]  │                                        ▼
+      测试量：验多少    [下界]  │        card_retry · ratchet · acceptance_ratchet
+      深度：产出多细    [声明]  │        review_loop · lifecycle · hill_climb
+                              │                                        │
+                    ┌─────────┴────────────────────────────────────────▼──────────────┐
+                    │  ④ 三道人签的门：G1 世界裁决 · G2 判据冻结 · G3 例外复核         │
+                    │     旋钮拧不掉它们（never_skippable），环也升级不过它们           │
+                    └────────────────────────────────────────────────────────────────┘
+                                              │
+                    ┌─────────────────────────▼──────────────────────────────────────┐
+                    │  ⑤ 两条记忆通道：ledger.md 记「已经错了什么」                    │
+                    │                   notes.md  记「含糊处当时选了什么」             │
+                    └────────────────────────────────────────────────────────────────┘
+```
+
+**① 主干**是 15 个阶段的依赖顺序，不是流程规定。它由 `aidlc_state.py` 的状态机拥有：每次 `advance`
+对着 `state.json` 检前置条件，**不对着引擎的说法检**。这条是全部机械性的来源——路由确定化，质量交给模型。
+
+**② 三个旋钮**让同一条主干伸缩，否则三行 bug 修复也要走完全程，于是整条流水线被绕过，而一条被绕过的
+流水线抬不高任何人的下限。三个旋钮**正交**（"完整文档 + 最少测试"是合法组合），但**强制力不同，文档如实标注**：
+广度由 `next_allowed` / `prereqs` 强制；测试量是下界，由脚本检；深度只是给 skill 读的声明，因为没有脚本
+能判"这份文档够不够细"。假装它是闸比没有它更坏（不变量 17）。
+
+**③ 六个环**处理"没一次做对"。每个环有同一份契约（`loops.yaml`）：generator ≠ verifier、四键停机
+（success / convergence / budget / impossible）、预算可解析。收敛检测把"再试也没用"分成三种——同指纹重复、
+震荡、平台期——分别归到方案层或任务层。**收敛 ≠ 正确**：三个信号都稳但产物差，是换方案不是再迭代。
+
+**④ 三道门**是唯一只能人签的东西。它们不在旋钮的可达范围内（`never_skippable`），也不接受环的自动升级。
+这是整套设计里唯一不谈效率的地方：门的存在就是为了让人付出验证成本，而不是省掉它。
+
+**⑤ 两条记忆通道**回答两个不同的问题。账本回答"哪一层病了"——它记的全是**已经发生的错**。
+日记回答"当初为什么往那边走"——规格含糊处 agent 当场做了什么选择，那件事发生时没人认为是个错，
+所以账本里永远没有它。一次逃逸缺陷的因果链走到头如果落在"当时按默认理解填了"，只有日记能答。
+两条通道都只增不删，都进归档，`/retro` 一起读。
+
+**贯穿五个部件的一条极性**：**一个靠遗漏就能打开的门不是门**。缺省档位是最严的那一档；手设的档位换不到
+豁免；缺完成标记按"没跑完"算；分析器缺席按"没检"算。凡是"没填 / 没跑 / 没标"，一律走严的那条路。
+
+---
+
+## 1. 九环与一根脊柱
+
+> v0.6.0 起这张图是**数据**：`skills/ai-dlc/assets/graph.yaml`（52 节点 · 67 边：阶段 / skill / agent / 人；sequential · conditional ·
+> fan_out · fan_in · loop_back · interrupt · handoff）。`python3 skills/ai-dlc/scripts/aidlc_state.py graph render` 生成 mermaid；
+> `graph check` 让它与状态机的 ORDER 互相断言；`verify_graph.py` 检五条性质（见 §3.7）。下面的 ASCII 是给人读的摘要。
+
+```
+                       ┌──────────────────────── 脊柱 /ai-dlc ────────────────────────┐
+                       │  state.json（脚本校验迁移） · ledger.md（只增） · routing.yaml（分层预算 · 指纹终止）  │
+                       │  G1 世界裁决 · G2 判据冻结 · G3 例外复核（只能人签）                                   │
+                       └────────────────────────────────────────────────────────────┘
+ R0 世界        /psl ──▶ /psl-derive ──▶ [G1 人] ─────────────────────────────┐   PSL 轨才走；TASK 轨从 R2 起
+ R1 本体        /dos-extract（现状） · /invariant-extract（□） · dos-proposal（应然，来自 R0）  ── 横切：词表闭包
+ R2 契约        /issue ──▶ /donewhen-extract | /acceptance-spec(+convert) ──▶ done_when.yaml v2 ──▶ [G2 人] 锁
+ R3 标准        /test-suite-generator（按卡分批） · /spec-compile（可判性阶梯） ──▶ /calibrate（标准的标准）── L5 二次锁
+ R4 计划        /plan-cards ──▶ cards/CARD-xx.yaml（lint 三项 + 40k）
+ R5 实现        /implement（隔离实现者 · 白名单执行器）· /commit · /ratchet（跑到达标为止的卡）
+ R6 验收        /acceptance-fleet ──▶ 六审查 skill ──▶ /meta-judge ──▶ 四态棘轮 ──▶ [G3 人]     单 PR 手审：/pr-review
+ R7 交付        /pr ──▶ /review-loop（评论当主张）──▶ merge（人）──▶ /release（tag · changelog · 验证 · 回滚）
+ R8 学习        /issue --escape（逃逸缺陷）──▶ /retro（基线 · 回流分布 · 提案落层）──▶ 回到 R0/R1/R2 的变更提案
+```
+
+| 环 | 问题 | skill | 产物（一产物一生产者） | 门 / 闸 |
+|---|---|---|---|---|
+| R0 世界 | 这个产品为什么这样运转 | `psl`、`psl-derive` | `PSL-<x>.md`、`derived/{dos-proposal,workflow,form-draft,divergence}` | `verify_psl.py`、`verify_derived.py`、**G1** |
+| R1 本体 | 系统里有什么、叫什么、什么不可违反 | `dos-extract`、`invariant-extract` | `dos.yaml`、`decisions.md`、不变量卡、**`agent-map.md`** | `verify_dos.py`、`verify_card.py`、**`verify_agent_map.py --probe`（命令逐条实跑）**；agent 无写权 |
+| R2 契约 | 什么算做完 | `issue`、`donewhen-extract`、`acceptance-spec` | issue、`spec.md`、**`done_when.yaml` v2**（含 `constraints.structure`）、**`divergence.yaml`** | `verify_issue.py`、`verify_done_when.py`、`validate_done_when_v2.py`、**G2**（`lock_done_when.py sign --stage g2`） |
+| R3 标准 | 判据怎么被机器执行 | `test-suite-generator`、`spec-compile`、`calibrate` | `tests/<f>/`、`behavior`（manifest）、`compile_manifest.yaml`、`calibration_report.yaml` | `derive_counts / gen_existence / check_verbatim_names`、`verify_compile.py`、`verify_calibration.py`；L5 二次锁 |
+| R4 计划 | 怎么拆成无上下文可做的卡 | `plan-cards` | `cards/CARD-xx.yaml`、**地图切片** | `lint_cards.py`、`slice_agent_map.py` |
+| R5 实现 | 按卡做、按卡提交 | `implement`、`commit`、`ratchet` | diff、commit、卡状态 | `verify_commit.py`（白名单 · 锁 · secrets）、`aidlc_state.py fail`（指纹升级） |
+| R6 验收 | 三档验收，谁一票否决 | `acceptance-fleet` + `code-reviewer` `qa-reviewer` `pm-reviewer` `spec-drift-detector` `spec-gaming-detector` + `meta-judge`；`pr-review` | `ratchet-log/iteration-NNN/`、`final-state.json`、`findings.yaml` | A 档一票否决 / B 档告警 / C 档请求人；**G3** |
+| R7 交付 | 合入与发布 | `pr`、`review-loop`、`release` | PR、收敛证据日志、tag、`CHANGELOG`、`releases/vX.md` | `verify_pr.py`、`pr-poll.sh done`、`verify_release.py`；merge / push tag 是人类动作 |
+| R8 学习 | 流程病在哪层；环的参数该不该调 | `issue --escape`、`retro`、**`tune`** | `escape-defects.md`、`retro/retro-<date>.md`、`metrics.json`、`tune/harness-proposals-<date>.yaml` + patch | `metrics.py`、`tune.py`、`apply_proposal.py`（只出 diff）；提案不自动生效 |
+
+**脊柱 `/ai-dlc`** 不做任何一环的活，只做五件事：持有状态（`aidlc_state.py`）、记账（`ledger.md` + 类型边伴生 `trace.jsonl`）、路由失败
+（`routing.yaml` v2，含收敛检测）、把三道门编译成"不跑就 advance 不了"、把图与环声明成数据（`graph.yaml` / `loops.yaml` / `triggers.yaml`）。
+
+---
+
+## 2. 制品链：一个产物只有一个生产者
+
+```
+需求原文 ─psl─▶ PSL ─psl-derive─▶ derived/ ─G1─▶ 签字版形态草案(sha256)
+                                                  │
+代码 ─dos-extract─▶ dos.yaml ◀─对账(人,G1记录)─ dos-proposal.yaml
+失败记忆 ─invariant-extract─▶ 不变量卡 ─┐
+                                        ▼
+需求/形态草案 ─issue─▶ issue(AC v2 雏形) ─donewhen-extract / acceptance-spec+convert─▶ done_when.yaml v2 ─G2─▶ .done_when.lock(stage g2)
+                                                                                          │
+                                        plan-cards ◀──────────────────────────────────────┤
+                                            │ cards/                                       │
+                                            ▼                                              ▼
+                                        implement ─commit─▶ diff/commits        test-suite-generator + spec-compile ─▶ tests/ + behavior ─calibrate─▶ 校准报告
+                                            │                                              │ lock --stage l5
+                                            └──────────────▶ acceptance-fleet ◀────────────┘
+                                                                  │ final-state.json
+                                                        pr ─▶ review-loop ─▶ merge ─▶ release ─▶ archive(specs/<slug>/)
+                                                                                        │
+                                                                  escape ─▶ retro ─▶ 变更提案 → R0/R1/R2
+```
+
+**契约 v2 是全线的转轴（裁决 C1/C2/C3 的落实）。** `done_when.yaml` v2 = v1 超集：`acceptance`（以 AC 为单位，G2 签它）+
+`existence` 只留观察边界 + `behavior` 降为 tests-manifest 种子（L5 由非实现者填并二次锁）+ `rules` / `thresholds`（六审查
+skill 与 meta-judge 照旧读）+ `constraints` / `budgets`。`aidlc_state.py advance g2` 会跑 `validate_done_when_v2.py`——契约形状不对
+就冻结不了。`acceptance-spec` 产出的 v1 经 `convert_v1_to_v2.py` 变成骨架，由 `/donewhen-extract` 或人补齐 AC。
+
+**两段锁（裁决 C6）。** G2 锁判据（`--stage g2`）；L5 测试写完后再签一次（`--stage l5`，含 `tests/**` 与填好的 `behavior`）。
+之后任何被锁文件出现在 diff 都要同一 diff 附 `change-proposal-*.md`，否则 `verify_commit.py` / `verify_pr.py` 拒。
+
+---
+
+## 3. 如何运转
+
+### 3.1 状态机（脚本拥有，引擎只提议）
+
+```
+intake → track → issue → branch → contract → g2 → cards → implement → acceptance → pr → review → g3 → merge → release → archive
+```
+
+每个 `advance <stage>` 对着 `state.json` 检前置条件（不是对着引擎的说法）：
+
+| 进入 | 必须已成立 |
+|---|---|
+| issue | track ∈ {psl, task}；PSL 轨还要 `gates.g1 = pass` |
+| g2 | `contract.done_when` 存在 **且过 v2 校验** |
+| cards | `gates.g2 = pass` ∧ `lock.path` 存在 |
+| implement | `cards.lint_passed = true` ∧ 至少一张卡登记 |
+| acceptance | 所有卡 `done` |
+| pr | `acceptance.evaluation_result` 或 `acceptance.skipped_reason`（TASK 轨轻量，留痕） |
+| g3 / merge | `review.done`；G3 required 时 `gates.g3 = pass` |
+| release | `merge.sha` |
+| archive | `release.done = true` 或 `release.skipped_reason` |
+
+`--force --reason` 可以豁免，但豁免被写成 waiver（账本 + state），`/retro` 会数它。
+
+### 3.2 三道门（只能人签）
+
+| 门 | 何时 | 输入 | 脚本强制什么 |
+|---|---|---|---|
+| **G1 世界裁决**（PSL 轨） | 推导产物之后、issue 之前 | `derived/` + 分歧集 | `gate g1 --verdict pass` 要求 `world.derived_dir` 存在；reject 必须归因 `derivation_error | rule_error`（世界层计数 +1） |
+| **G2 判据冻结** | 契约写完、拆卡之前 | `done_when.yaml` v2（+ contract.yaml） | pass 要求 `lock.path` 存在；契约必须过 v2 校验 |
+| **G3 例外复核** | 验收之后、合入之前 | human AC 清单 + 失败报告 + 假设台账 | 产品需求默认触发；`gates.g3.required=false` 要显式 set 留痕 |
+
+> **三道门 ≠ 五个 human 节点。** `graph.yaml` 里 `kind: human` 的节点有五个：G1 / G2 / G3 是**门**（有 Gate 对象、
+> 有 `gate` 命令、有 verdict 与签字），`human.merge` 与 `human.harness-review` 是**人做的动作**，不是门——它们没有
+> Gate 对象，`aidlc_state.py` 里也没有对应的 verdict。本插件的自审曾在这里读岔（dogfood I-16 / Q004）：把五个 human
+> 节点当成五道门，或反过来以为文档漏写了两道。两者都不对，差别在于**有没有一个可以被签、被拒、被计数的判决**。
+
+### 3.3 回流路由（X2）：失败归层，不原地重试
+
+`aidlc_state.py fail --signal <信号>` 读 `routing.yaml`：给候选层（card ⊂ plan ⊂ task ⊂ ontology ⊂ world）、处理者、
+动作、该层计数与预算余量、指纹重复次数、是否升级。**同层同指纹连续 2 次 = 无进展，立即升级**；预算按轨道分
+（PSL 轨 task 回流 2，TASK 轨 1；单卡 3）；世界层不设上限——本来就该停下来交人。`/acceptance-fleet` 的四态
+（FIX / SPEC_DRIFT / GAMING_RISK / NEEDS_HUMAN）与 `/ratchet` 的 kill/restart 都映射到这张表。升级时产出失败报告
+（候选层 + 证据 + 已排除 + 建议回退），那是 G3 的输入——人不看原始日志。
+
+### 3.4 信息隔离（评估者与被评估者分离）
+
+- 实现者（`/implement`、`card-implementer`）只拿到卡 + 状态摘要 + AC 子集 + 红基线；看不到评审判据、隐藏集、其他卡。
+- 评审 skill 的输出只给人和 `/meta-judge`；给实现者的是 fix-prompt（file:line + 改法，不含评审者身份与置信度）。
+- `/calibrate` 的 holdout（隐藏变体集）放在实现者不可读的环境；`/review-loop` 的 verifier 与 fixer 隔离。
+- 跨供应商评估器可用时用在最容易同源盲区的两个槽（对抗式 code-review、spec-gaming）。
+
+### 3.5 三档验收（C9）
+
+| 档 | 检查项 | 执行者 | 效力 |
+|---|---|---|---|
+| A 机械 | 测试 / lint / 类型 / secrets / 白名单 / 锁 / 新增依赖 / REQ 覆盖 / 隐藏集 / 契约硬命中 / 有复现的缺陷 / **结构（复杂度增量 · 重复块 · 依赖方向）** | 脚本、`qa-reviewer`（含 `verify_structure.py`）、`spec-gaming-detector`（硬）、`pr-review` 缺陷类 | 一票否决；结构闸 exit 3 = 未检，按未检记录不按通过 |
+| B 结构 | 复杂度 / 重复 / 公共 API 变更 / diff 体量 / spec-drift / gaming 软命中 / **跨制品术语漂移** | `code-reviewer`、`spec-drift-detector`、`pr-review`、`verify_vocabulary.py` | 超阈值告警，有界可进；术语传感器 exit 3 = 没有本体，按未检记不按通过 |
+| C 判断 | human AC / 架构意图 / 可读性 | `pm-reviewer`（只路由）、`meta-judge`、`pr-review` C 档 | 请求人工（G3） |
+
+### 3.6 账本与非对称回滚
+
+产物（代码、卡、PR、契约版本）可以回滚；判据、失败记录、被拒的修复、路由决定、豁免**不回滚**（`ledger.md` 只增）。
+`/review-loop` 的证据日志同理：被 reviewer 推翻的 verdict 保留原记录。`/retro` 读这些账本，把"又栽在这儿了"变成提案。
+
+**决策迹（v0.6.0）。** `ledger.md` 每行同时写进 `trace.jsonl`，事件之间用封闭集的类型边相连：`caused_by`（回流 → 失败、
+失败报告 → 回流、逃逸缺陷 → AC 变更）、`decided_by`（→ 路由规则 / 签字人 / 门记录）、`supersedes`（新版 AC → 旧版）、
+`implements`（commit → 卡 → AC）、`references`、`depends_on`、`rejected_alternative`。只增日志只能向后指，所以因果边写成
+"效果指向原因"。`trace.py why AC-003` 走出"AC 为什么改：隐藏集失败 → R08 回流 → 变更提案 by 张三"；`impact` 走出改它波及的
+卡与 commit；`metrics.py` 从边算逃逸缺陷因果链深度与契约返工率——"为什么门没拦住"从考古变成一条查询。不上图数据库。
+
+### 3.7 图与环是数据（v0.6.0）
+
+- **`graph.yaml`** 节点带边界身份（`reads` / `must_not_read` / `writes` / `authority`），边带类型与守卫，回边带 `loop:`。
+  `verify_graph.py` 五条 lint，每条对应 graph engineering 点名的一种生产失败：① skill/agent 节点写范围有界；② 去掉 loop_back 后
+  必须是 DAG，且每条 loop_back 引用的环有预算和可测的成功谓词（"通过条件不可测的无界循环"）；③ 评估者 → 实现者的边只能携带
+  `fix_prompt` / `accepted_claim`（"执行顺序 ≠ 信息可见性"）；④ 人节点必须声明 `resume_binding`（"人工恢复绑到错误 checkpoint"）；
+  ⑤ fan_in 必须有 `merge`（"并发写无合并规则"）。实测：首版声明就被 lint ② 抓到两处未标环归属的圈（验收扇入回交、review 修复验证回交）。
+- **`loops.yaml`** 六个环同一契约：`card_retry` · `ratchet` · `acceptance_ratchet` · `review_loop` · `lifecycle` · `hill_climb`，
+  字段 level（LangChain 四层）/ timescale（Ng 三尺度）/ generator ≠ verifier / stop 四键（success · convergence · budget · impossible）/
+  memory / fresh_context / trigger / escalate_to。`verify_loop.py` 检；`aidlc_state.py loops` 一屏看每个环的预算消耗。
+- **`triggers.yaml`** 每个环绑到 Claude Code 原生原语：`/goal`（独立小模型判 Met / Not yet / Impossible，条件里的退出码必须回显）、
+  `/loop`、Stop hook（`check-clean --as-hook`，模板 `assets/hooks/stop-clean-state.json`，不自动安装）、`/schedule`。
+  `pr-poll.sh` 仍是谓词，只是不再是唯一的等待方式。
+
+### 3.8 收敛检测（routing.yaml v2）
+
+`fail` 命令每个 key 存最近 6 次指纹与 score：同指纹 ×2 = **repeat**；周期 2–3 往复 = **oscillation** → 派生 `oscillation_detected`
+（R14，plan 层：在相似解之间震荡是方案层的权衡）；`--score` 连续 3 次不超过最佳 = **plateau** → R15（plan 层，允许一次探索性重写
+再升级——ratchet 的做法提到路由表层面）；评估者判"在当前契约下不可能" = `impossible_under_contract` → R16（task 层，走变更提案；
+只接受 `impossible_reporters` 里的 `--by`，实现者报被拒——对应 `/goal` 的 Impossible 判决）。收敛 ≠ 正确：三个信号都稳但产物差，
+是换方案不是再迭代。任一升级置 `pending.failure_report`，`check-clean` 拒绝在没写报告时结束 session。
+
+---
+
+## 4. 五个闭环怎么闭
+
+| 闭环 | 起点 → 终点 | 闭合机制 |
+|---|---|---|
+| 交付闭环 | 需求 → 合入 → 发布 | 状态机线性推进；每阶段产物过脚本或门；`release` 验证绿才算交付 |
+| 失败闭环 | 任一阶段失败 → 正确的层 | `routing.yaml` + 指纹终止；失败报告 → G3；不在实现层重试世界层的错 |
+| 校准闭环 | 线上逃逸缺陷 → 世界 / 本体 / 契约 | `/issue --escape`（归因层 + 为什么门没拦住）→ `/invariant-extract`（从失败抽不变量）→ `/psl` Open Questions / 变更提案 |
+| 度量闭环 | 归档 → 流程改进 | `/retro`：基线 → 回流分布 → 提案落层（psl / dos / invariant / ac / routing / skill），提案经 G2/G3 生效 |
+| 标准闭环 | 判据 → 测试 → 尺子本身 | `/spec-compile` 编译、`/calibrate` 证明尺子承重（mutation / α / holdout / 隔离）；未校准的标准不当证据 |
+| **harness 闭环**（v0.6.0） | 六个环的 trace → 环自己的参数 | `/tune` 读归档 / pr-watch / results.tsv，按封闭 target 集出提案（routing 预算、指纹阈值、MAX_ROUNDS、隔离等级、fix_list），`apply_proposal.py` 只出 diff，人开 PR 合；样本 < 2 只记基线——LangChain 四层里的 Hill-Climbing Loop |
+
+skill 正文的进化（第七个闭环）不在本插件：`skill-evolve` 邻居读各 skill 的 `eval/gate.json` fix_list（`/tune` 会往里写）。
+
+---
+
+## 5. 如何使用
+
+### 5.1 安装与前置
+
+```bash
+/plugin marketplace add XRenSiu/claude-code-forge
+/plugin install ai-dlc@claude-code-forge          # 之后重启 session
+```
+前置：`git`、`gh`（已 `gh auth login`）、`jq`、`python3` + `pyyaml`。与 looper / done-when-pipeline / ratchet 同时启用时，
+同名 skill 用 `/ai-dlc:<name>`。
+
+### 5.2 三种入口
+
+**入口 A · 单点使用**（不进流水线，各 skill 独立可用）
+
+```bash
+/issue "用户可以按'上个月'这类相对时间搜索记忆"      # 结构化 issue，先给你看再建
+/commit --issue 42                                   # 预门 + 自检 + 提交
+/pr --issue 42 --done-when specs/x/done_when.yaml    # 预门 + 确认 + 建 PR
+/review-loop 57                                      # 跟进 PR #57 直到收敛
+/pr-review 57 --focus security --post                # 审别人的 PR
+/dos-extract . ; /invariant-extract search           # 本体与不变量
+/retro --archive specs/                              # 复盘：判据与世界的提案
+
+# 五处新配件（v0.10–0.11），单独也能用
+python3 skills/ai-dlc/scripts/aidlc_state.py size --base origin/main --commit   # 体量分档，缺省 M
+python3 skills/qa-reviewer/scripts/verify_structure.py \
+        --done-when done_when.yaml --base origin/main                        # A 档结构闸，exit 3 = 未求值
+python3 skills/donewhen-extract/scripts/divergence.py d1.yaml d2.yaml d3.yaml # N 份草案的分歧集
+python3 skills/dos-extract/scripts/verify_agent_map.py agent-map.md --probe   # 仓库地图，命令真跑一遍
+python3 skills/plan-cards/scripts/slice_agent_map.py agent-map.md --card cards/CARD-01.yaml
+python3 skills/acceptance-fleet/scripts/pick_evaluators.py                     # 跨供应商分配 + 留痕
+/tune specs/ --pr-watch .aidlc/pr-watch               # 调参：环的参数提案（≥ 2 个归档）
+python3 skills/ai-dlc/scripts/aidlc_state.py loops      # 六个环的预算消耗
+python3 skills/ai-dlc/scripts/trace.py why AC-003      # 这条 AC 为什么改
+```
+
+**入口 B · TASK 轨全流程**（形态已定的需求）
+
+```bash
+/ai-dlc "导出报表增加 CSV 六列" --track task
+#   → issue → branch → /donewhen-extract（或 /acceptance-spec + convert）→ 你签 G2
+#   → /plan-cards → /test-suite-generator（按卡）→ /implement（每卡）→ /acceptance-fleet
+#   → /pr → /review-loop → 你签 G3（有 human AC 时）→ 你合并 → /release → archive
+```
+
+**入口 C · PSL 轨全流程**（体验性 / 语义模糊的需求，或 issue 的 DOS 闭包失败被强制转轨）
+
+```bash
+/psl "用户可以按相对时间搜索记忆"                    # 世界；verify_psl.py
+/psl-derive PSL-memory-time-search.md --n 3         # 推导产物 + 分歧集
+#   → 你签 G1（g1-record.md：三问 + 分歧集逐条回应）
+/ai-dlc "用户可以按相对时间搜索记忆" --track psl       # 从 issue 起同入口 B
+```
+
+### 5.3 人在哪里出现
+
+| 时机 | 人做什么 | 命令 |
+|---|---|---|
+| G1 | 三问 + 分歧集回应 + 归因 | `aidlc_state.py gate g1 --verdict pass|reject --by <你> [--attribution …] --record g1-record.md` |
+| G2 | 确认判据、指派 human AC 裁决人、签锁 | `lock_done_when.py sign --by <你> --stage g2 done_when.yaml` → `gate g2 --verdict pass` |
+| 建 issue / 建 PR / 发 review / 打 tag / 部署前 | 看一眼再放行（`--yes` / `--autopilot` 可免，门不可免） | 各 skill 自带确认 |
+| G3 | 裁决 human AC、处置 B 档告警与假设台账、确认失败报告的归因层 | `gate g3 --verdict pass|reject --record g3-record.md` |
+| merge | 合并是人类动作 | GitHub |
+| 逃逸缺陷 | 归因到层 | `/issue --escape` |
+
+### 5.4 中断与恢复
+
+`/ai-dlc --resume <slug>` 从 `state.json.stage` 继续；`ledger.md` 说明上次为什么停；`/review-loop` 的水位线与计数器
+保证评论不重复处理、预算跨会话延续。`state.json` 不手改。
+
+### 5.5 产物落点
+
+```
+.aidlc/<slug>/state.json · ledger.md        specs/<slug>/（归档：state · ledger · done_when · lock · cards · evaluation · G 记录）
+.aidlc/pr-watch/pr-<N>.*                    cards/CARD-xx.yaml · .done_when.lock · tests/<feature>/ · ratchet-log/
+derived/ · PSL-<x>.md · dos.yaml          releases/vX.Y.Z.md · CHANGELOG.md · escape-defects.md · retro/retro-<date>.md
+```
+
+---
+
+## 6. 自洽规则（设计不变量）
+
+1. **一个产物只有一个生产者；契约只有一种 schema（v2）**，其他形态经转换后进入。
+2. **判据先于代码，测试非实现者写且写完锁**（两段锁）；改契约或测试只能走变更提案。
+3. **实现者看不到评估者**；评估者的输出经 meta-judge / 人再回到实现者（fix-prompt）。
+4. **预算与终止由脚本强制**（状态机、路由表、pr-poll.sh），引擎不自行维护计数器。
+5. **账本只增不删**；产物可回滚，判据与失败记录不回滚。
+6. **三道门只能人签**；`--autopilot` 免的是逐步确认，不是门。
+7. **未校准的标准不当证据**（`calibration_pending`）；`meets_done_when` 由脚本比对，不由评估 agent 宣布。
+8. **失败归层再处理**；同指纹重复 = 无进展 = 升级，不是重试。
+9. **合入不是终点**：release 验证绿才交付；逃逸缺陷必须回到层。
+10. **静态过审 ≠ 有效**：所有 skill `static_only`，行为层未跑就不说"已验证"。
+11. **图与环是数据，不是散文**：节点有写范围，每个圈有环契约，评估者到实现者只带 fix_prompt，人节点有恢复绑定——`verify_graph.py` 检。
+12. **收敛 ≠ 正确**：repeat / oscillation / plateau 都是"换层"的信号，不是"再试一次"的理由；`impossible` 只能由评估者说。
+13. **harness 改动经人**：`/tune` 只出 diff；routing / 脚本默认值 / fix_list 的改动都是 PR。
+14. **声明了但没求值 ≠ 通过**（v0.10.0；v0.12.0 扩到 agent）：契约承诺了一条判据而**求值者没跑完**，
+    结果是 `unevaluated`，调用方按"未检"记录。一把没跑的尺子不许报绿；连"一个文件都没数出来"也算没跑——
+    那次假绿是本轮自己的孪生用例抓到的。求值者是脚本还是 LLM 不改变这条规则，只改变它怎么被检出来：
+    - **脚本**：分析器缺席 → `verify_structure.py` 退出码 3。
+    - **agent**（六个审查 skill、`agents/` 下的隔离子 agent）：一次被截断的审查留下的是一份**短而干净**的
+      报告，与"走完全程、什么也没发现"在字节层面无法区分。所以每份产物自带 `review_complete:` 标记
+      （`status` + `findings_count`，两个数字产生于不同时刻，对不上就是截断的证据），
+      `verify_review_complete.py` 在 meta-judge 之前判它，退出码 3 同义。缺标记走严路，不走宽路。
+    一次审查最多重派一次，重派前把陈旧产物移进 `stale/`（不删——失败记录不回滚，规则 5）；
+    第二次仍不完整就记 A 档 `unevaluated`，DONE 不成立。
+15. **缺省不给豁免**（v0.10.0；v1.0.0 扩成网格）：`intake.size` 缺省 M。**广度是数据不是 if**——
+    `sizing.yaml` 的 `stages:` 网格说哪一档跳哪些阶段，`never_skippable` 说哪些阶段任何档都不能跳
+    （**三道门在里面**，规则 6 是它的上位法），`verify_sizing.py` 七条 lint 让网格与 `ORDER` / `prereqs`
+    互相断言（L7 直接 import 真的那份 `next_allowed`，自己写第二份迟早分叉，而分叉出来的那份会说"网格没问题"）。
+    跳过只认**推导来的**档位（`size_source ∈ derived / derived_early`），手设的拿不到；每个被跳的阶段写一条
+    带理由的 `size_exemption` 账本行。漏填得到的是较严的路径——**一个靠遗漏就能打开的门不是门**。
+    重定档只能改**尚未开始**的阶段：一次已经付过的 G2 不会被追认为"其实不用签"。
+16. **学习下轮生效**（v1.0.0）：解释日记里被晋升的规则写在盘上，**下一次 `init` 才编译进来**。
+    跑动中改规则会让前面已经批准过的门失去意义——你当时批准的是另一套前提。这与规则 13 同源：
+    可复现优先于立刻变聪明。相应地，`notes --for-gate` 在门禁前**逐字**呈现每一行，不改写、不做
+    「有趣度」筛选——被筛掉的那条就是下次撞的墙；Open questions 不晋升，它是研究项不是规则。
+17. **强制力必须如实标注**（v1.0.0）：一个部件是脚本强制、是下界、还是仅仅一句声明，文档必须写清楚，
+    **不许把声明写成闸**。深度旋钮就是这条的第一个适用对象：没有任何脚本能判"这份文档够不够细"，
+    所以它只是给 skill 读的输入，`sizing.yaml` 与 SKILL.md 都明说这一点。
+    理由与规则 14 同源——报出一个没人验过的"通过"，比不报更坏，因为它以证据的形状到达。
+
+---
+
+## 7. 覆盖矩阵与空白
+
+| 参考文档环节 | 承载 | 状态 |
+|---|---|---|
+| U1/U2 PSL · U3 推导 · G1 | psl · psl-derive · gate g1 | 已有 |
+| L1 TASK · 台账 | issue · acceptance-spec | 已有 |
+| L2 接口契约 | — | **空白**（`verify_issue.py` 只 flag observe 未解析） |
+| L3 DONE_WHEN v2 · G2 | donewhen-extract · validate v2 · lock --stage g2 | 已有 |
+| L4 PLAN | plan-cards | 已有 |
+| L5 测试 · 红绿 · 隐藏集 | test-suite-generator · spec-compile · calibrate · lock --stage l5 | 已有；红-绿脚本**空白** |
+| L6 实现 · 白名单 · 指纹 | implement · commit · ratchet · aidlc_state fail | 已有 |
+| L7 A/B/C · G3 | acceptance-fleet 六 skill · meta-judge · pr-review · gate g3 | 已有；`meets_done_when` 比对脚本**空白** |
+| L8 合入 · 交付 · 逃逸 | pr · review-loop · release · issue --escape | 已有 |
+| X1 DOS 生命周期 | dos-extract · invariant-extract · dos-proposal · `verify_vocabulary.py`（B 档） | 部分：应然↔现状对账已有（`reconcile_dos.py`）；**ontology-drift 补上了「制品→本体」这一向**——契约 / 卡 / spec / issue / PR body 的散文里出现、本体解析不了的名词，现在有传感器。仍空白：**「本体→代码」那一向**（本体改了、实现没跟上，没人检）、本体版本演进与 candidate 命名空间 |
+| X2 路由 · 预算 | routing.yaml · aidlc_state fail | 已有 |
+| **结构性质量（A 档）** | `constraints.structure` · `verify_structure.py` | 已有（v0.10.0）；unevaluated 有独立退出码 |
+| **审查完成度（A 档）** | `review_complete:` 标记 · `verify_review_complete.py`（fleet S1.5） | 已有（v0.12.0）；缺标记 / 缺文件 / 数目不符都是退出码 3，不是通过 |
+| **仓库地图** | `agent_map_template.md` · `verify_agent_map.py --probe` · `slice_agent_map.py` | 已有（v0.10.0） |
+| **TASK 轨模糊度信号** | `divergence.py`（N 份隔离草案） | 已有（v0.10.0） |
+| **体量分档** | `sizing.yaml` · `aidlc_state.py size` | 已有（v0.10.0） |
+| **行为层对比** | `eval/effect/`（run.py · score.py · tasks/T01） | **部分**：1/10 任务、3 arm 跑过一轮；score.py 在 < 5 任务时拒绝下结论 |
+| X3 度量 | retro · metrics.py（+ trace 指标 + 体量分桶）· **tune**（harness 闭环） | 已有 |
+| 环契约 / 图声明 / 触发绑定（loop & graph engineering） | loops.yaml · graph.yaml · triggers.yaml · verify_loop / verify_graph · check-clean | 已有（v0.6.0）；Stop hook 只有模板 |
+| 收敛检测（oscillation / plateau / impossible） | routing.yaml v2 R14–R16 · `fail --score --by` | 已有；阈值是文献先验，待真实运行校准 |
+| 决策迹 | trace.jsonl · trace.py · metrics 新指标 | 已有 |
+
+---
+
+## 8. 还有哪些文档
+
+| 文档 | 回答什么 |
+|---|---|
+| `reference.md` | 手上这件事有没有现成脚本；它检什么、退出码什么意思。**全部脚本与资产的索引**，冒烟盯着它不许漏 |
+| `evaluation.md` | 这个插件自己怎么被验：三层证据、现在能说什么、哪些话还不能说 |
+| `lifecycle.md` | 全景与空白清单：每个环节由谁承载、哪些还空着 |
+| `routing.md` | 失败往哪回：归因启发式、分层预算、按体量的覆盖 |
+| `design-notes.md` | 借鉴来源与取舍：哪些是收编的、哪些是新写的、哪些有意不做 |
+| `proposals/loop-graph-engineering.md` | v0.6.0 那次按环 / 图透镜的重看 |
+| `reports/raising-the-floor-2026-09-05.*` | 为什么不同人用同一个 agent 质量差那么多；五条缺口与它们的实现 |
+| `../eval/effect/README.md` | 行为层对照的协议、题库、每一轮的读数与发现 |
+
+## 9. 术语
+
+| 词 | 含义 |
+|---|---|
+| PSL 轨 / TASK 轨 | 形态未定（先建世界）/ 形态已定（直接进契约）的两条轨道；DOS 闭包失败是客观转轨触发 |
+| AC v2 | `kind: mechanical`（observe/given/expect）或 `kind: human`（statement/judge/evidence）的验收条目；契约的最小单位 |
+| 卡 | 自包含的任务单元；实现者的全部输入 |
+| 层 | card ⊂ plan ⊂ task ⊂ ontology ⊂ world：失败回流的坐标 |
+| 指纹 | 失败输出的稳定摘要；同指纹重复 = 无进展 |
+| 三档 | A 机械（否决）/ B 结构（告警）/ C 判断（请求人） |
+| 两段锁 | G2 锁判据；L5 锁测试与 manifest |
+| 隐藏集 | 冻结 AC 的变体，实现者不可读；calibrate 的 holdout |
+| 账本 | `ledger.md`，只增不删的失败与决定记录 |
+| static_only | 结构过审、脚本冒烟，但带/不带 skill 的行为对比未跑 |
+| 环契约 | `loops.yaml` 一条：generator ≠ verifier、stop 四键、budget.ref、memory、trigger |
+| 图 | `graph.yaml`：节点（边界身份）+ 边（类型 / 守卫 / 环归属）；每个圈必须归属一个环 |
+| 迹 | `trace.jsonl`：账本的类型边伴生；`caused_by` 由效果指向原因 |
+| oscillation / plateau / impossible | 三种"再试也没用"：往复 / 不涨 / 契约下不可能——分别归 plan / plan / task |
+| hill_climb | 环改环的外环：trace → 参数提案 → 人开 PR |

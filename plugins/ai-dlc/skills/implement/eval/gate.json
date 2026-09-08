@@ -1,0 +1,33 @@
+{
+  "skill": "plugins/ai-dlc/skills/implement",
+  "tier": "production",
+  "evaluated_layers": [
+    "structural"
+  ],
+  "gate_pass": "static_only",
+  "structural": {
+    "findings": [],
+    "failure_taxonomy": {
+      "underfill": 0,
+      "overfill": 0,
+      "wrong-layer": 0,
+      "wrong-route": 0,
+      "no-exit": 0,
+      "seam-misplacement": 0
+    },
+    "waived_count": 0
+  },
+  "effect": null,
+  "discrimination": null,
+  "fix_list": [
+    "L2: run card-implementer on one real card; verify it stops on whitelist overflow instead of widening scope",
+    "no own script by design — gates are verify_commit.py + aidlc_state.py (both smoke-tested)"
+  ],
+  "provenance": {
+    "date": "2026-09-05",
+    "evaluator": "AUTHOR-RUN structural pass: skillwise lint_skill.py L0 + plugins/ai-dlc/eval/smoke.sh. NOT a decorrelated read, NOT an L2 run.",
+    "scripts_run": {},
+    "why_it_exists": "2026-09-05 re-split: the reference lifecycle had no carrier skill for L4 plan / L6 implement / L8 delivery / X3 learning; see docs/design-notes.md",
+    "v0.6.0": "loop contract section added (loops.yaml#card_retry); impossible_under_contract may not be reported by the implementer (compiled in aidlc_state.py)"
+  }
+}
