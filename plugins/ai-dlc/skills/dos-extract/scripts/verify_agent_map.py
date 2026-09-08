@@ -15,6 +15,7 @@
 
 用法：
   verify_agent_map.py <agent-map.md> [--repo .] [--probe] [--timeout 120] [--json]
+  --timeout 是**下界**：某一行在第四列声明了更长的耗时，就按声明的 1.5 倍等它。
 
 退出码：0 = 过（可带 flag）· 1 = 拒 · 2 = IO / 用法错误。
 `--probe` 不加时，命令这一节只检形状不检可执行性，输出里写明 probed=false ——
@@ -58,6 +59,22 @@ def rows(md, section):
             continue
         out.append(cells)
     return out
+
+
+# 地图第四列声明的耗时不是装饰：它就是这条命令该给多久。用一个全局 --timeout 去卡一条声明了
+# 「~25min」的命令，得到的 timeout 不是"命令坏了"，是"我们没按它说的等"——那是本插件反复反对的
+# 那种假红（与 verify_structure.py 的 exit 3 同源：没求值不等于不通过，也不等于通过）。
+_DUR = re.compile(r"~?\s*([\d.]+)\s*(ms|s|sec|min|m|h)\b", re.I)
+_MULT = {"ms": 0.001, "s": 1, "sec": 1, "min": 60, "m": 60, "h": 3600}
+
+
+def declared_timeout(cell, default):
+    """→ 该行声明的秒数（留 50% 余量），声明不出来就用 --timeout。"""
+    m = _DUR.search((cell or "").replace("*", ""))
+    if not m:
+        return default, None
+    secs = float(m.group(1)) * _MULT[m.group(2).lower()]
+    return max(default, int(secs * 1.5)), secs
 
 
 def main() -> int:
@@ -110,13 +127,15 @@ def main() -> int:
                          "——它的可执行性要在套件之外单独证（README 的 agent-map 一节）")
             continue
         if a.probe:
+            budget, declared = declared_timeout(r[3] if len(r) > 3 else "", a.timeout)
             t0 = time.time()
             try:
                 p = subprocess.run(cmd, shell=True, cwd=a.repo, capture_output=True,
-                                   text=True, timeout=a.timeout)
+                                   text=True, timeout=budget)
                 code, tail = p.returncode, (p.stderr or p.stdout or "").strip().splitlines()[-1:]
             except subprocess.TimeoutExpired:
-                code, tail = "timeout", [f"> {a.timeout}s"]
+                code, tail = "timeout", [f"> {budget}s"
+                                         + (f"（地图声明 {declared:.0f}s）" if declared else "")]
             except OSError as e:
                 code, tail = "error", [str(e)]
             dt = round(time.time() - t0, 1)
@@ -125,7 +144,10 @@ def main() -> int:
             want = int(m2.group(1)) if m2 else 0      # 期望列没写清楚 = 期望 0，不是"期望失败"
             ok = (code == want)
             probes.append({"purpose": purpose, "cmd": cmd, "exit": code, "want": want,
-                           "seconds": dt, "ok": ok})
+                           "seconds": dt, "declared_seconds": declared, "ok": ok})
+            if ok and declared and dt > max(3 * declared, declared + 30):
+                flags.append(f"「{purpose}」实跑 {dt:.0f}s，地图声明 {declared:.0f}s——"
+                             "差三倍以上的耗时会把人骗去等一个错误的时长，改掉声明")
             if not ok:
                 rejects.append(f"「{purpose}」跑不通：`{cmd}` → exit {code}，期望 {want}（{'; '.join(tail)[:120]}）"
                                "——跑不通的命令比没有命令更糟，实现者会照着它试三次再去猜")

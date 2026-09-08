@@ -18,7 +18,7 @@ description: |
   constitution from a static repo. Do NOT use for: a single Territory's resident
   invariants (that is invariant-extract), or task-level acceptance criteria (acceptance-spec).
 argument-hint: "[repo path] [--auto]"
-version: 0.6.1
+version: 0.7.0
 user-invocable: true
 # imported into AI-DLC 2026-09-05 from looper v0.2.0; body kept, AI-DLC wiring added (see 接线 / 术语映射)
 ---
