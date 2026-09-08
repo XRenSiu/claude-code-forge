@@ -548,4 +548,5 @@ specs/<slug>/      归档：状态 · 账本 · 日记 · 契约 · 锁 · 卡 �
 | `lifecycle.md` | 全景与空白清单：每个环节由谁承载 |
 | `routing.md` | 失败往哪回：归因启发式与分层预算 |
 | `design-notes.md` | 写法与取舍：为什么是这样而不是那样 |
+| `reports/raising-the-floor-2026-09-08.md` | 最近一次评估：机制齐了没有、读数说明了什么、现在真正的缺口在哪（附 `.html`） |
 | `../eval/effect/README.md` | 行为层对照的协议与读数 |

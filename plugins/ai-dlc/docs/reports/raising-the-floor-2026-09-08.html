@@ -1,0 +1,342 @@
+<title>AI-DLC 抬高的是哪个下限</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  --paper:#ECEFF2; --surface:#FAFBFC; --sunk:#E1E6EA;
+  --ink:#141A22; --ink-2:#414E5B; --ink-3:#6D7C8A;
+  --rule:#CBD3DA; --rule-soft:#DDE3E8;
+  --said:#0F6A57; --said-bg:#DCEFE9;
+  --unsaid:#BC4227; --unsaid-bg:#F8E4DE;
+  --band:#9AA8B6; --band-fill:#CFD8E0;
+  --shadow:0 1px 2px rgba(20,26,34,.05), 0 10px 30px -20px rgba(20,26,34,.35);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#0F1419; --surface:#171E25; --sunk:#131A20;
+    --ink:#E6EBEF; --ink-2:#AEBAC5; --ink-3:#7C8B98;
+    --rule:#2A343D; --rule-soft:#212A32;
+    --said:#4FC0A6; --said-bg:#123028;
+    --unsaid:#EE7F60; --unsaid-bg:#37190F;
+    --band:#5D6C7A; --band-fill:#242F39;
+    --shadow:0 1px 2px rgba(0,0,0,.5), 0 10px 30px -20px rgba(0,0,0,.9);
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0F1419; --surface:#171E25; --sunk:#131A20;
+  --ink:#E6EBEF; --ink-2:#AEBAC5; --ink-3:#7C8B98;
+  --rule:#2A343D; --rule-soft:#212A32;
+  --said:#4FC0A6; --said-bg:#123028;
+  --unsaid:#EE7F60; --unsaid-bg:#37190F;
+  --band:#5D6C7A; --band-fill:#242F39;
+  --shadow:0 1px 2px rgba(0,0,0,.5), 0 10px 30px -20px rgba(0,0,0,.9);
+}
+*{box-sizing:border-box}
+body{
+  background:var(--paper); color:var(--ink); margin:0;
+  font-family:"Noto Serif SC",Georgia,"Songti SC",serif;
+  font-size:16px; line-height:1.95; -webkit-font-smoothing:antialiased;
+}
+.mono,code,th,.fig,.num{font-family:"IBM Plex Mono","SF Mono",Menlo,monospace}
+.page{max-width:790px; margin:0 auto; padding:0 24px 110px}
+
+/* masthead */
+header.top{padding:52px 0 26px; border-bottom:2px solid var(--ink); margin-bottom:40px}
+.kicker{font-family:"IBM Plex Mono",monospace; font-size:11.5px; letter-spacing:.18em;
+        text-transform:uppercase; color:var(--unsaid); font-weight:600}
+h1{font-weight:700; font-size:clamp(31px,5.4vw,47px); line-height:1.22; margin:15px 0 0;
+   letter-spacing:-.015em; text-wrap:balance}
+.dek{margin:20px 0 0; color:var(--ink-2); font-size:15.5px; line-height:1.85; max-width:63ch;
+     padding-left:16px; border-left:2px solid var(--rule)}
+
+h2{font-size:23px; font-weight:700; line-height:1.4; margin:64px 0 4px; text-wrap:balance;
+   scroll-margin-top:16px}
+h2 .n{font-family:"IBM Plex Mono",monospace; font-size:12px; font-weight:600;
+      color:var(--unsaid); letter-spacing:.1em; display:block; margin-bottom:7px}
+h3{font-size:17px; font-weight:700; margin:36px 0 6px; line-height:1.55}
+p{margin:16px 0; max-width:63ch}
+strong{font-weight:700}
+em{font-style:normal; border-bottom:2px solid var(--unsaid); padding-bottom:1px; font-weight:500}
+code{font-size:.86em; background:var(--sunk); padding:2px 6px; border-radius:3px}
+hr{border:none; border-top:1px solid var(--rule); margin:52px 0}
+
+/* the three-line lede */
+.claims{display:flex; flex-direction:column; gap:0; margin:30px 0 8px;
+        border:1px solid var(--rule); border-radius:9px; overflow:hidden;
+        background:var(--surface); box-shadow:var(--shadow)}
+.claim{display:grid; grid-template-columns:minmax(0,1fr); gap:6px; padding:19px 22px;
+       border-bottom:1px solid var(--rule-soft)}
+.claim:last-child{border-bottom:none}
+.claim .lab{font-family:"IBM Plex Mono",monospace; font-size:11px; letter-spacing:.13em;
+            text-transform:uppercase; color:var(--ink-3); font-weight:600}
+.claim p{margin:0; font-size:15px; line-height:1.8; max-width:none}
+.claim.a{border-left:3px solid var(--said)}
+.claim.b{border-left:3px solid var(--band)}
+.claim.c{border-left:3px solid var(--unsaid)}
+
+/* figure shell */
+figure{margin:34px 0; padding:22px 22px 16px; background:var(--surface);
+       border:1px solid var(--rule); border-radius:9px; box-shadow:var(--shadow)}
+figcaption{font-size:12.5px; color:var(--ink-3); line-height:1.7; margin-top:14px;
+           padding-top:12px; border-top:1px solid var(--rule-soft)}
+.figtitle{font-family:"IBM Plex Mono",monospace; font-size:11px; letter-spacing:.13em;
+          text-transform:uppercase; color:var(--ink-3); font-weight:600; margin-bottom:14px}
+.svgwrap{overflow-x:auto}
+svg{display:block; width:100%; height:auto; min-width:560px}
+.s-lab{fill:var(--ink); font-family:"Noto Serif SC",serif; font-size:14px; font-weight:700}
+.s-sub{fill:var(--ink-3); font-family:"IBM Plex Mono",monospace; font-size:10.5px}
+.s-val{fill:var(--ink-2); font-family:"IBM Plex Mono",monospace; font-size:11.5px; font-weight:500}
+.s-val.hi{fill:var(--unsaid); font-weight:600}
+.s-val.lo{fill:var(--band)}
+.s-tick{fill:var(--ink-3); font-family:"IBM Plex Mono",monospace; font-size:10px}
+.s-verdict{font-family:"IBM Plex Mono",monospace; font-size:11px; font-weight:600}
+
+/* breakdown bars */
+.bars{display:flex; flex-direction:column; gap:11px; margin-top:4px}
+.bar{display:grid; grid-template-columns:minmax(0,1fr); gap:5px}
+.bar .top{display:flex; justify-content:space-between; align-items:baseline; gap:14px}
+.bar .nm{font-size:14px; line-height:1.5}
+.bar .ct{font-family:"IBM Plex Mono",monospace; font-size:13px; font-weight:600; color:var(--ink-2); flex:none}
+.track{height:9px; background:var(--sunk); border-radius:5px; overflow:hidden}
+.fill{height:100%; border-radius:5px; background:var(--band)}
+.bar.lead .ct{color:var(--unsaid)}
+.bar.lead .fill{background:var(--unsaid)}
+
+/* tables */
+.tw{overflow-x:auto; margin:28px 0; border:1px solid var(--rule); border-radius:9px;
+    background:var(--surface); box-shadow:var(--shadow)}
+table{border-collapse:collapse; width:100%; font-size:14px; min-width:500px;
+      font-family:"Noto Serif SC",serif}
+th{text-align:left; font-size:10.5px; letter-spacing:.11em; text-transform:uppercase;
+   color:var(--ink-3); padding:13px 17px; background:var(--sunk);
+   border-bottom:1px solid var(--rule); font-weight:600; white-space:nowrap}
+td{padding:13px 17px; border-bottom:1px solid var(--rule-soft); vertical-align:top; line-height:1.7}
+tr:last-child td{border-bottom:none}
+td.num{font-family:"IBM Plex Mono",monospace; font-variant-numeric:tabular-nums; white-space:nowrap}
+.in{color:var(--band); font-weight:600}
+.out{color:var(--unsaid); font-weight:600}
+
+/* said / unsaid split */
+.split{display:grid; gap:14px; margin:30px 0}
+@media(min-width:700px){ .split{grid-template-columns:1fr 1fr} }
+.col{border-radius:9px; padding:20px 22px; box-shadow:var(--shadow)}
+.col.y{background:var(--said-bg); border:1px solid transparent}
+.col.n{background:var(--unsaid-bg); border:1px solid transparent}
+.col h4{margin:0 0 12px; font-size:15px; font-weight:700}
+.col.y h4{color:var(--said)}
+.col.n h4{color:var(--unsaid)}
+.col ul{margin:0; padding-left:19px; font-size:14px; line-height:1.85}
+.col li{margin:9px 0}
+.col.y li::marker{color:var(--said)}
+.col.n li::marker{color:var(--unsaid)}
+
+/* checklist */
+.check{margin:26px 0; border:1px solid var(--rule); border-radius:9px; overflow:hidden;
+       background:var(--surface); box-shadow:var(--shadow)}
+.check > div{display:flex; gap:14px; align-items:flex-start; padding:15px 20px;
+             border-bottom:1px solid var(--rule-soft); font-size:14.5px; line-height:1.7}
+.check > div:last-child{border-bottom:none}
+.box{width:15px; height:15px; border:2px solid var(--band); border-radius:3px; flex:none; margin-top:6px}
+
+.note{background:var(--surface); border-left:3px solid var(--ink); border-radius:0 8px 8px 0;
+      padding:16px 20px; margin:28px 0; font-size:14.5px; color:var(--ink-2); box-shadow:var(--shadow)}
+.note b{color:var(--ink)}
+footer{margin-top:76px; padding-top:22px; border-top:1px solid var(--rule);
+        color:var(--ink-3); font-size:12.5px; line-height:1.8;
+        font-family:"IBM Plex Mono",monospace}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="page">
+<header class="top">
+  <div class="kicker">研究报告 · 2026-09-08</div>
+  <h1>AI-DLC 抬高的是哪个下限</h1>
+  <p class="dek">三天前的上一份报告问"为什么不同人用同一个 agent 质量差那么多"，数出五条缺口。五条全部实现了。这一份重新问同一个问题——答案变了。不是因为观点变了，是因为这次有读数。</p>
+</header>
+
+<h2><span class="n">结论先行</span>三句话</h2>
+
+<div class="claims">
+  <div class="claim a">
+    <span class="lab">一 · 机制这侧不缺了</span>
+    <p>上一份点名的五条缺口都建好了，而且不止五条。结构闸、仓库地图、模糊度信号、体量分档、行为层对照，加上后来的广度网格、解释日记、审查完成度闸、跨制品术语传感器。<strong>机制这一侧，我找不出下一条值得排进前五的。</strong></p>
+  </div>
+  <div class="claim b">
+    <span class="lab">二 · 但读数说的不是"做得更好"</span>
+    <p>十道题、三个 arm、三十次运行之后，"做对了没有"这一维三个 arm <strong>落在噪声带内</strong>。真正把它们分开的是另一维——<strong>"没说清楚的地方，有没有被写下来"</strong>。</p>
+  </div>
+  <div class="claim c">
+    <span class="lab">三 · 所以要改口</span>
+    <p>它抬高的下限是<strong>验证成本</strong>，不是<strong>产出质量</strong>。这两件事不一样，混着说会让人对它抱错期待。由此推出的当前最大缺口也完全不同：不是缺机制，是<em>机制建好了但没被真正跑过</em>。</p>
+  </div>
+</div>
+
+<h2><span class="n">01</span>五条缺口，五条都合上了</h2>
+
+<div class="tw">
+<table>
+<thead><tr><th>上一份说缺什么</th><th>现在</th></tr></thead>
+<tbody>
+<tr><td>全部 skill 都是 static_only，没有带与不带的行为对比</td><td>建了对照实验：10 道题、3 个 arm、跑过 30 次，有第一份基线</td></tr>
+<tr><td>没有结构性质量的机械闸</td><td>契约里加了结构约束，进 A 档一票否决；<b>分析器跑不起来退出"未评估"，不报绿</b></td></tr>
+<tr><td>实现者拿不到"这个仓库怎么干活"</td><td>仓库地图 + 逐条实跑探针（命令必须真能跑通），按卡切片进实现者的输入</td></tr>
+<tr><td>模糊检测只有本体闭包一条客观触发</td><td>同一个 issue 隔离生成 N 份契约草案，<b>分歧处就是必须澄清的槽</b></td></tr>
+<tr><td>流程不分大小</td><td>体量分档，S 档跳过拆卡与整体验收；跳过要用可数的证据换</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>之后又合上四条：广度从散文变成网格并被 lint 核验；含糊处的选择有了记录通道；被截断的审查不再读成"没发现问题"；本体从只在一个字段上用，变成跨制品的术语传感器。</p>
+
+<h2><span class="n">02</span>读数说了什么，以及它为什么让人不舒服</h2>
+
+<figure>
+  <div class="figtitle">三十次运行 · 两个维度 · 噪声带 0.15</div>
+  <div class="svgwrap">
+  <svg viewBox="0 0 720 236" role="img" aria-label="两个维度的读数与噪声带：做对了没有落在带内，没说清的写下来了没有超出带外">
+    <!-- axis -->
+    <line x1="180" y1="204" x2="690" y2="204" stroke="var(--rule)" stroke-width="1"/>
+    <g class="s-tick" text-anchor="middle">
+      <text x="180" y="222">0.40</text>
+      <text x="350" y="222">0.60</text>
+      <text x="520" y="222">0.80</text>
+      <text x="690" y="222">1.00</text>
+    </g>
+    <line x1="180" y1="200" x2="180" y2="208" stroke="var(--rule)" stroke-width="1"/>
+    <line x1="350" y1="200" x2="350" y2="208" stroke="var(--rule)" stroke-width="1"/>
+    <line x1="520" y1="200" x2="520" y2="208" stroke="var(--rule)" stroke-width="1"/>
+    <line x1="690" y1="200" x2="690" y2="208" stroke="var(--rule)" stroke-width="1"/>
+
+    <!-- row 1 : hidden set -->
+    <text class="s-lab" x="0" y="52">做对了没有</text>
+    <text class="s-sub" x="0" y="70">隐藏集</text>
+    <rect x="520" y="34" width="127.5" height="34" fill="var(--band-fill)" rx="3"/>
+    <text class="s-sub" x="583" y="26" text-anchor="middle" fill="var(--band)">噪声带 0.15</text>
+    <line x1="180" y1="51" x2="690" y2="51" stroke="var(--rule-soft)" stroke-width="1"/>
+    <circle cx="520" cy="51" r="6" fill="var(--band)"/>
+    <circle cx="639" cy="51" r="7.5" fill="var(--band)"/>
+    <text class="s-val lo" x="520" y="90" text-anchor="middle">bare · claudemd 0.80</text>
+    <text class="s-val lo" x="645" y="90" text-anchor="start">aidlc 0.94</text>
+    <text class="s-verdict" x="690" y="26" text-anchor="end" fill="var(--band)">差 0.14 → 带内，不算数</text>
+
+    <!-- row 2 : underspecified slots -->
+    <text class="s-lab" x="0" y="146">没说清的</text>
+    <text class="s-lab" x="0" y="166">写下来了没有</text>
+    <text class="s-sub" x="0" y="184">欠定槽</text>
+    <rect x="307.5" y="128" width="127.5" height="34" fill="var(--band-fill)" rx="3"/>
+    <line x1="180" y1="145" x2="690" y2="145" stroke="var(--rule-soft)" stroke-width="1"/>
+    <circle cx="307.5" cy="145" r="6" fill="var(--band)"/>
+    <circle cx="350" cy="145" r="6" fill="var(--band)"/>
+    <circle cx="647.5" cy="145" r="7.5" fill="var(--unsaid)"/>
+    <text class="s-val lo" x="307.5" y="120" text-anchor="middle">0.55</text>
+    <text class="s-val lo" x="350" y="182" text-anchor="middle">0.60</text>
+    <text class="s-val hi" x="647.5" y="120" text-anchor="middle">aidlc 0.95</text>
+    <text class="s-verdict" x="690" y="182" text-anchor="end" fill="var(--unsaid)">差 0.40 → 超出带外</text>
+  </svg>
+  </div>
+  <figcaption>评分脚本把噪声带 0.15 编译进去了：差距落在带内，它拒绝下"哪个 arm 更好"的结论。第一行 0.94 比 0.80 看着好不少，但 0.14 &lt; 0.15，分不开它和抖动。</figcaption>
+</figure>
+
+<p>第一行是这套东西<strong>没能证明</strong>的那件事。第二行是它<strong>证明了</strong>的那件事，差距很大。但这里有个必须自己说出来的问题：aidlc 那个 arm 的提示词里<strong>明确要求它写假设台账</strong>。所以这一维有一部分在测"它服从不服从自己的指令"，不是在测"这套纪律有没有内化"。剥掉那部分，只留"领域模型有没有被证伪"，三个 arm 又落回噪声带（<span class="mono">33/35 · 33/35 · 35/35</span>）。</p>
+
+<p>还有一条跑多少轮都不会消失：<em>十道题是这个仓库自己写的，隐藏集也是</em>。出题人与被测者同源。这不是"再多跑几轮"能解决的。</p>
+
+<div class="note"><b>所以老老实实说：</b>目前有证据的只有一句——带上这套纪律的 agent，更会把自己不知道的东西写下来。</div>
+
+<h2><span class="n">03</span>这为什么仍然有价值，只是价值在别处</h2>
+
+<p>"更会写下不知道的东西"听起来像个安慰奖。它不是。</p>
+
+<p>回到这套东西的前提：AI 的产出速度已经超过人的验证速度，所以要降低的是<strong>验证成本</strong>。而验证一份产出，最贵的部分从来不是读代码，是<strong>判断它哪里可能不对</strong>。一份把"我在这里按默认理解填了"写下来的产出，和一份没写的，代码可能一模一样，但前者的验证成本低一个量级——<strong>你知道该看哪儿</strong>。</p>
+
+<p>所以读数其实是自洽的：它的设计目标是降低验证成本，而唯一测出来的效果正是降低验证成本。它没测出产出质量提升，因为<strong>它本来就没有一个机制是冲着"写得更对"去的</strong>——每一道闸做的都是"拦住没被验证的东西通过"，不是"让实现更聪明"。</p>
+
+<div class="note"><b>该改口的是宣传语，不是设计。</b>"抬高质量下限"改成"抬高<b>可验证性</b>下限"，所有读数就都对得上了，也不用再替它辩护 0.14 那个差距。</div>
+
+<h2><span class="n">04</span>现在真正的缺口：建好了，但没跑过</h2>
+
+<p>把 28 个 skill 登记在案的待办全部导出来数一遍，54 条，按性质归类：</p>
+
+<figure>
+  <div class="figtitle">54 条待办 · 按性质</div>
+  <div class="bars">
+    <div class="bar lead"><div class="top"><span class="nm">在一次真实运行里跑一遍</span><span class="ct">23</span></div><div class="track"><div class="fill" style="width:42.6%"></div></div></div>
+    <div class="bar"><div class="top"><span class="nm">继承来的写法还没归位</span><span class="ct">10</span></div><div class="track"><div class="fill" style="width:18.5%"></div></div></div>
+    <div class="bar"><div class="top"><span class="nm">接线只是声明，没编译成脚本</span><span class="ct">8</span></div><div class="track"><div class="fill" style="width:14.8%"></div></div></div>
+    <div class="bar"><div class="top"><span class="nm">阈值是文献先验，没校准过</span><span class="ct">2</span></div><div class="track"><div class="fill" style="width:3.7%"></div></div></div>
+    <div class="bar"><div class="top"><span class="nm">其它</span><span class="ct">11</span></div><div class="track"><div class="fill" style="width:20.4%"></div></div></div>
+  </div>
+  <figcaption>数据来自遍历 28 个 <code>eval/gate.json</code> 的 fix_list。同一次遍历显示：<b>28 个 skill，28 个的证据等级都是 static_only</b>，一个都没升上去过。</figcaption>
+</figure>
+
+<p>这条比上一份的任何一条都要紧，理由是：<strong>一个从没被真实用过的闸，它拦不拦得住是未知的，而不是已知为真的。</strong>冒烟测的是"给它一个坏输入它会红"，测不出"真实场景里坏输入长不长这个样子"。</p>
+
+<p>这套东西自己有一条不变量——<em>声明了但没求值不等于通过</em>——现在这条不变量正指着它自己。</p>
+
+<h3>按"补上之后下限抬多少"排前五</h3>
+
+<div class="tw">
+<table>
+<thead><tr><th style="width:34px">#</th><th>缺什么</th><th>补法</th></tr></thead>
+<tbody>
+<tr><td class="num out">1</td><td><b>用它自己走一次真实需求，从头到尾</b><br><span style="color:var(--ink-3);font-size:13px">仓库里那次自审是好几轮改动之前的形态，之后加的网格、日记、完成度闸、术语传感器一个都没进过</span></td><td>一个真需求的时间，<b>不是新代码</b>。这条补上，23 条待办能一次清掉一大半</td></tr>
+<tr><td class="num out">2</td><td><b>把"服从指令"和"纪律内化"分开测</b></td><td>不给 arm 那段纪律，只给它脚本，看它还写不写。<b>上一份就写了这个做法，至今没做</b></td></tr>
+<tr><td class="num out">3</td><td><b>出题人换人</b></td><td>跨供应商出题，或拿公开基准的任务改造。在此之前那张表的数字不能对外说</td></tr>
+<tr><td class="num">4</td><td><b>阈值该校准了</b><br><span style="color:var(--ink-3);font-size:13px">收敛检测三个阈值 + 调参三个比例，全是文献先验</span></td><td>第一条补上就有真实数据，那时校准是顺手的；<b>现在校准是拍脑袋</b></td></tr>
+<tr><td class="num">5</td><td><b>新加的四样一样没有行为层证据</b></td><td>尤其解释日记：它的价值要等第一次"翻日记发现上次为什么往那边走"才算被验证，那需要至少两轮真实运行的间隔</td></tr>
+</tbody>
+</table>
+</div>
+
+<h2><span class="n">05</span>一个必须说清的自相矛盾</h2>
+
+<p>这套东西反复讲"未校准的标准不当证据"，而它自己的闸门阈值全是未校准的先验。它讲"评估者与被评估者必须分离"，而它的题库、隐藏集、评分口径都出自同一个仓库。</p>
+
+<p>这不是伪善，是<strong>顺序问题</strong>：先有机制才谈得上校准机制。但顺序不能变成借口——上一份报告写下这两条是 2026-09-05，现在是 09-08，机制侧又合上四条，而这两条<em>一个字没动</em>。</p>
+
+<p>判据写在这里，下一份报告直接对账：</p>
+
+<div class="check">
+  <div><span class="box"></span><span>至少一次真实运行的归档进 <code>specs/</code>，且用的是当前形态（含网格 / 日记 / 完成度闸）</span></div>
+  <div><span class="box"></span><span>对照实验里出现一个<b>不给纪律只给脚本</b>的 arm</span></div>
+  <div><span class="box"></span><span>收敛阈值里至少有一个来自真实运行，而不是文献</span></div>
+  <div><span class="box"></span><span>至少一道题不是这个仓库写的</span></div>
+</div>
+
+<p>四条里做到两条，"抬高可验证性下限"这句话才有资格从设计声明变成结论。</p>
+
+<h2><span class="n">06</span>现在能说什么、不能说什么</h2>
+
+<div class="split">
+  <div class="col y">
+    <h4>能说的</h4>
+    <ul>
+      <li>机制齐了。每一步的产物要么能被脚本检，要么被一道只能人签的门挡住。</li>
+      <li>489 条冒烟期望全绿，关键行为配了变异证明——把被测的东西故意改坏，确认它真的变红。</li>
+      <li>带上它的 agent 更会把没想清楚的地方写下来，差距 0.40，超出噪声带。</li>
+      <li>它的极性守得住：缺省是最严的一档，手设档位换不到豁免，分析器跑不起来记未检不记通过。</li>
+    </ul>
+  </div>
+  <div class="col n">
+    <h4>不能说的</h4>
+    <ul>
+      <li>不能说它让产出更对。那一维的读数落在噪声带内。</li>
+      <li>不能说 0.40 那个差距全是纪律的功劳，其中有一部分是服从性。</li>
+      <li>不能说任何一个 skill 在真实场景下有效。<b>28 个全是 static_only</b>。</li>
+      <li>不能引用那张表对外证明什么。出题人与被测者同源。</li>
+    </ul>
+  </div>
+</div>
+
+<hr>
+
+<h2><span class="n">附</span>这份报告自己怎么被验</h2>
+
+<p>正文的每个数字都是当场从代码里导出来的，不是从上一份抄的：54 条待办来自遍历 28 个 <code>eval/gate.json</code> 的 fix_list；<code>static_only</code> 的计数来自同一次遍历的 <code>gate_pass</code> 字段；三个 arm 的读数来自对照实验的基线文件；489 条冒烟来自套件自己的结尾行。</p>
+
+<p>上一份报告写完时，顺手发现它引用的"52 节点 67 边"已经与代码不符（实际 <span class="mono">53 / 69</span>）。这次的做法是：<strong>凡是数字，先跑一遍再写。</strong></p>
+
+<footer>
+承接 raising-the-floor-2026-09-05（写于插件还叫 sdlc 的时候）。<br>
+那一份的证据半边仍然成立，前瞻半边已被本文取代。
+</footer>
+</div>

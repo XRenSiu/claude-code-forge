@@ -1,4 +1,4 @@
-# AI-DLC (v1.1.1)
+# AI-DLC (v1.1.2)
 
 > **2026-09-08 改名**：本插件原名 `sdlc`，现名 **AI-DLC**——目录 `plugins/ai-dlc/`，斜杠命令 `/ai-dlc`，
 > 运行时目录 `.aidlc/`（旧的 `.sdlc/` 仍可读，见 `aidlc_state.py` 的 `resolve_root`），状态脚本 `aidlc_state.py`。
