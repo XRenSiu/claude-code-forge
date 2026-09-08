@@ -1,11 +1,11 @@
-# AI-DLC (v1.1.0)
+# AI-DLC (v1.1.1)
 
 > **2026-09-08 改名**：本插件原名 `sdlc`，现名 **AI-DLC**——目录 `plugins/ai-dlc/`，斜杠命令 `/ai-dlc`，
 > 运行时目录 `.aidlc/`（旧的 `.sdlc/` 仍可读，见 `aidlc_state.py` 的 `resolve_root`），状态脚本 `aidlc_state.py`。
 > 归档目录与历史报告**保持原样未改写**，理由见 [`dogfood/RENAME-NOTE.md`](dogfood/RENAME-NOTE.md)。
 > 名字与 AWS 的 AI-DLC 方法论重合：全仓库约定 **AWS AI-DLC** 指 AWS 那套，不带前缀的 **AI-DLC** 指本插件。
 > v1.0.0 的 major 标的是**身份变更**（安装 id 变了），不是成熟度声明——证据等级仍是 `static_only`。
-> 整体逻辑（五个部件怎么拼成一件东西）看 [`docs/ARCHITECTURE.md` §0](docs/ARCHITECTURE.md)。
+> 整体逻辑（五个部件怎么拼成一件东西）看 [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) §2。
 
 完整的软件开发生命周期，分三段。上半段建世界：PSL → 推导产物 → G1 人裁决。
 下半段收敛交付：issue → 分支 → 判据冻结 → 任务卡 → 按卡实现与提交 → PR → review 跟进 → 合入归档 → 逃逸缺陷登记。
