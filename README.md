@@ -490,7 +490,7 @@ Goal-driven, long-running autonomous loop with strict separation of judge and wo
 
 ## AI-DLC
 
-**Version**: 1.1.2 · **Category**: Development · **Requires**: `gh` (authenticated), `jq`, `python3` + `pyyaml`
+**Version**: 1.2.0 · **Category**: Development · **Requires**: `gh` (authenticated), `jq`, `python3` + `pyyaml`
 
 The complete software development lifecycle, in three parts. **Upper half — build the world**: `/psl` writes the
 product world, `/psl-derive` derives DOS proposal / workflow / form draft (every decision cites a PSL-ID) plus an

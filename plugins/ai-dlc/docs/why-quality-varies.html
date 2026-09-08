@@ -1,0 +1,450 @@
+<title>同一个 agent，为什么有人用得好</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  --paper:#F4F1EB; --surface:#FCFAF7; --sunk:#EAE5DC; --deep:#E3DDD2;
+  --ink:#1C1A18; --ink-2:#4E4842; --ink-3:#847B72;
+  --rule:#D8D0C4; --rule-soft:#E6E0D6;
+  --spread:#8E3A6B; --spread-bg:#F3E4EE; --spread-soft:#C98FB2;
+  --gate:#22467E; --gate-bg:#E2E8F3; --gate-soft:#8DA3C6;
+  --ok:#2F6B4F; --ok-bg:#E0EDE6;
+  --shadow:0 1px 2px rgba(28,26,24,.05), 0 12px 32px -22px rgba(28,26,24,.4);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#15130F; --surface:#1E1B17; --sunk:#191612; --deep:#221E19;
+    --ink:#F0EBE3; --ink-2:#BCB3A8; --ink-3:#8B8177;
+    --rule:#332D26; --rule-soft:#282320;
+    --spread:#E58CBE; --spread-bg:#33192A; --spread-soft:#8E4E71;
+    --gate:#8FB0E6; --gate-bg:#16233A; --gate-soft:#4C6A9E;
+    --ok:#6FC194; --ok-bg:#14291F;
+    --shadow:0 1px 2px rgba(0,0,0,.5), 0 12px 32px -22px rgba(0,0,0,.9);
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#15130F; --surface:#1E1B17; --sunk:#191612; --deep:#221E19;
+  --ink:#F0EBE3; --ink-2:#BCB3A8; --ink-3:#8B8177;
+  --rule:#332D26; --rule-soft:#282320;
+  --spread:#E58CBE; --spread-bg:#33192A; --spread-soft:#8E4E71;
+  --gate:#8FB0E6; --gate-bg:#16233A; --gate-soft:#4C6A9E;
+  --ok:#6FC194; --ok-bg:#14291F;
+  --shadow:0 1px 2px rgba(0,0,0,.5), 0 12px 32px -22px rgba(0,0,0,.9);
+}
+*{box-sizing:border-box}
+body{
+  background:var(--paper); color:var(--ink); margin:0;
+  font-family:"Noto Sans SC",-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
+  font-size:16px; line-height:1.9; -webkit-font-smoothing:antialiased;
+}
+.mono,code,.fig,.num{font-family:"IBM Plex Mono","SF Mono",Menlo,monospace}
+.page{max-width:820px; margin:0 auto; padding:0 24px 110px}
+
+header.top{padding:56px 0 30px}
+.kicker{font-family:"IBM Plex Mono",monospace; font-size:11.5px; letter-spacing:.2em;
+        text-transform:uppercase; color:var(--spread); font-weight:600}
+h1{font-weight:900; font-size:clamp(33px,6.2vw,54px); line-height:1.14; margin:16px 0 0;
+   letter-spacing:-.03em; text-wrap:balance}
+.dek{margin:22px 0 0; font-size:17px; line-height:1.8; color:var(--ink-2); max-width:60ch}
+.dek b{color:var(--ink); font-weight:700}
+
+h2{font-weight:900; font-size:clamp(23px,3.4vw,30px); line-height:1.3; margin:72px 0 8px;
+   letter-spacing:-.02em; text-wrap:balance}
+h2 .n{display:block; font-family:"IBM Plex Mono",monospace; font-size:11.5px; font-weight:600;
+      letter-spacing:.16em; color:var(--spread); margin-bottom:9px; text-transform:uppercase}
+h3{font-weight:700; font-size:18px; margin:40px 0 6px; line-height:1.5}
+p{margin:16px 0; max-width:62ch}
+strong{font-weight:700}
+em{font-style:normal; background:var(--spread-bg); color:var(--spread); font-weight:500;
+   padding:1px 6px; border-radius:3px}
+code{font-size:.86em; background:var(--sunk); padding:2px 6px; border-radius:3px}
+
+/* figure */
+figure{margin:38px 0; padding:24px; background:var(--surface); border:1px solid var(--rule);
+       border-radius:11px; box-shadow:var(--shadow)}
+.figtitle{font-family:"IBM Plex Mono",monospace; font-size:11px; letter-spacing:.15em;
+          text-transform:uppercase; color:var(--ink-3); font-weight:600; margin-bottom:16px}
+figcaption{font-size:12.5px; color:var(--ink-3); line-height:1.75; margin-top:16px;
+           padding-top:13px; border-top:1px solid var(--rule-soft)}
+.svgwrap{overflow-x:auto}
+svg{display:block; width:100%; height:auto; min-width:600px}
+.t-lab{fill:var(--ink); font-family:"Noto Sans SC",sans-serif; font-size:13px; font-weight:700}
+.t-sm{fill:var(--ink-3); font-family:"IBM Plex Mono",monospace; font-size:10px}
+.t-sp{fill:var(--spread); font-family:"Noto Sans SC",sans-serif; font-size:12px; font-weight:700}
+.t-gt{fill:var(--gate); font-family:"Noto Sans SC",sans-serif; font-size:12px; font-weight:700}
+
+/* fork cards */
+.forks{display:flex; flex-direction:column; gap:14px; margin:32px 0}
+.fork{background:var(--surface); border:1px solid var(--rule); border-radius:11px;
+      overflow:hidden; box-shadow:var(--shadow)}
+.fork .hd{display:flex; align-items:baseline; gap:12px; padding:16px 20px 14px;
+          border-bottom:1px solid var(--rule-soft); background:var(--sunk)}
+.fork .fn{font-family:"IBM Plex Mono",monospace; font-size:12px; font-weight:600;
+          color:var(--spread); flex:none; letter-spacing:.08em}
+.fork .ft{font-size:16px; font-weight:700; line-height:1.45}
+.ab{display:grid; grid-template-columns:minmax(0,1fr); gap:0}
+@media(min-width:720px){ .ab{grid-template-columns:1fr 1fr} }
+.ab > div{padding:16px 20px; display:flex; flex-direction:column; gap:7px}
+.ab > div:first-child{border-bottom:1px solid var(--rule-soft)}
+@media(min-width:720px){ .ab > div:first-child{border-bottom:none; border-right:1px solid var(--rule-soft)} }
+.who{font-family:"IBM Plex Mono",monospace; font-size:10.5px; letter-spacing:.13em;
+     text-transform:uppercase; font-weight:600}
+.who.a{color:var(--spread)} .who.b{color:var(--ok)}
+.ab p{margin:0; font-size:14px; line-height:1.75; max-width:none; color:var(--ink-2)}
+.ab .quote{background:var(--deep); border-radius:6px; padding:11px 13px; font-size:13px;
+           line-height:1.7; color:var(--ink); font-family:"IBM Plex Mono",monospace}
+.outcome{margin-top:3px; font-size:13px; font-weight:700}
+.outcome.bad{color:var(--spread)} .outcome.good{color:var(--ok)}
+
+/* gate cards */
+.clamp{background:var(--gate-bg); border-radius:0 0 11px 11px; padding:15px 20px;
+       display:flex; gap:12px; align-items:flex-start; border-top:2px solid var(--gate)}
+.clamp .ic{font-family:"IBM Plex Mono",monospace; font-size:11px; font-weight:600; color:var(--gate);
+           letter-spacing:.1em; flex:none; padding-top:3px}
+.clamp p{margin:0; font-size:14px; line-height:1.75; color:var(--ink-2); max-width:none}
+.clamp b{color:var(--gate)}
+
+/* tables */
+.tw{overflow-x:auto; margin:30px 0; border:1px solid var(--rule); border-radius:11px;
+    background:var(--surface); box-shadow:var(--shadow)}
+table{border-collapse:collapse; width:100%; font-size:14px; min-width:540px}
+th{text-align:left; font-size:10.5px; letter-spacing:.12em; text-transform:uppercase;
+   color:var(--ink-3); padding:13px 18px; background:var(--sunk);
+   border-bottom:1px solid var(--rule); font-weight:600; white-space:nowrap}
+td{padding:13px 18px; border-bottom:1px solid var(--rule-soft); vertical-align:top; line-height:1.7}
+tr:last-child td{border-bottom:none}
+td.num{font-family:"IBM Plex Mono",monospace; font-variant-numeric:tabular-nums; white-space:nowrap}
+.sp{color:var(--spread); font-weight:700}
+.gt{color:var(--gate); font-weight:700}
+
+/* bar readings */
+.reads{display:flex; flex-direction:column; gap:22px}
+.read .rh{display:flex; justify-content:space-between; align-items:baseline; gap:16px; margin-bottom:9px}
+.read .rn{font-size:15px; font-weight:700}
+.read .rv{font-family:"IBM Plex Mono",monospace; font-size:12px; font-weight:600; flex:none}
+.read .rv.in{color:var(--ink-3)} .read .rv.out{color:var(--ok)}
+.rows{display:flex; flex-direction:column; gap:6px}
+.row{display:grid; grid-template-columns:96px minmax(0,1fr) 46px; gap:11px; align-items:center}
+.row .who2{font-family:"IBM Plex Mono",monospace; font-size:11.5px; color:var(--ink-3)}
+.row .tr{height:15px; background:var(--sunk); border-radius:3px; overflow:hidden; position:relative}
+.row .fl{height:100%; background:var(--spread-soft); border-radius:3px}
+.row.lead .fl{background:var(--ok)}
+.row .vv{font-family:"IBM Plex Mono",monospace; font-size:12px; font-variant-numeric:tabular-nums;
+         color:var(--ink-2); text-align:right}
+.row.lead .vv{color:var(--ok); font-weight:600}
+
+.note{background:var(--surface); border-left:3px solid var(--gate); border-radius:0 9px 9px 0;
+      padding:17px 21px; margin:30px 0; font-size:15px; color:var(--ink-2); box-shadow:var(--shadow)}
+.note b{color:var(--ink)}
+.note.warn{border-left-color:var(--spread)}
+.big{font-size:19px; line-height:1.75; font-weight:500; color:var(--ink); max-width:58ch;
+     margin:34px 0; padding-left:18px; border-left:3px solid var(--spread)}
+footer{margin-top:78px; padding-top:24px; border-top:1px solid var(--rule);
+       color:var(--ink-3); font-size:12.5px; line-height:1.8}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="page">
+<header class="top">
+  <div class="kicker">同一个模型 · 不同的人 · 差很多</div>
+  <h1>同一个 agent，<br>为什么有人用得好</h1>
+  <p class="dek">同一个模型，同一个仓库，同一句需求。张三交出来的东西能上线，李四交出来的能跑但是错的。<b>差的不是模型，是模型周围那五件事。</b>这篇讲清楚那五件事分别是什么，以及怎么把它们从"靠人自觉"变成"不做就走不下去"。</p>
+</header>
+
+<h2><span class="n">一</span>先把问题摆对：差异从哪儿来</h2>
+
+<p>大家习惯把这事归结成"会不会写 prompt"。不是。同一句 prompt 交给同一个模型，输出的方差本来就没那么大。真正拉开差距的，是<strong>需求进到模型之前</strong>和<strong>产物出来之后</strong>发生了什么。</p>
+
+<p>一个需求从进来到合入，中间有五个地方，人的做法可以完全不同。每经过一个，两个人的结果就分开一点。五个走完，就是天差地别。</p>
+
+<figure>
+  <div class="figtitle">图 1 · 同一个需求，五处岔口</div>
+  <div class="svgwrap">
+  <svg viewBox="0 0 760 430" role="img" aria-label="上半部分：同一个需求经过五处岔口后结果越来越发散。下半部分：五处岔口各被一道卡子卡住后，结果始终收在一条窄带里">
+    <!-- ============ TOP: diverging ============ -->
+    <text class="t-sp" x="0" y="20">没有卡子：越走越散</text>
+    <rect x="0" y="30" width="86" height="34" rx="5" fill="var(--deep)"/>
+    <text class="t-sm" x="43" y="51" text-anchor="middle" fill="var(--ink-2)">同一句需求</text>
+
+    <g fill="none" stroke="var(--spread-soft)" stroke-width="2" opacity=".95">
+      <path d="M86 47 L200 47 L320 47 L440 47 L560 47 L700 47"/>
+    </g>
+    <!-- five diverging paths, centred at y=47 -->
+    <g fill="none" stroke="var(--spread-soft)" stroke-width="2">
+      <path d="M86 47 L200 61 L320 75 L440 89 L560 103 L700 117"/>
+      <path d="M86 47 L200 54 L320 61 L440 68 L560 75 L700 82"/>
+      <path d="M86 47 L200 47 L320 47 L440 47 L560 47 L700 47"/>
+      <path d="M86 47 L200 40 L320 33 L440 26 L560 19 L700 12"/>
+      <path d="M86 47 L200 33 L320 19 L440 5 L560 -9 L700 -23"/>
+    </g>
+
+    <!-- gate ticks top -->
+    <g stroke="var(--rule)" stroke-width="1" stroke-dasharray="3 3">
+      <line x1="200" y1="0" x2="200" y2="130"/><line x1="320" y1="0" x2="320" y2="130"/>
+      <line x1="440" y1="0" x2="440" y2="130"/><line x1="560" y1="0" x2="560" y2="130"/>
+      <line x1="680" y1="0" x2="680" y2="130"/>
+    </g>
+    <rect x="700" y="4" width="58" height="122" rx="5" fill="var(--spread-bg)"/>
+    <text class="t-sp" x="729" y="58" text-anchor="middle" font-size="11">结果</text>
+    <text class="t-sp" x="729" y="74" text-anchor="middle" font-size="11">差很多</text>
+
+    <!-- ============ labels of the five forks ============ -->
+    <g class="t-sm" text-anchor="middle" fill="var(--ink-2)">
+      <text x="200" y="152">① 需求</text><text x="200" y="166">写成什么样</text>
+      <text x="320" y="152">② 实现者</text><text x="320" y="166">手里有什么</text>
+      <text x="440" y="152">③ 谁说</text><text x="440" y="166">"做完了"</text>
+      <text x="560" y="152">④ 失败之后</text><text x="560" y="166">怎么办</text>
+      <text x="680" y="152">⑤ 含糊的地方</text><text x="680" y="166">谁来定</text>
+    </g>
+
+    <!-- ============ BOTTOM: clamped ============ -->
+    <text class="t-gt" x="0" y="228">每处加一道卡子：始终收在窄带里</text>
+    <rect x="0" y="240" width="86" height="34" rx="5" fill="var(--deep)"/>
+    <text class="t-sm" x="43" y="261" text-anchor="middle" fill="var(--ink-2)">同一句需求</text>
+
+    <!-- clamp bars -->
+    <g fill="var(--gate)" opacity=".16">
+      <rect x="194" y="232" width="12" height="118" rx="4"/>
+      <rect x="314" y="232" width="12" height="118" rx="4"/>
+      <rect x="434" y="232" width="12" height="118" rx="4"/>
+      <rect x="554" y="232" width="12" height="118" rx="4"/>
+      <rect x="674" y="232" width="12" height="118" rx="4"/>
+    </g>
+    <g fill="none" stroke="var(--gate-soft)" stroke-width="2">
+      <path d="M86 257 L200 268 L320 264 L440 269 L560 265 L700 268"/>
+      <path d="M86 257 L200 262 L320 258 L440 261 L560 259 L700 261"/>
+      <path d="M86 257 L200 257 L320 257 L440 257 L560 257 L700 257"/>
+      <path d="M86 257 L200 252 L320 255 L440 251 L560 254 L700 252"/>
+      <path d="M86 257 L200 246 L320 250 L440 245 L560 249 L700 246"/>
+    </g>
+    <rect x="700" y="238" width="58" height="38" rx="5" fill="var(--gate-bg)"/>
+    <text class="t-gt" x="729" y="253" text-anchor="middle" font-size="11">结果</text>
+    <text class="t-gt" x="729" y="268" text-anchor="middle" font-size="11">差不多</text>
+
+    <g class="t-sm" text-anchor="middle" fill="var(--gate)">
+      <text x="200" y="370">写不成</text><text x="200" y="384">可判真假就退回</text>
+      <text x="320" y="370">卡里给全</text><text x="320" y="384">不靠他自己有</text>
+      <text x="440" y="370">不是作者</text><text x="440" y="384">的东西来判</text>
+      <text x="560" y="370">同样的失败</text><text x="560" y="384">第二次就换层</text>
+      <text x="680" y="370">当场记下来</text><text x="680" y="384">签字前念一遍</text>
+    </g>
+
+    <line x1="0" y1="404" x2="760" y2="404" stroke="var(--rule)" stroke-width="1"/>
+    <text class="t-sm" x="0" y="424" fill="var(--ink-3)">上下两条带子的宽度差，就是"人和人之间的差距"被压掉的部分</text>
+  </svg>
+  </div>
+  <figcaption>上半部分每经过一个岔口，五个人的结果就分开一点；下半部分同样五个岔口，每处有一道谁都绕不过去的卡子，所以始终收在一条窄带里。下面五节逐个讲这五处。</figcaption>
+</figure>
+
+<h2><span class="n">二</span>五处岔口，一处一处看</h2>
+<p>每一处都给两个人的真实做法对比。A 是没有约束时最自然的做法，B 是有约束时被逼出来的做法。</p>
+
+<div class="forks">
+
+  <div class="fork">
+    <div class="hd"><span class="fn">岔口 ①</span><span class="ft">需求写成什么样</span></div>
+    <div class="ab">
+      <div>
+        <span class="who a">A 的写法</span>
+        <div class="quote">"加个搜索，快一点"</div>
+        <p>模型只能猜：快一点是多快？"上个月"是自然月还是往前 30 天？没搜到显示什么？</p>
+        <div class="outcome bad">→ 猜错一个，产物就是"能跑但不对"</div>
+      </div>
+      <div>
+        <span class="who b">B 的写法</span>
+        <div class="quote">输入"上个月"返回 8/1–8/31 的记录<br>95 分位 200ms 内<br>没结果显示"这段时间没有记录"</div>
+        <p>三个都能一句话判真假。模型不用猜，你也不用等它做完才发现理解错了。</p>
+        <div class="outcome good">→ 做错了当场看得出来</div>
+      </div>
+    </div>
+    <div class="clamp"><span class="ic">卡子</span><p><b>模糊词必须换成数字，正常情况必须配一条异常情况。</b>写"快一点"直接被退回，让你补上到底多快；写了"搜到了显示什么"却没写"没搜到显示什么"，也退回。这不是建议，是脚本拒收。</p></div>
+  </div>
+
+  <div class="fork">
+    <div class="hd"><span class="fn">岔口 ②</span><span class="ft">实现者手里有什么</span></div>
+    <div class="ab">
+      <div>
+        <span class="who a">A 的情况</span>
+        <p>模型不知道这个仓库的测试怎么跑，自己试了个命令，跑的是另一个目录的测试，全绿。它也不知道配置读取有新旧两处，改了新的那处，老的还在生效。</p>
+        <div class="outcome bad">→ 报告"测试通过"，其实什么都没验到</div>
+      </div>
+      <div>
+        <span class="who b">B 的情况</span>
+        <p>模型拿到的是一份写死的仓库地图：测试跑 <code>make test</code>；不要碰 <code>vendor/</code>；已知陷阱——配置读取有两处，老的那处还在用。</p>
+        <div class="outcome good">→ 不靠"他碰巧知道"</div>
+      </div>
+    </div>
+    <div class="clamp"><span class="ic">卡子</span><p><b>仓库地图里的每条命令都要真跑一遍才算数。</b>写了"测试跑 <code>make test</code>"，就真去执行一次，跑不通就退回改。一条跑不通的命令比没有命令更糟——模型会照着它试三次，然后开始瞎猜。</p></div>
+  </div>
+
+  <div class="fork">
+    <div class="hd"><span class="fn">岔口 ③</span><span class="ft">谁说了算"做完了"</span></div>
+    <div class="ab">
+      <div>
+        <span class="who a">A 的做法</span>
+        <p>模型说"已完成，测试通过"。A 扫了一眼 diff，看着挺像那么回事，合了。</p>
+        <p style="color:var(--spread)">问题在于：<strong>让写代码的东西自己判"做完了没有"，它几乎总说做完了。</strong></p>
+        <div class="outcome bad">→ 验收等于没验</div>
+      </div>
+      <div>
+        <span class="who b">B 的做法</span>
+        <p>测试是别人写的、先写的，写完就锁上。验收由几个互相独立的检查并行做，谁都看不到别人的结论。</p>
+        <p>最后"达标没有"是脚本拿数字比阈值算出来的，不是任何一个模型宣布的。</p>
+        <div class="outcome good">→ 想蒙混得先骗过脚本</div>
+      </div>
+    </div>
+    <div class="clamp"><span class="ic">卡子</span><p><b>写东西的和判东西的必须是两个，否则不存在验收。</b>实现者看不到评审的判据，也看不到留出来的隐藏用例；改测试让测试变绿这条路是锁死的——测试在判据冻结之后属于受保护文件，动它要单独走一份变更说明。</p></div>
+  </div>
+
+  <div class="fork">
+    <div class="hd"><span class="fn">岔口 ④</span><span class="ft">失败之后怎么办</span></div>
+    <div class="ab">
+      <div>
+        <span class="who a">A 的做法</span>
+        <div class="quote">测试红了 → "再试一次"<br>还红 → "再试一次"<br>还红 → "再试一次"</div>
+        <p>试到上下文耗尽，最后手动把测试改了让它变绿。</p>
+        <div class="outcome bad">→ 在错的层上烧掉全部预算</div>
+      </div>
+      <div>
+        <span class="who b">B 的做法</span>
+        <p>同一个失败原样出现第二次，就不再重试了——一模一样的失败重现，说明这一层没有进展。</p>
+        <p>往外退一层看：是这张任务卡拆错了？还是判据本身写错了？</p>
+        <div class="outcome good">→ 在对的层上花时间</div>
+      </div>
+    </div>
+    <div class="clamp"><span class="ic">卡子</span><p><b>失败先归层，再决定谁处理。</b>每一层有自己的重试预算，越往外越贵、越该交给人。预算用完不会"再试一次"，而是写一份说明：怀疑是哪一层的问题、证据是什么、哪些可能已经排除了。人看这份说明，不看原始日志。</p></div>
+  </div>
+
+  <div class="fork">
+    <div class="hd"><span class="fn">岔口 ⑤</span><span class="ft">含糊的地方谁来定</span></div>
+    <div class="ab">
+      <div>
+        <span class="who a">A 的情况</span>
+        <p>需求没说"上个月"到底怎么算，模型按往前 30 天实现了，<strong>没告诉任何人</strong>。</p>
+        <p>三周后运营问：为什么 8 月 31 号的记录不见了？没人知道当初为什么那么填。</p>
+        <div class="outcome bad">→ 埋了一颗没人知道的雷</div>
+      </div>
+      <div>
+        <span class="who b">B 的情况</span>
+        <p>那次选择被当场记了一行："需求说'上个月'，我按往前 30 天实现的，没按自然月。"</p>
+        <p>签字之前，这一行原样念给签字的人听。</p>
+        <div class="outcome good">→ 五秒钟就能拦下来</div>
+      </div>
+    </div>
+    <div class="clamp"><span class="ic">卡子</span><p><b>含糊处的选择当场记，签字前逐字念，不做筛选。</b>被筛掉的那一条，就是下次撞的墙。注意这跟"记录出过的错"是两件事——这条记的是<b>当时没人认为是错</b>的选择，所以它不会出现在任何错误日志里。</p></div>
+  </div>
+
+</div>
+
+<h2><span class="n">三</span>为什么"靠人自觉"不管用</h2>
+
+<p>看完上面五条，一个很自然的反应是：这些不都是常识吗？好的工程师本来就会做啊。</p>
+
+<p>对，会做。问题是<strong>会做不等于每次都做</strong>，更不等于团队里每个人都做。</p>
+
+<div class="tw">
+<table>
+<thead><tr><th>岔口</th><th>靠人自觉的时候</th><th>变成机械约束之后</th></tr></thead>
+<tbody>
+<tr><td><span class="sp">①</span> 需求的形状</td><td>赶时间的时候第一个被省掉</td><td><span class="gt">写不成可判真假的就退回，不能往下走</span></td></tr>
+<tr><td><span class="sp">②</span> 上下文供给</td><td>散在每个人自己的笔记里，新人没有</td><td><span class="gt">仓库地图切片直接进实现者的输入</span></td></tr>
+<tr><td><span class="sp">③</span> 谁来验收</td><td>累了就"看着还行"</td><td><span class="gt">不是作者的东西来判，脚本比对阈值</span></td></tr>
+<tr><td><span class="sp">④</span> 失败的处理</td><td>沉没成本让人越陷越深</td><td><span class="gt">同样的失败第二次自动升级，不由人决定</span></td></tr>
+<tr><td><span class="sp">⑤</span> 含糊处的选择</td><td>当时不觉得重要，就没记</td><td><span class="gt">当场记，签字前逐字念</span></td></tr>
+</tbody>
+</table>
+</div>
+
+<p class="big">高手之所以稳定，是因为这五件事他都做了。但他是靠经验和自律做的——而<strong>经验和自律没法复制给团队</strong>。能复制的只有"不做就走不下去"。</p>
+
+<p>所以整套东西的规矩只有一句：<strong>每一步的产物，要么能被脚本检，要么被一道只能人签的门挡住，没有第三种。</strong>不允许存在"我看了一眼觉得没问题"这种中间状态——因为那正是差异的来源。</p>
+
+<h3>还有一条更隐蔽的：漏填必须走严的那条路</h3>
+
+<p>约束最容易失效的方式不是被推翻，是被<strong>绕过</strong>。所以每一处的默认值都设成最严的：</p>
+
+<div class="tw">
+<table>
+<thead><tr><th>如果你没做某件事</th><th>系统怎么处理</th></tr></thead>
+<tbody>
+<tr><td>没说这次任务多大</td><td>按最大的算，一个步骤都不给你省</td></tr>
+<tr><td>手写一句"这是小改动"</td><td>不认。得让它从改动文件数和判据条数里数出来</td></tr>
+<tr><td>检查工具装不上、跑不起来</td><td>记成 <b>"没检"</b>，不记成"通过"</td></tr>
+<tr><td>一次审查中途断了，报告很干净</td><td>记成 <b>"没检"</b>，不记成"没发现问题"</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="note warn"><b>为什么最后两条特别重要：</b>一份被截断的审查，和一份认真做完但没发现问题的审查，<b>在文件层面长得一模一样</b>——都是短短的、干净的。如果不强制每份审查自报"我跑完了没有"，前者就会被当成后者，而这正是"看起来全绿"最常见的来源。</div>
+
+<h2><span class="n">四</span>那它到底压掉了多少差异</h2>
+
+<p>上面都是设计意图。真实效果得测。</p>
+
+<p>做法是：拿十道题，每道题让三种配置各做一遍——<strong>裸模型</strong>、<strong>模型加一份项目说明</strong>、<strong>模型加这整套约束</strong>。评分不由模型做，由留出来的、它们看不到的测试算。</p>
+
+<figure>
+  <div class="figtitle">图 2 · 十道题 × 三种配置 × 三十次运行</div>
+  <div class="reads">
+    <div class="read">
+      <div class="rh"><span class="rn">做对了没有</span><span class="rv in">差 0.14 —— 分不开</span></div>
+      <div class="rows">
+        <div class="row"><span class="who2">裸模型</span><span class="tr"><span class="fl" style="width:80%"></span></span><span class="vv">0.80</span></div>
+        <div class="row"><span class="who2">加项目说明</span><span class="tr"><span class="fl" style="width:80%"></span></span><span class="vv">0.80</span></div>
+        <div class="row"><span class="who2">加整套约束</span><span class="tr"><span class="fl" style="width:94%"></span></span><span class="vv">0.94</span></div>
+      </div>
+    </div>
+    <div class="read">
+      <div class="rh"><span class="rn">没说清的地方，有没有被写下来</span><span class="rv out">差 0.40 —— 拉开了</span></div>
+      <div class="rows">
+        <div class="row"><span class="who2">裸模型</span><span class="tr"><span class="fl" style="width:55%"></span></span><span class="vv">0.55</span></div>
+        <div class="row"><span class="who2">加项目说明</span><span class="tr"><span class="fl" style="width:60%"></span></span><span class="vv">0.60</span></div>
+        <div class="row lead"><span class="who2">加整套约束</span><span class="tr"><span class="fl" style="width:95%"></span></span><span class="vv">0.95</span></div>
+      </div>
+    </div>
+  </div>
+  <figcaption>0.14 这个差距落在噪声范围里——样本量不够把它和随机波动分开，所以评分程序拒绝把它当成差异。0.40 那个超出去了。另外注意：加一份项目说明这一档，两个维度都几乎没有变化。</figcaption>
+</figure>
+
+<p>读数说了两件事，一件符合预期，一件不符合。</p>
+
+<p><strong>不符合预期的是：它没能证明"做得更对"。</strong>0.94 比 0.80 看着好不少，但差距落在噪声里，分不开它和运气。</p>
+
+<p><strong>符合预期的是：它明显让人更会把不知道的东西写下来。</strong>而且这个差距很大。</p>
+
+<h2><span class="n">五</span>所以它压掉的是哪一种差异</h2>
+
+<p>把上面两条放一起，结论其实很干净，只是跟宣传口径不一样：</p>
+
+<p class="big">它压掉的不是<strong>"做得对不对"</strong>的差异，是<strong>"你得花多大力气才能知道它对不对"</strong>的差异。</p>
+
+<p>这听起来像个安慰奖。它不是。</p>
+
+<p>想一下你验收一份产物时，最贵的部分是什么。不是读代码——读代码是机械劳动。最贵的是<strong>判断它哪里可能不对</strong>。一份把"我在这里按默认理解填了"写下来的产物，和一份没写的，代码可能一模一样，但前者你知道该盯哪儿，后者你得从头猜。</p>
+
+<p>而且这跟设计是自洽的：<strong>这套东西里没有任何一个机制是冲着"让模型写得更聪明"去的。</strong>每一道卡子做的都是同一件事——拦住没被验证的东西通过。所以它测出来的效果正好是"验证变便宜了"，而不是"实现变好了"。两者不矛盾，是同一件事的两面。</p>
+
+<div class="note"><b>一句实在话：</b>如果你期待的是"装上它模型就变强"，那会失望。如果你期待的是"团队里最不细心的那个人，交出来的东西也能让人在十分钟内看出哪里可疑"，那它做到了。<b>抬高的是下限，不是上限。</b></div>
+
+<h2><span class="n">六</span>这套说法自己怎么被推翻</h2>
+
+<p>自闭环的最后一环：上面每句话怎么才算错。</p>
+
+<div class="tw">
+<table>
+<thead><tr><th>如果出现这个</th><th>说明上面哪句话是错的</th></tr></thead>
+<tbody>
+<tr><td>同样十道题，样本加大之后"做对了没有"那一维差距还是落在噪声里</td><td>那 0.94 就是运气，"更会写下不知道的东西"是它<b>唯一</b>的效果</td></tr>
+<tr><td>把要求写台账那段话从提示里去掉，第二维的差距消失</td><td>0.40 那个差距是<b>服从指令</b>，不是纪律内化——现在还分不开这两者</td></tr>
+<tr><td>换一批不是这个仓库出的题，差距消失</td><td>题目和被测者同源，读数不能外推</td></tr>
+<tr><td>团队真用起来之后，逃逸到线上的缺陷率没下降</td><td>"抬高下限"这句话在真实工作量下不成立</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>这四条现在<strong>一条都没被证伪，也一条都没被证实</strong>。所以上面所有结论都只在"十道题、三十次运行"这个范围内成立。超出这个范围引用它，就是在夸大。</p>
+
+<footer>
+所有读数来自十道题、三种配置、三十次运行；评分由留出的测试机器判定，不由模型自评。<br>
+题目与留出测试出自同一处，这一条无法靠增加运行次数消除。
+</footer>
+</div>
