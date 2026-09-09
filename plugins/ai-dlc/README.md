@@ -1,4 +1,4 @@
-# AI-DLC (v1.2.0)
+# AI-DLC (v1.2.1)
 
 > **2026-09-08 改名**：本插件原名 `sdlc`，现名 **AI-DLC**——目录 `plugins/ai-dlc/`，斜杠命令 `/ai-dlc`，
 > 运行时目录 `.aidlc/`（旧的 `.sdlc/` 仍可读，见 `aidlc_state.py` 的 `resolve_root`），状态脚本 `aidlc_state.py`。
@@ -173,7 +173,8 @@ specs/<slug>/               # 归档（metrics.py 的数据源）
 | 每个环节由谁承载、哪些还空着 | [`docs/lifecycle.md`](docs/lifecycle.md) |
 | 失败往哪回、预算怎么算 | [`docs/routing.md`](docs/routing.md) |
 | 为什么这样设计、什么有意不做 | [`docs/design-notes.md`](docs/design-notes.md) |
-| 为什么不同人用同一个 agent 质量差那么多 | [`docs/reports/raising-the-floor-2026-09-05.md`](docs/reports/raising-the-floor-2026-09-05.md) |
+| **为什么不同人用同一个 agent 质量差那么多，这套东西怎么解决** | [`docs/why-quality-varies.html`](docs/why-quality-varies.html)（大白话 + 图，自包含，可以直接发给没用过的人） |
+| 这套东西被验到什么程度、现在真正的缺口在哪 | [`docs/reports/raising-the-floor-2026-09-08.md`](docs/reports/raising-the-floor-2026-09-08.md)（附 `.html`；[09-05 那份](docs/reports/raising-the-floor-2026-09-05.md)的前瞻半边已被它取代） |
 | 行为层对照怎么跑、读数是多少 | [`eval/effect/README.md`](eval/effect/README.md) |
 
 ## 诚实声明
