@@ -6,7 +6,7 @@ A card is correct when a context-free agent can finish it alone. That is a judge
 CAN guarantee is the structural half that, when violated, makes parallel/isolated execution unsafe:
 
 Usage:
-  lint_cards.py <cards_dir> [--spec spec.md] [--done-when done_when.yaml] [--dos dos.yaml]
+  lint_cards.py <cards_dir> [--spec spec.md] [--done-when done_when.yaml] [--dos dos.yaml] [--require-dos]
                 [--max-context 40000]
 
 Exit 0 = no rejects (flags may remain for a judge). Exit 1 = ≥1 REJECT. Exit 2 = usage/IO error.
@@ -17,7 +17,8 @@ Mechanical guarantees (REJECT on breach — the non-waivable half):
   2. no write conflicts: two cards' allowed_files must not overlap (identical globs, literal ⊂ glob, or
      nested directory globs); shared files (lockfiles / package manifests / route tables) must be owned by
      at most one card, and any card that does not own them must forbid them
-  3. DOS closure (only with --dos): every dos_slice.objects term is a declared object, every
+  3. DOS closure (only with --dos, or auto-discovered under --require-dos):
+     every dos_slice.objects term is a declared object, every
      dos_slice.invariants id is a declared rule — structured fields only, never free text
   4. context_estimate_tokens ≤ --max-context (else split — this is a lint, not a remark)
   5. (with --done-when) every ac_ids entry exists in done_when.acceptance[].id
@@ -46,6 +47,7 @@ except ImportError:
 # DOS closure means the same thing here and in verify_issue.py: one resolver, owned by
 # dos-extract (the skill that writes dos.yaml). See dos-extract/scripts/dos_closure.py.
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[2] / "dos-extract" / "scripts"))
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[2] / "ai-dlc" / "scripts"))
 try:
     import dos_closure
 except ImportError:  # a neighbour skill may be absent; that is not this script's failure
@@ -53,6 +55,10 @@ except ImportError:  # a neighbour skill may be absent; that is not this script'
     # when a neighbour is missing. Hard-exiting at import time killed runs that never passed --dos
     # (PR pre-review, B-tier). Absent, closure checking degrades to a flag where it is asked for.
     dos_closure = None
+try:
+    import repo_assets   # X1 仓库级制品的发现（与 doctor / prereqs 同一份候选路径表）
+except Exception:
+    repo_assets = None
 
 SHARED_BASENAMES = {"package.json", "package-lock.json", "pnpm-lock.yaml", "yarn.lock", "Cargo.lock",
                     "Cargo.toml", "go.mod", "go.sum", "requirements.txt", "pyproject.toml", "poetry.lock",
@@ -148,11 +154,16 @@ def main():
     ap.add_argument("--spec")
     ap.add_argument("--done-when")
     ap.add_argument("--dos")
+    ap.add_argument("--require-dos", dest="require_dos", action="store_true",
+                    help="把「dos_slice 闭包未检」从 info 升成 reject；没给 --dos 时先自动发现 dos.yaml。"
+                         "卡里出现一个本体解析不了的名词是整条流水线上代价最高的一次漂移")
     ap.add_argument("--max-context", type=int, default=40000)
     ap.add_argument("--repo-root", help="resolve allowed_files against this root to read projection scripts")
     ap.add_argument("--projection-pattern", default=PROJECTION_DEFAULT,
                     help="basename regex that marks a script as a projection (default: %(default)s)")
     a = ap.parse_args()
+    if a.require_dos and not a.dos and repo_assets is not None:
+        a.dos = repo_assets.find("dos")
     projection_re = re.compile(a.projection_pattern, re.IGNORECASE)
 
     files = sorted(glob.glob(os.path.join(a.cards_dir, "CARD-*.y*ml")))
@@ -250,6 +261,12 @@ def main():
                     rejects.append(f"{cid} dos_slice.invariants `{r}` not a declared rule id (closure)")
                 elif canon != r:
                     flags.append(f"{cid} dos_slice.invariants `{r}` closes as an alias of `{canon}`")
+    elif a.require_dos:
+        rejects.append(
+            "dos_slice closure unchecked and --require-dos is set: no dos.yaml given or found in the "
+            "project (ai-dlc/scripts/repo_assets.py searches the repo root, docs/, ontology/). "
+            "卡里出现一个本体解析不了的名词，实现者会自己给它挑一个意思，而这个意思要到验收才对得上——"
+            "未检不是通过。Run /dos-extract and commit dos.yaml to git.")
     else:
         info.append("DOS closure unchecked (no --dos)")
 

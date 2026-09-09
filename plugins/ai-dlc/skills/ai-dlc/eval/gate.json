@@ -24,7 +24,8 @@
     "blank (registered in references/stages.md): red-green evidence script; meets_done_when comparison script; contract.yaml schema; ontology-drift; psl-derive",
     "Stop hook: assets/hooks/stop-clean-state.json is a template (not installed); check-clean --as-hook exercised, the hook wiring itself is not",
     "graph.yaml vs ORDER: P1 keeps both and asserts equality (graph check); decide before P2 closes which one is the source (lean: graph.yaml, advance reads it)",
-    "convergence thresholds (fingerprint_history 6, oscillation periods 2–3, plateau_rounds 3) are literature priors; calibrate after the first real run"
+    "convergence thresholds (fingerprint_history 6, oscillation periods 2–3, plateau_rounds 3) are literature priors; calibrate after the first real run",
+    "X1 repo readiness (v1.1.0): repo_assets discovery / git-tracked check / prereqs(\"issue\") gating / verify_sizing L8 are smoke-covered on fixtures; what is NOT measured is the effect — whether requiring dos.yaml before issue actually reduces vocabulary drift, and whether teams commit it rather than force-waiving every run. Count greenfield waivers per run in /retro."
   ],
   "provenance": {
     "date": "2026-09-05",

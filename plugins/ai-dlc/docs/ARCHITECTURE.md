@@ -142,7 +142,7 @@ G1/G2/G3 有裁决对象、有签字人、有 verdict、能被复盘统计；
 
 | 旋钮 | 调什么 | 谁强制 |
 |---|---|---|
-| **广度** | 这次跑哪些阶段 | `next_allowed` / `prereqs` **强制**；`verify_sizing.py` 七条 lint 核验 |
+| **广度** | 这次跑哪些阶段 | `next_allowed` / `prereqs` **强制**；`verify_sizing.py` 八条 lint 核验 |
 | **测试量** | 这次验多少 | **下界**：`derive_counts.py --strategy`，低于地板退出 4 |
 | **深度** | 每个阶段产出多细 | **只是声明**。没有任何脚本能判"这份文档够不够细" |
 

@@ -39,7 +39,12 @@ deletion 测试：撤掉本 skill，引擎会把需求原文当 body 直接建 i
   再回来建 issue）；确定性主导 → TASK 轨直接建。混合需求只对体验性内核走 PSL。速判：把需求
   交给不了解产品的工程师照字面做，会不会做出"技术正确、产品错误"的东西？会 → PSL。
   **客观触发有两条，都不靠自评**（Ambig-SWE：模型分不清任务写没写清楚）：
-  ① `--dos dos.yaml` 时 `依赖 DOS:` 出现 dos.yaml 解析不了的概念 → 强制 PSL 轨；
+  ① `--dos dos.yaml` 时 `依赖 DOS:` 出现 dos.yaml 解析不了的概念 → 强制 PSL 轨。
+     **前提是闭包真的被算过**：没有 `dos.yaml` 时这条判据不是失败也不是通过，是**没算**，
+     而没算过的判据挡不住"自信而错的人绕开 G1"。所以 M / L 档带 `--require-dos`——
+     它先在项目目录里自动发现 `dos.yaml`（`../ai-dlc/scripts/repo_assets.py`：仓库根 /
+     `docs/` / `ontology/`），找不到才拒，并告诉你去跑 `/dos-extract` 并把它提交进 git
+     （全组共用一份，不放 `.aidlc/`）。落地状态看 `aidlc_state.py repo`；
   ② TASK 轨在 issue 之后、G2 之前，对同一个 issue **隔离**起草 2–3 份 done_when，跑
   `../donewhen-extract/scripts/divergence.py`：分歧率超阈值 → 那些分歧就是必须澄清的槽
   （每条自带要问用户的话）。详见 `references/dual-track.md`。
@@ -70,9 +75,11 @@ deletion 测试：撤掉本 skill，引擎会把需求原文当 body 直接建 i
 
 ## 原语（Π）
 
-- `scripts/verify_issue.py <issue-body.md> [--dos dos.yaml] [--kind feature|bug|escape]` —
+- `scripts/verify_issue.py <issue-body.md> [--dos dos.yaml] [--require-dos] [--kind feature|bug|escape]` —
   机械预门：exit 0 过（可带 flags）、1 拒、2 IO；`--dos` 下闭包失败还会在输出里给
-  `force_track: psl`。**建 issue 前必须跑**。
+  `force_track: psl`；`--require-dos` 把"闭包未检"从一条 flag 升成 reject，并在没给 `--dos` 时
+  自动发现项目里的 `dos.yaml`（输出里 `dos_source: discovered` 说明它是发现来的）。
+  **建 issue 前必须跑**。
 - `assets/issue_template.md` — 产物的段落序（Intent / Track / Scope / Acceptance / Assumptions /
   Depends on DOS / Repro（bug）/ Attribution（escape）/ Links）。
 - `gh issue create --title … --body-file … [--label …]` —— 存在性声明；`gh` 缺席或未认证时，

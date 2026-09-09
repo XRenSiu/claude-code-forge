@@ -232,9 +232,12 @@ The engine runs the extraction; these gates do not move:
 - **通道二输入要可核对**：`channel_2_input` 写 `sources`（每源 ref / entries / kind）与 `snapshot_at`。
   失败记忆在一次运行里会长（本次 `skill-issues.md` 从 6 行涨到 16 行），只写一个整数，别人重跑对不上。
 - **◊ 候选**（本次验收）→ `/donewhen-extract`（本插件），不是 acceptance-spec 专属。
-- **谁写状态**：`world.invariants` 由**编排者**（`/ai-dlc` 主会话）在卡过门后记入
-  `aidlc_state.py set world.invariants=…`。执行本 skill 的实现者写白名单只覆盖 `invariants/`，`.aidlc/` 不在其中；
-  让实现者写状态既会撞白名单执行器，也会让"谁记的"这件事失去单一来源。
+- **卡写在哪**：项目目录的 `invariants/`（`docs/invariants/` 也认），**提交进 git**——常驻不变量是
+  这个仓库的法，不是这一次运行的产物；放进 `.aidlc/`（per-run 运行时状态）等于每个人各自维护一份。
+- **谁写状态**：`world.invariants` 不用手记——`aidlc_state.py init` 用
+  `../ai-dlc/scripts/repo_assets.py` 在项目目录里发现 `invariants/` 并写进 `world.*`，
+  `repo` / `doctor` 报它在不在、进没进 git。执行本 skill 的实现者写白名单只覆盖 `invariants/`，
+  `.aidlc/` 不在其中；让实现者写状态既会撞白名单执行器，也会让"谁记的"这件事失去单一来源。
 
 ## Exit gate for this skill itself
 

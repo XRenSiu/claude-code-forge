@@ -4,7 +4,7 @@ verify_issue.py — the mechanical pre-gate for /issue: checks the PRODUCT (an i
 "what a falsifiable TASK seed looks like", and FLAGS (never decides) the semantic half.
 
 Usage:
-  verify_issue.py <issue-body.md> [--dos dos.yaml] [--kind feature|bug|escape]
+  verify_issue.py <issue-body.md> [--dos dos.yaml] [--require-dos] [--kind feature|bug|escape]
 
 Exit 0 = no rejects (flags may remain). Exit 1 = >=1 REJECT. Exit 2 = IO/usage error.
 Output: JSON {rejects, flags, force_track, sections, acceptance_stats}.
@@ -24,6 +24,10 @@ Mechanical guarantees (REJECT on breach — the non-waivable half):
   - --kind escape: Attribution section with layer ∈ {card, plan, task, ontology, world} + why_gate_missed
   - secrets-looking strings in the body → reject
   - --dos: every Depends-on-DOS object / invariant must resolve in dos.yaml; else reject + force_track: psl
+  - --require-dos: 没有 --dos 时不再只出一条 flag。**未检不是通过** —— 「闭包失败 = 客观触发
+    PSL 轨」这条判据的全部力量来自闭包真的被算过；没有本体时它退化成自评，而自信而错的人
+    正是靠自评绕开 G1 的。给了这个 flag 就先在项目目录里自动找 dos.yaml
+    （ai-dlc/scripts/repo_assets.py：仓库根 / docs/ / ontology/），找不到才 reject。
 Semantic half (FLAGGED as needs_semantic_review): threshold source traces to KPI/SLO/failure; the unhappy
 twin covers the RIGHT edge; these ACs are the narrowest falsifiable conditions for THIS run.
 """
@@ -37,6 +41,7 @@ import sys
 # DOS closure means the same thing here and in lint_cards.py: one resolver, owned by
 # dos-extract (the skill that writes dos.yaml). See dos-extract/scripts/dos_closure.py.
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[2] / "dos-extract" / "scripts"))
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[2] / "ai-dlc" / "scripts"))
 try:
     import dos_closure
 except ImportError:  # a neighbour skill may be absent; that is not this script's failure
@@ -44,6 +49,10 @@ except ImportError:  # a neighbour skill may be absent; that is not this script'
     # when a neighbour is missing. Hard-exiting at import time killed runs that never passed --dos
     # (PR pre-review, B-tier). Absent, closure checking degrades to a flag where it is asked for.
     dos_closure = None
+try:
+    import repo_assets   # X1 仓库级制品的发现（与 doctor / prereqs 同一份候选路径表）
+except Exception:
+    repo_assets = None
 
 VAGUE = ["快", "慢", "稳定", "可靠", "健壮", "高效", "及时", "尽快", "尽量", "大部分", "多数", "合理",
          "友好", "流畅", "顺畅", "良好", "充分", "适当", "足够", "正确处理", "智能",
@@ -100,8 +109,15 @@ def is_vague(s):
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("body"); ap.add_argument("--dos"); ap.add_argument("--kind", choices=["feature", "bug", "escape"], default="feature")
+    ap.add_argument("--require-dos", dest="require_dos", action="store_true",
+                    help="把「闭包未检」从 flag 升成 reject；没给 --dos 时先自动发现 dos.yaml")
     ap.add_argument("--g1", help="G1 record; on the PSL track the issue text is checked against the negations it writes down (dogfood I-45)")
     a = ap.parse_args()
+    dos_source = "given" if a.dos else None
+    if a.require_dos and not a.dos and repo_assets is not None:
+        found = repo_assets.find("dos")
+        if found:
+            a.dos, dos_source = found, "discovered"
     try:
         md = open(a.body, encoding="utf-8").read()
     except OSError as e:
@@ -264,6 +280,12 @@ def main():
             if missing_terms:
                 rejects.append(f"DOS closure failed: {missing_terms} not in {a.dos} — world not built for these; force PSL track")
                 force_track = "psl"
+        elif a.require_dos:
+            rejects.append(
+                "DOS closure unchecked and --require-dos is set: no dos.yaml given or found in the project "
+                "(ai-dlc/scripts/repo_assets.py searches the repo root, docs/, ontology/). "
+                "「闭包失败 = 客观触发 PSL 轨」只有在闭包真的被算过时才成立——未检不是通过。"
+                "Run /dos-extract, commit dos.yaml to git (the team shares one), or drop --require-dos.")
         elif objs or invs:
             flags.append("Depends on DOS declared but no --dos given — closure unchecked")
     if track == "psl":
@@ -319,7 +341,7 @@ def main():
     flags.append("needs_semantic_review: are these ACs the narrowest falsifiable conditions for THIS run? does the unhappy twin cover the right edge?")
 
     out = {"verdict": "REJECT" if rejects else "PASS", "track": track, "force_track": force_track,
-           "missing_dos_terms": missing_terms, "acceptance_stats": stats, "rejects": rejects, "flags": flags,
+           "dos": a.dos, "dos_source": dos_source, "missing_dos_terms": missing_terms, "acceptance_stats": stats, "rejects": rejects, "flags": flags,
            "sections": sorted(secs)}
     print(json.dumps(out, ensure_ascii=False, indent=2))
     sys.exit(1 if rejects else 0)

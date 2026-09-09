@@ -20,7 +20,7 @@
       注意这里**没有 exit 3**：网格是本仓库自带的资产，不是用户可能没配的外部分析器。
       读不到它是错误，不是「未求值」。
 
-七条 lint（每条对应一种它防住的失败）：
+八条 lint（每条对应一种它防住的失败）：
   L1 网格里的每个阶段名都在 ORDER 里
       —— 防「网格写了一个不存在的阶段名，永远不会命中，看起来配了其实没配」。
   L2 never_skippable ⊆ ORDER，且三道门与不可逆动作都在里面
@@ -37,6 +37,12 @@
   L7 每一档剩下的阶段构成一条 next_allowed 真的会放行的路径
       —— 这是「数据与代码互相断言」那一条：直接 import aidlc_state 的 next_allowed，
          用一个假 state 把整条路走一遍。网格声明的路径如果引擎走不通，这里就红。
+
+  L8 repo_assets 的键与档位都在封闭集里，且每一档都有一条要求
+      —— 防「X1 制品的要求写了一个 repo_assets.py 不认识的键（或一个不存在的档位），
+         于是那条要求永远求值成 optional，看起来配了其实没配」。同 L1 的失败形状，
+         只是这次的表是「哪些仓库级制品必须先就位」而不是「跑哪些阶段」。
+         这张表就是那条静默降级的补丁：没有 dos.yaml 时闭包不是失败也不是通过，是没算。
 
 为什么是 import 而不是重实现：一个自己写的第二份 next_allowed 迟早与真的那份分叉，
 而分叉出来的那份会说「网格没问题」。同一个函数才叫互相断言（`graph check` 同源）。
@@ -131,6 +137,33 @@ def check(doc):
         if r.get("tier") and r["tier"] not in tiers:
             problems.append(f"L6 {r.get('id')}: tier `{r['tier']}` has no entry under `tiers:`")
 
+    # L8 —— X1 仓库级制品的要求表
+    ra = doc.get("repo_assets")
+    if ra is not None:
+        levels = list(ra.get("levels") or [])
+        if set(levels) != set(S.repo_assets.LEVELS):
+            problems.append(f"L8 repo_assets.levels {levels} != repo_assets.py 的封闭集 "
+                            f"{list(S.repo_assets.LEVELS)} — 一个脚本不认识的档位求值成 optional，"
+                            "看起来配了其实没配")
+        known = set(S.repo_assets.KEYS)
+        for where, table in (("by_tier", ra.get("by_tier") or {}),
+                             *[(f"by_track.{t}", v) for t, v in (ra.get("by_track") or {}).items()]):
+            for key, val in table.items():
+                if key not in known:
+                    problems.append(f"L8 repo_assets.{where}: `{key}` is not a known asset "
+                                    f"{sorted(known)} — an entry that can never match")
+                vals = val.values() if isinstance(val, dict) else [val]
+                for v in vals:
+                    if v not in levels:
+                        problems.append(f"L8 repo_assets.{where}.{key}: level `{v}` not in {levels}")
+            if where == "by_tier":
+                for key, val in table.items():
+                    missing = [t for t in tiers if t not in (val or {})]
+                    if missing:
+                        problems.append(f"L8 repo_assets.by_tier.{key}: no requirement for tier(s) "
+                                        f"{missing} — 缺一档就是那一档静默 optional，"
+                                        "而极性要求「漏填得到较严的那条」")
+
     # L7 —— 每一档的剩余路径 next_allowed 真的放行
     for tier in tiers:
         skips = {row["stage"]: row.get("why", "") for row in ((grid.get(tier) or {}).get("skip") or [])
@@ -171,7 +204,7 @@ def main():
             print(f"  ✗ {p}")
         if not problems:
             tiers = list((doc.get("tiers") or {}))
-            print(f"  ✓ 7 checks pass · tiers={tiers} · "
+            print(f"  ✓ 8 checks pass · tiers={tiers} · "
                   f"never_skippable={len(((doc.get('never_skippable') or {}).get('stages')) or [])} stages")
     sys.exit(1 if problems else 0)
 

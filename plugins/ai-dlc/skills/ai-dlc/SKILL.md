@@ -47,7 +47,7 @@ deletion 测试：撤掉本 skill，让引擎"把这个需求做完提 PR"。它
 | U1/U2 世界（仅 PSL 轨） | `PSL-<名>.md` | /psl（本插件） | 世界是形态的定律；`verify_psl.py` 过门 |
 | U3 推导产物（仅 PSL 轨） | `derived/{dos-proposal.yaml, workflow.md, form-draft.md, divergence.md}` | /psl-derive（本插件） | 先推三样再谈代码；每条形态决策 ← PSL-ID；N 次推导取分歧集 = G1 议程 |
 | G1（仅 PSL 轨） | `g1-record.md` | **人**（`gate g1` 要求 `world.derived_dir` 存在） | 唯一能拦"正确的错误"的门；否决必须归因（推错了 / 规律错了） |
-| X1 本体（任一轨，有存量代码时） | `dos.yaml` + 不变量卡 | /dos-extract · /invariant-extract（本插件） | 闭包检查与卡的 dos_slice 的解析源；应然本体（dos-proposal）与现状本体对账在 G1 记录里做 |
+| X1 本体（任一轨，有存量代码时）**一次性、仓库级** | 项目目录里的 `dos.yaml` + `decisions.md` + `agent-map.md` + `invariants/`，**全部进 git** | /dos-extract · /invariant-extract（本插件） | 闭包检查与卡的 dos_slice 的解析源；应然本体（dos-proposal）与现状本体对账在 G1 记录里做。它在 issue **之前**：`/issue --dos` 的闭包是"客观触发 PSL 轨"那条判据的全部依据，没有本体时它不是失败也不是通过，是**没算**。`aidlc_state.py repo` 报落地状态，`sizing.yaml.repo_assets` 说每档要求到哪一级 |
 | issue | GitHub issue（TASK 雏形：EARS + AC v2 + 假设台账 + 依赖 DOS） | /issue | 没有 issue 就没有 `Closes #N`；AC 在这里第一次被写下 |
 | branch | `<type>/<issue>-<slug>` | 你 | 不在 main 上做事 |
 | contract | `done_when.yaml`（+ `contract.yaml` 条件触发） | /donewhen-extract（AC 优先）或 /acceptance-spec（EARS spec.md 形态），都在本插件 | 判据契约，方案盲写；阈值溯源、happy/unhappy 配对、矛盾与覆盖两检；S2.5 自对抗留痕给 spec-gaming。**REQ 粒度须能按 ≤ 40k 的卡切分**——L4 的"REQ 一卡一主 + ≤ 40k"是反压，读集超 40k 的 REQ 在这里按分区拆最便宜，G2 之后要走变更提案 |
@@ -74,7 +74,8 @@ deletion 测试：撤掉本 skill，让引擎"把这个需求做完提 PR"。它
 越外层越贵、越该交人；世界层不设自动上限。
 
 **本插件自带的上半段与横切。** `/psl`（idea→world）→ `/psl-derive`（U3 推导 + 分歧集）→ G1；
-`/dos-extract`（code→world，`dos.yaml` 给闭包检查）、`/invariant-extract`（□ 常驻不变量）；
+`/dos-extract`（code→world，`dos.yaml` 给闭包检查）、`/invariant-extract`（□ 常驻不变量）——
+这两条是**仓库级、一次性**的，做一次全组共用（下面「X1 仓库级制品」一节）；
 `/donewhen-extract`（L3 契约）→ `/spec-compile`（L5 编译成 fitness fn / eval_case / 评判程序）→ `/calibrate`
 （标准的标准：mutation score / agreement / holdout / 隔离）。它们各自有 `verify_*.py` 预门与 `接线` 段。
 
@@ -88,6 +89,38 @@ deletion 测试：撤掉本 skill，让引擎"把这个需求做完提 PR"。它
 
 **关于用户的 Σ。** "做完"在用户口中常指"PR 发了"；本 skill 的 done 是 archive。用户说
 "先别合"= 停在 review 之后等人；"直接合"≠ 跳过 G3，G3 有 human AC 时仍要人签。
+
+## X1 仓库级制品（进 git，全组共用一份）
+
+`dos.yaml` / `decisions.md` / `agent-map.md` / `invariants/` **不是这一次运行的产物**，是这个仓库的。
+它们该在**项目目录里、提交进 git**：本体是团队的共同词表，一份没进版本库的词表不是"有本体"，
+是"你有本体"。`.aidlc/` 是 per-run 运行时状态（`init` 自己会警告它没被 gitignore），放这里同时错两次
+——换个 feature 找不到，换个人更找不到。
+
+```
+aidlc_state.py repo              # 在不在 · 进没进 git · 这一档要求到哪一级 · 缺了怎么补
+aidlc_state.py repo --path dos   # 只打印命中的路径，给 `--dos $(…)` 这类接线用
+```
+
+**你不手 set 这些路径。** `init` 用 `scripts/repo_assets.py` 在项目目录里按候选序发现它们
+（仓库根 → `docs/` → `ontology/`，`.aidlc/` 排最后且命中即告警），并用 `git ls-files` 核对它们
+进没进版本库，然后写进 `world.*`。每个 slug 手抄一遍仓库级事实，抄错一份没人会发现。
+
+**缺席时下游是"未检"不是"通过"**——这是这一节存在的全部理由：
+
+| 消费者 | 有本体 | 没有本体 |
+|---|---|---|
+| `/issue --dos` 的词表闭包 | 缺词 → reject + 强制 PSL 轨（**客观触发，不靠自评**） | 一条 `closure unchecked` 的 flag，放行 |
+| `lint_cards.py --dos` 的 `dos_slice` | 名词不在本体 → reject | 一条 info |
+| `verify_vocabulary.py` | B 档告警计入账本 | exit 3 = **未检** |
+| `agent-map.md` → `slice_agent_map.py` → `card_context.md` | 实现者拿到"测试怎么跑、禁区在哪、陷阱有哪些" | 零行，自己猜 |
+
+要求分档写在 `assets/sizing.yaml` 的 `repo_assets`（`verify_sizing.py` L8 核它）：
+S 档 optional（三行修复上一次全仓库本体提取，成本高到没人愿意用，而**一条被绕过的流水线抬不高
+任何人的下限**）· M 档 recommended（doctor warn）· L 档与 PSL 轨 dos 是 **required**，
+`advance issue` 拦得住。绿地仓库没有存量代码、本体无处可抽，走
+`advance issue --force --reason greenfield`——那是一条记进 waivers 与账本的豁免，不是一片空白。
+`/issue` 与 `/plan-cards` 在这两档要带 `--require-dos`（没给 `--dos` 时自动发现，找不到才拒）。
 
 ## 状态（γ：脚本拥有控制状态，你拥有账本）
 
@@ -118,7 +151,7 @@ deletion 测试：撤掉本 skill，让引擎"把这个需求做完提 PR"。它
 | 世界 / 推导 / G1 | `verify_psl.py` 六层齐全无步骤；`verify_derived.py` 四文件 + 决策全带 PSL-ID + DOS 提案过 `verify_dos.py` + 不造实体 | 世界抓得对不对；分歧按哪个版本定（G1 人签） |
 | contract（起草） | `verify_done_when.py`：模糊量词有阈值、happy 有 unhappy、无矛盾、覆盖 | 阈值是否反映 KPI（judge） |
 | L5 标准 | `verify_compile.py` 不往上路由 / 非 example-only / 评判维度二元带证据；`verify_calibration.py` 四不可破 | 变异族对不对、参考解是否代表性 |
-| issue | `verify_issue.py` 过：无模糊量词、happy 有 unhappy 孪生、observe 非文件路径、范围四项非空 | AC 是不是这次最窄的可证伪条件 |
+| issue | `verify_issue.py` 过：无模糊量词、happy 有 unhappy 孪生、observe 非文件路径、范围四项非空；`--require-dos` 时闭包必须真的算过（未检 = 拒）；`advance issue` 检 required 那级的 X1 制品 | AC 是不是这次最窄的可证伪条件 |
 | contract / G2 | `validate_done_when_v2.py` 过（schema 2、AC 齐、existence 只留边界、forbidden_paths 含 tests/**）；`.done_when.lock` 存在且哈希匹配 | 判据对不对（人签） |
 | cards | `lint_cards.py` 三项 + 上下文 ≤ 40k | 卡是否自包含 |
 | implement | 每次 commit 过 `verify_commit.py`（白名单、锁、secrets）；单卡测试过 | 实现是否走了捷径（spec-gaming 邻居） |
@@ -175,10 +208,14 @@ deletion 测试：撤掉本 skill，让引擎"把这个需求做完提 PR"。它
 - `scripts/aidlc_state.py` — init / show / set / advance / gate / card / fail / report / check-clean / graph check|next|render /
   loops / ledger / archive（`--help`）。`fail` 多了 `--score` 与 `--by`；`loops` 一屏看六个环的预算消耗；`check-clean --as-hook`
   是 Stop hook 的出口（模板 `assets/hooks/stop-clean-state.json`，不自动安装）。
+  v1.1.0 新增 `repo`（X1 仓库级制品：在不在 · 进没进 git · 这一档要求到哪一级 · 怎么补）。
   v0.12.0 新增：`size --from-issue|--early`（早定档 + 飞行中重定档）、`plan`（启动前的有效规模）、
   `doctor`（装置健康度，建议性、从不阻断、不进 `advance` 的前置条件——会阻断的 doctor 就是第四道门）、
   `note` / `notes --for-gate`（解释日记与门禁仪式）、`autonomy`（自治阶梯）、`card --status skipped --reason`。
-- `scripts/verify_sizing.py` — 体量网格的 lint（七条）。L7 直接 `import aidlc_state` 用**真的那份** `next_allowed`
+- `scripts/repo_assets.py` — X1 仓库级制品的**发现**（候选路径序）与 **git 核对**（`git ls-files`）。
+  `aidlc_state.py` 的 `init` / `doctor` / `repo` / `prereqs("issue")`、`verify_issue.py --require-dos`、
+  `lint_cards.py --require-dos` 共用这一份候选表——第二份候选表迟早与真的那份分叉（同 `graph check`）。
+- `scripts/verify_sizing.py` — 体量网格的 lint（八条，L8 核 `repo_assets` 的键与档位）。L7 直接 `import aidlc_state` 用**真的那份** `next_allowed`
   把每一档的剩余路径走一遍：自己写第二份迟早与真的那份分叉，而分叉出来的那份会说"网格没问题"（同 `graph check`）。
 - `scripts/lock_done_when.py` — `sign --stage g2|l5` / A 档 `verify`（exit 0 / 1 reject / 2 changed_with_proposal）。
 - `scripts/verify_graph.py` / `scripts/verify_loop.py` / `scripts/trace.py why|impact|render|lint` — 图 / 环 / 迹的 lint 与查询。
@@ -212,7 +249,7 @@ v0.12.0 起这是三个**正交**旋钮（借鉴 AWS AI-DLC 2.0，见 `../../doc
 
 | 旋钮 | 是什么 | 谁强制 |
 |---|---|---|
-| 广度 | 跑哪些阶段（`stages:` 网格） | `next_allowed` / `prereqs` 按网格放行；`verify_sizing.py` 七条 lint |
+| 广度 | 跑哪些阶段（`stages:` 网格） | `next_allowed` / `prereqs` 按网格放行；`verify_sizing.py` 八条 lint |
 | 测试量 | 验多少（`test_strategy`） | **下界**：`derive_counts.py --strategy`，低于地板 exit 4 |
 | 深度 | 每个阶段产出多细（`depth`） | **只是声明**给 skill 读的输入。没有脚本能判"这份文档够不够细"——写在这里是为了不假装它是闸 |
 
@@ -278,6 +315,9 @@ CLI flag**——flag 每次调用都要重给，恢复会话就丢；记进 stat
 - **绝不删账本行**。回滚只回滚产物。
 - **绝不在 G2 之后改被锁文件而不附变更提案**；绝不用改测试的方式让测试过；绝不把 v1（测试名）契约当判据冻结。
 - **绝不代人签门**：G1/G2/G3 的 `--by` 必须是人名；`--autopilot` 与 `autonomy` 的任何一档都不代签。
+- **绝不把 `dos.yaml` / `agent-map.md` / `invariants/` 放进 `.aidlc/`，也绝不手 set 它们的路径**：
+  那是仓库级、全组共享、要进 git 的制品，`repo_assets.py` 发现它们；放进运行时目录等于每个人
+  各自维护一份本体。**绝不把「闭包未检」当成「闭包通过」**——没算过的判据挡不住任何人。
 - **绝不手设档位换豁免**：`set intake.size=S` 得到的是 `size_source=manual`，一个阶段也跳不掉。
   要轻量路径就把量数出来（`size --from-issue` / `--base`）。
 - **绝不晋升 Open question**：它是研究项不是规则。要它变成规则，先把它答了，再作为

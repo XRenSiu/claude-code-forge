@@ -441,7 +441,7 @@
     },
     "world": {
       "type": "object",
-      "description": "PSL 轨的上半段产物（U1/U2/U3/X1）",
+      "description": "PSL 轨的上半段产物（U1/U2/U3）+ X1 仓库级制品的**发现结果**（dos / agent_map / invariants：由 init 经 scripts/repo_assets.py 在项目目录里发现并写入，不是手 set 的；它们进 git、全组共用一份，不放 .aidlc/）",
       "properties": {
         "psl": {
           "type": "string"
@@ -453,10 +453,16 @@
           "type": "string"
         },
         "dos": {
-          "type": "string"
+          "type": "string",
+          "description": "dos.yaml 的仓库根相对路径（发现来的；`aidlc_state.py repo` 报它进没进 git）"
         },
         "invariants": {
-          "type": "string"
+          "type": "string",
+          "description": "invariants/ 的仓库根相对路径（发现来的）"
+        },
+        "agent_map": {
+          "type": "string",
+          "description": "仓库地图（agent-map.md）的仓库根相对路径；slice_agent_map.py 按卡切片进 card_context.md"
         }
       }
     },

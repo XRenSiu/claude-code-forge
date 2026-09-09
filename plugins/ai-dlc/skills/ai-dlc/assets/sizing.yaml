@@ -138,6 +138,44 @@ recompose:
     与"学习下轮生效"（不变量 13）同一条理由：可复现优先于立刻变聪明。
 
 # ---------------------------------------------------------------------------------------------
+# X1 仓库级制品的要求（按档 / 按轨道）
+# ---------------------------------------------------------------------------------------------
+# 谁读它：scripts/repo_assets.py 发现制品，scripts/aidlc_state.py 的 prereqs("issue") 按这张表
+#        决定「缺席」是拦（required）还是提醒（recommended / optional）；doctor 按它定严重度。
+#
+# 为什么存在（2026-09-09）：dos.yaml / agent-map.md / invariants/ 被文档写成横切 X1，但代码里
+# 没有任何东西查它们在不在——于是缺席时三个消费者**静默降级**：`/issue --dos` 的闭包（"客观触发
+# PSL 轨、不靠自评"那条）退回自评、`lint_cards.py --dos` 的 dos_slice 闭包降成一条 info、
+# `verify_vocabulary.py` 给 exit 3（未检，不是通过）。**未检不是通过**是这张表的全部内容。
+#
+# 极性与网格一致：缺席要用证据换。required 档缺制品时 `advance issue` 拒绝，
+# `--force --reason` 仍然可以过去——但那是一条记在 waivers 与账本里的豁免，不是一片空白。
+# 绿地仓库（没有存量代码，本体无处可抽）走的正是这条路：`--force --reason greenfield`。
+#
+# 位置是 required 的一部分而不是偏好：这三样是**仓库级、一次性、全组共享**的制品，
+# 落在 .aidlc/（per-run 运行时状态）或没进 git 时，repo_assets.py 一律 warn——
+# 一份没进版本库的本体不是「有本体」，是「你有本体」。
+
+repo_assets:
+  levels: [optional, recommended, required]      # 封闭集；verify_sizing.py L8 核它
+  by_tier:
+    dos:        {S: optional, M: recommended, L: required}
+    decisions:  {S: optional, M: optional,    L: recommended}
+    agent_map:  {S: optional, M: recommended, L: recommended}
+    invariants: {S: optional, M: optional,    L: recommended}
+  by_track:
+    # 轨道的要求盖过档位（取更严的那个）。PSL 轨的定义就是「闭包算不出来」，
+    # 而闭包要有 dos.yaml 才算得出来——没有本体的 PSL 轨是自评出来的 PSL 轨。
+    psl:
+      dos: required
+  # decisions.md **永不 required**：闭包不读它（它是命名判断的审计轨与豁免源）。
+  # 只有「下游算不出来」的东西才配拦一次 advance；其余的顶多是 warn。
+  why: >-
+    S 档不要求本体：三行修复上一次全仓库本体提取，成本高到没人愿意用，
+    而一条被绕过的流水线抬不高任何人的下限。L 档与 PSL 轨要求它：
+    那两档的失败模式正是「名词各说各的，到验收才对上」。
+
+# ---------------------------------------------------------------------------------------------
 # 每档的回流预算覆盖（缺省取 routing.yaml 的按轨道预算）
 # ---------------------------------------------------------------------------------------------
 budget_overrides:

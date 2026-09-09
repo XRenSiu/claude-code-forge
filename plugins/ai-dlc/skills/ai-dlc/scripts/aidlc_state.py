@@ -17,6 +17,8 @@ Usage:
                         [--early] [--commit]                # --early: 还没 diff 时定档，永远够不到 S
   aidlc_state.py plan    [--slug S] [--json]                 # 启动前的有效规模：跑几个阶段、几道门、跳了什么
   aidlc_state.py doctor  [--slug S] [--json]                 # 装置健康度；建议性，从不阻断门禁
+  aidlc_state.py repo    [--slug S] [--json] [--path dos|agent_map|invariants]
+                        # X1 仓库级制品（dos.yaml / agent-map.md / invariants/）在不在、进没进 git
   aidlc_state.py note    [--slug S] --kind interpretation|deviation|tradeoff|open_question --text T
   aidlc_state.py note    [--slug S] --promote n-0001 --to project --by NAME    # Open questions 不可晋升
   aidlc_state.py notes   [--slug S] [--for-gate g1|g2|g3] [--json]             # 门禁仪式：逐字呈现
@@ -61,6 +63,11 @@ Mechanical guarantees (the non-waivable half):
     `never_skippable` says which no tier may, and a skip is only granted to a tier derived from evidence
     (size_source ∈ derived / derived_early) — `set intake.size=S` opens nothing. verify_sizing.py asserts
     the grid against ORDER and against the prerequisites this file implements
+  - X1 的仓库级制品（dos.yaml / agent-map.md / invariants/）是**发现**来的，不是手 set 的：
+    `repo_assets.py` 按候选路径序在项目目录里找，并用 `git ls-files` 核对它们进没进版本库
+    （没进 = 队友 clone 下来是空的 = 不是「有本体」，是「你有本体」）。`sizing.yaml.repo_assets`
+    说每档 / 每轨要求到哪一级，`prereqs("issue")` 把 required 那级编译成拦得住的前置——
+    缺席时下游闭包是**未检**不是通过，而未检以前是一条静默的 flag
   - learning is compiled at `init`, never mid-run: notes promoted to project rules take effect on the NEXT
     run (the gates you already signed correspond to one stable rule set — same reason as invariant 13)
 Semantic half (a judge / a human, never this script): whether the candidate layer is the RIGHT layer.
@@ -69,12 +76,16 @@ import argparse
 import datetime as _dt
 import glob
 import hashlib
+import io
 import json
 import os
 import re
 import shutil
 import subprocess
 import sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import repo_assets  # noqa: E402  —— X1 仓库级制品的发现与 git 核对（同目录）
 
 ROOT_DEFAULT = ".aidlc"
 LEGACY_ROOT = ".sdlc"   # 改名前的运行时目录；见 resolve_root
@@ -95,7 +106,8 @@ SETTABLE = {
     "review.done", "review.exit_reason", "review.rounds", "review.waiver_ref",
     "merge.sha", "merge.merged_at",
     "gates.g3.required",
-    "world.psl", "world.derived_dir", "world.dos", "world.invariants", "world.form_draft_sha256",
+    "world.psl", "world.derived_dir", "world.dos", "world.invariants", "world.agent_map",
+    "world.form_draft_sha256",
     "contract.compile_manifest", "contract.calibration_report", "contract.tests_manifest",
     "release.version", "release.tag", "release.notes", "release.done", "release.skipped_reason",
 }
@@ -410,6 +422,10 @@ def prereqs(st, target, skips=None):
         if st.get("track") == "psl":
             need(get_path(st, "gates.g1.verdict") in ("pass", "waived"),
                  "G1 recorded as pass (PSL track) — run `gate g1`")
+        # X1：本体在 issue 之前就位，因为 `/issue --dos` 的词表闭包是**客观触发 PSL 轨**那条
+        # 判据的全部依据。没有 dos.yaml 时闭包不是失败也不是通过，是没算——而没算过的判据
+        # 挡不住「自信而错的人绕开 G1」。要求到哪一级由 sizing.yaml.repo_assets 说了算。
+        unmet.extend(repo_asset_unmet(st))
     elif target == "branch":
         need(get_path(st, "issue.number"), "issue.number set")
     elif target == "contract":
@@ -501,6 +517,13 @@ def cmd_init(a):
         "waivers": [], "assumptions": [], "artifacts": {},
         "notes": {"promoted": []},
     }
+    # X1 仓库级制品在这里被**发现**，不是被 set。它们在项目目录里、进 git、全组共用一份，
+    # 而 state.json 是 per-feature 的：每个 slug 手抄一遍仓库级事实，抄错一份没人会发现。
+    disc = repo_assets.discover()
+    world = {k: disc[k]["path"] for k in ("dos", "agent_map", "invariants") if disc[k].get("found")}
+    if world:
+        st["world"] = world
+
     # 学习**下轮生效**：上一轮晋升到 project 的规则在这里被编译进来（记下路径 + 内容哈希 + 条数）。
     # 跑动中晋升的规则不影响本轮——你前面批准过的门对应的是当时那套规则集合，框架不在跑动中抽掉地基。
     lp = learnings_path(a.root)
@@ -732,6 +755,60 @@ def load_sizing(path=None):
     return d
 
 
+def repo_asset_requirements(st, sizing=None):
+    """→ {asset_key: optional|recommended|required}。档位一条、轨道一条，取更严的那条。
+
+    要求是**数据**（`sizing.yaml.repo_assets`）不是散在 prereqs 里的 if，理由与阶段网格相同：
+    一条只写在代码里的要求，改的时候没人会连同它的理由一起改。
+
+    极性同网格：缺省得到较严的那条。`intake.size` 缺省是 M，M 档 dos 是 recommended——
+    不拦，但 doctor 会 warn，且 `/issue` 的闭包会被记成**未检**而不是通过。
+    """
+    try:
+        sizing = sizing if sizing is not None else load_sizing()
+    except SystemExit:
+        return {}
+    conf = sizing.get("repo_assets") or {}
+    levels = list(conf.get("levels") or repo_assets.LEVELS)
+    tier = get_path(st, "intake.size") or "M"
+    track = st.get("track")
+    by_track = (conf.get("by_track") or {}).get(track) or {}
+    out = {}
+    for key in repo_assets.KEYS:
+        lv = ((conf.get("by_tier") or {}).get(key) or {}).get(tier, "optional")
+        tr = by_track.get(key)
+        if tr in levels and (lv not in levels or levels.index(tr) > levels.index(lv)):
+            lv = tr
+        out[key] = lv if lv in levels else "optional"
+    return out
+
+
+def repo_asset_unmet(st):
+    """→ [str]。只有 required 那一级进 unmet；recommended / optional 归 doctor 的 warn / info。
+
+    绿地仓库（没有存量代码，本体无处可抽）走 `--force --reason greenfield`——那是一条记进
+    waivers 与账本的豁免，不是一片空白。这正是「缺席要用证据换」在 X1 上的形态。
+    """
+    req = repo_asset_requirements(st)
+    if not any(v == "required" for v in req.values()):
+        return []
+    disc = repo_assets.discover()
+    out = []
+    for key, level in req.items():
+        if level != "required":
+            continue
+        rec = disc.get(key) or {}
+        if rec.get("found"):
+            continue
+        spec = repo_assets.SPEC[key]
+        out.append(
+            f"X1 仓库级 `{spec['filename']}` 不在（找过 {', '.join(rec.get('searched') or [])}）——"
+            f"跑 {spec['produced_by']}，写到 `{rec.get('canonical')}` 并**提交进 git**（全组共用一份，"
+            f"不放 .aidlc/）。没有它，{spec['consumers'][0] if spec.get('consumers') else '下游闭包'}；"
+            f"看 `aidlc_state.py repo`。绿地仓库：`advance issue --force --reason greenfield`")
+    return out
+
+
 def derive_size(sizing, *, track, files, acs, human_acs):
     """→ (tier, rule_id, why)。规则按顺序求值，第一条命中即定档；没有形容词，只有可数的量。
 
@@ -906,9 +983,70 @@ def cmd_plan(a):
     print("remaining: " + " → ".join(out["stages_remaining"]))
 
 
-# ---- doctor: 这套装置现在健康吗（建议性，从不阻断） ----------------------------------------
-# 借鉴 AWS AI-DLC 的 --doctor：按需查漂移，从不阻断门禁。它不进 advance 的前置条件——
+# ---- doctor / repo: 装置健康度与仓库就绪度（都建议性，都不阻断） --------------------------
+# doctor 借鉴 AWS AI-DLC 的 --doctor：按需查漂移，从不阻断门禁。它不进 advance 的前置条件——
 # 一个会阻断的 doctor 会变成第四道门，而这个插件只有三道门。
+# repo 报的是 X1 仓库级制品的落地（一次性，全组共用一份）：它同样只报不拦——真正拦得住的是
+# prereqs("issue") 里的 required 那一级，而那一条是 sizing.yaml 的数据说了算，不是这里。
+def state_or_empty(root, slug):
+    """→ state dict，读不到就给 {}，且**不往 stderr 写**。
+
+    doctor / repo 查的是装置与仓库，「这个仓库还没有任何 run」是它们最常见的正常入口
+    （第一次把 /ai-dlc 带进一个仓库时正是如此）。让 die() 的 stderr 漏出去，会把一条
+    正常路径印成一条错误。
+    """
+    if not (slug or os.path.isdir(root)):
+        return {}
+    err = sys.stderr
+    try:
+        sys.stderr = io.StringIO()
+        return load(root, resolve_slug(root, slug))
+    except SystemExit:
+        return {}
+    finally:
+        sys.stderr = err
+
+
+def cmd_repo(a):
+    """X1 仓库级制品的落地报告 + 缺席时的一次性补法。
+
+    为什么与 doctor 分开：doctor 报的是「这一次运行的装置健不健康」，每次跑都看；
+    仓库落地是**一次性**的事——做一次，之后每个 slug 自动发现它。第一次把 /ai-dlc 带进一个
+    仓库时看这一条，之后不用再看。两者共用 repo_assets 的同一份事实与同一套措辞。
+
+    退出码：0 = 要求都满足且位置 / 版本库没问题 · 1 = 有 error / warn（可用作 CI 的就绪检查）。
+    """
+    st = state_or_empty(a.root, a.slug)
+    disc = repo_assets.discover(refresh=True)
+    if getattr(a, "path", None):
+        rec = disc.get(a.path) or {}
+        if not rec.get("found"):
+            sys.exit(1)
+        print(os.path.join(disc["_root"]["path"], rec["path"]))
+        return
+    req = repo_asset_requirements(st)
+    fs = repo_assets.findings(disc, req)
+    bad = [f for f in fs if f["severity"] in ("error", "warn")]
+    if a.json:
+        print(json.dumps({"ok": not bad, "root": disc["_root"], "requirements": req,
+                          "assets": {k: disc[k] for k in repo_assets.KEYS}, "findings": fs},
+                         ensure_ascii=False, indent=2))
+    else:
+        print(repo_assets.render(disc, req))
+        if fs:
+            print()
+            for f in fs:
+                print(f"[{f['severity']}] {f['check']}: {f['hint']}")
+        if any(not disc[k].get("found") for k in repo_assets.KEYS):
+            print(repo_assets.ONBOARDING)
+        req_missing = [k for k, v in req.items() if v == "required" and not disc[k].get("found")]
+        if req_missing:
+            print(f"这一档（{get_path(st, 'intake.size') or 'M'} / track={st.get('track') or 'unset'}）"
+                  f"把 {req_missing} 列为 required：`advance issue` 会拦。"
+                  f"绿地仓库用 `--force --reason greenfield`，豁免记进账本。")
+    sys.exit(1 if bad else 0)
+
+
 def cmd_doctor(a):
     findings = []
     def add(sev, what, hint):
@@ -950,15 +1088,18 @@ def cmd_doctor(a):
     if not hook_ok:
         add("info", "stop hook", "check-clean 的 Stop hook 没装（assets/hooks/stop-clean-state.json 是模板，"
                                  "有意不自动安装）。装上之后，卡还 doing 且工作区脏、或升级后没写失败报告，就结束不了 session")
-    if a.slug or os.path.isdir(a.root):
-        try:
-            st = load(a.root, resolve_slug(a.root, a.slug))
-            if get_path(st, "pending.failure_report"):
-                add("warn", "pending failure report", "有一次升级还没写失败报告（`report --path …`）")
-            if get_path(st, "intake.size_source") in ("default", None):
-                add("info", "tier", "档位还是缺省 M（没有证据）。`plan` 会告诉你这意味着一个阶段也跳不掉")
-        except SystemExit:
-            pass
+    st = state_or_empty(a.root, a.slug)
+    if st:
+        if get_path(st, "pending.failure_report"):
+            add("warn", "pending failure report", "有一次升级还没写失败报告（`report --path …`）")
+        if get_path(st, "intake.size_source") in ("default", None):
+            add("info", "tier", "档位还是缺省 M（没有证据）。`plan` 会告诉你这意味着一个阶段也跳不掉")
+    # 仓库侧就绪度（X1）。doctor 原来只查装置——pyyaml、兄弟脚本、git / gh、Stop hook——
+    # 一条也查不到「这个仓库有没有本体」，而缺席时下游是**静默降级**（未检 ≠ 通过）。
+    # 严重度由 sizing.yaml.repo_assets 的档位给；「找到了但没进 git / 落在 .aidlc」一律 warn，
+    # 与档位无关：团队共享不是可以按档放宽的偏好。
+    for f in repo_assets.findings(repo_assets.discover(), repo_asset_requirements(st)):
+        add(f["severity"], f["check"], f["hint"])
     order = {"error": 0, "warn": 1, "info": 2}
     findings.sort(key=lambda f: order[f["severity"]])
     bad = [f for f in findings if f["severity"] == "error"]
@@ -1574,6 +1715,10 @@ def main():
     s.add_argument("--allow-unknown", action="store_true"); s.add_argument("--sizing")
     s = P("plan"); s.add_argument("--sizing"); s.add_argument("--json", action="store_true")
     s = P("doctor"); s.add_argument("--json", action="store_true")
+    s = P("repo"); s.add_argument("--json", action="store_true")
+    s.add_argument("--path", choices=repo_assets.KEYS,
+                   help="只打印这个制品命中的绝对路径（没找到 exit 1 且不打印）——"
+                        "给 `--dos $(… repo --path dos)` 这类接线用")
     s = P("note"); s.add_argument("--kind", choices=list(NOTE_KINDS)); s.add_argument("--text")
     s.add_argument("--promote", help="note id，晋升成下一轮的项目规则（Open questions 不可晋升）")
     s.add_argument("--to", choices=["project"], help="作用域只有 project：没有 team / org 通道")
@@ -1615,13 +1760,17 @@ def main():
     # 改名后的根解析：init 永远写新根，其余命令在新根不存在时回退到旧根并说明（resolve_root）
     if a.cmd != "init":
         a.root, root_note = resolve_root(a.root)
-        if root_note:
+        # doctor / repo 查的是装置与仓库，不是「这一次运行」——第一次把 /ai-dlc 带进一个仓库时
+        # 恰恰还没有任何 run，那时候「run init first」是噪音而不是提示。
+        if root_note and a.cmd not in ("doctor", "repo"):
             sys.stderr.write(f"aidlc_state: {root_note}\n")
-    if a.cmd == "doctor" and not (a.slug or os.path.isdir(a.root)):
-        return cmd_doctor(a)   # doctor 在没有任何 run 的仓库里也要能跑：它查的是装置，不是这一次运行
+    if a.cmd in ("doctor", "repo") and not (a.slug or os.path.isdir(a.root)):
+        # 这两条在没有任何 run 的仓库里也要能跑：doctor 查的是装置，repo 查的是仓库——
+        # 都不是「这一次运行」。第一次把 /ai-dlc 带进一个仓库时，恰恰还没有任何 run。
+        return cmd_doctor(a) if a.cmd == "doctor" else cmd_repo(a)
     a.slug = resolve_slug(a.root, a.slug)
     return {"show": cmd_show, "set": cmd_set, "advance": cmd_advance, "gate": cmd_gate, "card": cmd_card,
-            "size": cmd_size, "plan": cmd_plan, "doctor": cmd_doctor,
+            "size": cmd_size, "plan": cmd_plan, "doctor": cmd_doctor, "repo": cmd_repo,
             "note": cmd_note, "notes": cmd_notes, "autonomy": cmd_autonomy,
             "fail": cmd_fail, "waive": cmd_waive, "report": cmd_report, "check-clean": cmd_check_clean,
             "graph": cmd_graph, "ledger": cmd_ledger, "archive": cmd_archive}[a.cmd](a)

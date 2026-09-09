@@ -918,7 +918,12 @@ expect "gate g1 pass refused without world.derived_dir" 1 py "$SS" gate g1 --ver
 mkdir -p derived && cp "$FXD/derived_good/"* derived/
 expect "set world.* paths" 0 py "$SS" set world.psl=PSL.md world.derived_dir=derived
 expect "gate g1 pass with derived products" 0 py "$SS" gate g1 --verdict pass --signer-kind human --by human --record g1-record.md
-expect "advance issue ok after G1" 0 py "$SS" advance issue
+# X1（v1.1.0）：PSL 轨的定义就是「闭包算不出来」，而闭包要有 dos.yaml 才算得出来。
+# 没有本体的 PSL 轨是**自评**出来的 PSL 轨，所以 sizing.yaml 的 by_track.psl 把 dos 提到 required。
+expect "advance issue refused on the PSL track without a repo dos.yaml (X1)" 1 py "$SS" advance issue
+expect "the refusal names the artefact, where it looked, and the greenfield escape (X1)" 0 bash -c "python3 '$SS' advance issue | python3 -c \"import json,sys; u=' | '.join(json.load(sys.stdin)['unmet']); assert 'dos.yaml' in u and 'docs/dos.yaml' in u and 'greenfield' in u and '提交进 git' in u, u\""
+printf 'objects:\n  Thing: {}\nrules: []\n' > dos.yaml
+expect "advance issue ok after G1 once the ontology is in the project directory" 0 py "$SS" advance issue
 expect "gate g1 reject with attribution bumps world counter" 0 bash -c "python3 '$SS' gate g1 --verdict reject --signer-kind human --by human --attribution rule_error >/dev/null && python3 '$SS' show | grep -q '\"world\": 1'"
 expect "gate g1 reject with derivation_error does NOT bump world (I-34)" 0 bash -c "python3 '$SS' gate g1 --verdict reject --signer-kind human --by human --attribution derivation_error >/dev/null && python3 '$SS' show | grep -q '\"world\": 1'"
 expect "gate g1 pass after a reject clears the stale attribution (I-51)" 0 bash -c "python3 '$SS' gate g1 --verdict pass --signer-kind human --by human >/dev/null && ! python3 '$SS' show | grep -q 'derivation_error'"
@@ -1513,6 +1518,65 @@ expect "agent-map: the repo's own map still passes a real probe" 0 \
   env AGENT_MAP_NO_RECURSE=smoke.sh python3 "$S/dos-extract/scripts/verify_agent_map.py" "$ROOT/../../agent-map.md" --repo "$ROOT/../.." --probe --timeout 90
 expect "agent-map: the recursive command is recorded as skipped, not as proved" 0 \
   bash -c "env AGENT_MAP_NO_RECURSE=smoke.sh python3 '$S/dos-extract/scripts/verify_agent_map.py' '$ROOT/../../agent-map.md' --repo '$ROOT/../..' --probe --timeout 90 --json | python3 -c \"import json,sys;d=json.load(sys.stdin);sk=[p for p in d['probes'] if p['exit']=='skipped(recursive)'];assert sk, 'the self-referential command should be marked skipped';assert any('未 probe' in f for f in d['flags']), d['flags']\""
+
+
+# ---- X1 仓库级制品：在项目目录里、进 git、全组共用一份（v1.1.0）----------------------------
+# 补的缺口：dos.yaml / agent-map.md / invariants/ 被文档写成横切 X1，代码里却没有任何东西查它们
+# 在不在——ORDER 没有它们，prereqs 一个分支也不提，doctor 只查工具链。缺席时三个消费者**静默降级**
+# （闭包退回自评 / dos_slice 降成 info / verify_vocabulary exit 3），而三种降级在旧输出里都长得像通过。
+echo "== ai-dlc / X1 repo assets: discovery, git-tracked, tier gating"
+RA="$S/ai-dlc/scripts/repo_assets.py"
+IFX="$S/issue/eval/fixtures"       # good_issue.md / closure_fail.md（$FX 此处已是 ai-dlc 的 fixtures）
+AFX="$S/ai-dlc/eval/fixtures"      # spec.md / done_when.yaml
+NODOS="$TMP/nodos"; rm -rf "$NODOS"; mkdir -p "$NODOS"   # 保证是一个真的什么都没有的目录
+RAD="$TMP/ra"; rm -rf "$RAD"; mkdir -p "$RAD"; pushd "$RAD" >/dev/null
+git init -q . && git config user.email t@t && git config user.name t
+echo x > README.md && git add README.md && git commit -qm init >/dev/null
+
+expect "repo_assets: an empty repo reports every X1 artefact missing" 1 py "$RA"
+expect "repo_assets: the missing report names the consumers that silently degrade" 0 bash -c "python3 '$RA' --json | python3 -c \"import json,sys; f=json.load(sys.stdin)['findings']; j=' | '.join(x['hint'] for x in f); assert '未检' in j and 'PSL 轨退回自评' in j, j\""
+
+printf 'objects:\n  Thing: {}\nrules: []\n' > dos.yaml
+expect "repo_assets: an untracked dos.yaml is found but flagged as not shared" 0 bash -c "python3 '$RA' --json | python3 -c \"import json,sys; d=json.load(sys.stdin); a=d['assets']['dos']; assert a['found'] and a['tracked'] is False, a; assert any('未共享' in x['check'] and x['severity']=='warn' for x in d['findings']), d['findings']\""
+git add dos.yaml && git commit -qm dos >/dev/null
+expect "repo_assets: committing it clears the sharing warning" 0 bash -c "python3 '$RA' --json | python3 -c \"import json,sys; d=json.load(sys.stdin); assert d['assets']['dos']['tracked'] is True; assert not any('未共享' in x['check'] for x in d['findings']), d['findings']\""
+
+# .aidlc/ 是 per-run 运行时状态（init 自己就会警告它没被 gitignore）。本体放这里同时错两次：
+# 换个 feature 找不到，换个人更找不到。而对它建议 `git add` 是**错的建议**，所以那条不该出现。
+git rm -q --cached dos.yaml >/dev/null && rm dos.yaml && mkdir -p .aidlc && printf 'objects: {}\n' > .aidlc/dos.yaml
+expect "repo_assets: an ontology parked in the runtime dir is flagged as not shareable" 0 bash -c "python3 '$RA' --json | python3 -c \"import json,sys; d=json.load(sys.stdin); c=[x['check'] for x in d['findings']]; assert any('位置不共享' in x for x in c), c; assert not any('未共享' in x for x in c), 'never advise git add on .aidlc/'\""
+expect "repo_assets: the sibling audit trail is not dragged into the runtime dir too" 0 bash -c "python3 '$RA' --json | python3 -c \"import json,sys; d=json.load(sys.stdin); assert d['assets']['decisions']['canonical']=='decisions.md', d['assets']['decisions']\""
+rm -rf .aidlc
+
+# 档位/轨道决定「缺席」是拦还是提醒（sizing.yaml.repo_assets，verify_sizing L8 核它）
+expect "M tier (default, TASK track): a missing ontology is a warning, not a wall" 0 bash -c "rm -rf .aidlc && python3 '$SS' init --slug m1 --title t --track task >/dev/null && python3 '$SS' advance --slug m1 track >/dev/null && python3 '$SS' advance --slug m1 issue"
+expect "L tier: a missing ontology refuses advance issue" 1 bash -c "rm -rf .aidlc && python3 '$SS' init --slug l1 --title t --track task >/dev/null && python3 '$SS' size --slug l1 --files 20 --acs 9 --human-acs 0 --commit >/dev/null && python3 '$SS' advance --slug l1 track >/dev/null && python3 '$SS' advance --slug l1 issue"
+expect "greenfield: --force --reason records a waiver rather than a silent blank" 0 bash -c "python3 '$SS' advance --slug l1 issue --force --reason 'greenfield: 没有存量代码' >/dev/null && python3 -c \"import json; w=json.load(open('.aidlc/l1/state.json'))['waivers']; assert w and w[0]['stage']=='issue' and 'greenfield' in w[0]['reason'] and any('dos.yaml' in u for u in w[0]['unmet']), w\" && grep -q 'forced → issue' .aidlc/l1/ledger.md"
+printf 'objects:\n  Thing: {}\nrules: []\n' > dos.yaml
+expect "L tier: the same advance passes once the ontology is in the project directory" 0 bash -c "rm -rf .aidlc && python3 '$SS' init --slug l2 --title t --track task >/dev/null && python3 '$SS' size --slug l2 --files 20 --acs 9 --human-acs 0 --commit >/dev/null && python3 '$SS' advance --slug l2 track >/dev/null && python3 '$SS' advance --slug l2 issue"
+expect "init discovers the repo-level artefacts instead of making you set the paths" 0 bash -c "rm -rf .aidlc && python3 '$SS' init --slug l3 --title t --track task >/dev/null && python3 -c \"import json; w=json.load(open('.aidlc/l3/state.json'))['world']; assert w.get('dos')=='dos.yaml', w\""
+popd >/dev/null
+
+# 「未检」在旧输出里长得像通过。--require-dos 把它变回一条拒绝。
+expect "verify_issue --require-dos rejects when no ontology can be found" 1 bash -c "cd \"$NODOS\" && python3 '$S/issue/scripts/verify_issue.py' '$IFX/good_issue.md' --require-dos"
+expect "verify_issue --require-dos explains why unchecked is not passed" 0 bash -c "cd \"$NODOS\" && python3 '$S/issue/scripts/verify_issue.py' '$IFX/good_issue.md' --require-dos | python3 -c \"import json,sys; r=' | '.join(json.load(sys.stdin)['rejects']); assert '未检不是通过' in r and 'dos-extract' in r, r\""
+expect "verify_issue --require-dos discovers the ontology and really runs the closure" 0 bash -c "cd \"$TMP/ra\" && python3 '$S/issue/scripts/verify_issue.py' '$IFX/closure_fail.md' --require-dos | python3 -c \"import json,sys; d=json.load(sys.stdin); assert d['dos_source']=='discovered', d; assert d['verdict']=='REJECT' and d['force_track']=='psl', d\""
+expect "verify_issue without --require-dos keeps the old flag-only behaviour" 0 bash -c "cd \"$NODOS\" && python3 '$S/issue/scripts/verify_issue.py' '$IFX/good_issue.md' | grep -q 'closure unchecked'"
+expect "lint_cards --require-dos rejects an unchecked dos_slice closure" 1 bash -c "cd \"$NODOS\" && python3 '$S/plan-cards/scripts/lint_cards.py' '$S/plan-cards/eval/fixtures/cards_good' --spec '$AFX/spec.md' --done-when '$AFX/done_when.yaml' --require-dos"
+expect "lint_cards without --require-dos keeps the old info-only behaviour" 0 py "$S/plan-cards/scripts/lint_cards.py" "$S/plan-cards/eval/fixtures/cards_good" --spec "$AFX/spec.md" --done-when "$AFX/done_when.yaml"
+
+# L8：要求表的键与档位必须在封闭集里，且每一档都有一条要求（同 L1 的失败形状：
+# 一个脚本不认识的键永远求值成 optional，看起来配了其实没配）。
+expect "verify_sizing L8: the shipped grid passes eight checks" 0 py "$S/ai-dlc/scripts/verify_sizing.py"
+expect "verify_sizing L8: an unknown asset key / bad level / missing tier all turn it red" 1 bash -c "python3 -c \"
+import yaml,sys
+d=yaml.safe_load(open('$S/ai-dlc/assets/sizing.yaml'))
+d['repo_assets']['by_tier']['ontology']={'S':'optional','M':'optional','L':'optional'}
+d['repo_assets']['by_tier']['dos']['L']='mandatory'
+del d['repo_assets']['by_tier']['agent_map']['M']
+yaml.safe_dump(d, open('$TMP/bad_sizing.yaml','w'), allow_unicode=True)
+\" && python3 '$S/ai-dlc/scripts/verify_sizing.py' '$TMP/bad_sizing.yaml'"
+expect "verify_sizing L8: the three L8 failures are each named" 0 bash -c "python3 '$S/ai-dlc/scripts/verify_sizing.py' '$TMP/bad_sizing.yaml' --json | python3 -c \"import json,sys; p=[x for x in json.load(sys.stdin)['problems'] if x.startswith('L8')]; assert len(p)==3, p\""
 
 # 文档漂移是可以被机器发现的（2026-09-06：8 个脚本、26 个资产曾在六份文档里一次都没出现过）。
 expect "docs: every script and asset appears in docs/reference.md" 0 \

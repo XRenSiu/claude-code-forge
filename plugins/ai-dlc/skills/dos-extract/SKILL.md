@@ -63,6 +63,13 @@ The gap is the *semantic judgment*, plus the knowledge of what a clean DOS looks
   Full priority rules: `references/methodology.md` (code-vs-docs signal priority).
 - **Output is two files.** `dos.yaml` (the ontology) + `decisions.md` (the audit trail —
   every non-trivial judgment traceable to one of the four by name).
+- **They belong in the project directory, committed to git.** The ontology is the team's
+  shared vocabulary — one repo, one copy, everyone's. Write them at the repo root
+  (`dos.yaml` / `decisions.md`; `docs/` and `ontology/` are also discovered), **never under
+  `.aidlc/`** — that is per-run runtime state, so an ontology parked there is found by neither
+  the next feature nor the next person. `aidlc_state.py repo` reports where they landed and
+  whether `git ls-files` can see them; untracked is not "has an ontology", it is
+  "you have an ontology". Same for `agent-map.md` and the `invariants/` cards.
 
 ## What counts as correct (the judgments — declared, not sequenced)
 
@@ -271,7 +278,13 @@ DOS 说的是「系统里有什么、叫什么、什么不可违反」。它不�
   代码通道抽出 0 个名词是**关于这个仓库的事实**，照实写进 `decisions.md`（模板已留位置），
   不要装作有一张剪枝表。
 - **agent 无写权**：`dos.yaml` 进 G2 锁与卡的 `forbidden_files`；改本体走变更提案（本体层回流）。
-- 路径记入 `aidlc_state.py set world.dos=…`（由编排者记，不是本 skill 的执行者）。
+- **路径不用手记**：`aidlc_state.py init` 用 `../ai-dlc/scripts/repo_assets.py` 在项目目录里发现
+  `dos.yaml` / `decisions.md` / `agent-map.md` / `invariants/` 并写进 `world.*`；`repo` / `doctor`
+  报它们在不在、进没进 git。这是**一次性、仓库级**的落地：做一次，之后每个 slug 自动发现它。
+  `sizing.yaml.repo_assets` 说每档要求到哪一级——L 档与 PSL 轨 `dos.yaml` 是 **required**，
+  `advance issue` 拦得住；绿地仓库走 `--force --reason greenfield`，豁免记进账本。
+  缺席时下游是**未检**不是通过：`--require-dos` 让 `verify_issue.py` / `lint_cards.py` 把这件事
+  从一条 flag 升成 reject。
 
 ## Exit gate for this skill itself
 

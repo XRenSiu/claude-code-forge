@@ -51,7 +51,10 @@ implement` 要求 `cards.lint_passed`）。
 
 ## 原语（Π）
 
-- `scripts/lint_cards.py <cards_dir> [--spec spec.md] [--done-when done_when.yaml] [--dos dos.yaml] [--max-context N] [--repo-root DIR] [--projection-pattern RE]`
+- `scripts/lint_cards.py <cards_dir> [--spec spec.md] [--done-when done_when.yaml] [--dos dos.yaml] [--require-dos] [--max-context N] [--repo-root DIR] [--projection-pattern RE]`
+  —— `--require-dos` 把"`dos_slice` 闭包未检"从一条 info 升成 reject，并在没给 `--dos` 时自动发现
+  项目里的 `dos.yaml`（`../ai-dlc/scripts/repo_assets.py`）。M / L 档带上它：卡里出现一个本体
+  解析不了的名词是整条流水线上代价最高的一次漂移，而"没算过"和"算过且通过"在旧输出里长得一样。
   —— exit 0 / 1 / 2。**进 implement 前必须跑**，过了 `aidlc_state.py set cards.lint_passed=true`。
   给 `--repo-root` 时会读渲染脚本本身核验 `reads_from`，声明因此可核验而非自述。
 - `../dos-extract/scripts/verify_vocabulary.py --dos dos.yaml cards/CARD-*.yaml` —— **B 档术语传感器**。

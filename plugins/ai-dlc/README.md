@@ -37,7 +37,7 @@
 | `/tune`（新） | X3 harness 闭环：六个环的 trace → 环参数提案（routing 预算 / 指纹阈值 / MAX_ROUNDS / 隔离等级 / fix_list，封闭集）→ diff / patch → 人开 PR；样本 < 2 只记基线 | `tune.py` `apply_proposal.py`（只出 diff） | 模型可 |
 
 > v0.12.0：按 AWS AI-DLC 2.0 的一手研究对照补五条缺口（[`docs/reports/aidlc-gap-2026-09-07.md`](docs/reports/aidlc-gap-2026-09-07.md)）。
-> **广度成为网格**（`sizing.yaml` v2 的 `stages:` + `never_skippable`，`verify_sizing.py` 七条 lint 让它与
+> **广度成为网格**（`sizing.yaml` v2 的 `stages:` + `never_skippable`，`verify_sizing.py` 八条 lint 让它与
 > `aidlc_state.py` 的 ORDER / prereqs 互相断言——原来 S 档声明豁免两项、代码只实现一项，且无人发现）；
 > 深度与测试量成为另外两个正交旋钮（测试量是下界，`derive_counts.py --strategy` 检，exit 4）；
 > 早定档 + 飞行中重定档（`size --from-issue --early`，结构上够不到 S；已走过的阶段冻结）；
