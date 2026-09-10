@@ -3,6 +3,16 @@
 > 给一个没有任何上下文的实现者的四个答案：怎么跑测试、怎么构建、哪个目录管什么、哪里不能碰。
 > 由 `/dos-extract` 维护，`plugins/ai-dlc/skills/dos-extract/scripts/verify_agent_map.py --probe` 检
 > （命令逐条实跑）。每条"已知陷阱"指向一次真实失败，没有来路的条目不进这张表。
+>
+> **作用域是整个 claude-code-forge，不是某一个插件**——「目录职责」里的 `plugins/<name>/` 对 12 个
+> 插件都成立，「禁区」有一半在 `~/.claude/` 与别人的工作树上，「陷阱」里两条来自 CLAUDE.md、一条
+> 来自 `/humanize`。「跑起来」几乎全是 `plugins/ai-dlc/` 的路径，是因为它的 `smoke.sh` 就是**全仓**
+> 的冒烟入口（见下表），不是因为这份地图属于那个插件。
+>
+> 与 `dos.yaml` 的区别正在这里：本体一个 bounded context 一份（所以在 `plugins/ai-dlc/dos.yaml`），
+> 地图是「这个**仓库**怎么干活」一份。真要加一份 package 级的地图，注意 `repo_assets.py` 的候选序
+> 是**更具体的赢**：`plugins/<pkg>/agent-map.md` 会盖住这一份，而地图的内容是可加的——它会报一条
+> `遮蔽` 告警提醒你把两边合起来，别让仓库级的禁区悄悄消失。
 
 ## 跑起来
 

@@ -73,6 +73,9 @@ SPEC = {
         "kind": "file",
         "candidates": ["agent-map.md", "docs/agent-map.md", "AGENT-MAP.md", ".aidlc/agent-map.md"],
         "produced_by": "/dos-extract（assets/agent_map_template.md + verify_agent_map.py --probe）",
+        # 地图的内容是**可加的**（四节事实），本体是**权威的**（一个上下文一份，package 那份就是对的）。
+        # 所以 package 的地图盖住仓库根那份 = 丢掉仓库级的禁区与陷阱，而 slice_agent_map.py 只读一份文件。
+        "shadow_is_lossy": True,
         "consumers": [
             "slice_agent_map.py → card_context.md 的「仓库怎么干活」一节"
             "（缺席 = 实现者拿到零行，自己猜命令 / 禁区 / 陷阱）",
@@ -139,6 +142,15 @@ def candidates_for(spec: dict, scope: str | None) -> list[str]:
     return [scoped(scope, c) for c in base] + base
 
 
+def _same(root: str, a: str, b: str) -> bool:
+    """两个仓库根相对路径指的是不是同一份东西（大小写不敏感文件系统上会是）。"""
+    pa, pb = os.path.join(root, a), os.path.join(root, b)
+    try:
+        return os.path.samefile(pa, pb)
+    except OSError:
+        return os.path.normcase(os.path.realpath(pa)) == os.path.normcase(os.path.realpath(pb))
+
+
 def _exists(root: str, rel: str, spec: dict):
     """→ (found, count)。目录 kind 还要至少有一个匹配 glob 的文件才算数。"""
     p = os.path.join(root, rel)
@@ -169,7 +181,7 @@ def discover(root: str | None = None, refresh: bool = False, scope: str | None =
     for key, spec in SPEC.items():
         rec = {"key": key, "label": spec["label"], "kind": spec["kind"],
                "canonical": None, "path": None, "found": False, "tracked": None,
-               "ignored": False, "runtime_dir": False, "count": None,
+               "ignored": False, "runtime_dir": False, "count": None, "shadows": [],
                "produced_by": spec["produced_by"], "searched": []}
         if "sibling_of" in spec:
             # decisions.md 跟着 dos.yaml 走：本体在哪就去哪找它。但**建议写到哪**跟的是本体的
@@ -186,12 +198,23 @@ def discover(root: str | None = None, refresh: bool = False, scope: str | None =
         rec["canonical"] = (canonical_override if "sibling_of" in spec
                             else cands[0] + ("/" if spec["kind"] == "dir" else ""))
         rec["searched"] = cands
-        for rel in cands:
+        for i, rel in enumerate(cands):
             found, count = _exists(root, rel, spec)
             if found:
+                # 被这一次命中盖住的其余候选。第一个命中即用是对的（更具体的赢），
+                # 但**盖住了什么必须说出来**：一次没人提起的遮蔽，和一次没发生的遮蔽长得一样。
+                # macOS / Windows 的文件系统大小写不敏感：`AGENT-MAP.md` 与 `agent-map.md`
+                # 是同一个 inode，按路径字符串比会报出三条根本不存在的遮蔽。用 samefile 认同一份。
+                shadowed = []
+                for c in cands[i + 1:]:
+                    if not _exists(root, c, spec)[0] or _same(root, rel, c):
+                        continue
+                    if any(_same(root, c, seen) for seen in shadowed):
+                        continue          # 同一份东西的另一种拼法，不是第二次遮蔽
+                    shadowed.append(c)
                 rec.update(path=rel, found=True, count=count,
                            tracked=_tracked(root, rel), ignored=_ignored(root, rel),
-                           runtime_dir=rel.startswith(RUNTIME_DIRS))
+                           runtime_dir=rel.startswith(RUNTIME_DIRS), shadows=shadowed)
                 break
         out[key] = rec
     out["_root"] = {"path": root, "is_git": _in_git(root), "scope": scope}
@@ -244,6 +267,18 @@ def findings(disc: dict, requirements: dict | None = None) -> list[dict]:
                 "check": f"{rec['label']} 位置不共享",
                 "hint": f"`{rec['path']}` 落在运行时目录里（.aidlc / .sdlc 是 per-run 状态，"
                         f"不是共享位置）。移到 `{rec['canonical']}` 并提交",
+            })
+        if rec.get("shadows"):
+            lossy = SPEC[key].get("shadow_is_lossy")
+            out.append({
+                "severity": "warn" if lossy else "info", "key": key,
+                "check": f"{rec['label']} 遮蔽",
+                "hint": (f"用的是 `{rec['path']}`，它盖住了同样存在的 {rec['shadows']}。"
+                         + ("这份制品的内容是**可加的**（地图的四节事实），不是权威式的：被盖住那份里的"
+                            "禁区与陷阱不会出现在实现者拿到的切片里，而 slice_agent_map.py 只读一份文件。"
+                            "要么把两边合成一份，要么在用的那份里引到被盖那份。"
+                            if lossy else
+                            "更具体的那份赢是对的（一个 bounded context 一份本体），这一条只是让遮蔽可见。")),
             })
         if rec["kind"] == "dir" and rec.get("count") == 0:
             out.append({

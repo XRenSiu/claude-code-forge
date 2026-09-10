@@ -1597,6 +1597,10 @@ expect "scope: init records world.scope so every later discovery keeps the packa
 expect "scope: without it, the same repo reports the package ontology as missing" 0 bash -c "python3 '$RA' --json | python3 -c \"import json,sys; a=json.load(sys.stdin)['assets']['dos']; assert a['found'] is False, a\""
 popd >/dev/null
 
+expect "scope: a package artefact shadowing a repo-level one is reported, never silent" 0 bash -c "cd '$SCD' && printf '# pkg map\n' > pkg-a/agent-map.md && python3 '$RA' --scope pkg-a --json | python3 -c \"import json,sys; d=json.load(sys.stdin); a=d['assets']['agent_map']; assert a['path']=='pkg-a/agent-map.md' and a['shadows']==['agent-map.md'], a; f=[x for x in d['findings'] if '遮蔽' in x['check']]; assert f and f[0]['severity']=='warn', d['findings']\" && rm pkg-a/agent-map.md"
+expect "scope: a case-only spelling of the same file is not a second shadow (macOS/APFS)" 0 bash -c "cd '$SCD' && printf '# pkg map\n' > pkg-a/agent-map.md && python3 '$RA' --scope pkg-a --json | python3 -c \"import json,sys; sh=json.load(sys.stdin)['assets']['agent_map']['shadows']; assert sh==['agent-map.md'], sh\" && rm pkg-a/agent-map.md"
+expect "agent-map: the repo's own map states it covers the repository, not one plugin" 0 bash -c "grep -q '作用域是整个 claude-code-forge' '$ROOT/../../agent-map.md'"
+
 # ---- verify_dos：>7 的豁免必须可表达 ---------------------------------------------------------
 # 原来这条 reject 的措辞指向「a human waiver in decisions.md」，而没有任何代码去读它——
 # 唯一的出路是忽略一个永远红的预门。一个只能靠忽略才能过的门不是门。

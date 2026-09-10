@@ -107,6 +107,11 @@ aidlc_state.py init --scope plugins/<pkg>   # 记进 world.scope，之后每次�
 所以"一份仓库级 `agent-map.md` + 每个 package 一份 `dos.yaml`"是可表达的。把只覆盖某一个
 package 的本体放在仓库根，是拿 scope 撒谎（dos-extract 的 edge case：一个 package 一个
 bounded context）。本仓库自己就是这个形状：根上一份 agent-map，`plugins/ai-dlc/dos.yaml` 一份。
+**更具体的赢，但盖住了什么要说出来。** 候选序命中即用（package 的 `dos.yaml` 赢过仓库根那份，
+这是对的：一个 bounded context 一份本体）。但同名制品同时存在时会报一条 `遮蔽`——`agent-map.md`
+的内容是**可加的**（四节事实，`slice_agent_map.py` 只读一份文件），被盖住那份里的禁区与陷阱不会
+出现在实现者拿到的切片里。一次没人提起的遮蔽，和一次没发生的遮蔽长得一样。
+
 
 **你不手 set 这些路径。** `init` 用 `scripts/repo_assets.py` 在项目目录里按候选序发现它们
 （`--scope` 的 package 目录 → 仓库根 → `docs/` → `ontology/`，`.aidlc/` 排最后且命中即告警），
