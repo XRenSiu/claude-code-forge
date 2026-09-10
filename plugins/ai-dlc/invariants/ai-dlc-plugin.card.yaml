@@ -1,0 +1,602 @@
+# Invariant card — Territory: ai-dlc plugin
+# Schema: skills/invariant-extract/assets/invariant_card.yaml
+# Hard invariants are propose-only: they enter Territory.invariants at G2, on a change proposal.
+channel_2_input:
+  corroboration_read:
+  - git log --oneline -20 (f629e22 feat P1–P4, 4d3057a chore v0.6.0)
+  - git show --stat f629e22 — what the v0.6.0 commits fixed
+  dry: false
+  failure_memory_count: 29
+  sources:
+  - entries: 16
+    kind: skill defects found in today's dogfood, I-01..I-16 (snapshot 2026-09-05T14:11:47Z; the file grew
+      from 6 to 16 rows during this run)
+    ref: plugins/ai-dlc/dogfood/ring-audit/skill-issues.md
+  - entries: 2
+    kind: the auditor patched an audited verifier in-run (verify_derived.py, verify_issue.py) — deviation from
+      PSL-003, recorded
+    ref: '.aidlc/sdlc-ring-audit/trace.jsonl#ev-0005, #ev-0008 (ledger.md deviation rows)'
+  - entries: 3
+    kind: inconsistencies found by reasoning the lifecycle through
+    ref: plugins/ai-dlc/docs/design-notes.md — 2026-09-05 第二次整理 三类不自洽
+  - entries: 1
+    kind: first graph.yaml caught by its own lint with two unowned cycles
+    ref: plugins/ai-dlc/docs/design-notes.md — 2026-09-05 第三次整理 dogfooding 发现
+  - entries: 5
+    kind: named risks — not realized failures; used only as corroboration
+    ref: plugins/ai-dlc/docs/proposals/loop-graph-engineering.md §6
+  - ref: this session, 2026-09-10 (X1 readiness work on plugins/ai-dlc v1.3.0)
+    entries: 2
+    kind: 'two defects found while wiring X1: (F-A) X1 declared as a cross-cutting stage in every document
+      and absent from ORDER / every prereqs() branch / doctor, so three consumers degraded silently; (F-B)
+      verify_dos.py''s >7 reject named a waiver in decisions.md that no code parsed'
+  snapshot_at: '2026-09-10T00:00:00Z'
+  note: 'gate.json''s fix_list was listed as a failure-memory source in the 2026-09-05 card. It is not: a registered
+    gap says NOT DONE YET, not DONE WRONG, and negating something never attempted yields ◊ (''should do that''),
+    not □. Moved to registered_gaps — the skill''s wiring section says so explicitly and the first card predates
+    it.'
+conflicts_for_legislation:
+- a: 'PSL-003 (plugins/ai-dlc/dogfood/ring-audit/PSL-sdlc-ring-audit.md): the auditor never touches the audited
+    tree.'
+  b: 'INV-ai-dlc-plugin-001: a gating verifier may be changed in-run if a deviation Event precedes the Gate
+    and the fix ships as its own commit.'
+  note: 'Two Runs today (ev-0005, ev-0008) needed b; a as written forbids it and would have left the U3 gate
+    blocked by a buggy ruler. Legislation picks: amend PSL-003 with the deviation clause, or keep PSL-003 and
+    route verifier defects to a separate fix Run before the gate re-runs.'
+- a: 'INV-ai-dlc-plugin-002: no caller flag or default lowers a verifier''s standing hard floor.'
+  b: 'DEF-ai-dlc-plugin-005: a heuristic reject offers a recorded waiver path (decisions.md entry or --waive
+    reading one).'
+  note: 'A --waive is a caller lowering a line. Proposed boundary: INV-002 governs calibrated numeric floors
+    (α, mutation score); DEF-005 governs heuristic classifiers (suffix / word lists), and its waiver is a recorded
+    human decision with a name, never a bare flag. Legislation confirms or redraws.'
+- a: 'dos.yaml agent_guidelines.should[1]: keep imported vocabulary (Territory, Run, MemoryAsset, R001/R002)
+    in the 术语映射 tables, not in state or graph declarations.'
+  b: Closure checks (verify_issue.py --dos, lint_cards.py --dos) must resolve every noun a card or issue cites
+    against dos.yaml objects / rules (INV-ai-dlc-plugin-004 spirit; dos.yaml success_criteria (1)).
+  note: 'skill-issues.md I-15: the mapped terms live only in prose tables, so closure cannot see them. Either
+    dos.yaml gains synonyms that closure honours, or the 接线 sections declare the terms 不参与闭包.'
+constitution_promotion_suspects:
+- routed_to: legislation
+  statement: A Run never modifies the evaluator (verifier script, test, benchmark) that gates it, unless a
+    deviation Event precedes the gate and the fix is committed separately.
+  why_purpose_independent: Holds for a correctness Territory (the ruler), a latency Territory (the benchmark
+    harness), a cost Territory (the meter). It is R004 / R014 (generator ≠ verifier; tests locked before implementation)
+    lifted from the delivery Run to the plugin's own scripts — the same rule at one altitude higher.
+- routed_to: legislation
+  statement: A verifier's hard floor is never lowered by the party being gated at call time; lines move only
+    through legislation (a human-merged change).
+  why_purpose_independent: 'Model Spec chain of command: the evaluated party cannot redraw the line. True regardless
+    of which aspect the floor measures (α, mutation score, P95, cost cap).'
+- statement: A criterion stated as binding anywhere a reader will act on it — a SKILL.md sentence, a lifecycle
+    table row, or a verifier's own reject text — is either compiled or explicitly labelled uncompiled.
+  narrowed_card_id: DEF-ai-dlc-plugin-003 (+ INV-ai-dlc-plugin-010, its reject-text case)
+  why_purpose_independent: 'holds under every Territory''s purpose that has a written standard at all: the
+    gap between ''what the document promises'' and ''what the code refuses'' is not specific to correctness
+    or to this lifecycle. Two independent obstacles now (2026-09-05 I-nn, 2026-09-10 F-A/F-B)'
+  routed_to: --cross-territory batch proposal; a single-Territory run may only suspect, never promote
+deduped_against_constitution:
+- candidate: 'Every lifecycle stage has an owning Node (design-notes 第二次整理 #2: L4 / L6 / L8 / X3 had no skill;
+    dos.yaml anti_patterns[1])'
+  matched_rule: R001
+- candidate: 'One Contract schema (v2); issue-inline AC and acceptance-spec v1 enter through conversion (第二次整理
+    #1; acceptance-spec fix_list[2]; validate_done_when_v2.py:62; Q008)'
+  matched_rule: R002
+  note: 'skill-issues.md I-08 is an observed R002 violation: donewhen-extract''s card shape has no converter
+    to v2 and its exit verifier checks the card, not the Contract of record. R002 says enforced_by: system;
+    the card path is not covered. → DW-ai-dlc-plugin-009.'
+- candidate: No cards before G2 pass + lock (aidlc_state.py prereqs cards; :385 G2 pass requires lock.path)
+  matched_rule: R003
+  note: the lock requirement itself is dos.yaml objects.Gate.lifecycle, not an R00x statement
+- candidate: A locked Contract file changes only with a change proposal in the same diff (verify_commit.py:188;
+    verify_pr.py:166; lock_done_when.py:104)
+  matched_rule: R004
+- candidate: Evaluator → implementer edges carry only fix_prompt / accepted_claim (verify_graph.py:175,180)
+  matched_rule: R005
+- candidate: '`set` cannot write stage / gates / counters — SETTABLE whitelist (aidlc_state.py:338 ''key not
+    settable'')'
+  matched_rule: R006
+  note: gates half of it is R009
+- candidate: APPROVE is refused — approval is a human act (post_review.py:79)
+  matched_rule: R008
+  note: R008 speaks of Gate verdicts; approve/merge are human actions but not Gates (dos.yaml Q004) — the match
+    is by spirit
+- candidate: --force requires --reason; every skip is a recorded Waiver Event (aidlc_state.py:367-372)
+  matched_rule: R009
+- candidate: calibration_pending must be true on a compiled standard (verify_compile.py:115)
+  matched_rule: R010
+- candidate: G1 reject requires attribution derivation_error | rule_error (aidlc_state.py:387); acceptance
+    blocked while pending.failure_report (prereqs acceptance; check-clean)
+  matched_rule: R011
+- candidate: impossible_under_contract only from routing.impossible_reporters or a human (aidlc_state.py:472);
+    convergence detects repeat / oscillation / plateau, not same-fp ×2 (proposal §0 row 1)
+  matched_rule: R012
+- candidate: Every cycle is a loop_back owned by a Loop with budget + non-null success; bounded writes; whitelist
+    overflow is a reject (verify_graph.py:136-161; verify_commit.py:173,175; design-notes 第三次整理 dogfooding)
+  matched_rule: R013
+- candidate: generator ≠ verifier (verify_loop.py:80)
+  matched_rule: R014
+- candidate: Release artifacts (SemVer > previous tag, bump implied by commits, changelog entry, notes sections)
+    verified before archive (verify_release.py:76-138; prereqs archive)
+  matched_rule: R015
+  note: tag immutability and rollback content are NOT in R015 — carded as INV-005 / INV-006
+- candidate: tune / apply_proposal only emit diffs; a human merges (apply_proposal.py:38-114; proposal §0 row
+    3, §6 bullet 4)
+  matched_rule: R016
+- candidate: L2 never run → static_only, never 'verified' (~20 gate.json fix_list entries; proposal §6 bullet
+    1)
+  matched_rule: R017
+- candidate: trace.jsonl / ledger.md are evidence, not control state — a corrupt trace never affects budgets
+    or transitions (proposal §6 bullet 3; cmd_fail reads Run.counters, aidlc_state.py:461-483)
+  matched_rule: dos.yaml objects.Event.identity_rule (declared, not R00x)
+  note: Already written down by dos-extract, so not re-carded; flagged for dos-extract as a promotion candidate
+    to R00x since it guards a named risk.
+- candidate: G1 pass requires world.derived_dir; G2 pass requires Contract.lock (aidlc_state.py:385,391)
+  matched_rule: dos.yaml objects.Gate.lifecycle (declared, not R00x)
+- candidate: A REQ has exactly one owner WorkUnit; two WorkUnits' allowed_files never overlap (lint_cards.py:133,136,149,163)
+  matched_rule: dos.yaml objects.WorkUnit.identity_rule (declared, not R00x)
+- candidate: A check that cannot evaluate its input must not return the shape of a pass (the direct negation
+    of 2026-09-10 F-A)
+  matched_rule: R018 — lifted into dos.yaml 0.2.0 the same day; territory-level residue carded as INV-ai-dlc-plugin-009
+    (coverage, not recording)
+- candidate: An ontology that is not in version control is not the team's shared vocabulary
+  matched_rule: R020 — lifted into dos.yaml 0.2.0; nothing territory-level remains
+- candidate: An exemption must be bought with counted evidence and recorded, never taken by omission
+  matched_rule: 'R019 — lifted into dos.yaml 0.2.0 (recovered, not new: true since v0.10.0)'
+dos_ref: plugins/ai-dlc/dos.yaml (0.2.0 — 8 objects, R001–R020)
+extracted_at: 2026-09-05, amended 2026-09-10
+hard_invariants:
+- altitude: territory
+  aspect: correctness
+  channel: abductive
+  confidence: high
+  disposition: propose
+  ears_type: unwanted
+  golden_regression: true
+  id: INV-ai-dlc-plugin-001
+  narrowest_rule_note: 'PSL-003 as written (''the auditor never touches the audited tree'') is wider: it would
+    have left the U3 gate blocked by a buggy ruler (I-05). ''Never patch a verifier'' also kills the legitimate
+    fix. The narrowest rule that prevents a silently self-modified ruler while allowing the fix is: hash-stable
+    during the Run, or a recorded deviation before the gate plus a separate commit. Today''s two deviations
+    satisfied the clause by hand; nothing compiles it.'
+  provenance:
+    execution_point: plugins/ai-dlc/skills/ai-dlc/scripts/lock_done_when.py:1-24 (the sha256 lock mechanism
+      exists for Contract files; it is not applied to the verifier scripts)
+    obstacle_ref: '.aidlc/sdlc-ring-audit/trace.jsonl#ev-0005 (in-run fix of verify_derived.py, I-04/I-05,
+      blocked U3 gate) and #ev-0008 (in-run fix of verify_issue.py, I-07); both recorded as PSL-003 deviations'
+  statement: WHILE a Run is open, THE SYSTEM SHALL NOT change the content of any verify_*.py / lint_*.py /
+    validate_*.py under plugins/ai-dlc/skills/*/scripts whose verdict feeds one of that Run's Gates, UNLESS
+    a deviation Event naming the script is appended before the Gate Event and the fix is committed on its own,
+    outside the Run's diff.
+  strength: hard
+  survival_test: pass
+- altitude: territory
+  aspect: correctness
+  channel: both
+  confidence: high
+  disposition: propose
+  ears_type: ubiquitous
+  golden_regression: true
+  id: INV-ai-dlc-plugin-002
+  narrowest_rule_note: 'Not ''no flag may change any threshold'' (routing budgets are legitimately proposed
+    by /tune under R016) and not ''floors never change'' (calibration evidence may move them). Only: the party
+    being gated cannot move the line downward at call time.'
+  provenance:
+    execution_point: plugins/ai-dlc/skills/calibrate/scripts/verify_calibration.py:76,79 (--min-alpha / --min-mutation
+      below the standing hard line → reject)
+    obstacle_ref: 'dos.yaml anti_patterns[6] — 2026-06-24 round-1 blocker: HARD_MUTATION_FLOOR absent while
+      the α floor was hard (''lower the line to pass''); closed in round 2'
+  statement: 'THE SYSTEM SHALL NEVER let a caller flag or a default lower a verifier''s standing hard floor
+    (today: verify_calibration.py Krippendorff α floor and mutation-score floor); a floor moves only through
+    a human-merged change to the script itself — lines only ratchet tighter.'
+  strength: hard
+  survival_test: pass
+- altitude: territory
+  aspect: correctness
+  channel: both
+  confidence: high
+  disposition: propose
+  ears_type: state
+  golden_regression: true
+  id: INV-ai-dlc-plugin-003
+  narrowest_rule_note: 'Not ''one source only'' — that is Q003, a pending human decision; when it is made this
+    rule becomes vacuous, not violated. Not ''docs never drift'' — unmeasurable. Only: while two machine-readable
+    sources exist, equality is asserted mechanically on every smoke run.'
+  provenance:
+    execution_point: plugins/ai-dlc/skills/ai-dlc/scripts/verify_graph.py:197,205 (stages list ≠ --stages /
+      sequential chain ≠ stages → reject); aidlc_state.py graph check
+    obstacle_ref: dos.yaml anti_patterns[2] (graph in ARCHITECTURE ASCII while ORDER hard-coded; drifted silently);
+      loop-graph-engineering.md §0 row 5 and §6 bullet 2; dos.yaml Q003; skill-issues.md I-16 (docs say 3 gates
+      / 5 agents, graph.yaml has 5 human / 4 agent nodes — the same drift where one side is prose and cannot
+      be asserted)
+  statement: 'WHILE a plugin declaration has more than one writable source (today: the stage list in assets/graph.yaml
+    stages and aidlc_state.py ORDER), THE smoke suite SHALL assert the sources equal and reject on any difference.'
+  strength: hard
+  survival_test: pass
+- altitude: territory
+  aspect: correctness
+  channel: both
+  confidence: high
+  disposition: propose
+  ears_type: event
+  golden_regression: true
+  id: INV-ai-dlc-plugin-004
+  narrowest_rule_note: Bound to the enumerated reference kinds the plugin declares today; new reference kinds
+    join the list by amendment. Not 'all names must be in dos.yaml' (that is closure, a plan-cards / issue
+    rule on Run artifacts) — only that a reference that exists resolves.
+  provenance:
+    execution_point: plugins/ai-dlc/skills/ai-dlc/scripts/verify_graph.py:155; verify_loop.py:107,123; plugins/ai-dlc/skills/plan-cards/scripts/lint_cards.py:181,184;
+      plugins/ai-dlc/skills/ai-dlc/scripts/trace.py:246,250,259; plugins/ai-dlc/skills/donewhen-extract/scripts/verify_done_when.py:116,167
+    obstacle_ref: 'dos.yaml anti_patterns[6] — 2026-06-24: donewhen-extract paired_with was string-checked,
+      never resolved (纪律②); the fix line is verify_done_when.py:116'
+  statement: WHEN a plugin declaration or Run artifact references another by id or path (loop_back.loop → loops.yaml;
+    Loop.stop.budget.ref and impossible.reporters → routing.yaml; WorkUnit.dos_slice → dos.yaml objects / rules;
+    Event.refs.target → event id, contract anchor, routing rule, graph node or path; AC.paired_with → AC id),
+    THE verifier SHALL resolve the target and reject a dangling one; matching the reference as a string is
+    not resolution.
+  strength: hard
+  survival_test: pass
+- altitude: territory
+  aspect: reversibility
+  channel: deductive
+  confidence: high
+  disposition: propose
+  ears_type: ubiquitous
+  golden_regression: true
+  id: INV-ai-dlc-plugin-005
+  narrowest_rule_note: 'Deductive only: three independent guards declare the same prohibition; no failure has
+    yet been paid for it in this repo. Not ''never rebase'' (local, unpushed history is free).'
+  provenance:
+    execution_point: plugins/ai-dlc/skills/pr/scripts/verify_pr.py:187 (behind origin/base → merge first, no
+      rebase); plugins/ai-dlc/skills/release/scripts/verify_release.py:146 (tag exists → never overwrite);
+      plugins/ai-dlc/skills/commit/SKILL.md:34,89 (已推送的永不 amend / rebase / force-push)
+    obstacle_ref: ''
+  statement: THE SYSTEM SHALL NEVER rewrite pushed history (amend, rebase or force-push of pushed commits)
+    or overwrite an existing tag; a branch behind its base catches up by merge, and a release tag that already
+    exists is a reject.
+  strength: hard
+  survival_test: pass
+- altitude: territory
+  aspect: reversibility
+  channel: deductive
+  confidence: high
+  disposition: propose
+  ears_type: event
+  golden_regression: true
+  id: INV-ai-dlc-plugin-006
+  narrowest_rule_note: 'The reversibility □ of the delivery closing edge: no release without a stated way back.
+    R015 requires release verification to be green before archive but does not name rollback as its content.'
+  provenance:
+    execution_point: plugins/ai-dlc/skills/release/scripts/verify_release.py:114
+    obstacle_ref: ''
+  statement: WHEN release notes are verified before tagging, THE SYSTEM SHALL reject notes whose Rollback section
+    carries no concrete `how:` line.
+  strength: hard
+  survival_test: pass
+- altitude: territory
+  aspect: correctness
+  channel: deductive
+  confidence: high
+  disposition: propose
+  ears_type: unwanted
+  golden_regression: true
+  id: INV-ai-dlc-plugin-007
+  narrowest_rule_note: 'Direct carrier of the kpi ''escaped defects per merged feature''. Not ''Known issues
+    must be empty'' (agentpatterns: 2–3 self-review rounds plateau; survivors are legitimately handed to a
+    human) — only that the top tier never ships.'
+  provenance:
+    execution_point: 'plugins/ai-dlc/skills/pr/scripts/verify_pr.py:113 (--pre-review: Known issues carries
+      a P0 / A-tier finding → reject)'
+    obstacle_ref: ''
+  statement: WHEN a PR body carries a Known issues section, THE SYSTEM SHALL NEVER accept a P0 or A-tier finding
+    listed there; such a finding is fixed before the PR is created.
+  strength: hard
+  survival_test: pass
+- altitude: territory
+  aspect: correctness
+  channel: abductive
+  confidence: high
+  disposition: propose
+  ears_type: event
+  golden_regression: true
+  id: INV-ai-dlc-plugin-008
+  narrowest_rule_note: 'Not ''upstream and downstream verifiers check the same things'' — downstream legitimately
+    rejects on properties of its own artifact (a form-draft citing a non-existent PSL id). Only properties
+    OF THE UPSTREAM ARTIFACT that downstream rejects on: an artifact must not be able to pass its own gate
+    and then fail the next on a property it was never told about.'
+  provenance:
+    execution_point: plugins/ai-dlc/skills/psl-derive/scripts/verify_derived.py:68 (the downstream reject)
+      versus plugins/ai-dlc/skills/psl/scripts/verify_psl.py (no PSL-NNN check anywhere — confirmed by grep)
+    obstacle_ref: skill-issues.md I-02 — /psl PASSed a PSL with no rule ids; /psl-derive rejected the whole
+      derivation on exactly that; neither /psl SKILL.md nor EXAMPLE.md mentions the id convention
+  statement: 'WHEN a verifier rejects on a property of an artifact produced by a different Node (today: verify_derived.py
+    rejects a PSL that carries no PSL-NNN rule ids), THAT property SHALL be declared in the producer Node''s
+    output contract (its SKILL.md φ) and checked by the producer''s own verifier, as a reject or a flag.'
+  strength: hard
+  survival_test: pass
+- id: INV-ai-dlc-plugin-009
+  statement: WHEN a verifier has a branch for input it cannot evaluate — an `unevaluated` exit code, a `--require-*`
+    posture, or a flag emitted where a reject would otherwise go — THE skill's eval fixtures SHALL exercise
+    that branch.
+  ears_type: event-driven
+  survival_test: pass
+  strength: hard
+  altitude: territory
+  aspect: correctness
+  channel: abductive
+  provenance:
+    execution_point: 'plugins/ai-dlc/skills/issue/scripts/verify_issue.py:268 (pre-fix: ''closure unchecked''
+      as a flag), plugins/ai-dlc/skills/plan-cards/scripts/lint_cards.py:254 (info), plugins/ai-dlc/skills/dos-extract/scripts/verify_vocabulary.py
+      (exit 3)'
+    obstacle_ref: 2026-09-10 F-A — X1 enforced nowhere. All three unevaluated branches EXISTED in code; none
+      was reachable from any fixture, so five days of green smoke runs said nothing about them
+  narrowest_rule_note: 'Deliberately narrower than R018 (which says an unevaluated check is recorded as unevaluated)
+    and narrower than DEF-ai-dlc-plugin-003 (which says a declared criterion must be compiled). Both were satisfied
+    here — the branches existed and recorded correctly — and the failure happened anyway. The residue R018
+    does not cover is COVERAGE: an unexercised unevaluated-path is indistinguishable from one that does not
+    exist. Scoped to verifiers, not to all branches, because that is the surface the obstacle appeared on.'
+  confidence: high
+  disposition: propose
+  golden_regression: true
+- id: INV-ai-dlc-plugin-010
+  statement: WHEN a verifier's reject or flag text names an escape hatch — a waiver bullet, a CLI flag, a config
+    key — THAT hatch SHALL exist in the same script and be exercised by a fixture; otherwise the text SHALL
+    NOT name it.
+  ears_type: event-driven
+  survival_test: pass
+  strength: hard
+  altitude: territory
+  aspect: correctness
+  channel: abductive
+  provenance:
+    execution_point: 'plugins/ai-dlc/skills/dos-extract/scripts/verify_dos.py:171-172 (pre-fix: ''>7 objects
+      — exceed only with a human waiver in decisions.md'', with no code reading such a waiver); fixed same
+      day by teaching parse_waivers the name `object_count`'
+    obstacle_ref: 2026-09-10 F-B — found while recording the object_count waiver this very card's DOS needs.
+      The only way past was to ignore a permanently red pre-gate
+  narrowest_rule_note: 'The obstacle is not ''documentation drifts'' (that is DEF-ai-dlc-plugin-003, docs →
+    enforcement). It is narrower and on a different surface: the REJECT MESSAGE ITSELF names a lever, and the
+    message is the last thing a blocked operator reads. Mechanically checkable — grep reject strings for waiver
+    / --flag names and assert the flag parses. Not generalised to ''every string in a script must be true'',
+    which no fixture could gate.'
+  confidence: high
+  disposition: propose
+  golden_regression: true
+kicked_to_done_when:
+- handoff_to: donewhen-extract
+  id: DW-ai-dlc-plugin-001
+  statement: Run one real TASK-track requirement end-to-end through /sdlc and record the archive dir.
+  why_diamond: Attained once, then true. The resident □ is R017 (a static_only skill is never described as
+    verified); ~20 gate.json fix_list entries and proposal §6 bullet 1 are this one task.
+- handoff_to: donewhen-extract
+  id: DW-ai-dlc-plugin-002
+  statement: Commit the two in-run verifier fixes (verify_derived.py, verify_issue.py — currently modified
+    in the working tree) as separate fix(sdlc) commits on the feature branch.
+  why_diamond: This Run's obligation under INV-ai-dlc-plugin-001's deviation clause (ev-0005, ev-0008).
+- handoff_to: donewhen-extract
+  id: DW-ai-dlc-plugin-003
+  statement: 'Add smoke fixtures: a psl-derive PSL whose body mentions ''Domain Model'' a second time (I-05);
+    a psl-track issue fixture (I-07); a workflow.md produced from assets/workflow_template.md (I-04).'
+  why_diamond: Three concrete fixtures for this release; DEF-ai-dlc-plugin-002 is the standing rule.
+- handoff_to: donewhen-extract
+  id: DW-ai-dlc-plugin-004
+  statement: g1_record.md gains a section 'Open Questions 逐条：接受 seam / 现在回答 / 阻塞' (I-03).
+  why_diamond: One template edit; DEF-ai-dlc-plugin-001 is the □.
+- handoff_to: donewhen-extract
+  id: DW-ai-dlc-plugin-005
+  statement: verify_derived.py unreferenced-rule flag text appends '→ G1 议程：删规律或补决策' (I-06).
+  why_diamond: One message edit; DEF-ai-dlc-plugin-001 is the □.
+- handoff_to: donewhen-extract
+  id: DW-ai-dlc-plugin-006
+  statement: 'psl: compile ''verify_psl.py must run before delivery'' into a hooks.json Stop/PostToolUse hook,
+    or label it declarative in SKILL.md + gate.json.'
+  why_diamond: psl/eval/gate.json fix_list[0]; DEF-ai-dlc-plugin-003 is the □.
+- handoff_to: donewhen-extract
+  id: DW-ai-dlc-plugin-007
+  statement: Decide the source of truth for the stage list — graph.yaml.stages or aidlc_state.py ORDER (dos.yaml
+    Q003, sdlc gate.json fix_list[3]).
+  why_diamond: A one-time human decision; INV-ai-dlc-plugin-003 holds only while both sources exist.
+- handoff_to: donewhen-extract
+  id: DW-ai-dlc-plugin-008
+  statement: Calibrate routing.yaml convergence thresholds (fingerprint_history 6, oscillation periods 2–3,
+    plateau_rounds 3) and tune.py's 40% / 50% / 0.95 on the first real archives.
+  why_diamond: 'sdlc gate.json fix_list[4], tune fix_list[1], proposal §6 bullet 1 (''在 fixture 上调尺子''). A
+    labelling rule (''priors are labelled priors'') was considered and NOT carded: no violation and no execution
+    point → no provenance (decisions.md).'
+- handoff_to: donewhen-extract
+  id: DW-ai-dlc-plugin-009
+  statement: 'donewhen-extract: port the three disciplines (adjective → threshold, happy/unhappy twin, contradiction
+    + coverage) into validate_done_when_v2.py, or ship a card → v2 converter and declare the card an intermediate
+    artifact in the 接线 section (I-08).'
+  why_diamond: The □ is R002 (one Contract shape, others enter through conversion) — I-08 is an observed R002
+    violation (no converter exists), recorded under deduped_against_constitution.
+- handoff_to: donewhen-extract
+  id: DW-ai-dlc-plugin-010
+  statement: 'dos-extract inventory.py: scan YAML/JSON keys and $defs (I-09); decisions_template.md carries
+    a zero-noun row (I-13); docs_extraction_prompt.md ships a grep/regex counting primitive (I-12).'
+  why_diamond: Capability gaps in R1 tooling for a plugin-as-codebase; inventory.py did warn (<10), so no invariant
+    was violated.
+- handoff_to: donewhen-extract
+  id: DW-ai-dlc-plugin-011
+  statement: 'dos_template.yaml gains a synonyms: slot that closure checks (verify_issue --dos, lint_cards
+    --dos) honour, and downstream_contexts gains translation_notes (I-11, I-15).'
+  why_diamond: Template change; the standing tension is conflicts_for_legislation[2].
+- handoff_to: donewhen-extract
+  id: DW-ai-dlc-plugin-012
+  statement: 'verify_dos.py: whole-word exemption or --waive reading decisions.md for the UI-suffix check (I-10,
+    Q001); a size flag per methodology 300–500 / >800 lines (I-14).'
+  why_diamond: Two script edits; DEF-ai-dlc-plugin-005 and DEF-ai-dlc-plugin-003 are the □.
+- handoff_to: donewhen-extract
+  id: DW-ai-dlc-plugin-013
+  statement: Generate the ARCHITECTURE.md §1 / README counts (gates, agents, human nodes) from graph.yaml instead
+    of hand-writing them (I-16).
+  why_diamond: Prose cannot be asserted equal; the way to bring docs under INV-ai-dlc-plugin-003 is to derive
+    them.
+- handoff_to: donewhen-extract
+  id: DW-ai-dlc-plugin-014
+  statement: acceptance-spec emits done_when.yaml v2 directly, or hands spec.md to donewhen-extract (dos.yaml
+    Q008, acceptance-spec gate.json fix_list[2]).
+  why_diamond: R002 is the □; this is the remaining producer to converge.
+- handoff_to: donewhen-extract
+  id: DW-ai-dlc-plugin-015
+  statement: 'Compile INV-ai-dlc-plugin-001: at Run init record sha256 of the gating verifier scripts (or reuse
+    lock_done_when.py with a script list) and have `gate` compare, accepting a preceding deviation Event.'
+  why_diamond: The implementation task behind the proposed hard invariant; only after a human signs INV-001.
+- handoff_to: donewhen-extract
+  id: DW-ai-dlc-plugin-016
+  statement: README §状态与产物 states the .aidlc/ VCS policy (.gitignore it; archive into specs/) and `init` flags
+    a repo whose .gitignore lacks the line (I-01).
+  why_diamond: One-off packaging task; the obstacle itself projected to ∅ (projected_out_obstacles[0]).
+mode: auto
+overridable_defaults:
+- aspect: correctness
+  authority_level: The Gate's human signer may sign without the agenda item if the record states they read
+    the artifact directly; skill authors own the templates (g1_record.md, g3-record.md).
+  channel: abductive
+  confidence: high
+  disposition: carded
+  id: DEF-ai-dlc-plugin-001
+  provenance:
+    execution_point: ''
+    obstacle_ref: skill-issues.md I-03 (G1 record has no place for seam count — signer cannot see how empty
+      the world is) and I-06 (verify_derived.py flags three unreferenced PSL rules but does not tell G1 whether
+      to delete the rule or add a decision)
+  statement: WHEN a verify_*.py emits a flag (a non-reject finding) or counts unfilled load-bearing slots (Open
+    Questions / seams) on an artifact that a human Gate will sign, THE Gate record template SHALL carry each
+    as an agenda item naming the decision the signer must make.
+  strength: overridable
+  survival_test: pass
+- aspect: correctness
+  authority_level: Skill author; waivable when the skill has no template or no enum branch, recorded in eval/gate.json
+    fix_list.
+  channel: abductive
+  confidence: high
+  disposition: carded
+  id: DEF-ai-dlc-plugin-002
+  provenance:
+    execution_point: plugins/ai-dlc/skills/psl-derive/scripts/verify_derived.py:90-91 (post-fix blockquote
+      skip — the template's own guidance quoted the banned tokens)
+    obstacle_ref: skill-issues.md I-04 (template tokens counted as named steps), I-05 (greedy regex under re.S
+      emptied the vocabulary; fixture PSL never mentioned 'Domain Model' twice), I-07 (one-line Links parsed
+      as one key; fixture was task-track only, psl branch never ran)
+  statement: WHEN a skill ships a verifier together with a template or asset that the verifier reads, THE skill's
+    eval fixtures SHALL include at least one passing artifact produced from that template (not a hand-minimal
+    one) and one fixture per declared enum branch the verifier switches on (e.g. track psl | task).
+  strength: overridable
+  survival_test: pass
+- aspect: correctness
+  authority_level: Plugin author; design-notes.md 有意不做的 records the standing waiver for PreToolUse hooks, so
+    labelling is the expected form there.
+  channel: both
+  confidence: high
+  disposition: carded
+  id: DEF-ai-dlc-plugin-003
+  provenance:
+    execution_point: plugins/ai-dlc/skills/ai-dlc/scripts/aidlc_state.py:250-259 (the g2 prerequisite runs
+      validate_done_when_v2.py — the compiled form of 'the contract must validate')
+    obstacle_ref: psl/eval/gate.json fix_list[0] ('交付前必须跑 verify_psl.py' is declarative only, judge A round-1
+      A'-1); commit/eval/gate.json fix_list[1] (red-green evidence is manual, no script); skill-issues.md I-14
+      (methodology says 300–500 lines, >800 bloat; verify_dos.py has no flag)
+  statement: WHEN a SKILL.md or its references states a criterion as binding (must run before delivery, must
+    not exceed, must include), THE criterion SHALL be compiled — a aidlc_state.py prerequisite, a hook, or
+    a verify_*.py reject / flag — or the sentence SHALL be labelled `declarative (not compiled)` in the same
+    SKILL.md and in eval/gate.json.
+  strength: overridable
+  survival_test: pass
+  corroboration:
+  - obstacle_ref: 2026-09-10 F-A
+    note: X1 was stated as binding in SKILL.md's Σ table and lifecycle.md, was neither compiled nor labelled
+      `declarative (not compiled)`, and nothing noticed for five days. This default existed and did not hold
+      — evidence for promoting it to hard, or for giving it the mechanical check it never had.
+- aspect: reversibility
+  authority_level: The engine may append edge-less custom notes; any new decision kind added to aidlc_state.py
+    must emit its edge (plugin author, by PR).
+  channel: both
+  confidence: high
+  disposition: carded
+  id: DEF-ai-dlc-plugin-004
+  provenance:
+    execution_point: plugins/ai-dlc/skills/ai-dlc/scripts/aidlc_state.py:370-372 (waiver Event carries decided_by
+      human:waiver); plugins/ai-dlc/skills/ai-dlc/scripts/trace.py:224-259 (lint validates edge types and targets
+      — but not presence for decision kinds)
+    obstacle_ref: 'dos.yaml anti_patterns[5] (flat ledger: ''why did AC-003 change'' was archaeology); loop-graph-engineering.md
+      §0 row 4'
+  statement: WHEN an Event of kind fail, reflow, waiver, gate or escape is appended, IT SHALL carry at least
+    one decided_by or caused_by edge; edge-less Events are permitted only for kinds init, set, advance and
+    custom `ledger --kind` notes.
+  strength: overridable
+  survival_test: pass
+- aspect: correctness
+  authority_level: A named human in decisions.md; never a bare flag. Structural rejects (missing required field,
+    dangling reference) carry no waiver.
+  channel: both
+  confidence: high
+  disposition: carded
+  id: DEF-ai-dlc-plugin-005
+  provenance:
+    execution_point: plugins/ai-dlc/skills/dos-extract/scripts/verify_dos.py:67 (message says 'exceed only
+      with a human waiver in decisions.md' but the script reads no waiver — exit 1 regardless); verify_dos.py:73
+      (UI/impl suffix → reject, no whole-word exemption)
+    obstacle_ref: 'skill-issues.md I-10 — the canonical object 卡 / Card was renamed WorkUnit in the as-is dos.yaml
+      because the suffix check could not be waived (影响产物: 是); dos.yaml Q001'
+  statement: WHEN a verifier hard-rejects on a heuristic classifier (a suffix blacklist, a word list) rather
+    than a structural property, THE verifier SHALL offer a recorded waiver path — a decisions.md waiver entry
+    with a human name, or a --waive that reads one — so the reject can be overridden with provenance instead
+    of by editing the artifact to dodge the heuristic.
+  strength: overridable
+  survival_test: pass
+projected_out_obstacles:
+- obstacle_ref: skill-issues.md I-01 (.aidlc/ not in .gitignore; no VCS policy for the state dir)
+  why_empty: Packaging / repository hygiene. dos.yaml scope.out_of_scope names plugin packaging; neither escaped
+    defects nor waivers move. The fix is a one-off task → also listed as DW-ai-dlc-plugin-016.
+- obstacle_ref: 'gate.json fix_list ×10: ''classify the inherited phase-map order into the six cells or rewrite
+    as φ/γ (skillwise §3)'''
+  why_empty: 'Skill-authoring style under the skillwise evaluation frame; dos.yaml scope.out_of_scope: ''the
+    skillwise evaluation tiers of skills''. No lifecycle artifact is checked differently.'
+- obstacle_ref: 'design-notes.md 第二次整理 #3 (naming: keep imported skill names, name new skills by artifact)'
+  why_empty: Ontology / ubiquitous language — dos-extract's column (dos.yaml anti_patterns[7], [8]; Q001, Q002).
+    Not a correctness or reversibility property of a Run.
+- obstacle_ref: loop-graph-engineering.md §0 row 2 (loop triggers were bash sleep polling, not L3 event-driven)
+  why_empty: Operability / latency aspect. Under correctness + reversibility a polling trigger produces the
+    same verdicts, later.
+- obstacle_ref: 'loop-graph-engineering.md §6 bullet 5 (vocabulary drift: graph engineering has three meanings)'
+  why_empty: Ontology; handled by the proposal's own §1 definitions and dos.yaml Q002.
+- obstacle_ref: skill-issues.md I-16 part (routing pseudo-layers exception / g3 / human_attribution / next_outer
+    not on the five-layer ladder)
+  why_empty: Ontology of Layer (dos.yaml composition.Layer already notes the pseudo-layers). An audit Finding
+    for AUDIT.md, not an invariant of this Territory.
+- obstacle_ref: verify_commit.py:149,152 (secret-looking string / debugger left in an added line)
+  why_empty: Hygiene of the delivered code, owned by /commit's own φ. Irreversibility of a leaked secret is
+    real but belongs to a security Territory of the product, not to the lifecycle's own correctness.
+- obstacle_ref: verify_dos.py:67 (objects ≤ 7), verify_psl.py:117-172 (six-layer skeleton, Open Questions,
+    Acceptance arrows)
+  why_empty: Shape rules of R0/R1 world content — dos.yaml scope.out_of_scope ('the content of the product
+    world … R0/R1 own them').
+- obstacle_ref: lint_cards.py:198 (context_estimate_tokens > 40k → split)
+  why_empty: A policy number (dos.yaml decisions excluded policy numbers from the constitution); cost / feasibility
+    aspect.
+- obstacle_ref: release gate.json fix_list[1] ('deploy systems are out of scope'), review-loop fix_list[1]
+    ('linter persona hit is a false positive')
+  why_empty: Scope statements about the evaluation frame, not failures of a Run.
+purpose:
+  aspect: correctness + reversibility
+  kpi: escaped defects per merged feature, and waiver count
+  name: a self-closing product-engineering lifecycle whose every artifact is either script-checked or human-gated
+  scope_ref: 'plugins/ai-dlc/dos.yaml#scope — in_scope: one Run through fifteen stages, Contract frozen by
+    human Gates, WorkUnits, Layers, append-only Events, declared Nodes and Loops, and the RepoAssets they resolve
+    against (R2–R8, X1/X2/X3/X4); out_of_scope: PSL/DOS content, GitHub object model, finding/verdict schemas,
+    plugin packaging, skillwise tiers, and the other eleven plugins in this monorepo'
+territory_id: ai-dlc-plugin
+registered_gaps:
+- ref: plugins/ai-dlc/skills/ai-dlc/eval/gate.json#fix_list
+  gap: 52 entries, mostly 'L2 was never run' registrations rather than observed defects
+  destination: backlog
+  note: listed as a failure-memory source on the 2026-09-05 card; a gap is not a violation
+- ref: plugins/ai-dlc/dos.yaml#open_questions.Q010
+  gap: requiring a dos RepoAsset before issue is smoke-covered; its effect on vocabulary drift is unmeasured
+  destination: done_when
+  note: R017 — the claim may not exceed the evidence; count greenfield waivers per Run in /retro
+- ref: plugins/ai-dlc/skills/ai-dlc/references/stages.md
+  gap: red-green evidence script; meets_done_when comparison script; contract.yaml schema; ontology-drift;
+    psl-derive
+  destination: backlog
+  note: carried unchanged from the 2026-09-05 card

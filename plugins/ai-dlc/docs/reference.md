@@ -41,13 +41,13 @@ flag 不等于 reject。预门过了但带 flag，意思是「机器判不了这
 | `verify_graph.py` | `graph.yaml` 的五条 lint（写范围有界 / 圈必须归环 / 评估者→实现者只带 fix_prompt / 人节点有恢复绑定 / fan_in 有 merge） | 0 · 1 拒 |
 | `verify_loop.py` | `loops.yaml` 的环契约（generator ≠ verifier、stop 四键齐） | 0 · 1 拒 |
 | `verify_sizing.py` | 体量网格的八条 lint：阶段名在 ORDER 里 / never_skippable 覆盖三道门 / 没有一档绕过它 / 每条 skip 有 why / **兜底档一个阶段也不跳（极性）** / `needs` 与 `when` 一致 / 每一档的剩余路径 `next_allowed` 真的放行（直接 import 真的那份，不重实现）/ **`repo_assets` 的键与档位在封闭集里且每档都有一条要求** | 0 · 1 拒 · 2 用法/IO（**没有 3**：网格是自带资产，读不到是错误不是「未求值」） |
-| `repo_assets.py` | X1 仓库级制品在不在（候选路径序：仓库根 → `docs/` → `ontology/`，`.aidlc/` 最后且命中即告警）、进没进 git（`git ls-files`）。被 `aidlc_state.py init/doctor/repo/prereqs`、`verify_issue.py --require-dos`、`lint_cards.py --require-dos` 共用——一份候选表，不是六份 | 0 齐全且都进了 git · 1 有缺失 / 未 tracked / 位置不共享 · 2 用法/IO |
+| `repo_assets.py` | X1 仓库级制品在不在（候选路径序：`--scope` 的 package 目录 → 仓库根 → `docs/` → `ontology/`，`.aidlc/` 最后且命中即告警）、进没进 git（`git ls-files`）。**monorepo 一个 package 一份本体**，回落让仓库级的 `agent-map.md` 与 package 级的 `dos.yaml` 共存。被 `aidlc_state.py init/doctor/repo/prereqs`、`verify_issue.py --require-dos`、`lint_cards.py --require-dos` 共用——一份候选表，不是六份 | 0 齐全且都进了 git · 1 有缺失 / 未 tracked / 位置不共享 · 2 用法/IO |
 
 `aidlc_state.py` 的子命令里最容易被漏的三个：
 
 - `size`：按 `assets/sizing.yaml` 的六条规则推体量档，输入只有四个可数的量（改动文件数、AC 数、human AC 数、轨道）。
   `--commit` 才写进 state。缺省是 M，S 的豁免只认 `size_source=derived`。
-- `repo`：**第一次把 /ai-dlc 带进一个仓库时先跑这条**。X1 的仓库级制品（`dos.yaml` / `decisions.md` /
+- `repo --scope plugins/<pkg>`：**第一次把 /ai-dlc 带进一个仓库时先跑这条**。X1 的仓库级制品（`dos.yaml` / `decisions.md` /
   `agent-map.md` / `invariants/`）在不在、进没进 git、这一档要求到哪一级、缺了怎么补。它们是
   **一次性、仓库级、全组共用一份**的制品：做一次，之后每个 slug 由 `init` 自动发现，不必手 set 路径。
   缺席时下游是**未检**不是通过——`/issue` 的闭包会退回自评，卡的 `dos_slice` 无人解析。

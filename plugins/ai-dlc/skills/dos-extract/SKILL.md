@@ -64,10 +64,14 @@ The gap is the *semantic judgment*, plus the knowledge of what a clean DOS looks
 - **Output is two files.** `dos.yaml` (the ontology) + `decisions.md` (the audit trail —
   every non-trivial judgment traceable to one of the four by name).
 - **They belong in the project directory, committed to git.** The ontology is the team's
-  shared vocabulary — one repo, one copy, everyone's. Write them at the repo root
-  (`dos.yaml` / `decisions.md`; `docs/` and `ontology/` are also discovered), **never under
-  `.aidlc/`** — that is per-run runtime state, so an ontology parked there is found by neither
-  the next feature nor the next person. `aidlc_state.py repo` reports where they landed and
+  shared vocabulary — one bounded context, one copy, everyone's. Write them at the root of the
+  context (`dos.yaml` / `decisions.md`; `docs/` and `ontology/` are also discovered), **never
+  under `.aidlc/`** — that is per-run runtime state, so an ontology parked there is found by
+  neither the next feature nor the next person. **In a monorepo the context is the package**,
+  not the repository: `plugins/<pkg>/dos.yaml`, discovered with
+  `repo_assets.py --scope plugins/<pkg>` (which falls back to the root, so one repo-level
+  `agent-map.md` and a per-package `dos.yaml` coexist). A root-level DOS covering one package
+  of twelve claims a scope it does not have. `aidlc_state.py repo` reports where they landed and
   whether `git ls-files` can see them; untracked is not "has an ontology", it is
   "you have an ontology". Same for `agent-map.md` and the `invariants/` cards.
 
@@ -154,8 +158,10 @@ docs-win priority, and `open_questions` is non-empty (a DOS with none is dishone
 and it checks the *product*, not mere well-formedness (it rejects UI/impl-suffixed object names,
 undeclared relationship refs, >7 objects). Run it before presenting. It **rejects** on:
 
-- >7 objects → **reject** (a justification for exceeding is a human waiver recorded in
-  `decisions.md`; the script does not auto-detect it — it errs strict, the judge relaxes);
+- >7 objects → **reject**, cleared only by a `## Naming waivers` bullet named `object_count`
+  in `decisions.md` (reported under `waived` and flagged, never silent). Until v0.9.0 the reject
+  text named that waiver and no code read it, so the only way past was to ignore a permanently
+  red pre-gate — a gate you can only pass by ignoring it is not a gate;
 - every object in `relationships` is declared in `objects` (a declared synonym resolves, with
   a flag to prefer the canonical name); every relationship has both cardinality sides;
 - no object name is **compounded** on a UI/impl primitive (`TopicCard`, `UserRepository`) —

@@ -157,13 +157,14 @@ def main():
     ap.add_argument("--require-dos", dest="require_dos", action="store_true",
                     help="把「dos_slice 闭包未检」从 info 升成 reject；没给 --dos 时先自动发现 dos.yaml。"
                          "卡里出现一个本体解析不了的名词是整条流水线上代价最高的一次漂移")
+    ap.add_argument("--dos-scope", dest="dos_scope", help="monorepo：先在这个目录里找 dos.yaml（如 plugins/ai-dlc），找不到再回落到仓库根")
     ap.add_argument("--max-context", type=int, default=40000)
     ap.add_argument("--repo-root", help="resolve allowed_files against this root to read projection scripts")
     ap.add_argument("--projection-pattern", default=PROJECTION_DEFAULT,
                     help="basename regex that marks a script as a projection (default: %(default)s)")
     a = ap.parse_args()
     if a.require_dos and not a.dos and repo_assets is not None:
-        a.dos = repo_assets.find("dos")
+        a.dos = repo_assets.find("dos", scope=a.dos_scope)
     projection_re = re.compile(a.projection_pattern, re.IGNORECASE)
 
     files = sorted(glob.glob(os.path.join(a.cards_dir, "CARD-*.y*ml")))

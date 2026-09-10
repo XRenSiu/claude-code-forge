@@ -111,11 +111,12 @@ def main():
     ap.add_argument("body"); ap.add_argument("--dos"); ap.add_argument("--kind", choices=["feature", "bug", "escape"], default="feature")
     ap.add_argument("--require-dos", dest="require_dos", action="store_true",
                     help="把「闭包未检」从 flag 升成 reject；没给 --dos 时先自动发现 dos.yaml")
+    ap.add_argument("--dos-scope", dest="dos_scope", help="monorepo：先在这个目录里找 dos.yaml（如 plugins/ai-dlc），找不到再回落到仓库根")
     ap.add_argument("--g1", help="G1 record; on the PSL track the issue text is checked against the negations it writes down (dogfood I-45)")
     a = ap.parse_args()
     dos_source = "given" if a.dos else None
     if a.require_dos and not a.dos and repo_assets is not None:
-        found = repo_assets.find("dos")
+        found = repo_assets.find("dos", scope=a.dos_scope)
         if found:
             a.dos, dos_source = found, "discovered"
     try:

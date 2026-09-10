@@ -21,11 +21,15 @@
 
   1. **在不在** —— 按候选路径序找，第一个命中即用。canonical 在最前，`.aidlc/` 在最后
      且命中即告警（它是运行时目录，不是共享位置）。
+     **monorepo 走 `--scope`**：一个仓库多个 package 时，本体是**每个 package 一份**
+     （dos-extract 的 edge case：一个 package 一个 bounded context）。把只覆盖某一个
+     package 的本体放在仓库根，是拿 scope 撒谎。`--scope plugins/ai-dlc` 先在那个目录里找，
+     找不到再回落到仓库根——所以「一份仓库级 agent-map + 每个 package 一份 dos」是可表达的。
   2. **进没进 git** —— `git ls-files`。找到了但没 tracked（或被 .gitignore 吃掉），
      队友 clone 下来是空的。这是「团队共享」这件事唯一可机械核对的形式。
 
 用法：
-  repo_assets.py [--repo-root .] [--json]
+  repo_assets.py [--repo-root .] [--scope plugins/ai-dlc] [--json]
 
 退出码：0 = 三样齐全且都进了 git · 1 = 有缺失 / 未 tracked / 位置不共享 · 2 = 用法 / IO
 """
@@ -117,6 +121,24 @@ def _ignored(root: str, rel: str) -> bool:
 
 
 # ---- discovery ------------------------------------------------------------------------------
+def scoped(scope: str | None, rel: str) -> str:
+    """→ scope 下的候选路径（scope 为空就是原路径）。"""
+    return os.path.join(scope, rel) if scope else rel
+
+
+def candidates_for(spec: dict, scope: str | None) -> list[str]:
+    """→ 求值序：先 scope 内，再仓库根。
+
+    回落是有意的，不是兜底：`agent-map.md`（这个仓库怎么干活）天然是仓库级的一份，
+    而 `dos.yaml`（这个 package 的本体）是 package 级的。两者用同一张表表达，
+    靠的就是「scope 里没有就用仓库根那份」。
+    """
+    base = list(spec["candidates"])
+    if not scope:
+        return base
+    return [scoped(scope, c) for c in base] + base
+
+
 def _exists(root: str, rel: str, spec: dict):
     """→ (found, count)。目录 kind 还要至少有一个匹配 glob 的文件才算数。"""
     p = os.path.join(root, rel)
@@ -132,15 +154,17 @@ def _exists(root: str, rel: str, spec: dict):
 _CACHE: dict[str, dict] = {}
 
 
-def discover(root: str | None = None, refresh: bool = False) -> dict:
+def discover(root: str | None = None, refresh: bool = False, scope: str | None = None) -> dict:
     """→ {key: record}。记录只陈述可核对的事实，不做要求判断（要求在 sizing.yaml 里）。
 
     结果按仓库根缓存：`prereqs()` 与 `doctor` 在一次进程里会反复问同一个问题，而每次问都要
     起若干个 git 子进程。缓存的是**一次运行内**的事实——`--refresh` 或换个进程就重新读。
     """
     root = repo_root(root or ".")
-    if not refresh and root in _CACHE:
-        return _CACHE[root]
+    scope = (scope or "").strip("/") or None
+    cache_key = f"{root}::{scope or ''}"
+    if not refresh and cache_key in _CACHE:
+        return _CACHE[cache_key]
     out: dict[str, dict] = {}
     for key, spec in SPEC.items():
         rec = {"key": key, "label": spec["label"], "kind": spec["kind"],
@@ -156,9 +180,9 @@ def discover(root: str | None = None, refresh: bool = False) -> dict:
             look = os.path.dirname(sib.get("path") or "") if sib.get("found") else ""
             want = os.path.dirname(sib.get("canonical") or "") if good else ""
             cands = [os.path.join(look, spec["filename"]) if look else spec["filename"]]
-            canonical_override = os.path.join(want, spec["filename"]) if want else spec["filename"]
+            canonical_override = os.path.join(want, spec["filename"]) if want else scoped(scope, spec["filename"])
         else:
-            cands = list(spec["candidates"])
+            cands = candidates_for(spec, scope)
         rec["canonical"] = (canonical_override if "sibling_of" in spec
                             else cands[0] + ("/" if spec["kind"] == "dir" else ""))
         rec["searched"] = cands
@@ -170,14 +194,14 @@ def discover(root: str | None = None, refresh: bool = False) -> dict:
                            runtime_dir=rel.startswith(RUNTIME_DIRS))
                 break
         out[key] = rec
-    out["_root"] = {"path": root, "is_git": _in_git(root)}
-    _CACHE[root] = out
+    out["_root"] = {"path": root, "is_git": _in_git(root), "scope": scope}
+    _CACHE[cache_key] = out
     return out
 
 
-def find(key: str, root: str | None = None) -> str | None:
+def find(key: str, root: str | None = None, scope: str | None = None) -> str | None:
     """→ 命中的绝对路径，没找到给 None。给 verify_issue.py / lint_cards.py 的自动发现用。"""
-    disc = discover(root)
+    disc = discover(root, scope=scope)
     rec = disc.get(key) or {}
     return os.path.join(disc["_root"]["path"], rec["path"]) if rec.get("found") else None
 
@@ -232,12 +256,14 @@ def findings(disc: dict, requirements: dict | None = None) -> list[dict]:
 
 # ---- CLI ------------------------------------------------------------------------------------
 def render(disc: dict, req: dict | None = None) -> str:
+    sc = disc["_root"].get("scope")
     lines = ["仓库级 X1 制品（进 git、全组共享——不放 .aidlc/）",
-             f"  仓库根 {disc['_root']['path']}" + ("" if disc["_root"]["is_git"] else "  [不是 git 仓库]"), ""]
+             f"  仓库根 {disc['_root']['path']}" + ("" if disc["_root"]["is_git"] else "  [不是 git 仓库]")
+             + (f"\n  scope  {sc}/  （找不到时回落到仓库根）" if sc else ""), ""]
     mark = {True: "✓", False: "✗"}
     for key in KEYS:
         r = disc[key]
-        state = "—"
+        state = f"→ 该写到 {r['canonical']}"
         if r["found"]:
             state = {True: "tracked", False: "未进 git", None: "无法判定"}[r["tracked"]]
             if r["ignored"]:
@@ -248,7 +274,7 @@ def render(disc: dict, req: dict | None = None) -> str:
                 state += f" · {r['count']} 张卡"
         level = (req or {}).get(key, "optional")
         lines.append(f"  {mark[r['found']]} {SPEC[key]['filename']:<16} "
-                     f"{(r['path'] or '缺'):<24} {state:<24} [{level}]")
+                     f"{(r['path'] or '缺'):<26} {state:<34} [{level}]")
     return "\n".join(lines)
 
 
@@ -264,10 +290,12 @@ ONBOARDING = """
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--repo-root", default=".")
+    ap.add_argument("--scope", help="monorepo：先在这个仓库根相对目录里找（如 plugins/ai-dlc），"
+                                    "找不到再回落到仓库根。一个 package 一个 bounded context")
     ap.add_argument("--json", action="store_true")
     ap.add_argument("--path", choices=KEYS, help="只打印这个制品命中的路径（没找到 exit 1，不打印）")
     a = ap.parse_args()
-    disc = discover(a.repo_root)
+    disc = discover(a.repo_root, scope=a.scope)
     if a.path:
         rec = disc[a.path]
         if not rec["found"]:

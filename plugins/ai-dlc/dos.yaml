@@ -1,0 +1,829 @@
+# =============================================================================
+# Design Ontology Spec — ai-dlc plugin (as-is / 现状本体), extracted 2026-09-05, amended 2026-09-10
+# Schema: plugins/ai-dlc/skills/dos-extract/assets/dos_template.yaml (12 sections)
+# Companion audit trail: decisions.md (every non-trivial call traced to Judgment 1–4)
+# Signal priority: docs (README, docs/*.md) outrank code for naming; data assets
+# (state.schema.json, graph.yaml, loops.yaml, routing.yaml) were read as the code side.
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# 0. Meta
+# -----------------------------------------------------------------------------
+meta:
+  dos_version: "0.2.0"
+  product: "ai-dlc plugin"
+  bounded_context: "software delivery lifecycle"
+  owner: "XRenSiu"
+  status: "draft"
+  last_reviewed: "2026-09-10"
+  related_docs:
+    - "plugins/ai-dlc/README.md"
+    - "plugins/ai-dlc/docs/ARCHITECTURE.md"
+    - "plugins/ai-dlc/docs/lifecycle.md"
+    - "plugins/ai-dlc/docs/routing.md"
+    - "plugins/ai-dlc/docs/design-notes.md"
+    - "plugins/ai-dlc/docs/proposals/loop-graph-engineering.md"
+    - "plugins/ai-dlc/skills/ai-dlc/assets/state.schema.json"
+    - "plugins/ai-dlc/skills/ai-dlc/assets/graph.yaml"
+    - "plugins/ai-dlc/skills/ai-dlc/assets/loops.yaml"
+    - "plugins/ai-dlc/skills/ai-dlc/assets/routing.yaml"
+    - "plugins/ai-dlc/decisions.md"
+    - "plugins/ai-dlc/skills/ai-dlc/assets/sizing.yaml"
+    - "plugins/ai-dlc/skills/ai-dlc/scripts/repo_assets.py"
+
+# -----------------------------------------------------------------------------
+# 1. Scope
+# -----------------------------------------------------------------------------
+scope:
+  in_scope: |
+    One software delivery lifecycle as the ai-dlc plugin runs it: a Run that moves through
+    fifteen stages, its acceptance Contract frozen by human Gates, its work split into
+    WorkUnits handed to isolated implementers, every failure routed to a Layer and recorded
+    as an append-only Event, and the declared execution graph (Nodes) and loop contracts
+    (Loops) that bound the whole thing. Covers R2–R8 (contract → learning), the X2 routing
+    and X3/X4 ledger/trace/graph cross-cuts, and the seams to R0/R1.
+
+  out_of_scope: |
+    The content of the product world (PSL laws, DOS proposals, invariant cards — R0/R1 own
+    them; this DOS only holds their paths and closure). The GitHub object model (issue body,
+    PR comments, review threads — referenced, not modelled). The acceptance-line finding /
+    verdict schemas (evaluation context). Claude Code plugin packaging (marketplace, versions,
+    user-invocable) and the skillwise evaluation tiers of skills. The code being delivered.
+    The other eleven plugins in claude-code-forge: this repository is a monorepo and each plugin is its
+    own bounded context. This DOS covers plugins/ai-dlc only — which is why it lives there and not at the
+    repository root, where it would be claiming a scope it does not have.
+  audience:
+    - "the plugin author (XRenSiu)"
+    - "authors of ai-dlc skills and agents"
+    - "AI agents running /ai-dlc, /plan-cards, /implement, card-implementer"
+    - "reviewers reconciling the PSL-derived dos-proposal against this as-is ontology (X1)"
+
+  success_criteria: |
+    (1) `verify_issue.py --dos` and `lint_cards.py --dos` resolve every domain noun a card or
+    issue cites against `objects` / `rules` here. (2) The 应然 dos-proposal derived from the
+    ring-audit PSL can be reconciled object-by-object (same / synonym / conflict) against this
+    file in a G1 record. (3) A new skill author can draw the Run → Contract → WorkUnit → Event
+    data flow and name which Node writes which artifact without reading any SKILL.md.
+
+# -----------------------------------------------------------------------------
+# 2. Reuse
+# -----------------------------------------------------------------------------
+reuse:
+  internal_references:
+    - name: "looper v0.2.0 — dos-extract / psl / invariant-extract"
+      url: "plugins/ai-dlc/skills/dos-extract/SKILL.md"
+      adopted_concepts: ["this 12-section DOS schema", "R00x constitution ids", "□/◊ split (resident invariant vs done_when)"]
+    - name: "qanat .claude/skills — donewhen-extract / spec-compile / calibrate"
+      url: "plugins/ai-dlc/skills/donewhen-extract/SKILL.md#术语映射"
+      adopted_concepts: ["Run (一次执行) as the lifecycle instance", "Contract as the human-signed gate asset", "R001 evaluator/executor isolation", "R002 gate assets only humans sign"]
+    - name: "done-when-pipeline v1.1.0 (this repo)"
+      url: "plugins/ai-dlc/skills/acceptance-spec/SKILL.md"
+      adopted_concepts: ["done_when.yaml (v1, bridged to v2)", "spec-robustness.md", "four-state ratchet", "REQ-ID / EARS types"]
+    - name: "vana-builder pr-review-loop v0.4.0"
+      url: "plugins/ai-dlc/skills/review-loop/SKILL.md"
+      adopted_concepts: ["review_loop memory (watermark, counters, evidence log)", "verdict set ACCEPT/REJECT/REPLY/ESCALATE/SKIPPED"]
+  external_references:
+    - name: "LangChain four loop levels + Andrew Ng three timescales"
+      url: "plugins/ai-dlc/docs/proposals/loop-graph-engineering.md#1.2"
+      adopted_concepts: ["Loop.level (agent | verification | event | hill_climbing)", "Loop.timescale (minutes | hours | days)"]
+    - name: "Flowtivity typed edges / puppyone graph-engineering failure list"
+      url: "plugins/ai-dlc/docs/proposals/loop-graph-engineering.md#1.3"
+      adopted_concepts: ["Event.refs closed edge set", "Node boundary identity (reads / must_not_read / writes / authority)", "resume_binding on human Nodes"]
+    - name: "EARS requirement syntax; Conventional Commits; SemVer; KAOS goal model"
+      url: "plugins/ai-dlc/skills/acceptance-spec/references/ears-syntax.md"
+      adopted_concepts: ["Contract.acceptance[].ears_type", "commit message grammar (behavior, not object)", "release bump derivation", "□ vs ◊ altitude"]
+  deliberate_divergence:
+    - from: "Flowtivity `caused` edge"
+      reason: "an append-only log can only point backwards, so the causal edge is `caused_by` (effect → cause); saves a forward event id"
+    - from: "LangGraph / ADK runtimes and knowledge-graph 'context graph'"
+      reason: "graph.yaml is a declaration, skills are the runtime; trace.jsonl is a decision trace, not a knowledge graph (design-notes 第三次整理)"
+    - from: "qanat's G1 / G2 (verify_g1 machine gate / review_g2 review gate)"
+      reason: "ai-dlc's G1 (world adjudication) and G2 (criteria freeze) are human Gates, not the same pair — mapped in each imported skill's 术语映射"
+
+# -----------------------------------------------------------------------------
+# 3. Objects (7)
+# -----------------------------------------------------------------------------
+objects:
+  Run:
+    description: "One delivery from intake to archive; its state.json is the sufficient statistic."
+    type: "aggregate_root"
+    synonyms: ["slug", "feature (metrics.py / tune.py)", "一次交付", ".aidlc/<slug>/", "Run (qanat 术语映射)"]
+    properties:
+      slug: { type: "string", required: true, description: "^[a-z0-9][a-z0-9-]{1,63}$; directory name under .aidlc/ and specs/" }
+      title: { type: "string", required: true }
+      track: { type: "enum", required: true, description: "psl | task | unset — PSL track builds the world first; DOS-closure failure forces psl" }
+      stage: { type: "enum", required: true, description: "intake → track → issue → branch → contract → g2 → cards → implement → acceptance → pr → review → g3 → merge → release → archive (ORDER; asserted equal to graph.yaml.stages)" }
+      counters: { type: "object", required: true, description: "per-Layer reflow counts card/plan/task/ontology/world + fingerprint_history (window) + scores; owned by aidlc_state.py fail" }
+      gates: { type: "object", required: true, description: "g1 / g2 / g3 → Gate" }
+      waivers: { type: "array", required: false, description: "{stage, reason, at, unmet} — every --force advance; a process smell retro counts" }
+      assumptions: { type: "array", required: false, description: "假设台账: {id, req, risk, signed_by, verify_at, status open|verified|accepted_risk}" }
+      artifacts: { type: "object", required: true, description: "name → path of produced artifacts; copied into the Archive" }
+      pending: { type: "object", required: false, description: "failure_report: true after an escalation until `report --path` clears it; check-clean refuses to end a session while set" }
+      issue: { type: "ref", required: false, description: "GitHub issue {number, url, kind feature|bug|escape} — slim reference to the requirement-intake context" }
+      pr: { type: "ref", required: false, description: "GitHub PR {number, url, size_class XS..XL, pre_review_rounds}" }
+      merge: { type: "ref", required: false, description: "{sha, merged_at} — merge is a human action" }
+      release: { type: "object", required: false, description: "{version, tag, notes, done, skipped_reason}; archive requires done or skipped_reason" }
+      world: { type: "object", required: false, description: "paths into the world context: psl, derived_dir, form_draft_sha256, dos, invariants" }
+    identity_rule: |
+      Identified by slug; one state.json per slug under .aidlc/; the same slug archived under specs/<slug>/.
+    lifecycle: |
+      init (intake) → advance through the fifteen stages in ORDER (skips only with a recorded Waiver; the
+      review → merge skip is legal when gates.g3.required=false) → archive (copies state, ledger, trace,
+      artifacts to specs/<slug>/). Resumable from state.json.stage at any time.
+
+  Contract:
+    description: "The acceptance criteria a Run must meet — done_when.yaml v2, frozen by G2."
+    type: "aggregate_root"
+    synonyms: ["契约", "判据契约", "done_when.yaml", "acceptance contract", "Contract (qanat)"]
+    properties:
+      schema: { type: "integer", required: true, description: "always 2 (v1 shapes enter via convert_v1_to_v2.py)" }
+      feature: { type: "string", required: true, description: "the Run's slug" }
+      track: { type: "enum", required: true, description: "psl | task" }
+      created_by: { type: "enum", required: true, description: "donewhen-extract | acceptance-spec(+convert) | issue-inline" }
+      based_on: { type: "array", required: true, description: "REQ-ids the criteria hang from (requirement-intake context)" }
+      acceptance: { type: "array", required: true, description: "AC items {id AC-nnn-x, req, kind mechanical|human, ears_type, observe (boundary route:/cli:/ui:/db_field:/event:, never a file path), given, expect, paired_with | statement, judge product|design|tech, evidence checklist|demo}; the minimal unit G2 signs" }
+      existence: { type: "array", required: false, description: "observation boundaries only (route / db_field / ui / cli / event); file-level existence lives on WorkUnit.allowed_files" }
+      behavior: { type: "object", required: false, description: "tests-manifest seed (test → AC map) filled at L5 by a non-implementer; may be empty at G2" }
+      thresholds: { type: "object", required: false, description: "numbers that are themselves criteria (coverage, mutation kill rate, p95 …) with threshold_source" }
+      rules: { type: "array", required: false, description: "flat conditions meta-judge reads (e.g. any P0 finding blocks merge)" }
+      constraints: { type: "object", required: false, description: "forbidden_paths (tests/**, done_when.yaml, dos.yaml, contract.yaml, .done_when.lock) and mock_allowlist" }
+      budgets: { type: "object", required: false, description: "card_retries / plan_reflows / task_reflows override; default from routing.yaml" }
+      lock: { type: "value", required: false, description: ".done_when.lock {version, stage g2|l5, signed_by, signed_at, files[{path, sha256}]}; two-stage: g2 signs criteria, l5 re-signs tests + behavior" }
+    identity_rule: |
+      One Contract per Run (contract.done_when path in state.json). AC ids are stable within the Contract
+      and are first-class trace anchors (implements / supersedes edges).
+    lifecycle: |
+      draft (issue AC → donewhen-extract or acceptance-spec+convert) → validated as v2 (advance g2) →
+      frozen by Gate g2 (lock stage g2) → re-signed after tests (lock stage l5) → amended only through a
+      change proposal in the same diff (Event AMENDS Contract, task-layer reflow) → archived.
+
+  WorkUnit:
+    description: "A self-contained unit of work a context-free agent can finish alone (卡 / CARD-xx)."
+    type: "entity"
+    synonyms: ["卡", "任务卡", "Card", "CARD-xx", "prompt 载荷"]
+    naming_note: "Canonical docs/code name is 卡/Card; renamed here because verify_dos.py rejects any object ending in `Card` (see decisions.md, Q001)."
+    properties:
+      id: { type: "string", required: true, description: "CARD-nn" }
+      title: { type: "string", required: true, description: "one observable behaviour this unit delivers" }
+      req_ids: { type: "array", required: true, description: "REQ-ids owned — each REQ belongs to exactly one WorkUnit" }
+      ac_ids: { type: "array", required: true, description: "subset of Contract.acceptance ids this unit must turn green" }
+      dos_slice: { type: "object", required: true, description: "{objects[], invariants[]} — the DOS nouns this unit uses; lint_cards.py --dos checks closure against this file" }
+      allowed_files: { type: "array", required: true, description: "write whitelist globs; the whitelist executor (verify_commit.py --card) refuses anything else" }
+      forbidden_files: { type: "array", required: true, description: "default tests/**, done_when.yaml, dos.yaml, contract.yaml, .done_when.lock + Contract.constraints.forbidden_paths" }
+      context_estimate_tokens: { type: "integer", required: true, description: "card + sources + AC subset + tests; over the lint limit → split" }
+      budget: { type: "object", required: true, description: "{retries} — same fingerprint twice escalates before the budget is spent" }
+      depends_on: { type: "array", required: false, description: "other WorkUnit ids; dependency order only" }
+      status: { type: "enum", required: true, description: "todo | doing | done | blocked (in Run.cards.items, with retries, last_fingerprint, commits[])" }
+    identity_rule: |
+      Identified by id within a Run's cards/ directory; registered in Run.cards.items. A REQ has one owner
+      WorkUnit; two WorkUnits' allowed_files never overlap.
+    lifecycle: |
+      split from the frozen Contract (plan-cards) → linted (coverage, no write conflicts, DOS closure,
+      context bound, ac_ids exist) → todo → doing (implementer sees only this unit + state summary + AC
+      subset + red baseline) → done (commits registered) | blocked; re-split = plan-layer reflow.
+
+  Gate:
+    description: "A human-only checkpoint with a recorded verdict: G1 world, G2 criteria, G3 exceptions."
+    type: "entity"
+    synonyms: ["门", "三道门", "G1 世界裁决", "G2 判据冻结", "G3 例外复核", "human seam", "R002 gate asset (qanat)"]
+    properties:
+      id: { type: "enum", required: true, description: "g1 | g2 | g3" }
+      required: { type: "boolean", required: true, description: "g1 only on the psl track; g3 default true, false must be set explicitly and is recorded" }
+      verdict: { type: "enum", required: true, description: "pending | pass | reject | waived" }
+      by: { type: "string", required: false, description: "the human signer — a person's name, never a Node of kind skill/agent" }
+      at: { type: "timestamp", required: false }
+      record: { type: "path", required: false, description: "g1-record.md (三问 + 分歧集回应) / .done_when.lock (g2) / g3-record.md (human AC verdicts, B-tier warnings, failure report, assumptions)" }
+      attribution: { type: "enum", required: false, description: "g1 reject only: derivation_error | rule_error (rule_error bumps Run.counters.world)" }
+    identity_rule: |
+      Identified by id within a Run (Run.gates.g1/g2/g3). Declared once, graph-side, as the human Node that
+      holds it (human.g1 / human.g2 / human.g3 with resume_binding).
+    lifecycle: |
+      pending → pass | reject (+attribution for g1) | waived (only via a recorded Waiver). g2 pass requires
+      Contract.lock to exist; g1 pass requires Run.world.derived_dir to exist. A mechanical pre-gate
+      (verify_*.py, lint_cards.py) is NOT a Gate — it is an edge guard.
+
+  Event:
+    description: "One append-only ledger record with typed edges to what caused or decided it."
+    type: "entity"
+    synonyms: ["账本记录", "迹事件", "ledger row", "trace event", "ev-nnnn"]
+    properties:
+      id: { type: "string", required: true, description: "ev-NNNN, sequential per Run" }
+      at: { type: "timestamp", required: true }
+      stage: { type: "enum", required: true, description: "Run.stage when recorded" }
+      kind: { type: "enum", required: true, description: "init | set | advance | waiver | gate | card | fail | reflow | failure_report | archive | escape | <custom via ledger --kind>" }
+      signal: { type: "enum", required: false, description: "closed set from routing.yaml (card_test_fail, same_card_same_fingerprint, whitelist_overflow, lock_hash_mismatch, pbt_fail_n3_consistent_with_req, counterexample_cites_dos_invariant, counterexample_cites_psl_rule, hidden_variant_fail, review_thread_strike_limit, human_ac_pending, b_tier_warning_over_threshold, escape_defect, budget_exhausted, oscillation_detected, plateau, impossible_under_contract) or a gate id" }
+      layer: { type: "enum", required: false, description: "card ⊂ plan ⊂ task ⊂ ontology ⊂ world — the reflow coordinate (routing also emits pseudo-layers exception / g3 / human_attribution / next_outer)" }
+      fingerprint: { type: "string", required: false, description: "stable digest of the failure output (or sha1[:12] of --evidence); repeat / oscillation are computed over the window" }
+      convergence: { type: "object", required: false, description: "fail events: {type none|repeat|oscillation|plateau|budget|impossible|handler=human, fingerprint_history, repeat, oscillation_period, score}" }
+      note: { type: "string", required: false, description: "evidence text" }
+      decision: { type: "string", required: false, description: "action taken or ESCALATE→<layer>" }
+      by: { type: "string", required: true, description: "engine | human:<name> | <verifier node>" }
+      refs: { type: "array", required: true, description: "typed edges {type ∈ caused_by | decided_by | supersedes | implements | references | depends_on | rejected_alternative, target ∈ ev-id | CARD-* | AC-* | REQ-* | PSL-* | DOS-* | routing.Rnn | human:* | github:* | path}" }
+    identity_rule: |
+      Identified by id within a Run's trace.jsonl; the same row appears in ledger.md (human projection).
+      Never edited, never deleted; a corrupt trace never affects budgets or transitions (evidence, not control state).
+    lifecycle: |
+      appended by every mutating aidlc_state.py command (init / set / advance / gate / card / fail / report /
+      ledger / archive) → queried by trace.py why / impact, metrics.py, tune.py → archived with the Run.
+
+  Node:
+    description: "A participant in the declared execution graph with a bounded read/write identity."
+    type: "entity"
+    synonyms: ["节点", "skill node", "agent node", "human node", "stage node", "graph.yaml nodes[]"]
+    properties:
+      id: { type: "string", required: true, description: "<skill> | agent.<name> | human.<name> | stage.<stage>" }
+      kind: { type: "enum", required: true, description: "skill | agent | human | stage" }
+      role: { type: "enum", required: false, description: "orchestrator | world | knowledge | contract | standard | planner | implementer | evaluator | delivery | learning | gate — the docs' 九环 is this field grouped" }
+      reads: { type: "array", required: false, description: "what the Node may read" }
+      must_not_read: { type: "array", required: false, description: "the compiled isolation: implementers never see ratchet-log/**, spec-robustness.md, evaluator prompts, hidden set, other WorkUnits" }
+      writes: { type: "array", required: true, description: "bounded write scope; non-empty for skill/agent kinds; never a bare ** / * (verify_graph lint 1)" }
+      authority: { type: "object", required: false, description: "{commit, post, resolve, approve, sign, merge, push_tag} booleans" }
+      loop: { type: "ref", required: false, description: "the Loop this Node generates inside (loops.yaml id)" }
+      resume_binding: { type: "array", required: false, description: "human Nodes only: the Run state fields a resume must match (verify_graph lint 4)" }
+      handled_by: { type: "array", required: false, description: "stage Nodes only: the Nodes that do the stage's work" }
+    identity_rule: |
+      Identified by id in graph.yaml (52 nodes at v0.6.0: 28 skill, 15 stage, 5 human, 4 agent). Declaration-time
+      object: it changes by human PR (verify_graph.py, verify_loop.py, graph check assert it), not per Run.
+    lifecycle: |
+      declared in graph.yaml → linted (bounded writes, DAG without loop_back, evaluator→implementer carries,
+      human resume binding, fan_in merge) → mutually asserted against aidlc_state.py ORDER → rendered (graph render).
+
+  Loop:
+    description: "A cycle contract: who generates, who verifies, and the four ways it stops."
+    type: "entity"
+    synonyms: ["环契约", "loops.yaml entry", "六个环 (card_retry · ratchet · acceptance_ratchet · review_loop · lifecycle · hill_climb)"]
+    properties:
+      id: { type: "string", required: true }
+      level: { type: "enum", required: true, description: "agent | verification | event | hill_climbing (LangChain four layers)" }
+      timescale: { type: "enum", required: true, description: "minutes | hours | days" }
+      goal: { type: "object", required: true, description: "{predicate, checked_by}" }
+      generator: { type: "ref", required: true, description: "Node that produces (implement, ratchet.worker, agent.comment-fixer, ai-dlc, tune)" }
+      verifier: { type: "ref", required: true, description: "Node that judges — never the same Node as generator (verify_loop)" }
+      stop: { type: "object", required: true, description: "four keys, all explicit (null allowed): success (non-null predicate) · convergence {fingerprint_repeat, oscillation_periods, plateau_rounds, …} · budget {ref routing:<dotted> | literal + numbers} · impossible {signal, reporters}" }
+      memory: { type: "array", required: true, description: "on-disk state inside the archive/state layout (.aidlc/, specs/, ratchet-log/, cards/, tests/, tune/, retro/, state.json, ledger.md, trace.jsonl, learnings.md, dead-ends.md, results.tsv)" }
+      fresh_context: { type: "boolean", required: true, description: "true = every iteration starts a new context and reads memory from disk" }
+      trigger: { type: "enum", required: true, description: "turn_end | event | interval | cron | after | manual; bound to /goal, /loop, Stop hook, /schedule in triggers.yaml" }
+      escalate_to: { type: "enum", required: true, description: "card | plan | task | ontology | world | human" }
+      signals: { type: "array", required: false, description: "routing signals this Loop can emit" }
+    identity_rule: |
+      Identified by id in loops.yaml; every loop_back edge in graph.yaml names exactly one Loop (verify_graph lint 2).
+      Declaration-time object; its parameters change only through /tune proposals merged by a human.
+    lifecycle: |
+      declared → linted (generator ≠ verifier, stop four keys, budget.ref resolves, memory in layout) →
+      consumed per Run by aidlc_state.py loops (budget consumption) and by tune.py (proposals) → amended by PR.
+
+  RepoAsset:
+    description: "A repo-level ontology artifact the team shares: discovered in the project directory, tracked in git."
+    type: "aggregate_root"
+    synonyms: ["仓库级制品", "X1 制品", "本体制品", "dos.yaml", "decisions.md", "agent-map.md", "invariants/", "repo asset"]
+    naming_note: |
+      The eighth object, past the ≤7 discipline, waived in decisions.md (`object_count`). Judgment 2 found
+      nothing to merge into — a Contract is per-Run and frozen by Gate g2, a RepoAsset outlives every Run and
+      changes only through an ontology-layer proposal. Judgment 4 kept it in this context: all three consumers
+      (issue closure, WorkUnit.dos_slice, the vocabulary sensor) sit inside R2–R8, not downstream of it.
+    properties:
+      kind: { type: "enum", required: true, description: "dos | decisions | agent_map | invariants — the closed set repo_assets.py knows" }
+      canonical_path: { type: "string", required: true, description: "where it belongs when absent: under Run.world.scope in a monorepo (plugins/ai-dlc/dos.yaml), else the repository root" }
+      path: { type: "string", required: false, description: "repo-root-relative path actually found, or null; .aidlc/ resolves but is reported as not shareable" }
+      tracked: { type: "boolean", required: false, description: "git ls-files sees it; false is not「有本体」, it is「你有本体」" }
+      required_level: { type: "enum", required: true, description: "optional | recommended | required — sizing.yaml.repo_assets by tier and track; required is the only level prereqs(issue) refuses on" }
+      produced_by: { type: "enum", required: true, description: "dos-extract | invariant-extract; afterwards amended by an ontology-layer proposal, never by an implementer Node" }
+    identity_rule: |
+      Identified by kind plus the scope it was discovered under: one ontology per bounded context, never one per Run.
+      In a monorepo the bounded context is the package, so plugins/ai-dlc/dos.yaml and a sibling plugin's are two
+      RepoAssets, not one — and a repository-root copy claiming to cover both would be a scope lie.
+    lifecycle: |
+      extracted once per package (dos-extract / invariant-extract) → committed to git → discovered by every later
+      Run (repo_assets.py, recorded into Run.world) → amended by an ontology-layer change proposal.
+      Never written by a Run, never copied into .aidlc/.
+
+# -----------------------------------------------------------------------------
+# 4. Relationships
+# -----------------------------------------------------------------------------
+relationships:
+  - subject: "Run"
+    verb: "HAS"
+    object: "Contract"
+    cardinality: "1:1"
+    inverse: "BELONGS_TO"
+    description: "state.json contract.done_when; one Contract per Run, v2 the only schema"
+  - subject: "Run"
+    verb: "IS_SPLIT_INTO"
+    object: "WorkUnit"
+    cardinality: "1:N"
+    inverse: "BELONGS_TO"
+    description: "cards/CARD-*.yaml registered in Run.cards.items; unit-level acceptance ≠ Run-level acceptance"
+  - subject: "Run"
+    verb: "PASSES"
+    object: "Gate"
+    cardinality: "1:N"
+    inverse: "GUARDS"
+    description: "g1 (psl track), g2, g3 — the stage machine cannot advance past a Gate stage without its verdict"
+  - subject: "Run"
+    verb: "APPENDS"
+    object: "Event"
+    cardinality: "1:N"
+    inverse: "RECORDED_IN"
+    description: "every mutating command appends one Event to ledger.md and trace.jsonl"
+  - subject: "Run"
+    verb: "OCCUPIES"
+    object: "Node"
+    cardinality: "N:1"
+    inverse: "HOSTS"
+    description: "Run.stage names the stage Node the Run currently occupies; graph next lists its legal successors"
+  - subject: "Contract"
+    verb: "CONSTRAINS"
+    object: "WorkUnit"
+    cardinality: "1:N"
+    inverse: "DERIVES_FROM"
+    description: "ac_ids ⊆ Contract.acceptance ids; forbidden_files ⊇ Contract.constraints.forbidden_paths"
+  - subject: "Gate"
+    verb: "FREEZES"
+    object: "Contract"
+    cardinality: "1:1"
+    inverse: "FROZEN_BY"
+    description: "g2 pass requires Contract.lock; after it, a locked file may change only with a change proposal in the same diff"
+  - subject: "Node"
+    verb: "HOLDS"
+    object: "Gate"
+    cardinality: "1:1"
+    inverse: "HELD_BY"
+    description: "human.g1 / human.g2 / human.g3 hold g1 / g2 / g3; human.merge and human.harness-review hold no Gate (Q004)"
+  - subject: "Node"
+    verb: "HANDS_OFF_TO"
+    object: "Node"
+    cardinality: "N:N"
+    inverse: "RECEIVES_FROM"
+    description: "graph.yaml edges typed sequential | conditional | fan_out | fan_in | loop_back | interrupt | handoff, with guard / when / signal / carries / merge"
+  - subject: "Loop"
+    verb: "GENERATED_BY"
+    object: "Node"
+    cardinality: "N:1"
+    inverse: "GENERATES"
+    description: "loops.yaml generator"
+  - subject: "Loop"
+    verb: "VERIFIED_BY"
+    object: "Node"
+    cardinality: "N:1"
+    inverse: "VERIFIES"
+    description: "loops.yaml verifier; must differ from the generator"
+  - subject: "Node"
+    verb: "PARTICIPATES_IN"
+    object: "Loop"
+    cardinality: "N:1"
+    inverse: "ENCLOSES"
+    description: "node.loop in graph.yaml; loop_back edges out of the Node name the same Loop"
+  - subject: "Event"
+    verb: "CAUSED_BY"
+    object: "Event"
+    cardinality: "N:1"
+    inverse: "CAUSES"
+    description: "effect → cause (reflow → fail; failure_report → reflow; escape → AC change); trace.py why walks it"
+  - subject: "Event"
+    verb: "IMPLEMENTS"
+    object: "WorkUnit"
+    cardinality: "N:N"
+    inverse: "IMPLEMENTED_BY"
+    description: "card events with a commit sha: implements CARD-xx and its AC ids; trace.py impact walks it"
+  - subject: "Event"
+    verb: "AMENDS"
+    object: "Contract"
+    cardinality: "N:1"
+    inverse: "AMENDED_BY"
+    description: "supersedes done_when.yaml#AC-nnn@vK — the change-proposal path; metrics.py counts it as contract rework"
+  - subject: "Event"
+    verb: "DECIDED_BY"
+    object: "Gate"
+    cardinality: "N:1"
+    inverse: "DECIDES"
+    description: "gate events reference the Gate record and human:<signer>; fail events reference routing.Rnn instead"
+
+  - subject: "Run"
+    verb: "RESOLVES_AGAINST"
+    object: "RepoAsset"
+    cardinality: "N:1"
+    inverse: "IS_RESOLVED_BY"
+    description: "issue closure and WorkUnit.dos_slice resolve their nouns against the RepoAsset of kind dos; a Run never writes one"
+  - subject: "WorkUnit"
+    verb: "SLICES"
+    object: "RepoAsset"
+    cardinality: "N:1"
+    inverse: "IS_SLICED_FOR"
+    description: "slice_agent_map.py cuts the agent_map RepoAsset per WorkUnit into card_context.md — the whole map is noise, zero lines is guessing"
+
+# -----------------------------------------------------------------------------
+# 5. Rules (constitution — Judgment 3; policy numbers are excluded, see decisions.md)
+# -----------------------------------------------------------------------------
+rules:
+  - id: "R001"
+    statement: "Within a Run, every artifact is written by exactly one Node."
+    rationale: "一个产物只有一个生产者 (ARCHITECTURE §2, §6.1); two writers of one artifact make provenance and rollback ambiguous."
+    enforced_by: "user_workflow"
+  - id: "R002"
+    statement: "A Run has exactly one Contract, and it has the v2 AC-first shape; other shapes enter only through conversion."
+    rationale: "契约只有一种 schema (§6.1); three producers and two schemas were the first inconsistency found on 2026-09-05."
+    enforced_by: "system"
+  - id: "R003"
+    statement: "No WorkUnit exists before the Contract is frozen by Gate g2."
+    rationale: "判据先于代码 (§6.2); cards need a frozen AC subset to point at."
+    enforced_by: "system"
+  - id: "R004"
+    statement: "Tests are written by a Node that is not the implementer and are locked (stage l5) before implementation; a WorkUnit's forbidden files always include tests/** and the Contract."
+    rationale: "测试非实现者写且写完锁 (§6.2, C6); an implementer that can edit the test can make it green."
+    enforced_by: "system"
+  - id: "R005"
+    statement: "An implementer Node never reads evaluator output; the only things an evaluator Node may hand an implementer Node are fix_prompt and accepted_claim."
+    rationale: "实现者看不到评估者 (§6.3); information visibility is not execution order — the evaluation collapses if the implementer reads the judge's notes."
+    enforced_by: "system"
+  - id: "R006"
+    statement: "Budgets, counters and termination live in Run.counters and Loop.stop and are advanced only by scripts; no Node keeps its own counter."
+    rationale: "预算与终止由脚本强制 (§6.4); a model-maintained counter is a counter that forgets."
+    enforced_by: "system"
+  - id: "R007"
+    statement: "Events are append-only and never rolled back; artifacts (Contract, WorkUnit, code) may be rolled back."
+    rationale: "账本只增不删 (§6.5, WikiSkill asymmetric rollback); judgments and failures are paid-for assets."
+    enforced_by: "system"
+  - id: "R008"
+    statement: "A Gate verdict carries a human signer; no Node of kind skill or agent records one, and --autopilot skips confirmations, never Gates."
+    rationale: "三道门只能人签 (§6.6); the gates exist precisely where the machine's judgment is not trusted."
+    enforced_by: "user_workflow"
+  - id: "R009"
+    statement: "A Run cannot advance past a Gate stage until that Gate's verdict is recorded, or an explicit Waiver Event is written."
+    rationale: "门编译成前置条件 — 不跑就 advance 不了 (§3.2); a silent skip would make the gate decorative."
+    enforced_by: "system"
+  - id: "R010"
+    statement: "meets_done_when is computed by a script from the Contract's thresholds, never declared by an evaluator Node; a standard that has not passed calibrate is not evidence."
+    rationale: "未校准的标准不当证据 (§6.7); an evaluator announcing 'done' is the reward-hacking surface the plugin exists to close."
+    enforced_by: "not_enforced"
+  - id: "R011"
+    statement: "Every failure Event is routed to a Layer by the routing table before any retry; when a Layer's budget is exhausted the Run escalates to the next outer Layer with a failure report, never a retry."
+    rationale: "失败归层再处理 (§6.8, X2); the default of retrying a world-layer error at the implementation layer is the catastrophe routing prevents."
+    enforced_by: "system"
+  - id: "R012"
+    statement: "A repeated fingerprint, an oscillation or a plateau escalates instead of retrying; impossible_under_contract may be reported only by a verifier Node or a human."
+    rationale: "收敛 ≠ 正确 (§6.12); an implementer saying 'impossible' is self-assessment, not evidence."
+    enforced_by: "system"
+  - id: "R013"
+    statement: "Every cycle a Run can traverse is a loop_back edge owned by a Loop with a budget and a measurable success predicate; every Node has a bounded write scope; every human Node declares a resume binding."
+    rationale: "图与环是数据，不是散文 (§6.11); the first graph.yaml was caught by its own lint with two unowned cycles."
+    enforced_by: "system"
+  - id: "R014"
+    statement: "A Loop's generator Node and verifier Node are different Nodes."
+    rationale: "generator ≠ verifier is the self-verification anti-pattern every loop-engineering source names (loops.yaml header)."
+    enforced_by: "system"
+  - id: "R015"
+    statement: "A Run reaches archive only after release verification is green or a skipped_reason is recorded, and every escape defect is attributed to a Layer."
+    rationale: "合入不是终点 (§6.9); the escape defect is the world layer's only external calibration source."
+    enforced_by: "system"
+  - id: "R016"
+    statement: "Changes to Loop or routing parameters are proposals that a human Node merges; a script never applies them."
+    rationale: "harness 改动经人 (§6.13); an auto-tuning loop that edits its own budgets has no outside."
+    enforced_by: "system"
+  - id: "R017"
+    statement: "A Node's effectiveness claim never exceeds its evidence tier; a static_only skill is never described as verified."
+    rationale: "静态过审 ≠ 有效 (§6.10); the plugin's honesty about itself is part of what it is."
+    enforced_by: "user_workflow"
+  - id: "R018"
+    statement: "A check that did not run has not passed: an unevaluated analyzer, probe or review is recorded as unevaluated and never counted green, and a gate posture turns it into a failure."
+    rationale: |
+      未检 ≠ 通过. exit 3 (verify_vocabulary, verify_compile), probed=false (verify_agent_map) and `unevaluated`
+      (the review skills) all read like a pass to anyone scanning for red; --require-ontology / --require-dos are
+      the gate posture that turns them back into failures. Lifted 2026-09-10, after X1 was found declared in every
+      document and enforced nowhere — three consumers had been degrading silently.
+    enforced_by: "system"
+  - id: "R019"
+    statement: "What you get by omission is the stricter path; every exemption is bought with counted evidence and recorded as a Waiver Event."
+    rationale: |
+      一个靠遗漏就能打开的门不是门 (ARCHITECTURE.md). intake.size defaults to M with size_source=default,
+      a hand-set tier grants no skip, never_skippable holds even when sizing.yaml is wrong. True since v0.10.0;
+      the 2026-09-05 pass did not lift it into the constitution — this is a rule recovered, not a rule added.
+    enforced_by: "system"
+  - id: "R020"
+    statement: "A RepoAsset lives in the project directory under its bounded context and is tracked in git; a copy under the runtime directory is not the team's language."
+    rationale: |
+      本体是团队的共同词表，一份没进版本库的词表不是「有本体」，是「你有本体」. .aidlc/ is per-Run state
+      (init itself warns when it is not gitignored), so an ontology parked there is found by neither the next Run
+      nor the next person. In a monorepo the context is the package, not the repository root.
+    enforced_by: "system"
+
+# -----------------------------------------------------------------------------
+# 6. Composition (derived views — not new objects)
+# -----------------------------------------------------------------------------
+composition:
+  Ledger:
+    description: "ledger.md — the human-readable, append-only table of a Run's Events"
+    derived_from: ["Run APPENDS Event", "one row per Event: at | stage | kind | signal / gate | layer | fingerprint | evidence | decision | by"]
+    is_persistent: true
+  Trace:
+    description: "trace.jsonl — the machine-readable sidecar of the same Events with typed refs"
+    derived_from: ["the same Event stream as Ledger", "Event.refs edges; trace.py why / impact / render / lint"]
+    is_persistent: true
+  Graph:
+    description: "graph.yaml — all Nodes plus their HANDS_OFF_TO edges and the stages list"
+    derived_from: ["Node", "Node HANDS_OFF_TO Node", "stages == aidlc_state.py ORDER (graph check)"]
+    is_persistent: true
+  Ring:
+    description: "九环 R0–R8 + 脊柱 — the docs' grouping of skills; graph.yaml carries it as Node.role, not as a field"
+    derived_from: ["Node grouped by role: world→R0, knowledge→R1, contract→R2, standard→R3, planner→R4, implementer→R5, evaluator→R6, delivery→R7, learning→R8, orchestrator→脊柱, gate→human"]
+    is_persistent: false
+  Layer:
+    description: "the reflow coordinate ladder card ⊂ plan ⊂ task ⊂ ontology ⊂ world"
+    derived_from: ["routing.yaml layers", "Run.counters keys", "Event.layer values", "Loop.escalate_to values (∪ human)"]
+    is_persistent: false
+  FailureReport:
+    description: "failure-report-*.md — the G3 input written after an escalation (candidate layer + evidence + convergence + excluded + suggested rollback)"
+    derived_from: ["the reflow Event and its convergence block", "Event CAUSED_BY chain (trace.py why pre-fills 已排除的可能)", "clears Run.pending.failure_report via report --path"]
+    is_persistent: true
+  ChangeProposal:
+    description: "change-proposal-*.md — the only legal path to alter a locked Contract file (in the same diff)"
+    derived_from: ["Event AMENDS Contract", "Gate g2 re-sign", "counted as one task-layer reflow"]
+    is_persistent: true
+  Archive:
+    description: "specs/<slug>/ — the Run's durable record and the data source of retro and tune"
+    derived_from: ["Run state.json", "Ledger + Trace", "Contract + lock", "WorkUnits", "evaluation final-state", "Gate records", "archive-manifest.json"]
+    is_persistent: true
+  EvidenceLog:
+    description: ".aidlc/pr-watch/pr-N.json — review_loop's own append-only verdict log (ACCEPT/REJECT/REPLY/ESCALATE/SKIPPED, sycophancy_suspect)"
+    derived_from: ["review_loop Loop memory", "not (yet) mirrored into the Run's Trace — see Q005"]
+    is_persistent: true
+
+# -----------------------------------------------------------------------------
+# 7. Behaviors (cause → effects)
+# -----------------------------------------------------------------------------
+behaviors:
+  - trigger: "a human signs the Contract at g2 (lock_done_when.py sign --by <name>; gate g2 --verdict pass)"
+    effects:
+      - "Contract.lock is written (stage g2) and Gate g2 verdict = pass with by / at / record"
+      - "Run may advance to cards; WorkUnits can now be split"
+      - "any later change to a locked file without a change proposal in the same diff is refused by verify_commit.py / lock verify (exit 1); with one it passes (exit 2) and counts a task-layer reflow"
+    notes: "L5 re-signs with --stage l5 once tests and behavior are written by a non-implementer"
+  - trigger: "aidlc_state.py fail --signal <signal> [--card] [--fingerprint|--evidence] [--score] [--by]"
+    effects:
+      - "an Event of kind fail is appended with layer, fingerprint, convergence and decided_by routing.Rnn"
+      - "Run.counters[layer] += 1; fingerprint_history window updated; WorkUnit.retries += 1 for card-layer signals"
+      - "repeat (same fingerprint ×limit), oscillation (period 2–3), plateau (score stale) or budget exhaustion → a reflow Event CAUSED_BY the fail, Run.pending.failure_report = true, escalate_to the next outer Layer (or human)"
+      - "impossible_under_contract from a --by not in routing.impossible_reporters is refused (exit 1)"
+    notes: "check-clean --as-hook blocks ending the session until report --path clears pending.failure_report"
+  - trigger: "advance <stage> with unmet prerequisites and --force --reason"
+    effects:
+      - "a Waiver {stage, reason, at, unmet} is appended to Run.waivers"
+      - "a waiver Event (decided_by human:waiver) then an advance Event are appended"
+      - "retro counts waivers as a process smell; tune proposes an ai-dlc fix_list entry when ≥50% of features carry waivers"
+    notes: "--force without --reason is refused; a silent skip does not exist"
+  - trigger: "a WorkUnit is marked done with a commit (card CARD-xx --status done --commit <sha> --ac …)"
+    effects:
+      - "Run.cards.items[CARD-xx].status = done, commits += sha"
+      - "an Event of kind card IMPLEMENTS CARD-xx and each AC id (trace.py impact)"
+      - "when every WorkUnit is done and no failure report is pending, advance acceptance becomes legal"
+  - trigger: "acceptance-fleet decodes meta-judge into a four-state result"
+    effects:
+      - "DONE → acceptance.evaluation_result set; advance pr becomes legal"
+      - "FIX → fail --signal card_test_fail (card layer; same fingerprint twice escalates to plan)"
+      - "SPEC_DRIFT → fail --signal pbt_fail_n3_consistent_with_req (task layer: narrow the REQ, do not patch code)"
+      - "GAMING_RISK → task layer with contract hardening; NEEDS_HUMAN → human_ac_pending → Gate g3"
+      - "impossible_under_contract may be reported here (--by acceptance-fleet | meta-judge) → change proposal + g2 re-sign"
+    notes: "the only edge from the fleet into an implementer Node carries fix_prompt (verify_graph lint 3)"
+  - trigger: "an escape defect is registered after merge (/issue --escape)"
+    effects:
+      - "an escape row is appended to escape-defects.md with a human-attributed Layer and 'why the gate missed'"
+      - "an Event of kind escape (signal escape_defect, R12) is appended; routing continues by the attributed Layer"
+      - "metrics.py walks its CAUSED_BY chain to the root (escape chain depth / root layer); tune routes a fix_list entry to the Layer's skill"
+  - trigger: "Gate g1 is rejected"
+    effects:
+      - "attribution derivation_error | rule_error is mandatory (refused otherwise)"
+      - "Run.counters.world += 1; rule_error means the PSL changes before re-derivation, derivation_error re-derives on the same PSL"
+  - trigger: "a Run is archived (advance archive; aidlc_state.py archive --to specs/<slug>)"
+    effects:
+      - "state.json, ledger.md, trace.jsonl and Run.artifacts are copied into the Archive with archive-manifest.json"
+      - "retro (metrics.py) and tune (tune.py) read the Archive; tune emits harness proposals as diffs that a human merges (hill_climb loop_back into ai-dlc)"
+
+# -----------------------------------------------------------------------------
+# 8. Bounded contexts (Judgment 4)
+# -----------------------------------------------------------------------------
+bounded_contexts:
+  current_context: "software delivery lifecycle (R2–R8 runtime + X2/X3/X4 declarations) — owns Run, Contract, WorkUnit, Gate, Event, Node, Loop"
+
+  upstream_contexts:
+    - name: "world (R0/R1: PSL, DOS proposal + as-is DOS, invariant cards)"
+      provides: ["PSL-ID laws", "DOS objects and R00x rules", "invariant cards", "form-draft sha256"]
+      translation_notes: "Run.world holds paths only; WorkUnit.dos_slice and the issue's Depends-on-DOS close against DOS objects/rules; Gate g1 attribution rule_error is the world-layer reflow; qanat 'Territory' = a DOS bounded context"
+    - name: "requirement intake (GitHub issue + EARS spec.md)"
+      provides: ["Issue (Intent / Track / Scope / Acceptance / Assumptions / Depends on DOS)", "Requirement REQ-ids", "assumption ledger rows"]
+      translation_notes: "Run.issue keeps {number, url, kind}; Contract.based_on and acceptance[].req reference REQ-ids; the issue's Acceptance block is a Contract draft (issue-inline), never the Contract itself"
+    - name: "GitHub delivery surface (PR, review threads, commits, tags)"
+      provides: ["PR number / url / size class", "review comments as claims", "merge sha", "tags"]
+      translation_notes: "Run.pr, Run.merge, Run.release hold slim refs; review_loop keeps its own EvidenceLog under .aidlc/pr-watch (Q005); merge and approve are human actions, not Gates"
+    - name: "skill evaluation (skillwise gate.json)"
+      provides: ["tier static_only", "fix_list"]
+      translation_notes: "feeds R017; tune.py writes fix_list entries as its 'skill' delivery channel; skill-evolve (neighbour) reads them"
+
+  downstream_contexts:
+    - name: "acceptance evaluation (six review skills + meta-judge + acceptance-fleet; pr-review)"
+      consumes: ["Contract thresholds / rules / constraints", "WorkUnit ac_ids", "spec-robustness.md", "ratchet-log iteration history"]
+      translation_notes: "its Finding (severity P0–P3, tier A/B/C, confidence, vendor) and Verdict (PASS / BLOCK_MERGE / NEEDS_HUMAN → DONE / FIX / SPEC_DRIFT / GAMING_RISK) are not modelled here; they re-enter as Event signals (card_test_fail, pbt_fail_n3_consistent_with_req, impossible_under_contract, human_ac_pending) — the mapping lives only in each SKILL.md Wiring section (Q009)"
+    - name: "learning (retro + tune)"
+      consumes: ["Archive", "Events (escape chains, contract rework)", "EvidenceLog", "Loop / routing parameters"]
+      translation_notes: "retro proposes changes to Contract / world (change proposals, PSL Open Questions); tune proposes Loop / routing parameter diffs and fix_list entries — both re-enter only through a human"
+
+# -----------------------------------------------------------------------------
+# 9. Agent guidelines
+# -----------------------------------------------------------------------------
+agent_guidelines:
+  must:
+    - "Name domain things with this file's object names in cards' dos_slice and issues' Depends on DOS (Run, Contract, WorkUnit, Gate, Event, Node, Loop, RepoAsset); write 卡/Card only as a synonym in prose"
+    - "Write only artifacts listed in your Node's writes; anything else is a whitelist overflow, stop and report"
+    - "Record every failure through aidlc_state.py fail so it becomes an Event with a Layer and a fingerprint; never keep a private retry counter"
+    - "Freeze the Contract (Gate g2) before splitting WorkUnits; change a locked file only with a change proposal in the same diff"
+    - "Declare any new cycle in graph.yaml as a loop_back edge that names a Loop with stop.budget and a non-null stop.success"
+    - "Run `aidlc_state.py repo --scope <package>` before the first Run in a repository: absent RepoAssets mean the closure was not checked, not that it passed (R018)"
+  should:
+    - "Prefer a new Event.kind over a new log file; the Trace is where why / impact are answered"
+    - "Keep imported vocabulary (Territory, Run, MemoryAsset, R001/R002) in the 术语映射 tables, not in state or graph declarations"
+    - "Use Node.role, not ring numbers, when grouping skills in data; the nine rings are a documentation view"
+    - "Report enforced_by honestly: a script that flags is not a script that rejects"
+  must_not:
+    - "Do not introduce a second Contract schema or a second contract producer without conversion (R002; anti-pattern: three producers, two schemas)"
+    - "Do not hand findings, verdicts, confidence or evaluator identity to an implementer Node — only fix_prompt / accepted_claim (R005)"
+    - "Do not edit or delete a ledger.md row or a trace.jsonl line (R007)"
+    - "Do not record a Gate verdict as a skill or agent, and do not let --autopilot sign one (R008)"
+    - "Do not declare meets_done_when from an evaluator; compute it against Contract.thresholds (R010)"
+    - "Do not report impossible_under_contract as an implementer (R012)"
+    - "Do not add a cycle to graph.yaml without a loop_back edge and an owning Loop (R013; anti-pattern: unowned cycles)"
+    - "Do not apply a tune proposal directly to routing.yaml, loops.yaml, pr-poll.sh or gate.json — emit a diff for a human PR (R016)"
+    - "Do not describe a static_only skill as verified (R017)"
+    - "Do not use 环 unqualified in new docs or data: say Ring (R0–R8 grouping) or Loop (loops.yaml contract) (anti-pattern: overloaded 环 / 门)"
+    - "Do not report an unevaluated check as a pass — exit 3, probed=false and unevaluated are recorded as unchecked (R018)"
+    - "Do not place a RepoAsset under .aidlc/, leave it untracked, or set its path by hand — it is discovered, and an untracked ontology is yours, not the team's (R020)"
+
+# -----------------------------------------------------------------------------
+# 10. Anti-patterns (real history of this plugin — not generic warnings)
+# -----------------------------------------------------------------------------
+anti_patterns:
+  - pattern: "Three producers, two schemas for the Contract (issue-inline AC v2 / donewhen-extract card / acceptance-spec done_when v1)"
+    why_bad: "downstream consumers (/issue, /pr, lint_cards.py, spec-gaming-detector) could not agree on the shape; G2 froze different things depending on the path taken"
+    correct_approach: "one Contract object with schema v2 as the only shape; v1 enters through convert_v1_to_v2.py; validate_done_when_v2.py compiled into advance g2; two-stage lock g2 / l5"
+    historical_context: "2026-09-05 第二次整理 #1 (docs/design-notes.md). Residual: acceptance-spec still emits v1 (its gate.json fix_list 'upgrade done_when.yaml to the AC-first v2 shape') — Q008"
+  - pattern: "Lifecycle stages with no owning Node (L4 plan hidden inside /ai-dlc; L6 implement, L8 delivery, X3 learning had no skill)"
+    why_bad: "an artifact without a producer Node cannot be given a write scope or an isolation contract; the stage existed in the docs' ASCII but nowhere a lint could see"
+    correct_approach: "one Node per stage's work: plan-cards (lint_cards.py moved in), implement (+ card-implementer agent), release (verify_release.py), retro (metrics.py); stage release added to ORDER"
+    historical_context: "2026-09-05 第二次整理 #2 (docs/design-notes.md)"
+  - pattern: "The execution graph lived in ARCHITECTURE.md ASCII while the stage chain was hard-coded in aidlc_state.py ORDER — two sources that could drift"
+    why_bad: "no property of the graph (bounded writes, owned cycles, fix_prompt-only edges, resume bindings, fan-in merge) could be checked; docs and code disagreed silently"
+    correct_approach: "graph.yaml as data, verify_graph.py five lints, aidlc_state.py graph check asserting ORDER == graph.yaml.stages; source of truth still to be decided (Q003)"
+    historical_context: "docs/proposals/loop-graph-engineering.md §0 last row; implemented v0.6.0 (P1); ai-dlc gate.json fix_list keeps the source-of-truth decision open"
+  - pattern: "Cycles without a Loop: the first graph.yaml closed two iterations (acceptance fan-in hand-back; fix-verifier → review-loop) with plain handoff edges"
+    why_bad: "an unbounded cycle with an unmeasurable pass condition — exactly the production failure graph engineering names; no budget, no success predicate, no owner"
+    correct_approach: "type the closing edge loop_back and name its Loop (acceptance_ratchet, review_loop); verify_graph lint 2 rejects the alternative"
+    historical_context: "dogfooding finding, 2026-09-05 第三次整理 (docs/design-notes.md; ARCHITECTURE.md §3.7 '实测')"
+  - pattern: "Six loops, six vocabularies (retries · rounds · strikes · iterations · MAX_ROUNDS · stale_count) with no common contract"
+    why_bad: "nobody could answer 'which loop is burning budget and how much'; generator ≠ verifier and the stop condition were implicit per skill"
+    correct_approach: "one Loop object (loops.yaml) with level / timescale / generator / verifier / stop four keys / memory / trigger; verify_loop.py; aidlc_state.py loops"
+    historical_context: "docs/proposals/loop-graph-engineering.md §2.1 last row → 方案 B, v0.6.0"
+  - pattern: "A flat ledger: ledger.md rows with no references between them; G1/G3 records, failure reports, change proposals, rejected fixes, review verdicts as isolated files"
+    why_bad: "'why did AC-003 change' and 'why did the gate miss' were archaeology, not queries; the edge type IS the knowledge"
+    correct_approach: "Event.refs with the closed edge set (caused_by, decided_by, supersedes, implements, references, depends_on, rejected_alternative) mirrored into trace.jsonl; trace.py why / impact; metrics from edges"
+    historical_context: "docs/proposals/loop-graph-engineering.md §0 / 方案 F; adopted with `caused_by` instead of `caused` (design-notes 第三次整理)"
+  - pattern: "Rules declared as system-enforced that the script only flagged or never checked (dos-extract must_not→anti-pattern trace; invariant-extract 'only guarantee'; calibrate mutation floor absent while alpha floor hard; donewhen-extract paired_with never resolved)"
+    why_bad: "a rule with enforced_by: system that the verifier does not reject is a false guarantee — the exact reward-hacking hole (lower the line to pass) the skills forbid"
+    correct_approach: "split the mechanical half (reject) from the semantic half (needs_semantic_review) in every verify_*.py and say which is which; add symmetric hard floors; resolve references, do not string-check them"
+    historical_context: "eval/gate.json round-1 blockers, 2026-06-24 (dos-extract DE3, invariant-extract, calibrate HARD_MUTATION_FLOOR, donewhen-extract 纪律②); closed in round 2. This DOS keeps R001/R008/R010/R017 honest as user_workflow / not_enforced for the same reason"
+  - pattern: "Same word, different object across imported skills: qanat's G1/G2 (verify_g1 machine gate / review_g2 review gate) versus ai-dlc's G1/G2 (world adjudication / criteria freeze)"
+    why_bad: "an imported SKILL.md read literally sends a reader to the wrong gate; 'R001/R002' and 'Territory/Run/MemoryAsset' likewise mean ai-dlc things under other names"
+    correct_approach: "keep imported bodies verbatim but add a 术语映射 table per skill mapping each foreign term to a declared ai-dlc object or rule; never re-use G1/G2 for a machine gate"
+    historical_context: "design-notes.md 直接收编 (qanat); 术语映射 tables in donewhen-extract / spec-compile / calibrate SKILL.md, 2026-09-05"
+  - pattern: "Overloaded Chinese terms in the docs: 环 means both Ring (九环 R0–R8) and Loop (loops.yaml 六个环); 门 means both the human Gate and the mechanical pre-gate (自动门 / 预门 / 闸)"
+    why_bad: "'每个圈必须归属一个环' and '九环与一根脊柱' use the same character for a cycle contract and a phase grouping; '自动门' invites reading a script check as a Gate a human could waive"
+    correct_approach: "Ring = composition (Node.role grouping), Loop = object; Gate = human-signed verdict only, mechanical checks = edge guards; qualify 环 / 门 in new text"
+    historical_context: "observed during this extraction (2026-09-05) in ARCHITECTURE.md §1/§3.2/§8 and README.md; not yet corrected — Q002"
+
+  - pattern: "X1 declared as a cross-cutting stage in every document and enforced nowhere in code: absent from ORDER, absent from every prereqs() branch, and doctor only ever checked the toolchain"
+    why_bad: |
+      Three consumers degraded in silence and all three read like a pass: the issue closure fell back to the
+      self-assessment it exists to beat («客观触发，不靠自评» became self-assessment), WorkUnit.dos_slice dropped
+      to an info line, and verify_vocabulary returned exit 3. A cross-cutting stage nothing asks for is a
+      cross-cutting stage nobody runs.
+    correct_approach: |
+      repo_assets.py discovers the artefacts and checks git tracking; sizing.yaml.repo_assets says how hard each
+      tier and track asks for them; prereqs(issue) refuses on the required level and records a Waiver Event when
+      forced. Closed v1.3.0 (2026-09-10) — see R018, R020.
+  - pattern: "A pre-gate whose reject text points at a waiver the code never reads: verify_dos.py said «exceed only with a human waiver in decisions.md» and nothing parsed one"
+    why_bad: |
+      The only way past was to ignore a permanently red pre-gate, and a gate you can only pass by ignoring it is
+      not a gate — it is training to skim past red. Same shape as R019 read backwards: an exemption that cannot
+      be expressed is an exemption taken silently.
+    correct_approach: |
+      The `## Naming waivers` bullet convention already existed; `object_count` now uses it, and the waiver is
+      reported under `waived` and flagged for the judge rather than clearing quietly (2026-09-10).
+
+# -----------------------------------------------------------------------------
+# 11. Open questions (owner + deadline mandatory)
+# -----------------------------------------------------------------------------
+open_questions:
+  - id: "Q001"
+    question: "The canonical name of the task unit is 卡 / Card in every doc and in code (CARD-xx), but verify_dos.py rejects any object ending in `Card` as a UI suffix, so this DOS names it WorkUnit. Whitelist whole-word `Card` in the verifier, or adopt WorkUnit in docs and card_template.yaml?"
+    raised_at: "2026-09-05"
+    raised_by: "dos-extract --auto"
+    owner: "XRenSiu"
+    deadline: "2026-09-30"
+    impact_if_unresolved: "cards' dos_slice and issues written by people will say Card and fail closure, or the DOS will drift from the team's word"
+    candidates: ["add a whole-word exemption list to verify_dos.py UI_IMPL_SUFFIXES", "rename 卡 → 任务单元 / WorkUnit across docs + card_template.yaml", "keep both with a synonyms field the closure checks honour"]
+  - id: "Q002"
+    question: "环 names both the nine Rings (R0–R8 documentation grouping) and the six Loops (loops.yaml). graph.yaml carries Node.role (11 values) and no ring field. Retire Ring in favour of Node.role, add `ring:` to graph.yaml, or keep Ring as a docs-only view?"
+    raised_at: "2026-09-05"
+    raised_by: "dos-extract --auto"
+    owner: "XRenSiu"
+    deadline: "2026-09-30"
+    impact_if_unresolved: "ARCHITECTURE.md §1 and graph.yaml can drift (they already disagree on gate/orchestrator vs 脊柱); '环契约' and '九环' stay ambiguous in Chinese"
+    candidates: ["Ring := Node.role grouping (this DOS's reading), document the mapping in §8 术语", "add ring: R0..R8 to every non-stage node and lint it", "drop the ring numbering from docs"]
+  - id: "Q003"
+    question: "Which is the source of truth for the stage list — graph.yaml.stages or aidlc_state.py ORDER? P1 asserts equality (graph check); P2 was to decide (lean graph.yaml, advance reads it)."
+    raised_at: "2026-09-05"
+    raised_by: "ai-dlc gate.json fix_list (carried here)"
+    owner: "XRenSiu"
+    deadline: "2026-09-30"
+    impact_if_unresolved: "two writable sources of the Run lifecycle; a stage added to one and not the other fails smoke instead of being impossible"
+    candidates: ["graph.yaml is the source and aidlc_state.py loads ORDER from it", "ORDER stays and graph.yaml.stages is generated", "keep mutual assertion permanently"]
+  - id: "Q004"
+    question: "Docs say three Gates (G1/G2/G3); graph.yaml declares five human Nodes (human.g1/g2/g3/merge/harness-review) with sign/merge authority. Are merge and harness-review Gates (with a verdict record) or plain human Nodes?"
+    raised_at: "2026-09-05"
+    raised_by: "dos-extract --auto"
+    owner: "XRenSiu"
+    deadline: "2026-09-30"
+    impact_if_unresolved: "Gate cardinality and R008/R009 apply to three checkpoints while two more human decisions (merge, harness PR) go unrecorded in Run.gates"
+    candidates: ["Gate = exactly g1/g2/g3 (this DOS); merge/harness-review stay human Nodes whose decisions are Events", "add merge and harness-review to Run.gates and the $defs/gate schema"]
+  - id: "Q005"
+    question: "review_loop keeps its own append-only EvidenceLog (.aidlc/pr-watch/pr-N.json: verdicts, sycophancy_suspect, pending_replies) outside the Run's Trace. Should review verdicts become Events (kind review_verdict) so trace.py why can cross from an escape defect into a REJECTed thread?"
+    raised_at: "2026-09-05"
+    raised_by: "dos-extract --auto"
+    owner: "XRenSiu"
+    deadline: "2026-09-30"
+    impact_if_unresolved: "two ledgers with different shapes; tune.py already reads both; 'why did the gate miss' stops at the PR boundary"
+    candidates: ["mirror each verdict into trace.jsonl with references github:pr#thread", "keep EvidenceLog separate and document it as review_loop memory only", "make pr-watch a per-Run subdirectory"]
+  - id: "Q006"
+    question: "R001 (one producer per artifact) has no mechanical check: verify_graph lint 1 checks that writes are bounded, not that an artifact appears in one Node's writes; graph.yaml today lists done_when.yaml under both donewhen-extract and acceptance-spec, card.allowed_files under three implementer Nodes, github:pr under pr and human.harness-review. Add a uniqueness lint (per Run path, alternative producers allowed) or downgrade R001 to a documentation rule?"
+    raised_at: "2026-09-05"
+    raised_by: "dos-extract --auto"
+    owner: "XRenSiu"
+    deadline: "2026-09-30"
+    impact_if_unresolved: "the constitution's first rule stays user_workflow while the graph already violates a literal reading of it"
+    candidates: ["lint: each artifact path written by ≤1 node unless the nodes are conditional alternatives on the same stage", "restate R001 as 'one producer per artifact per Run'", "leave as documentation"]
+  - id: "Q007"
+    question: "R010 (meets_done_when computed by a script) is not_enforced: the comparison script is a registered blank (stages.md L7, ai-dlc gate.json fix_list). Who writes it and where does it live — qa-reviewer's thresholds output, acceptance-fleet, or aidlc_state.py?"
+    raised_at: "2026-09-05"
+    raised_by: "ai-dlc references/stages.md 空白 (carried here)"
+    owner: "XRenSiu"
+    deadline: "2026-09-30"
+    impact_if_unresolved: "acceptance.meets_done_when remains a settable boolean any Node can write, contradicting the rule it is meant to embody"
+    candidates: ["aidlc_state.py set acceptance.meets_done_when computed from qa-report thresholds", "acceptance-fleet writes it into final-state.json and ai-dlc reads it", "leave settable and rely on R005 isolation"]
+  - id: "Q008"
+    question: "acceptance-spec still emits done_when.yaml v1 (test names under behavior, file/function existence) while R002 says v2 is the only Contract shape; the bridge is convert_v1_to_v2.py. Upgrade acceptance-spec to emit v2, or make /donewhen-extract the sole Contract producer?"
+    raised_at: "2026-09-05"
+    raised_by: "acceptance-spec gate.json fix_list (carried here)"
+    owner: "XRenSiu"
+    deadline: "2026-09-30"
+    impact_if_unresolved: "two Contract producers with different shapes persist; graph.yaml stage.contract handled_by both"
+    candidates: ["acceptance-spec emits v2 directly (Appendix C v2)", "acceptance-spec stops emitting done_when and hands spec.md to donewhen-extract", "keep convert as the permanent adapter"]
+  - id: "Q009"
+    question: "The four-state ratchet (DONE / FIX / SPEC_DRIFT / GAMING_RISK / NEEDS_HUMAN) maps onto routing signals only in prose (each SKILL.md 'Wiring in ai-dlc'). Should the mapping be data in routing.yaml (or loops.yaml#acceptance_ratchet) so the evaluation context's Verdict translates into an Event mechanically?"
+    raised_at: "2026-09-05"
+    raised_by: "dos-extract --auto"
+    owner: "XRenSiu"
+    deadline: "2026-09-30"
+    impact_if_unresolved: "the seam between the evaluation context and the lifecycle is the one place a Verdict can be mis-routed without any lint noticing"
+    candidates: ["routing.yaml gains a `verdict_map:` block", "acceptance-fleet emits `aidlc_state.py fail` itself from final-state.json", "leave as Wiring prose"]
+
+  - id: "Q010"
+    question: |
+      Does requiring a dos RepoAsset before issue actually reduce vocabulary drift, or does it just produce a
+      greenfield Waiver Event on every Run? The mechanism is smoke-covered; the effect is not measured, and
+      R017 says the claim may not exceed the evidence.
+    raised_by: "ai-dlc gate.json fix_list (2026-09-10)"
+    candidates:
+      - "count greenfield waivers per Run in /retro and compare escape defects by tier"
+      - "keep required at the L tier and the PSL track only (current)"
+      - "drop to recommended everywhere and rely on doctor"
+
+# -----------------------------------------------------------------------------
+# 12. Evolution log
+# -----------------------------------------------------------------------------
+evolution_log:
+  - version: "0.1.0"
+    date: "2026-09-05"
+    author: "XRenSiu"
+    change_type: "initial"
+    summary: "Extracted from plugins/ai-dlc (v0.6.0) via dos-extract --auto: 7 objects, 16 relationships, 17 constitution rules, 9 real anti-patterns, 9 open questions"
+    rationale: "Reverse-engineered as-is baseline for the X1 reconciliation against the ring-audit PSL's dos-proposal; pending team review"
+    breaking: false
+  - version: "0.2.0"
+    date: "2026-09-10"
+    author: "XRenSiu"
+    change_type: "amended"
+    breaking: false
+    summary: |
+      Renamed sdlc → ai-dlc throughout (the plugin was renamed 2026-09-08 and every plugins/sdlc/ path had
+      stopped resolving); added RepoAsset as the eighth object with a recorded object_count waiver; added
+      R018 未检≠通过, R019 缺省从严, R020 本体进版本库; two anti-patterns and Q010.
+    rationale: |
+      v1.3.0 pulled repo-level ontology assets into the pipeline's own vocabulary, and the 2026-09-05 baseline
+      predates both that and the rename. Moved out of dogfood/ring-audit/ into plugins/ai-dlc/ so repo_assets.py
+      can discover it: this repository is a monorepo, and the bounded context is the package, not the root.

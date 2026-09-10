@@ -98,13 +98,20 @@ deletion 测试：撤掉本 skill，让引擎"把这个需求做完提 PR"。它
 ——换个 feature 找不到，换个人更找不到。
 
 ```
-aidlc_state.py repo              # 在不在 · 进没进 git · 这一档要求到哪一级 · 缺了怎么补
-aidlc_state.py repo --path dos   # 只打印命中的路径，给 `--dos $(…)` 这类接线用
+aidlc_state.py repo --scope plugins/<pkg>   # 在不在 · 进没进 git · 这一档要求到哪一级 · 缺了怎么补
+aidlc_state.py repo --path dos              # 只打印命中的路径，给 `--dos $(…)` 这类接线用
+aidlc_state.py init --scope plugins/<pkg>   # 记进 world.scope，之后每次发现都带上它
 ```
 
+**monorepo：一个 package 一份本体。** `--scope` 先在那个目录里找，找不到再回落到仓库根——
+所以"一份仓库级 `agent-map.md` + 每个 package 一份 `dos.yaml`"是可表达的。把只覆盖某一个
+package 的本体放在仓库根，是拿 scope 撒谎（dos-extract 的 edge case：一个 package 一个
+bounded context）。本仓库自己就是这个形状：根上一份 agent-map，`plugins/ai-dlc/dos.yaml` 一份。
+
 **你不手 set 这些路径。** `init` 用 `scripts/repo_assets.py` 在项目目录里按候选序发现它们
-（仓库根 → `docs/` → `ontology/`，`.aidlc/` 排最后且命中即告警），并用 `git ls-files` 核对它们
-进没进版本库，然后写进 `world.*`。每个 slug 手抄一遍仓库级事实，抄错一份没人会发现。
+（`--scope` 的 package 目录 → 仓库根 → `docs/` → `ontology/`，`.aidlc/` 排最后且命中即告警），
+并用 `git ls-files` 核对它们进没进版本库，然后写进 `world.*`（含 `world.scope`）。
+每个 slug 手抄一遍仓库级事实，抄错一份没人会发现。
 
 **缺席时下游是"未检"不是"通过"**——这是这一节存在的全部理由：
 

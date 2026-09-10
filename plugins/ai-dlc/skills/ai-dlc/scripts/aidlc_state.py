@@ -17,8 +17,9 @@ Usage:
                         [--early] [--commit]                # --early: 还没 diff 时定档，永远够不到 S
   aidlc_state.py plan    [--slug S] [--json]                 # 启动前的有效规模：跑几个阶段、几道门、跳了什么
   aidlc_state.py doctor  [--slug S] [--json]                 # 装置健康度；建议性，从不阻断门禁
-  aidlc_state.py repo    [--slug S] [--json] [--path dos|agent_map|invariants]
+  aidlc_state.py repo    [--slug S] [--scope DIR] [--json] [--path dos|agent_map|invariants]
                         # X1 仓库级制品（dos.yaml / agent-map.md / invariants/）在不在、进没进 git
+                        # --scope：monorepo 里本体是每个 package 一份（plugins/ai-dlc/dos.yaml）
   aidlc_state.py note    [--slug S] --kind interpretation|deviation|tradeoff|open_question --text T
   aidlc_state.py note    [--slug S] --promote n-0001 --to project --by NAME    # Open questions 不可晋升
   aidlc_state.py notes   [--slug S] [--for-gate g1|g2|g3] [--json]             # 门禁仪式：逐字呈现
@@ -107,7 +108,7 @@ SETTABLE = {
     "merge.sha", "merge.merged_at",
     "gates.g3.required",
     "world.psl", "world.derived_dir", "world.dos", "world.invariants", "world.agent_map",
-    "world.form_draft_sha256",
+    "world.scope", "world.form_draft_sha256",
     "contract.compile_manifest", "contract.calibration_report", "contract.tests_manifest",
     "release.version", "release.tag", "release.notes", "release.done", "release.skipped_reason",
 }
@@ -519,8 +520,10 @@ def cmd_init(a):
     }
     # X1 仓库级制品在这里被**发现**，不是被 set。它们在项目目录里、进 git、全组共用一份，
     # 而 state.json 是 per-feature 的：每个 slug 手抄一遍仓库级事实，抄错一份没人会发现。
-    disc = repo_assets.discover()
+    disc = repo_assets.discover(scope=(a.scope or "").strip("/") or None)
     world = {k: disc[k]["path"] for k in ("dos", "agent_map", "invariants") if disc[k].get("found")}
+    if a.scope:
+        world["scope"] = (a.scope or "").strip("/")
     if world:
         st["world"] = world
 
@@ -783,6 +786,17 @@ def repo_asset_requirements(st, sizing=None):
     return out
 
 
+def repo_scope(st):
+    """→ 这次 Run 的本体作用域（仓库根相对目录），没有就 None。
+
+    monorepo 里本体是**每个 package 一份**（dos-extract 的 edge case：一个 package 一个
+    bounded context）。把只覆盖某一个 package 的本体放在仓库根，是拿 scope 撒谎。
+    scope 由 `init --scope` 记进 state，之后每次 discover 都带上它——
+    否则同一个仓库里两个 package 的 Run 会互相拿到对方的词表。
+    """
+    return get_path(st, "world.scope") or None
+
+
 def repo_asset_unmet(st):
     """→ [str]。只有 required 那一级进 unmet；recommended / optional 归 doctor 的 warn / info。
 
@@ -792,7 +806,7 @@ def repo_asset_unmet(st):
     req = repo_asset_requirements(st)
     if not any(v == "required" for v in req.values()):
         return []
-    disc = repo_assets.discover()
+    disc = repo_assets.discover(scope=repo_scope(st))
     out = []
     for key, level in req.items():
         if level != "required":
@@ -1017,7 +1031,8 @@ def cmd_repo(a):
     退出码：0 = 要求都满足且位置 / 版本库没问题 · 1 = 有 error / warn（可用作 CI 的就绪检查）。
     """
     st = state_or_empty(a.root, a.slug)
-    disc = repo_assets.discover(refresh=True)
+    # 显式 --scope 盖过 state 里记的那个：第一次进一个 package 时还没有任何 run。
+    disc = repo_assets.discover(refresh=True, scope=(getattr(a, "scope", None) or "").strip("/") or repo_scope(st))
     if getattr(a, "path", None):
         rec = disc.get(a.path) or {}
         if not rec.get("found"):
@@ -1098,7 +1113,7 @@ def cmd_doctor(a):
     # 一条也查不到「这个仓库有没有本体」，而缺席时下游是**静默降级**（未检 ≠ 通过）。
     # 严重度由 sizing.yaml.repo_assets 的档位给；「找到了但没进 git / 落在 .aidlc」一律 warn，
     # 与档位无关：团队共享不是可以按档放宽的偏好。
-    for f in repo_assets.findings(repo_assets.discover(), repo_asset_requirements(st)):
+    for f in repo_assets.findings(repo_assets.discover(scope=repo_scope(st)), repo_asset_requirements(st)):
         add(f["severity"], f["check"], f["hint"])
     order = {"error": 0, "warn": 1, "info": 2}
     findings.sort(key=lambda f: order[f["severity"]])
@@ -1691,6 +1706,8 @@ def main():
     P = lambda name: sub.add_parser(name, parents=[common])
 
     s = P("init"); s.add_argument("--title", required=True); s.add_argument("--track", choices=["psl", "task"])
+    s.add_argument("--scope", help="monorepo：本体所在的 package 目录（如 plugins/ai-dlc）。"
+                                   "记进 world.scope，之后每次发现都带上它——一个 package 一个 bounded context")
     P("show")
     s = P("set"); s.add_argument("pairs", nargs="+")
     s = P("advance"); s.add_argument("stage"); s.add_argument("--force", action="store_true"); s.add_argument("--reason")
@@ -1716,6 +1733,7 @@ def main():
     s = P("plan"); s.add_argument("--sizing"); s.add_argument("--json", action="store_true")
     s = P("doctor"); s.add_argument("--json", action="store_true")
     s = P("repo"); s.add_argument("--json", action="store_true")
+    s.add_argument("--scope", help="monorepo：先在这个目录里找，找不到再回落到仓库根")
     s.add_argument("--path", choices=repo_assets.KEYS,
                    help="只打印这个制品命中的绝对路径（没找到 exit 1 且不打印）——"
                         "给 `--dos $(… repo --path dos)` 这类接线用")

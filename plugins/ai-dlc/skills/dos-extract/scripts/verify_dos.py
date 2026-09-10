@@ -35,6 +35,16 @@ Waivable (REJECT by default, cleared by a recorded human waiver):
           in its definition. Whole word, not a `*Card` compound.
     A waived name is not silently accepted: it is reported under `waived` and flagged
     for the judge.
+  - MORE THAN 7 objects. The reject text has always said "exceed only with a human
+    waiver in decisions.md", but nothing read one — so the lever it pointed at did not
+    exist and the only way past was to ignore a permanently red pre-gate. A gate you
+    can only pass by ignoring it is not a gate. The waiver uses the same bullet
+    convention, named `object_count`:
+        ## Naming waivers
+        - `object_count` — 8 objects. Judgment 2 (nothing to merge into) and Judgment 4
+          (same bounded context) were both applied; see the entry in decisions.md.
+    Reported under `waived` and flagged, never silent — and a waiver that does not say
+    which judgment it survived is recorded with "no reason recorded" beside it.
 
 Semantic half — FLAGGED as needs_semantic_review, never auto-passed:
   - each agent_guidelines.must_not should trace to an anti_pattern or rule (judge call)
@@ -167,10 +177,21 @@ def main():
     obj_names, synonyms = object_names(objects)
     resolvable = obj_names | set(synonyms)
 
-    # <=7 objects
+    # <=7 objects. 超过 7 个仍然默认 reject——它十有八九是漏做的一次合并或一次拆分。
+    # 但豁免必须**可表达**：原来这条 reject 的措辞指向 decisions.md 的一条人签豁免，而没有
+    # 任何代码去读它，于是唯一的出路是忽略一个永远红的预门。一个只能靠忽略才能过的门不是门
+    # （与 sizing.yaml 的极性同源：豁免是一等记录，不是沉默）。
     if len(obj_names) > 7:
-        rejects.append(f"{len(obj_names)} objects > 7 — exceed only with a human waiver in decisions.md "
-                       f"(usually a skipped Judgment 2 merge or Judgment 4 split): {sorted(obj_names)}")
+        if "object_count" in waivers:
+            waived_used.append(f"'object_count': {len(obj_names)} objects > 7 waived — "
+                               f"{waivers['object_count'] or 'no reason recorded'}")
+            flags.append(f"waived object_count: {len(obj_names)} objects — confirm Judgment 2 "
+                         f"(nothing to merge into) and Judgment 4 (one context, not two) really "
+                         f"were applied: {sorted(obj_names)}")
+        else:
+            rejects.append(f"{len(obj_names)} objects > 7 — exceed only with a human waiver in decisions.md "
+                           f"(a `## Naming waivers` bullet named `object_count`); usually a skipped "
+                           f"Judgment 2 merge or Judgment 4 split: {sorted(obj_names)}")
 
     # UI/impl-suffixed object names
     for name in sorted(obj_names):

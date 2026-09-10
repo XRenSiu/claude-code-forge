@@ -1578,6 +1578,66 @@ yaml.safe_dump(d, open('$TMP/bad_sizing.yaml','w'), allow_unicode=True)
 \" && python3 '$S/ai-dlc/scripts/verify_sizing.py' '$TMP/bad_sizing.yaml'"
 expect "verify_sizing L8: the three L8 failures are each named" 0 bash -c "python3 '$S/ai-dlc/scripts/verify_sizing.py' '$TMP/bad_sizing.yaml' --json | python3 -c \"import json,sys; p=[x for x in json.load(sys.stdin)['problems'] if x.startswith('L8')]; assert len(p)==3, p\""
 
+# ---- monorepo：本体是每个 package 一份，不是仓库根一份 -------------------------------------
+# 补的缺口：第一版 repo_assets.py 只认仓库根 / docs/ / ontology/，而 dos-extract 的 edge case
+# 写着「一个 package 一个 bounded context」。把只覆盖某一个 package 的本体放在仓库根，是拿 scope
+# 撒谎——而这个仓库正好有十二个插件。
+echo "== ai-dlc / X1 --scope: one ontology per package"
+SCD="$TMP/scope"; rm -rf "$SCD"; mkdir -p "$SCD/pkg-a" "$SCD/pkg-b"; pushd "$SCD" >/dev/null
+git init -q . && git config user.email t@t && git config user.name t
+printf 'objects:\n  Alpha: {}\nrules: []\n' > pkg-a/dos.yaml
+printf '# map\n' > agent-map.md
+git add -A && git commit -qm init >/dev/null
+
+expect "scope: the package's own dos.yaml wins over the repository root" 0 bash -c "python3 '$RA' --scope pkg-a --json | python3 -c \"import json,sys; a=json.load(sys.stdin)['assets']['dos']; assert a['path']=='pkg-a/dos.yaml' and a['tracked'] is True, a\""
+expect "scope: a repo-level artefact still resolves by falling back to the root" 0 bash -c "python3 '$RA' --scope pkg-a --json | python3 -c \"import json,sys; a=json.load(sys.stdin)['assets']['agent_map']; assert a['path']=='agent-map.md', a\""
+expect "scope: a sibling package does not inherit pkg-a's ontology" 0 bash -c "python3 '$RA' --scope pkg-b --json | python3 -c \"import json,sys; a=json.load(sys.stdin)['assets']['dos']; assert a['found'] is False, a; assert a['canonical']=='pkg-b/dos.yaml', a\""
+expect "scope: canonical points inside the package, so the fix never lands at the root" 0 bash -c "python3 '$RA' --scope pkg-b | grep -q 'pkg-b/dos.yaml'"
+expect "scope: init records world.scope so every later discovery keeps the package" 0 bash -c "python3 '$SS' init --slug sc --title t --track task --scope pkg-a >/dev/null && python3 -c \"import json; w=json.load(open('.aidlc/sc/state.json'))['world']; assert w['scope']=='pkg-a' and w['dos']=='pkg-a/dos.yaml', w\""
+expect "scope: without it, the same repo reports the package ontology as missing" 0 bash -c "python3 '$RA' --json | python3 -c \"import json,sys; a=json.load(sys.stdin)['assets']['dos']; assert a['found'] is False, a\""
+popd >/dev/null
+
+# ---- verify_dos：>7 的豁免必须可表达 ---------------------------------------------------------
+# 原来这条 reject 的措辞指向「a human waiver in decisions.md」，而没有任何代码去读它——
+# 唯一的出路是忽略一个永远红的预门。一个只能靠忽略才能过的门不是门。
+DW="$TMP/dosw"; rm -rf "$DW"; mkdir -p "$DW"
+python3 - "$DW" <<'PYX'
+import sys, pathlib
+d = pathlib.Path(sys.argv[1])
+objs = "\n".join(f"  Obj{i}:\n    description: \"o{i}\"\n    type: \"entity\"" for i in range(1, 9))
+(d / "dos8.yaml").write_text(
+    "objects:\n" + objs + "\nrelationships: []\nrules: []\n"
+    "open_questions:\n  - id: Q1\n    question: \"is this really eight things?\"\n")
+(d / "waived.md").write_text(
+    "## Naming waivers\n- `object_count` — 8 objects; Judgment 2 found nothing to merge.\n")
+(d / "silent.md").write_text("## Naming waivers\n- `Obj1` — unrelated waiver.\n")
+PYX
+expect "verify_dos: 8 objects reject when no waiver is recorded" 1 py "$S/dos-extract/scripts/verify_dos.py" "$DW/dos8.yaml"
+expect "verify_dos: the reject names the bullet that would clear it" 0 bash -c "python3 '$S/dos-extract/scripts/verify_dos.py' '$DW/dos8.yaml' 2>&1 | grep -q 'object_count'"
+expect "verify_dos: an unrelated naming waiver does not clear the count" 1 py "$S/dos-extract/scripts/verify_dos.py" "$DW/dos8.yaml" --decisions "$DW/silent.md"
+expect "verify_dos: a recorded object_count waiver clears it, reported not silent" 0 bash -c "python3 '$S/dos-extract/scripts/verify_dos.py' '$DW/dos8.yaml' --decisions '$DW/waived.md' > '$DW/out.json'; [ \$? = 0 ] || exit 9; python3 -c \"import json; d=json.load(open('$DW/out.json')); assert d['exit']=='MECHANICALLY_CLEAN', d['exit']; w=' | '.join(d['waived']); assert 'object_count' in w and 'nothing to merge' in w, w; assert any('waived object_count' in f for f in d['needs_semantic_review']), d['needs_semantic_review']\""
+
+# ---- 防腐：这个仓库自己交付的那四份制品必须一直过它们自己的门 --------------------------------
+expect "X1: the shipped dos.yaml passes its own pre-gate with the recorded waiver" 0 \
+  py "$S/dos-extract/scripts/verify_dos.py" "$ROOT/dos.yaml" --decisions "$ROOT/decisions.md"
+expect "X1: the shipped dos.yaml does NOT pass without decisions.md (the waiver is load-bearing)" 1 \
+  py "$S/dos-extract/scripts/verify_dos.py" "$ROOT/dos.yaml"
+expect "X1: the shipped invariant card passes verify_card against the shipped ontology" 0 \
+  py "$S/invariant-extract/scripts/verify_card.py" "$ROOT/invariants/ai-dlc-plugin.card.yaml" --dos "$ROOT/dos.yaml"
+expect "X1: the shipped card keeps every hard invariant propose-only (never auto-installed)" 0 \
+  bash -c "python3 -c \"
+import yaml
+c = yaml.safe_load(open('$ROOT/invariants/ai-dlc-plugin.card.yaml'))
+bad = [e['id'] for e in c['hard_invariants'] if e.get('disposition') != 'propose']
+assert not bad, bad
+gaps = [g for g in c['registered_gaps'] if g.get('destination') not in ('done_when','issue','backlog')]
+assert not gaps, gaps
+n = sum(s.get('entries', 0) for s in c['channel_2_input']['sources'])
+assert n == c['channel_2_input']['failure_memory_count'], (n, c['channel_2_input']['failure_memory_count'])
+\""
+expect "X1: the vocabulary sensor resolves the plugin's own docs against the shipped ontology" 0 \
+  py "$S/dos-extract/scripts/verify_vocabulary.py" --dos "$ROOT/dos.yaml" "$ROOT/docs/lifecycle.md" "$ROOT/docs/routing.md"
+
 # 文档漂移是可以被机器发现的（2026-09-06：8 个脚本、26 个资产曾在六份文档里一次都没出现过）。
 expect "docs: every script and asset appears in docs/reference.md" 0 \
   py "$ROOT/eval/fixtures/doc_coverage.py" "$ROOT"
