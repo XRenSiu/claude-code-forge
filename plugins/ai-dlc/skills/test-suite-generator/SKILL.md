@@ -17,7 +17,7 @@ description: >-
   test suite" / "build verification battery" / "/test-suite-generator" /
   pointing at any specs/<feature>/ directory.
 argument-hint: "<path to specs/<feature>/ or path to done_when.yaml>"
-version: 1.3.1
+version: 1.4.0
 user-invocable: true
 # imported into AI-DLC 2026-09-05 from done-when-pipeline v1.1.0 (canonical copy in this repo; qanat holds an older copy); body kept, AI-DLC wiring section added
 ---

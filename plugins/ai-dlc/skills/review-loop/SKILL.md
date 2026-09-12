@@ -11,7 +11,7 @@ description: >-
   总结评论（gh pr view 即可）、你是 reviewer 一侧（/pr-review）、只回一条评论（gh api 即可）。
   前置：gh 已认证、jq 可用、当前目录是目标 git 仓库。改编自 vana-builder 的 pr-review-loop v0.4.0。
 argument-hint: "<PR number | 当前分支的 PR> [MAX_ROUNDS=10] [MAX_THREAD_STRIKES=3] [--interval 45] [--max-wait 480]"
-version: 0.4.2
+version: 0.5.0
 user-invocable: true
 # 只能由人显式调起。本 skill 会在公开 PR 上自动回帖、resolve 线程，并可能挂起数小时——发出去的
 # 评论撤不回，不能因为对话里出现「PR」「review」就被模型自行调起。/ai-dlc 在 review 阶段读本文件

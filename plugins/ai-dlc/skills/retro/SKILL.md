@@ -8,7 +8,7 @@ description: >-
   出问题" / "度量" / 一个或多个 feature 归档之后。NOT for: 单次 bug 的根因（/adversarial-debugging 类）、
   改 skill 本身（skill-evolve 邻居）。前置：`specs/*/` 至少一个归档。
 argument-hint: "[--archive specs/] [--since YYYY-MM-DD] [--out retro/retro-<date>.md]"
-version: 0.5.1
+version: 0.5.2
 user-invocable: true
 ---
 
