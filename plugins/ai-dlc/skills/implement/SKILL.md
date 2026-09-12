@@ -53,7 +53,7 @@ deletion 测试：撤掉本 skill，引擎会把整个对话历史、评审 skil
 
 ## 门（γ）
 
-- **前置**：`cards.lint_passed=true`；`.done_when.lock` 存在；该卡 AC 的测试存在且在基线上为红（无测试则 `notes`
+- **前置**：`aidlc_state.py advance implement` 已过（它自己查 G2 裁决、l5 锁里有测试、`contract.red_baseline` 过 `--verify`、对 `cards.dir` 跑 `lint_cards.py` 并重验锁）；该卡 AC 的测试存在且在基线上为红（无测试则 `notes`
   写明 `no-tests-for: AC-xxx` 并在整体验收时补——不许实现者自己写验收测试）。
 - **done_when**（本卡）：AC 子集绿 ∧ 全套件无回归 ∧ 每个 commit 过闸 ∧ `aidlc_state.py card CARD-xx --status done --commit <sha>`。
 - **升级**：`fail --signal card_test_fail --card CARD-xx --fingerprint <摘要>`；返回 `escalate: true` → 停，写失败报告，

@@ -596,7 +596,7 @@ registered_gaps:
   destination: done_when
   note: R017 — the claim may not exceed the evidence; count greenfield waivers per Run in /retro
 - ref: plugins/ai-dlc/skills/ai-dlc/references/stages.md
-  gap: red-green evidence script; meets_done_when comparison script; contract.yaml schema; ontology-drift;
+  gap: contract.yaml schema; ontology-drift;
     psl-derive
   destination: backlog
   note: carried unchanged from the 2026-09-05 card

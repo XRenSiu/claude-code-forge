@@ -1,0 +1,9 @@
+# qa_facts.py projection with the two numbers the ai-dlc fixture contract thresholds name.
+# meets_done_when.py finds them by key name: unit_coverage ≥ 0.80, mutation_kill_rate ≥ 0.70 → met.
+qa_measurements:
+  agent_role: qa-reviewer
+  scope: { tests_executed: 40, tests_passed: 40 }
+  results:
+    unit: { passed: 30, failed: 0, unit_coverage: 0.86 }
+    integration: { passed: 10, failed: 0 }
+  mutation: { mutation_kill_rate: 0.74, surviving_mutants: [] }

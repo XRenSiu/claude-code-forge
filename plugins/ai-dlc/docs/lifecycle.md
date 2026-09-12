@@ -37,11 +37,11 @@ G1 世界裁决     人 · gate g1     + 范围段             G2 签字冻结  
 | DONE_WHEN v2 | `/donewhen-extract`（AC 优先）或 `/acceptance-spec` + `convert_v1_to_v2.py` | 已有 | 唯一契约 schema = v2（`references/done-when-v2-schema.yaml`）；`validate_done_when_v2.py` |
 | G2 签字冻结 | `validate_done_when_v2.py` + `lock_done_when.py --stage g2|l5` + `gate g2` | 已有 | 契约 v2 校验编译进 advance g2；篡改被拒 / 附提案放行 已冒烟 |
 | PLAN 任务卡 | `/plan-cards`（`card_template.yaml` + `lint_cards.py`） | 已有 | 三项 lint + 上下文上限 |
-| 测试实现 | `/test-suite-generator` + `/spec-compile` + `/calibrate`（本插件） | 已有 | 红-绿证据脚本 **空白** |
+| 测试实现 | `/test-suite-generator` + `/spec-compile` + `/calibrate`（本插件） | 已有 | 红→绿证据：`capture_red_baseline.py`（红）+ `verify_red_green.py`（绿且无失踪，v1.4.0） |
 | 实现 | `/implement`（card-implementer / self / `/ratchet` / forge-teams）+ `/commit` | 已有 | 白名单执行器 = verify_commit.py；实现者信息隔离 |
-| 验收 A/B/C | `/acceptance-fleet` + 六审查 skill + `/meta-judge`（本插件）；单 PR 用 `/pr-review` | 已有 | `meets_done_when` 比对脚本 **空白**；三档映射写在各 Wiring 段 |
+| 验收 A/B/C | `/acceptance-fleet` + 六审查 skill + `/meta-judge`（本插件）；单 PR 用 `/pr-review` | 已有 | `meets_done_when.py` 比对 `behavior.thresholds`（v1.4.0）；`advance pr` 读 final-state.json；三档映射写在各 Wiring 段 |
 | G3 例外复核 | `assets/g3_record.md` + `gate g3` | 已有 | 默认触发；required=false 需留痕 |
-| 合入 · 交付 · 逃逸缺陷 | `/pr` `/review-loop` `/release` `archive` `/issue --escape` | 已有 | 验证绿才交付；归档结构固定 |
+| 合入 · 交付 · 逃逸缺陷 | `/pr` `/review-loop` `/release` `archive` `/issue --escape` + `aidlc_state.py escape` | 已有 | 验证绿才交付；归档结构固定；逃逸经 `escape` 计到归因层并镜像进归档（v1.4.0 前没有任何命令写 escape 事件） |
 | DOS 本体 + 闭包 | `/dos-extract` + `/invariant-extract`（本插件，引自 looper）+ `verify_issue.py --dos[--require-dos]`（issue 的声明）/ `lint_cards.py --dos[--require-dos]`（卡的 dos_slice）/ `verify_vocabulary.py`（**全部下游制品的散文**，B 档） | 部分 | 对账已有（`reconcile_dos.py`）；drift 的「制品→本体」一向已有传感器，**「本体→代码」一向与 candidate 命名空间仍空白** |
 | **仓库就绪度（X1 落地）** | `ai-dlc/scripts/repo_assets.py`（发现 + `git ls-files` 核对）+ `aidlc_state.py repo|doctor|init` + `sizing.yaml.repo_assets` + `prereqs("issue")` | 已有（v1.1.0） | 制品在项目目录里、进 git、全组共用一份，**不放 `.aidlc/`**；缺席时下游是**未检**不是通过。L 档与 PSL 轨 dos 为 required，`advance issue` 拦得住；绿地走 `--force --reason greenfield` |
 | 回流路由 | `routing.yaml` + `aidlc_state.py fail`；`/acceptance-fleet` 四态、`/ratchet` kill/restart 映射到它 | 已有 | 归因器是启发式，人确认 |
@@ -50,7 +50,8 @@ G1 世界裁决     人 · gate g1     + 范围段             G2 签字冻结  
 | **结构性质量（A 档第三条腿）** | `constraints.structure` + `qa-reviewer/scripts/verify_structure.py` | 已有（v0.10.0） | 复杂度增量 / 重复块 / 依赖方向；分析器缺席 = unevaluated（exit 3），不是 pass |
 | **仓库地图** | `dos-extract/assets/agent_map_template.md` + `verify_agent_map.py --probe` + `plan-cards/scripts/slice_agent_map.py` | 已有（v0.10.0） | 命令逐条实跑；陷阱必须有来路；按卡切片进 card_context |
 | **TASK 轨的模糊度信号** | `donewhen-extract/scripts/divergence.py` | 已有（v0.10.0） | N 份隔离草案的分歧 = 必须澄清的槽；不靠引擎自评 |
-| **体量分档 → 广度网格** | `ai-dlc/assets/sizing.yaml` v2 的 `stages:` / `never_skippable` + `aidlc_state.py size|plan` + `verify_sizing.py` | 已有（v0.10.0 → **v0.12.0 成网格**） | 缺省 M；skip 只认 derived / derived_early，且每个被跳阶段写一条带 why 的 size_exemption。三道门在 never_skippable 里——广度旋钮拧不掉门。八条 lint 让网格与 ORDER / prereqs 互相断言（L7 直接 import 真的那份 next_allowed，L8 核 repo_assets 的键与档位） |
+| **体量分档 → 广度网格** | `ai-dlc/assets/sizing.yaml` v2 的 `stages:` / `never_skippable` + `aidlc_state.py size|plan` + `verify_sizing.py` | 已有（v0.10.0 → **v0.12.0 成网格**） | 缺省 M；skip 只认 derived / derived_early，且每个被跳阶段写一条带 why 的 size_exemption。三道门在 never_skippable 里——广度旋钮拧不掉门。九条 lint 让网格与 ORDER / prereqs 互相断言（L7 直接 import 真的那份 next_allowed，L8 核 repo_assets 的键与档位，L9 核 calibration 的按档要求） |
+| **advance 对着文件与仓库检** | `aidlc_state.py prereqs`：G2 裁决在 implement 再查（跳过 cards 不跳签字）、l5 锁与红基线、红→绿证据、按档校准报告、pr-poll 裁决文件、merge.sha 可达、tag 指着 merge.sha、锁历史 | 已有（v1.4.0） | 曾有四个引擎 set 的布尔顶替校验器；现在每个前置读文件或问 git，都有冒烟孪生 |
 | **深度旋钮** | `sizing.yaml` `tiers.<档>.depth` | 已有（v0.12.0）· **只是声明** | 没有脚本能判"这份文档够不够细"；文档明说它的强制力与广度不同，不假装它是闸 |
 | **测试量旋钮** | `sizing.yaml` `tiers.<档>.test_strategy` + `derive_counts.py --strategy` | 已有（v0.12.0） | **下界**不是上界：低于地板 exit 4（与空 behavior 的 exit 2 分开）。minimal 的地板从契约算（AC 数 + 观察边界数），不从策略名猜 |
 | **早定档 + 飞行中重定档** | `aidlc_state.py size --from-issue --early` | 已有（v0.12.0） | AC 数从 `verify_issue.py` 的 acceptance_stats 读（数字与来路同一次读）；S 的入口需要 files，所以早定档结构上够不到 S；重定档只能改尚未开始的阶段 |

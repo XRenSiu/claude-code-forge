@@ -429,7 +429,7 @@ rules:
     enforced_by: "system"
   - id: "R004"
     statement: "Tests are written by a Node that is not the implementer and are locked (stage l5) before implementation; a WorkUnit's forbidden files always include tests/** and the Contract."
-    rationale: "测试非实现者写且写完锁 (§6.2, C6); an implementer that can edit the test can make it green."
+    rationale: "测试非实现者写且写完锁 (§6.2, C6); an implementer that can edit the test can make it green. Compiled 2026-09-12: advance implement refuses a lock that is not stage l5 or lists no test, and a RED baseline that carries no clean-checkout evidence."
     enforced_by: "system"
   - id: "R005"
     statement: "An implementer Node never reads evaluator output; the only things an evaluator Node may hand an implementer Node are fix_prompt and accepted_claim."
@@ -449,12 +449,17 @@ rules:
     enforced_by: "user_workflow"
   - id: "R009"
     statement: "A Run cannot advance past a Gate stage until that Gate's verdict is recorded, or an explicit Waiver Event is written."
-    rationale: "门编译成前置条件 — 不跑就 advance 不了 (§3.2); a silent skip would make the gate decorative."
+    rationale: "门编译成前置条件 — 不跑就 advance 不了 (§3.2); a silent skip would make the gate decorative. Found 2026-09-12: G2's verdict was checked only by prereqs(cards), and the S tier skips cards — the stage was never skippable, the signature was. Now checked at implement too."
     enforced_by: "system"
   - id: "R010"
     statement: "meets_done_when is computed by a script from the Contract's thresholds, never declared by an evaluator Node; a standard that has not passed calibrate is not evidence."
-    rationale: "未校准的标准不当证据 (§6.7); an evaluator announcing 'done' is the reward-hacking surface the plugin exists to close."
-    enforced_by: "not_enforced"
+    rationale: |
+      未校准的标准不当证据 (§6.7); an evaluator announcing 'done' is the reward-hacking surface the plugin exists to close.
+      Compiled 2026-09-12: acceptance-fleet/scripts/meets_done_when.py compares behavior.thresholds against the qa
+      projection (unevaluated ≠ pass), aidlc_state.py `acceptance --meets` is the only writer of acceptance.meets_done_when
+      (it is not in SETTABLE and the report's done_when_sha256 must match the Contract), and advance pr refuses a
+      Contract with thresholds whose meets_done_when is not `met`. The calibrate half stays user_workflow.
+    enforced_by: "system"
   - id: "R011"
     statement: "Every failure Event is routed to a Layer by the routing table before any retry; when a Layer's budget is exhausted the Run escalates to the next outer Layer with a failure report, never a retry."
     rationale: "失败归层再处理 (§6.8, X2); the default of retrying a world-layer error at the implementation layer is the catastrophe routing prevents."
@@ -687,6 +692,10 @@ anti_patterns:
     why_bad: "a rule with enforced_by: system that the verifier does not reject is a false guarantee — the exact reward-hacking hole (lower the line to pass) the skills forbid"
     correct_approach: "split the mechanical half (reject) from the semantic half (needs_semantic_review) in every verify_*.py and say which is which; add symmetric hard floors; resolve references, do not string-check them"
     historical_context: "eval/gate.json round-1 blockers, 2026-06-24 (dos-extract DE3, invariant-extract, calibrate HARD_MUTATION_FLOOR, donewhen-extract 纪律②); closed in round 2. This DOS keeps R001/R008/R010/R017 honest as user_workflow / not_enforced for the same reason"
+  - pattern: "A settable boolean standing in for a verifier's verdict (cards.lint_passed, acceptance.meets_done_when, release.done, acceptance.evaluation_result checked only for non-emptiness)"
+    why_bad: "advance is documented as 'checked against the state, not the model's claim' — but a flag the model sets IS the model's claim; only Gate g2 actually ran its verifier (validate_done_when_v2.py), every later stage trusted a string"
+    correct_approach: "advance runs the verifier itself and records the outcome: implement runs lint_cards.py, pr reads final-state.json (DONE · no unevaluated review · meets_done_when.py met), archive reads the post-deploy line out of release.notes, implement / acceptance / pr / merge re-run lock_done_when.py verify; the flags leave SETTABLE"
+    historical_context: "found 2026-09-12 while checking whether the pipeline is a closed loop; the same pass found the escape wire dead (no producer of escape Events, metrics.py reading only the Archive), card_retries enforced on the global layer counter instead of per WorkUnit, and the M-tier fleet subset granted by omission (R019)"
   - pattern: "Same word, different object across imported skills: qanat's G1/G2 (verify_g1 machine gate / review_g2 review gate) versus ai-dlc's G1/G2 (world adjudication / criteria freeze)"
     why_bad: "an imported SKILL.md read literally sends a reader to the wrong gate; 'R001/R002' and 'Territory/Run/MemoryAsset' likewise mean ai-dlc things under other names"
     correct_approach: "keep imported bodies verbatim but add a 术语映射 table per skill mapping each foreign term to a declared ai-dlc object or rule; never re-use G1/G2 for a machine gate"
@@ -827,3 +836,22 @@ evolution_log:
       v1.3.0 pulled repo-level ontology assets into the pipeline's own vocabulary, and the 2026-09-05 baseline
       predates both that and the rename. Moved out of dogfood/ring-audit/ into plugins/ai-dlc/ so repo_assets.py
       can discover it: this repository is a monorepo, and the bounded context is the package, not the root.
+  - version: "0.3.0"
+    date: "2026-09-12"
+    author: "XRenSiu"
+    change_type: "amended"
+    breaking: false
+    summary: |
+      R010 enforced_by not_enforced → system (meets_done_when.py + `acceptance --meets`; advance pr reads it). One
+      anti-pattern added: a settable boolean standing in for a verifier's verdict. The escape Event finally has a
+      producer (`aidlc_state.py escape`, R12) and is mirrored into the Archive; card_retries is per WorkUnit;
+      the M-tier fleet subset is granted only to a derived tier (R019 applied to reviewers).
+      Second pass the same day, asked to leave no open wire: R009 now holds across a skipped cards stage (G2's
+      verdict is checked at implement too); R004 is compiled (implement needs the l5 lock over tests and a verified
+      RED baseline, pr needs the green evidence); the calibrate half of R010 is tiered (sizing.yaml calibration);
+      the review exit, the merge sha, the release tag and the lock's history are all read from files or asked of
+      git; G3 cannot be switched off while the Contract has a human AC; G1 pass needs its record and stores the
+      form draft's hash; an escape needs its issue.
+    rationale: |
+      A closed-loop audit of the plugin (v1.5.0) found the calibration loop's first wire dead and four flags
+      trusted where the docs promised files. The ontology said R010 was not enforced; it is now, so the DOS says so.

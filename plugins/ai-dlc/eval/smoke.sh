@@ -182,8 +182,20 @@ expect "tampered AC with proposal → exit 2 (changed_with_proposal)" 2 py "$S/a
 popd >/dev/null
 
 echo "== ai-dlc / aidlc_state.py"
-ST="$TMP/state"; mkdir -p "$ST"; pushd "$ST" >/dev/null
-SS="$S/ai-dlc/scripts/aidlc_state.py"
+# 一个能走完整条主干的最小仓库：契约 + 一个读 src/impl.txt 的测试运行器（没有实现时红，实现落地后绿）。
+# 红基线、红→绿证据、卡的 commit sha、合并可达性、release tag 都要真的 git——状态机对着文件与仓库检，不对着说法检。
+mkrepo() { # mkrepo <dir> <done_when fixture>
+  mkdir -p "$1" && pushd "$1" >/dev/null || return 9
+  git init -q . && git config user.email t@t && git config user.name t && git checkout -q -b main
+  cp "$2" done_when.yaml
+  mkdir -p tests && printf '#!/usr/bin/env bash\nif grep -q ok src/impl.txt 2>/dev/null; then echo "test_a (t.T.test_a) ... ok"; else echo "test_a (t.T.test_a) ... FAIL"; exit 1; fi\n' > tests/run_tests.sh
+  git add . >/dev/null && git commit -qm "chore: contract + red tests" >/dev/null
+  popd >/dev/null
+}
+SS="$S/ai-dlc/scripts/aidlc_state.py"; LDW="$S/ai-dlc/scripts/lock_done_when.py"
+CRB="$S/test-suite-generator/scripts/capture_red_baseline.py"; VRG="$S/test-suite-generator/scripts/verify_red_green.py"
+PPL="$S/review-loop/scripts/pr-poll.sh"
+ST="$TMP/state"; mkrepo "$ST" "$FX/done_when.yaml"; pushd "$ST" >/dev/null
 expect "init" 0 py "$SS" init --slug demo --title "demo feature"
 expect "advance to track" 0 py "$SS" advance track
 expect "advance to issue refused (track unset)" 1 py "$SS" advance issue
@@ -192,9 +204,9 @@ expect "advance to issue ok" 0 py "$SS" advance issue
 expect "skip to branch refused (issue.number unset)" 1 py "$SS" advance branch
 expect "set issue.number" 0 py "$SS" set issue.number=42 issue.url=https://x/42
 expect "advance branch" 0 py "$SS" advance branch
+git checkout -q -b feat/42-demo
 expect "set branch" 0 py "$SS" set branch.name=feat/42-demo branch.base=main
 expect "advance contract" 0 py "$SS" advance contract
-cp "$FX/done_when.yaml" done_when.yaml
 expect "set contract.done_when" 0 py "$SS" set contract.done_when=done_when.yaml contract.source=issue-inline
 cp "$S/donewhen-extract/eval/fixtures/v2_bad_v1shape.yaml" dw_v1.yaml
 expect "advance g2 refused when contract is v1-shaped (C1 compiled)" 1 bash -c "python3 '$SS' set contract.done_when=dw_v1.yaml >/dev/null && python3 '$SS' advance g2"
@@ -202,13 +214,28 @@ py "$SS" set contract.done_when=done_when.yaml >/dev/null
 expect "advance g2 (v2 contract validates)" 0 py "$SS" advance g2
 expect "advance cards refused (G2 not passed)" 1 py "$SS" advance cards
 expect "gate g2 pass refused without lock.path" 1 py "$SS" gate g2 --verdict pass --signer-kind human --by human
-py "$S/ai-dlc/scripts/lock_done_when.py" sign --signer-kind human --by human done_when.yaml >/dev/null
+py "$LDW" sign --signer-kind human --by human done_when.yaml >/dev/null
 expect "set lock.path" 0 py "$SS" set lock.path=.done_when.lock lock.signed_by=human
 expect "gate g2 pass" 0 py "$SS" gate g2 --verdict pass --signer-kind human --by human
 expect "advance cards" 0 py "$SS" advance cards
-expect "advance implement refused (lint not passed)" 1 py "$SS" advance implement
-expect "set cards.lint_passed + card" 0 bash -c "python3 '$SS' set cards.lint_passed=true >/dev/null && python3 '$SS' card CARD-01 --status todo"
-expect "advance implement" 0 py "$SS" advance implement
+expect "advance implement refused (no cards.dir)" 1 py "$SS" advance implement
+# cards.lint_passed 曾是一个引擎自己 set 的布尔——那是执行者的说法，不是状态。现在 advance implement
+# 自己跑 lint_cards.py（同 advance g2 跑 validate_done_when_v2.py），过了才记 lint_passed。
+expect "cards.lint_passed is not settable (advance implement runs lint_cards.py itself)" 1 py "$SS" set cards.lint_passed=true
+mkdir -p cards-bad && cp "$S/plan-cards/eval/fixtures/cards_bad/"*.yaml cards-bad/
+expect "advance implement refused: lint_cards.py rejects the registered cards dir" 0 bash -c "python3 '$SS' set cards.dir=cards-bad >/dev/null && python3 '$SS' card CARD-01 --status todo >/dev/null && python3 '$SS' advance implement | grep -q 'lint_cards.py rejects'"
+cp -R "$S/plan-cards/eval/fixtures/cards_good" cards
+expect "set cards.dir (lint runs at advance, not at set)" 0 py "$SS" set cards.dir=cards
+# R004：测试由非实现者写、写完锁上（l5），**然后**才实现。只有 g2 锁的契约，实现者改测试让测试过的路还开着。
+expect "advance implement refused: the lock is still g2 — tests must be re-signed at l5 before implementation (R004)" 0 bash -c "python3 '$SS' advance implement | grep -q 'not l5'"
+py "$LDW" sign --signer-kind human --by tester --stage l5 done_when.yaml tests/run_tests.sh >/dev/null
+# 判据先于代码的机械形：实现前测试在干净检出上是红的，且那份红有证据。
+expect "advance implement refused: no RED baseline on record" 0 bash -c "python3 '$SS' advance implement | grep -q 'contract.red_baseline'"
+expect "RED baseline captured in a clean checkout of HEAD" 0 py "$CRB" tests/run_tests.sh --out tests/RED_BASELINE.txt
+python3 -c "s=open('tests/RED_BASELINE.txt').read(); open('tests/RED_DIRTY.txt','w').write(s.replace('<empty>',' M x'))"
+expect "advance implement refused: a baseline without clean-checkout evidence (twin)" 0 bash -c "python3 '$SS' set contract.red_baseline=tests/RED_DIRTY.txt >/dev/null && python3 '$SS' advance implement | grep -q 'clean-checkout'"
+expect "set contract.red_baseline" 0 py "$SS" set contract.red_baseline=tests/RED_BASELINE.txt
+expect "advance implement (lint_cards.py passes; cards.lint_passed recorded by the script)" 0 bash -c "python3 '$SS' advance implement >/dev/null && python3 '$SS' show | grep -q '\"lint_passed\": true'"
 expect "fail card_test_fail #1 (no escalate)" 0 bash -c "python3 '$SS' fail --signal card_test_fail --card CARD-01 --fingerprint fp1 | grep -q '\"escalate\": false'"
 expect "fail same fingerprint #2 → escalate" 0 bash -c "python3 '$SS' fail --signal card_test_fail --card CARD-01 --fingerprint fp1 | grep -q '\"escalate\": true'"
 expect "fail whitelist_overflow → human" 0 bash -c "python3 '$SS' fail --signal whitelist_overflow --evidence 'src/x.ts' | grep -q '\"escalate_to\": \"human\"'"
@@ -216,16 +243,47 @@ expect "unknown signal refused" 1 py "$SS" fail --signal nonsense
 expect "advance acceptance refused (card not done)" 1 py "$SS" advance acceptance
 echo "# failure report" > .aidlc/demo/failure-report-001.md
 expect "report clears pending.failure_report after the escalations above" 0 py "$SS" report --path .aidlc/demo/failure-report-001.md
-expect "card done" 0 py "$SS" card CARD-01 --status done --commit abc123
+# 按卡实现、按卡提交：done 的凭证是一个 git 认识的提交，不是一个字符串。
+expect "card done with a sha git does not know is refused" 1 py "$SS" card CARD-01 --status done --commit abc123
+expect "card done without any commit is refused" 1 py "$SS" card CARD-01 --status done
+mkdir -p src && echo ok > src/impl.txt && git add src >/dev/null && git commit -qm "feat(demo): CARD-01 lands the implementation" >/dev/null
+expect "card done" 0 bash -c "python3 '$SS' card CARD-01 --status done --commit \$(git rev-parse HEAD)"
 expect "advance acceptance" 0 py "$SS" advance acceptance
+# M 档推荐校准而没有报告：不拦，但留一行——一把没校准的尺子不许悄悄当成校准过的。
+expect "acceptance at M with no calibration report → a calibration_unevaluated ledger row, not a pass" 0 bash -c "grep -q '| calibration_unevaluated |' .aidlc/demo/ledger.md"
 expect "advance pr refused (no evaluation/skip reason)" 1 py "$SS" advance pr
 expect "force without reason refused" 1 py "$SS" advance pr --force
 expect "force with reason → waiver recorded" 0 py "$SS" advance pr --force --reason "task track lightweight"
 expect "gate g1 reject without attribution refused" 1 py "$SS" gate g1 --verdict reject --signer-kind human --by human
-expect "set pr/review/merge → advance to merge" 0 bash -c "python3 '$SS' set pr.number=7 >/dev/null && python3 '$SS' advance review >/dev/null && python3 '$SS' set review.done=true gates.g3.required=false >/dev/null && python3 '$SS' advance merge >/dev/null && python3 '$SS' set merge.sha=deadbeef >/dev/null"
+py "$SS" set pr.number=7 >/dev/null; py "$SS" advance review >/dev/null
+# G3 默认触发；能不能关由契约里有没有 kind: human 的 AC 说了算，不由引擎说了算。
+expect "gates.g3.required=false refused: the contract has a human AC" 1 py "$SS" set gates.g3.required=false
+# 评审出口曾是引擎 set 的 review.done；现在 done 的出口要有 pr-poll.sh 留下的裁决文件。
+expect "advance g3 refused: review.done=done needs pr-poll's verdict file" 0 bash -c "python3 '$SS' set review.done=done >/dev/null && python3 '$SS' advance g3 | grep -q 'done.json'"
+expect "pr-poll predicate records the verdict file (offline)" 0 bash -c "bash '$PPL' predicate 7 APPROVED 0 green 2 false >/dev/null && test -s .aidlc/pr-watch/pr-7.done.json"
+expect "advance g3 (the review ring's verdict file says exit 0)" 0 py "$SS" advance g3
+printf '# G3\n- human AC-002-a: pass (product)\n' > g3-record.md
+expect "gate g3 pass" 0 py "$SS" gate g3 --verdict pass --signer-kind human --by human --record g3-record.md
+expect "advance merge" 0 py "$SS" advance merge
+git checkout -q main && git merge -q --no-ff feat/42-demo -m "merge: feat/42-demo" >/dev/null 2>&1
+git checkout -q -b stray && echo x > stray.txt && git add stray.txt >/dev/null && git commit -qm "chore: stray" >/dev/null && git checkout -q main
+# 合并是人的动作，但合并**发生了没有**是 git 能答的：sha 要解析得到，且已在 base 里。
+expect "advance release refused: merge.sha is not a commit" 0 bash -c "python3 '$SS' set merge.sha=deadbeef >/dev/null && python3 '$SS' advance release | grep -q 'does not resolve'"
+expect "advance release refused: merge.sha not reachable from branch.base (twin)" 0 bash -c "python3 '$SS' set merge.sha=\$(git rev-parse stray) >/dev/null && python3 '$SS' advance release | grep -q 'not reachable'"
+py "$SS" set merge.sha=$(git rev-parse main) >/dev/null
 expect "advance release" 0 py "$SS" advance release
 expect "advance archive refused (release not done)" 1 py "$SS" advance archive
-expect "set release.done → advance archive" 0 bash -c "python3 '$SS' set release.version=0.1.0 release.tag=v0.1.0 release.done=true >/dev/null && python3 '$SS' advance archive"
+# release.done 曾是一个引擎自己 set 的布尔；verify_release.py 自己说它要等 notes 里的 post-deploy 行——
+# 现在 advance archive 读那一行（合入不是终点，发布后验证绿才算交付），并要求 tag 在 git 里指着 merge.sha。
+expect "advance archive refused: release.done=true without release.notes" 0 bash -c "python3 '$SS' set release.version=0.1.0 release.tag=v0.1.0 release.done=true >/dev/null && python3 '$SS' advance archive | grep -q 'release.notes'"
+mkdir -p releases && printf '# v0.1.0\n\n## Verification\n- tests green\n' > releases/v0.1.0.md
+expect "advance archive refused: release notes carry no post-deploy line" 0 bash -c "python3 '$SS' set release.notes=releases/v0.1.0.md >/dev/null && python3 '$SS' advance archive | grep -q 'post-deploy'"
+printf -- '- post-deploy: smoke green on prod\n' >> releases/v0.1.0.md
+expect "advance archive refused: release.tag does not exist in git" 0 bash -c "python3 '$SS' advance archive | grep -q 'does not exist in git'"
+git tag v0.1.0 stray
+expect "advance archive refused: release.tag points at another commit than merge.sha (twin)" 0 bash -c "python3 '$SS' advance archive | grep -q 'points at'"
+git tag -d v0.1.0 >/dev/null && git tag v0.1.0 main
+expect "set release.done + notes with a post-deploy line + tag on merge.sha → advance archive" 0 py "$SS" advance archive
 expect "ledger has waiver row" 0 bash -c "grep -q '| waiver |' .aidlc/demo/ledger.md"
 # dogfood 2026-09-06 (I-57): state.schema.json defines lock.stage, so the l5 re-sign must be able to record it
 expect "set lock.stage=l5 (I-57)" 0 bash -c "python3 '$SS' set lock.stage=l5 >/dev/null && python3 -c \"import json; assert json.load(open('.aidlc/demo/state.json'))['lock']['stage']=='l5'\""
@@ -254,7 +312,8 @@ assert r['done']=='waived' and r['waiver_ref'].startswith('ev-'), r\""
 expect "prereqs: a waived review exit still opens g3, an open one does not (I-83)" 0 python3 -c "
 import importlib.util; spec=importlib.util.spec_from_file_location('ss','$SS'); ss=importlib.util.module_from_spec(spec); spec.loader.exec_module(ss)
 assert ss.prereqs({'stage':'review','review':{'done':'waived','waiver_ref':'ev-0001'},'gates':{}},'g3')==[]
-assert ss.prereqs({'stage':'review','review':{'done':True},'gates':{}},'g3')==[]
+u=ss.prereqs({'stage':'review','review':{'done':True},'pr':{'number':7},'gates':{}},'g3', root='/nonexistent')
+assert u and 'done.json' in u[0], ('a done exit without pr-poll\'s verdict file must not open g3', u)
 assert ss.prereqs({'stage':'review','review':{},'gates':{}},'g3'), 'an open review must not open g3'"
 expect "state.json never hand-edited: json valid" 0 python3 -c "import json;json.load(open('.aidlc/demo/state.json'))"
 popd >/dev/null
@@ -263,6 +322,128 @@ popd >/dev/null
 # v0.12.0 · 广度网格（sizing.yaml.stages）+ 解释日记 + plan / doctor / autonomy
 # 借鉴 AWS AI-DLC 2.0 的 scope grid / memory.md 四格 / 自治阶梯，见 docs/reports/aidlc-gap-2026-09-07.md
 # ---------------------------------------------------------------------------------------------
+echo "== ai-dlc / 闸编译进 advance · 单卡预算 · 指纹归一化 · escape · fleet 极性（v1.4.0）"
+MDW="$S/acceptance-fleet/scripts/meets_done_when.py"; AFX="$S/acceptance-fleet/eval/fixtures"; MET="$S/retro/scripts/metrics.py"
+ST3="$TMP/state-gates"; mkrepo "$ST3" "$FX/done_when.yaml"; pushd "$ST3" >/dev/null
+cp "$FX/final-state-"*.json .; git checkout -q -b feat/acc
+py "$SS" init --slug acc --title "acceptance gates" >/dev/null
+py "$SS" set --slug acc track=task contract.done_when=done_when.yaml branch.name=feat/acc branch.base=main >/dev/null
+py "$SS" advance --slug acc acceptance --force --reason fixture >/dev/null
+# advance pr 曾只看 acceptance.evaluation_result 是不是非空字符串——那是执行者的说法，不是状态。
+# 现在对着 final-state.json 检：四态要是 DONE、没跑完的审查要为零（不变量 14）、契约声明了阈值
+# 就要有 meets_done_when.py 比对出来的 met（不变量 7：达标由脚本比对，不由评估 agent 宣布）。
+expect "acceptance --result records the fleet verdict (FIX)" 0 py "$SS" acceptance --slug acc --result final-state-fix.json
+expect "advance pr refused: final-state is FIX, not DONE" 0 bash -c "python3 '$SS' advance --slug acc pr | grep -q 'not DONE'"
+expect "advance pr refused: DONE but a review never finished (invariant 14)" 0 bash -c "python3 '$SS' acceptance --slug acc --result final-state-done-unevaluated.json >/dev/null && python3 '$SS' advance --slug acc pr | grep -q 'unevaluated reviews'"
+expect "advance pr refused: DONE but thresholds declared and meets_done_when not computed (invariant 7)" 0 bash -c "python3 '$SS' acceptance --slug acc --result final-state-done.json >/dev/null && python3 '$SS' advance --slug acc pr | grep -q 'meets_done_when is not computed'"
+expect "acceptance.meets_done_when is not settable (only the comparison script writes it)" 1 py "$SS" set --slug acc acceptance.meets_done_when=true
+expect "meets_done_when.py: every threshold measured and satisfied → met (0)" 0 py "$MDW" done_when.yaml --measurements "$AFX/qa-measurements-metrics.yaml" --final-state final-state-done.json --out meets-ok.yaml
+expect "meets_done_when.py: a threshold violated → not_met (1)" 1 py "$MDW" done_when.yaml --measurements "$AFX/qa-measurements-metrics-low.yaml" --out meets-low.yaml
+expect "meets_done_when.py: a declared threshold nobody measured → unevaluated (3), not pass" 3 py "$MDW" done_when.yaml --measurements "$AFX/qa-measurements-metrics-partial.yaml" --out meets-partial.yaml
+expect "meets_done_when.py: a FIX final-state is not_met even when every threshold passes (twin)" 1 py "$MDW" done_when.yaml --measurements "$AFX/qa-measurements-metrics.yaml" --final-state final-state-fix.json --out meets-fix.yaml
+expect "acceptance --meets unevaluated is recorded but does not open pr" 0 bash -c "python3 '$SS' acceptance --slug acc --result final-state-done.json --meets meets-partial.yaml >/dev/null && python3 '$SS' advance --slug acc pr | grep -q \"meets_done_when is 'unevaluated'\""
+python3 -c "import re; s=open('meets-ok.yaml').read(); open('meets-other.yaml','w').write(re.sub(r'done_when_sha256: \S+', 'done_when_sha256: deadbeef', s))"
+expect "acceptance --meets refuses a report computed against another contract (sha mismatch)" 1 py "$SS" acceptance --slug acc --result final-state-done.json --meets meets-other.yaml
+expect "acceptance --meets records met" 0 bash -c "python3 '$SS' acceptance --slug acc --result final-state-done.json --meets meets-ok.yaml | grep -q '\"meets_done_when\": true'"
+# 红→绿的另一半：基线里每条红测试现在都过了、一条没失踪，才有资格进 pr。
+py "$CRB" tests/run_tests.sh --out tests/RED_BASELINE.txt >/dev/null; py "$SS" set --slug acc contract.red_baseline=tests/RED_BASELINE.txt >/dev/null
+expect "advance pr refused: no red→green evidence on record" 0 bash -c "python3 '$SS' advance --slug acc pr | grep -q 'acceptance.red_green'"
+py "$VRG" tests/RED_BASELINE.txt --runner tests/run_tests.sh --out red-green-red.yaml >/dev/null 2>&1
+expect "advance pr refused: red→green evidence says not_green (twin)" 0 bash -c "python3 '$SS' set --slug acc acceptance.red_green=red-green-red.yaml >/dev/null && python3 '$SS' advance --slug acc pr | grep -q 'not green'"
+mkdir -p src && echo ok > src/impl.txt && git add src >/dev/null && git commit -qm "feat(acc): implementation" >/dev/null
+py "$VRG" tests/RED_BASELINE.txt --runner tests/run_tests.sh --out red-green.yaml >/dev/null
+expect "set acceptance.red_green (green)" 0 py "$SS" set --slug acc acceptance.red_green=red-green.yaml
+# 锁在状态机里再验一遍：/commit 与 /pr 的预门都能被裸 git 绕开，advance 绕不开。
+py "$S/ai-dlc/scripts/lock_done_when.py" sign --signer-kind human --by human done_when.yaml >/dev/null; py "$SS" set --slug acc lock.path=.done_when.lock >/dev/null
+echo "# tampered" >> done_when.yaml
+expect "advance pr refused: a G2-locked file changed without a change proposal (lock re-verified by the state machine)" 0 bash -c "python3 '$SS' advance --slug acc pr | grep -q 'locked file changed'"
+cp "$FX/done_when.yaml" done_when.yaml
+expect "advance pr ok: DONE · no unevaluated review · thresholds met · lock intact" 0 py "$SS" advance --slug acc pr
+
+# card_retries 是**单卡**预算（routing.yaml / loops.yaml / SKILL.md 三处都这么写）。曾按全局 counters.card
+# 判：第 3 次失败无论落在哪张卡都升级——五张卡的特性只付得起三次失败。
+py "$SS" init --slug budget --title "per-card budget" >/dev/null; py "$SS" set --slug budget track=task >/dev/null
+py "$SS" card --slug budget CARD-01 --status doing >/dev/null; py "$SS" card --slug budget CARD-02 --status doing >/dev/null
+expect "per-card budget: two retries on CARD-01 do not spend CARD-02's budget" 0 bash -c "python3 '$SS' fail --slug budget --signal card_test_fail --card CARD-01 --fingerprint a1 >/dev/null; python3 '$SS' fail --slug budget --signal card_test_fail --card CARD-01 --fingerprint a2 >/dev/null; python3 '$SS' fail --slug budget --signal card_test_fail --card CARD-02 --fingerprint b1 | python3 -c \"import json,sys; d=json.load(sys.stdin); assert d['escalate'] is False and d['budget_scope']=='card:CARD-02' and d['layer_count']==1, d\""
+expect "per-card budget: CARD-01's own third failure exhausts its budget (twin)" 0 bash -c "python3 '$SS' fail --slug budget --signal card_test_fail --card CARD-01 --fingerprint a3 | python3 -c \"import json,sys; d=json.load(sys.stdin); assert d['escalate'] and d['convergence']['type']=='budget' and d['layer_count']==3, d\""
+
+# 指纹要的是「同一个失败」不是「同一段字节」：行号 / 时间戳 / 临时路径每次都变，留着它们「同指纹两次」永远不触发。
+py "$SS" init --slug fpn --title "fingerprint normalisation" >/dev/null; py "$SS" set --slug fpn track=task >/dev/null; py "$SS" card --slug fpn CARD-01 --status doing >/dev/null
+expect "fingerprint: the same failure at another line / time is the same fingerprint → repeat on the 2nd" 0 bash -c "python3 '$SS' fail --slug fpn --signal card_test_fail --card CARD-01 --evidence 'AssertionError tests/test_x.py:42 expected 3 got 0 at 2026-09-05T15:26:16Z' >/dev/null; python3 '$SS' fail --slug fpn --signal card_test_fail --card CARD-01 --evidence 'AssertionError tests/test_x.py:57 expected 3 got 0 at 2026-09-06T09:01:00Z' | python3 -c \"import json,sys; d=json.load(sys.stdin); assert d['fingerprint_source']=='normalized_evidence' and d['convergence']['type']=='repeat' and d['escalate'], d\""
+expect "fingerprint: a genuinely different failure is a different fingerprint (twin)" 0 bash -c "python3 '$SS' fail --slug fpn --signal card_test_fail --card CARD-02 --evidence 'TypeError: None is not iterable' >/dev/null; python3 '$SS' fail --slug fpn --signal card_test_fail --card CARD-02 --evidence 'KeyError: era_id' | python3 -c \"import json,sys; d=json.load(sys.stdin); assert d['fingerprint_repeat']==1 and d['convergence']['type']=='none', d\""
+
+# R12 逃逸缺陷：曾经没有任何命令写 escape 事件，/issue --escape 只写 issue 正文，metrics.py 只读归档——
+# 「校准」闭环（逃逸 → 世界 / 本体 / 契约）的第一根线是断的。
+py "$SS" init --slug esc --title "escape" >/dev/null; py "$SS" set --slug esc track=task merge.sha=deadbeef pr.number=9 >/dev/null
+py "$SS" advance --slug esc archive --force --reason fixture >/dev/null
+mkdir -p specs; py "$SS" archive --slug esc --to specs/esc >/dev/null
+expect "escape_defect is not a fail signal (R12 is attribute-then-route, a merged Run owes no failure report)" 1 py "$SS" fail --slug esc --signal escape_defect --evidence "prod 500"
+expect "escape: human_attribution is the act, not a layer — refused" 2 py "$SS" escape --slug esc --layer human_attribution --why x --by human
+expect "escape: counted on the attributed layer, appended to the log, mirrored into the archive" 0 bash -c "python3 '$SS' escape --slug esc --layer task --why 'AC never covered the empty-query path' --by human --issue 99 --symptom 'prod 500 on empty query' --found-via alert | python3 -c \"import json,sys; d=json.load(sys.stdin); assert d['layer']=='task' and d['counter']==1 and d.get('mirrored_into_archive')=='specs/esc', d\" && [ \"\$(grep -c '^| 20' specs/esc/escape-defects.md)\" = 1 ] && grep -q '\"kind\": \"escape\"' specs/esc/trace.jsonl"
+expect "escape: metrics.py sees it in the archive (escape_defects=1, chain root layer=task)" 0 bash -c "python3 '$MET' specs --json '$TMP/esc-metrics.json' >/dev/null && python3 -c \"import json; d=json.load(open('$TMP/esc-metrics.json')); r=[x for x in d['features'] if x['feature']=='esc'][0]; assert r['escape_defects']==1 and r['escape_chains'][0]['root_layer']=='task', r\""
+expect "escape: an escape with no issue closes nothing — --issue is required" 2 py "$SS" escape --slug esc --layer task --why x --by human
+expect "escape: works on the archive alone once the runtime dir is gone (--root specs)" 0 bash -c "rm -rf .aidlc/esc && python3 '$SS' escape --root specs --slug esc --layer world --why 'the PSL never said what empty means' --by human --issue 100 | python3 -c \"import json,sys; d=json.load(sys.stdin); assert d['layer']=='world' and d['counter']==1, d\" && [ \"\$(grep -c '^| 20' specs/esc/escape-defects.md)\" = 2 ]"
+
+# 「未校准的标准不当证据」按档编译：L 档缺校准报告不进验收；任何档有报告就必须过 verify_calibration.py。
+py "$SS" init --slug cal --title "calibration" >/dev/null; py "$SS" set --slug cal track=task contract.done_when=done_when.yaml >/dev/null
+py "$SS" size --slug cal --files 20 --acs 3 --human-acs 0 --commit >/dev/null; py "$SS" advance --slug cal implement --force --reason fixture >/dev/null
+expect "calibration: an L tier refuses acceptance without a calibration report (未校准的标准不当证据)" 0 bash -c "python3 '$SS' advance --slug cal acceptance | grep -q 'calibration_report'"
+expect "calibration: a report that fails the meta-gate is refused at any tier (twin)" 0 bash -c "python3 '$SS' set --slug cal contract.calibration_report='$S/calibrate/eval/fixtures/report_bad_noholdout.yaml' >/dev/null && python3 '$SS' advance --slug cal acceptance | grep -q 'fails the meta-gate'"
+expect "calibration: a passing report opens acceptance" 0 bash -c "python3 '$SS' set --slug cal contract.calibration_report='$S/calibrate/eval/fixtures/report_good.yaml' >/dev/null && python3 '$SS' advance --slug cal acceptance"
+
+# M 档的 fleet_subset 是一次豁免（少跑四个审查者）；豁免只认推导来的档位。缺省 M 不跑 `size` 就少四个，是一扇靠遗漏打开的门。
+py "$SS" init --slug fleet --title "fleet polarity" >/dev/null; py "$SS" set --slug fleet track=task >/dev/null
+expect "fleet: a default (underived) M runs the full fleet — a subset by omission is a door" 0 bash -c "python3 '$SS' plan --slug fleet --json | python3 -c \"import json,sys; d=json.load(sys.stdin); assert d['size_source']=='default' and len(d['fleet'])==5, d\""
+expect "fleet: a derived M earns the two-reviewer subset" 0 bash -c "python3 '$SS' size --slug fleet --files 5 --acs 3 --human-acs 0 --commit >/dev/null && python3 '$SS' plan --slug fleet --json | python3 -c \"import json,sys; d=json.load(sys.stdin); assert d['tier']=='M' and d['size_source']=='derived' and d['fleet']==['qa-reviewer','spec-gaming-detector'], d\""
+expect "fleet: a hand-set M loses the subset again (twin)" 0 bash -c "python3 '$SS' set --slug fleet intake.size=M >/dev/null && python3 '$SS' plan --slug fleet --json | python3 -c \"import json,sys; d=json.load(sys.stdin); assert d['size_source']=='manual' and len(d['fleet'])==5, d\""
+RCP="$S/acceptance-fleet/eval/fixtures/review-complete"; VRCP="$S/acceptance-fleet/scripts/verify_review_complete.py"
+expect "review-complete: --size M with size_source=default expects the full L set (two files → unevaluated)" 3 py "$VRCP" "$RCP/complete" --size M --size-source default --out "$TMP/rc-def.yaml"
+expect "review-complete: --size M with size_source=derived expects the subset (twin)" 0 py "$VRCP" "$RCP/complete" --size M --size-source derived --out "$TMP/rc-der.yaml"
+
+popd >/dev/null
+
+# S 档 skip 的 why 写着「仍要过 /pr-review」。写在 why 里的承诺不是闸（不变量 17）——现在被网格跳过整体验收的 Run，进 G3 / 合入前必须有 pre-review 的发现文件。
+# 同一条链顺便证明：网格跳掉的是 cards 这个**阶段**，不是 G2 的**签字**；红基线 / l5 锁 / 红→绿 / 评审裁决文件在 S 档一个都不少。
+ST4="$TMP/state-stier"; mkrepo "$ST4" "$FX/done_when_nohuman.yaml"; pushd "$ST4" >/dev/null
+git checkout -q -b feat/s
+py "$SS" init --slug stier --title "S tier still reviews" >/dev/null
+py "$SS" set --slug stier track=task branch.name=feat/s branch.base=main contract.done_when=done_when.yaml >/dev/null
+py "$SS" size --slug stier --files 2 --acs 1 --human-acs 0 --commit >/dev/null
+py "$SS" advance --slug stier g2 --force --reason fixture >/dev/null
+expect "S tier: implement refused without G2's signature even though cards are skipped (the grid skips the stage, never the verdict)" 0 bash -c "python3 '$SS' advance --slug stier implement | grep -q 'G2 verdict pass'"
+py "$LDW" sign --signer-kind human --by tester --stage l5 done_when.yaml tests/run_tests.sh >/dev/null
+py "$SS" set --slug stier lock.path=.done_when.lock >/dev/null; py "$SS" gate --slug stier g2 --verdict pass --signer-kind human --by human >/dev/null
+py "$CRB" tests/run_tests.sh --out tests/RED_BASELINE.txt >/dev/null; py "$SS" set --slug stier contract.red_baseline=tests/RED_BASELINE.txt >/dev/null
+expect "S tier: implement reached with G2 signed, l5 lock and RED baseline (cards skipped by the grid)" 0 py "$SS" advance --slug stier implement
+mkdir -p src && echo ok > src/impl.txt && git add src >/dev/null && git commit -qm "feat(s): fix" >/dev/null
+py "$VRG" tests/RED_BASELINE.txt --runner tests/run_tests.sh --out red-green.yaml >/dev/null; py "$SS" set --slug stier acceptance.red_green=red-green.yaml >/dev/null
+expect "S tier: pr reached via the grid, acceptance skipped_by=size_tier" 0 bash -c "python3 '$SS' advance --slug stier pr >/dev/null && python3 '$SS' show --slug stier | grep -q '\"skipped_by\": \"size_tier\"'"
+py "$SS" set --slug stier pr.number=3 >/dev/null; py "$SS" advance --slug stier review >/dev/null
+bash "$PPL" predicate 3 APPROVED 0 green 1 false >/dev/null
+expect "S tier: gates.g3.required=false is legal here — the contract has no human AC" 0 py "$SS" set --slug stier review.done=done gates.g3.required=false
+expect "S tier: merge refused until the promised /pr-review findings exist" 0 bash -c "python3 '$SS' advance --slug stier merge | grep -q 'pre_review_findings'"
+printf 'findings: []\n' > pre-review.yaml
+expect "S tier: merge allowed once pr.pre_review_findings points at the file (twin)" 0 bash -c "python3 '$SS' set --slug stier pr.pre_review_findings=pre-review.yaml >/dev/null && python3 '$SS' advance --slug stier merge"
+popd >/dev/null
+
+# 锁在**历史**里再验一遍：改了被锁文件再改回去，磁盘对得上，历史里那次改动却没有变更提案。
+ST5="$TMP/state-hist"; mkrepo "$ST5" "$FX/done_when_nohuman.yaml"; pushd "$ST5" >/dev/null
+git checkout -q -b feat/h
+py "$SS" init --slug hist --title "lock history" >/dev/null
+py "$SS" set --slug hist track=task branch.name=feat/h branch.base=main contract.done_when=done_when.yaml pr.number=1 >/dev/null
+py "$LDW" sign --signer-kind human --by human done_when.yaml >/dev/null; py "$SS" set --slug hist lock.path=.done_when.lock >/dev/null
+py "$SS" advance --slug hist review --force --reason fixture >/dev/null
+bash "$PPL" predicate 1 APPROVED 0 green 1 false >/dev/null; py "$SS" set --slug hist review.done=done gates.g3.required=false >/dev/null
+echo "# tamper" >> done_when.yaml && git commit -qam "chore: tamper the contract" >/dev/null && git checkout -q HEAD~1 -- done_when.yaml && git commit -qam "chore: restore it" >/dev/null
+expect "lock history: a commit that moved a locked file, then a restore — disk matches the lock, history does not" 0 bash -c "python3 '$SS' advance --slug hist merge | grep -q 'no change-proposal'"
+git reset -q --hard main
+echo "# amended" >> done_when.yaml && echo "proposal" > change-proposal-001.md && git add . >/dev/null && git commit -qm "chore: amend the contract with its proposal" >/dev/null
+py "$LDW" sign --signer-kind human --by human done_when.yaml >/dev/null
+expect "pending failure report blocks merge too" 0 bash -c "python3 '$SS' fail --slug hist --signal hidden_variant_fail --evidence 'holdout 3/10' >/dev/null; python3 '$SS' advance --slug hist merge | grep -q 'pending failure report'"
+echo "# fr" > fr.md; py "$SS" report --slug hist --path fr.md >/dev/null
+expect "lock history: the same move WITH its change proposal in the same commit passes (twin)" 0 py "$SS" advance --slug hist merge
+popd >/dev/null
+
 echo "== ai-dlc / verify_sizing.py（网格与代码互相断言）"
 VS="$S/ai-dlc/scripts/verify_sizing.py"; SZ="$S/ai-dlc/assets/sizing.yaml"
 expect "shipped sizing grid passes all 7 checks" 0 py "$VS" "$SZ"
@@ -289,9 +470,8 @@ mk_sizing "d['stages']['S']['skip'].append({'stage':'nosuchstage','why':'x'})" "
 expect "a grid naming a stage outside ORDER is rejected (L1)" 1 py "$VS" "$TMP/sz_bad.yaml"
 
 echo "== ai-dlc / 体量网格的极性与跳过"
-GR="$TMP/grid"; mkdir -p "$GR"; pushd "$GR" >/dev/null
-cp "$FX/done_when.yaml" done_when.yaml
-py "$SS" init --slug g --title "三行修复" --track task >/dev/null
+GR="$TMP/grid"; mkrepo "$GR" "$FX/done_when.yaml"; pushd "$GR" >/dev/null
+py "$SS" init --slug g --title "三行修复" --track task >/dev/null; py "$SS" set --slug g branch.base=main >/dev/null
 # 极性①：手设的档位一扇门也打不开
 expect "a hand-set tier grants no skip (size_source=manual)" 0 bash -c "python3 '$SS' set --slug g intake.size=S >/dev/null && python3 '$SS' plan --slug g --json | python3 -c \"
 import json,sys; d=json.load(sys.stdin)
@@ -318,7 +498,11 @@ python3 '$SS' advance --slug g g2 >/dev/null
 python3 '$S/ai-dlc/scripts/lock_done_when.py' sign --signer-kind human --by human done_when.yaml >/dev/null
 python3 '$SS' set --slug g lock.path=.done_when.lock >/dev/null
 python3 '$SS' gate --slug g g2 --verdict pass --signer-kind human --by human >/dev/null
+python3 '$S/ai-dlc/scripts/lock_done_when.py' sign --signer-kind human --by tester --stage l5 done_when.yaml tests/run_tests.sh >/dev/null
+python3 '$CRB' tests/run_tests.sh --out tests/RED_BASELINE.txt >/dev/null; python3 '$SS' set --slug g contract.red_baseline=tests/RED_BASELINE.txt >/dev/null
 python3 '$SS' advance --slug g implement >/dev/null
+mkdir -p src && echo ok > src/impl.txt && git add src >/dev/null && git commit -qm 'feat(g): fix' >/dev/null
+python3 '$VRG' tests/RED_BASELINE.txt --runner tests/run_tests.sh --out red-green.yaml >/dev/null; python3 '$SS' set --slug g acceptance.red_green=red-green.yaml >/dev/null
 python3 '$SS' advance --slug g pr >/dev/null
 python3 -c \"
 import json
@@ -917,7 +1101,12 @@ expect "advance issue refused (G1 pending)" 1 py "$SS" advance issue
 expect "gate g1 pass refused without world.derived_dir" 1 py "$SS" gate g1 --verdict pass --signer-kind human --by human
 mkdir -p derived && cp "$FXD/derived_good/"* derived/
 expect "set world.* paths" 0 py "$SS" set world.psl=PSL.md world.derived_dir=derived
+# G1 的裁决对象是签字版形态草案：记录要在，记录里写的哈希要是 derived/form-draft.md 现在的哈希。
+expect "gate g1 pass refused without --record (the record carries the signed draft's sha256)" 1 py "$SS" gate g1 --verdict pass --signer-kind human --by human
+python3 -c "import hashlib; h=hashlib.sha256(open('derived/form-draft.md','rb').read()).hexdigest(); open('g1-record.md','w').write('# G1\n- [x] PASS — 签字版形态草案 sha256: \x60%s\x60\n' % h); open('g1-wrong.md','w').write('# G1\n- [x] PASS — sha256: \x60%s\x60\n' % ('0'*64))"
+expect "gate g1 pass refused when the record names another draft's sha256 (twin)" 1 py "$SS" gate g1 --verdict pass --signer-kind human --by human --record g1-wrong.md
 expect "gate g1 pass with derived products" 0 py "$SS" gate g1 --verdict pass --signer-kind human --by human --record g1-record.md
+expect "gate g1 pass records world.form_draft_sha256 from derived/form-draft.md" 0 bash -c "python3 '$SS' show | grep -q '\"form_draft_sha256\": \"'"
 # X1（v1.1.0）：PSL 轨的定义就是「闭包算不出来」，而闭包要有 dos.yaml 才算得出来。
 # 没有本体的 PSL 轨是**自评**出来的 PSL 轨，所以 sizing.yaml 的 by_track.psl 把 dos 提到 required。
 expect "advance issue refused on the PSL track without a repo dos.yaml (X1)" 1 py "$SS" advance issue
@@ -926,7 +1115,7 @@ printf 'objects:\n  Thing: {}\nrules: []\n' > dos.yaml
 expect "advance issue ok after G1 once the ontology is in the project directory" 0 py "$SS" advance issue
 expect "gate g1 reject with attribution bumps world counter" 0 bash -c "python3 '$SS' gate g1 --verdict reject --signer-kind human --by human --attribution rule_error >/dev/null && python3 '$SS' show | grep -q '\"world\": 1'"
 expect "gate g1 reject with derivation_error does NOT bump world (I-34)" 0 bash -c "python3 '$SS' gate g1 --verdict reject --signer-kind human --by human --attribution derivation_error >/dev/null && python3 '$SS' show | grep -q '\"world\": 1'"
-expect "gate g1 pass after a reject clears the stale attribution (I-51)" 0 bash -c "python3 '$SS' gate g1 --verdict pass --signer-kind human --by human >/dev/null && ! python3 '$SS' show | grep -q 'derivation_error'"
+expect "gate g1 pass after a reject clears the stale attribution (I-51)" 0 bash -c "python3 '$SS' gate g1 --verdict pass --signer-kind human --by human --record g1-record.md >/dev/null && ! python3 '$SS' show | grep -q 'derivation_error'"
 # re-audit 2026-09-06: --signer-kind used to default to `human`, so an agent that simply omitted the
 # flag was recorded as a person. A discipline bypassable by omission is not a discipline, and this
 # whole run's honesty rests on delegated signatures being marked as such. It is now required.
@@ -1053,6 +1242,22 @@ if [[ -z "${SMOKE_NESTED:-}" ]]; then
     POISON=\"\$(mktemp -d)\"; cp -R '$ROOT' \"\$POISON/ai-dlc\"
     bash \"\$POISON/ai-dlc/eval/smoke.sh\" --only 'derive_counts on example' --mutate skills/test-suite-generator/scripts/derive_counts.py 'the count primitive' 'the counting primitive' >/dev/null 2>&1"
 fi
+
+echo "== test-suite-generator / verify_red_green.py（红→绿证据；capture_red_baseline.py 的另一半）"
+CRB="$S/test-suite-generator/scripts/capture_red_baseline.py"; VRG="$S/test-suite-generator/scripts/verify_red_green.py"
+RG="$TMP/redgreen"; rm -rf "$RG"; mkdir -p "$RG"; pushd "$RG" >/dev/null
+git init -q . && git config user.email t@t && git config user.name t
+printf '#!/usr/bin/env bash\necho "test_a (t.T.test_a) ... FAIL"\necho "test_b (t.T.test_b) ... ok"\nexit 1\n' > run_tests.sh
+git add . >/dev/null && git commit -qm red
+expect "red-green: capture the RED baseline in a clean checkout" 0 py "$CRB" run_tests.sh --out RED_BASELINE.txt
+expect "red-green: the red test is still red → not green (1)" 1 py "$VRG" RED_BASELINE.txt --runner run_tests.sh --out rg-red.yaml
+printf '#!/usr/bin/env bash\necho "test_a (t.T.test_a) ... ok"\necho "test_b (t.T.test_b) ... ok"\n' > run_tests.sh; git commit -qam green
+expect "red-green: every red test now passes, none missing → green (0)" 0 py "$VRG" RED_BASELINE.txt --runner run_tests.sh --out rg-green.yaml
+printf '#!/usr/bin/env bash\necho "test_b (t.T.test_b) ... ok"\n' > run_tests.sh; git commit -qam deleted
+expect "red-green: a red test that vanished is not green — deleting a test is the cheapest green (twin)" 0 bash -c "python3 '$VRG' RED_BASELINE.txt --runner run_tests.sh --out rg-gone.yaml; [ \$? = 1 ] || exit 9; grep -q 'missing:' rg-gone.yaml && grep -q 'test_a' rg-gone.yaml"
+python3 -c "s=open('RED_BASELINE.txt').read(); open('RED_DIRTY.txt','w').write(s.replace('<empty>',' M src/x.py'))"
+expect "red-green: a baseline without clean-checkout evidence is unevaluated (3), not pass" 3 py "$VRG" RED_DIRTY.txt --runner run_tests.sh --out rg-dirty.yaml
+popd >/dev/null
 
 echo "== cross-skill boundaries (PR pre-review, B-tier)"
 # Two shared-logic decisions were made in opposite directions in one delivery. The rule now: a skill's
@@ -1376,8 +1581,9 @@ expect "qa_facts: a non-qa document is refused" 1 bash -c "printf 'gaming_assess
 # 一次被截断的审查留下的是一份**短而干净**的报告 —— 与"走完全程、什么也没发现"在字节层面无法
 # 区分，/meta-judge 会从它合成出 PASS。不变量 14 的 agent 侧：缺标记走严路，不走宽路。
 VRC="$AF/verify_review_complete.py"; RC="$FXA/review-complete"
+# --size M 的两人期望集是一次豁免，只给推导来的档位（--size-source derived）；缺省 / 手设按 L 档全集（见 v1.4.0 段）。
 expect "review-complete: a complete fleet passes" 0 \
-  py "$VRC" "$RC/complete" --size M --out "$TMP/rc-complete.yaml"
+  py "$VRC" "$RC/complete" --size M --size-source derived --out "$TMP/rc-complete.yaml"
 expect "review-complete: a missing expected review is unevaluated, not a pass (exit 3)" 3 \
   py "$VRC" "$RC/complete" --size L --out "$TMP/rc-missing.yaml"
 expect "review-complete: a truncated review with no completion marker is unevaluated (exit 3)" 3 \
@@ -1474,7 +1680,7 @@ expect "size: an S tier needs counted evidence, never a bare assertion" 1 \
 expect "size: a human AC forces L even on a two-file change" 0 \
   bash -c "python3 '$S/ai-dlc/scripts/aidlc_state.py' size --root \"$TMP/sz\" --slug s --files 2 --acs 2 --human-acs 1 | grep -q '\"tier\": \"L\"'"
 expect "size: a derived S grants the fleet exemption and records it as a typed ledger line" 0 \
-  bash -c "d=\"$TMP/sz2\"; rm -rf \"\$d\"; python3 '$S/ai-dlc/scripts/aidlc_state.py' init --root \"\$d\" --slug s --title t --track task >/dev/null; python3 '$S/ai-dlc/scripts/aidlc_state.py' size --root \"\$d\" --slug s --files 1 --acs 1 --human-acs 0 --commit >/dev/null; python3 -c \"import json;p='\$d/s/state.json';d=json.load(open(p));d['stage']='acceptance';json.dump(d,open(p,'w'))\"; python3 '$S/ai-dlc/scripts/aidlc_state.py' advance --root \"\$d\" --slug s pr >/dev/null && grep -q size_exemption \"\$d/s/ledger.md\""
+  bash -c "d=\"$TMP/sz2\"; rm -rf \"\$d\"; python3 '$S/ai-dlc/scripts/aidlc_state.py' init --root \"\$d\" --slug s --title t --track task >/dev/null; python3 '$S/ai-dlc/scripts/aidlc_state.py' size --root \"\$d\" --slug s --files 1 --acs 1 --human-acs 0 --commit >/dev/null; python3 -c \"import json;p='\$d/s/state.json';d=json.load(open(p));d['stage']='acceptance';open('\$d/rg.yaml','w').write('verdict: green');d['acceptance']={'red_green':'\$d/rg.yaml'};json.dump(d,open(p,'w'))\"; python3 '$S/ai-dlc/scripts/aidlc_state.py' advance --root \"\$d\" --slug s pr >/dev/null && grep -q size_exemption \"\$d/s/ledger.md\""
 expect "size: a hand-set S never grants the exemption (twin — the door does not open by omission)" 1 \
   bash -c "d=\"$TMP/sz3\"; rm -rf \"\$d\"; python3 '$S/ai-dlc/scripts/aidlc_state.py' init --root \"\$d\" --slug s --title t --track task >/dev/null; python3 '$S/ai-dlc/scripts/aidlc_state.py' set --root \"\$d\" --slug s intake.size=S >/dev/null; python3 -c \"import json;p='\$d/s/state.json';d=json.load(open(p));d['stage']='acceptance';json.dump(d,open(p,'w'))\"; python3 '$S/ai-dlc/scripts/aidlc_state.py' advance --root \"\$d\" --slug s pr"
 expect "size: size_source is not settable — only the derivation can write it" 1 \
@@ -1647,6 +1853,12 @@ expect "docs: every script and asset appears in docs/reference.md" 0 \
   py "$ROOT/eval/fixtures/doc_coverage.py" "$ROOT"
 expect "docs: a script missing from the index turns it red (twin)" 1 \
   bash -c "t=\"$TMP/dc\"; rm -rf \"\$t\"; mkdir -p \"\$t/docs\"; cp -R '$ROOT/skills' \"\$t/\"; sed 's/verify_structure.py/verify_XXXX.py/g' '$ROOT/docs/reference.md' > \"\$t/docs/reference.md\"; python3 '$ROOT/eval/fixtures/doc_coverage.py' \"\$t\""
+# 2026-09-08 的报告抓到 ARCHITECTURE.md 的 52/67 已成 53/69，改了那一处；SKILL.md 与 reference.md 里同样的数字没人改。
+# 「凡是数字，先跑一遍再写」变成期望：活文档里手抄的节点 / 边数必须等于 verify_graph.py 数出来的。
+expect "docs: node / edge counts in living docs equal verify_graph.py (no hand-copied numbers)" 0 \
+  py "$ROOT/eval/fixtures/doc_graph_counts.py" "$ROOT"
+expect "docs: a drifted count turns it red (twin)" 1 \
+  bash -c "t=\"$TMP/dgc\"; rm -rf \"\$t\"; mkdir -p \"\$t/docs\" \"\$t/skills/ai-dlc\"; cp -R '$ROOT/skills/ai-dlc/scripts' '$ROOT/skills/ai-dlc/assets' \"\$t/skills/ai-dlc/\"; sed 's/53 节点 · 69 边/52 节点 · 67 边/' '$ROOT/docs/ARCHITECTURE.md' > \"\$t/docs/ARCHITECTURE.md\"; python3 '$ROOT/eval/fixtures/doc_graph_counts.py' \"\$t\""
 expect "docs: the evaluation doc still states the plugin is not L2-verified" 0 \
   bash -c "grep -q 'static_only' '$ROOT/docs/evaluation.md' && grep -q '出题人与被测者同源' '$ROOT/docs/evaluation.md'"
 

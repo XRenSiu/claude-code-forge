@@ -83,7 +83,7 @@ deletion 测试：撤掉本 skill，引擎会写"这次沟通不够充分，下�
 
 ## 接线
 
-上游：`/ai-dlc archive`（含 trace.jsonl）、`/release`、`/issue --escape`、`/review-loop` 证据日志。下游：`/tune`（harness 参数——retro 改判据与世界，tune 改环的参数；同一次复盘可两个都跑）、`/psl`（Open Questions）、
+上游：`/ai-dlc archive`（含 trace.jsonl）、`/release`、`/issue --escape` → `aidlc_state.py escape`（逃逸事件与 escape-defects.md 镜像进归档；只写 issue 的逃逸这里数不到）、`/review-loop` 证据日志。下游：`/tune`（harness 参数——retro 改判据与世界，tune 改环的参数；同一次复盘可两个都跑）、`/psl`（Open Questions）、
 `/dos-extract` / `/invariant-extract`（本体层）、`/donewhen-extract`（AC 收紧）、`routing.yaml`、各 skill `eval/gate.json`、
 skill-evolve（邻居，学习槽）。
 

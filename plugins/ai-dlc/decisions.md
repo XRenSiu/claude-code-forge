@@ -164,3 +164,49 @@ summaries would break closure to save a page. Recorded here so it is a decision,
   `reconcile_dos.py`). Q003/Q007 from the baseline remain open and untouched.
 - It did not measure whether any of this reduces vocabulary drift. That is Q010, and R017 says
   the claim may not exceed the evidence: the mechanism is smoke-covered, the effect is not.
+
+---
+
+# Amendment 0.3.0 — 2026-09-12
+
+## What a closed-loop read of v1.5.0 found
+
+The question asked of the plugin was whether it is one closed loop. Six rings closed on paper; walking the
+wires found these open, all fixed in the same pass (smoke twins for each):
+
+| # | Where | What was declared | What the code did |
+|---|---|---|---|
+| 1 | R12 escape → retro | `/issue --escape` feeds X2 routing and X3 metrics | nothing wrote an escape Event; `metrics.py` reads only the Archive, which is copied once at `archive` — every escape rate was structurally 0 |
+| 2 | R010 | meets_done_when computed by a script | `acceptance.meets_done_when` was a settable boolean; `advance pr` accepted any non-empty `evaluation_result` string |
+| 3 | R006 budgets | `card_retries: 3` per card | enforced on the global `counters.card` — a five-card feature could afford three failures in total |
+| 4 | R019 | omission gives the stricter path | the default (underived) M tier ran two reviewers instead of six |
+| 5 | §3 "checked against the state" | prerequisites read state | `cards.lint_passed` / `release.done` were flags the engine set; only G2 ran its verifier |
+| 6 | §15 blanks | red-green evidence script | the RED half existed (`capture_red_baseline.py`), the GREEN half did not |
+| 7 | evaluation.md | numbers are not hand-copied | SKILL.md and reference.md still said 52 nodes / 67 edges; plugin.json hard-coded the smoke count; marketplace.json's description had drifted from plugin.json |
+| 8 | R009 / never_skippable | the three gates cannot be skipped | G2's verdict was checked only at `cards`; an S-tier run skipped cards and reached merge without ever signing G2 |
+| 9 | R004 | tests locked at l5 before implementation | nothing read the lock's stage; a g2-only lock let implementation start with tests unlocked |
+| 10 | stages.md L5 | RED baseline before, green after | neither was a prerequisite; `advance implement` and `advance pr` never asked |
+| 11 | R010 (calibrate half) | an uncalibrated standard is not evidence | no prerequisite read `contract.calibration_report`; now tiered via `sizing.yaml.calibration` |
+| 12 | review exit / merge / release | `pr-poll.sh done` decides; merge and tag are facts | `review.done`, `merge.sha`, `release.tag` were strings the engine set; now pr-poll writes a verdict file and git is asked whether the merge landed and the tag points at it |
+| 13 | G3 default | human ACs keep G3 | `set gates.g3.required=false` was accepted on any contract; refused now while a `kind: human` AC exists |
+| 14 | lock rule | proposal in the same diff | only the working tree was hashed; a commit that moved a locked file and a later restore passed; the branch history is now replayed against the signed hashes |
+
+## Judgment 3 — nothing lifted, one rule re-labelled
+
+No new constitution rule: every finding above violated a rule that already existed. R010 changes
+`enforced_by` from `not_enforced` to `system` because it now is. That is the honest direction — a rule that
+says `not_enforced` while a script enforces it is drift in the other direction, and the DOS should not be
+the last to know.
+
+## Judgment 4 — nothing moved
+
+`RepoAsset` and the eight-object waiver stand. The escape Event is an `Event` kind (Judgment 2 of the
+0.2.0 amendment already absorbed `Signal`); it gained a producer, not an object.
+
+## What this amendment did **not** do
+
+- It did not touch the frozen dogfood records; the two smoke expectations that went red under a plugin-dir
+  cwd were fixed in `eval/fixtures/` (the lock path now follows `audit.yaml`), not in `dogfood/`.
+- It did not calibrate any threshold. The fingerprint normalisation makes "same failure" detectable; how
+  many repeats should escalate is still a literature prior (Q009 stands).
+- It did not raise any skill above `static_only` (R017). Every fix has a smoke twin; none has an L2 run.

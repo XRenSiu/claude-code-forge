@@ -39,6 +39,7 @@
       "capture_red_baseline.py": "captures in a git worktree checkout of HEAD (untracked instrument excluded, clean-tree evidence written); --verify rejects a baseline without that evidence"
     },
     "residual": "sub-steps 4-A…4-E (12 linter step-hits) inherited; six-cell classification pending",
-    "mutation_proof": "2026-09-06: each new smoke expectation proved to kill its mutant via `bash plugins/ai-dlc/eval/smoke.sh --mutate <file> <old> <new>` (10 mutants, all killed; see the I-54/I-59/I-62/I-80 labels)"
+    "mutation_proof": "2026-09-06: each new smoke expectation proved to kill its mutant via `bash plugins/ai-dlc/eval/smoke.sh --mutate <file> <old> <new>` (10 mutants, all killed; see the I-54/I-59/I-62/I-80 labels)",
+    "v1.4.0": "2026-09-12: verify_red_green.py smoke in a temp git repo — still red → 1, all green → 0, vanished red test → 1, dirty baseline → 3"
   }
 }

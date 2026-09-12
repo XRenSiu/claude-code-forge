@@ -112,6 +112,10 @@
         },
         "tests_manifest": {
           "type": "string"
+        },
+        "red_baseline": {
+          "type": "string",
+          "description": "capture_red_baseline.py 的产物；advance implement 用 --verify 核它（干净检出证据）——判据先于代码的机械形"
         }
       }
     },
@@ -142,7 +146,8 @@
           "type": "string"
         },
         "lint_passed": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "由 advance implement 写（它自己跑 lint_cards.py）；不在 SETTABLE 里——一个引擎 set 的布尔是执行者的说法，不是状态"
         },
         "items": {
           "type": "object",
@@ -176,6 +181,10 @@
               }
             }
           }
+        },
+        "lint_at": {
+          "type": "string",
+          "description": "advance implement 自己跑 lint_cards.py 通过的时刻；lint_passed 不再可 set，它是这次运行的记录不是凭证"
         }
       }
     },
@@ -186,7 +195,8 @@
           "type": "string"
         },
         "meets_done_when": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "只由 `acceptance --meets <report>` 写：report 是 acceptance-fleet/scripts/meets_done_when.py 比对 behavior.thresholds 的产物（不变量 7 / R010）；不在 SETTABLE 里"
         },
         "skipped_reason": {
           "type": "string"
@@ -194,6 +204,22 @@
         "skipped_by": {
           "type": "string",
           "description": "谁跳过的整体验收。`size_tier` = 体量网格（有 size_exemption 账本行与理由）"
+        },
+        "meets_done_when_verdict": {
+          "enum": [
+            "met",
+            "not_met",
+            "unevaluated"
+          ],
+          "description": "meets_done_when.py 的 verdict；unevaluated 不是通过"
+        },
+        "meets_done_when_report": {
+          "type": "string",
+          "description": "那份报告的路径；其 done_when_sha256 必须等于当前契约的哈希"
+        },
+        "red_green": {
+          "type": "string",
+          "description": "verify_red_green.py 的报告；advance pr 读它的 verdict（green = 基线里每条红测试都过了、一条没失踪）"
         }
       }
     },
@@ -218,6 +244,10 @@
         "pre_review_rounds": {
           "type": "integer",
           "description": "/pr --pre-review 建 PR 前的自审轮数（≤ 2）"
+        },
+        "pre_review_findings": {
+          "type": "string",
+          "description": "/pr --pre-review 的发现文件（pre-review/round-N.findings.yaml）。整体验收被网格跳过（acceptance.skipped_by=size_tier）的 Run，进 G3 / 合入前必须有它——S 档 skip 的 why 里「仍要过 /pr-review」由此从声明变成闸"
         }
       }
     },
@@ -450,7 +480,8 @@
           "type": "string"
         },
         "form_draft_sha256": {
-          "type": "string"
+          "type": "string",
+          "description": "gate g1 --verdict pass 时由脚本从 derived/form-draft.md 算出并写入；--record 里若写了别的哈希则拒签"
         },
         "dos": {
           "type": "string",
@@ -577,6 +608,50 @@
           "type": "string"
         }
       }
+    },
+    "escapes": {
+      "type": "array",
+      "description": "R12 逃逸缺陷：`escape` 子命令登记；每条已由人归因到层并计入 counters.<layer>；同一行追加在 escape-defects.md 并镜像进归档",
+      "items": {
+        "type": "object",
+        "required": [
+          "at",
+          "layer",
+          "why_gate_missed",
+          "by"
+        ],
+        "properties": {
+          "at": {
+            "type": "string"
+          },
+          "feature": {
+            "type": "string"
+          },
+          "pr": {},
+          "symptom": {
+            "type": "string"
+          },
+          "found_via": {
+            "type": "string"
+          },
+          "layer": {
+            "enum": [
+              "card",
+              "plan",
+              "task",
+              "ontology",
+              "world"
+            ]
+          },
+          "why_gate_missed": {
+            "type": "string"
+          },
+          "issue": {},
+          "by": {
+            "type": "string"
+          }
+        }
+      }
     }
   },
   "$defs": {
@@ -624,4 +699,4 @@
       }
     }
   }
-}
+}\n

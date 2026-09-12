@@ -24,7 +24,7 @@ drop = ('                elif m.group("ca") is not None:\n'
         '                    return m.group(0)\n')
 open(p, "w", encoding="utf-8").write(s.replace(needle, drop))
 PY
-python3 "$T/check_anchors.py" --audit "$T/audit.yaml" verify >/dev/null 2>&1
+python3 "$T/check_anchors.py" --audit "$T/audit.yaml" --lock "$T/anchors.lock" verify >/dev/null 2>&1
 rc=$?
 if [ "$rc" -gt 1 ]; then echo "twin: 变异体自身跑不起来 (exit $rc)" >&2; exit 9; fi
 python3 "$CROSS" "$T/audit.yaml" "$T/check_anchors.py" >/dev/null 2>&1

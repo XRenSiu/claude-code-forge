@@ -1,0 +1,6 @@
+# No mutation block at all: mutation_kill_rate is declared in the contract but never measured → unevaluated (exit 3), not pass.
+qa_measurements:
+  agent_role: qa-reviewer
+  scope: { tests_executed: 40, tests_passed: 40 }
+  results:
+    unit: { passed: 30, failed: 0, unit_coverage: 0.86 }

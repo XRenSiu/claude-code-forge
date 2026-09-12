@@ -34,7 +34,9 @@ deletion 测试：撤掉本 skill，引擎会把需求原文当 body 直接建 i
   或 /ai-dlc 从这里的 AC 内联生成；issue 里的 AC 已经是 v2 形状，所以两边不会漂移。
 - **三种入口**，同一模板：`feature`（需求）、`bug`（复现 + 期望 + 实际，AC 就是"复现不再
   发生"+ 回归守卫）、`escape`（合入后发现的缺陷：多一段"归因层 / 为什么该层的门没拦住"，
-  同时追加到 `escape-defects.md`——它是世界层唯一的外部校准源）。
+  建完 issue 后**必须**登记：`aidlc_state.py escape --slug <feature> --layer <归因层> --why "<为什么没拦住>" --issue <N> --by <人>`
+  ——它计到归因层、追加 `escape-defects.md`、镜像进 `specs/<slug>/`；运行时目录已清时加 `--root specs`。
+  只写 issue 不登记，`/retro` 的逃逸率永远是 0——它是世界层唯一的外部校准源，断在这里等于没有校准）。
 - **两条轨道。** 语义份额 × 变化率高、实现原语难度低 → PSL 轨（先 `/psl` 建世界 → G1 人签，
   再回来建 issue）；确定性主导 → TASK 轨直接建。混合需求只对体验性内核走 PSL。速判：把需求
   交给不了解产品的工程师照字面做，会不会做出"技术正确、产品错误"的东西？会 → PSL。
@@ -115,7 +117,7 @@ deletion 测试：撤掉本 skill，引擎会把需求原文当 body 直接建 i
 ## 接线
 
 - 上游：`/psl`（PSL 轨）；`/dos-extract`（提供 dos.yaml 给闭包）。
-- 下游：`/acceptance-spec`（issue → EARS + done_when.yaml）；`/ai-dlc`（记 `issue.number`）；
+- 下游：`/acceptance-spec`（issue → EARS + done_when.yaml）；`/ai-dlc`（记 `issue.number`；`--kind escape` 时 `aidlc_state.py escape` 登记）；
   `/pr` 的 `Closes #N`；`/review-loop` 用 Scope 段判越界。
 
 ## 本 skill 自身的出口门

@@ -33,6 +33,15 @@ Usage:
                         [--commit SHA] [--ac AC-id ...]     # skipped 必须给理由，并列出会被拖累的卡
   aidlc_state.py fail    [--slug S] --signal SIG [--card CARD-xx] [--fingerprint FP | --evidence TEXT]
                         [--score X] [--by REPORTER] [--routing PATH]   # -> route decision JSON + counters + ledger
+                        # --evidence is normalised before hashing (line numbers / hex / timestamps / tmp paths
+                        # stripped) so the same failure yields the same fingerprint; escape_defect is NOT a fail
+  aidlc_state.py escape  [--slug S] --layer card|plan|task|ontology|world --why TEXT --by NAME
+                        [--issue N] [--pr N] [--symptom TEXT] [--found-via TEXT] [--archive DIR] [--ref type:target ...]
+                        # R12: a merged Run's escape, attributed by a human to the layer whose gate missed it;
+                        # counted on that layer, appended to escape-defects.md, mirrored into the archive
+                        # (after the runtime dir is gone: `--root specs --slug <slug>` works on the archive itself)
+  aidlc_state.py acceptance [--slug S] --result final-state.json [--meets meets_done_when.yaml]
+                        # records the fleet verdict; meets_done_when comes ONLY from meets_done_when.py's report
   aidlc_state.py waive   [--slug S] --signal SIG --reason R --by WHO
                         [--signer-kind human|delegated_agent] [--authorization TEXT]
                         [--fingerprint FP] [--card CARD-xx] [--layer L] [--stage S] [--scope TEXT] [--ref type:target ...]
@@ -50,7 +59,15 @@ Every mutating command appends a ledger row (and a trace event). Writes are atom
 
 Mechanical guarantees (the non-waivable half):
   - stage transitions follow ORDER; skipping requires --force + --reason, recorded as a waiver
-  - each stage's prerequisites (PREREQS) are checked against the state, not against the model's claim
+  - each stage's prerequisites (PREREQS) are checked against the state, not against the model's claim — and where
+    the state is a file, against the FILE: advance g2 runs validate_done_when_v2.py, advance implement runs
+    lint_cards.py (cards.lint_passed is not settable), advance pr reads final-state.json (DONE, no unevaluated
+    reviews, meets_done_when computed by meets_done_when.py when thresholds are declared), advance archive reads the
+    post-deploy line out of release.notes, and implement / acceptance / pr / merge re-run lock_done_when.py verify;
+    implement also needs G2's verdict (even when cards are skipped), the l5 lock over tests and a verified RED baseline;
+    pr needs the red→green evidence and a clean lock history (a commit that moved a locked file needs its proposal);
+    g3 / merge need pr-poll.sh's own verdict file; release / archive need merge.sha reachable from branch.base and
+    the release tag pointing at it; gates.g3.required=false is refused while the contract has a human AC
   - gates are recorded with who/when/verdict; G2 pass requires a lock path; G1 pass requires world.derived_dir
     (psl-derive products exist) and G1 reject requires attribution
   - `fail` consults routing.yaml, bumps the layer counter, keeps a fingerprint history per key and detects
@@ -100,10 +117,13 @@ SETTABLE = {
     "issue.number", "issue.url", "issue.kind",
     "branch.name", "branch.base",
     "contract.done_when", "contract.contract_yaml", "contract.source",
+    "contract.red_baseline",        # capture_red_baseline.py 的产物；advance implement 用 --verify 核它
+    "acceptance.red_green",         # verify_red_green.py 的报告；advance pr 读它的 verdict
     "lock.path", "lock.signed_by", "lock.signed_at", "lock.stage",
-    "cards.dir", "cards.lint_passed",
-    "acceptance.evaluation_result", "acceptance.meets_done_when", "acceptance.skipped_reason",
-    "pr.number", "pr.url", "pr.size_class", "pr.pre_review_rounds",
+    "cards.dir",   # cards.lint_passed 不可 set：advance implement 自己跑 lint_cards.py，过了才记
+    # acceptance.meets_done_when 不可 set：只有 `acceptance --meets <report>` 能写，report 由 meets_done_when.py 比对阈值算出
+    "acceptance.evaluation_result", "acceptance.skipped_reason",
+    "pr.number", "pr.url", "pr.size_class", "pr.pre_review_rounds", "pr.pre_review_findings",
     "review.done", "review.exit_reason", "review.rounds", "review.waiver_ref",
     "merge.sha", "merge.merged_at",
     "gates.g3.required",
@@ -124,6 +144,15 @@ LAYER_COUNTERS = ["card", "plan", "task", "ontology", "world"]
 SIZES = ("S", "M", "L")
 BUDGET_KEY = {"card": "card_retries", "plan": "plan_reflows", "task": "task_reflows",
               "ontology": "ontology_reflows", "world": "world_reflows"}
+# 逃逸缺陷（routing R12）：归因层由人给，计到该层，不欠失败报告——issue 本身就是报告。
+ESCAPE_SIGNAL = "escape_defect"
+ESCAPE_LOG = "escape-defects.md"
+ESCAPE_HEADER = ("# 逃逸缺陷登记 — %s\n\n> 合入后发现的问题登记 → 人归因到层 → 喂 X2 路由与 X3 度量。"
+                 "线上反馈是世界层唯一的外部校准源。\n\n"
+                 "| at | feature | PR | 症状 | 发现渠道 | 归因层（card/plan/task/ontology/world） | 为什么该层的门没拦住 | 后续（issue #） | 归因人 |\n"
+                 "|---|---|---|---|---|---|---|---|---|\n")
+# 六审里除 meta-judge 之外的五个审查者；M 档的 fleet_subset 是相对它的豁免，豁免只认推导来的档位
+FLEET_FULL = ["code-reviewer", "qa-reviewer", "pm-reviewer", "spec-drift-detector", "spec-gaming-detector"]
 # Append-only logs can only point backwards, so the causal edge is `caused_by` (effect → cause); the rest are
 # timeless (artifact anchors) or backwards (decided_by, supersedes). Same seven relations as the graph-engineering
 # canon, with `caused` read from the effect's side.
@@ -374,6 +403,386 @@ def coerce(v):
         return v
 
 
+def normalize_evidence(text):
+    """指纹要的是「同一个失败」，不是「同一段字节」。行号、地址、时间戳、临时路径每次都变；
+    留着它们，同一个失败永远不会「重复」，指纹终止就永远不触发——同指纹两次 = 无进展这条规则
+    就只在引擎恰好逐字复述时成立。归一化在这里做一次，引擎不必记得。"""
+    t = (text or "").lower()
+    t = re.sub(r"0x[0-9a-f]+", "0x#", t)
+    t = re.sub(r"\b[0-9a-f]{7,40}\b", "#", t)                                   # sha / hex ids
+    t = re.sub(r"\d{4}-\d{2}-\d{2}[t ]\d{2}:\d{2}(:\d{2})?(\.\d+)?(z|[+-]\d{2}:?\d{2})?", "<ts>", t)
+    t = re.sub(r"/(?:private/)?(?:tmp|var/folders)/\S+", "<tmp>", t)
+    t = re.sub(r"\d+", "#", t)
+    return re.sub(r"\s+", " ", t).strip()
+
+
+def sha256_file(path):
+    h = hashlib.sha256()
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(1 << 16), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def lock_unmet(st):
+    """A 档的锁检查在状态机里再跑一遍。/commit 与 /pr 的预门都查锁，但两者都能被绕开（裸 git、
+    直接 gh）；advance 绕不开——被锁文件改了而没有变更提案，实现 / 验收 / PR / 合入一律推进不了。"""
+    lp = get_path(st, "lock.path")
+    if not lp:
+        return []
+    if not os.path.isfile(lp):
+        return [f"lock.path {lp} is not a file"]
+    r = subprocess.run([sys.executable, os.path.join(HERE, "lock_done_when.py"), "verify", "--lock", lp],
+                       capture_output=True, text=True)
+    if r.returncode == 1:
+        return ["a G2-locked file changed without a change proposal (lock_done_when.py verify → reject): restore it, "
+                "or add change-proposal-*.md to the same diff and record `fail --signal lock_hash_mismatch`"]
+    if r.returncode not in (0, 2):
+        return [f"lock_done_when.py verify could not run (exit {r.returncode}: {r.stderr.strip()[:120]}) — unevaluated is not pass"]
+    return []   # 0 unchanged · 2 changed_with_proposal（合法路径；task 回流由 fail --signal lock_hash_mismatch 计）
+
+
+def git_ok(*args):
+    try:
+        r = subprocess.run(["git", *args], capture_output=True, text=True)
+        return r.returncode == 0, (r.stdout or "").strip()
+    except OSError:
+        return False, ""
+
+
+def pending_unmet(st):
+    return ["pending failure report written (`report --path …`)"] if get_path(st, "pending.failure_report") else []
+
+
+def g2_unmet(st):
+    """G2 是 never_skippable，但它的**裁决**曾只在 prereqs(cards) 里查——S 档跳过 cards，就把 G2 的签字一起跳掉了。
+    门不可跳的意思是门的裁决不可跳，不是门这个阶段名不可跳。"""
+    out = []
+    if get_path(st, "gates.g2.verdict") != "pass":
+        out.append("G2 verdict pass — run `gate g2` (the human signs the criteria; skipping cards does not skip the signature)")
+    lp = get_path(st, "lock.path")
+    if not (lp and os.path.isfile(lp)):
+        out.append("lock.path exists (lock_done_when.py sign --stage g2)")
+    return out
+
+
+def read_lock(st):
+    lp = get_path(st, "lock.path")
+    if not (lp and os.path.isfile(lp)):
+        return None
+    try:
+        with open(lp, encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return None
+
+
+def l5_lock_unmet(st):
+    """R004：测试由非实现者写、写完锁上，**然后**才实现。锁文件的 stage 必须是 l5，且锁里除契约之外
+    至少有一条 contract 角色的路径——那就是测试。只锁了判据没锁测试，实现者改测试让测试过的路还开着。"""
+    lock = read_lock(st)
+    if lock is None:
+        return ["lock file unreadable"]
+    if lock.get("stage") != "l5":
+        return [f"the lock is stage {lock.get('stage')!r}, not l5 — tests are written by a non-implementer and re-signed "
+                "(`lock_done_when.py sign --stage l5 done_when.yaml tests/…`) BEFORE implementation (R004)"]
+    dw = os.path.abspath(get_path(st, "contract.done_when") or "")
+    tests = [e["path"] for e in lock.get("files", []) if e.get("role", "contract") == "contract"
+             and os.path.abspath(e["path"]) != dw]
+    if not tests:
+        return ["the l5 lock lists no test path beside the contract — an l5 signature over the contract alone locks no test"]
+    return []
+
+
+def red_baseline_unmet(st):
+    """判据先于代码的机械形：实现前测试在干净检出上是红的，且那份红有证据（capture_red_baseline.py --verify）。"""
+    rb = get_path(st, "contract.red_baseline")
+    if not rb:
+        return ["contract.red_baseline set (capture_red_baseline.py <runner> --out tests/<f>/RED_BASELINE.txt; then `set contract.red_baseline=…`)"]
+    if not os.path.isfile(rb):
+        return [f"contract.red_baseline {rb} is not a file"]
+    crb = os.path.join(HERE, "..", "..", "test-suite-generator", "scripts", "capture_red_baseline.py")
+    if not os.path.isfile(crb):
+        return ["capture_red_baseline.py not found next to test-suite-generator — cannot verify the RED baseline"]
+    r = subprocess.run([sys.executable, crb, "--verify", rb], capture_output=True, text=True)
+    if r.returncode != 0:
+        return [f"RED baseline {rb} carries no clean-checkout evidence (capture_red_baseline.py --verify exit {r.returncode}): {(r.stderr or r.stdout).strip()[:160]}"]
+    return []
+
+
+def red_green_unmet(st):
+    """红→绿的另一半：verify_red_green.py 的报告说 green（基线里每条红测试都过了、一条没失踪）。"""
+    rg = get_path(st, "acceptance.red_green")
+    if not rg:
+        return ["acceptance.red_green set (verify_red_green.py <RED_BASELINE.txt> --runner … --out red-green-evidence.yaml; then `set acceptance.red_green=…`)"]
+    if not os.path.isfile(rg):
+        return [f"acceptance.red_green {rg} is not a file"]
+    try:
+        rep = json.load(open(rg, encoding="utf-8")) if rg.endswith(".json") else load_yaml(rg)
+    except SystemExit:
+        return [f"acceptance.red_green {rg} unreadable"]
+    v = (rep or {}).get("verdict")
+    if v != "green":
+        return [f"red-green evidence {rg} says {v!r}, not green — {(rep or {}).get('why', '')}"[:240]]
+    rb = get_path(st, "contract.red_baseline")
+    if rb and rep.get("baseline") and os.path.abspath(rep["baseline"]) != os.path.abspath(rb):
+        return [f"red-green evidence was computed against {rep['baseline']}, not contract.red_baseline {rb}"]
+    return []
+
+
+def calibration_level(st, sizing=None):
+    if sizing is None:
+        try:
+            sizing = load_sizing()
+        except SystemExit:
+            return "required"   # 网格读不到时站在严的一侧
+    tier = get_path(st, "intake.size") or "M"
+    return (((sizing.get("calibration") or {}).get("by_tier") or {}).get(tier)) or "required"
+
+
+def calibration_unmet(st, sizing=None):
+    """→ (unmet, note)。「未校准的标准不当证据」按档编译：required 档没有校准报告就不进验收；任何档只要有
+    报告就必须过 verify_calibration.py；recommended 档缺席记一条 calibration_unevaluated 账本行（可见，不阻断）。"""
+    level = calibration_level(st, sizing)
+    rep = get_path(st, "contract.calibration_report")
+    if rep:
+        if not os.path.isfile(rep):
+            return [f"contract.calibration_report {rep} is not a file"], None
+        vc = os.path.join(HERE, "..", "..", "calibrate", "scripts", "verify_calibration.py")
+        if not os.path.isfile(vc):
+            return ["verify_calibration.py not found next to calibrate — cannot certify the standard"], None
+        r = subprocess.run([sys.executable, vc, rep], capture_output=True, text=True)
+        if r.returncode != 0:
+            return [f"calibration report {rep} fails the meta-gate (verify_calibration.py exit {r.returncode}) — an uncalibrated standard is not evidence"], None
+        return [], None
+    if level == "required":
+        return [f"contract.calibration_report set and passing verify_calibration.py (tier {get_path(st, 'intake.size')} requires it: sizing.yaml calibration.by_tier)"], None
+    if level == "recommended":
+        return [], f"calibration_unevaluated: tier {get_path(st, 'intake.size')} recommends a calibration report and none is recorded — the standard is uncalibrated, not certified"
+    return [], None
+
+
+def review_evidence_unmet(st, root):
+    """评审出口曾是引擎 set 的 `review.done`。现在 done 的出口要有 pr-poll.sh 留下的裁决文件
+    （`done` / `predicate` 写 pr-watch/pr-<N>.done.json，exit 0 收敛 / 10 已合入或关闭）。"""
+    if review_exit(st) != "done":
+        return []   # waived 走 waiver_ref（check_review）；None 由调用方报「未记录」
+    n = get_path(st, "pr.number")
+    if not n:
+        return ["pr.number set"]
+    p = os.path.join(root, "pr-watch", f"pr-{n}.done.json")
+    if not os.path.isfile(p):
+        return [f"review.done=done needs the review ring's own verdict file {p} (written by `pr-poll.sh done <pr>`; offline: `pr-poll.sh predicate …`)"]
+    try:
+        d = json.load(open(p, encoding="utf-8"))
+    except Exception as e:
+        return [f"{p} is not JSON ({e})"]
+    if d.get("exit") not in (0, 10):
+        return [f"{p} records exit {d.get('exit')} (missing: {d.get('missing')}) — the review ring did not converge"]
+    if str(d.get("pr")) != str(n):
+        return [f"{p} is about PR {d.get('pr')}, state says {n}"]
+    return []
+
+
+def merge_unmet(st):
+    """merge.sha 曾是一个引擎写的字符串。合并是人的动作，但合并**发生了没有**是 git 能答的：
+    sha 必须解析成提交，且必须已在 branch.base 里。"""
+    sha = get_path(st, "merge.sha")
+    if not sha:
+        return ["merge.sha set"]
+    ok, full = git_ok("rev-parse", "--verify", "--quiet", f"{sha}^{{commit}}")
+    if not ok:
+        return [f"merge.sha {sha} does not resolve to a commit in this repository"]
+    base = get_path(st, "branch.base")
+    if not base:
+        return ["branch.base set (the branch the merge landed on)"]
+    ok, _ = git_ok("rev-parse", "--verify", "--quiet", f"{base}^{{commit}}")
+    if not ok:
+        return [f"branch.base {base} does not resolve to a ref"]
+    ok, _ = git_ok("merge-base", "--is-ancestor", full, base)
+    if not ok:
+        return [f"merge.sha {sha} is not reachable from {base} — the merge has not landed on the base branch"]
+    return []
+
+
+def release_tag_unmet(st):
+    if get_path(st, "release.done") is not True:
+        return []
+    tag = get_path(st, "release.tag")
+    if not tag:
+        return ["release.done=true needs release.tag (the tag verify_release.py checks)"]
+    ok, tagged = git_ok("rev-parse", "--verify", "--quiet", f"refs/tags/{tag}^{{commit}}")
+    if not ok:
+        return [f"release.tag {tag} does not exist in git — release.done stays false until the tag is cut"]
+    sha = get_path(st, "merge.sha")
+    if sha:
+        ok, full = git_ok("rev-parse", "--verify", "--quiet", f"{sha}^{{commit}}")
+        if ok and full != tagged:
+            return [f"release.tag {tag} points at {tagged[:7]}, not merge.sha {full[:7]}"]
+    return []
+
+
+def lock_history_unmet(st):
+    """锁在**历史**里再验一遍。磁盘哈希只看现在：改了被锁文件再改回去，磁盘对得上，历史里那次改动
+    却没有变更提案。规则是「同一个 diff 附变更提案」，所以按提交看：任何一次把被锁文件改成**不是锁里那份内容**
+    的提交，同一提交里必须有 change-proposal-*.md；把文件落成锁里那份内容的提交（写测试、签锁前后）不算。"""
+    lock = read_lock(st)
+    if lock is None:
+        return []
+    base = get_path(st, "branch.base")
+    if not base:
+        return ["branch.base set (needed to walk the branch's commits against the lock)"]
+    ok, _ = git_ok("rev-parse", "--verify", "--quiet", f"{base}^{{commit}}")
+    if not ok:
+        return [f"branch.base {base} does not resolve — cannot replay the lock over the branch history"]
+    head = get_path(st, "branch.name") or "HEAD"
+    ok, _ = git_ok("rev-parse", "--verify", "--quiet", f"{head}^{{commit}}")
+    if not ok:
+        head = "HEAD"
+    ok, mb = git_ok("merge-base", base, head)
+    if not ok:
+        return [f"no merge-base between {base} and {head}"]
+    ok, log = git_ok("log", "--format=%H", "--name-only", f"{mb}..{head}")
+    if not ok:
+        return ["git log failed while replaying the lock over the branch"]
+    locked = {os.path.normpath(e["path"]): e["sha256"] for e in lock.get("files", [])}
+    commits, cur = [], None
+    for line in log.splitlines():
+        line = line.strip()
+        if re.fullmatch(r"[0-9a-f]{40}", line):
+            cur = {"sha": line, "files": []}; commits.append(cur)
+        elif line and cur is not None:
+            cur["files"].append(os.path.normpath(line))
+    out = []
+    for c in commits:
+        touched = [f for f in c["files"] if f in locked]
+        if not touched:
+            continue
+        moved = []
+        for f in touched:
+            r = subprocess.run(["git", "show", f"{c['sha']}:{f}"], capture_output=True)
+            digest = hashlib.sha256(r.stdout).hexdigest() if r.returncode == 0 else None
+            if digest != locked[f]:
+                moved.append(f)
+        if moved and not any(glob.fnmatch.fnmatch(os.path.basename(f), "change-proposal-*.md") for f in c["files"]):
+            out.append(f"commit {c['sha'][:7]} changes locked {moved} away from the signed content with no change-proposal-*.md in the same commit")
+    return out
+
+
+def cards_lint_unmet(st, cards_dir):
+    """`cards.lint_passed` 曾是一个引擎自己 set 的布尔——那是执行者的说法，不是状态。
+    现在 advance implement 自己跑 lint_cards.py（同 advance g2 跑 validate_done_when_v2.py）。"""
+    lint = os.path.join(HERE, "..", "..", "plan-cards", "scripts", "lint_cards.py")
+    if not os.path.isfile(lint):
+        return ["lint_cards.py not found next to plan-cards — cannot certify the cards"]
+    cmd = [sys.executable, lint, cards_dir]
+    dw = get_path(st, "contract.done_when")
+    if dw and os.path.isfile(dw):
+        cmd += ["--done-when", dw]
+    dos = get_path(st, "world.dos")
+    if dos and os.path.isfile(dos):
+        cmd += ["--dos", dos]
+    r = subprocess.run(cmd, capture_output=True, text=True)
+    if r.returncode == 0:
+        return []
+    why = ""
+    try:
+        why = "; ".join((json.loads(r.stdout).get("rejects") or [])[:3])
+    except Exception:
+        why = (r.stderr or r.stdout).strip()[:200]
+    return [f"lint_cards.py rejects {cards_dir} (exit {r.returncode}): {why}"]
+
+
+def contract_thresholds(dw_path):
+    try:
+        dw = load_yaml(dw_path)
+    except SystemExit:
+        return {}
+    return ((dw.get("behavior") or {}).get("thresholds") or {}) if isinstance(dw, dict) else {}
+
+
+def evaluation_unmet(st, path):
+    """`acceptance.evaluation_result` 是一条路径，不是一句话。文件要在、要是 JSON、四态要是 DONE
+    （NEEDS_HUMAN 只在 G3 会开的时候放行——那正是 G3 存在的理由）、没跑完的审查要为零（不变量 14），
+    契约声明了阈值就要有脚本比对出来的 meets_done_when（不变量 7：达标由脚本比对，不由评估 agent 宣布）。"""
+    if not os.path.isfile(path):
+        return [f"acceptance.evaluation_result {path} is not a file (final-state.json)"]
+    try:
+        with open(path, encoding="utf-8") as f:
+            fs = json.load(f)
+    except Exception as e:
+        return [f"acceptance.evaluation_result {path} is not JSON ({e})"]
+    out = []
+    sd = fs.get("state_decision") or fs.get("state")
+    if sd == "NEEDS_HUMAN":
+        if not get_path(st, "gates.g3.required", True):
+            out.append("final-state.json is NEEDS_HUMAN but gates.g3.required=false — re-enable G3 or resolve the human items first")
+    elif sd != "DONE":
+        out.append(f"final-state.json state_decision is {sd!r}, not DONE — FIX / SPEC_DRIFT / GAMING_RISK route back "
+                   "(`fail --signal …`), they do not advance")
+    ur = fs.get("unevaluated_reviews") or []
+    if ur:
+        out.append(f"final-state.json lists unevaluated reviews {ur} — a review that did not run has not passed (invariant 14)")
+    dw = get_path(st, "contract.done_when")
+    if dw and os.path.isfile(dw) and contract_thresholds(dw) and get_path(st, "acceptance.meets_done_when") is not True:
+        v = get_path(st, "acceptance.meets_done_when_verdict")
+        out.append("the contract declares behavior.thresholds but meets_done_when is "
+                   + (f"{v!r}" if v else "not computed")
+                   + " — run acceptance-fleet/scripts/meets_done_when.py and record it with "
+                     "`acceptance --result <final-state.json> --meets <report>` (a script compares thresholds; an evaluator never declares them met)")
+    return out
+
+
+def tier_skip_review_unmet(st):
+    """S 档跳过整体验收的 why 里写着「仍要过 /pr-review」。一句写在 why 里的承诺不是闸（不变量 17）；
+    这里把它编译成：整体验收被网格跳过的 Run，进 G3 / 合入前必须有 pre-review 的发现文件。"""
+    if get_path(st, "acceptance.skipped_by") != "size_tier":
+        return []
+    prf = get_path(st, "pr.pre_review_findings")
+    if prf and os.path.isfile(prf):
+        return []
+    return ["acceptance was skipped by the size grid on the promise that /pr-review still runs (sizing.yaml S.acceptance.why): "
+            "run `/pr --pre-review` and record `set pr.pre_review_findings=pre-review/round-N.findings.yaml`"]
+
+
+def release_unmet(st):
+    """`release.done=true` 曾是一个引擎自己 set 的布尔。verify_release.py 自己说 release.done 要等
+    notes 里有 post-deploy 那一行才能为真——这里把那一行编译进 advance archive。"""
+    notes = get_path(st, "release.notes")
+    if not notes:
+        return ["release.done=true needs release.notes (releases/vX.Y.Z.md): the post-deploy verification line lives there — "
+                "合入不是终点，发布后验证绿才算交付"]
+    if not os.path.isfile(notes):
+        return [f"release.notes {notes} is not a file"]
+    with open(notes, encoding="utf-8") as f:
+        txt = f.read()
+    if not re.search(r"post-deploy\s*:\s*\S", txt, re.I):
+        return [f"release.notes {notes} has no `post-deploy:` line — verify_release.py flags exactly this; "
+                "release.done stays false until the post-deploy verification is recorded"]
+    return []
+
+
+def effective_fleet(st, sizing=None):
+    """→ (审查者列表 | None, 来源说明)。M 档的 fleet_subset 是一次豁免（少跑四个审查者）；豁免只认
+    推导来的档位（同 effective_skips 的第一重保险）。size_source 是 default / manual 时按 L 档全跑——
+    不跑 `size` 就少四个审查者，是一扇靠遗漏打开的门。None = 该档不派发（S）。"""
+    if sizing is None:
+        try:
+            sizing = load_sizing()
+        except SystemExit:
+            sizing = {}
+    tiers = sizing.get("tiers") or {}
+    tier = get_path(st, "intake.size") or "M"
+    src = get_path(st, "intake.size_source")
+    if src not in ("derived", "derived_early"):
+        return list(FLEET_FULL), (f"tier {tier} is {src or 'unset'}, not derived — an undeserved subset is a door "
+                                  "opened by omission; the full fleet runs")
+    if tier == "S":
+        return None, "S: the fleet is not dispatched (size_exemption on advance pr)"
+    sub = (tiers.get(tier) or {}).get("fleet_subset")
+    return (list(sub) if sub else list(FLEET_FULL)), f"tier {tier} ({src}): sizing.yaml tiers.{tier}.fleet_subset"
+
+
 # ---- the breadth knob: which stages this run actually executes -------------------------------
 # 借鉴 AWS AI-DLC 2.0 的 scope grid（11 种 scope × 33 stage 编译成网格，bugfix 只跑 9 个）。
 # 这里的网格小得多（3 档 × 15 阶段），但性质相同：**跑哪些阶段是数据，不是散在 prereqs() 里的 if**。
@@ -412,7 +821,7 @@ def jumped_stages(st, target, skips):
 
 
 # ---- prerequisites: checked against state, never against the model's claim ------------------
-def prereqs(st, target, skips=None):
+def prereqs(st, target, skips=None, root=ROOT_DEFAULT):
     skips = effective_skips(st) if skips is None else skips
     unmet = []
     need = lambda cond, msg: (None if cond else unmet.append(msg))
@@ -442,43 +851,73 @@ def prereqs(st, target, skips=None):
             else:
                 need(False, "validate_done_when_v2.py not found next to donewhen-extract — cannot certify the contract shape")
     elif target == "cards":
-        need(get_path(st, "gates.g2.verdict") == "pass", "G2 verdict pass — run `gate g2`")
-        need(get_path(st, "lock.path") and os.path.isfile(get_path(st, "lock.path")), "lock.path exists")
+        unmet.extend(g2_unmet(st))
     elif target == "implement":
+        # G2 的裁决在这里再查一次：cards 被网格跳过时，这是签字之后的第一个阶段。
+        unmet.extend(g2_unmet(st))
+        if not g2_unmet(st):
+            unmet.extend(l5_lock_unmet(st))          # 测试非实现者写、写完锁上，然后才实现（R004）
+        unmet.extend(red_baseline_unmet(st))         # 实现前测试在干净检出上是红的，且有证据
         # 卡的前置只在 cards 阶段真的跑了的时候要求。cards 被网格跳掉时，实现者的输入是契约的
         # AC 本身——那是 S 档 skip 的 why 里写明的交换条件，不是这里悄悄放松。
+        # lint 由这里**自己跑**（同 advance g2 跑 validate_done_when_v2.py）：一个引擎 set 的
+        # cards.lint_passed=true 是执行者的说法，不是状态。
         if "cards" not in skips:
-            need(get_path(st, "cards.lint_passed") is True, "cards.lint_passed true (lint_cards.py)")
+            cd = get_path(st, "cards.dir")
+            need(cd and os.path.isdir(cd), "cards.dir points at an existing directory (`set cards.dir=cards`)")
+            if cd and os.path.isdir(cd):
+                unmet.extend(cards_lint_unmet(st, cd))
             need(get_path(st, "cards.items"), "at least one card registered (`card CARD-xx --status todo`)")
+        unmet.extend(lock_unmet(st))
     elif target == "acceptance":
         if "cards" not in skips:
             items = get_path(st, "cards.items", {}) or {}
             pending = [k for k, v in items.items() if v.get("status") not in ("done", "skipped")]
             need(not pending, f"all cards done or skipped (pending: {pending})")
-        need(not get_path(st, "pending.failure_report"), "pending failure report written (`report --path …`)")
+        unmet.extend(pending_unmet(st))
+        unmet.extend(calibration_unmet(st)[0])       # 未校准的标准不当证据（按档：required 拦 / recommended 记 / optional 无）
+        unmet.extend(lock_unmet(st))
     elif target == "pr":
         # 整体验收要么真跑了、要么被显式留痕跳过、要么被网格跳掉（网格的跳过在 advance 里
         # 会写成一条有类型的 size_exemption 账本行，不是无声的空白）。
-        ok = (get_path(st, "acceptance.evaluation_result") or get_path(st, "acceptance.skipped_reason")
-              or "acceptance" in skips)
+        er = get_path(st, "acceptance.evaluation_result")
+        ok = (er or get_path(st, "acceptance.skipped_reason") or "acceptance" in skips)
         need(ok, "acceptance.evaluation_result path OR acceptance.skipped_reason "
                  "(or a derived tier whose grid skips acceptance — `size --files N --acs M --commit`)")
-        need(not get_path(st, "pending.failure_report"), "pending failure report written (`report --path …`)")
+        if er:
+            unmet.extend(evaluation_unmet(st, er))   # 对着文件检，不对着路径字符串检
+        unmet.extend(red_green_unmet(st))            # 红→绿：基线里每条红测试都过了、一条没失踪
+        unmet.extend(pending_unmet(st))
+        unmet.extend(lock_unmet(st))
+        unmet.extend(lock_history_unmet(st))         # 历史里改过被锁文件的提交，同一提交必须带变更提案
     elif target == "review":
         need(get_path(st, "pr.number"), "pr.number set")
     elif target == "g3":
-        need(review_exit(st), "review.done recorded (true | done | waived; a waived exit needs review.waiver_ref)")
+        need(review_exit(st), "review.done recorded (done | waived; a waived exit needs review.waiver_ref)")
+        unmet.extend(review_evidence_unmet(st, root))  # done 的出口要有 pr-poll.sh 的裁决文件
+        unmet.extend(tier_skip_review_unmet(st))
+        unmet.extend(pending_unmet(st))
     elif target == "merge":
         if get_path(st, "gates.g3.required", True):
             need(get_path(st, "gates.g3.verdict") in ("pass", "waived"), "G3 verdict pass — run `gate g3`")
         else:
-            need(review_exit(st), "review.done recorded (true | done | waived; a waived exit needs review.waiver_ref)")
+            need(review_exit(st), "review.done recorded (done | waived; a waived exit needs review.waiver_ref)")
+            unmet.extend(review_evidence_unmet(st, root))
+            unmet.extend(tier_skip_review_unmet(st))
+        unmet.extend(pending_unmet(st))
+        unmet.extend(lock_unmet(st))
+        unmet.extend(lock_history_unmet(st))
     elif target == "release":
-        need(get_path(st, "merge.sha"), "merge.sha set")
+        unmet.extend(merge_unmet(st))                # sha 解析得到且已在 base 里——合并发生了没有由 git 答
+        unmet.extend(pending_unmet(st))
     elif target == "archive":
-        need(get_path(st, "merge.sha"), "merge.sha set")
+        unmet.extend(merge_unmet(st))
         need(get_path(st, "release.done") is True or get_path(st, "release.skipped_reason"),
              "release.done true (verify_release.py + post-deploy verification) OR release.skipped_reason recorded")
+        if get_path(st, "release.done") is True:
+            unmet.extend(release_unmet(st))
+            unmet.extend(release_tag_unmet(st))      # tag 在 git 里且指着 merge.sha
+        unmet.extend(pending_unmet(st))
     return unmet
 
 
@@ -569,6 +1008,16 @@ def cmd_set(a):
                 "evidence is recorded with it (a tier set by hand grants exemptions nobody can audit)", 1)
         if k == "lock.stage" and v not in LOCK_STAGES:
             die(f"lock.stage must be {'|'.join(LOCK_STAGES)} (the two signing stages)", 1)
+        if k == "gates.g3.required" and coerce(v) is False:
+            # G3 默认触发；只有没有人判 AC 的纯内部需求才能关。关不关不由引擎说了算，由契约里有没有 kind: human 说了算。
+            dw = get_path(st, "contract.done_when")
+            if not (dw and os.path.isfile(dw)):
+                die("gates.g3.required=false needs contract.done_when on record: whether G3 can be waived is decided by the "
+                    "contract (any `kind: human` AC keeps it), not by the engine", 1)
+            acs = (load_yaml(dw) or {}).get("acceptance") or []
+            human = [x.get("id") for x in acs if isinstance(x, dict) and x.get("kind") == "human"]
+            if human:
+                die(f"gates.g3.required=false refused: the contract has human AC(s) {human} — those are G3's, run `gate g3`", 1)
         set_path(st, k, coerce(v))
         if k == "intake.size":
             set_path(st, "intake.size_source", "manual")   # 手设 = 无证据 = 不给豁免
@@ -594,7 +1043,7 @@ def cmd_advance(a):
     if not next_allowed(st, a.stage, skips):
         problems.append(f"not the next stage after {st['stage']} (order: {' → '.join(ORDER)}"
                         + (f"; this tier may skip {sorted(skips)}" if skips else "") + ")")
-    problems += prereqs(st, a.stage, skips)
+    problems += prereqs(st, a.stage, skips, root=a.root)
     if problems and not a.force:
         print(json.dumps({"ok": False, "stage": st["stage"], "target": a.stage, "unmet": problems},
                          ensure_ascii=False, indent=2))
@@ -611,6 +1060,10 @@ def cmd_advance(a):
         refs.append({"type": "decided_by", "target": wid})
     prev = st["stage"]
     st["stage"] = a.stage
+    if a.stage == "implement" and "cards" not in skips and not problems:
+        # lint 刚刚在 prereqs 里真跑过并通过；记下来是给复盘读的，不是给下一次 advance 当凭证
+        set_path(st, "cards.lint_passed", True)
+        set_path(st, "cards.lint_at", now())
     # 网格跳过的每一个阶段都写成一条有类型、可数的记录（不是一句自由文本的借口）——
     # /retro 按档分桶数逃逸缺陷，靠的就是这些行。豁免不留痕就不是豁免，是遗漏。
     ev = get_path(st, "intake.size_evidence", {}) or {}
@@ -635,6 +1088,11 @@ def cmd_advance(a):
     ledger_append(a.root, a.slug, "advance", f"{prev} → {a.stage}", stage=a.stage, refs=refs)
     for x in exempted:
         ledger_append(a.root, a.slug, "size_exemption", x["note"], stage=a.stage, decision=tier)
+    if a.stage == "acceptance":
+        # recommended 档缺校准报告：不拦，但要留一行——一把没校准的尺子不许悄悄当成校准过的
+        _, cal_note = calibration_unmet(st)
+        if cal_note:
+            ledger_append(a.root, a.slug, "calibration_unevaluated", cal_note, stage=a.stage, decision="unevaluated")
     print(json.dumps({"ok": True, "from": prev, "to": a.stage, "waived": bool(problems),
                       **({"size_exemption": [x["note"] for x in exempted]} if exempted else {})},
                      ensure_ascii=False))
@@ -652,6 +1110,18 @@ def cmd_gate(a):
         if not (dd and os.path.isdir(dd)):
             die("G1 pass requires world.derived_dir pointing at an existing derived/ directory (psl-derive output: "
                 "dos-proposal.yaml / workflow.md / form-draft.md / divergence.md) — G1 adjudicates derivation products, not vibes", 1)
+        if not (a.record and os.path.isfile(a.record)):
+            die("G1 pass requires --record <g1-record.md> that exists: the three questions, the divergence responses and the "
+                "signed form draft's sha256 live there, and G2 later locks it", 1)
+        fd = os.path.join(dd, "form-draft.md")
+        if os.path.isfile(fd):
+            digest = sha256_file(fd)
+            with open(a.record, encoding="utf-8") as f:
+                named = set(re.findall(r"\b[0-9a-f]{64}\b", f.read()))
+            if named and digest not in named:
+                die(f"{a.record} names a form-draft sha256 that is not the current derived/form-draft.md ({digest[:12]}…) — "
+                    "the signed draft and the record disagree; re-derive or re-sign", 1)
+            set_path(st, "world.form_draft_sha256", digest)
     # a gate is human-only; a delegated signature is legal only with an authorization on record (dogfood 2026-09-05, I-17)
     if a.signer_kind == "delegated_agent" and not a.authorization:
         die("--signer-kind delegated_agent requires --authorization <who/when/what allowed the delegation>", 1)
@@ -724,6 +1194,10 @@ def cmd_card(a):
         c["skip_reason"] = a.reason
     dependents = card_dependents(get_path(st, "cards.dir"), a.card) if a.status == "skipped" else []
     sha = resolve_commit(a.commit)
+    if a.commit and (sha == a.commit and not git_ok("rev-parse", "--verify", "--quiet", f"{a.commit}^{{commit}}")[0]):
+        die(f"--commit {a.commit} does not resolve to a commit in this repository — a card is done by a commit, not by a string", 1)
+    if a.status == "done" and not sha and not c.get("commits"):
+        die(f"{a.card} --status done needs --commit <sha>: 按卡实现、按卡提交，a card with no commit has not been implemented", 1)
     if sha:
         commits = c.setdefault("commits", [])
         if sha not in commits:   # one commit, one row — a short sha is the same commit as its full one (I-66)
@@ -976,8 +1450,9 @@ def cmd_plan(a):
         "gate_verdicts": {g: get_path(st, f"gates.{g}.verdict") for g in gates},
         "fleet_subset": tconf.get("fleet_subset"),
     }
+    out["fleet"], out["fleet_source"] = effective_fleet(st, sizing)
     if get_path(st, "intake.size_source") in (None, "default", "manual"):
-        out["note"] = ("tier is not derived — no stage is skipped and no exemption applies. "
+        out["note"] = ("tier is not derived — no stage is skipped, no exemption applies and the full fleet runs. "
                        "Run `size --from-issue <body.md> --early --commit` (before there is a diff) or "
                        "`size --base <ref> --commit` (after) to earn a tier with evidence.")
     if a.json:
@@ -988,6 +1463,7 @@ def cmd_plan(a):
           f"· autonomy={out['autonomy']}")
     print(f"stages: {out['stages_total']} to run ({out['stages_done']} done) · human gates: {len(gates)} "
           f"{ {g: out['gate_verdicts'][g] for g in gates} }")
+    print(f"fleet: {out['fleet']} — {out['fleet_source']}")
     if skips:
         print("skipped by the size grid:")
         for s, why in sorted(skips.items(), key=lambda kv: ORDER.index(kv[0])):
@@ -1318,13 +1794,19 @@ def cmd_fail(a):
     rule = rules.get(a.signal)
     if not rule:
         die(f"unknown signal {a.signal}; known: {sorted(rules)}", 1)
+    if a.signal == ESCAPE_SIGNAL:
+        # R12 的 layer 是 human_attribution——不是一个层，是「人先归因」这个动作。走 fail 会把它当成
+        # 一次要写失败报告的升级，而一个已经合入的 Run 不欠失败报告，它欠的是一条归了层的登记。
+        die("escape_defect is not a `fail` signal: register it with "
+            "`escape --layer card|plan|task|ontology|world --why … --by <人>` (R12 attribute_then_route)", 1)
     if a.signal == "impossible_under_contract":
         reporters = rt.get("impossible_reporters") or []
         if not a.by or not (a.by in reporters or a.by.startswith("human")):
             die("impossible_under_contract may only be reported by an evaluator or a human "
                 f"(--by ∈ {reporters}); an implementer saying 'impossible' is self-assessment, not evidence", 1)
 
-    fp = a.fingerprint or hashlib.sha1((a.evidence or a.signal).encode("utf-8")).hexdigest()[:12]
+    fp = a.fingerprint or hashlib.sha1(normalize_evidence(a.evidence or a.signal).encode("utf-8")).hexdigest()[:12]
+    fp_source = "given" if a.fingerprint else ("normalized_evidence" if a.evidence else "signal")
     orig_layer = rule["layer"]
     key = f"{a.card or orig_layer}:{orig_layer}"
     cnt = st["counters"]
@@ -1375,7 +1857,14 @@ def cmd_fail(a):
         except SystemExit:
             pass
     budget = budgets.get(BUDGET_KEY.get(layer, ""), None)
-    used = cnt.get(layer, 0) if layer in LAYER_COUNTERS else None
+    # card_retries 是**单卡**预算（routing.yaml / loops.yaml / SKILL.md 三处都这么写）：卡 A 烧掉的
+    # 重试不该让卡 B 第一次失败就升级。counters.card 仍全局累加——那是复盘看的分布，不是预算。
+    if layer == "card" and a.card:
+        used = st["cards"]["items"][a.card].get("retries", 0)
+        budget_scope = f"card:{a.card}"
+    else:
+        used = cnt.get(layer, 0) if layer in LAYER_COUNTERS else None
+        budget_scope = f"layer:{layer}"
     limit = int(rt.get("fingerprint_repeat_limit", 2))
     escalate, why = False, []
     if repeat >= limit:
@@ -1411,8 +1900,8 @@ def cmd_fail(a):
                    "score": score_info}
     decision = {
         "rule": rule["id"], "signal": a.signal, "derived_signal": derived, "layer": layer, "handler": rule.get("handler"),
-        "action": rule.get("action"), "fingerprint": fp, "fingerprint_repeat": repeat,
-        "layer_count": used, "budget": budget, "track": track,
+        "action": rule.get("action"), "fingerprint": fp, "fingerprint_source": fp_source, "fingerprint_repeat": repeat,
+        "layer_count": used, "budget": budget, "budget_scope": budget_scope, "track": track,
         "escalate": escalate, "escalate_to": escalate_to,
         "why": why, "note": rule.get("note", ""), "convergence": convergence,
         "next": ("write failure report (assets/failure_report.md, paste `convergence`) then `report --path …`; stop for human confirmation" if escalate
@@ -1524,7 +2013,7 @@ def cmd_graph(a):
                         if e.get(k) is not None:
                             item[k] = e[k]
                     if e.get("type") in ("sequential", "conditional") and str(t).startswith("stage."):
-                        item["unmet"] = prereqs(st, t.split(".", 1)[1])
+                        item["unmet"] = prereqs(st, t.split(".", 1)[1], root=a.root)
                     out.append(item)
         print(json.dumps({"stage": st["stage"], "handled_by": nodes.get(cur, {}).get("handled_by"), "edges": out}, ensure_ascii=False, indent=2))
         return
@@ -1657,6 +2146,114 @@ def cmd_waive(a):
                       "waivers": len(st["waivers"])}, ensure_ascii=False))
 
 
+def append_escape_row(path, slug, rec):
+    if not os.path.isfile(path):
+        atomic_write(path, ESCAPE_HEADER % slug)
+    cell = lambda x: str(x if x is not None else "").replace("|", "\\|").replace("\n", " ")
+    row = "| %s |\n" % " | ".join(cell(rec[k]) for k in
+                                  ("at", "feature", "pr", "symptom", "found_via", "layer", "why_gate_missed", "issue", "by"))
+    with open(path, "a", encoding="utf-8") as f:
+        f.write(row)
+
+
+def find_archive(root, slug):
+    """最近一次 archive 事件记着 --to；没有事件就看 specs/<slug>/ 有没有 manifest。"""
+    tp = trace_path(root, slug)
+    found = None
+    if os.path.isfile(tp):
+        with open(tp, encoding="utf-8") as f:
+            for line in f:
+                try:
+                    ev = json.loads(line)
+                except Exception:
+                    continue
+                if ev.get("kind") == "archive":
+                    for r in ev.get("refs") or []:
+                        if r.get("type") == "references" and os.path.isdir(str(r.get("target"))):
+                            found = str(r.get("target"))
+    if not found and os.path.isfile(os.path.join("specs", slug, "archive-manifest.json")):
+        found = os.path.join("specs", slug)
+    return found
+
+
+def cmd_escape(a):
+    """R12：合入后发现的缺陷。人归因到层 → 该层计数 +1 → escape-defects.md 加一行 → 镜像进归档。
+
+    为什么不是 `fail --signal escape_defect`：fail 会置 pending.failure_report，而一个已合入的 Run 不欠
+    失败报告；它欠的是一条**归了层**的登记，retro 按层数它、按体量分桶它（分档对不对由逃逸缺陷回答）。
+    为什么要镜像进归档：metrics.py 只读归档目录。一条只活在 .aidlc/ 里的逃逸，在复盘里等于没发生过。
+    运行时目录已经清掉时，直接对归档操作：`escape --root specs --slug <slug> …`（归档就是那个布局）。
+    """
+    st = load(a.root, a.slug)
+    if a.layer not in LAYER_COUNTERS:
+        die(f"--layer must be one of {LAYER_COUNTERS}: the human attributes the escape to the layer whose gate "
+            "should have caught it; routing R12's 'human_attribution' is the act, not a layer", 1)
+    if not (a.why or "").strip():
+        die("--why is required: one sentence on why that layer's gate did not catch it — it is what retro reads", 1)
+    rec = {"at": now(), "feature": a.slug, "pr": a.pr or get_path(st, "pr.number") or "", "symptom": a.symptom or "",
+           "found_via": a.found_via or "", "layer": a.layer, "why_gate_missed": a.why.strip(),
+           "issue": a.issue or "", "by": a.by}
+    st["counters"][a.layer] = st["counters"].get(a.layer, 0) + 1
+    st.setdefault("escapes", []).append(rec)
+    save(a.root, a.slug, st)
+    refs = [{"type": "decided_by", "target": "routing.R12"}, {"type": "decided_by", "target": f"human:{a.by}"}]
+    refs += parse_refs(a.ref)
+    if a.issue:
+        refs.append({"type": "references", "target": f"issue:#{a.issue}"})
+    eid = ledger_append(a.root, a.slug, "escape", (f"{rec['symptom']} | " if rec["symptom"] else "") + f"why gate missed: {rec['why_gate_missed']}",
+                        stage=st["stage"], signal=ESCAPE_SIGNAL, layer=a.layer, decision="attribute_then_route",
+                        by=a.by, refs=refs, extra={k: v for k, v in (("found_via", rec["found_via"]), ("pr", rec["pr"]), ("issue", rec["issue"])) if v})
+    d, sp, lp = paths(a.root, a.slug)
+    log = os.path.join(d, ESCAPE_LOG)
+    append_escape_row(log, a.slug, rec)
+    out = {"ok": True, "event": eid, "layer": a.layer, "counter": st["counters"][a.layer], "log": log,
+           "next": f"route by the {a.layer} layer's routing rows; /retro buckets it by intake.size"}
+    arch = a.archive or find_archive(a.root, a.slug)
+    if arch and os.path.isdir(arch) and os.path.abspath(arch) != os.path.abspath(d):
+        for src in (sp, lp, trace_path(a.root, a.slug), log):
+            if os.path.isfile(src):
+                shutil.copy2(src, os.path.join(arch, os.path.basename(src)))
+        out["mirrored_into_archive"] = arch
+    elif not arch:
+        out["warning"] = ("no archive found (no archive event, no specs/<slug>/archive-manifest.json) — the escape "
+                          "lives only in the runtime dir; pass --archive <dir>, or run with --root specs after archiving")
+    print(json.dumps(out, ensure_ascii=False, indent=2))
+
+
+def cmd_acceptance(a):
+    """记录整体验收的结果。evaluation_result 是 final-state.json 的路径；meets_done_when **只**从
+    meets_done_when.py 的报告里读——报告的 done_when_sha256 必须等于当前契约的哈希，否则它量的是另一份契约。"""
+    st = load(a.root, a.slug)
+    if not os.path.isfile(a.result):
+        die(f"--result {a.result} is not a file (final-state.json)", 1)
+    try:
+        with open(a.result, encoding="utf-8") as f:
+            fs = json.load(f)
+    except Exception as e:
+        die(f"--result {a.result} is not JSON: {e}", 1)
+    set_path(st, "acceptance.evaluation_result", a.result)
+    refs = [{"type": "references", "target": a.result}]
+    note = f"final-state {fs.get('state_decision') or fs.get('state')!s}"
+    if a.meets:
+        rep = load_yaml(a.meets) if not a.meets.endswith(".json") else json.load(open(a.meets, encoding="utf-8"))
+        v = (rep or {}).get("verdict")
+        if v not in ("met", "not_met", "unevaluated"):
+            die(f"--meets {a.meets}: verdict must be met|not_met|unevaluated (meets_done_when.py writes it), got {v!r}", 1)
+        dw = get_path(st, "contract.done_when")
+        if dw and os.path.isfile(dw) and rep.get("done_when_sha256") != sha256_file(dw):
+            die(f"--meets {a.meets} was computed against a different done_when.yaml (sha256 mismatch) — re-run meets_done_when.py on {dw}", 1)
+        set_path(st, "acceptance.meets_done_when", v == "met")
+        set_path(st, "acceptance.meets_done_when_verdict", v)
+        set_path(st, "acceptance.meets_done_when_report", a.meets)
+        refs.append({"type": "references", "target": a.meets})
+        note += f" · meets_done_when={v}"
+    save(a.root, a.slug, st)
+    ledger_append(a.root, a.slug, "acceptance", note, stage=st["stage"], decision=str(fs.get("state_decision") or fs.get("state") or ""), refs=refs)
+    print(json.dumps({"ok": True, "evaluation_result": a.result, "state_decision": fs.get("state_decision") or fs.get("state"),
+                      "meets_done_when": get_path(st, "acceptance.meets_done_when"),
+                      "meets_done_when_verdict": get_path(st, "acceptance.meets_done_when_verdict")}, ensure_ascii=False))
+
+
 def cmd_ledger(a):
     st = load(a.root, a.slug)
     extra = {"card": a.card} if a.card else None
@@ -1675,6 +2272,8 @@ def cmd_archive(a):
     # notes.md 归档：解释日记是 /retro 唯一能读到"规格含糊处当时怎么选的"的地方。
     # 不归档它，下一次复盘就只剩下失败记录——只知道撞了墙，不知道当初为什么往那边走。
     srcs += [p for p in [notes_path(a.root, a.slug)] if os.path.isfile(p)]
+    # escape-defects.md：metrics.py 从归档目录读它；不带上，逃逸率永远是 0
+    srcs += [p for p in [os.path.join(d, ESCAPE_LOG)] if os.path.isfile(p)]
     # the contract is not an "artifact" entry, yet retro/metrics.py reads done_when.yaml FROM the archive to
     # compute the human-AC ratio — leaving it behind made that metric empty for every run (I-85)
     srcs += [p for p in (get_path(st, k) for k in CONTRACT_FILES) if p and os.path.isfile(p)]
@@ -1758,6 +2357,14 @@ def main():
     s.add_argument("--authorization")
     s.add_argument("--fingerprint"); s.add_argument("--card"); s.add_argument("--layer"); s.add_argument("--stage"); s.add_argument("--scope")
     s.add_argument("--ref", action="append")
+    s = P("escape"); s.add_argument("--layer", required=True, choices=LAYER_COUNTERS); s.add_argument("--why", required=True)
+    s.add_argument("--by", required=True)
+    s.add_argument("--issue", required=True, help="the /issue --escape issue: it carries the regression AC that opens the next Run — "
+                                                   "an escape with no issue closes nothing")
+    s.add_argument("--pr"); s.add_argument("--symptom")
+    s.add_argument("--found-via", dest="found_via"); s.add_argument("--archive"); s.add_argument("--ref", action="append")
+    s = P("acceptance"); s.add_argument("--result", required=True, help="final-state.json")
+    s.add_argument("--meets", help="meets_done_when.py 的报告（verdict + done_when_sha256）")
     s = P("report"); s.add_argument("--path", required=True); s.add_argument("--by")
     s = P("check-clean"); s.add_argument("--as-hook", action="store_true")
     s = P("graph"); s.add_argument("action", choices=["check", "next", "render"]); s.add_argument("--graph"); s.add_argument("--full", action="store_true")
@@ -1791,6 +2398,7 @@ def main():
             "size": cmd_size, "plan": cmd_plan, "doctor": cmd_doctor, "repo": cmd_repo,
             "note": cmd_note, "notes": cmd_notes, "autonomy": cmd_autonomy,
             "fail": cmd_fail, "waive": cmd_waive, "report": cmd_report, "check-clean": cmd_check_clean,
+            "escape": cmd_escape, "acceptance": cmd_acceptance,
             "graph": cmd_graph, "ledger": cmd_ledger, "archive": cmd_archive}[a.cmd](a)
 
 

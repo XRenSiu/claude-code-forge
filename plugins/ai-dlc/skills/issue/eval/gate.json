@@ -30,6 +30,7 @@
     "harness_note": "scripts exercised in temp git repos / temp dirs; gh-networked paths (issue create, pr create, pr-poll watch/threads/resolve/done, post_review real post) NOT exercised — they need a live repo/PR",
     "scripts_run": {
       "verify_issue.py": "good body 0 rejects (with --dos closure ok); vague expect → reject; missing unhappy twin → reject; file-path observe → reject; DOS closure failure → reject + force_track: psl; --kind bug good passes, missing Repro rejected"
-    }
+    },
+    "v0.7.0": "2026-09-12: --kind escape now hands off to `aidlc_state.py escape` (declared wiring; the gh path is still not exercised)"
   }
 }

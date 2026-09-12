@@ -23,7 +23,7 @@
 ## Known residuals / fix list
 
 - L2: run /ai-dlc end-to-end on one real TASK-track requirement in a fresh session (Skill list must pick up AI-DLC@claude-code-forge) and record the archive dir
-- blank (registered in references/stages.md): red-green evidence script; meets_done_when comparison script; contract.yaml schema; ontology-drift; psl-derive
+- blank (registered in references/stages.md): contract.yaml schema; ontology-drift; psl-derive
 - consider compiling the advance-prerequisite gate as a Stop hook once the flow stabilises (declared, not compiled today)
 
 ## To upgrade `static_only` → certified `pass`

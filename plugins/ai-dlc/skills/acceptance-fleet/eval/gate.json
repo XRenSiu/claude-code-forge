@@ -33,6 +33,7 @@
     "date": "2026-09-05",
     "evaluator": "AUTHOR-RUN structural pass: skillwise lint_skill.py L0 (0 blocking; step-order/persona items are inherited 'to confirm' findings) + plugins/ai-dlc/eval/smoke.sh on bundled scripts. NOT a decorrelated read, NOT an L2 run.",
     "scripts_run": {},
-    "residual": "pure orchestrator; S0–S5 phase map inherited (5 hits); gh-networked dispatch not exercised"
+    "residual": "pure orchestrator; S0–S5 phase map inherited (5 hits); gh-networked dispatch not exercised",
+    "v1.5.0": "2026-09-12: meets_done_when.py (met / not_met / unevaluated on the ai-dlc fixture contract + qa-measurements fixtures); verify_review_complete --size-source (default M → L set)"
   }
 }

@@ -11,6 +11,7 @@
 用法: anchor_crosscheck.py <audit.yaml> <check_anchors.py>
 退出 0 = 两边数一致；1 = 不一致（报差额）；2 = 用法/读取错误。
 """
+import os
 import re
 import subprocess
 import sys
@@ -40,7 +41,10 @@ def main():
         expected += sum(1 for m in HASH.finditer(line) if outside(m))
         expected += sum(1 for m in COLON.finditer(line) if outside(m))
 
-    r = subprocess.run(["python3", tool, "--audit", audit, "verify"],
+    # 锁与 audit.yaml 同目录。check_anchors.py 的缺省是仓库根相对路径，只在 cwd = 仓库根时成立；
+    # 这里显式给，交叉核对就不再依赖谁从哪里启动它（在插件目录下跑 smoke 曾让这两条无故变红）。
+    lock = os.path.join(os.path.dirname(os.path.abspath(audit)), "anchors.lock")
+    r = subprocess.run(["python3", tool, "--audit", audit, "--lock", lock, "verify"],
                        capture_output=True, text=True)
     m = re.search(r"走到 (\d+) 个行号锚点", r.stdout)
     if not m:

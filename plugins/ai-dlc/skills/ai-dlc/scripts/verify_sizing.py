@@ -164,6 +164,22 @@ def check(doc):
                                         f"{missing} — 缺一档就是那一档静默 optional，"
                                         "而极性要求「漏填得到较严的那条」")
 
+    # L9 —— 校准报告的按档要求（advance acceptance 读 calibration.by_tier）
+    cal = doc.get("calibration")
+    if cal is None:
+        problems.append("L9 no `calibration:` block — without it calibration_level() falls back to `required` for "
+                        "every tier, which is the strict side but not a decision anyone made")
+    else:
+        levels = list(cal.get("levels") or [])
+        if set(levels) != {"optional", "recommended", "required"}:
+            problems.append(f"L9 calibration.levels {levels} must be exactly optional / recommended / required")
+        bt = cal.get("by_tier") or {}
+        for t in tiers:
+            if t not in bt:
+                problems.append(f"L9 calibration.by_tier: no level for tier {t} — 缺一档就是那一档静默 required，说清楚")
+            elif bt[t] not in levels:
+                problems.append(f"L9 calibration.by_tier.{t}: level `{bt[t]}` not in {levels}")
+
     # L7 —— 每一档的剩余路径 next_allowed 真的放行
     for tier in tiers:
         skips = {row["stage"]: row.get("why", "") for row in ((grid.get(tier) or {}).get("skip") or [])
@@ -204,7 +220,7 @@ def main():
             print(f"  ✗ {p}")
         if not problems:
             tiers = list((doc.get("tiers") or {}))
-            print(f"  ✓ 8 checks pass · tiers={tiers} · "
+            print(f"  ✓ 9 checks pass · tiers={tiers} · "
                   f"never_skippable={len(((doc.get('never_skippable') or {}).get('stages')) or [])} stages")
     sys.exit(1 if problems else 0)
 

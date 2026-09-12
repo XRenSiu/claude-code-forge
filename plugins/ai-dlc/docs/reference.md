@@ -35,15 +35,20 @@ flag 不等于 reject。预门过了但带 flag，意思是「机器判不了这
 
 | 脚本 | 干什么 | 关键退出码 |
 |---|---|---|
-| `aidlc_state.py` | 生命周期状态机：`init` / `show` / `set` / `advance` / `gate` / `card` / `size` / `plan` / `doctor` / `repo` / `note` / `notes` / `autonomy` / `fail` / `waive` / `report` / `check-clean` / `graph` / `loops` / `ledger` / `archive`。**状态由它拥有，不手改** | 0 成功 · 1 前置不满足（`doctor` 的 1 = 有 error 级发现，它从不阻断门禁）· 2 用法 |
+| `aidlc_state.py` | 生命周期状态机：`init` / `show` / `set` / `advance` / `gate` / `card` / `size` / `plan` / `doctor` / `repo` / `note` / `notes` / `autonomy` / `fail` / `escape` / `acceptance` / `waive` / `report` / `check-clean` / `graph` / `loops` / `ledger` / `archive`。**状态由它拥有，不手改**。`advance` 对着文件检：`implement` 跑 `lint_cards.py`，`pr` 读 final-state.json + `meets_done_when.py` 的报告，`archive` 读 release.notes 的 post-deploy 行与指着 merge.sha 的 tag，implement / acceptance / pr / merge 重跑锁校验；implement 还要 G2 裁决（cards 被跳过时也要）、l5 锁与已核验的红基线，pr 要红→绿证据与干净的锁历史，g3 / merge 要 pr-poll 的裁决文件，release / archive 要 merge.sha 已在 branch.base 里 | 0 成功 · 1 前置不满足（`doctor` 的 1 = 有 error 级发现，它从不阻断门禁）· 2 用法 |
 | `lock_done_when.py` | 契约的两段锁：`sign --stage g2\|l5` 算文件哈希并记签字人 | 0 · 1 拒 · 2 IO |
 | `trace.py` | 决策迹查询：`why <AC-id>` / `impact` / `render` / `lint` | 0 · 1 · 2 |
 | `verify_graph.py` | `graph.yaml` 的五条 lint（写范围有界 / 圈必须归环 / 评估者→实现者只带 fix_prompt / 人节点有恢复绑定 / fan_in 有 merge） | 0 · 1 拒 |
 | `verify_loop.py` | `loops.yaml` 的环契约（generator ≠ verifier、stop 四键齐） | 0 · 1 拒 |
-| `verify_sizing.py` | 体量网格的八条 lint：阶段名在 ORDER 里 / never_skippable 覆盖三道门 / 没有一档绕过它 / 每条 skip 有 why / **兜底档一个阶段也不跳（极性）** / `needs` 与 `when` 一致 / 每一档的剩余路径 `next_allowed` 真的放行（直接 import 真的那份，不重实现）/ **`repo_assets` 的键与档位在封闭集里且每档都有一条要求** | 0 · 1 拒 · 2 用法/IO（**没有 3**：网格是自带资产，读不到是错误不是「未求值」） |
+| `verify_sizing.py` | 体量网格的九条 lint：阶段名在 ORDER 里 / never_skippable 覆盖三道门 / 没有一档绕过它 / 每条 skip 有 why / **兜底档一个阶段也不跳（极性）** / `needs` 与 `when` 一致 / 每一档的剩余路径 `next_allowed` 真的放行（直接 import 真的那份，不重实现）/ **`repo_assets` 的键与档位在封闭集里且每档都有一条要求** / `calibration.by_tier` 每档都有一个封闭集里的档位 | 0 · 1 拒 · 2 用法/IO（**没有 3**：网格是自带资产，读不到是错误不是「未求值」） |
 | `repo_assets.py` | X1 仓库级制品在不在（候选路径序：`--scope` 的 package 目录 → 仓库根 → `docs/` → `ontology/`，`.aidlc/` 最后且命中即告警）、进没进 git（`git ls-files`）。**monorepo 一个 package 一份本体**，回落让仓库级的 `agent-map.md` 与 package 级的 `dos.yaml` 共存。被 `aidlc_state.py init/doctor/repo/prereqs`、`verify_issue.py --require-dos`、`lint_cards.py --require-dos` 共用——一份候选表，不是六份 | 0 齐全且都进了 git · 1 有缺失 / 未 tracked / 位置不共享 · 2 用法/IO |
 
-`aidlc_state.py` 的子命令里最容易被漏的三个：
+`aidlc_state.py` 的子命令里最容易被漏的五个：
+
+- `escape --layer <card|plan|task|ontology|world> --why … --by <人>`：R12 逃逸缺陷的登记入口（不是 `fail`）。计到归因层、追加
+  `escape-defects.md`、镜像进归档——`metrics.py` 只读归档，只写 issue 的逃逸在复盘里等于没发生。运行时目录已清时 `--root specs`。
+- `acceptance --result final-state.json [--meets meets_done_when.yaml]`：记录整体验收；`meets_done_when` 只能从 `meets_done_when.py`
+  的报告进来（报告的 `done_when_sha256` 必须等于当前契约的哈希）。
 
 - `size`：按 `assets/sizing.yaml` 的六条规则推体量档，输入只有四个可数的量（改动文件数、AC 数、human AC 数、轨道）。
   `--commit` 才写进 state。缺省是 M，S 的豁免只认 `size_source=derived`。
@@ -103,6 +108,7 @@ flag 不等于 reject。预门过了但带 flag，意思是「机器判不了这
 | `gen_existence.py` | test-suite-generator | 存在性测试的生成器（**不是闸**，没有拒绝路径） | 0 |
 | `check_verbatim_names.py` | test-suite-generator | 测试名与契约 manifest 逐字一致 | 0 · 1 不一致 |
 | `capture_red_baseline.py` | test-suite-generator | **红基线**：实现前跑一次，记录哪些测试是红的；实现者拿它自证红→绿 | 0 · 1 基线不是红 |
+| `verify_red_green.py` | test-suite-generator | **红→绿证据的另一半**：基线里每条红测试现在都必须出现且通过；**消失的红测试算不绿**（删测试是最便宜的变绿）；基线 HEAD 必须是当前 HEAD 的祖先 | 0 green · 1 not green · 2 IO · **3 unevaluated**（基线无干净检出证据 / 非祖先 / 认不出测试行）——不是通过 |
 | `verify_compile.py` | spec-compile | 可判性阶梯的产物检（fitness fn / eval_case / 评判程序） | 0 · 1 拒 |
 | `verify_calibration.py` | calibrate | **标准的标准**：mutation score / Krippendorff α ≥ 0.80 / holdout / 隔离，四不可破 | 0 元闸过 · 1 拒 |
 
@@ -113,7 +119,8 @@ flag 不等于 reject。预门过了但带 flag，意思是「机器判不了这
 | `verify_structure.py` | qa-reviewer | **A 档的结构闸**：圈复杂度（增量与绝对值）、重复块、依赖方向，只看本次 diff | 0 过 · 1 违反 · 2 IO · **3 声明了但无法求值** |
 | `next_iteration.py` | acceptance-fleet | 从上一轮 ratchet-log 推下一轮的派发参数 | 0 · 1 上一轮不自洽 |
 | `qa_facts.py` | acceptance-fleet | 把 qa-reviewer 的报告投影成**测量值**，供 spec-drift 比对 | 0 · 1 不是 qa 报告 |
-| `verify_review_complete.py` | acceptance-fleet | **审查完成度闸（fleet S1.5，meta-judge 之前）**：每份 fleet 产物必须自带 `review_complete:` 标记，且 `findings_count` 与实到发现条数一致；`--clear` 在重派前把陈旧产物移进 `stale/`（移不删，且只在给定目录内动手） | 0 全部到齐且完成 · 1 显式声明没跑完 · 2 IO / 用法 · **3 缺文件 / 解析不了 / 缺标记 / 数目不符——不是通过**（`--require-complete` 把 3 变 1） |
+| `meets_done_when.py` | acceptance-fleet | **达标比对器**：契约 `behavior.thresholds` 逐条对 `qa-measurements.yaml` 里的同名测量比（`--map` 可指路）；可选核 final-state 四态；报告带契约 sha256，`aidlc_state.py acceptance --meets` 核它 | 0 met · 1 not_met · 2 IO · **3 unevaluated**（声明了阈值没人量）——不是通过 |
+| `verify_review_complete.py` | acceptance-fleet | **审查完成度闸（fleet S1.5，meta-judge 之前）**：每份 fleet 产物必须自带 `review_complete:` 标记，且 `findings_count` 与实到发现条数一致；`--clear` 在重派前把陈旧产物移进 `stale/`（移不删，且只在给定目录内动手）；`--size M --size-source default\|manual` 按 L 档全集取期望——子集是豁免，豁免只认推导来的档位 | 0 全部到齐且完成 · 1 显式声明没跑完 · 2 IO / 用法 · **3 缺文件 / 解析不了 / 缺标记 / 数目不符——不是通过**（`--require-complete` 把 3 变 1） |
 | `pick_evaluators.py` | acceptance-fleet | **跨供应商分配**：探测可用供应商，按同源盲区排名分配，分不到就留 `same_vendor_caveat` | 0（无论是否跨供应商）· 2 配置读不了 |
 | `compute_score.py` | spec-gaming-detector | 六种 RHD 模式的 gaming_risk_score（0–10） | 0 |
 | `compute_confidence.py` | meta-judge | 多源 / 跨供应商发现的置信度加权 | 0 |
@@ -124,7 +131,7 @@ flag 不等于 reject。预门过了但带 flag，意思是「机器判不了这
 | 脚本 | 所属 skill | 干什么 | 关键退出码 |
 |---|---|---|---|
 | `verify_pr.py` | pr | PR body 的产物序 + 体量分级（XL 必拆）+ 锁文件改动需附提案 | 0 · 1 拒 |
-| `pr-poll.sh` | review-loop | 零 token 阻塞等待；预算与终止谓词编译在脚本里 | 0 收敛 · 30 预算耗尽 |
+| `pr-poll.sh` | review-loop | 零 token 阻塞等待；预算与终止谓词编译在脚本里；`done` / `predicate` 写 `pr-watch/pr-<N>.done.json`——`advance g3 / merge` 读它，不读引擎 set 的 `review.done` | 0 收敛 · 10 终态 · 20 未收敛 · 30 预算耗尽 |
 | `verify_release.py` | release | changelog ↔ tag ↔ notes 一致、回滚先于部署、验证绿才算交付 | 0 · 1 拒 |
 | `metrics.py` | retro | X3 导出：lead time / 回流分布 / G1 拦截率 / human AC 占比 / 逃逸率 / 豁免数 / **按体量分桶** | 0 |
 | `tune.py` | tune | 环的参数提案（封闭 target 集）：routing 预算、指纹阈值、MAX_ROUNDS、隔离等级、**跨供应商分配**、fix_list | 0 |
@@ -137,7 +144,8 @@ flag 不等于 reject。预门过了但带 flag，意思是「机器判不了这
 | `eval/smoke.sh` | 全仓脚本的冒烟期望；`--only <ERE>` 过滤，`--mutate <file> <old> <new>` 做变异自检（基线必须先绿，否则拒绝出结论） |
 | `eval/effect/run.py` | 行为层对照的 `prepare` / `collect`；隔离断言、副本收分、mtime 判污染 |
 | `eval/effect/score.py` | 汇总；样本 < 5 或差距在噪声带内**拒绝下结论**；两个维度分开判 |
-| `eval/fixtures/anchor_crosscheck.py` | 证据锚点的独立交叉核对（不共用被测实现） |
+| `eval/fixtures/anchor_crosscheck.py` | 证据锚点的独立交叉核对（不共用被测实现；锁路径随 audit.yaml 走，不依赖 cwd） |
+| `eval/fixtures/doc_graph_counts.py` | 活文档里手抄的「N 节点 · M 边」必须等于 `verify_graph.py` 数出来的数 |
 
 ---
 
@@ -149,7 +157,7 @@ flag 不等于 reject。预门过了但带 flag，意思是「机器判不了这
 |---|---|---|
 | `ai-dlc/assets/routing.yaml` | `aidlc_state.py fail` | 回流路由表：信号 → 层 → 处理者 → 动作；分层预算；收敛检测阈值 |
 | `ai-dlc/assets/sizing.yaml` | `aidlc_state.py size|plan|advance`、`verify_sizing.py` | v2：六条推导规则（带 `needs`）+ **`stages:` 广度网格** + `never_skippable`（三道门在里面）+ 每档的 `depth` / `test_strategy` + `recompose` 约束 + 预算覆盖 |
-| `ai-dlc/assets/graph.yaml` | `verify_graph.py`、`aidlc_state.py graph` | 52 节点 / 67 边；节点带 `reads` / `must_not_read` / `writes` / `authority` |
+| `ai-dlc/assets/graph.yaml` | `verify_graph.py`、`aidlc_state.py graph` | 53 节点 / 69 边；节点带 `reads` / `must_not_read` / `writes` / `authority` |
 | `ai-dlc/assets/loops.yaml` | `verify_loop.py`、`aidlc_state.py loops` | 六个环的契约：level / timescale / generator ≠ verifier / stop 四键 |
 | `ai-dlc/assets/triggers.yaml` | 人 | 每个环绑到哪个原生触发（`/goal` `/loop` Stop hook `/schedule`） |
 | `acceptance-fleet/assets/evaluators.yaml` | `pick_evaluators.py` | 供应商声明与探测命令；每个槽的同源盲区排名 |

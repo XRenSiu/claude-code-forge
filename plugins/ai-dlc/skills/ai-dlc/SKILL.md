@@ -62,7 +62,7 @@ deletion 测试：撤掉本 skill，让引擎"把这个需求做完提 PR"。它
 | merge | merge sha | **人**（或 `--autopilot` 且 G3 已过） | 不可逆 |
 | release | tag · CHANGELOG 条目 · `releases/vX.Y.Z.md` · 部署后验证 | /release（`verify_release.py`） | 合入不是终点：验证绿才交付；push tag / deploy 前给人看；回滚方案先于部署 |
 | archive | `specs/<slug>/`（state · ledger · done_when · lock · cards · evaluation · G 记录） | `aidlc_state.py archive` | X3 的数据源 |
-| escape | `escape-defects.md` 一行 | /issue `--escape` | 线上反馈是世界层唯一的外部校准源 |
+| escape | `escape-defects.md` 一行 + `escape` 事件（计到归因层，镜像进归档） | /issue `--escape` → `aidlc_state.py escape --layer <层> --why …` | 线上反馈是世界层唯一的外部校准源；只写 issue 不登记，metrics.py 永远数不到它 |
 | retro（跨 feature） | `retro/retro-<date>.md` + `metrics.json` | /retro（`metrics.py`） | 先记基线；发现引用数据；提案落到层（psl / dos / invariant / ac / routing / skill），经 G2/G3 生效 |
 
 **两条轨道与接缝。** TASK 轨（形态已定：支付校验、报表列宽）直接进 issue。PSL 轨（体验性 /
@@ -166,12 +166,12 @@ S 档 optional（三行修复上一次全仓库本体提取，成本高到没人
 | issue | `verify_issue.py` 过：无模糊量词、happy 有 unhappy 孪生、observe 非文件路径、范围四项非空；`--require-dos` 时闭包必须真的算过（未检 = 拒）；`advance issue` 检 required 那级的 X1 制品 | AC 是不是这次最窄的可证伪条件 |
 | contract / G2 | `validate_done_when_v2.py` 过（schema 2、AC 齐、existence 只留边界、forbidden_paths 含 tests/**）；`.done_when.lock` 存在且哈希匹配 | 判据对不对（人签） |
 | cards | `lint_cards.py` 三项 + 上下文 ≤ 40k | 卡是否自包含 |
-| implement | 每次 commit 过 `verify_commit.py`（白名单、锁、secrets）；单卡测试过 | 实现是否走了捷径（spec-gaming 邻居） |
-| acceptance | `final-state.json` 存在；`/qa-reviewer` 真跑测试；`/spec-gaming-detector` 硬命中 = A 档；`meets_done_when` 由脚本比对阈值得出，不由评估 agent 宣布 | human AC → G3；`/meta-judge` NEEDS_HUMAN |
-| pr | `verify_pr.py` 过：范围声明、Closes、验证证据、AC 映射、体量 ≤ L | 描述是否诚实 |
-| review | `pr-poll.sh done` exit 0 或 10；合法不收敛 = 有 REJECT 悬而未决时停在 20 并汇报 | 争议线程的对错 |
+| implement | `advance implement`：G2 裁决 + 锁（跳过 cards 也要）、l5 锁里有测试、红基线过 `--verify`、`lint_cards.py` 过；每次 commit 过 `verify_commit.py`（白名单、锁、secrets）；`card --status done` 要一个 git 认识的 sha | 实现是否走了捷径（spec-gaming 邻居） |
+| acceptance | `final-state.json` 存在且 `advance pr` 读它（四态 = DONE、`unevaluated_reviews` 为空）；`/qa-reviewer` 真跑测试；`/spec-gaming-detector` 硬命中 = A 档；`meets_done_when` 由 `acceptance-fleet/scripts/meets_done_when.py` 比对 `behavior.thresholds` 得出，经 `acceptance --meets` 记录，不可 set | human AC → G3；`/meta-judge` NEEDS_HUMAN |
+| pr | `verify_pr.py` 过：范围声明、Closes、验证证据、AC 映射、体量 ≤ L；`advance pr`：红→绿证据 green、锁历史里改过被锁文件的提交都带变更提案 | 描述是否诚实 |
+| review | `pr-poll.sh done` exit 0 或 10 并写 `pr-watch/pr-<N>.done.json`（`advance g3 / merge` 读它）；合法不收敛 = 有 REJECT 悬而未决时停在 20 并汇报 | 争议线程的对错 |
 | release | `verify_release.py` 过（changelog ↔ tag ↔ notes 一致、Rollback 非空、bump 与提交一致）；verify-cmd 绿 | 回滚方案是否真能执行 |
-| merge / archive | `merge.sha`；`release.done` 或 `skipped_reason`；归档目录结构固定、`metrics.py` 读得出 | — |
+| merge / archive | `merge.sha` 解析得到且已在 `branch.base` 里；`release.done`（notes 有 post-deploy 行、tag 指着 merge.sha）或 `skipped_reason`；归档目录结构固定、`metrics.py` 读得出 | — |
 
 **收敛检测（routing.yaml v2，`fail` 命令自动判）：** 每个 key 存最近 6 次指纹。同指纹连续 2 次 = repeat；周期 2–3 的往复
 （A B A B）= **oscillation** → 派生信号 `oscillation_detected`（R14，plan 层：在相似解之间震荡是方案层的权衡）；`--score` 连续 3 次
@@ -217,9 +217,18 @@ S 档 optional（三行修复上一次全仓库本体提取，成本高到没人
 
 ## 原语（Π 的存在性——不叙述调用顺序）
 
-- `scripts/aidlc_state.py` — init / show / set / advance / gate / card / fail / report / check-clean / graph check|next|render /
-  loops / ledger / archive（`--help`）。`fail` 多了 `--score` 与 `--by`；`loops` 一屏看六个环的预算消耗；`check-clean --as-hook`
-  是 Stop hook 的出口（模板 `assets/hooks/stop-clean-state.json`，不自动安装）。
+- `scripts/aidlc_state.py` — init / show / set / advance / gate / card / fail / escape / acceptance / report / check-clean /
+  graph check|next|render / loops / ledger / archive（`--help`）。`fail` 多了 `--score` 与 `--by`；`loops` 一屏看六个环的预算消耗；
+  `check-clean --as-hook` 是 Stop hook 的出口（模板 `assets/hooks/stop-clean-state.json`，不自动安装）。
+  v1.4.0：**advance 对着文件检，不对着 flag 检**——`implement` 自己跑 `lint_cards.py`（`cards.lint_passed` 不可 set）、
+  `pr` 读 final-state.json（DONE ∧ 无 unevaluated review ∧ 声明了阈值就要有 `meets_done_when.py` 的 met）、
+  `archive` 读 release.notes 的 post-deploy 行、implement / acceptance / pr / merge 重跑 `lock_done_when.py verify`；
+  `escape`（R12 登记：归因层计数 + escape-defects.md + 镜像进归档）；`acceptance --result … --meets …`；
+  `fail --evidence` 先归一化再取指纹（行号 / 时间戳 / 临时路径不算差异）；`card_retries` 按**卡**计不按层计。
+  同版第二轮：implement 还要 G2 裁决（跳过 cards 不跳签字）、l5 锁里有测试、`contract.red_baseline` 过 `--verify`；pr 要 `acceptance.red_green` 为 green
+  与干净的锁历史（改过被锁文件的提交同一提交带变更提案）；acceptance 按 `sizing.yaml.calibration` 读校准报告；g3 / merge 读 `pr-poll.sh` 的
+  `pr-<N>.done.json`；release / archive 问 git：merge.sha 已在 base 里、tag 指着它；`gates.g3.required=false` 在契约有 human AC 时被拒；
+  `gate g1 pass` 要 `--record` 且把 form-draft 的 sha256 写进 state；`card --status done` 要 git 认识的 sha；`escape --issue` 必填。
   v1.1.0 新增 `repo`（X1 仓库级制品：在不在 · 进没进 git · 这一档要求到哪一级 · 怎么补）。
   v0.12.0 新增：`size --from-issue|--early`（早定档 + 飞行中重定档）、`plan`（启动前的有效规模）、
   `doctor`（装置健康度，建议性、从不阻断、不进 `advance` 的前置条件——会阻断的 doctor 就是第四道门）、
@@ -227,11 +236,11 @@ S 档 optional（三行修复上一次全仓库本体提取，成本高到没人
 - `scripts/repo_assets.py` — X1 仓库级制品的**发现**（候选路径序）与 **git 核对**（`git ls-files`）。
   `aidlc_state.py` 的 `init` / `doctor` / `repo` / `prereqs("issue")`、`verify_issue.py --require-dos`、
   `lint_cards.py --require-dos` 共用这一份候选表——第二份候选表迟早与真的那份分叉（同 `graph check`）。
-- `scripts/verify_sizing.py` — 体量网格的 lint（八条，L8 核 `repo_assets` 的键与档位）。L7 直接 `import aidlc_state` 用**真的那份** `next_allowed`
+- `scripts/verify_sizing.py` — 体量网格的 lint（九条，L8 核 `repo_assets` 的键与档位，L9 核 `calibration` 的按档要求）。L7 直接 `import aidlc_state` 用**真的那份** `next_allowed`
   把每一档的剩余路径走一遍：自己写第二份迟早与真的那份分叉，而分叉出来的那份会说"网格没问题"（同 `graph check`）。
 - `scripts/lock_done_when.py` — `sign --stage g2|l5` / A 档 `verify`（exit 0 / 1 reject / 2 changed_with_proposal）。
 - `scripts/verify_graph.py` / `scripts/verify_loop.py` / `scripts/trace.py why|impact|render|lint` — 图 / 环 / 迹的 lint 与查询。
-- `assets/graph.yaml`（52 节点 · 67 边）· `assets/loops.yaml`（六个环）· `assets/triggers.yaml`（每个环绑到 `/goal` `/loop`
+- `assets/graph.yaml`（53 节点 · 69 边）· `assets/loops.yaml`（六个环）· `assets/triggers.yaml`（每个环绑到 `/goal` `/loop`
   Stop hook `/schedule`）· `assets/routing.yaml` v2（R14–R16）。
 - `../plan-cards/scripts/lint_cards.py`（L4）、`../retro/scripts/metrics.py`（X3）、`../donewhen-extract/scripts/validate_done_when_v2.py`（契约 v2 校验，`advance g2` 自动调用）、`convert_v1_to_v2.py`（acceptance-spec v1 → v2 骨架）、`../release/scripts/verify_release.py`（L8）。
 - 子 skill 的原语各自在其目录：`issue/scripts/verify_issue.py`、`commit/scripts/verify_commit.py`、
@@ -261,7 +270,7 @@ v0.12.0 起这是三个**正交**旋钮（借鉴 AWS AI-DLC 2.0，见 `../../doc
 
 | 旋钮 | 是什么 | 谁强制 |
 |---|---|---|
-| 广度 | 跑哪些阶段（`stages:` 网格） | `next_allowed` / `prereqs` 按网格放行；`verify_sizing.py` 八条 lint |
+| 广度 | 跑哪些阶段（`stages:` 网格） | `next_allowed` / `prereqs` 按网格放行；`verify_sizing.py` 九条 lint |
 | 测试量 | 验多少（`test_strategy`） | **下界**：`derive_counts.py --strategy`，低于地板 exit 4 |
 | 深度 | 每个阶段产出多细（`depth`） | **只是声明**给 skill 读的输入。没有脚本能判"这份文档够不够细"——写在这里是为了不假装它是闸 |
 
@@ -337,7 +346,11 @@ CLI flag**——flag 每次调用都要重给，恢复会话就丢；记进 stat
 - **绝不在门禁仪式上筛选日记**：`notes --for-gate` 逐字念每一行。做「有趣度」筛选的那一刻，
   被筛掉的那条就是下次撞的墙。
 - **绝不 force-push / rebase 已推送分支**（毁 review 锚点）；绝不直接在 main 提交。
-- **绝不把评审提示词给实现子 agent**；绝不让实现者自评 `meets_done_when`。
+- **绝不把评审提示词给实现子 agent**；绝不让实现者自评 `meets_done_when`——它不可 set，只有 `meets_done_when.py` 的报告经 `acceptance --meets` 能写。
+- **绝不用 `set` 伪造校验器的结论**：`cards.lint_passed` / `acceptance.meets_done_when` 不可 set；`release.done=true` 要 notes 里有 post-deploy 行；
+  `acceptance.evaluation_result` 必须是一份四态为 DONE 的 final-state.json。一个引擎自己 set 的布尔是执行者的说法，不是状态。
+- **绝不用 `fail --signal escape_defect` 登记逃逸**：用 `escape --layer … --why … --issue <N>`。合入后的 Run 不欠失败报告，欠的是一条归了层的登记。
+- **绝不在 l5 锁前、红基线前开始实现**；绝不把 `review.done` 当评审出口的凭证（凭证是 `pr-poll.sh` 写的裁决文件）；绝不在契约有 human AC 时关 G3。
 - **绝不因预算耗尽"再试一次"**——写失败报告，交人。
 - `--dry-run` 下绝不触网（不建 issue、不 push、不建 PR）：只产出计划 + 将执行的命令。
 

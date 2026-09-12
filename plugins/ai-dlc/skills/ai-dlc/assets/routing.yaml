@@ -130,7 +130,10 @@ rules:
     layer: human_attribution
     handler: human
     action: attribute_then_route
-    note: 人归因到层后，按该层的行再路由；同时喂 X3 度量
+    note: >-
+      人归因到层后，按该层的行再路由；同时喂 X3 度量。登记入口是 `aidlc_state.py escape --layer <层> --why …`
+      （不是 `fail --signal escape_defect`：合入后的 Run 不欠失败报告，欠的是一条归了层的登记；
+      escape 计到该层、追加 escape-defects.md、镜像进归档——metrics.py 只读归档）
 
   - id: R13
     signal: budget_exhausted

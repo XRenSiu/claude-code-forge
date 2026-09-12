@@ -225,7 +225,7 @@ bash <skill_dir>/scripts/pr-poll.sh resolve  <PR> <tid>    # 收束线程（回�
 bash <skill_dir>/scripts/pr-poll.sh round    <PR>          # 轮次记账（离线）
 bash <skill_dir>/scripts/pr-poll.sh strike   <PR> <tid>    # 线程往返记账（离线）
 bash <skill_dir>/scripts/pr-poll.sh selfreview <PR> <findings.yaml> [reviewer]   # 记一轮隔离预审（离线）
-bash <skill_dir>/scripts/pr-poll.sh done     <PR> [--solo] # 编译态终止谓词
+bash <skill_dir>/scripts/pr-poll.sh done     <PR> [--solo] # 编译态终止谓词；写 .aidlc/pr-watch/pr-<PR>.done.json（aidlc_state.py advance g3 / merge 读它）
 bash <skill_dir>/scripts/pr-poll.sh predicate <PR> <decision> <unresolved> <checks_state> <count> <truncated> [--solo]
                                                            # 同一谓词，事实由参数给（离线，供自检 / 冒烟）
 ```

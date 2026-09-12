@@ -21,11 +21,12 @@
   "discrimination": null,
   "fix_list": [
     "L2: run /ai-dlc end-to-end on one real TASK-track requirement in a fresh session (Skill list must pick up AI-DLC@claude-code-forge) and record the archive dir",
-    "blank (registered in references/stages.md): red-green evidence script; meets_done_when comparison script; contract.yaml schema; ontology-drift; psl-derive",
+    "blank (registered in references/stages.md): contract.yaml schema; ontology-drift; psl-derive",
     "Stop hook: assets/hooks/stop-clean-state.json is a template (not installed); check-clean --as-hook exercised, the hook wiring itself is not",
     "graph.yaml vs ORDER: P1 keeps both and asserts equality (graph check); decide before P2 closes which one is the source (lean: graph.yaml, advance reads it)",
     "convergence thresholds (fingerprint_history 6, oscillation periods 2–3, plateau_rounds 3) are literature priors; calibrate after the first real run",
-    "X1 repo readiness (v1.1.0): repo_assets discovery / git-tracked check / prereqs(\"issue\") gating / verify_sizing L8 are smoke-covered on fixtures; what is NOT measured is the effect — whether requiring dos.yaml before issue actually reduces vocabulary drift, and whether teams commit it rather than force-waiving every run. Count greenfield waivers per run in /retro."
+    "X1 repo readiness (v1.1.0): repo_assets discovery / git-tracked check / prereqs(\"issue\") gating / verify_sizing L8 are smoke-covered on fixtures; what is NOT measured is the effect — whether requiring dos.yaml before issue actually reduces vocabulary drift, and whether teams commit it rather than force-waiving every run. Count greenfield waivers per run in /retro.",
+    "L2: register one real escape defect with `escape` after a real archive and check /retro's size bucket picks it up"
   ],
   "provenance": {
     "date": "2026-09-05",
@@ -41,7 +42,9 @@
       "trace.py": "why/impact/render/lint on retro fixture (3-hop causal chain AC change ← reflow ← hidden_variant_fail; impact reaches escape); lint rejects unknown edge type + dangling event id, warns on artifacts absent from archive"
     },
     "moved": "lint_cards.py → plan-cards/scripts, metrics.py → retro/scripts (2026-09-05 re-split)",
-    "v0.6.0": "P1–P4 of docs/proposals/loop-graph-engineering.md implemented 2026-09-05; all still static_only"
+    "v0.6.0": "P1–P4 of docs/proposals/loop-graph-engineering.md implemented 2026-09-05; all still static_only",
+    "v1.4.0": "2026-09-12 closed-loop audit: escape subcommand (R12 producer + Archive mirror, metrics.py sees it); acceptance --result/--meets with meets_done_when.py; advance runs lint_cards.py / reads final-state.json / reads release.notes post-deploy / re-verifies the lock; card_retries per card; --evidence normalised before fingerprinting; effective_fleet (M subset only for a derived tier); pr.pre_review_findings required when the grid skipped acceptance. Each with smoke twins; still static_only.",
+    "v1.4.0-second-pass": "2026-09-12 second pass (no open wire): G2 verdict at implement; l5 lock + verified RED baseline before implement; red→green evidence + lock history replay before pr; tiered calibration at acceptance; pr-poll verdict file before g3/merge; merge.sha reachable from base and tag on it before release/archive; G3 cannot be waived under a human AC; G1 pass needs its record + form-draft hash; card done needs a real sha; escape needs its issue. Demo chain now runs inside a real git repo; S-tier, lock-history and calibration chains added; all smoke-twinned."
   },
   "script_smoke": {
     "aidlc_state.py size (v0.6)": {

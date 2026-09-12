@@ -24,7 +24,7 @@ user-invocable: true
 deletion 测试：撤掉本 skill，引擎会写一份平铺的 tasks.md——没有文件归属、没有 AC 子集、两张卡都改
 `package.json`、一张卡要 80k 上下文。并行实现时合并冲突，卡级验收没有对象，白名单执行器无从执行。
 缺的是判据（自包含长什么样）、原语（三项 lint）、门（lint 不过不进 implement——`aidlc_state.py advance
-implement` 要求 `cards.lint_passed`）。
+implement` 对 `cards.dir` **自己跑** `lint_cards.py`；`cards.lint_passed` 不可 set）。
 
 ## 世界（Σ）
 
@@ -55,7 +55,7 @@ implement` 要求 `cards.lint_passed`）。
   —— `--require-dos` 把"`dos_slice` 闭包未检"从一条 info 升成 reject，并在没给 `--dos` 时自动发现
   项目里的 `dos.yaml`（`../ai-dlc/scripts/repo_assets.py`）。M / L 档带上它：卡里出现一个本体
   解析不了的名词是整条流水线上代价最高的一次漂移，而"没算过"和"算过且通过"在旧输出里长得一样。
-  —— exit 0 / 1 / 2。**进 implement 前必须跑**，过了 `aidlc_state.py set cards.lint_passed=true`。
+  —— exit 0 / 1 / 2。**进 implement 前必须跑**；`aidlc_state.py set cards.dir=cards` 后 `advance implement` 会再跑一遍并记 `cards.lint_passed`（它不可 set：一个引擎 set 的布尔是执行者的说法）。
   给 `--repo-root` 时会读渲染脚本本身核验 `reads_from`，声明因此可核验而非自述。
 - `../dos-extract/scripts/verify_vocabulary.py --dos dos.yaml cards/CARD-*.yaml` —— **B 档术语传感器**。
   `lint_cards.py` 的第 3 项只闭包 `dos_slice.objects` / `dos_slice.invariants`（**结构化字段，作者主动列出来的**）；
@@ -79,7 +79,7 @@ implement` 要求 `cards.lint_passed`）。
 ## 门（γ）
 
 - **前置**：`.done_when.lock` 存在（契约冻结后才拆卡，否则卡的 AC 子集没有对象）。
-- **done_when**：`lint_cards.py` exit 0 ∧ 每张卡 `aidlc_state.py card CARD-xx --status todo` 登记 ∧ `cards.lint_passed=true`。
+- **done_when**：`lint_cards.py` exit 0 ∧ 每张卡 `aidlc_state.py card CARD-xx --status todo` 登记 ∧ `cards.dir` 已 set（`advance implement` 自己跑 lint 并记 `cards.lint_passed`）。
 - **B 档（告警，不挡）**：`verify_vocabulary.py --dos dos.yaml cards/CARD-*.yaml` 的计入发现记进账本。
   超阈值不阻止进 implement——术语漂移是告警不是否决——但它是"卡该不该重写一句话"的输入，
   且 exit 3（没有本体）必须按**未检**记，不许记成通过。

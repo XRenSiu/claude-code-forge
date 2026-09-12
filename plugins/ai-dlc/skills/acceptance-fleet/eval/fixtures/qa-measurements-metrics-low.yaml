@@ -1,0 +1,7 @@
+# Same shape, mutation_kill_rate below the contract's 0.70 floor → not_met (exit 1).
+qa_measurements:
+  agent_role: qa-reviewer
+  scope: { tests_executed: 40, tests_passed: 40 }
+  results:
+    unit: { passed: 30, failed: 0, unit_coverage: 0.86 }
+  mutation: { mutation_kill_rate: 0.55, surviving_mutants: [] }

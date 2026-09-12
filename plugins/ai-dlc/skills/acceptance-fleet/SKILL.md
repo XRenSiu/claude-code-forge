@@ -178,8 +178,10 @@ If only `medium` isolation, all skills use Claude but with mixed sizes (qa-revie
 
 ```bash
 python3 scripts/verify_review_complete.py "$ITER_DIR/fleet-outputs/" \
-  --size "$SIZE" \
+  --size "$SIZE" --size-source "$SIZE_SOURCE" \
   --out "$ITER_DIR/review-completeness.yaml"
+# SIZE / SIZE_SOURCE come from `aidlc_state.py plan --json` (.tier / .size_source). An M that was not derived
+# expects the full L set: the two-reviewer subset is an exemption, and exemptions are bought with evidence.
 ```
 
 `--size` is `intake.size` from `.aidlc/<slug>/state.json` (the same band that decided how many reviewers to dispatch). When the dispatch was narrowed by `--skip`, pass the actual set with `--expect qa-reviewer,pm-reviewer,…` instead. The gate checks **every** `*.yaml` sitting in `fleet-outputs/`, not just the expected ones, because `/meta-judge` M0 globs that directory — anything left there will be read, so anything left there is checked.
@@ -424,10 +426,12 @@ Cross-vendor evaluators cost slightly more per call but converge faster. Net cos
 | size | 派发 | 依据 |
 |---|---|---|
 | S | 不跑本 fleet（`aidlc_state.py advance pr` 记一条有类型的 size_exemption） | 三行修复走六审，成本高到没人用，流水线被绕过 |
-| M | `qa-reviewer` + `spec-gaming-detector` | 「真跑测试」与「假设作者在作弊」是两条最不可省的 |
+| M（**推导出的**） | `qa-reviewer` + `spec-gaming-detector` | 「真跑测试」与「假设作者在作弊」是两条最不可省的 |
+| M（缺省 / 手设）| 六个全跑 | 两人子集是一次豁免，豁免只认推导来的档位——不跑 `size` 就少四个审查者，是一扇靠遗漏打开的门 |
 | L | 六个全跑 | 契约面宽 / 有 human AC / PSL 轨 |
 
-缺省是 M：**漏填得到较严的档**。S 的豁免只认 `size_source=derived`，手设的档位拿不到。
+缺省是 M：**漏填得到较严的档**。S 的豁免与 M 的子集都只认 `size_source ∈ {derived, derived_early}`，手设的档位拿不到。
+派发前用 `aidlc_state.py plan --json` 的 `fleet` 字段取这一轮的审查者，S1.5 用 `verify_review_complete.py --size M --size-source <state 的 size_source>`。
 
 **A 档多了一条结构闸。** 派发时同时跑
 `python3 ../qa-reviewer/scripts/verify_structure.py --done-when <契约> --base <merge-base> --out ratchet-log/iteration-NNN/structure-facts.yaml`：
@@ -457,7 +461,15 @@ python3 scripts/pick_evaluators.py --implementer-vendor claude --out ratchet-log
 
 - **L7 whole-feature acceptance (after all cards are done).** `/ai-dlc` requires `acceptance.evaluation_result` before
   the pr stage; this orchestrator produces it (`ratchet-log/iteration-NNN/final-state.json`). Record with
-  `aidlc_state.py set acceptance.evaluation_result=ratchet-log/iteration-NNN/final-state.json`.
+  `aidlc_state.py acceptance --result ratchet-log/iteration-NNN/final-state.json --meets ratchet-log/iteration-NNN/meets_done_when.yaml`.
+  `advance pr` then READS the file: `state_decision` must be DONE (NEEDS_HUMAN only while G3 is required), `unevaluated_reviews`
+  must be empty, and when the contract declares `behavior.thresholds` the `--meets` report must say `met`. A path that is
+  merely non-empty no longer advances anything.
+- **`meets_done_when` is computed, never declared.** After S1.5, project the qa report (`qa_facts.py`) and run
+  `python3 scripts/meets_done_when.py <done_when.yaml> --measurements <iter>/fleet-outputs/qa-measurements.yaml --final-state <iter>/final-state.json --out <iter>/meets_done_when.yaml`.
+  Exit 0 met · 1 not_met · 3 unevaluated (a declared threshold nobody measured — not a pass). The report carries the contract's
+  sha256; `aidlc_state.py acceptance --meets` refuses a report computed against another contract. `acceptance.meets_done_when`
+  is not settable — invariant 7 ("达标由脚本比对，不由评估 agent 宣布") is compiled, not stated.
 - **Four-state ratchet ↔ X2 routing.** FIX → card/plan layer retry (`aidlc_state.py fail --signal card_test_fail`,
   same fingerprint twice escalates); SPEC_DRIFT → task layer (`pbt_fail_n3_consistent_with_req`); GAMING_RISK → task
   layer with contract hardening; NEEDS_HUMAN → G3. Budgets come from `routing.yaml` by track.
@@ -487,4 +499,5 @@ into the implementer carries `fix_prompt` — `verify_graph.py` lint 3 rejects a
 - `references/skill-dispatch-matrix.md` — how acceptance-fleet maps v0.x roles → v1.0+ skill invocations, with model + cross-vendor allocation per skill
 - `scripts/next_iteration.py <ratchet-log-dir> <N> [--done-when PATH] [--format sh|json]` — derives every cross-iteration parameter and the two gaming thresholds from iteration N-1's outputs; exit 1 when the predecessor is missing or the band is empty (iron rule 6 / I-72)
 - `scripts/qa_facts.py <qa-reviewer.yaml> --output <qa-measurements.yaml>` (and `--check <file>`) — projects the qa report down to measurements so `/spec-drift-detector` never sees another reviewer's findings (iron rule 2's exception / I-71)
-- `scripts/verify_review_complete.py <fleet-outputs/> [--size M|L | --expect a,b] [--out review-completeness.yaml] [--require-complete] [--clear <path>]` — the S1.5 gate: did each dispatched review produce a usable verdict at all. Exit 0 all complete · 1 an explicit `incomplete` · 2 usage/IO · **3 unevaluated (missing / unparseable / unmarked / findings_count disagreement) — not a pass** (iron rule 7 / invariant 14)
+- `scripts/meets_done_when.py <done_when.yaml> --measurements <qa-measurements.yaml> [--final-state final-state.json] [--map name=dotted.path] [--out meets_done_when.yaml]` — the threshold comparator behind `acceptance.meets_done_when`; exit 0 met · 1 not_met · 2 usage/IO · **3 unevaluated (a declared threshold with no measurement) — not a pass**
+- `scripts/verify_review_complete.py <fleet-outputs/> [--size M|L [--size-source default|manual|derived|derived_early] | --expect a,b] [--out review-completeness.yaml] [--require-complete] [--clear <path>]` — the S1.5 gate: did each dispatched review produce a usable verdict at all. Exit 0 all complete · 1 an explicit `incomplete` · 2 usage/IO · **3 unevaluated (missing / unparseable / unmarked / findings_count disagreement) — not a pass** (iron rule 7 / invariant 14)

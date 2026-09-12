@@ -356,6 +356,7 @@ Per skillwise THEORY.md §3, the mechanical sub-parts ship as runnable primitive
   `comprehensive` sets no arithmetic floor at all, because its lower bound is "every layer of the
   pyramid is non-empty", which is a criterion, not a number.
 - `scripts/check_verbatim_names.py` — asserts every contract test name appears verbatim in the generated files (iron rule 9 traceability gate); `--manifest` for v2, and an empty name set is a failure.
+- `scripts/verify_red_green.py <RED_BASELINE.txt> --runner <runner>` — the GREEN half: every test recorded red in the baseline must now appear and pass, **a vanished red test is not green** (deleting a test is the cheapest green), and the baseline's HEAD must be an ancestor of HEAD. Exit 0 green · 1 not green · 3 unevaluated (no clean-checkout evidence / not an ancestor / unrecognisable runner output — not a pass).
 - `scripts/capture_red_baseline.py` — captures the RED baseline in a `git worktree` checkout of HEAD and writes the clean-tree evidence into the file; `--verify` re-checks a recorded baseline for that evidence.
 
 ## Wiring in AI-DLC
@@ -374,7 +375,14 @@ Per skillwise THEORY.md §3, the mechanical sub-parts ship as runnable primitive
   python scripts/capture_red_baseline.py tests/<feature>/run_tests.sh \
       --out tests/<feature>/RED_BASELINE.txt --version <this SKILL's frontmatter version>
   python scripts/capture_red_baseline.py --verify tests/<feature>/RED_BASELINE.txt
+  # after the implementation lands (the other half — red→green with nothing missing):
+  python scripts/verify_red_green.py tests/<feature>/RED_BASELINE.txt --runner tests/<feature>/run_tests.sh \
+      --out tests/<feature>/red-green-evidence.yaml
   ```
+
+  Both files are state, not prose: `aidlc_state.py set contract.red_baseline=tests/<feature>/RED_BASELINE.txt` is a prerequisite of
+  `advance implement` (verified with `--verify` there), and `aidlc_state.py set acceptance.red_green=tests/<feature>/red-green-evidence.yaml`
+  is a prerequisite of `advance pr` (its `verdict` must be `green`).
 
   It runs the suite inside `git worktree add --detach <tmp> HEAD`, asserts `git status --porcelain` is empty **there**,
   and records both that evidence and what the outer working tree had that was excluded. A baseline taken in the working

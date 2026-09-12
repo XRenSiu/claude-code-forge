@@ -71,8 +71,11 @@ tiers:
     label: 常规特性
     depth: standard
     test_strategy: standard
+    # fleet_subset 是一次豁免（比 L 档少跑四个审查者）。豁免只认推导来的档位：size_source 是 default /
+    # manual 时 aidlc_state.py effective_fleet 与 verify_review_complete.py --size-source 都按 L 档全跑——
+    # 缺省 M 但不跑 `size` 就少四个审查者，是一扇靠遗漏打开的门（R019）。
     fleet_subset: [qa-reviewer, spec-gaming-detector]
-    note: 默认档。六审只跑"真跑测试"与"假设作者在作弊"两个——其余四个按需加。
+    note: 默认档。**推导出 M** 时六审只跑"真跑测试"与"假设作者在作弊"两个——其余四个按需加；缺省 / 手设的 M 全跑。
   L:
     label: 全流程
     depth: comprehensive
@@ -174,6 +177,21 @@ repo_assets:
     S 档不要求本体：三行修复上一次全仓库本体提取，成本高到没人愿意用，
     而一条被绕过的流水线抬不高任何人的下限。L 档与 PSL 轨要求它：
     那两档的失败模式正是「名词各说各的，到验收才对上」。
+
+# ---------------------------------------------------------------------------------------------
+# 标准的标准：校准报告按档要求（advance acceptance 读）
+# ---------------------------------------------------------------------------------------------
+# 「未校准的标准不当证据」（不变量 7 / R010）曾没有任何前置读 calibration_report。现在：
+#   required    缺报告 → advance acceptance 拒；有报告必须过 verify_calibration.py
+#   recommended 缺报告 → 放行但写一条 calibration_unevaluated 账本行（可见，不阻断）；有报告必须过
+#   optional    缺报告不记；有报告仍必须过（一份不过元闸的报告比没有更坏）
+# 与 repo_assets 同一条极性：漏填得到较严的那档；verify_sizing.py L9 核键与档位。
+calibration:
+  levels: [optional, recommended, required]
+  by_tier: {S: optional, M: recommended, L: required}
+  why: >-
+    S 档三行修复不必做变异分数；M 档该做但不拦，留痕给复盘；L 档与 PSL 轨（必 L）的契约面宽，
+    一把没证明承重的尺子量出来的绿不当证据。
 
 # ---------------------------------------------------------------------------------------------
 # 每档的回流预算覆盖（缺省取 routing.yaml 的按轨道预算）

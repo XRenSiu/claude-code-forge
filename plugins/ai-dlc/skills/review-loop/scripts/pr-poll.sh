@@ -15,7 +15,7 @@
 #   pr-poll.sh resolve  <pr> <thread_id>                    # 收束线程（仅限已修复+已回帖的）
 #   pr-poll.sh round    <pr>                                # 轮次 += 1（每批修复+push+回帖后调用）
 #   pr-poll.sh strike   <pr> <thread_id>                    # 线程往返 += 1
-#   pr-poll.sh done     <pr> [--solo]                       # 编译态终止谓词
+#   pr-poll.sh done     <pr> [--solo]                       # 编译态终止谓词；写 pr-<N>.done.json（advance g3/merge 读它）
 #   pr-poll.sh selfreview <pr> <findings-file> [reviewer]   # 记一轮隔离预审（离线；单人仓库的必要条件）
 #   pr-poll.sh predicate <pr> <decision> <unresolved> <checks_state> <checks_count> <truncated> [--solo]
 #                                                           # 同一谓词，事实由参数给（离线；done 自己也走它）
@@ -84,6 +84,15 @@ counters_init() {
 # 先写临时文件再 mv——同一文件系统内 mv 是原子的。
 write_counters() {
   printf '%s\n' "$1" > "$CNT_FILE.tmp" && mv "$CNT_FILE.tmp" "$CNT_FILE"
+}
+
+# 评审环的出口留一份**文件**：aidlc_state.py 的 advance g3 / merge 读 pr-<N>.done.json，不读引擎 set 的 review.done。
+# `done`（联网取数）与 `predicate`（离线给事实）都写它，所以谓词离线可验、出口也离线可核。
+record_done() { # record_done <rc> <verdict-json>
+  local rc="$1" vj="$2" out="$STATE_DIR/pr-$PR.done.json"
+  jq -n --argjson pr "$PR" --argjson rc "$rc" --argjson v "$vj" \
+        --arg at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" --arg sha "$(git rev-parse HEAD 2>/dev/null || echo "")" \
+        '{pr: $pr, exit: $rc, at: $at, head_sha: $sha} + $v' > "$out.tmp" && mv "$out.tmp" "$out"
 }
 
 resolve_repo() {
@@ -424,8 +433,10 @@ PYSR
     CCNT="${6:?checks count required}"
     TRUNC="${7:-false}"
     set +e
-    done_predicate "$DEC" "$UNRES" "$CST" "$CCNT" "$TRUNC" "$SOLO"; rc=$?
+    vj="$(done_predicate "$DEC" "$UNRES" "$CST" "$CCNT" "$TRUNC" "$SOLO")"; rc=$?
     set -e
+    printf '%s\n' "$vj"
+    record_done "$rc" "$vj"
     exit "$rc"
     ;;
 
@@ -434,7 +445,9 @@ PYSR
     st="$(pr_state)"
     state="$(jq -r .state <<<"$st")"
     if [[ "$state" == "MERGED" || "$state" == "CLOSED" ]]; then
-      jq -n --argjson s "$st" '{done: true, reason: "terminal", pr: $s}'
+      vj="$(jq -n --argjson s "$st" '{done: true, reason: "terminal", pr_state: $s}')"
+      printf '%s\n' "$vj"
+      record_done 10 "$vj"
       exit 10
     fi
     decision="$(jq -r .reviewDecision <<<"$st")"
@@ -443,8 +456,10 @@ PYSR
     truncated="$(jq -r 'has("warning")' <<<"$threads_out")"
     read -r cst ccnt <<<"$(checks_state)"
     set +e
-    done_predicate "$decision" "$unresolved" "$cst" "$ccnt" "$truncated" "$SOLO"; rc=$?
+    vj="$(done_predicate "$decision" "$unresolved" "$cst" "$ccnt" "$truncated" "$SOLO")"; rc=$?
     set -e
+    printf '%s\n' "$vj"
+    record_done "$rc" "$vj"
     exit "$rc"
     ;;
 

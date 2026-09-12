@@ -34,6 +34,7 @@
       "pr-poll.sh": "offline subcommands only: round → 0 then 30 at MAX_ROUNDS; strike → 0 then 31 at MAX_THREAD_STRIKES; counters json valid; corrupt counters self-heal. watch/snapshot/threads/resolve/done NOT run (need a live PR); logic is a near-verbatim adaptation of vana-builder pr-review-loop v0.4.0 which was run there",
       "pr-poll.sh (v0.6.0)": "unchanged; loops.yaml#review_loop declares its budgets; tune.py reads pr-N.json verdicts + counters (fixture)"
     },
-    "v0.6.0": "loop contract declared (loops.yaml#review_loop); triggers.md written; sycophancy proxy feeds /tune"
+    "v0.6.0": "loop contract declared (loops.yaml#review_loop); triggers.md written; sycophancy proxy feeds /tune",
+    "v0.5.0": "2026-09-12: done / predicate write pr-watch/pr-<N>.done.json (exit + verdict); aidlc_state.py advance g3 / merge read it instead of trusting review.done"
   }
 }

@@ -1,0 +1,10 @@
+{
+  "iteration": 1,
+  "state_decision": "FIX",
+  "blocking_findings_count": 2,
+  "gaming_risk_score": 2,
+  "gaming_band": "low",
+  "unevaluated_reviews": [],
+  "spec_drift_counter": 0,
+  "next_action": "feed fix-prompt.md to a fresh implementation session; re-invoke /acceptance-fleet"
+}

@@ -278,6 +278,9 @@ def main() -> int:
     ap.add_argument("targets", nargs="+", help="fleet-outputs 目录，或一到多个审查输出文件")
     ap.add_argument("--expect", help="期望到齐的输出，逗号分隔（qa-reviewer 或 qa-reviewer.yaml 都收）")
     ap.add_argument("--size", choices=["S", "M", "L"], help="按体量分档取期望集（S 不派发本 fleet）")
+    ap.add_argument("--size-source", dest="size_source", choices=["default", "manual", "derived", "derived_early"],
+                    help="state.intake.size_source。M 档的两人子集是一次豁免，豁免只认推导来的档位："
+                         "default / manual 一律按 L 档的全集取期望——一个靠不跑 `size` 就少四个审查者的门不是门")
     ap.add_argument("--out", default="review-completeness.yaml")
     ap.add_argument("--require-complete", action="store_true",
                     help="未检按否定处理（exit 1 而不是 3）——闸 / CI 里该这么用")
@@ -306,8 +309,13 @@ def main() -> int:
             expected = [norm_name(x) for x in a.expect.split(",") if x.strip()]
             facts["expected_source"] = "--expect"
         elif a.size:
-            expected = list(SIZE_PRESETS[a.size])
-            facts["expected_source"] = "--size %s" % a.size
+            if a.size == "M" and a.size_source not in ("derived", "derived_early"):
+                # 与 aidlc_state.py effective_fleet 同一条极性：子集是豁免，豁免要用推导来的档位换
+                expected = list(SIZE_PRESETS["L"])
+                facts["expected_source"] = "--size M with size_source=%s → full L set (an undeserved subset is a door opened by omission)" % (a.size_source or "unset")
+            else:
+                expected = list(SIZE_PRESETS[a.size])
+                facts["expected_source"] = "--size %s" % a.size + (" (%s)" % a.size_source if a.size_source else "")
         else:
             expected = []
             facts["expected_source"] = "未声明"

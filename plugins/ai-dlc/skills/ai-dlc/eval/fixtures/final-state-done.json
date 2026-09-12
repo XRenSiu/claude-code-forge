@@ -1,0 +1,12 @@
+{
+  "iteration": 2,
+  "state_decision": "DONE",
+  "blocking_findings_count": 0,
+  "gaming_risk_score": 1,
+  "gaming_band": "low",
+  "gaming_thresholds": {"done_below": 3, "block_at_or_above": 7},
+  "ratchet_rule": "F1",
+  "unevaluated_reviews": [],
+  "spec_drift_counter": 0,
+  "next_action": "advance pr"
+}

@@ -1,0 +1,10 @@
+{
+  "iteration": 2,
+  "state_decision": "DONE",
+  "blocking_findings_count": 0,
+  "gaming_risk_score": 1,
+  "gaming_band": "low",
+  "unevaluated_reviews": ["spec-gaming-detector.yaml"],
+  "spec_drift_counter": 0,
+  "next_action": "a review did not finish twice — DONE is not available while one stands (invariant 14)"
+}

@@ -184,6 +184,53 @@ README 与 evaluation.md 都明写这一点。
   是这一轮真正的新东西：深度旋钮没有任何脚本能强制，文档就必须这么写，**不许把声明写成闸**——
   理由与 14 同源，一个没人验过的"通过"以证据的形状到达，比不报更坏。
 
+## 2026-09-12 第七次整理：按「它是不是一条闭环」重读一遍（v1.6.0）
+
+问的不是"缺什么机制"，是"已经声明的机制，线接上了没有"。方法是拿 ARCHITECTURE 的六个闭环和十七条规则逐条对着
+代码走：每一处"文档说脚本强制"，去找那个脚本被谁调用；每一处"由脚本比对"，去找那个脚本存不存在。七处对不上，
+全部修掉，每处配冒烟孪生（`eval/smoke.sh` 结尾行为准）。
+
+- **校准闭环的第一根线是断的。** R12 说逃逸缺陷"归因到层后再路由、同时喂 X3"，`/issue --escape` 只写 issue 正文，
+  没有任何命令写 escape 事件；`metrics.py` 只读归档目录，而归档在 `archive` 时拷贝一次——逃逸永远发生在归档之后。
+  所以逃逸率、按体量分桶、因果链三个度量在结构上永远是零，而"分档对不对由下一次逃逸缺陷回答"就无从回答。
+  修法：`aidlc_state.py escape --layer … --why …`（归因层计数 + escape-defects.md + 镜像进归档；`--root specs`
+  可直接对归档操作）；`fail --signal escape_defect` 改为拒绝并指路——合入后的 Run 不欠失败报告。
+- **四个引擎自己 set 的布尔顶替了校验器的结论。** `cards.lint_passed`、`release.done`、`acceptance.meets_done_when`
+  可 set，`acceptance.evaluation_result` 只查非空。§3 写着"对着状态检，不对着执行者的说法检"，而一个引擎 set 的
+  flag 恰恰是执行者的说法——十五个阶段里只有 G2 真跑了自己的校验器。修法照 G2 的样子：implement 跑 `lint_cards.py`，
+  pr 读 final-state.json（DONE · 无 unevaluated review · 有阈值就要 `meets_done_when.py` 的 met），archive 读
+  release.notes 的 post-deploy 行（verify_release.py 自己说 release.done 要等它），implement / acceptance / pr / merge
+  重跑 `lock_done_when.py verify`（/commit 与 /pr 的预门能被裸 git 绕开，advance 绕不开）。三个 flag 移出 SETTABLE。
+- **达标比对器从空白变成脚本。** `meets_done_when.py`：契约 `behavior.thresholds` 逐条对 qa 投影的同名测量比，
+  没量到记 unevaluated（exit 3，不是通过）；报告带契约 sha256，`acceptance --meets` 核它——量另一份契约的报告不算数。
+  R010 的 `enforced_by` 从 `not_enforced` 改成 `system`：DOS 不该是最后一个知道的。
+- **单卡预算按层计了。** 三处文档写"单卡重试 3"，代码用全局 `counters.card` 判——五张卡的特性只付得起三次失败。
+  按卡的 `retries` 判，层计数保留给复盘。
+- **指纹归一化。** `--evidence` 直接哈希，行号 / 时间戳 / 临时路径每次都变，"同指纹两次 = 无进展"只在引擎逐字复述
+  时成立。归一化在脚本里做一次，引擎不必记得。阈值本身仍是文献先验（Q009 不动）。
+- **审查者子集是靠遗漏拿到的。** 缺省 M 档跑两个审查者，L 跑六个；不跑 `size` 就少四个——R019 的反例。
+  `effective_fleet` / `verify_review_complete.py --size-source`：子集只给推导来的档位，缺省 / 手设全跑。
+- **S 档 skip 的 why 里那句"仍要过 /pr-review"是散文。** 不变量 17 说不许把声明写成闸——现在被网格跳过整体验收的
+  Run，进 G3 / 合入前要有 `pr.pre_review_findings` 指向的文件。
+- **红→绿的另一半。** `capture_red_baseline.py` 只拍红的照片；`verify_red_green.py` 要求基线里每条红测试现在都出现且
+  通过、一条不能失踪（删测试是最便宜的变绿）、基线 HEAD 是当前 HEAD 的祖先。
+- **顺带的文档漂移。** 09-08 报告改了 ARCHITECTURE 的 52/67，SKILL.md 与 reference.md 里同样的数字又漂了三天；
+  plugin.json 手抄了冒烟条数；marketplace.json 的描述与 plugin.json 分叉（七条 / 八条 lint）、tags 少九个。
+  加了 `doc_graph_counts.py` 一条期望，描述改成"条数以脚本结尾行为准"。
+- **冒烟套件的 cwd 依赖。** 从插件目录跑，两条锚点交叉核对无故变红（check_anchors.py 的锁路径缺省是仓库根相对路径）。
+  修在 `eval/fixtures/`（锁路径随 audit.yaml 走），不碰冻结的 dogfood 记录。
+
+同一天的第二遍，要求是「没有断点」。再走一次每个阶段的前置，又关上七处：G2 的裁决只在 `cards` 查，S 档跳过 cards 就跳过了签字（阶段不可跳，
+签字更不可跳，现在 implement 再查一次）；l5 锁与红基线从「写在 L5 那一段」变成 implement 的前置，红→绿证据变成 pr 的前置；校准报告按档编译进
+acceptance（L 拦、M 记、任何档有报告就必须过元闸）；评审出口改读 `pr-poll.sh` 写下的 `pr-<N>.done.json`；merge.sha 与 release.tag 改问 git
+（sha 在 base 里没有、tag 指着它没有）；锁在分支历史里回放一遍（改了再改回去，磁盘对得上历史对不上）；契约里有 human AC 时 G3 关不掉；
+G1 pass 要记录文件并把形态草案的哈希写进 state；`card --status done` 要 git 认识的 sha；`escape --issue` 必填。为此冒烟的主链搬进了一个真的
+git 仓库（契约 + 一个先红后绿的运行器），S 档链、锁历史链、校准链各一条。
+
+**这一轮的教训**：机制齐了之后，下一类漂移不是"缺一个脚本"，是"脚本在、没人调它"或"文档说脚本判、代码信 flag"。
+检法很机械——每一句"由脚本 X 强制"，grep X 被谁调用；每一个 SETTABLE 的布尔，问它顶替了哪个校验器的结论。
+证据等级不变：每条修复有冒烟孪生，没有一条有 L2 运行。
+
 ## 有意不做的
 
 - 不做 hooks：把 `verify_*.py` 挂成 PreToolUse 会拦所有 git commit，对非 AI-DLC 场景过填；留给用户按仓库决定。
