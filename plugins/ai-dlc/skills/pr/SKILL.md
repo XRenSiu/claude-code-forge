@@ -10,7 +10,7 @@ description: >-
   （/commit）、跟进 PR 评论（/review-loop）、审别人的 PR（/pr-review）、直接合并（人类动作）。
   前置：gh 已认证、在目标仓库内、分支已有至少一个 commit。
 argument-hint: "[--base <branch>] [--remote <name>] [--sections map.yaml] [--issue N] [--draft] [--done-when done_when.yaml] [--cards cards/] [--pre-review [--rounds 2]] [--yes] [--dry-run]"
-version: 0.3.1
+version: 0.4.0
 user-invocable: true
 ---
 

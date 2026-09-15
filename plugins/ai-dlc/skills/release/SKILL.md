@@ -8,7 +8,7 @@ description: >-
   "部署" / "release" / "ship it" / 合入之后。NOT for: 建 PR（/pr）、合并（人类动作）、登记线上缺陷
   （/issue --escape，本 skill 只放入口）。前置：merge 已完成，在目标仓库内。
 argument-hint: "[--version X.Y.Z | --bump auto|patch|minor|major] [--scheme semver|calver|external] [--base <prev tag>] [--deploy-cmd '<cmd>'] [--verify-cmd '<cmd>'] [--dry-run]"
-version: 0.1.1
+version: 0.2.0
 user-invocable: true
 ---
 

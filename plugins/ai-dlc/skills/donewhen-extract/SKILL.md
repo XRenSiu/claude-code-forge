@@ -15,7 +15,7 @@ description: |
   (that is invariant-extract), compiling done_when into tests/rubric (that is spec-compile),
   or proving the compiled ruler is correct (that is calibrate).
 argument-hint: "<issue id / signal id / intent text> [--template <contract_template_id>] [--auto]"
-version: 0.5.1
+version: 0.6.0
 user-invocable: true
 # imported into AI-DLC 2026-09-05 from qanat/.claude/skills; body kept, AI-DLC wiring added (see 接线 / 术语映射)
 ---
