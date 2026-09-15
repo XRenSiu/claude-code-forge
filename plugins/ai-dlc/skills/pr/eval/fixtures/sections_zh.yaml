@@ -1,0 +1,11 @@
+# 一个已有中文 PR 模板的仓库，把 verify_pr.py 的语义槽映射到自己的章节上（dogfood vana-builder V-02）。
+# 不改团队模板；校验的是「槽在不在」，不是标题怎么拼。
+slots:
+  summary:            {headings: ["🎯 概览"]}
+  linked_issue:       {in: title_line, pattern: '#\d+'}
+  changes:            {headings: ["✨ 主要变动"]}
+  verification:       {headings: ["✅ 测试"], evidence: '^\s*-\s*\[[ x]\]\s*🟢'}
+  acceptance_mapping: {headings: ["✅ 测试"]}
+  scope:              {required: false, why: "团队模板没有范围段；范围写在 issue 的 Scope 里，review-loop 读 issue"}
+  risk_rollback:      {required: false, why: "团队无独立回滚段；回滚方案在发版流程 release-build 里"}
+  reviewer_focus:     {required: false, why: "团队模板用「🔧 技术细节」代替，非必含"}

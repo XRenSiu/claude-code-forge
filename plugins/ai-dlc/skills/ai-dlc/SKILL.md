@@ -51,7 +51,7 @@ deletion 测试：撤掉本 skill，让引擎"把这个需求做完提 PR"。它
 | issue | GitHub issue（TASK 雏形：EARS + AC v2 + 假设台账 + 依赖 DOS） | /issue | 没有 issue 就没有 `Closes #N`；AC 在这里第一次被写下 |
 | branch | `<type>/<issue>-<slug>` | 你 | 不在 main 上做事 |
 | contract | `done_when.yaml`（+ `contract.yaml` 条件触发） | /donewhen-extract（AC 优先）或 /acceptance-spec（EARS spec.md 形态），都在本插件 | 判据契约，方案盲写；阈值溯源、happy/unhappy 配对、矛盾与覆盖两检；S2.5 自对抗留痕给 spec-gaming。**REQ 粒度须能按 ≤ 40k 的卡切分**——L4 的"REQ 一卡一主 + ≤ 40k"是反压，读集超 40k 的 REQ 在这里按分区拆最便宜，G2 之后要走变更提案 |
-| G2 | `.done_when.lock`（stage g2） | **人**签，`lock_done_when.py sign --stage g2`；`advance g2` 先跑 `validate_done_when_v2.py` | 签完就锁：冻结的是判据不是测试名（C1）；L5 测试写完再签一次（stage l5，C6）——用 `--gate verify_*.py` 把**执行契约的闸脚本**一并冻上，否则契约冻了、量它的那把尺没冻（INV-001，I-30）；之后改锁内文件必须附变更提案，改 role=gate 的文件另记一条 deviation 事件并单独提交 |
+| G2 | `.done_when.lock`（stage g2） | **人**签，`lock_done_when.py sign --stage g2`；`advance g2` 先跑 `validate_done_when_v2.py --repo <仓库>`（forbidden_paths 要盖住这个仓库真实的测试文件；测试不在 `tests/` 下的仓库声明 `constraints.test_globs`） | 签完就锁：冻结的是判据不是测试名（C1）；L5 测试写完再签一次（stage l5，C6）——用 `--gate verify_*.py` 把**执行契约的闸脚本**一并冻上，否则契约冻了、量它的那把尺没冻（INV-001，I-30）；之后改锁内文件必须附变更提案，改 role=gate 的文件另记一条 deviation 事件并单独提交 |
 | cards | `cards/CARD-xx.yaml` | /plan-cards（`lint_cards.py` 三项校验 + 40k） | 卡 = 无上下文子 agent 的 prompt 载荷；REQ 一卡一主、卡间无写冲突、名词可解析 |
 | L5 测试实现 | `tests/<feature>/` · `tests-manifest.yaml` · `compile_manifest.yaml` · `calibration_report.yaml` | /test-suite-generator（按卡分批的五层金字塔）+ /spec-compile（可判性阶梯）→ /calibrate，都在本插件 | 非实现者写、写完锁；未校准的标准不承重 |
 | implement | 按卡的 diff + commit | /implement（隔离实现者：`card-implementer` / self / /ratchet / forge-teams）+ /commit | 实现者只见卡 + AC 子集 + 红基线；白名单执行器在 diff 落地前拦；单卡预算 3，同指纹立即升级 |
@@ -103,10 +103,11 @@ aidlc_state.py repo --path dos              # 只打印命中的路径，给 `--
 aidlc_state.py init --scope plugins/<pkg>   # 记进 world.scope，之后每次发现都带上它
 ```
 
-**monorepo：一个 package 一份本体。** `--scope` 先在那个目录里找，找不到再回落到仓库根——
+**monorepo：一个限界上下文一份本体。** `--scope` 先在那个目录里找，找不到再回落到仓库根——
 所以"一份仓库级 `agent-map.md` + 每个 package 一份 `dos.yaml`"是可表达的。把只覆盖某一个
 package 的本体放在仓库根，是拿 scope 撒谎（dos-extract 的 edge case：一个 package 一个
-bounded context）。本仓库自己就是这个形状：根上一份 agent-map，`plugins/ai-dlc/dos.yaml` 一份。
+bounded context）。**scope 是制品放在哪，不必是代码目录**：按功能切片、横跨 `app/main` · `app/renderer`
+的上下文用 `docs/ontology/<context>`；scope 目录不存在会被报出来，因为回落到仓库根那份和「这个上下文有本体」长得一样。本仓库自己就是这个形状：根上一份 agent-map，`plugins/ai-dlc/dos.yaml` 一份。
 **更具体的赢，但盖住了什么要说出来。** 候选序命中即用（package 的 `dos.yaml` 赢过仓库根那份，
 这是对的：一个 bounded context 一份本体）。但同名制品同时存在时会报一条 `遮蔽`——`agent-map.md`
 的内容是**可加的**（四节事实，`slice_agent_map.py` 只读一份文件），被盖住那份里的禁区与陷阱不会
@@ -231,7 +232,8 @@ S 档 optional（三行修复上一次全仓库本体提取，成本高到没人
   `gate g1 pass` 要 `--record` 且把 form-draft 的 sha256 写进 state；`card --status done` 要 git 认识的 sha；`escape --issue` 必填。
   v1.1.0 新增 `repo`（X1 仓库级制品：在不在 · 进没进 git · 这一档要求到哪一级 · 怎么补）。
   v0.12.0 新增：`size --from-issue|--early`（早定档 + 飞行中重定档）、`plan`（启动前的有效规模）、
-  `doctor`（装置健康度，建议性、从不阻断、不进 `advance` 的前置条件——会阻断的 doctor 就是第四道门）、
+  `doctor`（装置健康度，建议性、从不阻断、不进 `advance` 的前置条件——会阻断的 doctor 就是第四道门；v1.7.0 起还报
+  会话里装的插件版本是否落后于这份脚本 / marketplace 登记，以及宿主项目级 / 用户级里与插件同名或近名的 skill）、
   `note` / `notes --for-gate`（解释日记与门禁仪式）、`autonomy`（自治阶梯）、`card --status skipped --reason`。
 - `scripts/repo_assets.py` — X1 仓库级制品的**发现**（候选路径序）与 **git 核对**（`git ls-files`）。
   `aidlc_state.py` 的 `init` / `doctor` / `repo` / `prereqs("issue")`、`verify_issue.py --require-dos`、
@@ -346,6 +348,9 @@ CLI flag**——flag 每次调用都要重给，恢复会话就丢；记进 stat
 - **绝不在门禁仪式上筛选日记**：`notes --for-gate` 逐字念每一行。做「有趣度」筛选的那一刻，
   被筛掉的那条就是下次撞的墙。
 - **绝不 force-push / rebase 已推送分支**（毁 review 锚点）；绝不直接在 main 提交。
+- **宿主仓库有同名 skill 时绝不用短名调子 skill**（`doctor` 报「同名 skill」）：`/commit` 可能落到宿主自己的
+  commit skill，它不过 `verify_commit.py`。一律写全名 `/ai-dlc:commit` / `/ai-dlc:pr` / `/ai-dlc:review-loop`。
+  PR body 按宿主模板写时用 `verify_pr.py --sections` 映射语义槽，不改宿主模板。
 - **绝不把评审提示词给实现子 agent**；绝不让实现者自评 `meets_done_when`——它不可 set，只有 `meets_done_when.py` 的报告经 `acceptance --meets` 能写。
 - **绝不用 `set` 伪造校验器的结论**：`cards.lint_passed` / `acceptance.meets_done_when` 不可 set；`release.done=true` 要 notes 里有 post-deploy 行；
   `acceptance.evaluation_result` 必须是一份四态为 DONE 的 final-state.json。一个引擎自己 set 的布尔是执行者的说法，不是状态。

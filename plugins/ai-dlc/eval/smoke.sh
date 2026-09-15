@@ -1848,6 +1848,149 @@ assert n == c['channel_2_input']['failure_memory_count'], (n, c['channel_2_input
 expect "X1: the vocabulary sensor resolves the plugin's own docs against the shipped ontology" 0 \
   py "$S/dos-extract/scripts/verify_vocabulary.py" --dos "$ROOT/dos.yaml" "$ROOT/docs/lifecycle.md" "$ROOT/docs/routing.md"
 
+# ---- vana-builder 实地使用（2026-09-14）：插件的默认假设与一个真实团队仓库对不上的九处 ------------
+# 目标仓库自带中文 PR 模板、origin 是 GitLab 镜像、默认分支 master、测试就近放 *.spec.ts、版本号
+# 26.04.01341、宿主里已有 commit / pr skill。清单：plugins/ai-dlc/dogfood/vana-builder/issues-2026-09-14.md
+echo "== vana-builder dogfood (V-01 … V-09)"
+VPF="$S/pr/eval/fixtures"; VDW="$S/ai-dlc/eval/fixtures/done_when.yaml"
+VV="$TMP/vana"; rm -rf "$VV"; mkdir -p "$VV"
+
+# V-02：团队自己的 PR 模板把语义槽映射过来，而不是改写模板
+pushd "$VV" >/dev/null
+git init -q -b main pr && cd pr && git config user.name t && git config user.email t@t
+echo a > a.txt && git add -A && git commit -qm "chore: init" && git checkout -qb feat/42-x && echo b > b.txt && git add -A && git commit -qm "feat(search): x"
+expect "vana V-02: a Chinese team template is rejected by the English built-in headings (the conflict is real)" 1 \
+  py "$VP" --body "$VPF/zh_template_body.md" --base main --skip-preflight
+expect "vana V-02: the same body passes once the slots are mapped onto the team's headings" 0 \
+  py "$VP" --body "$VPF/zh_template_body.md" --base main --skip-preflight --sections "$VPF/sections_zh.yaml" --done-when "$VDW" --title "feat(search): relative time"
+expect "vana V-02: every waived slot is reported with its why, never silent" 0 \
+  bash -c "python3 '$VP' --body '$VPF/zh_template_body.md' --base main --skip-preflight --sections '$VPF/sections_zh.yaml' | python3 -c \"import json,sys; f=[x for x in json.load(sys.stdin)['flags'] if 'waived' in x]; assert len(f)==3 and all(':' in x for x in f), f\""
+expect "vana V-02: a mapped body still owes every mechanical AC (AC id removed → REJECT)" 1 \
+  bash -c "sed 's/<!-- AC-001-a -->//' '$VPF/zh_template_body.md' > noac.md && python3 '$VP' --body noac.md --base main --skip-preflight --sections '$VPF/sections_zh.yaml' --done-when '$VDW'"
+expect "vana V-02: a title line without #N is rejected when the issue link lives there" 1 \
+  bash -c "sed '1s/ #42//' '$VPF/zh_template_body.md' > nolink.md && python3 '$VP' --body nolink.md --base main --skip-preflight --sections '$VPF/sections_zh.yaml'"
+expect "vana V-02: linked_issue can be moved but not waived (usage error)" 2 \
+  bash -c "printf 'slots:\n  linked_issue: {required: false, why: x}\n' > m1.yaml && python3 '$VP' --body '$VPF/zh_template_body.md' --base main --sections m1.yaml"
+expect "vana V-02: an unknown slot key is a usage error, not a silently ignored line" 2 \
+  bash -c "printf 'slots:\n  sumary: {headings: [x]}\n' > m2.yaml && python3 '$VP' --body '$VPF/zh_template_body.md' --base main --sections m2.yaml"
+expect "vana V-02: a waiver without a why is a usage error" 2 \
+  bash -c "printf 'slots:\n  scope: {required: false}\n' > m3.yaml && python3 '$VP' --body '$VPF/zh_template_body.md' --base main --sections m3.yaml"
+cd "$VV"
+
+# V-03 / V-04：远端与 base 是解析出来的，不是猜的
+git init -q --bare gh.git && git init -q --bare gl.git
+git init -q -b main two && cd two && git config user.name t && git config user.email t@t
+echo a > a.txt && git add -A && git commit -qm "chore: init"
+git remote add origin ../gl.git && git remote add github ../gh.git && git push -q origin main && git push -q github main
+git clone -q ../gh.git ../other && (cd ../other && git config user.name t && git config user.email t@t && echo z > z.txt && git add -A && git commit -qm "chore: base moves on github" && git push -q origin main)
+git fetch -q github && git fetch -q origin
+git checkout -qb feat/42-x && echo b > b.txt && git add -A && git commit -qm "feat(search): x"
+expect "vana V-03: two remotes and no tracking branch → the sync check is reported skipped, not run against origin" 0 \
+  bash -c "python3 '$VP' --body '$VPF/good_body.md' --base main | python3 -c \"import json,sys; d=json.load(sys.stdin); assert d['remote'] is None and any('sync check skipped' in f for f in d['flags']), d\""
+git push -q -u github feat/42-x
+expect "vana V-03: the head branch tracks github, github/main moved on → behind is caught (origin/main was not)" 1 \
+  py "$VP" --body "$VPF/good_body.md" --base main
+expect "vana V-03: an unknown --remote is a usage error" 2 \
+  py "$VP" --body "$VPF/good_body.md" --base main --remote nope
+git remote set-head github -a >/dev/null 2>&1
+expect "vana V-04: no --base → read from the tracking remote's HEAD, and flagged as defaulted" 0 \
+  bash -c "python3 '$VP' --body '$VPF/good_body.md' --skip-preflight | python3 -c \"import json,sys; d=json.load(sys.stdin); assert d['base']=='main' and d['base_source']=='github/HEAD', d; assert any('base defaulted' in f for f in d['flags']), d['flags']\""
+cd "$VV"
+git init -q -b master mst && cd mst && git config user.name t && git config user.email t@t
+echo a > a.txt && git add -A && git commit -qm "chore: init" && git checkout -qb t/fix/x && echo b > b.txt && git add -A && git commit -qm "fix(x): y"
+expect "vana V-04: a master-only repository with no remote resolves base=master instead of a missing main" 0 \
+  bash -c "python3 '$VP' --body '$VPF/good_body.md' --skip-preflight | python3 -c \"import json,sys; d=json.load(sys.stdin); assert d['base']=='master' and d['changed_lines']>0, d\""
+cd "$VV"
+
+# V-05：forbidden_paths 要真的盖住这个仓库的测试
+V2V="$S/donewhen-extract/scripts/validate_done_when_v2.py"; V2G="$S/donewhen-extract/eval/fixtures/v2_good.yaml"
+git init -q -b main colo && cd colo && git config user.name t && git config user.email t@t
+mkdir -p src/search && echo "test('x')" > src/search/time.spec.ts && echo "export {}" > src/search/time.ts && git add -A && git commit -qm "chore: init"
+cp "$V2G" done_when.yaml
+python3 -c "
+import yaml
+d=yaml.safe_load(open('done_when.yaml')); d['constraints']['test_globs']=['**/*.spec.ts']; d['constraints']['forbidden_paths'].append('**/*.spec.ts')
+yaml.safe_dump(d,open('dw_globs.yaml','w'),allow_unicode=True,sort_keys=False)
+d['constraints']['forbidden_paths'].remove('**/*.spec.ts'); yaml.safe_dump(d,open('dw_globs_unforbidden.yaml','w'),allow_unicode=True,sort_keys=False)"
+expect "vana V-05: tests/** covering none of the repository's colocated specs is rejected" 1 py "$V2V" done_when.yaml --repo .
+expect "vana V-05: without --repo the coverage is reported unchecked, not passed" 0 \
+  bash -c "python3 '$V2V' done_when.yaml | python3 -c \"import json,sys; assert json.load(sys.stdin)['test_coverage']=={'checked': False}\""
+expect "vana V-05: declaring test_globs and forbidding them passes" 0 py "$V2V" dw_globs.yaml --repo .
+expect "vana V-05: a declared test glob missing from forbidden_paths is rejected" 1 py "$V2V" dw_globs_unforbidden.yaml --repo .
+expect "vana V-05: advance g2 runs the coverage check against the repository it stands in" 0 bash -c "
+python3 '$SS' init --slug v5 --title t --track task >/dev/null; python3 '$SS' advance --slug v5 track >/dev/null
+python3 '$SS' advance --slug v5 issue >/dev/null; python3 '$SS' set --slug v5 issue.number=5 >/dev/null
+python3 '$SS' advance --slug v5 branch >/dev/null; python3 '$SS' set --slug v5 branch.name=fix/5-x >/dev/null
+python3 '$SS' advance --slug v5 contract >/dev/null; python3 '$SS' set --slug v5 contract.done_when=done_when.yaml >/dev/null
+out=\$(python3 '$SS' advance --slug v5 g2); rc=\$?; [ \$rc = 1 ] && echo \"\$out\" | grep -q 'cover none'"
+expect "vana V-05: …and lets the declared contract through (twin)" 0 bash -c "
+python3 '$SS' set --slug v5 contract.done_when=dw_globs.yaml >/dev/null && python3 '$SS' advance --slug v5 g2"
+cd "$VV"
+
+# V-09：版本方案是声明，不是 SemVer 写死
+VRL="$S/release/scripts/verify_release.py"
+git init -q -b main rel && cd rel && git -c user.name=t -c user.email=t@t commit -q --allow-empty -m "chore: init" && git tag v26.03.01200 && mkdir releases
+printf '# Changelog\n\n## [26.04.01341] - 2026-09-05\n\n- fix(print): x\n' > CHANGELOG.md
+printf '# Release\n\n## Changes\n- x\n\n## Verification\n- post-deploy: smoke 200\n\n## Rollback\n- how: reinstall 26.03.01200\n\n## Escape\n/issue --escape\n' > releases/v26.04.01341.md
+expect "vana V-09: a calendar build number with a leading zero is not SemVer (and the reject names --scheme)" 0 \
+  bash -c "python3 '$VRL' --version 26.04.01341 --pre-tag > out.json; [ \$? = 1 ] && grep -q 'scheme calver' out.json"
+expect "vana V-09: --scheme calver accepts it and orders it after the previous calendar tag" 0 \
+  bash -c "python3 '$VRL' --version 26.04.01341 --scheme calver --pre-tag | python3 -c \"import json,sys; d=json.load(sys.stdin); assert d['verdict']=='PASS' and d['previous_tag']=='v26.03.01200', d\""
+expect "vana V-09: calver still refuses a version older than the previous tag (twin)" 1 \
+  bash -c "cp releases/v26.04.01341.md releases/v26.02.1.md && printf '\n## [26.02.1] - 2026-09-05\n\n- x\n' >> CHANGELOG.md && python3 '$VRL' --version 26.02.1 --scheme calver --pre-tag --base v26.03.01200"
+expect "vana V-09: --bump auto under calver is a usage error" 2 py "$VRL" --version 26.04.01341 --scheme calver --bump auto
+expect "vana V-09: --scheme external reports version / changelog / tag as unchecked, never as passed" 0 \
+  bash -c "rm CHANGELOG.md && python3 '$VRL' --version 26.04.01341 --scheme external | python3 -c \"import json,sys; d=json.load(sys.stdin); assert d['verdict']=='PASS' and len(d['unchecked'])==3 and d['tag'] is None, d\""
+expect "vana V-09: …but still owns the release notes (empty rollback → REJECT)" 1 \
+  bash -c "sed -i '' 's/- how: reinstall 26.03.01200/- how: <fill>/' releases/v26.04.01341.md && python3 '$VRL' --version 26.04.01341 --scheme external"
+cd "$VV"
+
+# V-01 / V-07：doctor 看得到装的是哪一版、宿主里谁在抢触发词（CLAUDE_CONFIG_DIR 让它不读真的 ~/.claude）
+PLUGIN_VER="$(python3 -c "import json; print(json.load(open('$ROOT/.claude-plugin/plugin.json'))['version'])")"
+mkdir -p cfg-drift/plugins mkt/.claude-plugin cfg-same/plugins cfg-none
+printf '{"plugins":[{"name":"ai-dlc","version":"9.9.9"}]}\n' > mkt/.claude-plugin/marketplace.json
+printf '{"forge":{"installLocation":"%s"}}\n' "$VV/mkt" > cfg-drift/plugins/known_marketplaces.json
+printf '{"version":2,"plugins":{"ai-dlc@forge":[{"version":"0.0.1","installPath":"%s"}]}}\n' "$VV/cache/ai-dlc/0.0.1" > cfg-drift/plugins/installed_plugins.json
+printf '{"forge":{"installLocation":"%s"}}\n' "$VV/mkt-same" > cfg-same/plugins/known_marketplaces.json
+mkdir -p mkt-same/.claude-plugin && printf '{"plugins":[{"name":"ai-dlc","version":"%s"}]}\n' "$PLUGIN_VER" > mkt-same/.claude-plugin/marketplace.json
+printf '{"version":2,"plugins":{"ai-dlc@forge":[{"version":"%s","installPath":"%s"}]}}\n' "$PLUGIN_VER" "$ROOT" > cfg-same/plugins/installed_plugins.json
+git init -q host && mkdir -p host/.claude/skills/commit host/.claude/skills/release-build host/.claude/skills/add-tests
+printf -- '---\nname: commit\n---\n' > host/.claude/skills/commit/SKILL.md
+printf -- '---\nname: release-build\n---\n' > host/.claude/skills/release-build/SKILL.md
+printf -- '---\nname: add-tests\n---\n' > host/.claude/skills/add-tests/SKILL.md
+expect "vana V-01: an install older than these scripts and than the marketplace listing is two warnings, still advisory" 0 \
+  bash -c "cd host && CLAUDE_CONFIG_DIR='$VV/cfg-drift' python3 '$SS' doctor --json | python3 -c \"import json,sys; d=json.load(sys.stdin); c=[f['check'] for f in d['findings']]; assert d['ok'] is True; assert 'plugin version 漂移' in c and 'plugin 未更新' in c, c\""
+expect "vana V-01: running the installed copy at the listed version reports no drift (twin)" 0 \
+  bash -c "cd host && CLAUDE_CONFIG_DIR='$VV/cfg-same' python3 '$SS' doctor --json | python3 -c \"import json,sys; c=[f['check'] for f in json.load(sys.stdin)['findings']]; assert not [x for x in c if x.startswith('plugin ')], c\""
+expect "vana V-01: no install record is an info that says so, not a silent pass" 0 \
+  bash -c "cd host && CLAUDE_CONFIG_DIR='$VV/cfg-none' python3 '$SS' doctor --json | python3 -c \"import json,sys; f=[x for x in json.load(sys.stdin)['findings'] if x['check']=='plugin version']; assert f and f[0]['severity']=='info', f\""
+expect "vana V-07: a host skill named like a plugin skill is a warning naming the full /ai-dlc: name" 0 \
+  bash -c "cd host && CLAUDE_CONFIG_DIR='$VV/cfg-none' python3 '$SS' doctor --json | python3 -c \"import json,sys; f=[x for x in json.load(sys.stdin)['findings'] if x['check']=='同名 skill']; assert len(f)==1 and f[0]['severity']=='warn' and '/ai-dlc:commit' in f[0]['hint'], f\""
+expect "vana V-07: a host skill whose words contain a plugin skill's is an info; an unrelated one is nothing" 0 \
+  bash -c "cd host && CLAUDE_CONFIG_DIR='$VV/cfg-none' python3 '$SS' doctor --json | python3 -c \"import json,sys; fs=json.load(sys.stdin)['findings']; near=[x for x in fs if x['check']=='近名 skill']; assert len(near)==1 and 'release-build' in near[0]['hint'] and near[0]['severity']=='info', near; assert not [x for x in fs if 'add-tests' in x['hint']], fs\""
+
+# V-06：写错的 scope 回落到仓库根时要说出来
+git init -q scope6 && cd scope6 && git config user.name t && git config user.email t@t
+printf 'objects:\n  Thing: {}\nrules: []\n' > dos.yaml && mkdir -p docs/ontology/copilot && touch docs/ontology/copilot/.keep && git add -A && git commit -qm init
+expect "vana V-06: a scope directory that does not exist, with a root ontology picked up instead, is a warning" 0 \
+  bash -c "python3 '$RA' --scope docs/ontology/copliot --json | python3 -c \"import json,sys; d=json.load(sys.stdin); f=[x for x in d['findings'] if x['check']=='scope 目录不存在']; assert f and f[0]['severity']=='warn' and 'dos.yaml' in f[0]['hint'], d['findings']\""
+expect "vana V-06: an existing non-code scope directory is a legitimate context location (twin)" 0 \
+  bash -c "python3 '$RA' --scope docs/ontology/copilot --json | python3 -c \"import json,sys; d=json.load(sys.stdin); assert d['root']['scope_exists'] is True; assert not [x for x in d['findings'] if x['check']=='scope 目录不存在'], d['findings']\""
+cd "$VV"
+
+# V-08：file: 来路要指得到东西，引用的原文还在
+VAM="$S/dos-extract/scripts/verify_agent_map.py"; mkdir -p am && printf '# rules\n\n版本号只改 app/package.json\n' > am/CLAUDE.md
+for n in quote_ok:'file:CLAUDE.md#"版本号只改 app/package.json"' quote_gone:'file:CLAUDE.md#"版本号只改根 package.json"' missing:'file:NOPE.md' line_eof:'file:CLAUDE.md#L99' bare:'file:CLAUDE.md'; do
+  { cat "$S/dos-extract/eval/fixtures/agent-map-good.md"; printf '| 版本号改错地方 | 根 package.json 永远 0.0.0-dev | 改 app/package.json | `%s` |\n' "${n#*:}"; } > "am/${n%%:*}.md"
+done
+expect "vana V-08: a verbatim anchor still present in the cited file passes" 0 py "$VAM" am/quote_ok.md --repo am
+expect "vana V-08: a quote the source no longer contains is rejected (the two copies drifted)" 1 py "$VAM" am/quote_gone.md --repo am
+expect "vana V-08: a file: provenance pointing at nothing is rejected" 1 py "$VAM" am/missing.md --repo am
+expect "vana V-08: a line anchor past the end of the file is rejected" 1 py "$VAM" am/line_eof.md --repo am
+expect "vana V-08: an unanchored file: provenance passes with a flag, not silently" 0 \
+  bash -c "python3 '$VAM' am/bare.md --repo am --json | python3 -c \"import json,sys; d=json.load(sys.stdin); assert d['verdict']=='pass' and any('原文锚点' in f for f in d['flags']), d\""
+popd >/dev/null
+
 # 文档漂移是可以被机器发现的（2026-09-06：8 个脚本、26 个资产曾在六份文档里一次都没出现过）。
 expect "docs: every script and asset appears in docs/reference.md" 0 \
   py "$ROOT/eval/fixtures/doc_coverage.py" "$ROOT"

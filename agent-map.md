@@ -51,7 +51,7 @@
 
 | 症状 | 原因 | 怎么绕 | 来路 |
 |---|---|---|---|
-| `aidlc_state.py --root X init` 报 `invalid choice` | `--root` / `--slug` 挂在子解析器上，不是顶层；必须写在子命令**后面** | `aidlc_state.py init --root X --slug Y` | `file:plugins/ai-dlc/skills/ai-dlc/scripts/aidlc_state.py#L966` |
-| 新插件装好了但 `/命令` 报 Unknown skill | marketplace 注册只完成一半：还要 `~/.claude/settings.json` 的 `enabledPlugins`，以及 `~/.claude/plugins/cache/` 里有对应版本目录 | 按 CLAUDE.md「新建插件的额外步骤」第 4–6 项做完，然后**重启 session**（skill 列表在启动时定型） | `file:CLAUDE.md` |
-| 让 `/humanize` 改一份研究报告，回来变成 40 段密实散文 | 它默认按方案体裁改，判据里列表占比、标题密度都是扣分项 | 报告 / README 用 `--genre report --keep-structure`，骨架由 `structdiff.py` 守住 | `file:plugins/humanize/skills/humanize/eval/report.md` |
-| 改完 skill 忘了 bump 版本，别人拉下来行为不一致 | 版本有三处（skill frontmatter / plugin.json / marketplace.json），漏一处就不同步 | 三处一起改，版本 bump 单独一个 commit | `file:CLAUDE.md` |
+| `aidlc_state.py --root X init` 报 `invalid choice` | `--root` / `--slug` 挂在子解析器上，不是顶层；必须写在子命令**后面** | `aidlc_state.py init --root X --slug Y` | `file:plugins/ai-dlc/skills/ai-dlc/scripts/aidlc_state.py#"P = lambda name: sub.add_parser(name, parents=[common])"` |
+| 新插件装好了但 `/命令` 报 Unknown skill | marketplace 注册只完成一半：还要 `~/.claude/settings.json` 的 `enabledPlugins`，以及 `~/.claude/plugins/cache/` 里有对应版本目录 | 按 CLAUDE.md「新建插件的额外步骤」第 4–6 项做完，然后**重启 session**（skill 列表在启动时定型） | `file:CLAUDE.md#"第 4-6 步是**用户级、不入 git** 的本机配置"` |
+| 让 `/humanize` 改一份研究报告，回来变成 40 段密实散文 | 它默认按方案体裁改，判据里列表占比、标题密度都是扣分项 | 报告 / README 用 `--genre report --keep-structure`，骨架由 `structdiff.py` 守住 | `file:plugins/humanize/skills/humanize/eval/report.md#"contract, default on for report / readme / reference"` |
+| 改完 skill 忘了 bump 版本，别人拉下来行为不一致 | 版本有三处（skill frontmatter / plugin.json / marketplace.json），漏一处就不同步 | 三处一起改，版本 bump 单独一个 commit | `file:CLAUDE.md#"版本 bump 单独提交"` |

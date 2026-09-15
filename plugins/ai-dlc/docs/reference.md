@@ -35,13 +35,13 @@ flag 不等于 reject。预门过了但带 flag，意思是「机器判不了这
 
 | 脚本 | 干什么 | 关键退出码 |
 |---|---|---|
-| `aidlc_state.py` | 生命周期状态机：`init` / `show` / `set` / `advance` / `gate` / `card` / `size` / `plan` / `doctor` / `repo` / `note` / `notes` / `autonomy` / `fail` / `escape` / `acceptance` / `waive` / `report` / `check-clean` / `graph` / `loops` / `ledger` / `archive`。**状态由它拥有，不手改**。`advance` 对着文件检：`implement` 跑 `lint_cards.py`，`pr` 读 final-state.json + `meets_done_when.py` 的报告，`archive` 读 release.notes 的 post-deploy 行与指着 merge.sha 的 tag，implement / acceptance / pr / merge 重跑锁校验；implement 还要 G2 裁决（cards 被跳过时也要）、l5 锁与已核验的红基线，pr 要红→绿证据与干净的锁历史，g3 / merge 要 pr-poll 的裁决文件，release / archive 要 merge.sha 已在 branch.base 里 | 0 成功 · 1 前置不满足（`doctor` 的 1 = 有 error 级发现，它从不阻断门禁）· 2 用法 |
+| `aidlc_state.py` | 生命周期状态机：`init` / `show` / `set` / `advance` / `gate` / `card` / `size` / `plan` / `doctor` / `repo` / `note` / `notes` / `autonomy` / `fail` / `escape` / `acceptance` / `waive` / `report` / `check-clean` / `graph` / `loops` / `ledger` / `archive`。**状态由它拥有，不手改**。`advance` 对着文件检：`implement` 跑 `lint_cards.py`，`pr` 读 final-state.json + `meets_done_when.py` 的报告，`archive` 读 release.notes 的 post-deploy 行与指着 merge.sha 的 tag，implement / acceptance / pr / merge 重跑锁校验；implement 还要 G2 裁决（cards 被跳过时也要）、l5 锁与已核验的红基线，pr 要红→绿证据与干净的锁历史，g3 / merge 要 pr-poll 的裁决文件，release / archive 要 merge.sha 已在 branch.base 里；`advance g2` 给契约校验带上 `--repo`（forbidden_paths 要盖住这个仓库真实的测试文件）。`doctor` 还报：会话里装的插件版本 vs 这份脚本 vs marketplace 登记（读 `CLAUDE_CONFIG_DIR`，缺省 `~/.claude`）、宿主项目级 / 用户级里与插件同名或近名的 skill / command | 0 成功 · 1 前置不满足（`doctor` 的 1 = 有 error 级发现，它从不阻断门禁）· 2 用法 |
 | `lock_done_when.py` | 契约的两段锁：`sign --stage g2\|l5` 算文件哈希并记签字人 | 0 · 1 拒 · 2 IO |
 | `trace.py` | 决策迹查询：`why <AC-id>` / `impact` / `render` / `lint` | 0 · 1 · 2 |
 | `verify_graph.py` | `graph.yaml` 的五条 lint（写范围有界 / 圈必须归环 / 评估者→实现者只带 fix_prompt / 人节点有恢复绑定 / fan_in 有 merge） | 0 · 1 拒 |
 | `verify_loop.py` | `loops.yaml` 的环契约（generator ≠ verifier、stop 四键齐） | 0 · 1 拒 |
 | `verify_sizing.py` | 体量网格的九条 lint：阶段名在 ORDER 里 / never_skippable 覆盖三道门 / 没有一档绕过它 / 每条 skip 有 why / **兜底档一个阶段也不跳（极性）** / `needs` 与 `when` 一致 / 每一档的剩余路径 `next_allowed` 真的放行（直接 import 真的那份，不重实现）/ **`repo_assets` 的键与档位在封闭集里且每档都有一条要求** / `calibration.by_tier` 每档都有一个封闭集里的档位 | 0 · 1 拒 · 2 用法/IO（**没有 3**：网格是自带资产，读不到是错误不是「未求值」） |
-| `repo_assets.py` | X1 仓库级制品在不在（候选路径序：`--scope` 的 package 目录 → 仓库根 → `docs/` → `ontology/`，`.aidlc/` 最后且命中即告警）、进没进 git（`git ls-files`）。**monorepo 一个 package 一份本体**，回落让仓库级的 `agent-map.md` 与 package 级的 `dos.yaml` 共存。被 `aidlc_state.py init/doctor/repo/prereqs`、`verify_issue.py --require-dos`、`lint_cards.py --require-dos` 共用——一份候选表，不是六份 | 0 齐全且都进了 git · 1 有缺失 / 未 tracked / 位置不共享 · 2 用法/IO |
+| `repo_assets.py` | X1 仓库级制品在不在（候选路径序：`--scope` 的限界上下文目录（不必是代码目录，横跨多个代码目录的上下文用 `docs/ontology/<context>`；目录不存在时报 `scope 目录不存在`，因为回落到仓库根的本体看起来和「这个上下文有本体」一样）→ 仓库根 → `docs/` → `ontology/`，`.aidlc/` 最后且命中即告警）、进没进 git（`git ls-files`）。**monorepo 一个 package 一份本体**，回落让仓库级的 `agent-map.md` 与 package 级的 `dos.yaml` 共存。被 `aidlc_state.py init/doctor/repo/prereqs`、`verify_issue.py --require-dos`、`lint_cards.py --require-dos` 共用——一份候选表，不是六份 | 0 齐全且都进了 git · 1 有缺失 / 未 tracked / 位置不共享 · 2 用法/IO |
 
 `aidlc_state.py` 的子命令里最容易被漏的五个：
 
@@ -73,7 +73,7 @@ flag 不等于 reject。预门过了但带 flag，意思是「机器判不了这
 |---|---|---|---|
 | `verify_issue.py` | issue | issue body 的预门：模糊量词无阈值拒、缺 unhappy 孪生拒、observe 写文件路径拒；`--dos` 下词表闭包失败给 `force_track: psl` | 0 · 1 拒 · 2 IO |
 | `verify_done_when.py` | donewhen-extract | done_when 卡的语义出口（矛盾检 + 覆盖检） | 0 · 1 拒 |
-| `validate_done_when_v2.py` | donewhen-extract | **契约 v2 的唯一校验器**，编译在 `advance g2` 里。含 `constraints.structure` 的形状检查 | 0 · 1 拒 · 2 IO |
+| `validate_done_when_v2.py` | donewhen-extract | **契约 v2 的唯一校验器**，编译在 `advance g2` 里。含 `constraints.structure` 的形状检查；`constraints.test_globs` 声明这个仓库的测试放在哪（缺省只有 `tests/**`），`--repo` 下 forbidden_paths 一个真实测试文件都盖不住 = 拒，盖住一部分 = flag，不带 `--repo` 输出 `test_coverage.checked: false` | 0 · 1 拒 · 2 IO |
 | `convert_v1_to_v2.py` | donewhen-extract | acceptance-spec 的 v1 契约 → v2 骨架 | 0 · 2 IO |
 | `divergence.py` | donewhen-extract | **N 份隔离草案的分歧集**：按 (req, ears_type, observe) 对齐，报五类分歧，每条带要问用户的话 | 0 分歧在阈值内 · 1 必须澄清 · 2 用法 |
 | `validate_done_when.py` | acceptance-spec | v1 契约的出口（历史形态） | 0 · 1 拒 |
@@ -88,7 +88,7 @@ flag 不等于 reject。预门过了但带 flag，意思是「机器判不了这
 | `dos_closure.py` | dos-extract | **「一个 DOS 词能不能被解析」的唯一定义**；`verify_issue.py`、`lint_cards.py`、`verify_vocabulary.py` 都 import 它 | 库，非命令行 |
 | `verify_vocabulary.py` | dos-extract | **跨制品术语传感器（B 档）**：契约 / 卡 / spec / issue / PR body 的**散文**里出现、`dos.yaml` 解析不了的领域名词，每条带 file:line 与本体里最近的可解析邻居；另报本体里无人使用的词（弱证据，不计入）。`--out` 缺省**不落文件**（B 档随手跑，不该在工作区留残留），要 facts 显式给 `--out`，要机器读用 `--json` | 0 过 · 1 超阈值 · 2 IO · **3 没有本体 = 未检**（`--require-ontology` → 1） |
 | `reconcile_dos.py` | dos-extract | 应然本体（psl-derive 的提案）↔ 现状本体逐条对账 | 0 · 1 有冲突 |
-| `verify_agent_map.py` | dos-extract | **仓库地图的预门**：`--probe` 逐条真跑命令并比对期望退出码；陷阱必须有来路；占位符拒 | 0 · 1 拒 · 2 IO |
+| `verify_agent_map.py` | dos-extract | **仓库地图的预门**：`--probe` 逐条真跑命令并比对期望退出码；陷阱必须有来路；占位符拒；`file:` 来路要指得到文件、行号不越界、`#"原文"` 仍逐字在源文件里（引用 CLAUDE.md / rules 而不是再抄一份，源头改了这一行就红）；没锚原文的 `file:` 记 flag | 0 · 1 拒 · 2 IO |
 | `verify_card.py` | invariant-extract | 不变量卡：无 provenance 拒、hard 必须 propose、◊ 混进 □ 拒 | 0 · 1 拒 |
 
 ### 计划与实现（R4 / R5）
@@ -130,9 +130,9 @@ flag 不等于 reject。预门过了但带 flag，意思是「机器判不了这
 
 | 脚本 | 所属 skill | 干什么 | 关键退出码 |
 |---|---|---|---|
-| `verify_pr.py` | pr | PR body 的产物序 + 体量分级（XL 必拆）+ 锁文件改动需附提案 | 0 · 1 拒 |
+| `verify_pr.py` | pr | PR body 的产物序 + 体量分级（XL 必拆）+ 锁文件改动需附提案。`--sections` 把语义槽映射到团队自己的 PR 模板标题（槽键封闭集；豁免要 why 且逐条 flag；linked_issue / verification / acceptance_mapping 只能挪不能免）；远端与 base 是解析出来的：`--remote` → 头 / base 分支的跟踪远端 → 唯一远端（多远端无跟踪 = 同步检查记跳过，不猜 origin），`--base` → `<remote>/HEAD` → main / master 中唯一存在的那个（缺省即 flag） | 0 · 1 拒 · 2 git/IO 或 `--sections` 写错 |
 | `pr-poll.sh` | review-loop | 零 token 阻塞等待；预算与终止谓词编译在脚本里；`done` / `predicate` 写 `pr-watch/pr-<N>.done.json`——`advance g3 / merge` 读它，不读引擎 set 的 `review.done` | 0 收敛 · 10 终态 · 20 未收敛 · 30 预算耗尽 |
-| `verify_release.py` | release | changelog ↔ tag ↔ notes 一致、回滚先于部署、验证绿才算交付 | 0 · 1 拒 |
+| `verify_release.py` | release | changelog ↔ tag ↔ notes 一致、回滚先于部署、验证绿才算交付。`--scheme semver`（缺省，数字段不许前导零）/ `calver`（YY[YY].MM[.N…]，按段比大小，`--bump auto` 是用法错误）/ `external`（版本、tag、changelog 归外部发布系统，列进 `unchecked` 而不是算通过；发布说明仍然要检） | 0 · 1 拒 · 2 用法 |
 | `metrics.py` | retro | X3 导出：lead time / 回流分布 / G1 拦截率 / human AC 占比 / 逃逸率 / 豁免数 / **按体量分桶** | 0 |
 | `tune.py` | tune | 环的参数提案（封闭 target 集）：routing 预算、指纹阈值、MAX_ROUNDS、隔离等级、**跨供应商分配**、fix_list | 0 |
 | `apply_proposal.py` | tune | 把提案变成 diff / patch —— **只出 diff，从不自动应用** | 0 · 1 |

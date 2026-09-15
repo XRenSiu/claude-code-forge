@@ -71,7 +71,11 @@ The gap is the *semantic judgment*, plus the knowledge of what a clean DOS looks
   not the repository: `plugins/<pkg>/dos.yaml`, discovered with
   `repo_assets.py --scope plugins/<pkg>` (which falls back to the root, so one repo-level
   `agent-map.md` and a per-package `dos.yaml` coexist). A root-level DOS covering one package
-  of twelve claims a scope it does not have. `aidlc_state.py repo` reports where they landed and
+  of twelve claims a scope it does not have. **The scope is where the context's artefacts live, not
+  necessarily a code directory**: a feature-sliced context that spans `app/main` / `app/renderer` /
+  `app/common` has no single code directory, so it uses `--scope docs/ontology/<context>`. A scope
+  directory that does not exist is reported, because falling back to the root ontology looks exactly
+  like "this context has an ontology". `aidlc_state.py repo` reports where they landed and
   whether `git ls-files` can see them; untracked is not "has an ontology", it is
   "you have an ontology". Same for `agent-map.md` and the `invariants/` cards.
 
@@ -247,7 +251,7 @@ DOS 说的是「系统里有什么、叫什么、什么不可违反」。它不�
 差异的来源。
 
 产物 `agent-map.md`（形状 `assets/agent_map_template.md`），四节：**跑起来** / **目录职责** /
-**禁区** / **已知陷阱**。三条纪律由 `scripts/verify_agent_map.py --probe` 编译：
+**禁区** / **已知陷阱**。四条纪律由 `scripts/verify_agent_map.py --probe` 编译：
 
 - **命令必须真能跑**：`--probe` 逐条执行并比对期望退出码。跑不通的命令比没有命令更糟——
   实现者会照着它试三次再去猜。没有 `--probe` 的一次检查，输出里写明 `probed=false`：那时候
@@ -255,6 +259,10 @@ DOS 说的是「系统里有什么、叫什么、什么不可违反」。它不�
 - **陷阱必须有来路**（`ledger:` / `issue:#N` / `commit:sha` / `file:`）。没有来路的陷阱是想出来的，
   不是这个仓库里的——与 `invariant-extract` 的 provenance 纪律同源。
 - **占位符不算填写**；没有的项写 `无`（那是一条信息：实现者不必去找）。
+- **引用已有的规则，不再抄一份；引用要能核对**。宿主仓库的 CLAUDE.md / `.claude/rules/` 往往已经写过禁区
+  与陷阱，这里一行 `file:CLAUDE.md#"原文里的一句"` 即可。`file:` 要指得到文件、`#L<n>` 不越界、`#"原文"`
+  仍逐字在源文件里——源头改了措辞，这一行就红。没锚原文的 `file:` 能过但记 flag：行号会跟着源头漂，
+  两份悄悄分叉而没人知道（本仓库自己的 `agent-map.md` 就有一条 `#L966` 早已指到别处）。
 
 不是把 README 塞给 agent：2607.27250 那 288 次运行说，把仓库知识堆进上下文**不提高正确率**。
 所以地图只装这四样，且由 `../plan-cards/scripts/slice_agent_map.py` 按卡切片后才进 `card_context.md`。

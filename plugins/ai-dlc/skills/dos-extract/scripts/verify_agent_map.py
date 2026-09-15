@@ -12,6 +12,12 @@
   - 命令必须真能跑（`--probe` 执行并记退出码）——跑不通的命令比没有命令更糟
   - 陷阱必须有来路（ledger / issue / commit）——没有来路的条目是想出来的，不是仓库里的
   - 占位符不算填写
+  - `file:` 来路必须指得到东西（vana-builder V-08）：宿主仓库常常已经在 CLAUDE.md / .claude/rules/ 里写过
+    禁区与陷阱，地图引用它们而不是再抄一份。引用本身要能被核对，否则两份迟早分叉而没人知道：
+      `file:<path>`            文件必须存在
+      `file:<path>#L<n>` / `:<n>`   第 n 行必须存在（行号不随源头移动——报一条 flag，建议换成原文锚点）
+      `file:<path>#"<原文>"` / `#「<原文>」`   原文必须仍逐字出现在文件里（空白折叠后比）——
+                               源头改了措辞，这一条就红，地图跟着改
 
 用法：
   verify_agent_map.py <agent-map.md> [--repo .] [--probe] [--timeout 120] [--json]
@@ -39,6 +45,7 @@ def unfilled(text):
     """占位符检测：反引号里的 `plugins/<name>/…` 是路径模式，不是没填完。"""
     return bool(PLACEHOLDER.search(re.sub(r"`[^`]*`", "", text)))
 PROV = re.compile(r"(ledger:|issue:#?\d+|commit:[0-9a-f]{7,}|pr:#?\d+|file:)", re.I)
+FILE_REF = re.compile(r"file:([^\s`|#:\"「]+)(?:#L(\d+)|:(\d+)|#\"([^\"]+)\"|#「([^」]+)」)?")
 CODE = re.compile(r"`([^`]+)`")
 
 
@@ -178,7 +185,44 @@ def main() -> int:
     if not traps:
         flags.append("「已知陷阱」为空——可以（新仓库还没踩过坑），但 /retro 每次应该往这里加一条")
 
-    res = {"path": a.path, "probed": bool(a.probe), "probes": probes,
+    # ---- file: 来路：指得到东西，引用的原文还在 ----
+    refs, unanchored = [], 0
+    for sec in ("目录职责", "禁区", "已知陷阱"):
+        for r in rows(md, sec) or []:
+            if unfilled(" | ".join(r)):
+                continue                      # 占位行已经被拒过一次，不再为它的假路径报第二条
+            for m in FILE_REF.finditer(" | ".join(r)):
+                path, line = m.group(1).rstrip(".,;)）"), m.group(2) or m.group(3)
+                quote = m.group(4) or m.group(5)
+                full = os.path.join(a.repo, path)
+                ref = {"section": sec, "path": path, "line": int(line) if line else None, "quote": quote, "ok": True}
+                refs.append(ref)
+                if not os.path.isfile(full):
+                    ref["ok"] = False
+                    rejects.append(f"「{sec}」的来路 file:{path} 在 {a.repo} 里不存在——来路指不到东西等于没有来路")
+                    continue
+                try:
+                    text = open(full, encoding="utf-8", errors="replace").read()
+                except OSError as e:
+                    ref["ok"] = False
+                    rejects.append(f"「{sec}」的来路 file:{path} 读不了：{e}")
+                    continue
+                if line and int(line) > len(text.splitlines()):
+                    ref["ok"] = False
+                    rejects.append(f"「{sec}」的来路 file:{path}#L{line} 超出文件（{len(text.splitlines())} 行）")
+                if quote:
+                    squash = lambda t: re.sub(r"\s+", " ", t).strip()
+                    if squash(quote) not in squash(text):
+                        ref["ok"] = False
+                        rejects.append(f"「{sec}」引用的原文「{quote[:40]}」在 {path} 里找不到了——源头改了，"
+                                       "地图没跟上（两份已经分叉）：按源头的现状改这一行，或删掉它")
+                else:
+                    unanchored += 1          # 行号也算没锚：源头挪一行，它就指着别的东西
+    if unanchored:
+        flags.append(f"{unanchored} 条 file: 来路没有原文锚点（#\"原文\"）——源头改了措辞或挪了行，这里发现不了；"
+                     "引用 CLAUDE.md / rules 里已有的规则时带上原文")
+
+    res = {"path": a.path, "probed": bool(a.probe), "probes": probes, "file_refs": refs,
            "sections": SECTIONS, "rejects": rejects, "flags": flags,
            "verdict": "reject" if rejects else "pass"}
     if a.json:

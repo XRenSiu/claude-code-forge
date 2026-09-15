@@ -71,6 +71,10 @@ rules:                                    # meta-judge 规则源
   - "mutation_kill_rate >= 0.7"
 
 constraints:
+  # 这个仓库的测试放在哪（可选，非空列表）。缺省只有本插件写测试的 tests/**；测试就近放的仓库
+  # （*.spec.ts / __tests__/）必须声明，且每条都要进 forbidden_paths。advance g2 带 --repo 校验：
+  # forbidden_paths 一个 git 跟踪的测试文件都盖不住 = 拒（C6 只在纸上成立，vana-builder V-05）。
+  test_globs: [tests/**]
   forbidden_paths: [tests/**, done_when.yaml, dos.yaml, contract.yaml, .done_when.lock]
   mock_allowlist: [external.mail]
   # 结构性质量判据（A 档；执行器 skills/qa-reviewer/scripts/verify_structure.py）。

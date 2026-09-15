@@ -17,6 +17,7 @@ Usage:
                         [--early] [--commit]                # --early: 还没 diff 时定档，永远够不到 S
   aidlc_state.py plan    [--slug S] [--json]                 # 启动前的有效规模：跑几个阶段、几道门、跳了什么
   aidlc_state.py doctor  [--slug S] [--json]                 # 装置健康度；建议性，从不阻断门禁
+                        # 含：装的插件版本 vs 这份脚本 vs marketplace 登记（CLAUDE_CONFIG_DIR）· 宿主同名 skill
   aidlc_state.py repo    [--slug S] [--scope DIR] [--json] [--path dos|agent_map|invariants]
                         # X1 仓库级制品（dos.yaml / agent-map.md / invariants/）在不在、进没进 git
                         # --scope：monorepo 里本体是每个 package 一份（plugins/ai-dlc/dos.yaml）
@@ -846,8 +847,16 @@ def prereqs(st, target, skips=None, root=ROOT_DEFAULT):
         if dw and os.path.isfile(dw):
             v2 = os.path.join(HERE, "..", "..", "donewhen-extract", "scripts", "validate_done_when_v2.py")
             if os.path.isfile(v2):
-                r = subprocess.run([sys.executable, v2, dw], capture_output=True, text=True)
-                need(r.returncode == 0, "contract.done_when validates as schema v2 (validate_done_when_v2.py; v1 → run convert_v1_to_v2.py and complete the ACs) — C1 compiled")
+                # --repo：forbidden_paths 要真的盖住这个仓库里 git 跟踪的测试文件。`tests/**` 是本插件写测试的地方，
+                # 不是每个仓库放测试的地方——就近放 *.spec.ts 的仓库里它一条也盖不住，C6 只在纸上成立（vana-builder V-05）。
+                r = subprocess.run([sys.executable, v2, dw, "--repo", os.getcwd()], capture_output=True, text=True)
+                why = ""
+                try:
+                    why = "; ".join(json.loads(r.stdout).get("rejects") or [])[:300]
+                except ValueError:
+                    pass
+                need(r.returncode == 0, "contract.done_when validates as schema v2 (validate_done_when_v2.py; v1 → run convert_v1_to_v2.py and complete the ACs) — C1 compiled"
+                     + (f": {why}" if why else ""))
             else:
                 need(False, "validate_done_when_v2.py not found next to donewhen-extract — cannot certify the contract shape")
     elif target == "cards":
@@ -1538,6 +1547,149 @@ def cmd_repo(a):
     sys.exit(1 if bad else 0)
 
 
+PLUGIN_ROOT = os.path.normpath(os.path.join(HERE, "..", "..", ".."))
+
+
+def claude_config_dir():
+    """Claude Code 的用户配置目录（CLAUDE_CONFIG_DIR 覆盖 ~/.claude）。"""
+    return os.environ.get("CLAUDE_CONFIG_DIR") or os.path.join(os.path.expanduser("~"), ".claude")
+
+
+def _read_json(path):
+    try:
+        with open(path, encoding="utf-8") as f:
+            return json.load(f)
+    except (OSError, ValueError):
+        return None
+
+
+def _vtuple(v):
+    m = re.match(r"^(\d+)\.(\d+)\.(\d+)", str(v or ""))
+    return tuple(int(x) for x in m.groups()) if m else None
+
+
+def plugin_version_findings():
+    """装的是哪个版本（vana-builder V-01）。
+
+    doctor 原来只看仓库，看不到会话里加载的 skill 来自哪个版本：源码已到 1.6.0、marketplace 克隆也已到
+    1.6.0，会话跑的却是 1.3.0 的 cache——v1.4–1.6 的闭环修复一条都不在，而 doctor 报「0 error」。
+    两种漂移分开报：① 你在终端里跑的这份脚本 ≠ 会话里装的那份（判据不是同一版）；② 装的那份落后于
+    marketplace 已登记的版本（没更新）。读不到安装记录（CI、别的机器）是 info，不是通过。"""
+    me = _read_json(os.path.join(PLUGIN_ROOT, ".claude-plugin", "plugin.json")) or {}
+    name, mine = me.get("name"), me.get("version")
+    if not name or not mine:
+        return []
+    cfg = claude_config_dir()
+    ipath = os.path.join(cfg, "plugins", "installed_plugins.json")
+    inst = _read_json(ipath)
+    if not isinstance(inst, dict):
+        return [{"severity": "info", "check": "plugin version",
+                 "hint": f"读不到 {ipath}：看不到会话里装的 {name} 是哪个版本（CI / 别的机器上这是正常的）。这份脚本是 v{mine}"}]
+    entries = {k: v for k, v in (inst.get("plugins") or {}).items() if k.split("@", 1)[0] == name}
+    if not entries:
+        return [{"severity": "info", "check": "plugin version",
+                 "hint": f"{name} 没装进 Claude Code（{ipath} 里没有）：/{name}:* 在会话里不可用，只能从源码跑脚本（v{mine}）"}]
+    known = _read_json(os.path.join(cfg, "plugins", "known_marketplaces.json")) or {}
+    here = os.path.realpath(PLUGIN_ROOT)
+    out = []
+    for key, lst in sorted(entries.items()):
+        mkt = key.split("@", 1)[1] if "@" in key else None
+        listed = None
+        loc = (known.get(mkt) or {}).get("installLocation") if mkt and isinstance(known.get(mkt), dict) else None
+        if loc:
+            mk = _read_json(os.path.join(loc, ".claude-plugin", "marketplace.json")) or {}
+            listed = next((p.get("version") for p in (mk.get("plugins") or [])
+                           if isinstance(p, dict) and p.get("name") == name), None)
+        for e in (lst if isinstance(lst, list) else [lst]):
+            if not isinstance(e, dict):
+                continue
+            iv, ip = e.get("version"), e.get("installPath")
+            running_install = bool(ip) and os.path.realpath(ip) == here
+            if not running_install and iv != mine:
+                out.append({"severity": "warn", "check": "plugin version 漂移",
+                            "hint": f"这些脚本是 {name} v{mine}（{here}），会话里的 skill 来自安装的 v{iv}（{key} · {ip}）。"
+                                    "终端里跑的闸与 skill 让模型遵守的规则不是同一版——更新安装后开新会话"})
+            if _vtuple(listed) and _vtuple(iv) and _vtuple(listed) > _vtuple(iv):
+                out.append({"severity": "warn", "check": "plugin 未更新",
+                            "hint": f"装的是 v{iv}，marketplace {mkt} 已登记 v{listed}：在 /plugin 里更新 {key}，"
+                                    "然后开新会话（skill 列表在会话启动时定型）"})
+    return out
+
+
+def _skill_names(d):
+    """→ {name: path}。SKILL.md frontmatter 的 name，缺省用目录名。"""
+    out = {}
+    if not os.path.isdir(d):
+        return out
+    for sub in sorted(os.listdir(d)):
+        sk = os.path.join(d, sub, "SKILL.md")
+        if not os.path.isfile(sk):
+            continue
+        name = sub
+        try:
+            with open(sk, encoding="utf-8") as f:
+                head = f.read(4000)
+            if head.startswith("---"):
+                m = re.search(r"^name:\s*['\"]?([^'\"\s#]+)", head[:head.find("\n---", 3) if head.find("\n---", 3) > 0 else 4000], re.M)
+                if m:
+                    name = m.group(1)
+        except OSError:
+            pass
+        out[name] = sk
+    return out
+
+
+def _command_names(d):
+    out = {}
+    if not os.path.isdir(d):
+        return out
+    for dirpath, _, files in os.walk(d):
+        for fn in sorted(files):
+            if fn.endswith(".md"):
+                out[fn[:-3]] = os.path.join(dirpath, fn)
+    return out
+
+
+def skill_collision_findings(repo=None):
+    """宿主仓库 / 用户级已有同名或近名的 skill / command（vana-builder V-07）。
+
+    vana 自带 `commit` / `pr` / `pr-review-loop`，与插件的 commit / pr / review-loop 触发词相同。说「提交一下」时
+    模型在两者之间任选一个，而两者的闸不同——一个过 verify_commit.py，一个不过。同名（含词序不同：review-pr ↔
+    pr-review）是 warn；插件名的词是宿主名的真子集（release ⊂ release-build）是 info。按宿主条目归并，一条一行。"""
+    me = _read_json(os.path.join(PLUGIN_ROOT, ".claude-plugin", "plugin.json")) or {}
+    plugin = me.get("name") or "ai-dlc"
+    mine = _skill_names(os.path.join(PLUGIN_ROOT, "skills"))
+    if not mine:
+        return []
+    repo = repo or repo_assets.repo_root(os.getcwd())
+    cfg = claude_config_dir()
+    here = os.path.realpath(PLUGIN_ROOT)
+    hosts = [("项目级 skill", _skill_names(os.path.join(repo, ".claude", "skills"))),
+             ("项目级 command", _command_names(os.path.join(repo, ".claude", "commands"))),
+             ("用户级 skill", _skill_names(os.path.join(cfg, "skills"))),
+             ("用户级 command", _command_names(os.path.join(cfg, "commands")))]
+    out, seen = [], set()
+    for kind, names in hosts:
+        for host, path in names.items():
+            real = os.path.realpath(path)
+            if real.startswith(here + os.sep) or real in seen:
+                continue                      # 指回插件自己的软链不是冲突
+            seen.add(real)
+            ht = set(host.split("-"))
+            same = [m for m in mine if m == host or set(m.split("-")) == ht]
+            near = [m for m in mine if m not in same and set(m.split("-")) < ht]
+            full = lambda ms: ", ".join(f"/{plugin}:{m}" for m in ms)
+            rel = os.path.relpath(path, repo) if real.startswith(os.path.realpath(repo) + os.sep) else path
+            if same:
+                out.append({"severity": "warn", "check": "同名 skill",
+                            "hint": f"{kind} `{host}`（{rel}）与 {full(same)} 同名。在这里说「{host}」时模型会在两者之间任选一个，"
+                                    f"而它们的闸不同——要插件那份就写全名 {full(same)}"})
+            elif near:
+                out.append({"severity": "info", "check": "近名 skill",
+                            "hint": f"{kind} `{host}`（{rel}）与 {full(near)} 做的是相邻的事；触发词可能重叠，调插件那份写全名"})
+    return out
+
+
 def cmd_doctor(a):
     findings = []
     def add(sev, what, hint):
@@ -1590,6 +1742,9 @@ def cmd_doctor(a):
     # 严重度由 sizing.yaml.repo_assets 的档位给；「找到了但没进 git / 落在 .aidlc」一律 warn，
     # 与档位无关：团队共享不是可以按档放宽的偏好。
     for f in repo_assets.findings(repo_assets.discover(scope=repo_scope(st)), repo_asset_requirements(st)):
+        add(f["severity"], f["check"], f["hint"])
+    # 装置的另一半：会话里装的是不是这一版，宿主里有没有抢触发词的同名 skill（vana-builder V-01 / V-07）。
+    for f in plugin_version_findings() + skill_collision_findings():
         add(f["severity"], f["check"], f["hint"])
     order = {"error": 0, "warn": 1, "info": 2}
     findings.sort(key=lambda f: order[f["severity"]])
@@ -2305,8 +2460,8 @@ def main():
     P = lambda name: sub.add_parser(name, parents=[common])
 
     s = P("init"); s.add_argument("--title", required=True); s.add_argument("--track", choices=["psl", "task"])
-    s.add_argument("--scope", help="monorepo：本体所在的 package 目录（如 plugins/ai-dlc）。"
-                                   "记进 world.scope，之后每次发现都带上它——一个 package 一个 bounded context")
+    s.add_argument("--scope", help="限界上下文的制品目录（如 plugins/ai-dlc，或横跨多个代码目录时的 docs/ontology/copilot）。"
+                                   "记进 world.scope，之后每次发现都带上它——一个 bounded context 一份本体；不必是代码目录")
     P("show")
     s = P("set"); s.add_argument("pairs", nargs="+")
     s = P("advance"); s.add_argument("stage"); s.add_argument("--force", action="store_true"); s.add_argument("--reason")
@@ -2332,7 +2487,7 @@ def main():
     s = P("plan"); s.add_argument("--sizing"); s.add_argument("--json", action="store_true")
     s = P("doctor"); s.add_argument("--json", action="store_true")
     s = P("repo"); s.add_argument("--json", action="store_true")
-    s.add_argument("--scope", help="monorepo：先在这个目录里找，找不到再回落到仓库根")
+    s.add_argument("--scope", help="限界上下文的制品目录：先在这里找，找不到再回落到仓库根（目录不存在会被报出来）")
     s.add_argument("--path", choices=repo_assets.KEYS,
                    help="只打印这个制品命中的绝对路径（没找到 exit 1 且不打印）——"
                         "给 `--dos $(… repo --path dos)` 这类接线用")

@@ -25,6 +25,10 @@
      （dos-extract 的 edge case：一个 package 一个 bounded context）。把只覆盖某一个
      package 的本体放在仓库根，是拿 scope 撒谎。`--scope plugins/ai-dlc` 先在那个目录里找，
      找不到再回落到仓库根——所以「一份仓库级 agent-map + 每个 package 一份 dos」是可表达的。
+     **scope 决定的是这个限界上下文的制品放在哪，不必是代码目录**：按功能切片、横跨
+     `app/main` · `app/renderer` · `app/common` 的上下文（vana-builder V-06）没有一个代码目录能当 scope，
+     就用 `docs/ontology/<context>`。scope 目录不存在时照样回落，但会说出来——一个拼错的 scope
+     拿到的是仓库根那份本体，看起来和「这个上下文有本体」一模一样。
   2. **进没进 git** —— `git ls-files`。找到了但没 tracked（或被 .gitignore 吃掉），
      队友 clone 下来是空的。这是「团队共享」这件事唯一可机械核对的形式。
 
@@ -217,7 +221,8 @@ def discover(root: str | None = None, refresh: bool = False, scope: str | None =
                            runtime_dir=rel.startswith(RUNTIME_DIRS), shadows=shadowed)
                 break
         out[key] = rec
-    out["_root"] = {"path": root, "is_git": _in_git(root), "scope": scope}
+    out["_root"] = {"path": root, "is_git": _in_git(root), "scope": scope,
+                    "scope_exists": os.path.isdir(os.path.join(root, scope)) if scope else None}
     _CACHE[cache_key] = out
     return out
 
@@ -241,6 +246,17 @@ def findings(disc: dict, requirements: dict | None = None) -> list[dict]:
     req = requirements or {}
     sev_of = {"required": "error", "recommended": "warn"}
     out = []
+    sc = (disc.get("_root") or {}).get("scope")
+    if sc and (disc.get("_root") or {}).get("scope_exists") is False:
+        fell_back = [disc[k]["path"] for k in KEYS if (disc.get(k) or {}).get("found")]
+        out.append({
+            "severity": "warn" if fell_back else "info", "key": "_scope",
+            "check": "scope 目录不存在",
+            "hint": (f"`{sc}/` 不在仓库里，所以每一样制品都回落到了仓库根"
+                     + (f"（命中的是 {fell_back}——它们说的是仓库根那个上下文，不是 `{sc}`）" if fell_back else "")
+                     + "。拼错了就改 `--scope`；第一次为这个上下文建本体时这是预期的：跑 /dos-extract 写到 "
+                       f"`{sc}/dos.yaml`。scope 不必是代码目录，横跨多个代码目录的上下文用 `docs/ontology/<context>`"),
+        })
     for key in KEYS:
         rec = disc.get(key) or {}
         level = req.get(key, "optional")
@@ -294,7 +310,8 @@ def render(disc: dict, req: dict | None = None) -> str:
     sc = disc["_root"].get("scope")
     lines = ["仓库级 X1 制品（进 git、全组共享——不放 .aidlc/）",
              f"  仓库根 {disc['_root']['path']}" + ("" if disc["_root"]["is_git"] else "  [不是 git 仓库]")
-             + (f"\n  scope  {sc}/  （找不到时回落到仓库根）" if sc else ""), ""]
+             + (f"\n  scope  {sc}/  （找不到时回落到仓库根）" if sc else "")
+             + ("  [目录不存在：全部回落到仓库根]" if sc and disc["_root"].get("scope_exists") is False else ""), ""]
     mark = {True: "✓", False: "✗"}
     for key in KEYS:
         r = disc[key]
@@ -325,8 +342,8 @@ ONBOARDING = """
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--repo-root", default=".")
-    ap.add_argument("--scope", help="monorepo：先在这个仓库根相对目录里找（如 plugins/ai-dlc），"
-                                    "找不到再回落到仓库根。一个 package 一个 bounded context")
+    ap.add_argument("--scope", help="限界上下文的制品目录（仓库根相对，如 plugins/ai-dlc 或 docs/ontology/copilot），"
+                                    "先在这里找，找不到再回落到仓库根。不必是代码目录")
     ap.add_argument("--json", action="store_true")
     ap.add_argument("--path", choices=KEYS, help="只打印这个制品命中的路径（没找到 exit 1，不打印）")
     a = ap.parse_args()

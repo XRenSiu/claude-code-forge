@@ -7,7 +7,7 @@ optional `behavior` (tests-manifest seed) + `rules` + `constraints` + `budgets`.
 `aidlc_state.py advance g2` runs — the C1 decision ("the contract holds criteria, not test names") compiled.
 
 Usage:
-  validate_done_when_v2.py <done_when.yaml> [--spec spec.md] [--require-behavior] [--json]
+  validate_done_when_v2.py <done_when.yaml> [--spec spec.md] [--require-behavior] [--repo DIR] [--json]
 
 Exit 0 = valid v2 (flags may remain) · 1 = REJECT · 2 = IO error.
 
@@ -19,7 +19,13 @@ Mechanical guarantees (REJECT):
   - human: statement + judge ∈ {product, design, tech} + evidence ∈ {checklist, demo}
   - event/state happy AC has an unwanted sibling on the same observe or paired_with resolves to one
   - existence entries: only route / db_field / ui / cli / event / frontend_component keys (no file / function)
-  - constraints.forbidden_paths (if present) contains tests/** and done_when.yaml
+  - constraints.forbidden_paths (if present) contains tests/**, done_when.yaml, and every glob in
+    constraints.test_globs (optional non-empty list — where THIS repository keeps its tests, e.g. **/*.spec.ts)
+  - --repo DIR (advance g2 passes it): forbidden_paths must cover at least one of the test files git tracks
+    there. `tests/**` is where this plugin writes tests, not where every repository keeps them — a repository
+    with 300 colocated `*.spec.ts` and a forbidden set of `tests/**` froze no test at all, and C6
+    ("tests are written by a non-implementer and locked") held only on paper (dogfood vana-builder V-05).
+    Covering some but not all is a flag with a sample; without --repo the coverage is reported `checked: false`.
   - --require-behavior (L5 stage): behavior has ≥1 test name
   - discipline 1 (adjective→threshold) applies to a human AC's `statement` too, not only `expect` —
     a vague word with no number is boilerplate wherever it sits (dogfood I-08 / I-40)
@@ -33,8 +39,10 @@ Flags: thresholds without threshold_source; REQ in based_on with no AC; behavior
 a human AC whose section mixes judges (split it — dogfood I-41).
 """
 import argparse
+import fnmatch
 import json
 import re
+import subprocess
 import sys
 
 try:
@@ -44,6 +52,7 @@ except ImportError:
 
 VAGUE = ["快", "慢", "稳定", "可靠", "健壮", "高效", "及时", "尽快", "大部分", "多数", "合理", "友好", "流畅", "良好", "充分", "适当", "足够", "正确处理", "智能",
          "fast", "slow", "stable", "reliable", "robust", "quick", "soon", "most", "reasonable", "friendly", "smooth", "adequate", "sufficient", "better", "properly", "correctly"]
+TEST_LIKE = re.compile(r"(^|/)(tests?|__tests__)/|\.(test|spec)\.[A-Za-z0-9]+$|_test\.(go|py)$|(^|/)test_[^/]+\.py$")
 BOUNDARY_RE = re.compile(r"^(route|cli|ui|db_field|event|api|topic|queue):", re.I)
 FILEPATH_RE = re.compile(r"(\bsrc/|\btests?/|\.(ts|tsx|js|jsx|py|go|rs|java|kt|rb|php|cs|swift|vue)\b|::|\(\))")
 EXIST_KEYS = {"route", "db_field", "ui", "cli", "event", "frontend_component", "api", "topic", "queue"}
@@ -58,10 +67,38 @@ def vague(s):
     return next((w for w in VAGUE if w in low), None)
 
 
+def glob_match(path, pat):
+    """Same semantics as ../../commit/scripts/verify_commit.py (the enforcer of forbidden_paths) — deliberate
+    duplicate, these scripts are self-contained per skill; keep in sync. Coverage measured with any other
+    matcher would certify a protection the enforcer does not apply."""
+    if pat.endswith("/**"):
+        base = pat[:-3]
+        if base.startswith("**/"):
+            return ("/" + path).find("/" + base[3:] + "/") >= 0
+        return path == base or path.startswith(base + "/")
+    if "**" in pat:
+        return fnmatch.fnmatch(path, pat) or fnmatch.fnmatch(path, pat.replace("**/", "")) or fnmatch.fnmatch(path, pat.replace("**", "*"))
+    if "/" not in pat:
+        return fnmatch.fnmatch(path, pat) or fnmatch.fnmatch(path.rsplit("/", 1)[-1], pat)
+    return fnmatch.fnmatch(path, pat)
+
+
+def tracked_test_files(repo):
+    """→ test-looking files git tracks under `repo`, or None when it is not a git work tree."""
+    top = subprocess.run(["git", "-C", repo, "rev-parse", "--show-toplevel"], capture_output=True, text=True)
+    if top.returncode != 0:
+        return None
+    r = subprocess.run(["git", "-C", top.stdout.strip(), "ls-files"], capture_output=True, text=True)
+    if r.returncode != 0:
+        return None
+    return [f for f in r.stdout.splitlines() if TEST_LIKE.search(f)]
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("path"); ap.add_argument("--spec"); ap.add_argument("--require-behavior", action="store_true"); ap.add_argument("--json", action="store_true")
     ap.add_argument("--form-draft", help="signed form draft; every expect key must be a predicate it names (dogfood I-40)")
+    ap.add_argument("--repo", help="git work tree whose tracked test files forbidden_paths must cover (advance g2 passes it)")
 
     a = ap.parse_args()
     try:
@@ -245,13 +282,41 @@ def main():
         if not any(k in st for k in STRUCT_NUM) and not st.get("layers"):
             rejects.append("constraints.structure 是空壳：一条阈值或一个 layers 都没有")
 
-    fp = (d.get("constraints") or {}).get("forbidden_paths")
+    cons = d.get("constraints") or {}
+    tg = cons.get("test_globs")
+    if tg is not None and (not isinstance(tg, list) or not tg or not all(isinstance(x, str) and x.strip() for x in tg)):
+        rejects.append("constraints.test_globs must be a non-empty list of globs (where this repository keeps its tests)")
+        tg = None
+    fp = cons.get("forbidden_paths")
+    coverage = {"checked": False}
     if fp is not None:
-        for must in ("tests/**", "done_when.yaml"):
+        for must in ["tests/**", "done_when.yaml"] + [g for g in (tg or []) if g not in ("tests/**", "done_when.yaml")]:
             if must not in fp:
-                rejects.append(f"constraints.forbidden_paths must include {must}")
+                rejects.append(f"constraints.forbidden_paths must include {must}"
+                               + (" (declared in constraints.test_globs)" if tg and must in tg else ""))
+        if a.repo:
+            tests = tracked_test_files(a.repo)
+            if tests is None:
+                coverage = {"checked": False, "why": f"{a.repo} is not a git work tree"}
+            else:
+                patterns = [str(p) for p in fp]
+                uncovered = [f for f in tests if not any(glob_match(f, p) for p in patterns)]
+                coverage = {"checked": True, "test_files": len(tests), "covered": len(tests) - len(uncovered),
+                            "uncovered_sample": uncovered[:5]}
+                if tests and len(uncovered) == len(tests):
+                    rejects.append(f"constraints.forbidden_paths cover none of the {len(tests)} test files git tracks "
+                                   f"(e.g. {', '.join(uncovered[:3])}) — this repository does not keep its tests under "
+                                   "tests/**; declare constraints.test_globs (e.g. **/*.spec.ts) and add them to "
+                                   "forbidden_paths, or no test is frozen against the implementer (C6)")
+                elif uncovered:
+                    flags.append(f"{len(uncovered)} of {len(tests)} tracked test files are outside forbidden_paths "
+                                 f"(e.g. {', '.join(uncovered[:3])}) — add their glob to constraints.test_globs if the "
+                                 "implementer must not edit them")
+    elif a.repo and tracked_test_files(a.repo):
+        flags.append("no constraints.forbidden_paths — nothing stops the implementer from editing the tests (C6)")
     out = {"verdict": "REJECT" if rejects else "PASS", "acceptance": len(acs), "mechanical": sum(1 for x in acs if isinstance(x, dict) and x.get("kind") == "mechanical"),
-           "human": sum(1 for x in acs if isinstance(x, dict) and x.get("kind") == "human"), "tests_in_manifest": len(names), "rejects": rejects, "flags": flags}
+           "human": sum(1 for x in acs if isinstance(x, dict) and x.get("kind") == "human"), "tests_in_manifest": len(names),
+           "test_coverage": coverage, "rejects": rejects, "flags": flags}
     print(json.dumps(out, ensure_ascii=False, indent=2))
     sys.exit(1 if rejects else 0)
 

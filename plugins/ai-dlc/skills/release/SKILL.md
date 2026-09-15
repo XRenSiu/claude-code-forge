@@ -7,7 +7,7 @@ description: >-
   tag + changelog + release notes + 部署验证记录出。Use when: "发版" / "打 tag" / "写 changelog" /
   "部署" / "release" / "ship it" / 合入之后。NOT for: 建 PR（/pr）、合并（人类动作）、登记线上缺陷
   （/issue --escape，本 skill 只放入口）。前置：merge 已完成，在目标仓库内。
-argument-hint: "[--version X.Y.Z | --bump auto|patch|minor|major] [--base <prev tag>] [--deploy-cmd '<cmd>'] [--verify-cmd '<cmd>'] [--dry-run]"
+argument-hint: "[--version X.Y.Z | --bump auto|patch|minor|major] [--scheme semver|calver|external] [--base <prev tag>] [--deploy-cmd '<cmd>'] [--verify-cmd '<cmd>'] [--dry-run]"
 version: 0.1.1
 user-invocable: true
 ---
@@ -46,8 +46,12 @@ deploy）前的确认门、和把机械半边编译掉的验证器。
 
 ## 原语（Π）
 
-- `scripts/verify_release.py --version X.Y.Z [--changelog CHANGELOG.md] [--notes releases/vX.Y.Z.md] [--base <prev tag>] [--bump auto] [--pre-tag]`
+- `scripts/verify_release.py --version X.Y.Z [--scheme semver|calver|external] [--changelog CHANGELOG.md] [--notes releases/vX.Y.Z.md] [--base <prev tag>] [--bump auto] [--pre-tag]`
   —— exit 0 / 1 / 2。**打 tag 前必须跑**（`--pre-tag`），**宣布完成前再跑一次**（不带 `--pre-tag`）。
+- **版本方案是声明**：日历版本（`26.04.01341`）用 `--scheme calver`，没有 bump 可推导；版本、tag、changelog 由
+  另一套发布系统管（CI 打包、人工触发的发布流程）用 `--scheme external`——那几项进 `unchecked`，不算通过，发布说明
+  （Rollback / post-deploy / Escape）照检。external 且外部系统不打 tag 时，`release.done` 拿不到 tag，记
+  `release.skipped_reason` 并把这份发布说明当证据。
 - `assets/release_notes_template.md` · `assets/changelog_entry_template.md`。
 - `references/semver-and-rollback.md` —— bump 规则、回滚方案的最小要素、部署验证清单。
 - `git tag -a vX.Y.Z -m …`、`git push origin vX.Y.Z`、`gh release create`（存在性声明）。

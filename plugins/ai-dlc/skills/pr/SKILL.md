@@ -9,7 +9,7 @@ description: >-
   PR" / "open a pull request" / 引擎准备 `gh pr create --fill` 时。NOT for: 单次 commit
   （/commit）、跟进 PR 评论（/review-loop）、审别人的 PR（/pr-review）、直接合并（人类动作）。
   前置：gh 已认证、在目标仓库内、分支已有至少一个 commit。
-argument-hint: "[--base main] [--issue N] [--draft] [--done-when done_when.yaml] [--cards cards/] [--pre-review [--rounds 2]] [--yes] [--dry-run]"
+argument-hint: "[--base <branch>] [--remote <name>] [--sections map.yaml] [--issue N] [--draft] [--done-when done_when.yaml] [--cards cards/] [--pre-review [--rounds 2]] [--yes] [--dry-run]"
 version: 0.3.1
 user-invocable: true
 ---
@@ -74,9 +74,16 @@ deletion 测试：撤掉本 skill，引擎 `git push && gh pr create --fill`：�
 
 ## 原语（Π）
 
-- `scripts/verify_pr.py --body BODY.md [--base main] [--head HEAD] [--title T] [--done-when F]
-  [--lock L] [--allow-xl] [--skip-preflight] [--pre-review] [--no-version-sync]` —— exit 0 过 / 1 拒 /
-  2 IO；输出 size_class。**建 PR 前必须跑**。
+- `scripts/verify_pr.py --body BODY.md [--base B] [--remote R] [--sections MAP] [--head HEAD] [--title T]
+  [--done-when F] [--lock L] [--allow-xl] [--skip-preflight] [--pre-review] [--no-version-sync]` —— exit 0 过 / 1 拒 /
+  2 IO 或 map 写错；输出 size_class、base / remote 及其来路。**建 PR 前必须跑**。
+- **仓库已有自己的 PR 模板时不改模板，映射语义槽**（`--sections`，例子 `eval/fixtures/sections_zh.yaml`）：
+  body 按团队模板写，把 summary / linked_issue / verification / acceptance_mapping … 指到团队的标题上；
+  issue 号在标题行的写 `linked_issue: {in: title_line, pattern: '#\\d+'}`；AC id 可以放在 `<!-- AC-001 -->` 注释里。
+  模板里确实没有的槽写 `required: false` + `why`，每一条都会作为 flag 呈给人；linked_issue / verification /
+  acceptance_mapping 只能挪不能免。映射文件跟团队模板放在一起并提交，不放 `.aidlc/`。
+- **base 与远端不假设**：有发版分支（`v*`）的仓库，PR 回到切出来的那条分支，显式给 `--base`；
+  多远端（如 origin 是镜像）且分支没有跟踪信息时显式给 `--remote`，否则同步检查记为跳过。
 - `assets/pr_template.md` —— body 形状（含 `## Known issues`，`--pre-review` 时必填）。
 - `../../agents/pr-reviewer.md` —— 预审用的只读审查 agent（新上下文；输出 findings.yaml，由你做修复与 Known issues）。
 - `references/size-and-split.md` —— 拆分策略、draft 判据、base 推断。

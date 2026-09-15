@@ -104,6 +104,12 @@ HTML disciplines are the load-bearing three; full procedures in `references/give
   the difference forces the reader to inherit the rest from its sibling, so a checker handed just the
   twin cannot tell what was removed — restate the happy `given`, then write the difference.
   `validate_done_when_v2.py` rejects a twin whose `given` does not cover its pair's (dogfood I-55).
+- **Forbid the tests where this repository actually keeps them.** `tests/**` is where this plugin
+  writes tests, not where every repository keeps its own: a repository with colocated `*.spec.ts`
+  declares `constraints.test_globs: ["**/*.spec.ts", …]` and lists each glob in `forbidden_paths`.
+  `advance g2` runs the validator with `--repo`, and a forbidden set that covers none of the test files
+  git tracks is rejected — otherwise "tests are written by a non-implementer and locked" (C6) holds only
+  on paper (dogfood vana-builder V-05). Partial coverage is a flag with a sample, for the human at G2.
 - **Every happy path carries an unhappy twin.** A clause that only says what should succeed leaves
   the failure semantics undefined — exactly the seam an agent games (pass the example, ignore the
   edge). For each `WHEN <happy> THE SYSTEM SHALL <succeed>`, draft the paired
