@@ -12,7 +12,7 @@ description: >-
   只想发 PR（/pr）、只想审别人的 PR（/pr-review）、只想盯一个已有 PR 的评论（/review-loop）——
   单点动作直接用对应 skill，进流水线反而慢。前置：git 仓库内、gh 已认证、python3。
 argument-hint: "<需求一句话 | 需求文件路径 | #issue> [--track psl|task] [--resume <slug>] [--autopilot] [--dry-run]"
-version: 1.5.0
+version: 1.6.0
 user-invocable: true
 # 只能由人显式调起：它会建 issue、开分支、发 PR、自动回帖——都是公开且部分不可逆的动作，
 # 不能因为对话里出现"需求""流程"就被模型自行调起。它是编排者，没有别的 skill 依赖它。
@@ -46,6 +46,7 @@ deletion 测试：撤掉本 skill，让引擎"把这个需求做完提 PR"。它
 | track | `psl` / `task` | /issue 的双轨判据（DOS 闭包失败 = 客观触发） | 形态未定的需求先建世界（U 段），否则交出"技术正确、产品错误" |
 | U1/U2 世界（仅 PSL 轨） | `PSL-<名>.md` | /psl（本插件） | 世界是形态的定律；`verify_psl.py` 过门 |
 | U3 推导产物（仅 PSL 轨） | `derived/{dos-proposal.yaml, workflow.md, form-draft.md, divergence.md}` | /psl-derive（本插件） | 先推三样再谈代码；每条形态决策 ← PSL-ID；N 次推导取分歧集 = G1 议程 |
+| grill 环（仅 PSL 轨，可选，U3 与 G1 之间） | `.aidlc/<slug>/grill/{pending.yaml, rounds.jsonl, grill-ledger.md}` | /grill（本插件） | 分歧先回物料找来路、找不到才交人；停机靠 `grill_loop.py check` 的分歧率与清单计数，不靠"引擎觉得对齐了"；人只裁 needs_human 行；converged 之后 G1 照签 |
 | G1（仅 PSL 轨） | `g1-record.md` | **人**（`gate g1` 要求 `world.derived_dir` 存在） | 唯一能拦"正确的错误"的门；否决必须归因（推错了 / 规律错了） |
 | X1 本体（任一轨，有存量代码时）**一次性、仓库级** | 项目目录里的 `dos.yaml` + `decisions.md` + `agent-map.md` + `invariants/`，**全部进 git** | /dos-extract · /invariant-extract（本插件） | 闭包检查与卡的 dos_slice 的解析源；应然本体（dos-proposal）与现状本体对账在 G1 记录里做。它在 issue **之前**：`/issue --dos` 的闭包是"客观触发 PSL 轨"那条判据的全部依据，没有本体时它不是失败也不是通过，是**没算**。`aidlc_state.py repo` 报落地状态，`sizing.yaml.repo_assets` 说每档要求到哪一级 |
 | issue | GitHub issue（TASK 雏形：EARS + AC v2 + 假设台账 + 依赖 DOS） | /issue | 没有 issue 就没有 `Closes #N`；AC 在这里第一次被写下 |
@@ -73,7 +74,8 @@ deletion 测试：撤掉本 skill，让引擎"把这个需求做完提 PR"。它
 **回流的坐标（层）。** card ⊂ plan ⊂ task ⊂ ontology ⊂ world。失败先归候选层再决定谁处理；
 越外层越贵、越该交人；世界层不设自动上限。
 
-**本插件自带的上半段与横切。** `/psl`（idea→world）→ `/psl-derive`（U3 推导 + 分歧集）→ G1；
+**本插件自带的上半段与横切。** `/psl`（idea→world，`--afk` 无人值守）→ `/psl-derive`（U3 推导 + 分歧集）→
+（可选）`/grill`（分歧回流：机器先找来路、找不到才交人，四键停机）→ G1；
 `/dos-extract`（code→world，`dos.yaml` 给闭包检查）、`/invariant-extract`（□ 常驻不变量）——
 这两条是**仓库级、一次性**的，做一次全组共用（下面「X1 仓库级制品」一节）；
 `/donewhen-extract`（L3 契约）→ `/spec-compile`（L5 编译成 fitness fn / eval_case / 评判程序）→ `/calibrate`
@@ -219,7 +221,7 @@ S 档 optional（三行修复上一次全仓库本体提取，成本高到没人
 ## 原语（Π 的存在性——不叙述调用顺序）
 
 - `scripts/aidlc_state.py` — init / show / set / advance / gate / card / fail / escape / acceptance / report / check-clean /
-  graph check|next|render / loops / ledger / archive（`--help`）。`fail` 多了 `--score` 与 `--by`；`loops` 一屏看六个环的预算消耗；
+  graph check|next|render / loops / ledger / archive（`--help`）。`fail` 多了 `--score` 与 `--by`；`loops` 一屏看七个环的预算消耗；
   `check-clean --as-hook` 是 Stop hook 的出口（模板 `assets/hooks/stop-clean-state.json`，不自动安装）。
   v1.4.0：**advance 对着文件检，不对着 flag 检**——`implement` 自己跑 `lint_cards.py`（`cards.lint_passed` 不可 set）、
   `pr` 读 final-state.json（DONE ∧ 无 unevaluated review ∧ 声明了阈值就要有 `meets_done_when.py` 的 met）、
@@ -242,12 +244,13 @@ S 档 optional（三行修复上一次全仓库本体提取，成本高到没人
   把每一档的剩余路径走一遍：自己写第二份迟早与真的那份分叉，而分叉出来的那份会说"网格没问题"（同 `graph check`）。
 - `scripts/lock_done_when.py` — `sign --stage g2|l5` / A 档 `verify`（exit 0 / 1 reject / 2 changed_with_proposal）。
 - `scripts/verify_graph.py` / `scripts/verify_loop.py` / `scripts/trace.py why|impact|render|lint` — 图 / 环 / 迹的 lint 与查询。
-- `assets/graph.yaml`（53 节点 · 69 边）· `assets/loops.yaml`（六个环）· `assets/triggers.yaml`（每个环绑到 `/goal` `/loop`
+- `assets/graph.yaml`（54 节点 · 72 边）· `assets/loops.yaml`（七个环）· `assets/triggers.yaml`（每个环绑到 `/goal` `/loop`
   Stop hook `/schedule`）· `assets/routing.yaml` v2（R14–R16）。
 - `../plan-cards/scripts/lint_cards.py`（L4）、`../retro/scripts/metrics.py`（X3）、`../donewhen-extract/scripts/validate_done_when_v2.py`（契约 v2 校验，`advance g2` 自动调用）、`convert_v1_to_v2.py`（acceptance-spec v1 → v2 骨架）、`../release/scripts/verify_release.py`（L8）。
 - 子 skill 的原语各自在其目录：`issue/scripts/verify_issue.py`、`commit/scripts/verify_commit.py`、
   `pr/scripts/verify_pr.py`、`review-loop/scripts/pr-poll.sh`、`pr-review/scripts/post_review.py`；
-  上半段与横切：`psl/scripts/verify_psl.py`、`psl-derive/scripts/verify_derived.py`、
+  上半段与横切：`psl/scripts/verify_psl.py`（`--afk`）、`psl-derive/scripts/verify_derived.py`、
+  `grill/scripts/grill_loop.py`（pending / resolve / defer / check：待定清单、三条出路、四键停机）、
   `dos-extract/scripts/{inventory,verify_dos}.py`、`invariant-extract/scripts/verify_card.py`、
   `donewhen-extract/scripts/verify_done_when.py`、`spec-compile/scripts/verify_compile.py`、
   `calibrate/scripts/verify_calibration.py`；验收线：`acceptance-spec/scripts/validate_done_when.py`、

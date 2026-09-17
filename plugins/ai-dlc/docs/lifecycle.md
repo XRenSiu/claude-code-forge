@@ -30,6 +30,7 @@ G1 世界裁决     人 · gate g1     + 范围段             G2 签字冻结  
 |---|---|---|---|
 | 产品级 / 功能级 PSL | `/psl`（本插件，引自 looper） | 已有 | 引用完整性 lint 未实现 |
 | 推导产物 | `/psl-derive` + `verify_derived.py` | 已有 | DOS 提案复用 dos-extract schema；N 次隔离推导行为层未跑 |
+| 分歧回流（grill 环） | `/grill` + `grill_loop.py` | 已有（v1.8.0） | 分歧先回物料找来路、找不到才交人；停机靠分歧率与清单计数；行为层（对比人逐题 grill）未跑 |
 | G1 世界裁决 | `ai-dlc` `assets/g1_record.md` + `gate g1`（pass 要求 derived_dir） | 已有 | reject 必须归因；外部证据只是 checklist 项 |
 | TASK（EARS + REQ-ID） | `/issue`（雏形）→ `/acceptance-spec`（spec.md，本插件） | 已有 | issue 的 AC 已是 v2 形状；acceptance-spec 的 done_when 仍是 v1 形状（C1/C2 待其升级） |
 | 澄清 + 假设台账 | `/issue` Assumptions 段 | 已有 | 3 轮上限是判据，未编译 |

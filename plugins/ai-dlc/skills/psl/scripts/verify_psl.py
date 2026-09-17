@@ -17,7 +17,11 @@
 来路核对（I-23）：`[elicit:物料 <file> §N]` 里的文件与章节做存在性 flag（只 flag，不拒——
 物料可能不在本机）。给 `--material-root` 指出物料树，默认取 PSL 同目录与当前工作目录。
 
-用法：python3 verify_psl.py <PSL文件.md> [--material-root DIR]...
+无人值守（--afk，grill 环）：用户全程不在场时写出的 PSL 多两条硬约束——（a）不得出现 `[elicit:用户 …]`
+来路（没有人可问，标了等于编了）；（b）Open Questions 每一条都要写"为什么需要人来定"（承重 / 为什么 /
+why），否则交到人手上的是一串问题而不是议程。两条都是 reject。`grill_loop.py pending` 从这一节抽待定清单。
+
+用法：python3 verify_psl.py <PSL文件.md> [--material-root DIR]... [--afk]
 退出码：0 = pass（可带 flag/info），1 = reject，2 = 用法/IO 错。
 """
 
@@ -63,6 +67,10 @@ LAYER_RE = re.compile(r"[（(]\s*(内容层|形态层|content|form)\s*[)）]|\[\
 CONTENT_LAYER = {"内容层", "content", "内容"}
 # 来路标注：[elicit:物料 …] / [elicit:material …]
 ELICIT_RE = re.compile(r"\[elicit\s*[:：]\s*(?:物料|material)([^\]]*)\]", re.I)
+# --afk：没有人在场，`[elicit:用户 …]` 是不可能发生的来路
+USER_ELICIT_RE = re.compile(r"\[elicit\s*[:：]\s*(?:用户|user)\b", re.I)
+# --afk：Open Questions 条目必须说明为什么要人来定
+WHY_HUMAN_RE = re.compile(r"承重|为什么|why|需要人|人来定|load[-\s]?bearing", re.I)
 # 一条来路里的 token：章节引用（§7 / §6.1 / #3）优先于普通词
 CITE_TOKEN_RE = re.compile(r"(?P<sec>[§#]\s*\d+(?:\.\d+)*)|(?P<word>[A-Za-z0-9_][A-Za-z0-9_./\-]*)")
 MATERIAL_EXT = (".md", ".markdown", ".yaml", ".yml", ".json", ".py", ".sh", ".txt", ".toml", ".cfg", ".ts", ".js")
@@ -232,6 +240,8 @@ def main():
     ap.add_argument("psl", help="PSL-<name>.md")
     ap.add_argument("--material-root", action="append", default=[],
                     help="物料树根目录（可重复）。默认：PSL 同目录 + 当前工作目录")
+    ap.add_argument("--afk", action="store_true",
+                    help="无人值守模式：拒 [elicit:用户] 来路；Open Questions 每条必须写为什么需要人来定")
     a = ap.parse_args()
     path = a.psl
     try:
@@ -340,6 +350,31 @@ def main():
                 continue
             if DEFAULT_FILL_PATTERN.search(line):
                 flags.append(f"第 {lineno} 行疑似默认值填充（{line.strip()[:40]}…）——承重未知应进 Open Questions，needs_semantic_review")
+
+    # 7. --afk：无人值守的两条硬约束（grill 环）
+    if a.afk:
+        for lineno, line in non_fenced(lines):
+            if USER_ELICIT_RE.search(line):
+                rejects.append(f"第 {lineno} 行来路写的是 [elicit:用户 …]，但这是 --afk 运行——没有人可问，"
+                               f"这条来路只能是编的。改成 [elicit:物料 <文件> §N] 或移入 Open Questions")
+        if oq is not None:
+            entries, current = [], None
+            for n, l in body_lines(lines, oq[2], oq[3]):
+                if BULLET_RE.match(l) and not l.startswith(("  ", "\t")):
+                    if current:
+                        entries.append(current)
+                    current = [n, l.strip()]
+                elif current and l.strip():
+                    current[1] += " " + l.strip()
+            if current:
+                entries.append(current)
+            for lineno, text in entries:
+                if not WHY_HUMAN_RE.search(text):
+                    rejects.append(f"Open Questions 第 {lineno} 行没有写为什么需要人来定（承重：… / why: …）"
+                                   f"——--afk 交到人手上的必须是议程，不是问题清单：{text[:40]}…")
+            infos.append(f"--afk：Open Questions {len(entries)} 条，全部带「为什么需要人来定」"
+                         if not any("为什么需要人来定" in r for r in rejects) else
+                         f"--afk：Open Questions {len(entries)} 条")
 
     for msg in rejects:
         print(f"REJECT: {msg}")

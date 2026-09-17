@@ -1494,7 +1494,7 @@ expect "impossible_under_contract by acceptance-fleet → task, human" 0 bash -c
 expect "trace.jsonl written with typed edges" 0 bash -c "test -s .aidlc/conv/trace.jsonl && grep -q '\"caused_by\"' .aidlc/conv/trace.jsonl"
 expect "trace lint on live run passes" 0 py "$SSG/trace.py" lint --root .aidlc --slug conv --routing "$S/ai-dlc/assets/routing.yaml"
 expect "trace why CARD-01 walks fail → reflow" 0 bash -c "python3 '$SSG/trace.py' why CARD-01 --root .aidlc --slug conv | grep -q 'reflow'"
-expect "loops: six rows with budget consumption" 0 bash -c "python3 '$SS' loops --slug conv --json | python3 -c \"import json,sys; d=json.load(sys.stdin); ids=[l['loop'] for l in d['loops']]; assert len(ids)==6 and 'card_retry' in ids and d['loops'][0]['used'] is not None, d\""
+expect "loops: seven rows with budget consumption (grill included)" 0 bash -c "python3 '$SS' loops --slug conv --json | python3 -c \"import json,sys; d=json.load(sys.stdin); ids=[l['loop'] for l in d['loops']]; assert len(ids)==7 and 'card_retry' in ids and 'grill' in ids and d['loops'][0]['used'] is not None, d\""
 expect "ledger --ref with unknown edge type rejected" 1 py "$SS" ledger --kind note --note x --ref bogus:CARD-01
 # dogfood 2026-09-06 (I-66): a short sha and its full one are one commit; registering both must not count two
 expect "card --commit resolves a short sha and dedupes against the full one (I-66)" 0 bash -c "FULL=\$(git rev-parse HEAD) && python3 '$SS' card CARD-03 --status doing --commit \$FULL >/dev/null && python3 '$SS' card CARD-03 --status done --commit \${FULL:0:7} >/dev/null && python3 -c \"
@@ -1991,6 +1991,53 @@ expect "vana V-08: an unanchored file: provenance passes with a flag, not silent
   bash -c "python3 '$VAM' am/bare.md --repo am --json | python3 -c \"import json,sys; d=json.load(sys.stdin); assert d['verdict']=='pass' and any('原文锚点' in f for f in d['flags']), d\""
 popd >/dev/null
 
+# ---- grill: 对齐环的机械部分（2026-09-17）。停机不靠"引擎觉得对齐了"，靠清单计数与分歧率；默认值进不来。
+GR="$S/grill/scripts/grill_loop.py"; FXG="$S/grill/eval/fixtures"; GT="$TMP/grill"; rm -rf "$GT"; mkdir -p "$GT"
+echo "== grill / grill_loop.py"
+expect "grill: pending extracts Q-1 / D-1 / U-1 from the three sources" 0 \
+  bash -c "python3 '$GR' pending '$FXG/PSL-memory-time-search.md' --derived '$FXG/derived_r1' --out '$GT/g' --json | python3 -c \"import json,sys; d=json.load(sys.stdin); assert d['items']==3 and d['open']==3 and d['divergence']['rate']==0.167, d\""
+expect "grill: check with open items is continue (exit 20)" 20 py "$GR" check "$GT/g" --record
+expect "grill: --from default is rejected — a default-filled slot is not a way out" 1 py "$GR" resolve "$GT/g" D-1 --from default --answer x
+expect "grill: a provenance naming a file not under --material-root is rejected" 1 py "$GR" resolve "$GT/g" D-1 --from materials --provenance "nowhere.md §2" --answer x --material-root "$FXG"
+expect "grill: a provenance that opens is accepted" 0 py "$GR" resolve "$GT/g" D-1 --from materials --provenance "PSL-memory-time-search.md §Open" --answer "阈值 2" --material-root "$FXG"
+expect "grill: defer requires --why" 2 py "$GR" defer "$GT/g" Q-1
+expect "grill: defer marks needs_human" 0 bash -c "python3 '$GR' defer '$GT/g' Q-1 --why 'no threshold source in materials' && python3 '$GR' defer '$GT/g' U-1 --why 'Scene never decided'"
+expect "grill: resolved this round but not re-derived → still continue (unrederived), never converged" 0 \
+  bash -c "python3 '$GR' check '$GT/g' --json | python3 -c \"import json,sys; d=json.load(sys.stdin); assert d['verdict']=='continue' and d['unrederived']==['D-1'], d\""
+printf '# 分歧集\n\nn: 3\nround: 2\nconsistent_decisions: 6\n\n## 分歧\n\n无分歧\n\n## PSL 欠定\n\n- `Scene` — 出现在 v2；建议：进 PSL Domain Model（作为 Era.scenes 的元素）或舍弃\n' > "$GT/d2.divergence.md"; mkdir -p "$GT/d2"; mv "$GT/d2.divergence.md" "$GT/d2/divergence.md"
+expect "grill: a changed divergence.md bumps the round and keeps statuses" 0 \
+  bash -c "python3 '$GR' pending '$FXG/PSL-memory-time-search.md' --derived '$GT/d2' --out '$GT/g' --json | python3 -c \"import json,sys; d=json.load(sys.stdin); assert d['round']==2 and d['open']==0, d\""
+expect "grill: open=0 with needs_human left → exit 10 (hand the list, not the PSL, to a human)" 10 py "$GR" check "$GT/g" --record
+expect "grill: --from human requires --by" 2 py "$GR" resolve "$GT/g" Q-1 --from human --answer 2
+expect "grill: human answers recorded" 0 bash -c "python3 '$GR' resolve '$GT/g' Q-1 --from human --by tester --answer 2 && python3 '$GR' resolve '$GT/g' U-1 --from human --by tester --answer discard"
+expect "grill: human answers not yet re-derived → continue, not converged" 20 py "$GR" check "$GT/g" --record
+sed '/^## Open Questions/,$d' "$FXG/PSL-memory-time-search.md" > "$GT/PSL2.md"; printf '## Open Questions\n\n' >> "$GT/PSL2.md"
+mkdir -p "$GT/d3"; printf '# 分歧集\n\nn: 3\nround: 3\nconsistent_decisions: 7\n\n## 分歧\n\n无分歧\n' > "$GT/d3/divergence.md"
+expect "grill: after the re-derivation everything is closed → converged (exit 0)" 0 \
+  bash -c "python3 '$GR' pending '$GT/PSL2.md' --derived '$GT/d3' --out '$GT/g' >/dev/null && python3 '$GR' check '$GT/g' --record --json | python3 -c \"import json,sys; d=json.load(sys.stdin); assert d['verdict']=='converged' and d['stop_key']=='success' and d['round']==3, d\""
+expect "grill: the ledger is append-only and carries every transition" 0 bash -c "grep -c '^- ' '$GT/g/grill-ledger.md' | awk '{exit (\$1>=10)?0:1}'"
+mkdir -p "$GT/dx"; printf '# 分歧集\n\nn: 3\nconsistent_decisions: 1\n\n## 分歧\n\n| # | 决策点 | v1 | v2 | v3 | 各自引用 | 议程 |\n|---|---|---|---|---|---|---|\n| D-1 | a | 1 | 2 | 3 | PSL-001 | 请人定 |\n| D-2 | b | 1 | 2 | 3 | PSL-001 | 请人定 |\n' > "$GT/dx/divergence.md"
+expect "grill: divergence rate > 0.5 is impossible (PSL too weak), not a vote" 0 \
+  bash -c "python3 '$GR' pending '$FXG/PSL-memory-time-search.md' --derived '$GT/dx' --out '$GT/gx' >/dev/null && python3 '$GR' check '$GT/gx' --json | python3 -c \"import json,sys; d=json.load(sys.stdin); assert d['verdict']=='impossible' and d['stop_key']=='impossible', d\""
+# plateau: open count flat across two recorded rounds
+mkdir -p "$GT/p1" "$GT/p2"; cp "$FXG/derived_r1/divergence.md" "$GT/p1/"; sed 's/consistent_decisions: 5/consistent_decisions: 6/' "$FXG/derived_r1/divergence.md" > "$GT/p2/divergence.md"
+expect "grill: open count unchanged across two recorded rounds → plateau (stop, hand over)" 0 \
+  bash -c "python3 '$GR' pending '$FXG/PSL-memory-time-search.md' --derived '$GT/p1' --out '$GT/gp' >/dev/null && python3 '$GR' check '$GT/gp' --record >/dev/null; python3 '$GR' pending '$FXG/PSL-memory-time-search.md' --derived '$GT/p2' --out '$GT/gp' >/dev/null && python3 '$GR' check '$GT/gp' --record --json | python3 -c \"import json,sys; d=json.load(sys.stdin); assert d['verdict']=='plateau' and d['stop_key']=='convergence', d\""
+expect "grill: pending without divergence.md in --derived is a usage reject, not an empty list" 1 py "$GR" pending "$FXG/PSL-memory-time-search.md" --derived "$GT/nowhere" --out "$GT/gn"
+echo "== psl / verify_psl.py --afk"
+expect "psl --afk: fixture with 承重 on its Open Question passes" 0 py "$S/psl/scripts/verify_psl.py" "$FXG/PSL-memory-time-search.md" --afk
+expect "psl --afk: an Open Question without why-a-human is rejected (twin)" 1 py "$S/psl/scripts/verify_psl.py" "$FXG/PSL-afk-no-why.md" --afk
+expect "psl --afk: the same file passes without --afk (the rule is afk-only)" 0 py "$S/psl/scripts/verify_psl.py" "$FXG/PSL-afk-no-why.md"
+expect "psl --afk: a [elicit:用户 …] provenance is rejected — nobody was there to ask" 1 py "$S/psl/scripts/verify_psl.py" "$FXG/PSL-afk-user-elicit.md" --afk
+expect "psl --afk: the same provenance is legal in an interactive run" 0 py "$S/psl/scripts/verify_psl.py" "$FXG/PSL-afk-user-elicit.md"
+echo "== grill loop registered as data"
+expect "grill: loops.yaml#grill passes verify_loop (generator psl ≠ verifier psl-derive, four stop keys)" 0 \
+  bash -c "python3 '$S/ai-dlc/scripts/verify_loop.py' --json | python3 -c \"import json,sys; d=json.load(sys.stdin); assert d['verdict']=='PASS' and 'grill' in d['loops'], d\""
+expect "grill: graph.yaml has the grill loop_back edge and no unowned cycle" 0 \
+  bash -c "python3 '$S/ai-dlc/scripts/verify_graph.py' --json | python3 -c \"import json,sys; d=json.load(sys.stdin); assert d['verdict']=='PASS' and 'grill' in d['loops_referenced'], d\""
+expect "grill: a self-verifying grill loop would be rejected (twin)" 1 \
+  bash -c "sed 's/verifier: psl-derive          # N 次隔离推导/verifier: psl          # N 次隔离推导/' '$S/ai-dlc/assets/loops.yaml' > '$GT/loops_self.yaml' && python3 '$S/ai-dlc/scripts/verify_loop.py' '$GT/loops_self.yaml' --routing '$S/ai-dlc/assets/routing.yaml' >/dev/null"
+
 # 文档漂移是可以被机器发现的（2026-09-06：8 个脚本、26 个资产曾在六份文档里一次都没出现过）。
 expect "docs: every script and asset appears in docs/reference.md" 0 \
   py "$ROOT/eval/fixtures/doc_coverage.py" "$ROOT"
@@ -2001,7 +2048,7 @@ expect "docs: a script missing from the index turns it red (twin)" 1 \
 expect "docs: node / edge counts in living docs equal verify_graph.py (no hand-copied numbers)" 0 \
   py "$ROOT/eval/fixtures/doc_graph_counts.py" "$ROOT"
 expect "docs: a drifted count turns it red (twin)" 1 \
-  bash -c "t=\"$TMP/dgc\"; rm -rf \"\$t\"; mkdir -p \"\$t/docs\" \"\$t/skills/ai-dlc\"; cp -R '$ROOT/skills/ai-dlc/scripts' '$ROOT/skills/ai-dlc/assets' \"\$t/skills/ai-dlc/\"; sed 's/53 节点 · 69 边/52 节点 · 67 边/' '$ROOT/docs/ARCHITECTURE.md' > \"\$t/docs/ARCHITECTURE.md\"; python3 '$ROOT/eval/fixtures/doc_graph_counts.py' \"\$t\""
+  bash -c "t=\"$TMP/dgc\"; rm -rf \"\$t\"; mkdir -p \"\$t/docs\" \"\$t/skills/ai-dlc\"; cp -R '$ROOT/skills/ai-dlc/scripts' '$ROOT/skills/ai-dlc/assets' \"\$t/skills/ai-dlc/\"; sed 's/54 节点 · 72 边/52 节点 · 67 边/' '$ROOT/docs/ARCHITECTURE.md' > \"\$t/docs/ARCHITECTURE.md\"; python3 '$ROOT/eval/fixtures/doc_graph_counts.py' \"\$t\""
 expect "docs: the evaluation doc still states the plugin is not L2-verified" 0 \
   bash -c "grep -q 'static_only' '$ROOT/docs/evaluation.md' && grep -q '出题人与被测者同源' '$ROOT/docs/evaluation.md'"
 

@@ -42,7 +42,7 @@
               │  merge → release → archive                              │
               └─────────────────────────────────────────────────────────┘
                         ▲                                    │
-   ② 三个正交旋钮：跑多少 │                                    │ ③ 六个环：没一次做对怎么办
+   ② 三个正交旋钮：跑多少 │                                    │ ③ 七个环：没一次做对怎么办
       广度 跑哪些阶段[强制]│                                    ▼
       测试量 验多少 [下界] │      card_retry · ratchet · acceptance_ratchet
       深度 产出多细 [声明] │      review_loop · lifecycle · hill_climb
@@ -67,7 +67,7 @@
 于是整条流水线被绕过——**一条被绕过的流水线抬不高任何人的下限**。三个旋钮互相正交：
 "完整文档 + 最少测试"是合法组合，测试量不该被文档详细度绑架。但**三者的强制力不同，文档如实标注**（见 §5）。
 
-**③ 六个环**处理"没一次做对"。每个环共用一份契约：生成者与验证者必须是两个东西，
+**③ 七个环**处理"没一次做对"（第七个 grill 环处理"需求没一次问对"：分歧先回物料找来路，找不到才交人）。每个环共用一份契约：生成者与验证者必须是两个东西，
 停机条件四键齐全（成功 / 收敛 / 预算 / 不可能），预算可解析。环负责在原地多试几次，
 但**它判不出"再试也没用"的时候就得交出去**——那是 §6 的收敛检测。
 
@@ -115,7 +115,7 @@ intake → track → issue → branch → contract → g2 → cards → implemen
 G2 跑契约 v2 校验，implement 跑卡 lint，pr 读 final-state.json 与达标比对报告，archive 读发布记录里的 post-deploy 行，
 并在 implement / acceptance / pr / merge 重跑锁校验——`/commit` 与 `/pr` 的预门能被裸 git 绕开，状态机绕不开。
 
-执行图 `graph.yaml`（53 节点 · 69 边）把同一件事声明成数据：节点带边界身份
+执行图 `graph.yaml`（54 节点 · 72 边）把同一件事声明成数据：节点带边界身份
 （读什么 / 不许读什么 / 写什么 / 有什么权限），边带类型与守卫，回边标明属于哪个环。
 `graph check` 让它与状态机的阶段列表**互相断言**——图和代码互为对方的测试。
 `verify_graph.py` 另外检五条性质：写范围有界、去掉回边后是 DAG 且每个圈归属一个环、
@@ -198,7 +198,7 @@ issue 不合格就拒绝取数）；文件数要等有 diff。缺一个量的规
 
 ---
 
-## 6. 六个环与收敛
+## 6. 七个环与收敛
 
 每个环共用一份契约（`loops.yaml`）：
 
@@ -347,14 +347,14 @@ A 档里有两条特别的：**结构闸**在分析器跑不起来时退出"未�
 
 ---
 
-## 11. 二十八个 skill、五个 agent
+## 11. 二十九个 skill、五个 agent
 
 九环加一根脊柱。**脊柱不做任何一环的活**，只做五件事：持有状态、记账、路由失败、
 把三道门编译成"不跑就推进不了"、把图与环声明成数据。
 
 | 环 | 回答的问题 | skill | 机械预门 |
 |---|---|---|---|
-| **R0 世界** | 这个产品为什么这样运转 | `psl` `psl-derive` | `verify_psl.py` `verify_derived.py`；**G1** |
+| **R0 世界** | 这个产品为什么这样运转 | `psl` `psl-derive` `grill` | `verify_psl.py`（`--afk`）`verify_derived.py` `grill_loop.py check`（四键停机）；**G1** |
 | **R1 本体** | 系统里有什么、叫什么、什么不可违反 | `dos-extract` `invariant-extract` | `verify_dos.py` `verify_card.py` `verify_agent_map.py --probe`（命令逐条实跑）`verify_vocabulary.py` |
 | **R2 契约** | 什么算做完 | `issue` `donewhen-extract` `acceptance-spec` | `verify_issue.py` `verify_done_when.py` `validate_done_when_v2.py`；**G2** |
 | **R3 标准** | 判据怎么被机器执行 | `test-suite-generator` `spec-compile` `calibrate` | `derive_counts.py` `verify_compile.py` `verify_calibration.py`；二次锁 |
@@ -381,7 +381,7 @@ A 档里有两条特别的：**结构闸**在分析器跑不起来时退出"未�
 | 校准 | 线上逃逸缺陷 → 世界 / 本体 / 契约 | `aidlc_state.py escape` 把人的归因写成该层的一次计数、一行 escape-defects.md、一个镜像进归档的事件（复盘只读归档）→ 回答"为什么门没拦住" → 抽成不变量 → 变更提案 |
 | 度量 | 归档 → 流程改进 | 复盘：基线 → 回流分布 → 提案落到能改的那一层，经门生效 |
 | 标准 | 判据 → 测试 → 尺子本身 | 编译判据、证明尺子承重（变异分数 / 一致性 / 留出集 / 隔离）；未校准的标准不当证据 |
-| 调参 | 六个环的迹 → 环自己的参数 | 读归档出提案（封闭 target 集），只出 diff，人开 PR 合 |
+| 调参 | 七个环的迹 → 环自己的参数 | 读归档出提案（封闭 target 集），只出 diff，人开 PR 合 |
 
 第六个是**环改环的外环**：它读其他五个环留下的痕迹，提出改这些环的参数，
 但它自己的提案**永不自动生效**——路由预算、脚本默认值、修复清单的改动都要人审的 PR。
@@ -473,7 +473,7 @@ A 档里有两条特别的：**结构闸**在分析器跑不起来时退出"未�
 
 ```bash
 aidlc_state.py plan     # 这次跑几个阶段、几道人签的门、跳了什么、为什么跳
-aidlc_state.py loops    # 六个环各自烧了多少预算
+aidlc_state.py loops    # 七个环各自烧了多少预算
 aidlc_state.py doctor   # 这套装置本身健康吗（建议性，从不阻断）
 trace.py why AC-003     # 这条判据为什么改、谁签的、上游是哪次失败
 ```

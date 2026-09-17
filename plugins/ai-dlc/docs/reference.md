@@ -66,6 +66,7 @@ flag 不等于 reject。预门过了但带 flag，意思是「机器判不了这
 |---|---|---|---|
 | `verify_psl.py` | psl | PSL 六层齐不齐、Workflow 里有没有 Step N 式步骤、验收是不是「问 X → 返回 Y」、规律有没有稳定的 PSL-NNN id | 0 · 1 拒 |
 | `verify_derived.py` | psl-derive | 推导产物：每条形态决策必须引用一个 PSL-ID；N 次隔离推导的分歧集必须在 | 0 · 1 拒 |
+| `grill_loop.py` | grill | 对齐环的机械部分：`pending` 从 PSL Open Questions + divergence.md 抽待定清单；`resolve --from materials`（来路必须打得开）/ `--from human --by` / `defer --why` 是槽的三条出路，`--from default` 硬拒；`check` 四键停机 | pending/resolve/defer 0 · 1 拒；check 0 converged · 10 human · 20 continue · 1 stop |
 
 ### 契约（R2）
 
@@ -157,8 +158,8 @@ flag 不等于 reject。预门过了但带 flag，意思是「机器判不了这
 |---|---|---|
 | `ai-dlc/assets/routing.yaml` | `aidlc_state.py fail` | 回流路由表：信号 → 层 → 处理者 → 动作；分层预算；收敛检测阈值 |
 | `ai-dlc/assets/sizing.yaml` | `aidlc_state.py size|plan|advance`、`verify_sizing.py` | v2：六条推导规则（带 `needs`）+ **`stages:` 广度网格** + `never_skippable`（三道门在里面）+ 每档的 `depth` / `test_strategy` + `recompose` 约束 + 预算覆盖 |
-| `ai-dlc/assets/graph.yaml` | `verify_graph.py`、`aidlc_state.py graph` | 53 节点 / 69 边；节点带 `reads` / `must_not_read` / `writes` / `authority` |
-| `ai-dlc/assets/loops.yaml` | `verify_loop.py`、`aidlc_state.py loops` | 六个环的契约：level / timescale / generator ≠ verifier / stop 四键 |
+| `ai-dlc/assets/graph.yaml` | `verify_graph.py`、`aidlc_state.py graph` | 54 节点 / 72 边；节点带 `reads` / `must_not_read` / `writes` / `authority` |
+| `ai-dlc/assets/loops.yaml` | `verify_loop.py`、`aidlc_state.py loops` | 七个环的契约：level / timescale / generator ≠ verifier / stop 四键（grill 环 v1.8.0 加入） |
 | `ai-dlc/assets/triggers.yaml` | 人 | 每个环绑到哪个原生触发（`/goal` `/loop` Stop hook `/schedule`） |
 | `acceptance-fleet/assets/evaluators.yaml` | `pick_evaluators.py` | 供应商声明与探测命令；每个槽的同源盲区排名 |
 | `donewhen-extract/references/done-when-v2-schema.yaml` | 人 + `validate_done_when_v2.py` | **契约的唯一 schema**；含 `constraints.structure` |
@@ -183,6 +184,7 @@ flag 不等于 reject。预门过了但带 flag，意思是「机器判不了这
 | `implement/assets/card_context.md` | **实现者能看到的全部输入**的形状（含 agent-map 切片） |
 | `dos-extract/assets/agent_map_template.md` · `decisions_template.md` · `docs_extraction_prompt.md` · `dos_amendment_template.md` | 仓库地图 / 判断审计轨 / 文档扫描 / 本体修订 |
 | `psl-derive/assets/workflow_template.md` · `form_draft_template.md` · `divergence_template.md` | U3 的三样推导产物 |
+| `grill/assets/pending_template.yaml` | grill 环的待定清单形状（三来源 Q-n / D-n / U-n、四状态、三条出路） |
 | `invariant-extract/assets/cross_territory_promotion_template.md` | 跨领地不变量的提升 |
 | `pr/assets/pr_template.md` | PR body 的产物序 |
 | `release/assets/changelog_entry_template.md` · `release_notes_template.md` | 交付产物 |

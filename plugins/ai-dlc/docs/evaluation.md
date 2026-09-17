@@ -7,7 +7,7 @@
 
 | 层 | 问的问题 | 怎么跑 | 现状 |
 |---|---|---|---|
-| **L0 结构** | 这个 skill 写法对不对（四原子、无 Step 1/2/3、有出口门） | skillwise `lint_skill.py` | 28 个 skill 全过 |
+| **L0 结构** | 这个 skill 写法对不对（四原子、无 Step 1/2/3、有出口门） | skillwise `lint_skill.py` | 29 个 skill 全过 |
 | **L1 冒烟 + 变异** | 脚本在 fixture 上表现对不对；这些期望**承不承重** | `eval/smoke.sh`；`--mutate` 做变异自检 | 全绿；关键行为有变异证明。条数以 `smoke.sh` 结尾那一行为准，不在文档里手抄——手抄的数字会与实际分叉（同 `derive_counts.py` 的理由） |
 | **L2 行为** | 带这套纪律的 agent，交付是不是更好 | `eval/effect/` | 10 题 × 3 arm × 30 次跑过一轮 |
 

@@ -8,8 +8,8 @@ description: |
   的东西，如「按时间搜索」被做成日历筛选器）。也用于判断一个 PRD 该不该改写为 PSL。
   触发词：PSL、产品世界、世界建模、把需求写成世界、"这需求 Agent 会不会做偏"、体验说不清、生成规则 vs 功能规格。
   NOT for deterministic requirements（支付校验 / 合规字段 / 报表列宽）——那里 PRD 的精确恰好够用，套世界模型是过填。
-argument-hint: "[一句/一段产品需求，或需求文件路径] [可选：物料文件路径…]"
-version: 0.2.1
+argument-hint: "[一句/一段产品需求，或需求文件路径] [可选：物料文件路径…] [--afk]"
+version: 0.3.0
 user-invocable: true
 # imported into AI-DLC 2026-09-05 from looper v0.2.0; body kept, AI-DLC wiring added (see 接线 / 术语映射)
 ---
@@ -131,6 +131,25 @@ UI Contract / Acceptance / Design Principles 三层的条目也编号（`UI-1` /
 - 用户全程不在场（无法回复）→ 全部承重空槽 seam，照常交付。Open Questions 会很长，
   这是诚实，不是失败。
 
+## 无人值守（`--afk`，grill 环的第一段）
+
+`--afk` 不是"少问几个"，是**把 elicit 这条来路整个关掉**：人不在场，能问的只剩物料与代码。规则与
+交互式一模一样，只是每个承重槽的出路少了一条：
+
+| 槽的情况 | 交互式 | `--afk` |
+|---|---|---|
+| 通用常识（surface） | 自己填，展示给用户确认 | 自己填，标 `[surface]`，留给 G1 确认 |
+| 物料里有（elicit:物料） | 抽出来，标 `[elicit:物料 <文件> §N]` | 同左——**来路必须能打开**，`verify_psl.py --afk` 与 `grill_loop.py resolve` 都核 |
+| 只有用户知道、承重 | 问用户 | **seam**：进 Open Questions，每条写"为什么需要人来定" |
+| 只有用户知道、不承重 | seam | seam |
+
+两条 `--afk` 专属的 reject（`verify_psl.py --afk`）：正文不得出现 `[elicit:用户 …]`（没有人可问，标了等于
+编了）；Open Questions 每条必须写为什么需要人来定（`（承重：…）` / `why: …`）——交到人手上的是议程，
+不是问题清单。默认值糊承重槽在两种模式下都是黑名单，`--afk` 下诱惑更大，所以多了一道闸。
+
+`--afk` 产物直接进 `/psl-derive --n 3` → `grill_loop.py pending`（`../grill/SKILL.md`）。人只裁清单里
+needs_human 的行，不通读 PSL。
+
 ## 出口（编译态预门 + 真正的保证）
 
 `scripts/verify_psl.py <PSL文件.md> [--material-root DIR]…` 是**机械预门**——检产物不检过程。
@@ -171,7 +190,10 @@ UI Contract / Acceptance / Design Principles 三层的条目也编号（`UI-1` /
 - **`dos-extract`（本插件）**：反向孪生——它 code→world，本 skill idea→world，共享同一套
   领域词表。有存量代码时，可先抽 DOS 作为物料（Σ 取料）；实现落地后，可再抽一次校验世界
   有没有漂移。
-- 环境里若有 `grill-me` 类逼问技能 → 可作上游取料；若有 `prototype` 类技能 → 可据 PSL 推导
+- **`grill`（本插件）**：无人值守的对齐环——`/psl --afk` → `/psl-derive --n 3` → `grill_loop.py pending`
+  抽待定清单 → 机器先回物料找来路、找不到才 defer → 人只裁 needs_human 行 → 重推 → converged 进 G1。
+  停机不靠"引擎觉得对齐了"，靠分歧率与清单计数。
+- 环境里若有 `grill-me` 类逼问技能 → 可作上游取料（它是人在场那一段的一种问法）；若有 `prototype` 类技能 → 可据 PSL 推导
   原型、用 Acceptance 在原型上跑行为验收。**都没有也照常进行，不依赖。**
 
 ## References

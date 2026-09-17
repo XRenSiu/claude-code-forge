@@ -1,0 +1,28 @@
+# pending.yaml — grill 环的待定清单（由 grill_loop.py pending 生成；不手写，这里只说明形状）
+#
+# 一条槽 = 形状数出来的一个必答题。三个来源：
+#   open_question   PSL 的 Open Questions 条目（seam）            id Q-n
+#   divergence      psl-derive divergence.md 的 D-行（读者不一致） id D-n
+#   underdetermined divergence.md 的「PSL 欠定」条目               id U-n
+# 四种状态：open · resolved_materials · resolved_human · needs_human（另有 dropped_from_source：来源里已消失）
+# 三条出路：resolve --from materials（来路必须打得开）· resolve --from human --by · defer --why
+# 没有 --from default。
+version: 1
+psl: <abs path>
+derived: <abs path | null>
+round: 1                       # divergence.md 内容变了即 +1
+divergence_sha: <12 hex | null>
+divergence: {n: 3, consistent_decisions: 5, rows: 1, rate: 0.167}   # rate = rows / (rows + consistent)
+generated_at: <iso>
+flags: []                      # 例如：某条没有 why_human
+items:
+  - id: Q-1
+    source: open_question
+    text: "[γ→人] PSL-008 重叠阈值是 2 还是 3？（承重：决定何时消歧）"
+    why_human: "决定何时消歧"
+    load_bearing: true
+    status: open
+    answer: null
+    provenance: null           # resolved_materials 时形如 "docs/ARCHITECTURE.md §7"
+    by: null                   # resolved_human 时是人名
+    # resolved_in_round / deferred_in_round / resolved_at 由脚本写

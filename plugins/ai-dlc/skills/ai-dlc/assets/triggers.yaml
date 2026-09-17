@@ -55,6 +55,21 @@ triggers:
     caveats:
       - 隔离等级 ≥ medium 是前置；同 session 跑实现与验收 = Level 0，acceptance-fleet 拒绝运行
 
+  - loop: grill
+    kind: turn_end
+    bindings:
+      interactive: >-
+        /goal `python3 <plugin>/skills/grill/scripts/grill_loop.py check .aidlc/<slug>/grill --record` 回显 exit 0 或 exit 10
+        （把 verdict 与 reasons 回显；exit 20 就按 reasons 做：resolve / defer / 补 PSL 重推 / 重抽 pending）；
+        or stop after 4 turns（= loops.yaml#grill budget.rounds）
+      unattended: 同上；--afk 的 PSL 先过 `verify_psl.py --afk`
+      headless: claude -p "/grill <PSL 路径> --n 3" --output-format stream-json --verbose
+    predicate_scripts: [grill_loop.py check, verify_psl.py --afk, verify_derived.py --round]
+    caveats:
+      - exit 1（impossible / budget / plateau）对 /goal 是 Impossible：不再自动转，交人
+      - 交人的是 pending.yaml 的 needs_human 行，不是 PSL 全文；人答后 resolve --from human --by，再补 PSL、重推、重抽
+      - N 次推导各开新上下文，不给前一次结果、不给 pending.yaml（否则读者不独立，分歧率失真）
+
   - loop: ratchet
     kind: turn_end
     bindings:
