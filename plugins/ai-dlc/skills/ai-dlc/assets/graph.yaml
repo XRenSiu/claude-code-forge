@@ -57,6 +57,13 @@ nodes:
     reads: [PSL-*.md]
     writes: [derived/**]
     authority: {commit: false}
+  - id: grill
+    kind: skill
+    role: world
+    reads: [PSL-*.md, derived/divergence.md, dos.yaml, decisions.md, docs/**]
+    writes: [.aidlc/<slug>/grill/pending.yaml, .aidlc/<slug>/grill/rounds.jsonl, .aidlc/<slug>/grill/grill-ledger.md]
+    authority: {commit: false, sign: false}
+    loop: grill
   - id: human.g1
     kind: human
     role: gate
@@ -307,6 +314,10 @@ edges:
   - {from: stage.track, to: psl,        type: conditional, when: "track == psl ∨ dos_closure_fail"}
   - {from: psl,         to: psl-derive, type: handoff, carries: [PSL-*.md]}
   - {from: psl-derive,  to: human.g1,   type: interrupt, carries: [derived/**, divergence.md]}
+  # grill 环：分歧先回物料找来路，找不到才交人；填槽者（psl）≠ 判者（psl-derive + grill_loop.py 计数）
+  - {from: psl-derive,  to: grill,      type: handoff,   carries: [divergence.md]}
+  - {from: grill,       to: psl,        type: loop_back, signal: grill_round, loop: grill, carries: [pending.yaml, materials provenance]}
+  - {from: grill,       to: human.g1,   type: interrupt, signal: pending_needs_human, carries: [pending.yaml needs_human rows, grill-ledger.md]}
   - {from: human.g1,    to: stage.issue, type: handoff, carries: [g1-record.md, form_draft_sha256]}
   - {from: human.g1,    to: psl,        type: loop_back, signal: counterexample_cites_psl_rule, loop: lifecycle, carries: [attribution]}
 

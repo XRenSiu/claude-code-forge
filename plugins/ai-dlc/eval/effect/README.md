@@ -1,6 +1,6 @@
 # eval/effect — 带 / 不带 skill 的行为层对照
 
-这个目录存在的唯一理由：AI-DLC 的 28 个 skill 全部 `static_only`。脚本在 fixture 上冒烟过，
+这个目录存在的唯一理由：AI-DLC 的 29 个 skill 全部 `static_only`。脚本在 fixture 上冒烟过，
 但「**带 AI-DLC 的 agent 交付是不是比不带的好**」一次都没测过，所有闸门阈值都是文献先验。
 一个声称抬高下限的插件，自己没有下限的测量值——这是报告 `docs/reports/raising-the-floor-2026-09-05`
 排在第一位的缺口。

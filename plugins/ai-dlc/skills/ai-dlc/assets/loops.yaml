@@ -1,9 +1,10 @@
-# loops.yaml — AI-DLC 六个环的统一契约
+# loops.yaml — AI-DLC 七个环的统一契约
 #
 # 谁读它：scripts/verify_loop.py（generator ≠ verifier · stop 四键齐 · budget.ref 可解析 · memory 在归档布局内）
 #        scripts/aidlc_state.py loops（读 state / pr-watch / ratchet 计数，按环打印预算消耗）
 #        assets/graph.yaml 的 loop_back 边通过 loop: <id> 引用这里
-# 为什么存在：六个环原来各说各话（retries / rounds / strikes / iterations / MAX_ROUNDS），没有一处能回答
+# 为什么存在：最初的六个环各说各话（retries / rounds / strikes / iterations / MAX_ROUNDS），没有一处能回答
+#（第七个环 grill 于 2026-09-17 加入，一开始就按这份契约写）
 # "现在哪个环在烧预算、烧到几成"。LangChain 2026 报告把 >60% 生产事故归于状态管理失败；统一契约是对策的一半。
 #
 # 字段（封闭集）：
@@ -33,6 +34,23 @@ loops:
     trigger: turn_end
     escalate_to: plan
     signals: [card_test_fail, same_card_same_fingerprint, oscillation_detected, plateau, whitelist_overflow]
+
+  - id: grill
+    level: verification
+    timescale: hours
+    goal: {predicate: pending_list_closed_and_readers_agree, checked_by: "grill/scripts/grill_loop.py check（exit 0 converged · 10 human · 20 continue · 1 stop）"}
+    generator: psl                # 填槽者：/psl --afk 与补槽后的重写
+    verifier: psl-derive          # N 次隔离推导的分歧集 + grill_loop.py 的计数——填槽者不评自己
+    stop:
+      success: "grill_loop.py check exit 0：open=0 ∧ needs_human=0 ∧ 本轮 resolve 已重推 ∧ 分歧率 ≤ max_divergence（0.20）；exit 10 = 机器份额做完，把 needs_human 行交人"
+      convergence: {fingerprint_repeat: null, oscillation_periods: null, plateau_rounds: 2, note: "open 数连续 2 轮不降 → plateau：机器找不到来路了，全部 defer 交人"}
+      budget: {ref: literal, rounds: 4, derivations_per_round: 3}
+      impossible: {signal: divergence_over_half, reporters: [grill_loop.py], note: "分歧率 > 0.5 = PSL 约束太弱，回 /psl 补 Mental Model / Domain Model；不许多数表决"}
+    memory: [.aidlc/<slug>/grill/pending.yaml, .aidlc/<slug>/grill/rounds.jsonl, .aidlc/<slug>/grill/grill-ledger.md, ledger.md, trace.jsonl]
+    fresh_context: true           # 每次推导新上下文；找来路可在主会话，但来路必须落进 PSL 正文
+    trigger: turn_end
+    escalate_to: world
+    signals: [grill_round, grill_plateau, divergence_over_half, pending_needs_human]
 
   - id: ratchet
     level: verification

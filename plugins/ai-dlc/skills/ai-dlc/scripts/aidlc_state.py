@@ -2255,6 +2255,18 @@ def cmd_loops(a):
         elif lid == "hill_climb":
             props = glob.glob("tune/harness-proposals-*.yaml")
             used, note = len(props), "proposal files under tune/"
+        elif lid == "grill":
+            budget = (l.get("stop", {}).get("budget") or {}).get("rounds")
+            gdir = os.path.join(a.root, (st or {}).get("slug") or "", "grill") if st else None
+            rj = os.path.join(gdir, "rounds.jsonl") if gdir else None
+            if rj and os.path.isfile(rj):
+                with open(rj, encoding="utf-8") as f:
+                    recs = [json.loads(x) for x in f if x.strip()]
+                used = len({r.get("round") for r in recs})
+                last = recs[-1] if recs else {}
+                note = f"open={last.get('open')} needs_human={last.get('needs_human')} rate={last.get('divergence_rate')}"
+            else:
+                note = "no rounds.jsonl (grill not run for this slug)"
         pct = (round(100.0 * used / budget) if isinstance(used, (int, float)) and isinstance(budget, (int, float)) and budget else None)
         rows.append({"loop": lid, "level": l.get("level"), "timescale": l.get("timescale"), "generator": l.get("generator"),
                      "verifier": l.get("verifier"), "used": used, "budget": budget, "pct": pct, "trigger": l.get("trigger"), "note": note})

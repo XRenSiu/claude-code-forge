@@ -10,7 +10,7 @@ description: >-
   "G1 要审什么" / 写完 PSL 之后、建 issue 之前。NOT for: 写 PSL 本身（/psl）、从代码抽本体
   （/dos-extract）、写验收契约（/donewhen-extract）、直接实现（那正是本 skill 要拦的）。
 argument-hint: "<PSL-<name>.md 路径> [--n 3] [--out derived/] [--dos dos.yaml] [--auto]"
-version: 0.2.1
+version: 0.3.0
 user-invocable: true
 ---
 
@@ -137,6 +137,26 @@ G2 复核契约时可能发现形态草案缺一条决策（本次：契约要�
    交叉导致二次写入。
 
 模板见 `../ai-dlc/assets/g1_record.md` 的「补签」小节。
+
+### 分歧回流：先物料后人（grill 环，v0.3.0）
+
+分歧集原来只有一个去向：G1 议程。grill 环（`../grill/SKILL.md`）在它前面加了一段**机器份额**：每条分歧
+先回仓库找来路，找到就补 PSL 并重推，找不到才留给人。这样人拿到的议程只剩机器证明了必须问的。
+
+```
+python3 ../grill/scripts/grill_loop.py pending PSL-<名>.md --derived derived/ --out .aidlc/<slug>/grill/
+python3 ../grill/scripts/grill_loop.py resolve <dir> D-1 --from materials --provenance "docs/ARCHITECTURE.md §7" --answer "…"
+python3 ../grill/scripts/grill_loop.py defer   <dir> D-2 --why "在 dos.yaml / decisions.md / docs/ 里没有阈值来源"
+python3 ../grill/scripts/grill_loop.py check   <dir> --record      # 0 converged · 10 human · 20 continue · 1 stop
+```
+
+回流的每一轮都是本 skill 的一轮：**先归档 `round<n-1>/`，再写新一轮**，`round-diff.md` 左侧指向归档，
+divergence.md 声明 `round: n` 并带「裁决 → 落点」表——机器份额的"裁决"就是那条物料来路（`materials: <文件> §N`），
+人份额的是 `g1-record.md` 或 `resolve --from human --by` 的记录。`verify_derived.py --round n` 对两种一视同仁。
+补槽之后是 N 次重推还是 n=1 定向重推：来路改动了 Mental Model / Domain Model 的承重内容就 N 次（形状可能
+又长出新槽），只是给某条决策补了一个引用就 n=1（声明 `未做分歧检验`）。
+
+三条不动的规矩：`--from default` 不存在；分歧率 > 0.5 是"PSL 太弱"回 `/psl`，不是投票；converged 之后 G1 照签。
 
 ## 本 skill 自身的出口门
 

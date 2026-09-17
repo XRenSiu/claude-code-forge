@@ -1,0 +1,37 @@
+{
+  "skill": "plugins/ai-dlc/skills/grill",
+  "tier": "production",
+  "evaluated_layers": [
+    "structural"
+  ],
+  "gate_pass": "static_only",
+  "structural": {
+    "findings": [],
+    "failure_taxonomy": {
+      "underfill": 0,
+      "overfill": 0,
+      "wrong-layer": 0,
+      "wrong-route": 0,
+      "no-exit": 0,
+      "seam-misplacement": 0
+    },
+    "waived_count": 0
+  },
+  "effect": null,
+  "discrimination": null,
+  "fix_list": [
+    "L2: run the loop on one real PSL-track requirement and hold a real G1; compare (a) the human's minutes and (b) the divergence rate at G1 against an interactive grill-me session on the same requirement — that comparison is the only thing that can say the loop saves anything",
+    "the why_human extraction is a regex over the Open Questions bullet; a PSL that puts the why on a continuation line is caught, one that puts it in a footnote is not",
+    "plateau is measured on the open count only; a loop that keeps swapping which items are open would not be seen as stuck"
+  ],
+  "provenance": {
+    "date": "2026-09-17",
+    "evaluator": "AUTHOR-RUN structural pass + plugins/ai-dlc/eval/smoke.sh. NOT a decorrelated read, NOT an L2 run.",
+    "scripts_run": {
+      "grill_loop.py": "pending extracts Q-1 / D-1 / U-1 from the psl-derive fixture; --from default rejected; a provenance naming a file not under --material-root rejected; a resolve in the current round keeps check at continue (unrederived) until a new divergence.md bumps the round; needs_human only → exit 10; all closed + re-derived → exit 0; divergence rate 0.667 → impossible exit 1; open count flat across two recorded rounds → plateau exit 1",
+      "verify_psl.py --afk": "fixture passes; the same PSL without 承重 on its Open Question is rejected; a [elicit:用户 …] provenance is rejected under --afk and accepted without it"
+    },
+    "mutation_tested": "yes — 6 mutants replayed by hand (the repo's smoke.sh --mutate refuses to certify while its scratch-copy baseline is red on 4 environment-bound release/vana expectations): default accepted → 1 red; re-derive requirement dropped → 2 red; impossible threshold dropped → 1 red; missing provenance accepted → 1 red; --afk why check dropped → 1 red; --afk user-elicit check dropped → 1 red. 0 survived.",
+    "smoke": "plugins/ai-dlc/eval/smoke.sh 636 → 662 passed (+26 expectations for grill / verify_psl --afk / loop registration); the 5 pre-existing failures are release/vana git-remote expectations, unchanged"
+  }
+}

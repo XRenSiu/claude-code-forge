@@ -16,7 +16,7 @@
 运行时遵循 SKILL.state（状态文件是充分统计量，脚本校验迁移）与 WikiSkill（账本只增不删）。
 流程对齐 *Spec Loop v1.2 × done_when Pipeline*：U1–U3 / G1、L1–L8 / G2 / G3、X1–X3。
 
-## 二十八个 skill（九环 + 脊柱，见 [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)）
+## 二十九个 skill（九环 + 脊柱，见 [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)）
 
 > v0.6.0：按 loop engineering / graph engineering 的透镜重看（[`docs/proposals/loop-graph-engineering.md`](docs/proposals/loop-graph-engineering.md)）。图（`graph.yaml`）与六个环（`loops.yaml`）成为数据并被 lint；每个环绑到 `/goal` `/loop` Stop hook `/schedule`（`triggers.yaml`）；收敛检测加 oscillation / plateau / impossible（routing v2）；账本有了类型边伴生 `trace.jsonl`；`/pr --pre-review`；新 skill `/tune` 闭合 hill-climbing 环。
 
@@ -34,7 +34,7 @@
 | `/implement` | L6：按卡实现的隔离契约（实现者只见卡 + AC 子集 + 红基线）；白名单执行器；同指纹升级 | `verify_commit.py` · `aidlc_state.py` | 模型可 |
 | `/release` | L8 交付：SemVer 推导、changelog ↔ tag ↔ notes 一致、回滚先于部署、验证绿才完成 | `verify_release.py` | 模型可 |
 | `/retro` | X3 学习：基线 → 回流分布 + 逃逸缺陷因果链 + 契约返工率 → 提案落层（psl / dos / invariant / ac / routing / skill） | `metrics.py` | 模型可 |
-| `/tune`（新） | X3 harness 闭环：六个环的 trace → 环参数提案（routing 预算 / 指纹阈值 / MAX_ROUNDS / 隔离等级 / fix_list，封闭集）→ diff / patch → 人开 PR；样本 < 2 只记基线 | `tune.py` `apply_proposal.py`（只出 diff） | 模型可 |
+| `/tune`（新） | X3 harness 闭环：七个环的 trace → 环参数提案（routing 预算 / 指纹阈值 / MAX_ROUNDS / 隔离等级 / fix_list，封闭集）→ diff / patch → 人开 PR；样本 < 2 只记基线 | `tune.py` `apply_proposal.py`（只出 diff） | 模型可 |
 
 > v0.12.0：按 AWS AI-DLC 2.0 的一手研究对照补五条缺口（[`docs/reports/aidlc-gap-2026-09-07.md`](docs/reports/aidlc-gap-2026-09-07.md)）。
 > **广度成为网格**（`sizing.yaml` v2 的 `stages:` + `never_skippable`，`verify_sizing.py` 九条 lint 让它与
@@ -58,6 +58,7 @@
 |---|---|---|
 | `/psl` | 把一个体验性需求写成完整 PSL（六层 + Open Questions），承重未知不默认填 | `verify_psl.py` |
 | `/psl-derive`（新写） | 读完 PSL 先推三样再谈代码：DOS 提案 / Workflow / 形态草案（每条决策 ← PSL-ID）+ N 次推导的分歧集 = G1 议程 | `verify_derived.py` |
+| `/grill`（v1.8.0 新增） | 无人值守的需求对齐环：`/psl --afk` → N 次推导分歧集 → 待定清单 → 机器先回物料找来路、找不到才交人 → 人只裁 needs_human 行 → 重推 → converged 进 G1。停机靠分歧率与清单计数，不靠"引擎觉得对齐了"；`--from default` 被硬拒 | `grill_loop.py`（pending / resolve / defer / check） · `verify_psl.py --afk` |
 
 ### 横切 X1 · 本体与不变量（引自 looper）
 
@@ -179,7 +180,7 @@ specs/<slug>/               # 归档（metrics.py 的数据源）
 
 ## 诚实声明
 
-所有 28 个 skill 处于 `static_only`：结构过审、脚本在 fixtures 上冒烟（`bash plugins/ai-dlc/eval/smoke.sh`）。
+所有 29 个 skill 处于 `static_only`：结构过审、脚本在 fixtures 上冒烟（`bash plugins/ai-dlc/eval/smoke.sh`）。
 从仓库根或插件目录跑都行（v1.6.0 起冒烟不再依赖 cwd）；条数以套件结尾那一行为准，文档不手抄。
 **行为层对比不再是零**：`eval/effect/` 是带 / 不带 skill 的对照题库与跑分器，已在 1 个任务 × 3 个 arm 上真跑过一轮（`eval/effect/baseline.md`）。那一轮的主要产物是**题目自己的 bug**，不是 arm 的排名。`score.py` 在样本 < 5 个任务时一律回 `insufficient_sample`，不许拿它宣称插件有效。
 v0.6.0 的收敛阈值（指纹历史 6、震荡周期 2–3、plateau 3 轮、sycophancy 0.95）与 tune 的 40% / 50% 规则是文献先验，未在真实运行上校准。
