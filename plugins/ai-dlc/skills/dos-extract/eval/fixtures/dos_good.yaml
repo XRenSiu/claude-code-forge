@@ -6,6 +6,17 @@ objects:
   Memory: { description: "a captured moment", type: entity }
   Era: { description: "a period with scenes aggregating memories", type: aggregate_root }
   TimeRef: { description: "a relative time expression with ambiguity", type: value_object }
+vocabulary:
+  Scene:
+    kind: value
+    of: Era
+    definition: "a moment cluster inside an Era"
+    synonyms: ["scene", "场景"]
+    rejected_names: ["EraScene"]
+  Ambiguity:
+    kind: concept
+    definition: "a TimeRef resolving to two or more Eras"
+    see_also: [R002]
 relationships:
   - { subject: Era, verb: CONTAINS, object: Memory, cardinality: "1:N", inverse: BELONGS_TO }
   - { subject: TimeRef, verb: RESOLVES_TO, object: Era, cardinality: "1:N", inverse: null }

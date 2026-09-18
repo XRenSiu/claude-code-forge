@@ -1,0 +1,73 @@
+# dos-terms.txt — the counted roster behind plugins/ai-dlc/dos.yaml (dos-extract v0.11.0).
+# Format: count_terms.py — `Label = variant, variant, /regex/`. Two consumers:
+#   python3 skills/dos-extract/scripts/count_terms.py --terms dos-terms.txt --root . \
+#       --group docs='docs/**/*.md' --group skills='skills/*/SKILL.md' --group data='skills/*/assets/*.yaml'
+#   python3 skills/dos-extract/scripts/verify_dos.py dos.yaml --decisions decisions.md --terms dos-terms.txt
+# Every label here was put in front of Judgment 1 (dogfood/ring-audit/.dos-extract/01b_docs_terms.md +
+# 02_classification.md + docs/ARCHITECTURE.md §16). The DOS must place every one of them; it is the
+# denominator of `coverage`, not a list of what the DOS happens to contain.
+Run          = Run, 一次交付
+Contract     = 契约, Contract, done_when
+AC           = 判据, /\bAC\b/, acceptance criterion
+WorkUnit     = 卡, 任务卡, /CARD-\d+/, WorkUnit
+Gate         = 门, Gate, /\bG[123]\b/
+Event        = 事件, /\bEvent\b/, ledger row
+Node         = 节点, /\bNode\b/
+Loop         = 环契约, /\bLoop\b/, loops.yaml
+RepoAsset    = 仓库级制品, RepoAsset, X1 制品
+Ring         = 九环, /\bRing\b/
+Layer        = 层, /\bLayer\b/
+Ledger       = 账本, ledger.md
+Trace        = 迹, trace.jsonl
+Graph        = 图, graph.yaml, 执行图
+FailureReport = 失败报告, failure report
+ChangeProposal = 变更提案, change proposal
+Archive      = 归档, /\bArchive\b/
+EvidenceLog  = EvidenceLog, pr-watch
+Lock         = 两段锁, .done_when.lock, /\bLock\b/
+Holdout      = 隐藏集, holdout
+Threshold    = thresholds, threshold_source
+Stage        = 阶段, /\bstage\b/
+Track        = 轨道, PSL 轨, TASK 轨
+SizeTier     = 体量档, /\b[SML] 档/, size_source
+Assumption   = 假设台账, assumption
+Budget       = 预算, budgets
+Signal       = 信号, /\bsignal\b/
+Fingerprint  = 指纹, fingerprint
+Convergence  = 收敛, convergence
+Oscillation  = oscillation, 往复
+Plateau      = plateau
+Impossible   = impossible_under_contract
+Failure      = 失败, fail event
+Reflow       = 回流, reflow
+Waiver       = 豁免, waiver
+EscapeDefect = 逃逸缺陷, escape defect
+Routing      = 路由, routing.yaml, 归层
+Escalation   = 升级, escalate
+Edge         = 边, /\bedge\b/
+NodeRole     = /\brole\b/, 脊柱
+Skill        = /\bskill\b/
+Agent        = /\bagent\b/, 子 agent
+Script       = 脚本, /\bscript\b/
+Asset        = 模板, assets/
+Trigger      = 触发, triggers.yaml
+EdgeGuard    = 闸, 预门, 自动门, pre-gate
+CheckTier    = 三档, /\b[ABC] 档/
+Unevaluated  = 未评估, unevaluated
+StaticOnly   = static_only
+Calibration  = 校准, calibrate
+Artifact     = 产物, /\bartifact\b/
+Implementer  = 实现者, implementer
+Evaluator    = 评估者, evaluator, verifier
+HumanSigner  = 人签, signer
+REQ          = /\bREQ\b/, /REQ-\d+/
+Issue        = /\bissue\b/
+Spec         = spec.md
+PR           = /\bPR\b/, pull request
+Finding      = /\bfinding\b/
+Verdict      = 裁决, /\bverdict\b/
+FourState    = 四态, SPEC_DRIFT, GAMING_RISK
+PSL          = /\bPSL\b/
+DOSProposal  = dos-proposal, 应然本体
+Invariant    = 不变量, invariant
+Territory    = Territory

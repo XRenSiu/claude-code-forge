@@ -10,13 +10,13 @@ description: >-
   "G1 要审什么" / 写完 PSL 之后、建 issue 之前。NOT for: 写 PSL 本身（/psl）、从代码抽本体
   （/dos-extract）、写验收契约（/donewhen-extract）、直接实现（那正是本 skill 要拦的）。
 argument-hint: "<PSL-<name>.md 路径> [--n 3] [--out derived/] [--dos dos.yaml] [--auto]"
-version: 0.3.0
+version: 0.3.1
 user-invocable: true
 ---
 
 # psl-derive — 读完世界，先推三样东西，再谈代码
 
-产物是 `derived/` 下四个文件：`dos-proposal.yaml`（应然本体，与 `/dos-extract` 同一 12 节 schema）、
+产物是 `derived/` 下四个文件：`dos-proposal.yaml`（应然本体，与 `/dos-extract` 同一 13 节 schema；作为先于代码的提案，`verify_derived.py` 以 `--core-only` 核它，不要求 `vocabulary` 层）、
 `workflow.md`（Σ 发生了什么 + φ 消歧判据，不是 Step 1/2/3）、`form-draft.md`（形态草案：每条决策带
 PSL-ID）、`divergence.md`（分歧集）。本文件写：推导产物在世界里是什么、什么算推对了、原语与出口、
 G1 前的门。推几次、先推哪层是你的份额——除非下面说它是依赖顺序。

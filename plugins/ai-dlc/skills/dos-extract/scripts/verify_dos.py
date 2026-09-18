@@ -8,13 +8,37 @@ quality criteria and FLAGS (does not decide) the semantic half.
 
 Usage:
     python verify_dos.py <dos.yaml> [--decisions decisions.md] [--waive Name,Name]
+                                    [--terms terms.txt] [--core-only]
                                     [--max-lines 800] [--max-description-chars 200]
 
 Exit 0 = no rejects (may still carry needs_semantic_review flags and warnings).
 Exit 1 = >=1 REJECT.
 
+A DOS is two layers, and this script checks both:
+  - the CORE MODEL — `objects` (≤7 aggregates, the napkin), `relationships`, `rules`, `composition`;
+  - the UBIQUITOUS LANGUAGE — `vocabulary`: every other term the team says (values, enum members,
+    artifacts, roles, processes, terms owned by a neighbouring context), each with a kind, an owner
+    (`of`), a definition, synonyms and rejected names. Until v0.11.0 the ≤7 cap was the ONLY
+    layer, so the ~40 real terms Judgment 1 sorted into value / enum / composition / external
+    survived only as decisions.md prose — invisible to every closure check downstream, which is
+    what "the DOS extracts a sliver and aligns nothing" looks like from the outside. No ontology
+    methodology caps concepts (Ontology 101 step 3 enumerates exhaustively; METHONTOLOGY and NeOn
+    start from a glossary); they layer, and so does this file.
+
 Mechanical guarantees (a breach is a REJECT — the non-waivable half):
-  - <=7 core objects (else reject; ontology pollution / skipped Judgment 2 or 4)
+  - <=7 core objects (else reject; ontology pollution / skipped Judgment 2 or 4 — or a long-tail
+    term that belongs in `vocabulary`, not in another object)
+  - `vocabulary` present and non-empty (a core model without its language is half a DOS) —
+    waivable only by `--core-only` / a `core_only` waiver, for a to-be proposal derived before code
+  - every vocabulary entry: `kind` in the closed set (dos_closure.VOCABULARY_KINDS), a non-empty
+    `definition`, `of` (required for value / enum) resolving to a declared object / composition /
+    term, `context` (required for external), `status` in active | deprecated | proposed
+  - no term declared twice: a vocabulary key that is also an object / composition key, a synonym
+    that is somebody else's canonical key, a name listed as both synonym and rejected_name
+  - `--terms terms.txt` (count_terms.py format, or one label per line): EVERY counted label
+    resolves through the closure — objects, compositions, vocabulary, synonyms, rejected names,
+    rule ids. This is the coverage gate: a term the docs use N times that the DOS cannot place is
+    the extraction's loss, reported by name. Without --terms coverage is reported as `unmeasured`.
   - every relationship subject/object is a declared object (or one of its synonyms)
   - every relationship carries a cardinality
   - no object name COMPOUNDED on a UI/impl suffix (TopicCard, UserRepository, …) —
@@ -47,6 +71,9 @@ Waivable (REJECT by default, cleared by a recorded human waiver):
     which judgment it survived is recorded with "no reason recorded" beside it.
 
 Semantic half — FLAGGED as needs_semantic_review, never auto-passed:
+  - a label claimed by two concepts (环 → Ring | Loop) is a HOMONYM: the closure refuses it
+    unqualified; confirm the split is real (Judgment 2 / 4) and both entries name their context
+  - a vocabulary entry of kind external names a context absent from bounded_contexts
   - each agent_guidelines.must_not should trace to an anti_pattern or rule (judge call)
   - confirm each object is truly a business object, not UI/impl that slipped Judgment 1
   - every declared `derived_from` property is a MATERIALISED view: confirm what keeps it
@@ -69,7 +96,11 @@ except ImportError:
     sys.stderr.write("verify_dos.py needs PyYAML: pip install pyyaml\n")
     sys.exit(1)
 
-SECTIONS = ["meta", "scope", "objects", "relationships", "rules", "composition",
+import os
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import dos_closure  # noqa: E402  — the one definition of "what a DOS term resolves to"
+
+SECTIONS = ["meta", "scope", "objects", "vocabulary", "relationships", "rules", "composition",
             "behaviors", "bounded_contexts", "agent_guidelines", "anti_patterns",
             "open_questions", "evolution_log"]
 UI_IMPL_SUFFIXES = ("Card", "Modal", "Drawer", "Toast", "Panel", "Repository", "DAO",
@@ -106,6 +137,26 @@ def parse_waivers(path, section_title="naming waivers"):
             name = (m.group(1) or m.group(2)).strip()
             waived[name] = (m.group(3) or "").lstrip("—- ").strip()
     return waived
+
+
+def read_terms(path):
+    """Labels out of a count_terms.py terms file (`Label = v1, v2`) or a one-label-per-line list.
+
+    Returns label -> [variants]. Blank lines and `#` comments are skipped. A `/regex/` variant is
+    kept as text (it is a counting device, not a word to resolve).
+    """
+    terms = {}
+    for raw in open(path, encoding="utf-8"):
+        line = raw.strip()
+        if not line or line.startswith("#"):
+            continue
+        if "=" in line:
+            label, rhs = line.split("=", 1)
+            variants = [v.strip() for v in rhs.split(",") if v.strip()]
+        else:
+            label, variants = line, []
+        terms[label.strip()] = variants
+    return terms
 
 
 def suffix_hit(name):
@@ -148,6 +199,11 @@ def main():
     ap.add_argument("dos")
     ap.add_argument("--decisions", help="decisions.md carrying a `## Naming waivers` section")
     ap.add_argument("--waive", default="", help="comma-separated object names to waive ad hoc")
+    ap.add_argument("--terms", help="count_terms.py terms file (or one label per line): every "
+                                    "label must resolve through the closure — the coverage gate")
+    ap.add_argument("--core-only", action="store_true",
+                    help="accept a DOS without `vocabulary` (a to-be proposal derived before code); "
+                         "reported as mode core_only, never silent")
     ap.add_argument("--max-lines", type=int, default=800,
                     help="warn above this many lines (methodology.md §6; default 800)")
     ap.add_argument("--max-description-chars", type=int, default=200,
@@ -191,7 +247,9 @@ def main():
         else:
             rejects.append(f"{len(obj_names)} objects > 7 — exceed only with a human waiver in decisions.md "
                            f"(a `## Naming waivers` bullet named `object_count`); usually a skipped "
-                           f"Judgment 2 merge or Judgment 4 split: {sorted(obj_names)}")
+                           f"Judgment 2 merge or Judgment 4 split, or a long-tail term that belongs in "
+                           f"`vocabulary` (value / enum / artifact / role / process / external), not in "
+                           f"another object: {sorted(obj_names)}")
 
     # UI/impl-suffixed object names
     for name in sorted(obj_names):
@@ -212,6 +270,125 @@ def main():
                 f"says this is a real domain object, record it under `## Naming waivers` in "
                 f"decisions.md and pass --decisions (or --waive {name}). Renaming a legitimate "
                 f"domain word to satisfy this heuristic breaks downstream closure.")
+
+    # ---- the ubiquitous-language layer -----------------------------------------------------
+    closure = dos_closure.closure_from_dos(dos, a.dos)
+    vocab = dos.get("vocabulary")
+    core_only = a.core_only or ("core_only" in waivers)
+    if not vocab:
+        if core_only:
+            why = waivers.get("core_only") if "core_only" in waivers else "--core-only on the command line"
+            waived_used.append(f"'core_only': no `vocabulary` section — {why or 'no reason recorded'}")
+            flags.append("core_only: this DOS is a core model without its ubiquitous language — "
+                         "downstream closure resolves only object / composition names and rule ids")
+        else:
+            rejects.append("`vocabulary` missing or empty — a DOS is the core model AND the team's "
+                           "whole language. Every term Judgment 1 sorted into value / enum / artifact / "
+                           "role / process / external belongs here with kind, of, definition and "
+                           "synonyms; a term that lives only in decisions.md resolves nowhere. "
+                           "(--core-only / a `core_only` waiver for a to-be proposal derived before code.)")
+        vocab = {}
+    if not isinstance(vocab, dict):
+        rejects.append("`vocabulary` must be a mapping of term -> entry")
+        vocab = {}
+    compositions = dos.get("composition") or {}
+    comp_names = set(compositions) if isinstance(compositions, dict) else set()
+    contexts = set()
+    bc = dos.get("bounded_contexts") or {}
+    if isinstance(bc, dict):
+        if bc.get("current_context"):
+            contexts.add("current")
+        for side in ("upstream_contexts", "downstream_contexts"):
+            for c in (bc.get(side) or []):
+                if isinstance(c, dict) and c.get("name"):
+                    contexts.add(str(c["name"]))
+    for tname, body in vocab.items():
+        tname = str(tname)
+        body = body if isinstance(body, dict) else {}
+        if tname in obj_names or tname in comp_names:
+            rejects.append(f"vocabulary '{tname}' is also declared as an object / composition — one home per term")
+        kind = str(body.get("kind") or "")
+        if kind not in dos_closure.VOCABULARY_KINDS:
+            rejects.append(f"vocabulary '{tname}': kind {kind!r} not in "
+                           f"{' | '.join(dos_closure.VOCABULARY_KINDS)}")
+        desc = str(body.get("definition") or "").strip()
+        if not desc:
+            rejects.append(f"vocabulary '{tname}': definition empty — a term without a definition "
+                           f"is a word, not a concept (ISO 1087: the concept is what the term designates)")
+        elif PLACEHOLDER_RE.match(desc):
+            warnings.append(f"vocabulary '{tname}': definition is still a template placeholder ({desc[:40]!r})")
+        elif len(desc) > a.max_description_chars:
+            warnings.append(f"vocabulary '{tname}': definition {len(desc)} chars > "
+                            f"{a.max_description_chars} — one sentence, the rest is a scope_note")
+        of = body.get("of")
+        if kind in ("value", "enum") and not of:
+            rejects.append(f"vocabulary '{tname}': kind {kind} needs `of` — which object / term owns it")
+        if of:
+            for owner in (of if isinstance(of, list) else [of]):
+                owner = str(owner).strip()
+                if owner == tname or closure.resolve_object(owner) is None:
+                    rejects.append(f"vocabulary '{tname}': `of: {owner}` does not resolve to a declared "
+                                   f"object / composition / term ({closure.why_unresolved(owner)})")
+        ctx = body.get("context")
+        if kind == "external":
+            if not ctx:
+                rejects.append(f"vocabulary '{tname}': kind external needs `context` — the bounded "
+                               f"context that owns the concept")
+            elif str(ctx) not in contexts and str(ctx) != "current":
+                flags.append(f"vocabulary '{tname}': context {ctx!r} is not named in bounded_contexts — "
+                             f"declare the neighbour or fix the name")
+        status = str(body.get("status") or "active")
+        if status not in dos_closure.VOCABULARY_STATUSES:
+            rejects.append(f"vocabulary '{tname}': status {status!r} not in "
+                           f"{' | '.join(dos_closure.VOCABULARY_STATUSES)}")
+        for ref in (body.get("see_also") or []):
+            if closure.resolve_object(str(ref)) is None and closure.resolve_rule(str(ref)) is None:
+                flags.append(f"vocabulary '{tname}': see_also {ref!r} resolves to nothing")
+        syns = {str(x).strip() for x in (body.get("synonyms") or []) if x}
+        rejs = {str(x).strip() for x in (body.get("rejected_names") or []) if x}
+        for both in sorted(syns & rejs):
+            rejects.append(f"vocabulary '{tname}': {both!r} is both a synonym and a rejected name")
+    # a name claimed as synonym / rejected_name by one concept and canonical for another
+    canonical_all = obj_names | comp_names | {str(k) for k in vocab}
+    for label, canons in sorted(closure.ambiguous.items()):
+        if label in canonical_all:
+            others = [c for c in canons if c != label]
+            rejects.append(f"'{label}' is a canonical key and also listed under {others} — a synonym "
+                           f"cannot be somebody else's name (Judgment 2: merge, or pick one home)")
+        else:
+            flags.append(f"homonym '{label}' → {' | '.join(canons)}: the closure refuses it unqualified. "
+                         f"Confirm the split is real (Judgment 2/4) and record how the team qualifies it")
+    for layer in (objects if isinstance(objects, dict) else {}, compositions if isinstance(compositions, dict) else {}, vocab):
+        for name, body in layer.items():
+            if not isinstance(body, dict):
+                continue
+            syns = {str(x).strip() for x in (body.get("synonyms") or []) if x}
+            rejs = {str(x).strip() for x in (body.get("rejected_names") or []) if x}
+            for both in sorted(syns & rejs):
+                if name not in vocab:
+                    rejects.append(f"'{name}': {both!r} is both a synonym and a rejected name")
+
+    # ---- coverage: every counted term must land somewhere ----------------------------------
+    coverage = {"status": "unmeasured", "terms": 0, "resolved": 0, "unplaced": []}
+    if a.terms:
+        try:
+            terms = read_terms(a.terms)
+        except OSError as e:
+            sys.stderr.write(f"REJECT: cannot read --terms: {e}\n")
+            sys.exit(1)
+        unplaced = []
+        for label, variants in terms.items():
+            cands = [label] + [v for v in variants if not (v.startswith("/") and v.endswith("/"))]
+            hit = next((c for c in cands if closure.resolve_object(c) or closure.resolve_rule(c)), None)
+            if hit is None:
+                unplaced.append(label)
+        coverage = {"status": "measured", "terms": len(terms), "resolved": len(terms) - len(unplaced),
+                    "unplaced": unplaced}
+        if unplaced:
+            rejects.append(f"coverage: {len(unplaced)}/{len(terms)} counted terms resolve nowhere in the "
+                           f"DOS — {unplaced}. Each needs a home: an object, a composition, a vocabulary "
+                           f"entry, a synonym or a rejected_name. A term the team counts and the DOS "
+                           f"cannot place is the extraction's loss, not the team's noise.")
 
     # relationships reference declared objects (or a synonym) + carry cardinality
     for rel in (dos.get("relationships") or []):
@@ -293,6 +470,11 @@ def main():
         "line_count": n_lines,
         "object_count": len(obj_names),
         "synonym_count": len(synonyms),
+        "vocabulary_count": len(vocab),
+        "resolvable_labels": len(closure.vocabulary("both")),
+        "homonyms": {k: v for k, v in sorted(closure.ambiguous.items())},
+        "mode": "core_only" if core_only and not dos.get("vocabulary") else "two_layer",
+        "coverage": coverage,
         "derived_properties": derived_props,
         "relationship_count": len(dos.get("relationships") or []),
         "rejects": rejects,

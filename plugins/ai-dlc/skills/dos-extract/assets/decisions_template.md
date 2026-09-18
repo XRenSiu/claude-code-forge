@@ -133,6 +133,11 @@ looks free and is not: every downstream closure check (`/issue --dos`,
 `lint_cards.py --dos`) resolves the operator's actual vocabulary against this DOS, so
 the rename either breaks closure or forces a `synonyms:` entry anyway.
 
+Two more bullets the script reads under this heading: `object_count` (an 8th object,
+with the Judgment 2 / 4 reasoning) and `core_only` (a DOS deliberately shipped without
+its `vocabulary` layer — legitimate only for a to-be proposal derived before code; an
+as-is extraction that waives this is saying it did not finish).
+
 - `<Name>` — Judgment 1 step 1 result and why: `<it is describable without a screen;
   the docs define it as …>`. Whole word, not a `*<Name>` compound. Docs/code evidence:
   `<counts + paths>`.
@@ -202,21 +207,30 @@ canonical name choice.
 >   of thing this is. The DOS is supposed to constrain the team's vocabulary;
 >   `Item` constrains nothing.
 
-### Demotions to value objects
+### Placements — where every non-core term landed (v0.11.0)
 
-Objects that were considered as top-level but determined to be value-typed
-(immutable, identity-by-value) and therefore live as fields of other objects:
+"Demoted", "absorbed", "value of X" are placements, not exits. Each term that did
+not become one of the ≤7 objects has a home in `dos.yaml`, and this table is the
+audit of that: a reviewer must be able to take any word from the inventory and find
+it in this table and in the file. (`decisions.md` records *why*; it is not *where*.)
 
-- `<TermName>` — demoted to a field of `<ParentObject>`. Reason: no independent
-  lifecycle; identical instances are interchangeable.
+| Term | Judgment 1 verdict | Home in `dos.yaml` | `of` / owner | Note |
+|---|---|---|---|---|
+| `<TermName>` | value | `vocabulary.<TermName>` kind value | `<ParentObject>` | no independent lifecycle; identical instances interchangeable |
+| `<TermName>` | enum member | `vocabulary.<TermName>` kind enum | `<Owner>.<field>` | closed set of `<n>` values |
+| `<TermName>` | derived container | `composition.<TermName>` | — | derives from `<source objects and rules>` |
+| `<TermName>` | another context's noun | `vocabulary.<TermName>` kind external | context `<name>` | referenced here as `<how>`; not modelled |
+| `<UiOrImplName>` | UI / impl of `<Object>` | `objects.<Object>.rejected_names` | — | resolves, flagged wherever used |
+| `<ForeignWord>` | imported vocabulary | `objects.<Object>.synonyms` | — | 术语映射 row, now a closure source |
+| `<Word>` | homonym (`<A>` and `<B>`) | `synonyms` on both; closure refuses the bare word | — | recorded in `anti_patterns` |
 
-### Demotions to compositions
+### Coverage (the exit's number)
 
-Objects that were considered as top-level but determined to be derived views:
-
-- `<TermName>` — demoted to `composition`. Derives from: `<source objects and
-  rules>`. Reason: no independent identity; can be recomputed from existing
-  objects.
+- **Terms file**: `<path to the count_terms.py terms file — the roster's denominator>`
+- **Command**: `verify_dos.py dos.yaml --decisions decisions.md --terms <terms file>`
+- **Result**: `<resolved>/<terms>` resolved; unplaced: `<list, or none>`
+- If anything is unplaced, it is either placed before presenting, or it is pure framework
+  noise moved to the pruning table above with a reason. There is no third bucket.
 
 ### Bounded Context splits (Judgment 4)
 
@@ -283,9 +297,9 @@ Run against the evaluation criteria from `references/methodology.md`:
 
 | Criterion | Result | Notes |
 |-----------|--------|-------|
-| Simplicity (≤7 objects) | `<pass / fail>` | `<count> objects` |
+| Simplicity (≤7 core objects) | `<pass / fail>` | `<count> objects; <count> vocabulary terms` |
 | Consistency | `<pass / fail>` | `<any inconsistencies found>` |
-| Completeness | `<pass / fail>` | `<features without DOS coverage>` |
+| Completeness (term coverage, `--terms`) | `<resolved>/<terms>` | `<unplaced labels, or none>`; features without a relationship: `<…>` |
 | Evolvability | `<pass / fail>` | `<count> open questions; healthy?` |
 | Executability | `<pass / fail>` | `<vague guidelines, if any>` |
 | Learnability | `<pass / fail>` | `<dos.yaml line count>` |

@@ -927,6 +927,23 @@ expect "named derived_from passes and is reported (I-37)" 0 bash -c "python3 '$D
 # dogfood 2026-09-05 (I-14): methodology.md §6's size budget was prose only; nothing measured it.
 expect "over-budget dos.yaml warns without changing the exit code (I-14)" 0 bash -c "python3 '$DXS/verify_dos.py' '$FXO/dos_good.yaml' --max-lines 5 | python3 -c \"import json,sys; d=json.load(sys.stdin); assert d['exit']=='MECHANICALLY_CLEAN', d['rejects']; assert any('lines >' in w for w in d['warnings']), d['warnings']\""
 expect "empty / placeholder / over-long object descriptions each warn (I-14)" 0 bash -c "python3 '$DXS/verify_dos.py' '$FXO/dos_bad_descriptions.yaml' | python3 -c \"import json,sys; w=json.load(sys.stdin)['warnings']; assert any('description empty' in x for x in w), w; assert any('placeholder' in x for x in w), w; assert any('chars >' in x for x in w), w\""
+# v0.11.0 — the DOS is two layers. The ≤7 cap used to be the ONLY layer, so ~40 real terms per
+# dogfood run survived only as decisions.md prose: invisible to every closure downstream.
+echo "== dos-extract / verify_dos.py (vocabulary layer, v0.11.0)"
+expect "vocab-layer: a core model with no \`vocabulary\` rejects" 1 py "$DXS/verify_dos.py" "$FXO/dos_no_vocabulary.yaml"
+expect "vocab-layer: --core-only accepts it and reports mode core_only, never silently" 0 bash -c "python3 '$DXS/verify_dos.py' '$FXO/dos_no_vocabulary.yaml' --core-only | python3 -c \"import json,sys; d=json.load(sys.stdin); assert d['mode']=='core_only', d['mode']; assert any('core_only' in w for w in d['waived']), d['waived']\""
+expect "vocab-layer: bad kind / empty definition / unresolved of / external without context = 4 rejects" 0 bash -c "python3 '$DXS/verify_dos.py' '$FXO/dos_vocab_bad.yaml' | python3 -c \"import json,sys; d=json.load(sys.stdin); r=d['rejects']; assert d['exit']=='REJECT'; assert len(r)==4, r; assert any('widget' in x for x in r) and any('definition empty' in x for x in r) and any('of: Feeling' in x for x in r) and any('needs \\\`context\\\`' in x for x in r), r\""
+expect "vocab-layer: a homonym (环 → Loop | Ring) is flagged, not rejected, and the closure refuses the bare word" 0 bash -c "python3 '$DXS/verify_dos.py' '$FXO/dos_vocab_homonym.yaml' | python3 -c \"import json,sys; d=json.load(sys.stdin); assert d['homonyms']=={'环':['Loop','Ring']}, d['homonyms']; assert any('homonym' in f for f in d['needs_semantic_review']), d['needs_semantic_review']\" && cd '$DXS' && python3 -c \"from dos_closure import load_closure; c=load_closure('$FXO/dos_vocab_homonym.yaml'); assert c.resolve_object('环') is None; assert c.why_unresolved('环').startswith('ambiguous'); assert c.resolve_object('九环')=='Ring' and c.resolve_object('指纹')=='Fingerprint'\""
+expect "vocab-layer: a synonym that is somebody else's canonical key rejects" 1 py "$DXS/verify_dos.py" "$FXO/dos_vocab_key_clash.yaml"
+expect "vocab-layer: --terms coverage — every counted label resolves through some layer" 0 bash -c "python3 '$DXS/verify_dos.py' '$FXO/dos_good.yaml' --terms '$FXO/terms_covered.txt' | python3 -c \"import json,sys; c=json.load(sys.stdin)['coverage']; assert c['status']=='measured' and c['resolved']==c['terms']==6, c\""
+expect "vocab-layer: --terms coverage names the unplaced labels and rejects" 0 bash -c "python3 '$DXS/verify_dos.py' '$FXO/dos_good.yaml' --terms '$FXO/terms_gap.txt' | python3 -c \"import json,sys; d=json.load(sys.stdin); c=d['coverage']; assert d['exit']=='REJECT', d['rejects']; assert c['unplaced']==['Timeline','Mood'], c\""
+expect "vocab-layer: closure resolves vocabulary terms, their synonyms and rejected names" 0 bash -c "cd '$DXS' && python3 -c \"from dos_closure import load_closure; c=load_closure('$FXO/dos_good.yaml'); assert c.resolve_object('Scene')=='Scene' and c.resolve_object('场景')=='Scene'; assert c.resolve_object('EraScene')=='Scene' and c.via_rejected('EraScene'); d=c.describe('场景'); assert d['kind']=='value' and d['of']=='Era' and d['via']=='synonym', d; assert c.unresolved(['Scene','Nope'])==['Nope']\""
+expect "vocab-layer: dos_template.yaml carries the vocabulary section with kind / of / rejected_names / context" 0 bash -c "python3 -c \"
+import yaml
+t=yaml.safe_load(open('$S/dos-extract/assets/dos_template.yaml'))
+v=t['vocabulary']['ExampleTerm']
+for k in ('kind','of','definition','synonyms','rejected_names','context','status'): assert k in v, k
+assert list(t).index('vocabulary')==list(t).index('objects')+1, list(t)\""
 
 echo "== dos-extract / inventory.py (structured channel)"
 INV="$TMP/inv"; mkdir -p "$INV/a/b/schema"
@@ -980,10 +997,14 @@ expect "vocab: unknown 缺省不计入退出码，--count-unknown 才计入" 0 p
 expect "vocab: --count-unknown 让频次佐证的生词计入" 1 py "$DXS/verify_vocabulary.py" --dos "$VFX/dos.yaml" "$VFX/artifacts/infra.md" --count-unknown --out "$TMP/vocab_inf1.yaml"
 expect "vocab: decisions.md 的 Vocabulary waivers 段清掉它们（与 verify_dos 同一套约定）" 0 py "$DXS/verify_vocabulary.py" --dos "$VFX/dos.yaml" "$VFX/artifacts/infra.md" --count-unknown --waivers "$VFX/decisions.md" --out "$TMP/vocab_inf2.yaml"
 expect "vocab: 反向信号——本体声明了没人用的词被报出来" 0 bash -c "python3 '$DXS/verify_vocabulary.py' --dos '$VFX/dos.yaml' '$VFX/artifacts/clean.md' --out '$TMP/vocab_un.yaml' --json > '$TMP/vocab_un.json' && python3 -c \"import json; d=json.load(open('$TMP/vocab_un.json')); u=[x['label'] for x in d['unused_ontology']]; assert 'R002' not in u and 'Account' not in u, u\""
-expect "vocab: 真实 dogfood 本体上计入的发现为 0（阈值不是靠噪音撑起来的）" 0 bash -c "python3 '$DXS/verify_vocabulary.py' --dos '$ROOT/dogfood/ring-audit/dos.yaml' '$ROOT/dogfood/ring-audit/done_when.yaml' '$ROOT/dogfood/ring-audit/cards/CARD-*.yaml' '$ROOT/dogfood/ring-audit/issue-body.md' '$ROOT/dogfood/ring-audit/pr-body.md' --out '$TMP/vocab_dog.yaml' --json > '$TMP/vocab_dog.json'; [ \$? = 0 ] || exit 9; python3 -c \"import json; d=json.load(open('$TMP/vocab_dog.json')); assert d['counted_findings']==0, [f['term'] for f in d['findings'] if f['counted']]; n=[f['term'] for f in d['findings']]; assert 'Ring' in n and 'Part' in n, n\""
+expect "vocab: 真实 dogfood 本体上计入的发现为 0（阈值不是靠噪音撑起来的）" 0 bash -c "python3 '$DXS/verify_vocabulary.py' --dos '$ROOT/dogfood/ring-audit/dos.yaml' '$ROOT/dogfood/ring-audit/done_when.yaml' '$ROOT/dogfood/ring-audit/cards/CARD-*.yaml' '$ROOT/dogfood/ring-audit/issue-body.md' '$ROOT/dogfood/ring-audit/pr-body.md' --out '$TMP/vocab_dog.yaml' --json > '$TMP/vocab_dog.json'; [ \$? = 0 ] || exit 9; python3 -c \"import json; d=json.load(open('$TMP/vocab_dog.json')); assert d['counted_findings']==0, [f['term'] for f in d['findings'] if f['counted']]; n=[f['term'] for f in d['findings']]; assert 'Part' in n, n; assert 'Ring' not in n, ('v0.11.0: Ring is declared as a composition, so it resolves instead of surfacing as an unknown', n)\""
 # 团队实测：从插件根随手跑一次，会在仓库根留下一个没人要的 vocabulary-facts.yaml。
 # --out 缺省不落地，这条盯着它。
 expect "vocab: 不给 --out 时不在工作区落文件" 0 bash -c "cd \"$TMP\" && rm -f vocabulary-facts.yaml && python3 '$DXS/verify_vocabulary.py' --dos '$VFX/dos.yaml' '$VFX/artifacts/nearmiss.md' >/dev/null; [ \$? = 1 ] || exit 9; [ ! -e vocabulary-facts.yaml ] || exit 8"
+# v0.11.0 — with the vocabulary layer the sensor gains its two highest-precision findings: a
+# declared REJECTED name in prose, and a homonym the DOS refuses unqualified.
+expect "vocab: a rejected name in prose is a counted finding whose neighbour is declared, not guessed" 0 bash -c "python3 '$DXS/verify_vocabulary.py' --dos '$VFX/dos_two_layer.yaml' '$VFX/artifacts/rejected.md' --json > '$TMP/vocab_rej.json'; [ \$? = 1 ] || exit 9; python3 -c \"import json; d=json.load(open('$TMP/vocab_rej.json')); t={x['term']:x for x in d['findings']}; assert t['Txn']['severity']=='rejected_name' and t['Txn']['counted'] and t['Txn']['neighbour']=='BankingTransaction', t.get('Txn'); assert t['Window']['severity']=='ambiguous' and t['Window']['counted'], t.get('Window'); assert d['ontology']['vocabulary']==3 and d['ontology']['rejected_names']==1, d['ontology']\""
+expect "vocab: prose that speaks the vocabulary layer's own terms has 0 counted findings" 0 bash -c "python3 '$DXS/verify_vocabulary.py' --dos '$VFX/dos_two_layer.yaml' '$VFX/artifacts/vocab_ok.md' --json > '$TMP/vocab_ok.json'; [ \$? = 0 ] || exit 9; python3 -c \"import json; d=json.load(open('$TMP/vocab_ok.json')); assert d['counted_findings']==0, [f['term'] for f in d['findings'] if f['counted']]; u=[x['label'] for x in d['unused_ontology']]; assert 'Posting' not in u and 'ClearingWindow' not in u, u\""
 
 echo "== dos-extract / reconcile_dos.py + dos_closure.py (X1 as-is ↔ to-be)"
 # dogfood 2026-09-05 (I-49): the reconciliation existed only as prose in the G1 record, so the
@@ -1817,6 +1838,7 @@ d = pathlib.Path(sys.argv[1])
 objs = "\n".join(f"  Obj{i}:\n    description: \"o{i}\"\n    type: \"entity\"" for i in range(1, 9))
 (d / "dos8.yaml").write_text(
     "objects:\n" + objs + "\nrelationships: []\nrules: []\n"
+    "vocabulary:\n  Bit:\n    kind: value\n    of: Obj1\n    definition: \"a part of Obj1\"\n"
     "open_questions:\n  - id: Q1\n    question: \"is this really eight things?\"\n")
 (d / "waived.md").write_text(
     "## Naming waivers\n- `object_count` — 8 objects; Judgment 2 found nothing to merge.\n")
@@ -1832,6 +1854,10 @@ expect "X1: the shipped dos.yaml passes its own pre-gate with the recorded waive
   py "$S/dos-extract/scripts/verify_dos.py" "$ROOT/dos.yaml" --decisions "$ROOT/decisions.md"
 expect "X1: the shipped dos.yaml does NOT pass without decisions.md (the waiver is load-bearing)" 1 \
   py "$S/dos-extract/scripts/verify_dos.py" "$ROOT/dos.yaml"
+# v0.11.0 / DOS 0.4.0: the plugin's own language is measured, not assumed. Every label of the counted
+# roster resolves through some layer; the two declared homonyms are the only ones.
+expect "X1: the shipped dos.yaml places every label of its counted roster (coverage 65/65) and declares exactly its two homonyms" 0 bash -c "python3 '$S/dos-extract/scripts/verify_dos.py' '$ROOT/dos.yaml' --decisions '$ROOT/decisions.md' --terms '$ROOT/dos-terms.txt' | python3 -c \"import json,sys; d=json.load(sys.stdin); c=d['coverage']; assert d['exit']=='MECHANICALLY_CLEAN', d['rejects']; assert c['status']=='measured' and c['unplaced']==[] and c['terms']>=60, c; assert set(d['homonyms'])=={'环','Tier'}, d['homonyms']; assert d['vocabulary_count']>=50, d['vocabulary_count']\""
+expect "X1: the counted roster itself is real — every label hits the plugin's docs / skills / data at least once" 0 bash -c "cd '$ROOT' && python3 skills/dos-extract/scripts/count_terms.py --terms dos-terms.txt --root . --group docs='docs/**/*.md' --group skills='skills/*/SKILL.md' --group data='skills/*/assets/*.yaml' --json > /dev/null"
 expect "X1: the shipped invariant card passes verify_card against the shipped ontology" 0 \
   py "$S/invariant-extract/scripts/verify_card.py" "$ROOT/invariants/ai-dlc-plugin.card.yaml" --dos "$ROOT/dos.yaml"
 expect "X1: the shipped card keeps every hard invariant propose-only (never auto-installed)" 0 \

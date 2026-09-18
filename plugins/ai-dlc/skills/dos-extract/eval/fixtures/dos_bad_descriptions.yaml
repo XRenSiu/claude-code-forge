@@ -13,6 +13,11 @@ objects:
   TimeRef:
     description: "a relative time expression whose resolution may be ambiguous across eras, carrying the raw user string, the parsed grammar node, the candidate era set, the confidence of each candidate, the tie-break policy applied, and the audit record of which policy fired"
     type: value_object
+vocabulary:
+  Scene:
+    kind: value
+    of: Era
+    definition: "a moment cluster inside an Era"
 relationships:
   - { subject: TimeRef, verb: RESOLVES_TO, object: Era, cardinality: "1:N", inverse: null }
 rules:

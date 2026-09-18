@@ -6,6 +6,11 @@ objects:
   Node: { description: "a declared execution-graph node", type: entity }
   Event: { description: "an append-only ledger row", type: entity }
   Gate: { description: "a human-signed verdict", type: entity }
+vocabulary:
+  Waiver:
+    kind: event
+    of: Event
+    definition: "an explicit, recorded skip of a prerequisite"
 relationships:
   - { subject: Node, verb: HOLDS, object: Gate, cardinality: "1:1", inverse: HELD_BY }
 rules:

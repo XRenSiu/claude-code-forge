@@ -15,6 +15,11 @@ objects:
   Part:
     description: "a skill, agent or script that fills a ring"
     type: entity
+vocabulary:
+  Gap:
+    kind: value
+    of: Ring
+    definition: "a Ring position no Part fills"
 relationships:
   - { subject: Part, verb: FILLS, object: Ring, cardinality: "N:1", inverse: FILLED_BY }
 rules:

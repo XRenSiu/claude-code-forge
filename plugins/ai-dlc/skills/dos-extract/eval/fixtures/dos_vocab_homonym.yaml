@@ -1,0 +1,35 @@
+# v0.11.0: the dogfood homonym. 环 is a synonym of the object Loop AND of the composition Ring.
+# This is TRUE about the docs, so it is recorded, not rejected: verify_dos flags it and the closure
+# refuses the bare word (resolve_object("环") -> None) until a consumer qualifies it.
+# A second, different defect is a REJECT: `Cycle` is Loop's synonym and also a vocabulary key.
+meta: { dos_version: "0.1.0", product: "ai-dlc", bounded_context: "delivery", owner: "xrensiu", status: draft }
+scope: { in_scope: "loops and rings", out_of_scope: "delivery" }
+objects:
+  Loop:
+    description: "a cycle contract: generator, verifier, four stop keys"
+    type: entity
+    synonyms: ["环", "环契约"]
+  Node: { description: "a participant in the execution graph", type: entity }
+vocabulary:
+  Fingerprint:
+    kind: value
+    of: Node
+    definition: "a stable digest of a failure output"
+    synonyms: ["指纹"]
+relationships:
+  - { subject: Node, verb: PARTICIPATES_IN, object: Loop, cardinality: "N:1", inverse: ENCLOSES }
+rules:
+  - { id: R001, statement: "a Loop's generator and verifier differ", rationale: "no self-verification", enforced_by: system }
+composition:
+  Ring:
+    description: "the docs' R0–R8 grouping of Nodes by role"
+    synonyms: ["环", "九环"]
+    derived_from: ["Node grouped by role"]
+    is_persistent: false
+behaviors: []
+bounded_contexts: { current_context: delivery }
+agent_guidelines: { must: [], should: [], must_not: [] }
+anti_patterns: []
+open_questions:
+  - { id: Q001, question: "retire Ring or qualify 环?", raised_at: "2026-09-05", raised_by: "dos-extract", owner: "xrensiu", deadline: "2026-09-30" }
+evolution_log: []

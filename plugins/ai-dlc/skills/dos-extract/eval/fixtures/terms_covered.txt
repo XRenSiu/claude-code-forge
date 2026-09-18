@@ -1,0 +1,7 @@
+# count_terms.py format — every label lands in dos_good.yaml through some layer
+Memory   = memory, 记忆
+Era      = era, 时代
+TimeRef  = time ref, /TimeRef\w*/
+Scene    = scene, 场景
+Ambiguity = ambiguous
+R002

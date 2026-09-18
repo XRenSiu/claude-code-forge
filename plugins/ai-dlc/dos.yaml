@@ -1,6 +1,6 @@
 # =============================================================================
-# Design Ontology Spec — ai-dlc plugin (as-is / 现状本体), extracted 2026-09-05, amended 2026-09-10
-# Schema: plugins/ai-dlc/skills/dos-extract/assets/dos_template.yaml (12 sections)
+# Design Ontology Spec — ai-dlc plugin (as-is / 现状本体), extracted 2026-09-05, amended 2026-09-10 / 09-12 / 09-18
+# Schema: plugins/ai-dlc/skills/dos-extract/assets/dos_template.yaml (13 sections: core model + vocabulary)
 # Companion audit trail: decisions.md (every non-trivial call traced to Judgment 1–4)
 # Signal priority: docs (README, docs/*.md) outrank code for naming; data assets
 # (state.schema.json, graph.yaml, loops.yaml, routing.yaml) were read as the code side.
@@ -72,7 +72,7 @@ reuse:
   internal_references:
     - name: "looper v0.2.0 — dos-extract / psl / invariant-extract"
       url: "plugins/ai-dlc/skills/dos-extract/SKILL.md"
-      adopted_concepts: ["this 12-section DOS schema", "R00x constitution ids", "□/◊ split (resident invariant vs done_when)"]
+      adopted_concepts: ["this 13-section DOS schema (core model + vocabulary layer)", "R00x constitution ids", "□/◊ split (resident invariant vs done_when)"]
     - name: "qanat .claude/skills — donewhen-extract / spec-compile / calibrate"
       url: "plugins/ai-dlc/skills/donewhen-extract/SKILL.md#术语映射"
       adopted_concepts: ["Run (一次执行) as the lifecycle instance", "Contract as the human-signed gate asset", "R001 evaluator/executor isolation", "R002 gate assets only humans sign"]
@@ -251,7 +251,7 @@ objects:
   Loop:
     description: "A cycle contract: who generates, who verifies, and the four ways it stops."
     type: "entity"
-    synonyms: ["环契约", "loops.yaml entry", "七个环 (card_retry · grill · ratchet · acceptance_ratchet · review_loop · lifecycle · hill_climb)"]
+    synonyms: ["环", "环契约", "loops.yaml entry", "七个环 (card_retry · grill · ratchet · acceptance_ratchet · review_loop · lifecycle · hill_climb)"]
     properties:
       id: { type: "string", required: true }
       level: { type: "enum", required: true, description: "agent | verification | event | hill_climbing (LangChain four layers)" }
@@ -298,7 +298,364 @@ objects:
       Never written by a Run, never copied into .aidlc/.
 
 # -----------------------------------------------------------------------------
-# 4. Relationships
+# 4. Vocabulary (the ubiquitous language — every term the team says that is not one of
+#    the eight objects; v0.4.0). Judgment 1 decided each term's kind; this is where it
+#    lives. kinds: value · enum · event · command · policy · artifact · role · process ·
+#    external · concept. `of` = owner (SKOS broader / ISO partitive); `rejected_names` =
+#    words the team decided against (they resolve, and consumers flag them); a synonym
+#    declared on two entries is a homonym the closure refuses unqualified (环, Tier).
+#    Definitions quote docs/ARCHITECTURE.md §16 术语 where it has one.
+# -----------------------------------------------------------------------------
+vocabulary:
+  # ---- Contract's parts -----------------------------------------------------------------
+  AC:
+    kind: "value"
+    of: "Contract"
+    definition: "验收条目，契约的最小单位；机械档（观察 / 前置 / 期望）或人判档（陈述 / 裁决人 / 证据）"
+    synonyms: ["判据", "acceptance criterion", "acceptance criteria", "AC v2", "acceptance item", "AC-nnn"]
+    see_also: ["REQ", "R002", "R010"]
+    source: "docs/ARCHITECTURE.md §16 术语"
+  Lock:
+    kind: "value"
+    of: "Contract"
+    definition: "两段锁：G2 锁判据；测试写完后锁测试与清单（.done_when.lock, stage g2 | l5）"
+    synonyms: ["锁", "两段锁", ".done_when.lock", "two-stage lock", "l5 lock", "g2 lock"]
+    see_also: ["Gate", "R004", "ChangeProposal"]
+    source: "docs/ARCHITECTURE.md §16 术语"
+  Holdout:
+    kind: "value"
+    of: "Contract"
+    definition: "冻结判据的变体，实现者不可读；calibrate 的 holdout"
+    synonyms: ["隐藏集", "hidden set", "holdout variant", "hidden variant"]
+    see_also: ["Calibration", "R005"]
+    source: "docs/ARCHITECTURE.md §16 术语"
+  Threshold:
+    kind: "value"
+    of: "Contract"
+    definition: "本身就是判据的数字（coverage、mutation kill rate、p95 …），带 threshold_source"
+    synonyms: ["thresholds", "threshold_source", "阈值"]
+    see_also: ["R010"]
+
+  # ---- Run's parts ----------------------------------------------------------------------
+  Stage:
+    kind: "enum"
+    of: "Run"
+    definition: "Run 所在的十五个阶段之一（ORDER；与 graph.yaml.stages 互相断言相等）"
+    synonyms: ["阶段", "stage node (Node.kind=stage)", "ORDER"]
+    see_also: ["Node", "R009"]
+  Track:
+    kind: "enum"
+    of: "Run"
+    definition: "PSL 轨 / TASK 轨：形态未定（先建世界）/ 形态已定（直接进契约）；词表闭包失败是客观转轨触发"
+    synonyms: ["轨道", "PSL 轨", "TASK 轨", "psl track", "task track", "dual track", "双轨"]
+    see_also: ["RepoAsset", "Gate"]
+    source: "docs/ARCHITECTURE.md §16 术语"
+  SizeTier:
+    kind: "value"
+    of: "Run"
+    definition: "体量档 S / M / L（intake.size + size_source）：决定 X1 制品、校准与回流预算要求到哪一级"
+    synonyms: ["体量档", "档位", "size tier", "S/M/L", "sizing", "Tier"]
+    scope_note: "不是三档 A/B/C（见 CheckTier）。裸词 Tier 两边都在用，闭包拒绝不带限定的 Tier。"
+    see_also: ["CheckTier", "R019"]
+  Assumption:
+    kind: "value"
+    of: "Run"
+    definition: "假设台账的一行：{id, req, risk, signed_by, verify_at, status open | verified | accepted_risk}"
+    synonyms: ["假设台账", "假设", "assumption ledger"]
+    see_also: ["Gate"]
+  Budget:
+    kind: "value"
+    of: ["Loop", "Run"]
+    definition: "一层 / 一环允许的回流或重试次数；只由脚本推进（Run.counters、Loop.stop.budget、routing.yaml）"
+    synonyms: ["预算", "budgets", "card_retries", "plan_reflows", "task_reflows", "budget_exhausted"]
+    see_also: ["R006", "R011", "Layer"]
+
+  # ---- Event's parts and kinds -----------------------------------------------------------
+  Signal:
+    kind: "value"
+    of: "Event"
+    definition: "失败事件携带的封闭集信号（routing.yaml），路由表据此归层"
+    synonyms: ["信号", "routing signal", "signal"]
+    see_also: ["Routing", "Layer"]
+  Fingerprint:
+    kind: "value"
+    of: "Event"
+    definition: "失败输出的稳定摘要；同指纹重复 = 无进展"
+    synonyms: ["指纹", "fingerprint", "fingerprint_history"]
+    see_also: ["Convergence", "R012"]
+    source: "docs/ARCHITECTURE.md §16 术语"
+  Convergence:
+    kind: "value"
+    of: "Event"
+    definition: "fail 事件上的收敛判定：none | repeat | oscillation | plateau | budget | impossible | handler=human"
+    synonyms: ["收敛", "convergence block", "convergence"]
+    see_also: ["Oscillation", "Plateau", "R012"]
+  Oscillation:
+    kind: "enum"
+    of: "Convergence"
+    definition: "三种“再试也没用”之一：指纹 A B A B 往复（周期 2–3）→ 归 plan 层"
+    synonyms: ["往复", "oscillation", "oscillation_detected"]
+    source: "docs/ARCHITECTURE.md §16 术语"
+  Plateau:
+    kind: "enum"
+    of: "Convergence"
+    definition: "三种“再试也没用”之一：分数不涨 → 归 plan 层"
+    synonyms: ["不涨", "plateau"]
+    source: "docs/ARCHITECTURE.md §16 术语"
+  Impossible:
+    kind: "enum"
+    of: "Convergence"
+    definition: "三种“再试也没用”之一：契约下不可能；只能由验证者 Node 或人报告 → 归 task 层，走变更提案"
+    synonyms: ["impossible_under_contract", "契约下不可能"]
+    see_also: ["R012", "ChangeProposal"]
+    source: "docs/ARCHITECTURE.md §16 术语"
+  Failure:
+    kind: "event"
+    of: "Event"
+    definition: "kind=fail 的 Event：一次被记账、带信号与指纹、经路由归层的失败"
+    synonyms: ["失败", "fail event", "card_test_fail"]
+    see_also: ["Reflow", "Routing"]
+  Reflow:
+    kind: "event"
+    of: "Event"
+    definition: "kind=reflow 的 Event：预算耗尽或收敛判定触发的向外层升级，带失败报告，从不重试"
+    synonyms: ["回流", "reflow event", "回流事件"]
+    see_also: ["Escalation", "FailureReport", "R011"]
+  Waiver:
+    kind: "event"
+    of: "Event"
+    definition: "一次被记录的前置条件跳过：{stage, reason, at, unmet}；--force 必带 --reason，静默跳过不存在"
+    synonyms: ["豁免", "waiver event", "--force --reason"]
+    see_also: ["R009", "R019"]
+  EscapeDefect:
+    kind: "event"
+    of: "Event"
+    definition: "合入后才发现的缺陷（kind=escape）：人归到一个 Layer 并写下“门为什么漏了”"
+    synonyms: ["逃逸缺陷", "escape defect", "escape", "Escape", "escape-defects.md"]
+    see_also: ["Layer", "R015"]
+  Note:
+    kind: "value"
+    of: "Event"
+    definition: "Event 上的证据文字；含糊处当时选了什么的解释日记，只增不删"
+    synonyms: ["解释日记", "日记", "evidence text"]
+    source: "docs/ARCHITECTURE.md §16 术语"
+
+  # ---- routing and layers -----------------------------------------------------------------
+  Routing:
+    kind: "process"
+    definition: "失败归层：路由表（routing.yaml R01–R16）按信号把每个失败事件归到一个 Layer，再决定重试或升级"
+    synonyms: ["路由", "归层", "routing table", "routing.yaml", "routing rule", "R01–R16"]
+    see_also: ["Layer", "Signal", "R011"]
+  Escalation:
+    kind: "process"
+    definition: "一层预算耗尽或收敛判定成立后向下一外层（或人）升级，附失败报告"
+    synonyms: ["升级", "escalate", "escalate_to", "ESCALATE"]
+    see_also: ["Reflow", "Layer", "R011"]
+
+  # ---- graph and loop parts ----------------------------------------------------------------
+  Edge:
+    kind: "value"
+    of: "Node"
+    definition: "graph.yaml 里两个 Node 之间的一条带类型的边（guard / when / signal / carries / merge）"
+    synonyms: ["边", "graph edge", "handoff edge"]
+    see_also: ["EdgeType", "Loop", "R013"]
+  EdgeType:
+    kind: "enum"
+    of: "Edge"
+    definition: "边的封闭类型集：sequential | conditional | fan_out | fan_in | loop_back | interrupt | handoff"
+    synonyms: ["扇出", "扇入", "fan_out", "fan_in", "loop_back", "interrupt edge", "sequential edge"]
+  NodeRole:
+    kind: "enum"
+    of: "Node"
+    definition: "Node.role：orchestrator | world | knowledge | contract | standard | planner | implementer | evaluator | delivery | learning | gate；文档的九环是它的分组"
+    synonyms: ["role", "脊柱 (orchestrator)"]
+    see_also: ["Ring"]
+  Skill:
+    kind: "enum"
+    of: "Node"
+    definition: "Node.kind=skill：以 SKILL.md 形式参与执行图的 Node；作为插件制品的 skill 属上游的插件打包上下文"
+    synonyms: ["skill"]
+    scope_note: "396 次出现里绝大多数指 Node of kind skill；skill 的版本 / 打包 / 评估属上游上下文（见 bounded_contexts）"
+  Agent:
+    kind: "enum"
+    of: "Node"
+    definition: "Node.kind=agent：以 agents/*.md 形式参与执行图、通常被 fan_out 派发的 Node"
+    synonyms: ["agent", "子 agent", "subagent", "Subagent", "sub-agent"]
+  Script:
+    kind: "role"
+    definition: "机械份额：verify_*.py / lint_*.py 等 Π 原语，作为边守卫与状态写入者，不做语义判断"
+    synonyms: ["脚本", "Π 原语", "verifier script"]
+    see_also: ["EdgeGuard", "R006"]
+  Asset:
+    kind: "artifact"
+    definition: "skill 的 assets/ 下的模板与数据（graph.yaml、loops.yaml、routing.yaml、card_template.yaml …）"
+    synonyms: ["模板", "assets/", "data asset"]
+  Trigger:
+    kind: "value"
+    of: "Loop"
+    definition: "环与原生原语的绑定：turn_end | event | interval | cron | after | manual（triggers.yaml）"
+    synonyms: ["触发", "triggers.yaml"]
+  StopKeys:
+    kind: "value"
+    of: "Loop"
+    definition: "环契约的停机四键：success · convergence · budget · impossible，全部显式（允许 null）"
+    synonyms: ["停机四键", "stop 四键", "stop keys"]
+    see_also: ["Budget", "Convergence", "R013"]
+
+  # ---- checks that are not Gates -----------------------------------------------------------
+  EdgeGuard:
+    kind: "concept"
+    definition: "边上的机械前置检查（verify_*.py、lint_cards.py）：拦得住 advance，但不是 Gate——没有人签，也不能被豁免成门"
+    synonyms: ["闸", "预门", "pre-gate", "edge guard", "mechanical pre-gate", "guard:"]
+    rejected_names: ["自动门"]
+    scope_note: "自动门 invites reading a script check as a Gate a human could waive；新文本里不要用"
+    see_also: ["Gate", "R008"]
+  CheckTier:
+    kind: "concept"
+    definition: "三档：A 机械（否决）/ B 结构（告警）/ C 判断（请求人）"
+    synonyms: ["三档", "A/B/C", "A 档", "B 档", "C 档", "check tier", "Tier"]
+    scope_note: "评审上下文的 Finding.tier 取同一套值；不是体量档 S/M/L（见 SizeTier）"
+    see_also: ["SizeTier", "Finding"]
+    source: "docs/ARCHITECTURE.md §16 术语"
+  Unevaluated:
+    kind: "concept"
+    definition: "声明了一条判据但求值者没跑完；不是通过（exit 3、probed=false、unevaluated）"
+    synonyms: ["未评估", "unevaluated", "exit 3", "probed=false", "未检"]
+    see_also: ["R018"]
+    source: "docs/ARCHITECTURE.md §16 术语"
+  StaticOnly:
+    kind: "concept"
+    definition: "static_only：结构过审、脚本冒烟，行为层对照未充分跑；不得描述为已验证"
+    synonyms: ["static_only", "静态过审"]
+    see_also: ["R017"]
+    source: "docs/ARCHITECTURE.md §16 术语"
+  Calibration:
+    kind: "process"
+    definition: "校准：用变异分数与隐藏集证明一把尺子承重，之后它量出来的绿才算证据（sizing.yaml calibration 按档要求）"
+    synonyms: ["校准", "calibrate", "calibration report", "mutation score", "mutation_score"]
+    see_also: ["Holdout", "R010"]
+  Artifact:
+    kind: "concept"
+    definition: "一个 Node 写出的任何产物（文件、记录、PR）；每个产物只有一个生产者，归档时复制进 Archive"
+    synonyms: ["产物", "artifact"]
+    see_also: ["R001", "Archive"]
+  Harness:
+    kind: "concept"
+    definition: "环与路由的参数集合（routing.yaml、loops.yaml、pr-poll.sh、gate.json）；只能经人合并的提案改动"
+    synonyms: ["harness", "harness proposal", "harness_proposals"]
+    see_also: ["R016"]
+
+  # ---- roles ---------------------------------------------------------------------------------
+  Implementer:
+    kind: "role"
+    definition: "实现者 Node：只看自己那张卡 + 状态摘要 + AC 子集 + 红基线；从不读评估者输出"
+    synonyms: ["实现者", "implementer", "card-implementer"]
+    see_also: ["R005", "WorkUnit"]
+  Evaluator:
+    kind: "role"
+    definition: "评估者 / 验证者 Node：产出裁决与 fix_prompt，与生成者不是同一个 Node"
+    synonyms: ["评估者", "验证者", "evaluator", "verifier", "judge"]
+    see_also: ["R005", "R014"]
+  HumanSigner:
+    kind: "role"
+    definition: "在 Gate 上签字的人（human:<name>）；skill / agent 永不记录 Gate 裁决"
+    synonyms: ["签字人", "signer", "人签", "human:<name>"]
+    see_also: ["Gate", "R008"]
+
+  # ---- commands -----------------------------------------------------------------------------
+  Advance:
+    kind: "command"
+    definition: "aidlc_state.py advance <stage>：按 ORDER 推进 Run，前置条件不满足即拒绝，除非 --force --reason 记一条 Waiver"
+    synonyms: ["推进", "advance"]
+    see_also: ["Stage", "Waiver", "R009"]
+  Autopilot:
+    kind: "command"
+    definition: "--autopilot：跳过确认，从不跳过 Gate"
+    synonyms: ["--autopilot", "autopilot"]
+    see_also: ["R008"]
+
+  # ---- terms owned by neighbouring contexts, referenced here -------------------------------
+  REQ:
+    kind: "external"
+    context: "requirement intake (GitHub issue + EARS spec.md)"
+    definition: "需求 id（REQ-nnn），来自 issue / spec.md；每个 REQ 只归一张卡，Contract.based_on 悬挂其上"
+    synonyms: ["需求", "REQ-id", "requirement"]
+    see_also: ["AC", "WorkUnit"]
+  Issue:
+    kind: "external"
+    context: "requirement intake (GitHub issue + EARS spec.md)"
+    definition: "GitHub issue：可证伪的需求 / bug / 逃逸缺陷登记（Intent / Track / Scope / Acceptance / Assumptions / Depends on DOS）"
+    synonyms: ["issue", "GitHub issue", "issue body"]
+    see_also: ["Run", "REQ"]
+  Spec:
+    kind: "external"
+    context: "requirement intake (GitHub issue + EARS spec.md)"
+    definition: "spec.md：EARS 形态的需求陈述，REQ-id 的出处"
+    synonyms: ["spec.md", "EARS spec", "规格"]
+  PR:
+    kind: "external"
+    context: "GitHub delivery surface (PR, review threads, commits, tags)"
+    definition: "pull request：Run 的交付面；merge 与 approve 是人类动作，不是 Gate"
+    synonyms: ["pull request", "PR body", "pr"]
+    see_also: ["Gate", "ReviewThread"]
+  ReviewThread:
+    kind: "external"
+    context: "GitHub delivery surface (PR, review threads, commits, tags)"
+    definition: "PR 上的一条评审线程；其评论是待验证的主张，review_loop 记入 EvidenceLog"
+    synonyms: ["review thread", "评审线程", "review comment"]
+    see_also: ["EvidenceLog"]
+  Finding:
+    kind: "external"
+    context: "acceptance evaluation (six review skills + meta-judge + acceptance-fleet; pr-review)"
+    definition: "一条评审发现：severity P0–P3、tier A/B/C、confidence、vendor"
+    synonyms: ["finding", "评审发现"]
+    scope_note: "在本上下文里只以 Event.signal 的形式重新进入；字段不建模（Q009）"
+    see_also: ["Verdict", "CheckTier"]
+  Verdict:
+    kind: "external"
+    context: "acceptance evaluation (six review skills + meta-judge + acceptance-fleet; pr-review)"
+    definition: "评审裁决：PASS / BLOCK_MERGE / NEEDS_HUMAN，经 meta-judge 解码为四态"
+    synonyms: ["裁决", "verdict"]
+    see_also: ["FourState", "Gate"]
+  FourState:
+    kind: "external"
+    context: "acceptance evaluation (six review skills + meta-judge + acceptance-fleet; pr-review)"
+    definition: "四态 DONE / FIX / SPEC_DRIFT / GAMING_RISK：验收结果的解码，各自映射到一个路由信号"
+    synonyms: ["四态", "four-state", "SPEC_DRIFT", "GAMING_RISK"]
+    see_also: ["Signal", "Routing"]
+  PSL:
+    kind: "external"
+    context: "world (R0/R1: PSL, DOS proposal + as-is DOS, invariant cards)"
+    definition: "问题空间规律（PSL-ID）：先于形态的世界描述，G1 裁决其推导"
+    synonyms: ["PSL-ID", "问题空间规律", "PSL 文档"]
+    see_also: ["Gate", "Track"]
+  DOSProposal:
+    kind: "external"
+    context: "world (R0/R1: PSL, DOS proposal + as-is DOS, invariant cards)"
+    definition: "应然本体 dos-proposal.yaml：从 PSL 推导出的 DOS 提案，与现状本体（本文件）逐条对账"
+    synonyms: ["dos-proposal.yaml", "应然本体", "to-be DOS", "DOS 提案"]
+    see_also: ["RepoAsset"]
+  Invariant:
+    kind: "external"
+    context: "world (R0/R1: PSL, DOS proposal + as-is DOS, invariant cards)"
+    definition: "□ 常驻不变量：一个 Territory 内从失败中归纳出的、卡的 dos_slice.invariants 引用的规则"
+    synonyms: ["不变量", "invariant card", "□"]
+    see_also: ["RepoAsset", "WorkUnit"]
+  Territory:
+    kind: "concept"
+    definition: "looper / qanat 的进口词：一个限界上下文 / 模块，即本文件 bounded_contexts.current_context 所指"
+    synonyms: ["Territory (qanat)", "territory"]
+    status: "deprecated"
+    scope_note: "只在收编来的 SKILL.md 正文与术语映射表里出现；新文本写 bounded context"
+  MemoryAsset:
+    kind: "concept"
+    definition: "qanat 的进口词：跨 Run 持久的记忆制品；在本上下文对应 Archive 与 RepoAsset"
+    synonyms: ["MemoryAsset (qanat)"]
+    status: "deprecated"
+    see_also: ["Archive", "RepoAsset"]
+
+# -----------------------------------------------------------------------------
+# 5. Relationships
 # -----------------------------------------------------------------------------
 relationships:
   - subject: "Run"
@@ -412,7 +769,7 @@ relationships:
     description: "slice_agent_map.py cuts the agent_map RepoAsset per WorkUnit into card_context.md — the whole map is noise, zero lines is guessing"
 
 # -----------------------------------------------------------------------------
-# 5. Rules (constitution — Judgment 3; policy numbers are excluded, see decisions.md)
+# 6. Rules (constitution — Judgment 3; policy numbers are excluded, see decisions.md)
 # -----------------------------------------------------------------------------
 rules:
   - id: "R001"
@@ -512,48 +869,57 @@ rules:
     enforced_by: "system"
 
 # -----------------------------------------------------------------------------
-# 6. Composition (derived views — not new objects)
+# 7. Composition (derived views — not new objects)
 # -----------------------------------------------------------------------------
 composition:
   Ledger:
     description: "ledger.md — the human-readable, append-only table of a Run's Events"
+    synonyms: ["账本", "ledger.md"]
     derived_from: ["Run APPENDS Event", "one row per Event: at | stage | kind | signal / gate | layer | fingerprint | evidence | decision | by"]
     is_persistent: true
   Trace:
     description: "trace.jsonl — the machine-readable sidecar of the same Events with typed refs"
+    synonyms: ["迹", "决策迹", "trace.jsonl"]
     derived_from: ["the same Event stream as Ledger", "Event.refs edges; trace.py why / impact / render / lint"]
     is_persistent: true
   Graph:
     description: "graph.yaml — all Nodes plus their HANDS_OFF_TO edges and the stages list"
+    synonyms: ["图", "执行图", "graph.yaml"]
     derived_from: ["Node", "Node HANDS_OFF_TO Node", "stages == aidlc_state.py ORDER (graph check)"]
     is_persistent: true
   Ring:
     description: "九环 R0–R8 + 脊柱 — the docs' grouping of skills; graph.yaml carries it as Node.role, not as a field"
+    synonyms: ["环", "九环", "R0–R8"]
     derived_from: ["Node grouped by role: world→R0, knowledge→R1, contract→R2, standard→R3, planner→R4, implementer→R5, evaluator→R6, delivery→R7, learning→R8, orchestrator→脊柱, gate→human"]
     is_persistent: false
   Layer:
     description: "the reflow coordinate ladder card ⊂ plan ⊂ task ⊂ ontology ⊂ world"
+    synonyms: ["层", "layer"]
     derived_from: ["routing.yaml layers", "Run.counters keys", "Event.layer values", "Loop.escalate_to values (∪ human)"]
     is_persistent: false
   FailureReport:
     description: "failure-report-*.md — the G3 input written after an escalation (candidate layer + evidence + convergence + excluded + suggested rollback)"
+    synonyms: ["失败报告", "failure report", "failure-report-*.md"]
     derived_from: ["the reflow Event and its convergence block", "Event CAUSED_BY chain (trace.py why pre-fills 已排除的可能)", "clears Run.pending.failure_report via report --path"]
     is_persistent: true
   ChangeProposal:
     description: "change-proposal-*.md — the only legal path to alter a locked Contract file (in the same diff)"
+    synonyms: ["变更提案", "change proposal", "change-proposal-*.md"]
     derived_from: ["Event AMENDS Contract", "Gate g2 re-sign", "counted as one task-layer reflow"]
     is_persistent: true
   Archive:
     description: "specs/<slug>/ — the Run's durable record and the data source of retro and tune"
+    synonyms: ["归档", "specs/<slug>/", "archive"]
     derived_from: ["Run state.json", "Ledger + Trace", "Contract + lock", "WorkUnits", "evaluation final-state", "Gate records", "archive-manifest.json"]
     is_persistent: true
   EvidenceLog:
     description: ".aidlc/pr-watch/pr-N.json — review_loop's own append-only verdict log (ACCEPT/REJECT/REPLY/ESCALATE/SKIPPED, sycophancy_suspect)"
+    synonyms: ["evidence log", ".aidlc/pr-watch"]
     derived_from: ["review_loop Loop memory", "not (yet) mirrored into the Run's Trace — see Q005"]
     is_persistent: true
 
 # -----------------------------------------------------------------------------
-# 7. Behaviors (cause → effects)
+# 8. Behaviors (cause → effects)
 # -----------------------------------------------------------------------------
 behaviors:
   - trigger: "a human signs the Contract at g2 (lock_done_when.py sign --by <name>; gate g2 --verdict pass)"
@@ -603,7 +969,7 @@ behaviors:
       - "retro (metrics.py) and tune (tune.py) read the Archive; tune emits harness proposals as diffs that a human merges (hill_climb loop_back into ai-dlc)"
 
 # -----------------------------------------------------------------------------
-# 8. Bounded contexts (Judgment 4)
+# 9. Bounded contexts (Judgment 4)
 # -----------------------------------------------------------------------------
 bounded_contexts:
   current_context: "software delivery lifecycle (R2–R8 runtime + X2/X3/X4 declarations) — owns Run, Contract, WorkUnit, Gate, Event, Node, Loop"
@@ -631,11 +997,11 @@ bounded_contexts:
       translation_notes: "retro proposes changes to Contract / world (change proposals, PSL Open Questions); tune proposes Loop / routing parameter diffs and fix_list entries — both re-enter only through a human"
 
 # -----------------------------------------------------------------------------
-# 9. Agent guidelines
+# 10. Agent guidelines
 # -----------------------------------------------------------------------------
 agent_guidelines:
   must:
-    - "Name domain things with this file's object names in cards' dos_slice and issues' Depends on DOS (Run, Contract, WorkUnit, Gate, Event, Node, Loop, RepoAsset); write 卡/Card only as a synonym in prose"
+    - "Name domain things with this file's words in cards' dos_slice and issues' Depends on DOS: the eight objects (Run, Contract, WorkUnit, Gate, Event, Node, Loop, RepoAsset), the compositions, or a `vocabulary` term (AC, Fingerprint, Finding …); a declared synonym closes, a rejected_names word (自动门) is flagged, a homonym (环, Tier) must be qualified; write 卡/Card only as a synonym in prose"
     - "Write only artifacts listed in your Node's writes; anything else is a whitelist overflow, stop and report"
     - "Record every failure through aidlc_state.py fail so it becomes an Event with a Layer and a fingerprint; never keep a private retry counter"
     - "Freeze the Contract (Gate g2) before splitting WorkUnits; change a locked file only with a change proposal in the same diff"
@@ -656,12 +1022,12 @@ agent_guidelines:
     - "Do not add a cycle to graph.yaml without a loop_back edge and an owning Loop (R013; anti-pattern: unowned cycles)"
     - "Do not apply a tune proposal directly to routing.yaml, loops.yaml, pr-poll.sh or gate.json — emit a diff for a human PR (R016)"
     - "Do not describe a static_only skill as verified (R017)"
-    - "Do not use 环 unqualified in new docs or data: say Ring (R0–R8 grouping) or Loop (loops.yaml contract) (anti-pattern: overloaded 环 / 门)"
+    - "Do not use 环 or Tier unqualified in new docs or data: say Ring (R0–R8 grouping) or Loop (loops.yaml contract), SizeTier (S/M/L) or CheckTier (A/B/C) — the closure refuses both bare words (anti-pattern: overloaded 环 / 门 / Tier)"
     - "Do not report an unevaluated check as a pass — exit 3, probed=false and unevaluated are recorded as unchecked (R018)"
     - "Do not place a RepoAsset under .aidlc/, leave it untracked, or set its path by hand — it is discovered, and an untracked ontology is yours, not the team's (R020)"
 
 # -----------------------------------------------------------------------------
-# 10. Anti-patterns (real history of this plugin — not generic warnings)
+# 11. Anti-patterns (real history of this plugin — not generic warnings)
 # -----------------------------------------------------------------------------
 anti_patterns:
   - pattern: "Three producers, two schemas for the Contract (issue-inline AC v2 / donewhen-extract card / acceptance-spec done_when v1)"
@@ -724,8 +1090,20 @@ anti_patterns:
       The `## Naming waivers` bullet convention already existed; `object_count` now uses it, and the waiver is
       reported under `waived` and flagged for the judge rather than clearing quietly (2026-09-10).
 
+  - pattern: "A core model shipped as the whole ontology: 45 terms classified on 2026-09-05, 7 objects kept, the other ~38 (AC, 指纹, 层, 三档, 隐藏集, Finding, Verdict, PSL, Territory …) left in decisions.md prose; ARCHITECTURE.md §16 already defined 13 of them as a glossary and none were lifted as terms"
+    why_bad: |
+      Every downstream consumer (issue closure, WorkUnit.dos_slice, verify_vocabulary) resolves against this file, so a
+      term that lives only in decisions.md is indistinguishable from one nobody extracted; the drift sensor dropped 205
+      candidate terms as «uncorroborated» on the plugin's own docs because the ontology had no neighbour for them.
+      The team's reading — «it extracts a sliver and aligns nothing» — was correct. Segregated-by-deletion, not Highlighted Core.
+    correct_approach: |
+      Two layers in one file: objects (≤7 + waiver) stay the napkin; every other classified term lands in `vocabulary`
+      with kind / of / definition / synonyms / rejected_names, or as a composition synonym; verify_dos.py --terms measures
+      coverage against the counted roster and names the unplaced. Closure resolves all three layers (dos-extract v0.11.0).
+    historical_context: "found 2026-09-18 when the plugin's owner asked why the extracted DOS was «没什么用»; dos-extract v0.11.0, this DOS v0.4.0. Pattern 11 in references/anti_patterns.md"
+
 # -----------------------------------------------------------------------------
-# 11. Open questions (owner + deadline mandatory)
+# 12. Open questions (owner + deadline mandatory)
 # -----------------------------------------------------------------------------
 open_questions:
   - id: "Q001"
@@ -813,7 +1191,7 @@ open_questions:
       - "drop to recommended everywhere and rely on doctor"
 
 # -----------------------------------------------------------------------------
-# 12. Evolution log
+# 13. Evolution log
 # -----------------------------------------------------------------------------
 evolution_log:
   - version: "0.1.0"
@@ -855,3 +1233,21 @@ evolution_log:
     rationale: |
       A closed-loop audit of the plugin (v1.5.0) found the calibration loop's first wire dead and four flags
       trusted where the docs promised files. The ontology said R010 was not enforced; it is now, so the DOS says so.
+  - version: "0.4.0"
+    date: "2026-09-18"
+    author: "XRenSiu"
+    change_type: "add"
+    breaking: false
+    summary: |
+      Added the `vocabulary` layer (dos-extract v0.11.0): 56 terms the 2026-09-05 classification had sorted into value /
+      enum / event / process / role / external / concept and then left in decisions.md — AC, Lock, Holdout, Fingerprint,
+      Convergence (Oscillation / Plateau / Impossible), Reflow, Waiver, EscapeDefect, Routing, Escalation, Edge, NodeRole,
+      Skill / Agent as Node kinds, EdgeGuard (with 自动门 as a rejected name), CheckTier vs SizeTier, Unevaluated,
+      StaticOnly, Calibration, Implementer / Evaluator / HumanSigner, REQ / Issue / Spec / PR / ReviewThread / Finding /
+      Verdict / FourState / PSL / DOSProposal / Invariant as externals with their owning context, Territory / MemoryAsset
+      as deprecated imports. Compositions gained their Chinese names as synonyms. 环 is now declared on both Loop and Ring
+      and Tier on both SizeTier and CheckTier, so the closure refuses the bare words. One anti-pattern recorded (the sliver).
+    rationale: |
+      The object layer was never the problem; the missing layer was. Term coverage against the counted roster
+      (dos-terms.txt, 65 labels, every one with ≥1 hit in docs / skills / data by count_terms.py) went from 17/65
+      resolvable to 65/65; the closure's resolvable labels went from 61 to 337; see decisions.md Amendment 0.4.0.

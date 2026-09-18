@@ -273,13 +273,20 @@ def main():
             # DOS's canonical key and the team's word are the same thing (dogfood I-15).
             missing_terms = closure.unresolved(objs, "object") + closure.unresolved(invs, "rule")
             for t in objs:
-                if closure.via_synonym(t, "object"):
+                if getattr(closure, "via_rejected", lambda x: False)(t):
+                    # closes, but the DOS lists the word as REJECTED — the issue speaks a name the team
+                    # decided against; a flag here (not a reject: the issue is upstream of the contract)
+                    flags.append(f"DOS closure: `{t}` is a rejected name — the DOS says `{closure.resolve_object(t)}`")
+                elif closure.via_synonym(t, "object"):
                     flags.append(f"DOS closure: `{t}` closes as a synonym of `{closure.resolve_object(t)}`")
             for t in invs:
                 if closure.via_synonym(t, "rule"):
                     flags.append(f"DOS closure: `{t}` closes as an alias of `{closure.resolve_rule(t)}`")
             if missing_terms:
-                rejects.append(f"DOS closure failed: {missing_terms} not in {a.dos} — world not built for these; force PSL track")
+                whys = {t: closure.why_unresolved(t) for t in missing_terms} if hasattr(closure, "why_unresolved") else {}
+                amb = [f"{t} ({w})" for t, w in whys.items() if w.startswith("ambiguous")]
+                rejects.append(f"DOS closure failed: {missing_terms} not in {a.dos} — world not built for these; force PSL track"
+                               + (f"; homonyms to qualify: {amb}" if amb else ""))
                 force_track = "psl"
         elif a.require_dos:
             rejects.append(

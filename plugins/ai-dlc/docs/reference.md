@@ -163,7 +163,7 @@ flag 不等于 reject。预门过了但带 flag，意思是「机器判不了这
 | `ai-dlc/assets/triggers.yaml` | 人 | 每个环绑到哪个原生触发（`/goal` `/loop` Stop hook `/schedule`） |
 | `acceptance-fleet/assets/evaluators.yaml` | `pick_evaluators.py` | 供应商声明与探测命令；每个槽的同源盲区排名 |
 | `donewhen-extract/references/done-when-v2-schema.yaml` | 人 + `validate_done_when_v2.py` | **契约的唯一 schema**；含 `constraints.structure` |
-| `dos-extract/assets/dos_template.yaml` | 人 | DOS 的 12 节结构 |
+| `dos-extract/assets/dos_template.yaml` | 人 | DOS 的 13 节结构：核心模型（objects ≤7 · relationships · rules · composition）+ 通用语言（vocabulary） |
 | `invariant-extract/assets/invariant_card.yaml` | `verify_card.py` | 不变量卡的具名字段 |
 | `donewhen-extract/assets/done_when_card.yaml` | `verify_done_when.py` | done_when 卡的具名字段 |
 | `plan-cards/assets/card_template.yaml` | `lint_cards.py` | 任务卡的具名字段 |

@@ -23,7 +23,10 @@ Here is what each one needs to be filled honestly:
   `inventory.py`, docs via LLM extraction. Both feed the classification work.
 - **classify / converge** (the heart of the work) — Needs the noun roster, then
   applies Judgments 1, 2, and 4. Docs vocabulary takes priority for naming
-  (Judgment 2).
+  (Judgment 2). **Every term that enters classification leaves it with a home**
+  (the placement table in `judgments.md`): the ≤7 survivors fill `objects`, the
+  rest fill `vocabulary` / `composition` / `synonyms` / `rejected_names`. The
+  roster is the denominator of the coverage the exit measures.
 - **relations + rules** (fills `relationships`, `rules`) — Needs the converged
   object set plus verbs from both inventories; rules come from code invariants
   AND docs "must"/"never" sentences; Judgment 3 filters policy out.
@@ -119,15 +122,23 @@ In all override cases, document the override and rationale in `decisions.md`.
 
 Borrowed from NeOn methodology, adapted for DOS:
 
-### 1. Simplicity
+### 1. Simplicity (of the core model)
 
 > Can the core objects fit on a napkin?
 
 Operationalized: **≤ 7 objects in the `objects` section.** Exceeding this is
 allowed only with documented justification in `decisions.md`.
 
-If exceeded, the most common cause is failure of Judgment 2 (synonyms not merged)
-or failure of Judgment 4 (multiple contexts forced into one DOS).
+If exceeded, the most common cause is failure of Judgment 2 (synonyms not merged),
+failure of Judgment 4 (multiple contexts forced into one DOS) — or, since v0.11.0,
+a long-tail term being forced into `objects` because the extractor forgot that
+`vocabulary` is where the 8th, 9th and 40th term live.
+
+**This criterion caps the core model, not the ontology.** It is Evans's *Highlighted
+Core* (make the core small and effortless to tell apart), not *Segregated-by-deletion*.
+The napkin is a view over the full language, and the full language is measured by
+criterion 3 below. Reading ≤7 as the size of the DOS is the mistake that made this
+plugin's own first DOS a clean sliver (see `anti_patterns.md` Pattern 11).
 
 ### 2. Consistency
 
@@ -140,13 +151,28 @@ Mechanical checks the AI can run:
 - `agent_guidelines.must` and `must_not` don't contradict each other. ✓
 - `anti_patterns.correct_approach` doesn't violate any `rule`. ✓
 
-### 3. Completeness
+### 3. Completeness (of the language)
 
-> For every core user action, does the DOS describe a corresponding relationship?
+> Does every word the team says have a home in the DOS?
 
-Cross-check by listing the top 10 user-facing features (from README or docs)
-and verifying each has a corresponding relationship in the DOS. Gaps go into
-`open_questions`.
+Operationalized, and mechanical: **`verify_dos.py dos.yaml --terms <terms file>`** — the
+same `count_terms.py` file the docs channel produced — resolves every counted label
+through every layer (objects, composition, vocabulary, their synonyms and rejected names,
+rule ids) and rejects with the unplaced labels by name. The report's
+`coverage: {terms, resolved, unplaced}` is the number to quote. `unmeasured` (no `--terms`)
+is not a pass: a coverage nobody measured is not a coverage.
+
+The denominator matters. It should be the whole classified roster — everything
+`01_inventory.md` + `01b_docs_terms.md` put in front of Judgment 1 — not a hand-picked
+subset that the DOS happens to cover. If the roster was pruned, the pruning table in
+`decisions.md` is where the pruned words are, and a reviewer can ask why `指纹` is in it.
+
+Second check, semantic: list the top 10 user-facing features (from README or docs) and
+verify each has a corresponding relationship. Gaps go into `open_questions`.
+
+Third check, optional and borrowed from NeOn: write 5–10 **competency questions** a
+reader should be able to answer from the DOS ("which context owns `Finding`?", "what
+freezes a `Contract` and what may change it afterwards?") and check each is answerable.
 
 ### 4. Evolvability
 
@@ -174,9 +200,88 @@ are excluded; concrete ones like "do not introduce `Node` as a class name; use
 > Can a new designer read this in 30 minutes?
 
 Hard to test at generation time. Surrogate metric: total length of `dos.yaml`
-should be reasonable. For a system with 6 objects, expect roughly 300-500 lines.
-If the draft balloons to >800 lines, sections are likely over-detailed
-(properties listed at field-by-field granularity instead of conceptual level).
+should be reasonable. For a system with 6 objects, expect roughly 300-500 lines
+**for the core model**; the `vocabulary` section adds roughly 5–8 lines per term and
+is read like a glossary (looked up, not read through), so it is budgeted separately.
+If the core sections balloon to >800 lines, they are likely over-detailed (properties
+listed at field-by-field granularity instead of conceptual level). A 50-term vocabulary
+is normal for a mature repository; a 5-term one on a repository with 40 counted nouns is
+a coverage failure, not learnability.
+
+---
+
+## Industry grounding — what "core vs complete" means outside this skill
+
+Researched 2026-09-18 when this plugin's own DOS turned out to capture 7 of 45 classified
+terms. The question was whether the ≤7 discipline is what the field does. It is not; the
+field layers. Sources at the end.
+
+**Domain-Driven Design.** The ubiquitous language is *complete within a bounded context*
+and never global (Evans; Vernon: "a Bounded Context should be as big as it needs to be in
+order to fully express its complete Ubiquitous Language"). The core is *flagged*, not the
+only thing kept: Evans's **Highlighted Core** — "define a core domain and provide a means
+of easily distinguishing it from the mass of supporting model and code… make the core
+small" — with a 3–7-page distillation document over the full model, and **Generic
+Subdomains** "factored out… into separate modules", never deleted. Core Domain Charts
+(ddd-crew) label every subdomain core / supporting / generic; the label is not a filter.
+Homonyms are one term per context with a context-map translation between them (Fowler's
+"Customer", the utility "meter" with three meanings). Tooling agrees: Contextive glossaries
+are folder-scoped with `aliases` per term; the Bounded Context Canvas has a "Ubiquitous
+Language" block for *key terms in this context*; EventStorming yields events, commands,
+actors, policies, read models — all vocabulary, and the `kind` set of `vocabulary` follows
+it. Repositories and factories are roles of code, not concepts (Evans), which is why they
+get no entry. No canonical aggregate count exists (Vernon: "how long is a piece of string?").
+
+**Ontology engineering.** Ontology 101 step 3: "get a comprehensive list of terms without
+worrying about overlap"; its only numeric heuristics are local (more than a dozen siblings →
+add an intermediate level). METHONTOLOGY's first conceptualisation artifact is the Glossary
+of Terms; NeOn's ORSD carries a pre-glossary *with frequencies* and scopes the ontology by
+**competency questions**, which double as the completeness test. Scope is set by
+requirements, completeness is measured as coverage of CQs or of the corpus — here, the
+codebase and its docs. "Core" and "complete" are reconciled by **layering** (foundational →
+core/reference → domain → application; OBO slims and SKOS collections as views), never by
+truncation. Ontology learning's layer cake (terms → synonyms → concepts → taxonomy →
+relations → axioms) and the 2024–25 LLMs4OL / ESWC results share one failure mode: high
+precision, **low recall** — the exact shape of a 7-term DOS.
+
+**Concept alignment standards.** SKOS: `prefLabel` (the key) · `altLabel` (`synonyms`) ·
+`hiddenLabel` (`rejected_names`) · `broader` (`of`) · `related` (`see_also`) · `scopeNote` ·
+`exactMatch` / `closeMatch` across schemes (the reconcile map). ISO 1087: a concept is
+defined by its characteristics independently of its designations; terms are *preferred /
+admitted / deprecated*; synonymy, polysemy and homonymy are three different things and a
+concept system has generic, partitive and associative relations. OBO Foundry: one concept
+one home, textual definitions, synonym scopes, unique stable ids, **obsolete never delete**
+(`status: deprecated`). OOPS! pitfalls P02 (synonyms as classes), P07 (two concepts in one
+class), P32 (two classes, same label) are Judgments 2 and 4 with catalogue numbers.
+
+**AI-facing semantic layers (2023–2026).** No product caps its vocabulary; all treat
+coverage as the accuracy lever and manage size with metadata. Palantir object types carry
+`visibility` (prominent / normal / hidden) and `status` (active / experimental / deprecated)
+and are handed to agents by retrieval, not pasted whole. dbt's 2026 benchmark: text-to-SQL
+90.0 % → 98.2 % with a semantic layer, and "can only answer questions that fall within the
+scope of what's been modeled". Cube's paired benchmark: a ~9 KB semantic context lifted
+three frontier models by 17–23 points, converging them — the definitions mattered more than
+the model. Snowflake and Databricks put `synonyms` on every dimension and metric. DataHub /
+Collibra glossaries: node → term, `inherits` / `contains` / `related_terms`, owner, status,
+source — dozens to low hundreds of terms per domain. Anthropic's context-engineering
+guidance ("right altitude", progressive disclosure through lightweight identifiers) is the
+reason the two layers live in one file: `objects` is what fits in a card's context slice;
+`vocabulary` is what a linter resolves against.
+
+**Where ≤7 came from.** Jens Jorgenson, "The Ontology Layer of Design" (2026-03-20), coined
+the Design Ontology Spec for greenfield *prototypes* and framed the object count as a one-off
+consolidation exercise ("e.g. no more than 5 objects"). It was never a completeness criterion
+for an existing repository, and AWS's AI-DLC — which this plugin borrows its name from — has
+domain models but no glossary step at all, which is the gap this skill exists to fill.
+
+Sources: Evans, *DDD Reference* (domainlanguage.com); Vernon, *Implementing DDD* ch. 2;
+Fowler, "BoundedContext"; ddd-crew Core Domain Charts and Bounded Context Canvas; Contextive
+docs; Noy & McGuinness, *Ontology Development 101*; Fernández-López et al., METHONTOLOGY;
+Suárez-Figueroa et al., NeOn ORSD; W3C SKOS Reference and Primer; ISO 1087:2019; OBO Foundry
+principles; Poveda-Villalón et al., OOPS!; Palantir Foundry ontology docs; dbt "Semantic
+layer vs text-to-SQL 2026"; Cube semantic-layer benchmark; Snowflake semantic view YAML spec;
+Databricks agent metadata; DataHub GlossaryTerm; Anthropic, "Effective context engineering
+for AI agents"; Jorgenson, "The Ontology Layer of Design"; awslabs/aidlc-workflows.
 
 ---
 
