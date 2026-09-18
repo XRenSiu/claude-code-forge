@@ -1,0 +1,5 @@
+# two labels the DOS cannot place: the coverage gate names them
+Memory   = memory
+Scene    = scene
+Timeline = timeline, 时间线
+Mood     = mood

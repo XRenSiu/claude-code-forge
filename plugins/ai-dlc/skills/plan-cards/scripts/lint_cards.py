@@ -253,9 +253,15 @@ def main():
             for o in sl.get("objects") or []:
                 canon = closure.resolve_object(o)
                 if canon is None:
-                    rejects.append(f"{cid} dos_slice.objects `{o}` not declared in dos.yaml (closure)")
+                    why = closure.why_unresolved(o) if hasattr(closure, "why_unresolved") else "undeclared"
+                    rejects.append(f"{cid} dos_slice.objects `{o}` not declared in dos.yaml (closure: {why})")
+                elif getattr(closure, "via_rejected", lambda t: False)(o):
+                    # the word closes, but the DOS lists it as a REJECTED name: a card that speaks the
+                    # rejected word teaches the implementer the wrong one — reject, the fix is one word
+                    rejects.append(f"{cid} dos_slice.objects `{o}` is a rejected name in dos.yaml — write `{canon}`")
                 elif canon != o:
-                    flags.append(f"{cid} dos_slice.objects `{o}` closes as a synonym of `{canon}`")
+                    d = closure.describe(o) if hasattr(closure, "describe") else {"kind": "object"}
+                    flags.append(f"{cid} dos_slice.objects `{o}` closes as a synonym of `{canon}` ({d.get('kind')})")
             for r in sl.get("invariants") or []:
                 canon = closure.resolve_rule(r)
                 if canon is None:

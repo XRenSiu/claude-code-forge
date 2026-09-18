@@ -68,6 +68,10 @@ title / notes、`spec.md`、PR body、issue body——都可以引入一个 `dos
            `typo`（不计入）——字面相似度 ≥0.87 却没有共同 token（`Contarct` vs `Contract`）。
               错别字是噪音；真正值钱的是「两个词都是真词、指的是同一个东西」那一类。
            `unresolved_rule`（计入）——见下。
+           `rejected_name`（计入，v0.11.0）——制品用了本体 `rejected_names` 里的词（团队明确弃用的写法，
+              SKOS hiddenLabel / ISO 1087 deprecated term）。邻居是**声明的**不是猜的，精度最高。
+           `ambiguous`（计入，v0.11.0）——同一个词被本体两个概念同时声明为 synonym（环 → Ring | Loop），
+              闭包拒绝不带限定的用法。
          其余一律丢弃，丢弃原因逐类计数进 facts 的 `dropped_candidates`。
 
     **实跑砍掉的三条**（2026-09-07 首次对 `dogfood/ring-audit` 跑，18 条 near_miss 里 15 条是噪音）：
@@ -386,7 +390,9 @@ def neighbour_of(term: str, vocab: dict, channel: str = "shaped"):
             continue
         compound = is_compound_identifier(label)
         shared = (tset & lset) - GENERIC_TOKENS
-        if compound and shared and tset < lset:
+        # 真子集判定只对 objects 层开放（见 main 里 ontology_tokens 的实跑理由）；composition /
+        # vocabulary 的复合名仍参与下面的归一化 near_miss 与 typo。
+        if compound and shared and tset < lset and kind == "object":
             if best_near is None or len(lset) < len(set(tokens_of(best_near[0]))):
                 best_near = (label, canon, kind, "near_miss",
                              f"`{term}` 是复合标识符 `{label}` 的真子集（共享 {sorted(shared)}）"
@@ -465,13 +471,23 @@ def main() -> int:
         return finish(a, facts, 3)
 
     vocab = closure.vocabulary()                       # label -> (canonical, kind)
-    # 第四通道的字典只从**复合标识符**来（见 is_compound_identifier 的实跑理由）。
+    # 第四通道的字典只从**复合标识符**来（见 is_compound_identifier 的实跑理由），而且只从
+    # **objects 层**来。v0.11.0 把 composition 与 vocabulary 层并进了闭包：它们参与精确解析、
+    # 归一化 near_miss、typo、rejected_name / ambiguous 与 unused，但**不参与真子集判定**——
+    # 实跑：一并入就把 dogfood 上 `report` ⊊ FailureReport、`evidence` ⊊ EvidenceLog、
+    # `proposal` ⊊ ChangeProposal 全报成 near_miss（7 条，全是普通英文），计入数从 0 跳到 7。
+    # 长尾词表本来就长在复合名上，把它拿来当 token 字典等于把整本英语词典当术语。
     ontology_tokens = set()
-    for label in vocab:
-        if is_ascii_wordish(label) and is_compound_identifier(label):
+    for label, (canon, kind) in vocab.items():
+        if kind == "object" and is_ascii_wordish(label) and is_compound_identifier(label):
             ontology_tokens |= {t for t in tokens_of(label) if t not in GENERIC_TOKENS}
     facts["ontology"] = {"objects": len(closure.objects),
                          "object_synonyms": len(closure.object_aliases),
+                         "compositions": len(closure.compositions),
+                         "vocabulary": len(closure.terms),          # v0.11.0: the ubiquitous-language layer
+                         "rejected_names": len(closure.rejected),
+                         "homonyms": sorted(closure.ambiguous),
+                         "resolvable_labels": len(vocab),
                          "rules": len(closure.rules),
                          "rule_aliases": len(closure.rule_aliases),
                          "compound_identifiers": sorted(
@@ -533,10 +549,42 @@ def main() -> int:
     # -- 判定：对象名词 ----------------------------------------------------
     findings, dropped = [], {"resolved": 0, "waived": 0, "sentence_initial": 0,
                              "uncorroborated": 0, "schema_key": 0, "code_shaped": 0}
+    # A case-only difference to a declared label is the same English word, not drift: `Minimal` at a
+    # sentence start vs the enum value `minimal`, `Repeat` vs the synonym `repeat`. Separator differences
+    # (`work_unit` vs `WorkUnit`) stay near_miss — those are two spellings of an identifier. Dogfood
+    # 2026-09-18: four of nine counted findings on the fresh ontology were this class.
+    lower_labels = {}
+    for label, (canon_l, _k) in vocab.items():
+        if is_ascii_wordish(label):
+            lower_labels.setdefault(label.lower(), canon_l)
     for term, entry in sorted(all_cands.items()):
         channel, where = entry["channel"], entry["where"]
-        if closure.resolve_object(term) is not None:
+        canon = closure.resolve_object(term)
+        if canon is None and is_ascii_wordish(term) and term.lower() in lower_labels \
+                and term.lower() not in {l.lower() for l in closure.ambiguous}:
+            canon = lower_labels[term.lower()]
+        if canon is not None:
+            if closure.via_rejected(term) and term not in waived:
+                # v0.11.0: the word closes — the DOS knows it — but the team decided AGAINST it
+                # (`rejected_names`, SKOS hiddenLabel / ISO 1087 deprecated term). Using it in a
+                # contract or a card is the alignment failure the vocabulary exists to catch, and
+                # it is the highest-precision finding here: the neighbour is declared, not guessed.
+                findings.append({"term": term, "severity": "rejected_name", "counted": True,
+                                 "channel": channel, "occurrences": len(where),
+                                 "neighbour": canon, "neighbour_canonical": canon,
+                                 "neighbour_kind": closure.kind_of(canon),
+                                 "why": f"`{term}` 是本体明确拒绝的写法（rejected_names）——正名是 `{canon}`",
+                                 "where": where[:5]})
+                continue
             dropped["resolved"] += 1
+            continue
+        if term in closure.ambiguous and term not in waived:
+            # a homonym: the DOS declares the word under two concepts and refuses it unqualified
+            findings.append({"term": term, "severity": "ambiguous", "counted": True,
+                             "channel": channel, "occurrences": len(where),
+                             "neighbour": " | ".join(closure.ambiguous[term]),
+                             "neighbour_canonical": None, "neighbour_kind": None,
+                             "why": closure.why_unresolved(term), "where": where[:5]})
             continue
         if term in waived:
             dropped["waived"] += 1
@@ -592,7 +640,7 @@ def main() -> int:
                          "why": f"形状像本体的 rule id，但 {a.dos} 里没有这条",
                          "where": where[:5]})
 
-    order = {"unresolved_rule": 0, "near_miss": 1, "unknown": 2, "typo": 3}
+    order = {"unresolved_rule": 0, "rejected_name": 0, "ambiguous": 0, "near_miss": 1, "unknown": 2, "typo": 3}
     findings.sort(key=lambda f: (order.get(f["severity"], 9), -f["occurrences"], f["term"]))
     facts["findings"] = findings
     facts["dropped_candidates"] = dropped
@@ -600,10 +648,12 @@ def main() -> int:
     # -- 反向信号：本体声明了、没人用 --------------------------------------
     if not a.no_unused:
         blob = "\n".join(corpus_lines)
-        for canon, body in sorted(closure.objects.items()):
-            variants = [canon] + [str(s).strip() for s in (body.get("synonyms") or []) if s]
+        for canon in sorted(closure.objects) + sorted(closure.compositions) + sorted(closure.terms):
+            # rejected names are excluded from the "is it used" test on purpose: a term whose only
+            # occurrences are the words the team rejected is a term nobody says correctly.
+            variants = [canon] + [a for a, c in closure._alias.items() if c == canon]
             if not any(re.search(variant_pattern(v), blob, re.IGNORECASE) for v in variants):
-                facts["unused_ontology"].append({"label": canon, "kind": "object",
+                facts["unused_ontology"].append({"label": canon, "kind": closure.kind_of(canon),
                                                  "variants": variants})
         for rid in sorted(closure.rules):
             variants = [rid] + [al for al, c in closure.rule_aliases.items() if c == rid]

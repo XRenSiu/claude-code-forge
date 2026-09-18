@@ -229,6 +229,37 @@ If none of these apply, exclude.
 
 ---
 
+## Pattern 11: Segregated-by-Deletion (the classification bucket as a bin)
+
+**Symptoms** (specific to extraction): the DOS has 5–8 clean objects and nothing else the
+team says. `decisions.md` has a long, careful table of "absorbed", "demoted", "value of X",
+"belongs to the evaluation context" — and none of those words appear in `dos.yaml`. The
+docs may even contain an explicit glossary the DOS did not lift.
+
+**Why bad**: the ontology is consumed by closure checks, card linters and a drift sensor.
+A term that lives only in `decisions.md` prose resolves nowhere, so downstream it is
+indistinguishable from a term nobody extracted. The team's experience is "it extracted a
+sliver and aligned nothing" — and the alignment work (synonym merges, homonym splits) that
+*was* done is invisible exactly where it would pay off. Evans calls the healthy version
+*Highlighted Core* — flag the core inside the full model — and warns against factoring
+the rest out of existence. Every ontology methodology (Ontology 101, METHONTOLOGY, NeOn)
+starts from an exhaustive glossary; none caps concepts.
+
+**How to spot**: count the terms Judgment 1 classified; count what resolves through
+`dos_closure.py`. On this plugin's own 2026-09-05 DOS: 45 classified, 8 objects + 9
+compositions resolvable, ~28 gone. Or run `verify_dos.py --terms` and read `coverage`.
+
+**Correction**: apply the placement table in `judgments.md`. Every non-core verdict is a
+`vocabulary` entry (kind value / enum / event / command / policy / artifact / role / process /
+external / concept), a `composition`, a `synonyms` entry or a `rejected_names` entry. Then
+measure: `coverage.unplaced` must be empty before the DOS is presented.
+
+**Distinguishing from healthy pruning**: pure framework noise (`Middleware`, `useEffect`,
+`package.json`) has no domain object behind it and stays out. The test is whether a
+teammate would ever say the word about the *product*. `Middleware`: no. `指纹`: yes.
+
+---
+
 ## How to use this catalog
 
 When classifying candidate objects:
@@ -240,6 +271,8 @@ When converging the surviving objects:
   merges, splits, and demotions.
 
 When drafting `dos.yaml`:
+- Run pattern 11 on the whole draft: every classified term has a home, and `--terms`
+  coverage names any that do not.
 - Run pattern 10 as a final check on every object before writing it into
   the DOS.
 

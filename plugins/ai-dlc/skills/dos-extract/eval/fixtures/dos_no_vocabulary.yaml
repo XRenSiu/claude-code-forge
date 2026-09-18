@@ -1,0 +1,19 @@
+# v0.11.0: a core model with no ubiquitous-language layer. Clean on every older check;
+# rejects now unless --core-only (a to-be proposal) or a `core_only` waiver says why.
+meta: { dos_version: "0.1.0", product: "memory", bounded_context: "search", owner: "xrensiu", status: draft }
+scope: { in_scope: "search", out_of_scope: "picker" }
+objects:
+  Memory: { description: "a captured moment", type: entity }
+  Era: { description: "a period with scenes aggregating memories", type: aggregate_root }
+relationships:
+  - { subject: Era, verb: CONTAINS, object: Memory, cardinality: "1:N", inverse: BELONGS_TO }
+rules:
+  - { id: R001, statement: "an Era has at least one Memory", rationale: "empty eras are not periods", enforced_by: system }
+composition: {}
+behaviors: []
+bounded_contexts: { current_context: search }
+agent_guidelines: { must: [], should: [], must_not: [] }
+anti_patterns: []
+open_questions:
+  - { id: Q001, question: "overlap threshold?", raised_at: "2026-09-05", raised_by: "dos-extract", owner: "xrensiu", deadline: "2026-09-12" }
+evolution_log: []

@@ -14,6 +14,11 @@ objects:
   Contract:
     description: "the frozen acceptance criteria a Card is split from"
     type: aggregate_root
+vocabulary:
+  REQ:
+    kind: value
+    of: Contract
+    definition: "a requirement id a Card owns exactly once"
 relationships:
   - { subject: Contract, verb: SPLITS_INTO, object: Card, cardinality: "1:N", inverse: BELONGS_TO }
 rules:

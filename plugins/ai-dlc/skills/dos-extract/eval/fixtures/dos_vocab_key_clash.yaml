@@ -1,0 +1,26 @@
+# v0.11.0: a synonym that is somebody else's canonical key. `Cycle` is Loop's synonym and a
+# vocabulary key — one word, two homes. Judgment 2 has to pick (merge, or drop the synonym).
+meta: { dos_version: "0.1.0", product: "ai-dlc", bounded_context: "delivery", owner: "xrensiu", status: draft }
+scope: { in_scope: "loops", out_of_scope: "delivery" }
+objects:
+  Loop:
+    description: "a cycle contract: generator, verifier, four stop keys"
+    type: entity
+    synonyms: ["Cycle"]
+  Node: { description: "a participant in the execution graph", type: entity }
+vocabulary:
+  Cycle:
+    kind: concept
+    definition: "any closed path in the graph, owned or not"
+relationships:
+  - { subject: Node, verb: PARTICIPATES_IN, object: Loop, cardinality: "N:1", inverse: ENCLOSES }
+rules:
+  - { id: R001, statement: "a Loop's generator and verifier differ", rationale: "no self-verification", enforced_by: system }
+composition: {}
+behaviors: []
+bounded_contexts: { current_context: delivery }
+agent_guidelines: { must: [], should: [], must_not: [] }
+anti_patterns: []
+open_questions:
+  - { id: Q001, question: "is every Cycle a Loop?", raised_at: "2026-09-05", raised_by: "dos-extract", owner: "xrensiu", deadline: "2026-09-30" }
+evolution_log: []

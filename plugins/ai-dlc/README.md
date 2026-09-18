@@ -64,7 +64,7 @@
 
 | skill | 一句话 | 机械预门 |
 |---|---|---|
-| `/dos-extract` | 从代码 + 文档反向抽 Design Ontology Spec（12 节 dos.yaml + decisions.md），四个分类判断 | `verify_dos.py` · `inventory.py` |
+| `/dos-extract` | 从代码 + 文档反向抽 Design Ontology Spec（13 节 dos.yaml：≤7 核心对象 + 完整 `vocabulary` 词表 + decisions.md），四个分类判断 + 逐词落位；`--terms` 量覆盖率 | `verify_dos.py` · `inventory.py` · `count_terms.py` |
 | `/invariant-extract` | 从失败记忆溯因 + 代码演绎抽一块领地的 □ 常驻不变量卡；硬不变量 propose-only | `verify_card.py` |
 
 ### 契约与标准（引自 qanat；加了术语映射 + 接线）

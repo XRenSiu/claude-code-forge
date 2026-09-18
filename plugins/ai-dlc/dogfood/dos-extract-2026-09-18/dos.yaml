@@ -1,39 +1,31 @@
 # =============================================================================
-# Design Ontology Spec — ai-dlc plugin (as-is / 现状本体), extracted 2026-09-05, amended 2026-09-10 / 09-12 / 09-18 (0.4.0 and 0.5.0)
+# Design Ontology Spec — ai-dlc plugin (as-is / 现状本体) — FRESH RUN 2026-09-18 with dos-extract 0.11.0 (--auto)
 # Schema: plugins/ai-dlc/skills/dos-extract/assets/dos_template.yaml (13 sections: core model + vocabulary)
-# Companion audit trail: decisions.md (every non-trivial call traced to Judgment 1–4)
-# Signal priority: docs (README, docs/*.md) outrank code for naming; data assets
-# (state.schema.json, graph.yaml, loops.yaml, routing.yaml) were read as the code side.
+# Workspace: .dos-extract/ (01_inventory · 01b_docs_terms · 02_classification · 03_convergence · terms.txt)
+# Companion audit trail: decisions.md. This is the dogfood product, compared against ../../dos.yaml 0.4.0 there;
+# it does not replace the shipped ontology.
 # =============================================================================
 
-# -----------------------------------------------------------------------------
-# 0. Meta
-# -----------------------------------------------------------------------------
 meta:
-  dos_version: "0.2.0"
+  dos_version: "0.1.0"
   product: "ai-dlc plugin"
   bounded_context: "software delivery lifecycle"
   owner: "XRenSiu"
   status: "draft"
-  last_reviewed: "2026-09-10"
+  last_reviewed: "2026-09-18"
   related_docs:
     - "plugins/ai-dlc/README.md"
     - "plugins/ai-dlc/docs/ARCHITECTURE.md"
     - "plugins/ai-dlc/docs/lifecycle.md"
     - "plugins/ai-dlc/docs/routing.md"
-    - "plugins/ai-dlc/docs/design-notes.md"
-    - "plugins/ai-dlc/docs/proposals/loop-graph-engineering.md"
+    - "plugins/ai-dlc/docs/evaluation.md"
     - "plugins/ai-dlc/skills/ai-dlc/assets/state.schema.json"
     - "plugins/ai-dlc/skills/ai-dlc/assets/graph.yaml"
     - "plugins/ai-dlc/skills/ai-dlc/assets/loops.yaml"
     - "plugins/ai-dlc/skills/ai-dlc/assets/routing.yaml"
-    - "plugins/ai-dlc/decisions.md"
     - "plugins/ai-dlc/skills/ai-dlc/assets/sizing.yaml"
-    - "plugins/ai-dlc/skills/ai-dlc/scripts/repo_assets.py"
+    - "plugins/ai-dlc/dogfood/dos-extract-2026-09-18/decisions.md"
 
-# -----------------------------------------------------------------------------
-# 1. Scope
-# -----------------------------------------------------------------------------
 scope:
   in_scope: |
     One software delivery lifecycle as the ai-dlc plugin runs it: a Run that moves through
@@ -65,9 +57,6 @@ scope:
     file in a G1 record. (3) A new skill author can draw the Run → Contract → WorkUnit → Event
     data flow and name which Node writes which artifact without reading any SKILL.md.
 
-# -----------------------------------------------------------------------------
-# 2. Reuse
-# -----------------------------------------------------------------------------
 reuse:
   internal_references:
     - name: "looper v0.2.0 — dos-extract / psl / invariant-extract"
@@ -101,7 +90,7 @@ reuse:
       reason: "ai-dlc's G1 (world adjudication) and G2 (criteria freeze) are human Gates, not the same pair — mapped in each imported skill's 术语映射"
 
 # -----------------------------------------------------------------------------
-# 3. Objects (7)
+# 3. Objects (8 — the seventh discipline holds, RepoAsset waived; see decisions.md)
 # -----------------------------------------------------------------------------
 objects:
   Run:
@@ -276,6 +265,8 @@ objects:
     description: "A repo-level ontology artifact the team shares: discovered in the project directory, tracked in git."
     type: "aggregate_root"
     synonyms: ["仓库级制品", "X1 制品", "本体制品", "decisions.md", "invariants/", "repo asset"]
+    # fresh-run correction #2 (2026-09-18): the file names dos.yaml / agent-map.md belong to the kinds
+    # (vocabulary DOS / AgentMap), not to the aggregate — declared on both they were homonyms.
     naming_note: |
       The eighth object, past the ≤7 discipline, waived in decisions.md (`object_count`). Judgment 2 found
       nothing to merge into — a Contract is per-Run and frozen by Gate g2, a RepoAsset outlives every Run and
@@ -298,12 +289,7 @@ objects:
       Never written by a Run, never copied into .aidlc/.
 
 # -----------------------------------------------------------------------------
-# 4. Vocabulary (the ubiquitous language — every term the team says that is not one of the eight
-#    objects; 91 terms since 0.5.0, extracted by a fresh dos-extract 0.11.0 --auto run — see
-#    dogfood/dos-extract-2026-09-18/). kinds: value · enum · event · command · policy · artifact · role ·
-#    process · external · concept. `of` = owner (SKOS broader / ISO partitive); `rejected_names` = words the
-#    team decided against (they resolve, and consumers flag them); a synonym declared on two entries is a
-#    homonym the closure refuses unqualified (环, Tier). Definitions quote docs/ARCHITECTURE.md where it has one.
+# 4. Vocabulary — 91 terms: the ubiquitous language (fresh run; 02_classification.md → placement)
 # -----------------------------------------------------------------------------
 vocabulary:
   # ---- Run's parts (主干与状态) ------------------------------------------------------------------
@@ -970,7 +956,7 @@ relationships:
     description: "slice_agent_map.py cuts the agent_map RepoAsset per WorkUnit into card_context.md — the whole map is noise, zero lines is guessing"
 
 # -----------------------------------------------------------------------------
-# 6. Rules (constitution — Judgment 3; policy numbers are excluded, see decisions.md)
+# 6. Rules (constitution — Judgment 3)
 # -----------------------------------------------------------------------------
 rules:
   - id: "R001"
@@ -1245,7 +1231,7 @@ agent_guidelines:
     - "Do not place a RepoAsset under .aidlc/, leave it untracked, or set its path by hand — it is discovered, and an untracked ontology is yours, not the team's (R020)"
 
 # -----------------------------------------------------------------------------
-# 11. Anti-patterns (real history of this plugin — not generic warnings)
+# 11. Anti-patterns (real history)
 # -----------------------------------------------------------------------------
 anti_patterns:
   - pattern: "Three producers, two schemas for the Contract (issue-inline AC v2 / donewhen-extract card / acceptance-spec done_when v1)"
@@ -1321,7 +1307,7 @@ anti_patterns:
     historical_context: "found 2026-09-18 when the plugin's owner asked why the extracted DOS was «没什么用»; dos-extract v0.11.0, this DOS v0.4.0. Pattern 11 in references/anti_patterns.md"
 
 # -----------------------------------------------------------------------------
-# 12. Open questions (owner + deadline mandatory)
+# 12. Open questions
 # -----------------------------------------------------------------------------
 open_questions:
   - id: "Q001"
@@ -1413,77 +1399,9 @@ open_questions:
 # -----------------------------------------------------------------------------
 evolution_log:
   - version: "0.1.0"
-    date: "2026-09-05"
+    date: "2026-09-18"
     author: "XRenSiu"
     change_type: "initial"
-    summary: "Extracted from plugins/ai-dlc (v0.6.0) via dos-extract --auto: 7 objects, 16 relationships, 17 constitution rules, 9 real anti-patterns, 9 open questions"
-    rationale: "Reverse-engineered as-is baseline for the X1 reconciliation against the ring-audit PSL's dos-proposal; pending team review"
+    summary: "Fresh extraction with dos-extract 0.11.0 --auto: 8 objects, 18 relationships, 20 rules, 10 compositions, 91 vocabulary terms, 108-label roster at 108/108 coverage"
+    rationale: "Dogfood of the two-layer skill on the plugin that motivated it; compared against the shipped dos.yaml 0.4.0 in decisions.md"
     breaking: false
-  - version: "0.2.0"
-    date: "2026-09-10"
-    author: "XRenSiu"
-    change_type: "amended"
-    breaking: false
-    summary: |
-      Renamed sdlc → ai-dlc throughout (the plugin was renamed 2026-09-08 and every plugins/sdlc/ path had
-      stopped resolving); added RepoAsset as the eighth object with a recorded object_count waiver; added
-      R018 未检≠通过, R019 缺省从严, R020 本体进版本库; two anti-patterns and Q010.
-    rationale: |
-      v1.3.0 pulled repo-level ontology assets into the pipeline's own vocabulary, and the 2026-09-05 baseline
-      predates both that and the rename. Moved out of dogfood/ring-audit/ into plugins/ai-dlc/ so repo_assets.py
-      can discover it: this repository is a monorepo, and the bounded context is the package, not the root.
-  - version: "0.3.0"
-    date: "2026-09-12"
-    author: "XRenSiu"
-    change_type: "amended"
-    breaking: false
-    summary: |
-      R010 enforced_by not_enforced → system (meets_done_when.py + `acceptance --meets`; advance pr reads it). One
-      anti-pattern added: a settable boolean standing in for a verifier's verdict. The escape Event finally has a
-      producer (`aidlc_state.py escape`, R12) and is mirrored into the Archive; card_retries is per WorkUnit;
-      the M-tier fleet subset is granted only to a derived tier (R019 applied to reviewers).
-      Second pass the same day, asked to leave no open wire: R009 now holds across a skipped cards stage (G2's
-      verdict is checked at implement too); R004 is compiled (implement needs the l5 lock over tests and a verified
-      RED baseline, pr needs the green evidence); the calibrate half of R010 is tiered (sizing.yaml calibration);
-      the review exit, the merge sha, the release tag and the lock's history are all read from files or asked of
-      git; G3 cannot be switched off while the Contract has a human AC; G1 pass needs its record and stores the
-      form draft's hash; an escape needs its issue.
-    rationale: |
-      A closed-loop audit of the plugin (v1.5.0) found the calibration loop's first wire dead and four flags
-      trusted where the docs promised files. The ontology said R010 was not enforced; it is now, so the DOS says so.
-  - version: "0.4.0"
-    date: "2026-09-18"
-    author: "XRenSiu"
-    change_type: "add"
-    breaking: false
-    summary: |
-      Added the `vocabulary` layer (dos-extract v0.11.0): 56 terms the 2026-09-05 classification had sorted into value /
-      enum / event / process / role / external / concept and then left in decisions.md — AC, Lock, Holdout, Fingerprint,
-      Convergence (Oscillation / Plateau / Impossible), Reflow, Waiver, EscapeDefect, Routing, Escalation, Edge, NodeRole,
-      Skill / Agent as Node kinds, EdgeGuard (with 自动门 as a rejected name), CheckTier vs SizeTier, Unevaluated,
-      StaticOnly, Calibration, Implementer / Evaluator / HumanSigner, REQ / Issue / Spec / PR / ReviewThread / Finding /
-      Verdict / FourState / PSL / DOSProposal / Invariant as externals with their owning context, Territory / MemoryAsset
-      as deprecated imports. Compositions gained their Chinese names as synonyms. 环 is now declared on both Loop and Ring
-      and Tier on both SizeTier and CheckTier, so the closure refuses the bare words. One anti-pattern recorded (the sliver).
-    rationale: |
-      The object layer was never the problem; the missing layer was. Term coverage against the counted roster
-      (dos-terms.txt, 65 labels, every one with ≥1 hit in docs / skills / data by count_terms.py) went from 17/65
-      resolvable to 65/65; the closure's resolvable labels went from 61 to 337; see decisions.md Amendment 0.4.0.
-  - version: "0.5.0"
-    date: "2026-09-18"
-    author: "XRenSiu"
-    change_type: "add"
-    breaking: false
-    summary: |
-      Vocabulary re-extracted by a fresh dos-extract 0.11.0 --auto run (dogfood/dos-extract-2026-09-18/): 56 → 91
-      terms. New: the three knobs (Knob · Breadth · TestVolume · Depth), the sizing grid (SizingGrid composition ·
-      SizingRule · SizeExemption), the second memory channel (Note re-read as a Run value, Promotion), Prereq,
-      StateFile, Autonomy, Resume, Doctor, ObserveBoundary, AllowedFiles / ForbiddenFiles, RedBaseline / RedGreen,
-      TestStrategy / Floor, MetaJudge, FixPrompt, CompletionMarker, Redispatch, Isolation, Attribution, GateRecord,
-      RoutingRule (policy), Harness, ClosedLoop, Divergence, Watermark, Commit / Release, InterfaceContract (proposed).
-      Two behaviors (the diary channel; deriving a tier). RepoAsset's file-name synonyms moved to the kind terms
-      DOS / AgentMap (they were homonyms). dos-terms.txt is now the fresh 108-label roster.
-    rationale: |
-      The 0.4.0 amendment was made by hand from the 2026-09-05 classification (45 terms) and covered 74 of the 108
-      labels a fresh read of the docs produces; the fresh run covers 108/108 with the same eight objects.
-      Details, corrections and skill issues: dogfood/dos-extract-2026-09-18/decisions.md, skill-issues.md.

@@ -210,3 +210,121 @@ the last to know.
 - It did not calibrate any threshold. The fingerprint normalisation makes "same failure" detectable; how
   many repeats should escalate is still a literature prior (Q009 stands).
 - It did not raise any skill above `static_only` (R017). Every fix has a smoke twin; none has an L2 run.
+
+---
+
+# Amendment 0.4.0 — 2026-09-18
+
+## What the owner asked, and what the numbers said
+
+The question was «DOS 提取出来的没什么用，应该把项目里的所有本体都提出来、把概念对齐，现在只提取出很少一部分».
+Measured before touching anything (dos-extract v0.10.0 scripts, this repository):
+
+| Measure | v0.3.0 (before) | Source |
+|---|---|---|
+| Terms Judgment 1 classified on 2026-09-05 | 45 | `dogfood/ring-audit/.dos-extract/02_classification.md` |
+| Terms the docs defined in an explicit glossary | 13 | `docs/ARCHITECTURE.md §16 术语` |
+| Objects kept | 8 (7 + waived RepoAsset) | this file, Amendment 0.2.0 |
+| Labels the closure could resolve (objects + synonyms + rule ids) | 61 | `dos_closure.py` |
+| Counted roster labels resolvable (`verify_dos.py --terms dos-terms.txt`) | **17 / 65** | new `dos-terms.txt` |
+| Drift-sensor candidates dropped as «uncorroborated» on README + docs + SKILL.md | 215 | `verify_vocabulary.py --json` |
+| Rules never referenced by any doc | 16 / 20 | `unused_ontology` |
+
+The complaint was correct, and it was not an extraction error — every one of the missing terms *was* classified.
+The Judgment 1 verdicts `value` / `enum` / `external` / `composition` (Amendment 0.2.0's «measured and **not**
+promoted» table, the 03_convergence «Demotions» list) had exactly one place to land that a consumer could read:
+`objects`. Everything else landed here, in prose. `decisions.md` records *why*; it was being used as *where*.
+Industry does not do this: DDD flags the core inside the full ubiquitous language (Evans, *Highlighted Core*),
+every ontology methodology opens with an exhaustive glossary (Ontology 101 step 3, METHONTOLOGY, NeOn ORSD), and
+the ≤7 figure traces to a prototype-consolidation exercise in the DOS origin article, never to a completeness
+criterion. Full grounding: `skills/dos-extract/references/methodology.md` §Industry grounding.
+
+## What changed in the schema (dos-extract v0.11.0) — recorded here because this DOS is its first user
+
+A DOS is now two layers in one file: the **core model** (`objects` ≤7 + `relationships` + `rules` +
+`composition`) and the **ubiquitous language** (`vocabulary`: every other term, with `kind`, `of`, `definition`,
+`synonyms`, `rejected_names`, `context`, `status`). `dos_closure.py` resolves all three layers, a `rejected_names`
+word resolves-and-flags, and a synonym two concepts both claim is a homonym the closure refuses unqualified.
+`verify_dos.py` rejects a missing `vocabulary` (waivable as `core_only` for a to-be proposal only) and measures
+coverage with `--terms`.
+
+## Placements (Judgment 1 verdicts → homes) — the table Amendment 0.2.0 should have been
+
+| Term | Verdict (2026-09-05) | Home now | `of` / context |
+|---|---|---|---|
+| AC · Lock · Holdout · Threshold | value of Contract | `vocabulary` kind value | Contract |
+| Stage · Track | enum of Run | `vocabulary` kind enum | Run |
+| 体量档 / SizeTier · Assumption | value of Run | `vocabulary` kind value | Run |
+| Budget | value | `vocabulary` kind value | Loop, Run |
+| Signal · Fingerprint · Convergence · Note | value of Event | `vocabulary` kind value | Event |
+| Oscillation · Plateau · Impossible | enum | `vocabulary` kind enum | Convergence |
+| fail · reflow · waiver · escape | Event kinds | `vocabulary` kind event (Failure · Reflow · Waiver · EscapeDefect) | Event |
+| 路由 / 归层 · 升级 | rule-shaped / process | `vocabulary` kind process (Routing · Escalation) | — |
+| 边 · edge types · role | relation / enum | `vocabulary` Edge (value of Node) · EdgeType · NodeRole | Node, Edge |
+| skill · agent | Node.kind (Pattern 7) | `vocabulary` kind enum (Skill · Agent) | Node |
+| script · asset | Π primitives / templates | `vocabulary` kind role (Script) · artifact (Asset) | — |
+| trigger · stop 四键 | value of Loop | `vocabulary` kind value (Trigger · StopKeys) | Loop |
+| 闸 / 预门 / 自动门 | rule/behavior, «not a Gate» | `vocabulary` EdgeGuard, **`自动门` as a rejected name** | — |
+| 三档 A/B/C | value | `vocabulary` CheckTier (concept) | — |
+| 未评估 · static_only · 产物 · harness · 校准 | concepts / process | `vocabulary` Unevaluated · StaticOnly · Artifact · Harness · Calibration | — |
+| implementer · evaluator · signer | actors | `vocabulary` kind role | — |
+| advance · --autopilot | commands | `vocabulary` kind command | — |
+| REQ · issue · spec.md | upstream (requirement intake) | `vocabulary` kind external | requirement intake context |
+| PR · review thread | upstream (GitHub) | `vocabulary` kind external | GitHub delivery surface |
+| finding · verdict · four-state | downstream (evaluation) | `vocabulary` kind external | acceptance evaluation context |
+| PSL · dos-proposal · invariant | upstream (world) | `vocabulary` kind external | world context |
+| Territory · MemoryAsset | imported qanat words | `vocabulary` kind concept, `status: deprecated` | — |
+| 账本 · 迹 · 图 · 九环 · 失败报告 · 变更提案 · 归档 | compositions (already) | `composition.*.synonyms` gained the Chinese names | — |
+
+Two homonyms are now **declared on both sides** instead of being resolved by whichever entry the parser saw
+first: `环` → Loop | Ring (Q002, the anti-pattern this file already recorded) and `Tier` → SizeTier | CheckTier
+(the 2026-09-10 table listed «`Tier` / 体量档 (85)» while Finding.tier means A/B/C). `verify_dos.py` flags both;
+the closure refuses the bare word; `lint_cards.py` / `verify_issue.py` say `ambiguous: 环 → Loop | Ring` and ask
+for the qualified term. An accidental third (`invariants/` on both Invariant and RepoAsset) was caught by the same
+flag while drafting and removed — the path belongs to the RepoAsset.
+
+## Coverage (the exit's number)
+
+- Terms file: `dos-terms.txt` (65 labels — the 01b docs roster + 02_classification + ARCHITECTURE §16; every
+  label has ≥1 hit, `count_terms.py --group docs='docs/**/*.md' --group skills='skills/*/SKILL.md'
+  --group data='skills/*/assets/*.yaml'` exits 0).
+- Command: `verify_dos.py dos.yaml --decisions decisions.md --terms dos-terms.txt`
+- Result: **65 / 65** resolved (was 17 / 65 on v0.3.0 with `--core-only`). Resolvable labels 61 → 337.
+- Drift sensor on README + docs + SKILL.md: candidates resolved 4 → 27; «uncorroborated» 215 → 203; counted
+  findings 4 → 5 — the one new finding is `Tier` reported as `ambiguous`, which is the point. On `docs/lifecycle.md`
+  + `docs/routing.md` (the smoke suite's X1 check) it stays at 0.
+
+## What this amendment did **not** do
+
+- It did not change the eight objects, any relationship or any rule. The object layer was never the problem.
+- It did not resolve Q002 (retire Ring or qualify 环) or the SizeTier / CheckTier overlap — it made both
+  *visible to the closure*, which is what a DOS can do; the decision is the owner's.
+- It did not add a competency-question set (methodology.md criterion 3, third check) — proposed for 0.5.0.
+
+---
+
+# Amendment 0.5.0 — 2026-09-18 (same day; the fresh run)
+
+Asked «用新版 skill 重新跑一次 ai-dlc 的 dos-extract 看看效果», the skill was run end to end in `--auto` mode into
+`dogfood/dos-extract-2026-09-18/` (inventory · docs roster · classification · convergence · dos.yaml · decisions.md ·
+skill-issues.md). Same eight objects; the language grew.
+
+| Ontology | Fresh 108-label roster resolved |
+|---|---|
+| 0.3.0 (before the two-layer skill) | 19 / 108 |
+| 0.4.0 (hand-amended this morning) | 74 / 108 |
+| fresh 0.11.0 run | **108 / 108** |
+
+The 34 labels 0.4.0 lacked were not exotic: the three knobs, the sizing grid, the second memory channel, prereq-is-a-file,
+isolation / fix prompt / completion marker / redispatch, attribution, red baseline, commit / release. The hand
+amendment had worked from the 2026-09-05 classification table; the fresh run re-read the docs with the placement
+table in hand. This amendment adopts the fresh run's vocabulary (91 terms), its SizingGrid composition and two
+behaviors, and its two corrections: **Note is a value of Run, not Event's evidence text** (it has a promotion
+lifecycle an Event never has — ARCHITECTURE §10), and the file names `dos.yaml` / `agent-map.md` belong to the
+kind terms, not to RepoAsset (declared on both they were homonyms, and the 0.11.0 verifier said so).
+
+Not adopted: nothing in the core model changed. Open: `release` is both a Stage (enum) and a GitHub-side
+external (tag + notes) — recorded as such, reviewer to confirm. Skill issues from the run (I-1…I-7, three fixed in
+dos-extract 0.11.1, one repo fix in ai-dlc 1.6.1 — `state.schema.json` was invalid JSON) are in
+`dogfood/dos-extract-2026-09-18/skill-issues.md`.
+

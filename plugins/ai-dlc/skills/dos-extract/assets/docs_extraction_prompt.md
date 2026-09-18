@@ -145,8 +145,19 @@ The agent executing the skill should:
    - If fewer than 5 nouns came out of substantial docs (>20KB), the docs are
      either very abstract or the extraction missed something — re-run with a
      prompt explicitly asking "what are the most-mentioned product nouns".
-   - If 50+ nouns came out, the extraction was too liberal — the noise will
-     swamp classification. Re-run with stricter exclusion (especially of generic words).
+   - If 50+ nouns came out of a mature repository, that is **normal** — the team's
+     language is that big, and every one of them will need a home (`objects`,
+     `vocabulary`, `composition`, a synonym or a rejected name; see the placement table
+     in `references/judgments.md`). Do NOT prune to make classification comfortable:
+     the roster is the denominator of the coverage `verify_dos.py --terms` measures, and
+     a word pruned here is a word the DOS will later fail to resolve. What you may drop
+     is pure framework noise with no product concept behind it (`package.json`,
+     `useEffect`) — record it in the pruning table so a reviewer can disagree.
+   - **Lift an explicit glossary verbatim.** A `术语` / "Terminology" / "Glossary" section
+     in the docs is gold-tier: each row is a definition (Rule 5, methodology.md) and a
+     ready-made `vocabulary` entry. This plugin's own first DOS read `ARCHITECTURE.md
+     §16 术语` (13 defined terms) and lifted none of them as terms — the shape of the
+     loss this section exists to prevent.
 
 ---
 
@@ -217,6 +228,10 @@ The "sentence test" in Judgment 2 becomes much sharper with docs evidence:
 
 ### When drafting `dos.yaml`
 
+- `vocabulary`: every noun in `01b_docs_terms.md` that did not become one of the ≤7
+  objects lands here (or in `composition` / `synonyms` / `rejected_names`) with its
+  definition — the docs' own wording when a definition was found. Then run
+  `verify_dos.py --terms <the terms file>` and read `coverage.unplaced`.
 - `scope.in_scope` and `success_criteria`: extract directly from docs.
 - `rules` candidates from docs: any sentence containing "must", "always",
   "never", "required" is a candidate constitutional rule. Apply Judgment 3

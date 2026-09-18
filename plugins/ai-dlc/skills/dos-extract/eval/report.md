@@ -39,3 +39,17 @@
 Pick ≥1 held-out repo, extract a DOS **with and without** the skill, assert on the produced
 `dos.yaml` (ontology cleanliness, ≤7 objects, no UI/impl objects), require `delta_exist > 0`
 with zero regressions. Then update `gate.json`.
+
+## 2026-09-18 — the second gap: a clean sliver (v0.11.0)
+
+The plugin's owner asked why the extracted DOS was «没什么用 … 只提取出很少一部分». Measured on the
+plugin's own `dos.yaml`: 45 terms classified, 8 kept, **17 / 65** roster labels resolvable, the docs'
+own 13-term glossary not lifted. Root cause was structural, not a bad run — the ≤7 discipline was the
+only layer, so every Judgment 1 verdict other than «core object» had nowhere to land but `decisions.md`
+prose. Industry (DDD Highlighted Core, Ontology 101 / METHONTOLOGY / NeOn glossaries, SKOS / ISO 1087 /
+OBO alignment, Palantir / dbt / DataHub semantic layers) caps nothing and layers everything. The fix is a
+second layer, `vocabulary`, resolved by the same closure and measured by `verify_dos.py --terms`; details
+in `gate.json` (`dogfood_fixes`, 2026-09-18) and `plugins/ai-dlc/decisions.md` Amendment 0.4.0. Tier
+stays `static_only`: the structural evidence grew (14 new expectations, 3 mutants killed — see the commit),
+the effect layer is still unrun.
+

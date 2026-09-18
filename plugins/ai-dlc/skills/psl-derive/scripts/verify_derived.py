@@ -18,8 +18,9 @@ Mechanical guarantees (REJECT — non-waivable half):
   - workflow.md has no named steps (Step N / 步骤 N / 第 N 步 / 阶段 N); ≥3 sequence words → flag. Blockquotes
     are stripped ONLY in the leading preamble (the template's own guidance quotes the banned tokens); a
     procedure written behind `> ` further down is still a procedure (I-04 over-corrected, fixed per I-77).
-  - dos-proposal.yaml passes dos-extract's verify_dos.py (≤7 objects, declared refs, no UI/impl suffix,
-    open_questions non-empty) — found at ../../dos-extract/scripts/verify_dos.py unless --verify-dos
+  - dos-proposal.yaml passes dos-extract's verify_dos.py --core-only (≤7 objects, declared refs, no UI/impl
+    suffix, open_questions non-empty; the `vocabulary` layer is not required of a to-be proposal) — found at
+    ../../dos-extract/scripts/verify_dos.py unless --verify-dos
   - dos-proposal objects ⊆ PSL Domain-Model vocabulary ∪ divergence "PSL 欠定" candidates (no invented entities)
   - divergence.md declares n; when n>1 the table has ≥1 row or an explicit "no divergence" statement; rows carry
     an agenda cell
@@ -238,7 +239,10 @@ def main():
     if os.path.isfile(files["dos-proposal.yaml"]):
         vd = a.verify_dos or os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "dos-extract", "scripts", "verify_dos.py")
         if os.path.isfile(vd):
-            r = subprocess.run([sys.executable, vd, files["dos-proposal.yaml"]], capture_output=True, text=True)
+            # --core-only: a proposal derived from a PSL before any code exists has objects and rules but no
+            # team vocabulary to be complete against; dos-extract's two-layer requirement (v0.11.0) is for
+            # the as-is DOS. reconcile_dos.py folds the proposal into that DOS's synonyms later.
+            r = subprocess.run([sys.executable, vd, files["dos-proposal.yaml"], "--core-only"], capture_output=True, text=True)
             if r.returncode != 0:
                 rejects.append("dos-proposal.yaml rejected by verify_dos.py: " + (r.stdout.strip().splitlines()[-1] if r.stdout.strip() else r.stderr.strip()[:200]))
         else:

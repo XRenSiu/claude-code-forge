@@ -409,6 +409,9 @@ def format_report(
     lines.append(f"  - structured files (YAML/JSON): {structured_stats.get('structured_files', 0)}"
                  f" ({structured_stats.get('structured_unparsed', 0)} unparsable,"
                  f" {structured_stats.get('structured_manifests', 0)} tooling manifests skipped)")
+    for up in structured_stats.get("unparsed_paths", []):
+        # A schema that does not parse is exactly the file whose objects you wanted: say which one.
+        lines.append(f"  - UNPARSABLE (skipped, fix or exclude it): `{up}`")
     lines.append(f"- Distinct nouns: {len(nouns)}")
     lines.append(f"  - from code declarations: {sum(1 for n in nouns if 'code' in noun_modes.get(n, {'code'}))}")
     lines.append(f"  - from structured data: {sum(1 for n in nouns if noun_modes.get(n, set()) - {'code'})}")
@@ -557,7 +560,9 @@ def main() -> int:
     pruned_seen: set[str] = set()
     files_scanned = 0
     stats = {"code_files": 0, "structured_files": 0,
-             "structured_unparsed": 0, "structured_manifests": 0}
+             "structured_unparsed": 0, "structured_manifests": 0,
+             "unparsed_paths": []}   # named, not just counted (dogfood 2026-09-18: the plugin's own
+                                     # state.schema.json was invalid JSON and nobody could tell which file)
 
     yaml_mod = None
     if not args.no_structured:
@@ -608,6 +613,7 @@ def main() -> int:
             doc = parse_structured(src_file, yaml_mod)
             if doc is None:
                 stats["structured_unparsed"] += 1
+                stats["unparsed_paths"].append(rel)
                 continue
             stats["structured_files"] += 1
             found: list[tuple[str, str]] = []
