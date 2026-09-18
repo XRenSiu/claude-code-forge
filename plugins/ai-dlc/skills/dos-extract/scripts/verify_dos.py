@@ -433,15 +433,26 @@ def main():
     if not oq:
         rejects.append("open_questions empty — a DOS with none is trivial or dishonest")
 
-    # size / legibility surrogates (methodology.md §6) — warnings, never the exit code
+    # size / legibility surrogates (methodology.md §6) — warnings, never the exit code.
+    # The budget is for the CORE MODEL: `vocabulary` is a glossary (looked up, not read through) and is
+    # budgeted separately (~5-8 lines per term), so its span is subtracted first — otherwise every
+    # complete ontology trips the bloat warning for having its language (dogfood 2026-09-18: 1405 lines,
+    # 640 of them vocabulary).
     n_lines = len(raw.splitlines())
+    vocab_lines = 0
+    m_v = re.search(r"^vocabulary:\s*$", raw, re.M)
+    if m_v:
+        m_next = re.search(r"^[A-Za-z_][A-Za-z0-9_]*:", raw[m_v.end():], re.M)
+        span = raw[m_v.start(): m_v.end() + (m_next.start() if m_next else len(raw) - m_v.end())]
+        vocab_lines = len([ln for ln in span.splitlines() if ln.strip() and not ln.lstrip().startswith("#")])
+    core_lines = n_lines - vocab_lines
     budget = 100 * max(len(obj_names), 1)   # methodology.md §6: ~300-500 lines for 6 objects
-    if n_lines > a.max_lines:
-        warnings.append(f"{n_lines} lines > {a.max_lines} — methodology.md §6: sections are likely "
-                        f"over-detailed (properties listed field-by-field instead of at the "
-                        f"conceptual level)")
-    elif n_lines > budget:
-        warnings.append(f"{n_lines} lines over a {budget}-line budget for {len(obj_names)} objects "
+    if core_lines > a.max_lines:
+        warnings.append(f"{core_lines} core-model lines > {a.max_lines} (file {n_lines}, vocabulary excluded) — "
+                        f"methodology.md §6: sections are likely over-detailed (properties listed "
+                        f"field-by-field instead of at the conceptual level)")
+    elif core_lines > budget:
+        warnings.append(f"{core_lines} core-model lines over a {budget}-line budget for {len(obj_names)} objects "
                         f"— methodology.md §6 expects ~300-500 at 6 objects (~100/object). Not yet "
                         f"the {a.max_lines}-line bloat threshold, but check whether properties are "
                         f"listed field-by-field instead of at the conceptual level.")
@@ -468,6 +479,8 @@ def main():
     report = {
         "dos": a.dos,
         "line_count": n_lines,
+        "core_line_count": core_lines,
+        "vocabulary_line_count": vocab_lines,
         "object_count": len(obj_names),
         "synonym_count": len(synonyms),
         "vocabulary_count": len(vocab),

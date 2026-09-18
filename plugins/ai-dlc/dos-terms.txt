@@ -1,73 +1,128 @@
-# dos-terms.txt — the counted roster behind plugins/ai-dlc/dos.yaml (dos-extract v0.11.0).
-# Format: count_terms.py — `Label = variant, variant, /regex/`. Two consumers:
-#   python3 skills/dos-extract/scripts/count_terms.py --terms dos-terms.txt --root . \
-#       --group docs='docs/**/*.md' --group skills='skills/*/SKILL.md' --group data='skills/*/assets/*.yaml'
+# dos-terms.txt — the counted roster behind plugins/ai-dlc/dos.yaml (0.5.0). Produced by the fresh dos-extract 0.11.0
+# run of 2026-09-18 (dogfood/dos-extract-2026-09-18/.dos-extract/terms.txt is the same file).
+# Consumers:
+#   python3 skills/dos-extract/scripts/count_terms.py --terms dos-terms.txt --root . --group docs='docs/*.md' \
+#       --group readme='README.md' --group skills='skills/*/SKILL.md' --group data='skills/*/assets/*.yaml' --group agents='agents/*.md'
 #   python3 skills/dos-extract/scripts/verify_dos.py dos.yaml --decisions decisions.md --terms dos-terms.txt
-# Every label here was put in front of Judgment 1 (dogfood/ring-audit/.dos-extract/01b_docs_terms.md +
-# 02_classification.md + docs/ARCHITECTURE.md §16). The DOS must place every one of them; it is the
-# denominator of `coverage`, not a list of what the DOS happens to contain.
-Run          = Run, 一次交付
-Contract     = 契约, Contract, done_when
-AC           = 判据, /\bAC\b/, acceptance criterion
-WorkUnit     = 卡, 任务卡, /CARD-\d+/, WorkUnit
-Gate         = 门, Gate, /\bG[123]\b/
-Event        = 事件, /\bEvent\b/, ledger row
-Node         = 节点, /\bNode\b/
-Loop         = 环契约, /\bLoop\b/, loops.yaml
-RepoAsset    = 仓库级制品, RepoAsset, X1 制品
-Ring         = 九环, /\bRing\b/
-Layer        = 层, /\bLayer\b/
-Ledger       = 账本, ledger.md
-Trace        = 迹, trace.jsonl
-Graph        = 图, graph.yaml, 执行图
-FailureReport = 失败报告, failure report
+# Sources: 01_inventory.md (graph.yaml kind-values, loops/routing/sizing/triggers keys), README.md,
+# docs/ARCHITECTURE.md §2–§16, docs/lifecycle.md 制品映射, docs/routing.md, docs/evaluation.md,
+# agents/*.md names. Every label here goes in front of Judgment 1 and must land somewhere.
+# ---- 主干与状态 -------------------------------------------------------------------------------
+Run            = Run, 一次交付, 一次运行
+Slug           = slug, /\.aidlc\/<slug>/
+Stage          = 阶段, /\bstage\b/, 十五个阶段
+StateFile      = state.json, 状态文件, 充分统计量
+Advance        = advance, 推进
+Prereq         = 前置条件, prereqs, next_allowed
+Waiver         = 豁免, waiver, --force --reason
+Track          = 轨道, PSL 轨, TASK 轨
+Autonomy       = 自治, autonomy, 自治阶梯
+Resume         = 恢复, --resume, resume_binding
+Doctor         = doctor, 装置健康度
+# ---- 契约线 -----------------------------------------------------------------------------------
+Contract       = 契约, Contract, done_when
+AC             = 判据, /\bAC\b/, acceptance criterion
+REQ            = /\bREQ\b/, /REQ-\d+/
+ObserveBoundary = 观察边界, observe, /\bobserve\b/
+Lock           = 两段锁, .done_when.lock, /\bLock\b/, 二次锁
 ChangeProposal = 变更提案, change proposal
-Archive      = 归档, /\bArchive\b/
-EvidenceLog  = EvidenceLog, pr-watch
-Lock         = 两段锁, .done_when.lock, /\bLock\b/
-Holdout      = 隐藏集, holdout
-Threshold    = thresholds, threshold_source
-Stage        = 阶段, /\bstage\b/
-Track        = 轨道, PSL 轨, TASK 轨
-SizeTier     = 体量档, /\b[SML] 档/, size_source
-Assumption   = 假设台账, assumption
-Budget       = 预算, budgets
-Signal       = 信号, /\bsignal\b/
-Fingerprint  = 指纹, fingerprint
-Convergence  = 收敛, convergence
-Oscillation  = oscillation, 往复
-Plateau      = plateau
-Impossible   = impossible_under_contract
-Failure      = 失败, fail event
-Reflow       = 回流, reflow
-Waiver       = 豁免, waiver
-EscapeDefect = 逃逸缺陷, escape defect
-Routing      = 路由, routing.yaml, 归层
-Escalation   = 升级, escalate
-Edge         = 边, /\bedge\b/
-NodeRole     = /\brole\b/, 脊柱
-Skill        = /\bskill\b/
-Agent        = /\bagent\b/, 子 agent
-Script       = 脚本, /\bscript\b/
-Asset        = 模板, assets/
-Trigger      = 触发, triggers.yaml
-EdgeGuard    = 闸, 预门, 自动门, pre-gate
-CheckTier    = 三档, /\b[ABC] 档/
-Unevaluated  = 未评估, unevaluated
-StaticOnly   = static_only
-Calibration  = 校准, calibrate
-Artifact     = 产物, /\bartifact\b/
-Implementer  = 实现者, implementer
-Evaluator    = 评估者, evaluator, verifier
-HumanSigner  = 人签, signer
-REQ          = /\bREQ\b/, /REQ-\d+/
-Issue        = /\bissue\b/
-Spec         = spec.md
-PR           = /\bPR\b/, pull request
-Finding      = /\bfinding\b/
-Verdict      = 裁决, /\bverdict\b/
-FourState    = 四态, SPEC_DRIFT, GAMING_RISK
-PSL          = /\bPSL\b/
-DOSProposal  = dos-proposal, 应然本体
-Invariant    = 不变量, invariant
-Territory    = Territory
+Assumption     = 假设台账, assumption
+Threshold      = thresholds, threshold_source, 阈值
+InterfaceContract = 接口契约, contract.yaml
+Spec           = spec.md, EARS
+Issue          = /\bissue\b/
+# ---- 计划与实现 ---------------------------------------------------------------------------------
+WorkUnit       = 卡, 任务卡, /CARD-\d+/, WorkUnit
+AllowedFiles   = allowed_files, 白名单
+ForbiddenFiles = forbidden_files, 禁改
+Implementer    = 实现者, implementer
+RedBaseline    = 红基线, RED_BASELINE, capture_red_baseline
+RedGreen       = 红→绿, red_green, verify_red_green
+Commit         = /\bcommit\b/, 提交
+# ---- 标准与测试 ---------------------------------------------------------------------------------
+TestStrategy   = test_strategy, minimal, comprehensive
+Floor          = 地板, /\bfloor\b/
+Calibration    = 校准, calibrate, calibration
+Holdout        = 隐藏集, holdout
+MutationScore  = 变异分数, mutation score, mutation_score
+# ---- 验收线 -------------------------------------------------------------------------------------
+CheckTier      = 三档, /\b[ABC] 档/
+Finding        = /\bfinding\b/
+Verdict        = 裁决, /\bverdict\b/
+FourState      = 四态, SPEC_DRIFT, GAMING_RISK
+Evaluator      = 评估者, evaluator, verifier
+MetaJudge      = meta-judge, 综合裁决
+FixPrompt      = fix_prompt, 修复提示
+CompletionMarker = 完成标记, verify_review_complete
+Unevaluated    = 未评估, unevaluated
+Redispatch     = 重派, stale/
+Isolation      = 信息隔离, must_not_read
+# ---- 门 -----------------------------------------------------------------------------------------
+Gate           = 门, Gate, /\bG[123]\b/
+HumanSigner    = 人签, signer, 签字人
+Attribution    = 归因, attribution, derivation_error
+GateRecord     = g1-record, g3-record, g1_record
+# ---- 事件与记忆 ---------------------------------------------------------------------------------
+Event          = 事件, /\bEvent\b/, ledger row
+Ledger         = 账本, ledger.md
+Trace          = 迹, trace.jsonl, 决策迹
+Note           = 解释日记, notes.md, 日记
+Promotion      = 晋升, learnings/project.md, learnings
+Archive        = 归档, /\bArchive\b/, /specs\/<slug>/
+Fingerprint    = 指纹, fingerprint
+Signal         = 信号, /\bsignal\b/
+Failure        = 失败, fail event
+Reflow         = 回流, reflow
+Escalation     = 升级, escalate
+FailureReport  = 失败报告, failure report
+EscapeDefect   = 逃逸缺陷, escape defect
+Convergence    = 收敛, convergence
+Oscillation    = oscillation, 往复
+Plateau        = plateau
+Impossible     = impossible_under_contract
+Budget         = 预算, budgets
+Layer          = 层, /\bLayer\b/
+Routing        = 路由, routing.yaml, 归层
+RoutingRule    = 路由表, /\bR0[1-9]\b/, /\bR1[0-6]\b/
+# ---- 图与环 -------------------------------------------------------------------------------------
+Node           = 节点, /\bNode\b/
+Edge           = 边, /\bedge\b/
+EdgeType       = 扇出, 扇入, fan_out, fan_in, loop_back
+Graph          = 图, graph.yaml, 执行图
+Loop           = 环契约, /\bLoop\b/, loops.yaml
+StopKeys       = 停机四键, stop 四键
+Trigger        = 触发, triggers.yaml
+Ring           = 九环, /\bRing\b/, 脊柱
+NodeRole       = /\brole\b/
+Skill          = /\bskill\b/
+Agent          = /\bagent\b/, 子 agent
+Script         = 脚本, /\bscript\b/
+Asset          = 模板, assets/
+EdgeGuard      = 闸, 预门, 自动门, pre-gate
+Harness        = harness
+ClosedLoop     = 闭环, closed loop
+# ---- 旋钮与网格 ---------------------------------------------------------------------------------
+Knob           = 旋钮, knob
+Breadth        = 广度, breadth
+TestVolume     = 测试量
+Depth          = 深度, depth
+SizeTier       = 体量档, 档位, /\b[SML] 档/, size_source
+SizingGrid     = 网格, sizing.yaml, never_skippable
+SizingRule     = /SZ-0[1-6]/
+SizeExemption  = size_exemption, 跳过
+# ---- 本体线（X1）与世界（R0）-----------------------------------------------------------------
+RepoAsset      = 仓库级制品, RepoAsset, X1 制品
+DOS            = /\bDOS\b/, dos.yaml, 本体
+DOSProposal    = dos-proposal, 应然本体
+Invariant      = 不变量, invariant
+AgentMap       = agent-map.md, 仓库地图
+PSL            = /\bPSL\b/
+Divergence     = 分歧, divergence
+Territory      = Territory
+Artifact       = 产物, /\bartifact\b/
+# ---- 外部面 -------------------------------------------------------------------------------------
+PR             = /\bPR\b/, pull request
+ReviewThread   = review thread, 评审线程, review comment
+Watermark      = 水位线, watermark
+Release        = 发布, /\brelease\b/, post-deploy
+StaticOnly     = static_only

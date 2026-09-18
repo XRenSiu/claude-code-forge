@@ -549,9 +549,20 @@ def main() -> int:
     # -- 判定：对象名词 ----------------------------------------------------
     findings, dropped = [], {"resolved": 0, "waived": 0, "sentence_initial": 0,
                              "uncorroborated": 0, "schema_key": 0, "code_shaped": 0}
+    # A case-only difference to a declared label is the same English word, not drift: `Minimal` at a
+    # sentence start vs the enum value `minimal`, `Repeat` vs the synonym `repeat`. Separator differences
+    # (`work_unit` vs `WorkUnit`) stay near_miss — those are two spellings of an identifier. Dogfood
+    # 2026-09-18: four of nine counted findings on the fresh ontology were this class.
+    lower_labels = {}
+    for label, (canon_l, _k) in vocab.items():
+        if is_ascii_wordish(label):
+            lower_labels.setdefault(label.lower(), canon_l)
     for term, entry in sorted(all_cands.items()):
         channel, where = entry["channel"], entry["where"]
         canon = closure.resolve_object(term)
+        if canon is None and is_ascii_wordish(term) and term.lower() in lower_labels \
+                and term.lower() not in {l.lower() for l in closure.ambiguous}:
+            canon = lower_labels[term.lower()]
         if canon is not None:
             if closure.via_rejected(term) and term not in waived:
                 # v0.11.0: the word closes — the DOS knows it — but the team decided AGAINST it

@@ -173,6 +173,7 @@ objects:
 #
 # 规则：
 #   - 每个词一个家：不得与 objects / composition 的键重名；一个词不得同时是 A 的 synonym 和 B 的 synonym
+#     （常见误踩：把文件名同时挂在聚合与它的 kind 词条上——`dos.yaml` 既在 RepoAsset 又在 DOS——verify_dos 会报同形异义）
 #     ——那是同形异义（homonym），verify_dos.py 会 flag，闭包会拒绝不带限定的用法（环 → Ring | Loop）。
 #   - `kind` 是封闭集（scripts/dos_closure.py VOCABULARY_KINDS）；value / enum 必填 `of`；external 必填 `context`。
 #   - definition 一句话；再多写进 scope_note。

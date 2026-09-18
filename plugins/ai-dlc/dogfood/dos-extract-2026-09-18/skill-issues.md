@@ -1,0 +1,13 @@
+# dos-extract skill issues found while dogfooding 0.11.0 on ai-dlc — 2026-09-18
+
+| # | Issue | Root cause | Fix | Affected the product? |
+|---|---|---|---|---|
+| I-1 | `inventory.py` reported "2 unparsable" structured files and **did not say which** | `parse_structured` returns None and the caller only counts | inventory.py names each unparsable path in the report header (`UNPARSABLE (skipped, fix or exclude it)`), 0.11.1 | Yes — the plugin's own `state.schema.json` was one of them (I-2) and the first inventory saw no `$defs` |
+| I-2 | `skills/ai-dlc/assets/state.schema.json` is invalid JSON: a literal backslash-n after the closing brace | typo when the file was written; nothing loads it (only SKILL.md references it) — a schema nobody validates against | trailing `\n` removed; `json.load` passes; ai-dlc skill 1.6.1 | Yes — 504 vs 388 nouns, `$defs/gate` visible |
+| I-3 | `count_terms.py --json --out X` writes the JSON into `X` (the `--out` "Markdown here" help text is wrong) and prints the "Wrote …" line to stdout | `--out` takes whatever `text` was rendered | not changed; documented here. Run the two forms separately (`--json` to stdout, `--out` for Markdown) | No (caught immediately) |
+| I-4 | `verify_dos.py` bloat warning counted the whole file, so every complete two-layer DOS trips "> 800 lines" for having its language | the 0.10.0 surrogate predates the vocabulary layer | size budget applies to core-model lines; `vocabulary` span subtracted; report carries `core_line_count` / `vocabulary_line_count`, 0.11.1 | Cosmetic (warning only) |
+| I-5 | `verify_vocabulary.py` counted `Minimal` / `Repeat` / `Comprehensive` as near_miss of the declared `minimal` / `repeat` / `comprehensive` | normalisation near-miss treated a case-only difference like a separator difference | a case-only match to a declared ASCII label resolves; separator differences (`work_unit`) stay near_miss, 0.11.1 | Yes — 4 of 9 counted findings on the fresh ontology were this class |
+| I-6 | Declaring a file name as a synonym of both an aggregate and its kind term (`dos.yaml` on RepoAsset and on DOS) is an easy homonym to create | the verifier flags it correctly; the template does not warn about it | one line in the template's vocabulary comment; the flag did its job | Caught by the gate before presenting |
+| I-7 | `finding-schema.yaml` (pm-reviewer) is a schema-by-example with `<placeholders>` — unparsable by design | intentional; inventory skips it | none; I-1 makes it visible so nobody wonders | No |
+
+Net: two skill fixes (I-1, I-4, I-5 in dos-extract 0.11.1), one repo fix (I-2, ai-dlc 1.6.1), two documented (I-3, I-6/I-7).

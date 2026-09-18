@@ -301,3 +301,30 @@ flag while drafting and removed — the path belongs to the RepoAsset.
   *visible to the closure*, which is what a DOS can do; the decision is the owner's.
 - It did not add a competency-question set (methodology.md criterion 3, third check) — proposed for 0.5.0.
 
+---
+
+# Amendment 0.5.0 — 2026-09-18 (same day; the fresh run)
+
+Asked «用新版 skill 重新跑一次 ai-dlc 的 dos-extract 看看效果», the skill was run end to end in `--auto` mode into
+`dogfood/dos-extract-2026-09-18/` (inventory · docs roster · classification · convergence · dos.yaml · decisions.md ·
+skill-issues.md). Same eight objects; the language grew.
+
+| Ontology | Fresh 108-label roster resolved |
+|---|---|
+| 0.3.0 (before the two-layer skill) | 19 / 108 |
+| 0.4.0 (hand-amended this morning) | 74 / 108 |
+| fresh 0.11.0 run | **108 / 108** |
+
+The 34 labels 0.4.0 lacked were not exotic: the three knobs, the sizing grid, the second memory channel, prereq-is-a-file,
+isolation / fix prompt / completion marker / redispatch, attribution, red baseline, commit / release. The hand
+amendment had worked from the 2026-09-05 classification table; the fresh run re-read the docs with the placement
+table in hand. This amendment adopts the fresh run's vocabulary (91 terms), its SizingGrid composition and two
+behaviors, and its two corrections: **Note is a value of Run, not Event's evidence text** (it has a promotion
+lifecycle an Event never has — ARCHITECTURE §10), and the file names `dos.yaml` / `agent-map.md` belong to the
+kind terms, not to RepoAsset (declared on both they were homonyms, and the 0.11.0 verifier said so).
+
+Not adopted: nothing in the core model changed. Open: `release` is both a Stage (enum) and a GitHub-side
+external (tag + notes) — recorded as such, reviewer to confirm. Skill issues from the run (I-1…I-7, three fixed in
+dos-extract 0.11.1, one repo fix in ai-dlc 1.6.1 — `state.schema.json` was invalid JSON) are in
+`dogfood/dos-extract-2026-09-18/skill-issues.md`.
+
