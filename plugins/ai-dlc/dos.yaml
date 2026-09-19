@@ -1287,7 +1287,7 @@ anti_patterns:
   - pattern: "Overloaded Chinese terms in the docs: 环 means both Ring (九环 R0–R8) and Loop (loops.yaml 七个环); 门 means both the human Gate and the mechanical pre-gate (自动门 / 预门 / 闸)"
     why_bad: "'每个圈必须归属一个环' and '九环与一根脊柱' use the same character for a cycle contract and a phase grouping; '自动门' invites reading a script check as a Gate a human could waive"
     correct_approach: "Ring = composition (Node.role grouping), Loop = object; Gate = human-signed verdict only, mechanical checks = edge guards; qualify 环 / 门 in new text"
-    historical_context: "observed during this extraction (2026-09-05) in ARCHITECTURE.md §1/§3.2/§8 and README.md; not yet corrected — Q002"
+    historical_context: "observed during this extraction (2026-09-05) in ARCHITECTURE.md §1/§3.2/§8 and README.md. Resolved 2026-09-19 (Q002 → evolution_log 0.5.1): Ring stays a docs-only composition over Node.role, no ring: field; the glossary now qualifies both senses of 环 and of 档 / Tier, and the closure refuses the bare words so a card or issue has to say which"
 
   - pattern: "X1 declared as a cross-cutting stage in every document and enforced nowhere in code: absent from ORDER, absent from every prereqs() branch, and doctor only ever checked the toolchain"
     why_bad: |
@@ -1332,14 +1332,6 @@ open_questions:
     deadline: "2026-09-30"
     impact_if_unresolved: "cards' dos_slice and issues written by people will say Card and fail closure, or the DOS will drift from the team's word"
     candidates: ["add a whole-word exemption list to verify_dos.py UI_IMPL_SUFFIXES", "rename 卡 → 任务单元 / WorkUnit across docs + card_template.yaml", "keep both with a synonyms field the closure checks honour"]
-  - id: "Q002"
-    question: "环 names both the nine Rings (R0–R8 documentation grouping) and the six Loops (loops.yaml). graph.yaml carries Node.role (11 values) and no ring field. Retire Ring in favour of Node.role, add `ring:` to graph.yaml, or keep Ring as a docs-only view?"
-    raised_at: "2026-09-05"
-    raised_by: "dos-extract --auto"
-    owner: "XRenSiu"
-    deadline: "2026-09-30"
-    impact_if_unresolved: "ARCHITECTURE.md §1 and graph.yaml can drift (they already disagree on gate/orchestrator vs 脊柱); '环契约' and '九环' stay ambiguous in Chinese"
-    candidates: ["Ring := Node.role grouping (this DOS's reading), document the mapping in §8 术语", "add ring: R0..R8 to every non-stage node and lint it", "drop the ring numbering from docs"]
   - id: "Q003"
     question: "Which is the source of truth for the stage list — graph.yaml.stages or aidlc_state.py ORDER? P1 asserts equality (graph check); P2 was to decide (lean graph.yaml, advance reads it)."
     raised_at: "2026-09-05"
@@ -1487,3 +1479,18 @@ evolution_log:
       The 0.4.0 amendment was made by hand from the 2026-09-05 classification (45 terms) and covered 74 of the 108
       labels a fresh read of the docs produces; the fresh run covers 108/108 with the same eight objects.
       Details, corrections and skill issues: dogfood/dos-extract-2026-09-18/decisions.md, skill-issues.md.
+  - version: "0.5.1"
+    date: "2026-09-19"
+    author: "XRenSiu"
+    change_type: "resolve"
+    breaking: false
+    summary: |
+      Q002 resolved, candidate 1: Ring := the grouping of Nodes by Node.role, a docs-only composition; no `ring:` field
+      is added to graph.yaml and the numbering stays in the docs. 环 keeps both senses in existing text; new text says
+      环契约 / Loop or 九环 / Ring, and the closure refuses the bare 环 (declared on both since 0.4.0). Same treatment
+      for 档 / Tier (体量档 SizeTier vs 三档 CheckTier). ARCHITECTURE.md §16 术语 gained two disambiguation rows.
+    rationale: |
+      Adding a ring: field would make a documentation grouping into data that graph.yaml then has to keep consistent
+      with Node.role — a second source of truth for one fact (the anti-pattern this file records twice). Dropping the
+      numbering would orphan every 九环 / R0–R8 reference in the docs. Keeping Ring as a derived view over role costs
+      nothing and the homonym is already mechanically visible: the closure says `ambiguous: 环 → Loop | Ring`.

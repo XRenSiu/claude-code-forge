@@ -118,12 +118,46 @@ The agent executing the skill should:
 4. **Apply the prompt above** to the collected content. Output goes to
    `<workspace>/01b_docs_terms.md`.
 
+   **Counting is mechanical — do not tally by eye or hand-roll a regex per term.** Read the
+   corpus for the *candidate terms and their variants*, write those into a terms file, then let
+   `scripts/count_terms.py` produce the frequencies and the `file:line` evidence:
+
+   ```
+   # terms.txt — canonical label = comma-separated variants (a /regex/ variant is allowed)
+   Gate     = 门, Gate, G1, G2, G3
+   Contract = 契约, Contract, done_when
+   Card     = 卡, 任务卡, Card, /CARD-\d+/
+   ```
+
+   ```
+   python3 scripts/count_terms.py --terms terms.txt --root <repo> \
+       --group docs='docs/**/*.md' --group code='src/**/*.ts' --group data='**/*.yaml' \
+       --out <workspace>/01b_docs_terms.md
+   ```
+
+   The named groups become the `(≈150 docs · 321 code · 68 data)` columns. Cite the exact command
+   in `decisions.md`: a frequency table nobody can rerun is a claim, not evidence, and a term that
+   matched nothing exits non-zero so a typo in the terms file cannot pass as a dead word.
+   Then add, by hand, what the script cannot: the Definitions / Cross-references / Bounded Context
+   sections below, which are judgments about meaning rather than counts.
+
 5. **Sanity check the output**:
    - If fewer than 5 nouns came out of substantial docs (>20KB), the docs are
      either very abstract or the extraction missed something — re-run with a
      prompt explicitly asking "what are the most-mentioned product nouns".
-   - If 50+ nouns came out, the extraction was too liberal — the noise will
-     swamp classification. Re-run with stricter exclusion (especially of generic words).
+   - If 50+ nouns came out of a mature repository, that is **normal** — the team's
+     language is that big, and every one of them will need a home (`objects`,
+     `vocabulary`, `composition`, a synonym or a rejected name; see the placement table
+     in `references/judgments.md`). Do NOT prune to make classification comfortable:
+     the roster is the denominator of the coverage `verify_dos.py --terms` measures, and
+     a word pruned here is a word the DOS will later fail to resolve. What you may drop
+     is pure framework noise with no product concept behind it (`package.json`,
+     `useEffect`) — record it in the pruning table so a reviewer can disagree.
+   - **Lift an explicit glossary verbatim.** A `术语` / "Terminology" / "Glossary" section
+     in the docs is gold-tier: each row is a definition (Rule 5, methodology.md) and a
+     ready-made `vocabulary` entry. This plugin's own first DOS read `ARCHITECTURE.md
+     §16 术语` (13 defined terms) and lifted none of them as terms — the shape of the
+     loss this section exists to prevent.
 
 ---
 
@@ -194,6 +228,10 @@ The "sentence test" in Judgment 2 becomes much sharper with docs evidence:
 
 ### When drafting `dos.yaml`
 
+- `vocabulary`: every noun in `01b_docs_terms.md` that did not become one of the ≤7
+  objects lands here (or in `composition` / `synonyms` / `rejected_names`) with its
+  definition — the docs' own wording when a definition was found. Then run
+  `verify_dos.py --terms <the terms file>` and read `coverage.unplaced`.
 - `scope.in_scope` and `success_criteria`: extract directly from docs.
 - `rules` candidates from docs: any sentence containing "must", "always",
   "never", "required" is a candidate constitutional rule. Apply Judgment 3

@@ -1,13 +1,19 @@
 {
   "skill": ".claude/skills/dos-extract",
   "tier": "production",
-  "evaluated_layers": ["structural"],
+  "evaluated_layers": [
+    "structural"
+  ],
   "gate_pass": "static_only",
   "structural": {
     "findings": [],
     "failure_taxonomy": {
-      "underfill": 0, "overfill": 0, "wrong-layer": 0,
-      "wrong-route": 0, "no-exit": 0, "seam-misplacement": 0
+      "underfill": 0,
+      "overfill": 0,
+      "wrong-layer": 0,
+      "wrong-route": 0,
+      "no-exit": 0,
+      "seam-misplacement": 0
     },
     "waived_count": 0
   },
@@ -41,5 +47,11 @@
       "aligned the section-presence claim: only objects/relationships/rules are reject-on-omission; the softer sections report as info"
     ],
     "tier2_status": "NOT RUN — no held-out repo set + executor available. Per effect-gate.md a production-tier skill with the effect layer required-but-unrun resolves to static_only: structurally sound, effectiveness unverified. To finish: run with/without delta_exist on >=1 held-out repo (extract a DOS with and without the skill, assert on the dos.yaml produced)."
+  },
+  "synced_from_ai_dlc": {
+    "date": "2026-09-19",
+    "ai_dlc_dos_extract_version": "0.11.2",
+    "what": "scripts/ assets/ references/ byte-identical; SKILL.md = ai-dlc body minus AI-DLC wiring sections; drift guarded by plugins/ai-dlc/eval/smoke.sh",
+    "note": "the two-layer DOS (objects ≤7 + complete vocabulary, coverage via verify_dos.py --terms) replaces the single-layer 0.2.0 shape; see ai-dlc's gate.json dogfood_fixes 2026-09-18"
   }
 }

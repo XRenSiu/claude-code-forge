@@ -25,16 +25,34 @@ The judgments themselves are documented in the skill's `references/judgments.md`
 
 - **Project root**: `<path>`
 - **Languages detected**: `<e.g. TypeScript, Python>`
-- **Files scanned**: `<count>`
-- **Distinct nouns from code**: `<count>` (after framework-noise pruning of `<count>` terms)
+- **Files scanned**: `<count>` (code `<count>`, structured YAML/JSON `<count>`)
+- **Distinct nouns from code declarations**: `<count>` (after framework-noise pruning of `<count>` terms)
+- **Distinct nouns from structured data**: `<count>` (`$defs` / schema-property / enum-value / kind-value / key)
 - **Distinct verbs from code**: `<count>`
 
 Full code inventory: `01_inventory.md` in the workspace.
+
+**If the code channel returned zero nouns**, say so here in one line and say what
+carried the weight instead — do not leave this section reading as though a pruning
+table exists. A repository whose objects live in YAML/JSON schemas, in Markdown
+tables, or in prose scores zero on class-declaration scanning and that is a fact
+about the repository, not a failed run. Template:
+
+> Code channel: 0 nouns from class/type declarations over `<count>` source files —
+> this repository declares nothing in classes. `<count>` nouns came from the
+> structured-data channel (`$defs`, schema properties, enum members), and the docs
+> channel below is the primary source. Nothing was pruned, so there is no pruning
+> table.
+
+Whenever the docs channel is primary, the counts below must be reproducible: run
+`scripts/count_terms.py --terms <terms file> --group ...` and cite the command, not
+a hand-tallied number.
 
 ### Docs-side inventory
 
 - **Doc files scanned**: `<count>` (`<paths>`)
 - **Distinct nouns from docs**: `<count>`
+- **Counting command**: `<the count_terms.py invocation, so the table is rerunnable>`
 - **Definitions found**: `<count>` explicit term definitions
 - **Cross-references found**: `<count>` "we use X not Y" statements
 - **Bounded Context hints**: `<count>`
@@ -97,6 +115,32 @@ For each ambiguous term, document the alternatives and the choice.
   - Evidence for each interpretation: `<...>`
   - **Resolution**: `<chosen interpretation>`
   - Reasoning: `<...>`
+
+## Naming waivers
+
+**Read by a script.** `verify_dos.py --decisions <this file>` parses the bullets under
+this exact heading: the first backticked token on a bullet is the waived object name,
+the rest is the justification a judge reads. Delete the heading if there are none.
+
+A waiver clears exactly one thing: an object name that IS a whole UI/impl primitive
+(`Card`, `Modal`, `Panel`, `Service`) and that Judgment 1 says is nonetheless a real
+domain object. It does NOT clear a compound (`TopicCard`, `UserRepository`) — the
+high-risk list forbids promoting those, full stop, and the script will not take a
+waiver for one.
+
+Use it instead of renaming. Renaming a legitimate domain word to satisfy the heuristic
+looks free and is not: every downstream closure check (`/issue --dos`,
+`lint_cards.py --dos`) resolves the operator's actual vocabulary against this DOS, so
+the rename either breaks closure or forces a `synonyms:` entry anyway.
+
+Two more bullets the script reads under this heading: `object_count` (an 8th object,
+with the Judgment 2 / 4 reasoning) and `core_only` (a DOS deliberately shipped without
+its `vocabulary` layer — legitimate only for a to-be proposal derived before code; an
+as-is extraction that waives this is saying it did not finish).
+
+- `<Name>` — Judgment 1 step 1 result and why: `<it is describable without a screen;
+  the docs define it as …>`. Whole word, not a `*<Name>` compound. Docs/code evidence:
+  `<counts + paths>`.
 
 ---
 
@@ -163,21 +207,30 @@ canonical name choice.
 >   of thing this is. The DOS is supposed to constrain the team's vocabulary;
 >   `Item` constrains nothing.
 
-### Demotions to value objects
+### Placements — where every non-core term landed (v0.11.0)
 
-Objects that were considered as top-level but determined to be value-typed
-(immutable, identity-by-value) and therefore live as fields of other objects:
+"Demoted", "absorbed", "value of X" are placements, not exits. Each term that did
+not become one of the ≤7 objects has a home in `dos.yaml`, and this table is the
+audit of that: a reviewer must be able to take any word from the inventory and find
+it in this table and in the file. (`decisions.md` records *why*; it is not *where*.)
 
-- `<TermName>` — demoted to a field of `<ParentObject>`. Reason: no independent
-  lifecycle; identical instances are interchangeable.
+| Term | Judgment 1 verdict | Home in `dos.yaml` | `of` / owner | Note |
+|---|---|---|---|---|
+| `<TermName>` | value | `vocabulary.<TermName>` kind value | `<ParentObject>` | no independent lifecycle; identical instances interchangeable |
+| `<TermName>` | enum member | `vocabulary.<TermName>` kind enum | `<Owner>.<field>` | closed set of `<n>` values |
+| `<TermName>` | derived container | `composition.<TermName>` | — | derives from `<source objects and rules>` |
+| `<TermName>` | another context's noun | `vocabulary.<TermName>` kind external | context `<name>` | referenced here as `<how>`; not modelled |
+| `<UiOrImplName>` | UI / impl of `<Object>` | `objects.<Object>.rejected_names` | — | resolves, flagged wherever used |
+| `<ForeignWord>` | imported vocabulary | `objects.<Object>.synonyms` | — | 术语映射 row, now a closure source |
+| `<Word>` | homonym (`<A>` and `<B>`) | `synonyms` on both; closure refuses the bare word | — | recorded in `anti_patterns` |
 
-### Demotions to compositions
+### Coverage (the exit's number)
 
-Objects that were considered as top-level but determined to be derived views:
-
-- `<TermName>` — demoted to `composition`. Derives from: `<source objects and
-  rules>`. Reason: no independent identity; can be recomputed from existing
-  objects.
+- **Terms file**: `<path to the count_terms.py terms file — the roster's denominator>`
+- **Command**: `verify_dos.py dos.yaml --decisions decisions.md --terms <terms file>`
+- **Result**: `<resolved>/<terms>` resolved; unplaced: `<list, or none>`
+- If anything is unplaced, it is either placed before presenting, or it is pure framework
+  noise moved to the pruning table above with a reason. There is no third bucket.
 
 ### Bounded Context splits (Judgment 4)
 
@@ -244,9 +297,9 @@ Run against the evaluation criteria from `references/methodology.md`:
 
 | Criterion | Result | Notes |
 |-----------|--------|-------|
-| Simplicity (≤7 objects) | `<pass / fail>` | `<count> objects` |
+| Simplicity (≤7 core objects) | `<pass / fail>` | `<count> objects; <count> vocabulary terms` |
 | Consistency | `<pass / fail>` | `<any inconsistencies found>` |
-| Completeness | `<pass / fail>` | `<features without DOS coverage>` |
+| Completeness (term coverage, `--terms`) | `<resolved>/<terms>` | `<unplaced labels, or none>`; features without a relationship: `<…>` |
 | Evolvability | `<pass / fail>` | `<count> open questions; healthy?` |
 | Executability | `<pass / fail>` | `<vague guidelines, if any>` |
 | Learnability | `<pass / fail>` | `<dos.yaml line count>` |

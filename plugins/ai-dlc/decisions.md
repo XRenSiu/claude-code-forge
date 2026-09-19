@@ -328,3 +328,25 @@ external (tag + notes) — recorded as such, reviewer to confirm. Skill issues f
 dos-extract 0.11.1, one repo fix in ai-dlc 1.6.1 — `state.schema.json` was invalid JSON) are in
 `dogfood/dos-extract-2026-09-18/skill-issues.md`.
 
+---
+
+# Amendment 0.5.1 — 2026-09-19
+
+## Q002 resolved (Judgment 2 / 4 — 环 is two things, and stays two things)
+
+Candidate 1 chosen: **Ring := Node.role grouping, a docs-only composition**. Not candidate 2 (a `ring:` field on every
+non-stage node) — that turns a documentation grouping into data graph.yaml must keep consistent with `role`, a second
+source of truth for one fact, which is the anti-pattern this DOS already records twice (ORDER vs graph.yaml.stages; the
+flat ledger). Not candidate 3 (drop the numbering) — it would orphan every 九环 / R0–R8 reference in the docs.
+
+The homonym itself is not "fixed" and is not meant to be: 环 has two senses in the team's language, both entries declare
+it, the closure refuses the bare word, and `ARCHITECTURE.md §16` now says which full form to write. Same for 档 / Tier
+(体量档 SizeTier vs 三档 CheckTier). The moved question lives in `evolution_log` 0.5.1.
+
+## The looper copy
+
+`plugins/looper/skills/dos-extract` had stayed at the pre-import v0.2.0 shape (single layer, two scripts). It is now a
+byte-identical copy of ai-dlc's `scripts/` · `assets/` · `references/`, with a SKILL.md that is ai-dlc's body minus the
+AI-DLC wiring sections and a note saying where the skill is maintained. `eval/smoke.sh` has a drift guard: the two copies
+diverging is a red expectation, not a surprise a year later.
+
