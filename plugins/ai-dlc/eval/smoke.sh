@@ -1874,6 +1874,11 @@ assert n == c['channel_2_input']['failure_memory_count'], (n, c['channel_2_input
 expect "X1: the vocabulary sensor resolves the plugin's own docs against the shipped ontology" 0 \
   py "$S/dos-extract/scripts/verify_vocabulary.py" --dos "$ROOT/dos.yaml" "$ROOT/docs/lifecycle.md" "$ROOT/docs/routing.md"
 
+# ---- looper 里那份 dos-extract 拷贝必须与这里逐字节相同（2026-09-19）：两份实现一分叉，只装 looper 的用户拿到的
+# ---- 就是单层旧本体。SKILL.md 有意不同（去掉了 AI-DLC 接线），只核 scripts / assets / references。
+expect "looper/dos-extract: scripts / assets / references are byte-identical to the maintained copy here" 0 bash -c "for d in scripts assets references; do diff -r -x __pycache__ '$ROOT/../looper/skills/dos-extract/'\$d '$S/dos-extract/'\$d || exit 1; done"
+expect "looper/dos-extract: the copy's SKILL.md carries the same version and names where the skill is maintained" 0 bash -c "v1=\$(grep -m1 '^version:' '$S/dos-extract/SKILL.md'); v2=\$(grep -m1 '^version:' '$ROOT/../looper/skills/dos-extract/SKILL.md'); [ \"\$v1\" = \"\$v2\" ] && grep -q '开发地是' '$ROOT/../looper/skills/dos-extract/SKILL.md'"
+
 # ---- vana-builder 实地使用（2026-09-14）：插件的默认假设与一个真实团队仓库对不上的九处 ------------
 # 目标仓库自带中文 PR 模板、origin 是 GitLab 镜像、默认分支 master、测试就近放 *.spec.ts、版本号
 # 26.04.01341、宿主里已有 commit / pr skill。清单：plugins/ai-dlc/dogfood/vana-builder/issues-2026-09-14.md

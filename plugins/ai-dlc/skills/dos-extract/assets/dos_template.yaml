@@ -383,7 +383,7 @@ evolution_log:
   - version: "0.1.0"
     date: "YYYY-MM-DD"
     author: ""
-    change_type: "initial"         # initial | add | remove | rename | refactor
+    change_type: "initial"         # initial | add | remove | rename | refactor | resolve（一条 open_question 落定后挪到这里，写明结论）
     summary: ""                    # 一句话总结
     rationale: ""                  # 为什么改
     breaking: false                # 是否破坏性变更（影响下游 Context 或现有代码）

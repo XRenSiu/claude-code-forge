@@ -54,11 +54,11 @@ For a given term `X`, ask in order:
 | Term | Steps | Verdict |
 |------|-------|---------|
 | `Topic` | 1: yes (a thought node). 4: no (product collapses without it). | **business** |
-| `TopicCard` | 1: no — only describable as "the rendered Topic on screen". | **UI** |
-| `TopicRepository` | 2: yes, suffix `Repository`. | **impl** |
+| `TopicCard` | 1: no — only describable as "the rendered Topic on screen". | **UI** → `Topic.rejected_names` |
+| `TopicRepository` | 2: yes, suffix `Repository`. | **impl** → `Topic.rejected_names` |
 | `Modal` | 1: no — purely visual. | **UI** |
 | `Conversation` | 1: yes (a dialogue, even off-screen). 4: no. | **business** |
-| `LoginEvent` | 3: yes — it's an action, not a thing. | **behavior** (not object) |
+| `LoginEvent` | 3: yes — it's an action, not a thing. | **behavior** (not object) → `vocabulary` kind event + a `behaviors` entry |
 | `SearchService` | 2: yes, suffix `Service`. | **impl** |
 | `Sheet` | 1: yes (a canvas of thoughts). 4: no. | **business** |
 
@@ -273,3 +273,43 @@ chain, not a checklist of steps to march through.
 
 If you find yourself reaching for a fifth judgment, stop — usually it's a special
 case of one of these four, and forcing it into a new judgment dilutes the framework.
+
+---
+
+## Placement: where each verdict lands (not a judgment — the output of one)
+
+Judgment 1 decides what **kind** of thing a term is. It never decides whether the term
+**stays in the DOS**: every term the inventories counted has exactly one home, and
+`decisions.md` is not a home (it records *why*, never *where*). Before v0.11.0 the only
+homes were `objects` (≤7) and `composition`, so the verdicts `value`, `enum`, `external`,
+`ui`, `impl` were, in effect, "discard" — on this plugin's own DOS that discarded ~38 of
+45 classified terms, including the 13 the docs had already defined in a glossary. The
+DOS is two layers (core model + `vocabulary`), and this table is the mapping:
+
+| Judgment 1 verdict | Home in `dos.yaml` | Required fields |
+|---|---|---|
+| business object, survives J2/J4 as one of the ≤7 | `objects.<Name>` | description, type, synonyms |
+| business object, real but not core (8th, 9th…) | `vocabulary.<Name>` kind `concept` (or `entity`-like value with `of`) | definition; say in decisions.md why it is not core |
+| attribute / value object of an owner (`AC` of `Contract`, `Lock`, `Fingerprint`) | `vocabulary` kind `value` | `of` |
+| closed-set member / discriminator value (`fail`, `psl`, `card_test_fail`) | `vocabulary` kind `enum` | `of` |
+| derived container / view (`Ledger`, `Feed`, `Ring`) | `composition.<Name>` | derived_from, is_persistent |
+| domain event the team names (`escape defect`, `reflow`) | `vocabulary` kind `event`; the cause→effect chain itself goes to `behaviors` | `of` optional |
+| command / intent with a name (`advance`, `--force`) | `vocabulary` kind `command` | — |
+| "whenever X, do Y" the team names (`缺省从严`) | `rules` if constitution (J3), else `vocabulary` kind `policy` | — |
+| named activity (`归档`, `escalation`, `reconcile`) | `vocabulary` kind `process` | — |
+| actor / participant kind (`implementer`, `evaluator`, `human signer`) | `vocabulary` kind `role` | — |
+| a neighbouring context's noun referenced here (`Finding`, `PR`, `PSL`) | `vocabulary` kind `external` | `context` (must appear in `bounded_contexts`) |
+| an abstraction that is none of the above (`三档`, `static_only`) | `vocabulary` kind `concept` | — |
+| UI / impl / framework name of a real object (`TopicCard`, `TopicRepository`, `Node` for `Topic`) | `rejected_names` on that object — it resolves, and every consumer flags it | — |
+| pure framework noise with no object behind it (`Middleware`, `useEffect`) | nowhere; `decisions.md` pruning table | — |
+| a synonym the team really uses (`卡`, `Card`, `Territory`) | `synonyms` on the canonical entry | — |
+| the same word meaning two things (`环` = Ring and Loop) | `synonyms` on **both**; the closure refuses the bare word; `anti_patterns` records the overload | qualify in new text |
+| a word the team stopped using | keep the entry, `status: deprecated`, or move the word to `rejected_names` | never delete |
+
+Two consequences worth stating:
+
+- **The ≤7 rule is a cap on `objects`, not on the ontology.** Failing it means "merge,
+  split, or move to `vocabulary`" — never "drop".
+- **Coverage is measurable.** `verify_dos.py --terms <the count_terms.py file>` resolves every
+  counted label through every layer and names the ones with no home. That number, not the
+  object count, is how much of the team's language the DOS captured.
