@@ -17,7 +17,19 @@ judgment:
     showing what was removed for transparency.
 
 Code channel (class/type/struct declarations):
-  TypeScript/JavaScript, Python, Go, Rust, Java/Kotlin.
+  TypeScript/JavaScript, Vue single-file components (`<script>` / `<script setup>` blocks, read as TS
+  when `lang="ts"`), Python, Go, Rust, Java/Kotlin.
+
+Three things the code channel refuses to count silently (dogfood vana-builder V-10, a Vue 3 app
+whose 478 `.vue` files were invisible, whose second most frequent "noun" came only from spec files,
+and whose table was led by `PX_X` / `COMMAND_PROVIDER_AI`):
+  - test files (`*.spec.*`, `*.test.*`, `__tests__/`, `__mocks__/`, `test_*.py`, `*_test.go|py`) are
+    skipped by default and counted in the header — `--exclude` takes names, so a colocated spec
+    could not be excluded at all; `--include-tests` counts them;
+  - ALL_CAPS identifiers are constants, not nouns: pruned into their own listed group;
+  - source files in a language with no patterns here (`.svelte`, `.swift`, `.php`, …) are counted per
+    extension under "Not scanned", because an unscanned file and a scanned file with no declarations
+    look identical in a frequency table.
 
 Structured-data channel (YAML/JSON declarations — on by default, `--no-structured`
 to turn off): repositories whose objects live in schemas and config rather than in
@@ -59,7 +71,19 @@ LANGUAGE_EXTENSIONS = {
     "rust": {".rs"},
     "java": {".java"},
     "kotlin": {".kt", ".kts"},
+    "vue": {".vue"},
 }
+
+# Source-like extensions this scanner has no patterns for. Not scanned — but counted and reported.
+UNSUPPORTED_SOURCE_EXTS = {
+    ".svelte", ".astro", ".php", ".rb", ".cs", ".swift", ".m", ".mm", ".c", ".cc", ".cpp", ".h", ".hpp",
+    ".scala", ".dart", ".ex", ".exs", ".erl", ".clj", ".lua", ".sql", ".graphql", ".gql", ".proto",
+}
+
+TEST_FILE_RE = re.compile(
+    r"(^|/)(__tests__|__mocks__)/|\.(spec|test)\.[A-Za-z0-9]+$|(^|/)test_[^/]+\.py$|_test\.(go|py)$")
+CONSTANT_RE = re.compile(r"^[A-Z][A-Z0-9_]*$")
+VUE_SCRIPT_RE = re.compile(r"<script\b([^>]*)>(.*?)</script>", re.S | re.I)
 
 ALL_EXTENSIONS = {ext for exts in LANGUAGE_EXTENSIONS.values() for ext in exts}
 
@@ -69,8 +93,8 @@ ALL_EXTENSIONS = {ext for exts in LANGUAGE_EXTENSIONS.values() for ext in exts}
 # Each pattern returns the captured identifier in group 1.
 NOUN_PATTERNS = {
     "typescript": [
-        # class Foo, interface Foo, type Foo, enum Foo
-        re.compile(r"\b(?:class|interface|type|enum)\s+([A-Z][A-Za-z0-9_]*)"),
+        # class Foo, interface Foo, type Foo, enum Foo — not `import type Foo from …` (an import, not a declaration)
+        re.compile(r"\b(?:class|interface|enum|(?<!import )type)\s+([A-Z][A-Za-z0-9_]*)"),
         # React component: const Foo = (props) => or function Foo(...)
         re.compile(r"\b(?:const|function)\s+([A-Z][A-Za-z0-9_]*)"),
     ],
@@ -345,14 +369,35 @@ def is_excluded(path: Path, excludes: set[str]) -> bool:
     return bool(parts & excludes)
 
 
-def iter_source_files(root: Path, excludes: set[str], wanted: set[str]) -> Iterable[Path]:
+def iter_source_files(root: Path, excludes: set[str], wanted: set[str],
+                      unsupported: Counter | None = None) -> Iterable[Path]:
     for dirpath, dirnames, filenames in os.walk(root):
         # Prune in place: excluded names, and every dot-directory (always).
         dirnames[:] = [d for d in dirnames if d not in excludes and not d.startswith(".")]
         for fn in filenames:
             full = Path(dirpath) / fn
-            if full.suffix.lower() in wanted and not is_excluded(full, excludes):
+            ext = full.suffix.lower()
+            if is_excluded(full, excludes):
+                continue
+            if ext in wanted:
                 yield full
+            elif unsupported is not None and ext in UNSUPPORTED_SOURCE_EXTS:
+                unsupported[ext] += 1
+
+
+def is_test_file(rel: str) -> bool:
+    return bool(TEST_FILE_RE.search(rel.replace(os.sep, "/")))
+
+
+def code_blocks(content: str, lang: str) -> list[tuple[str, str]]:
+    """→ [(language, source)]. A Vue SFC is its <script> blocks; template and style name no domain type."""
+    if lang != "vue":
+        return [(lang, content)]
+    out = []
+    for attrs, body in VUE_SCRIPT_RE.findall(content):
+        m = re.search(r"\blang\s*=\s*[\"']?(tsx?|jsx?)", attrs, re.I)
+        out.append(("typescript" if m and m.group(1).lower().startswith("ts") else "javascript", body))
+    return out
 
 
 def extract_terms(content: str, lang: str) -> tuple[list[str], list[str]]:
@@ -401,11 +446,19 @@ def format_report(
     noun_modes = noun_modes or {}
     structured_stats = structured_stats or {}
     lines: list[str] = []
-    lines.append(f"# Inventory — {project_root.name}")
+    lines.append(f"# Inventory — {project_root.resolve().name}")
     lines.append("")
     lines.append(f"- Project root: `{project_root}`")
     lines.append(f"- Files scanned: {files_scanned}")
-    lines.append(f"  - code files: {structured_stats.get('code_files', files_scanned)}")
+    lines.append(f"  - code files: {structured_stats.get('code_files', files_scanned)}"
+                 + (f" (of which Vue SFCs: {structured_stats['vue_files']})" if structured_stats.get('vue_files') else ""))
+    if structured_stats.get("tests_skipped"):
+        lines.append(f"  - test files skipped: {structured_stats['tests_skipped']} (`--include-tests` to count them)")
+    unsupported = structured_stats.get("unsupported") or {}
+    if unsupported:
+        lines.append("  - **not scanned** (no patterns for this language — their declarations are absent below, "
+                     "which is not the same as the repository having none): "
+                     + ", ".join(f"`{ext}` {n}" for ext, n in sorted(unsupported.items(), key=lambda kv: -kv[1])))
     lines.append(f"  - structured files (YAML/JSON): {structured_stats.get('structured_files', 0)}"
                  f" ({structured_stats.get('structured_unparsed', 0)} unparsable,"
                  f" {structured_stats.get('structured_manifests', 0)} tooling manifests skipped)")
@@ -530,6 +583,9 @@ def main() -> int:
                              "names, at any depth: `--exclude fixtures` drops a/fixtures/b.py "
                              "and deep/nested/fixtures/c.py alike. Dot-directories are always "
                              "skipped, listed or not.")
+    parser.add_argument("--include-tests", action="store_true",
+                        help="Count test files too (*.spec.*, *.test.*, __tests__/, __mocks__/, test_*.py, "
+                             "*_test.go|py). Skipped by default: their mocks and harness types are ghost objects.")
     parser.add_argument("--no-structured", action="store_true",
                         help="Skip the YAML/JSON channel (code declarations only). The "
                              "structured channel is on by default because schema-first and "
@@ -554,6 +610,7 @@ def main() -> int:
     pruned: dict[str, list[tuple[str, str]]] = {
         "Implementation suffixes": [],
         "Framework primitives": [],
+        "Constants (ALL_CAPS)": [],
         "CRUD verbs": [],
     }
 
@@ -561,8 +618,10 @@ def main() -> int:
     files_scanned = 0
     stats = {"code_files": 0, "structured_files": 0,
              "structured_unparsed": 0, "structured_manifests": 0,
+             "vue_files": 0, "tests_skipped": 0,
              "unparsed_paths": []}   # named, not just counted (dogfood 2026-09-18: the plugin's own
                                      # state.schema.json was invalid JSON and nobody could tell which file)
+    unsupported: Counter[str] = Counter()
 
     yaml_mod = None
     if not args.no_structured:
@@ -582,6 +641,11 @@ def main() -> int:
                     (name, f"suffix `{suf}`; operates on `{name[:-len(suf)]}`"))
                 pruned_seen.add(name)
             return False
+        if mode == "code" and CONSTANT_RE.match(name) and len(name) > 1:
+            if name not in pruned_seen:
+                pruned["Constants (ALL_CAPS)"].append((name, "constant-shaped identifier, not a noun"))
+                pruned_seen.add(name)
+            return False
         if name in FRAMEWORK_TERMS:
             if name not in pruned_seen:
                 pruned["Framework primitives"].append(
@@ -598,9 +662,12 @@ def main() -> int:
     if not args.no_structured:
         wanted |= STRUCTURED_EXTENSIONS
 
-    for src_file in iter_source_files(args.project_root, excludes, wanted):
+    for src_file in iter_source_files(args.project_root, excludes, wanted, unsupported):
         rel = str(src_file.relative_to(args.project_root))
         lang = detect_language(src_file)
+        if lang is not None and not args.include_tests and is_test_file(rel):
+            stats["tests_skipped"] += 1
+            continue
 
         if lang is None:
             # structured-data channel
@@ -624,11 +691,16 @@ def main() -> int:
 
         files_scanned += 1
         stats["code_files"] += 1
+        if lang == "vue":
+            stats["vue_files"] += 1
         try:
             content = src_file.read_text(encoding="utf-8", errors="ignore")
         except Exception:
             continue
-        ns, vs = extract_terms(content, lang)
+        ns, vs = [], []
+        for block_lang, block in code_blocks(content, lang):
+            bn, bv = extract_terms(block, block_lang)
+            ns.extend(bn); vs.extend(bv)
 
         for n in ns:
             record_noun(n, "code", rel)
@@ -643,6 +715,7 @@ def main() -> int:
             if len(verb_locations[v]) < 3:
                 verb_locations[v].append(rel)
 
+    stats["unsupported"] = dict(unsupported)
     report = format_report(
         nouns, verbs, noun_locations, verb_locations, pruned,
         args.project_root, files_scanned, noun_modes, stats,
@@ -652,7 +725,13 @@ def main() -> int:
 
     print(f"Wrote inventory to {args.output}")
     print(f"  Files scanned: {files_scanned} "
-          f"(code {stats['code_files']}, structured {stats['structured_files']})")
+          f"(code {stats['code_files']} incl. {stats['vue_files']} Vue SFCs, structured {stats['structured_files']})")
+    if stats["tests_skipped"]:
+        print(f"  Test files skipped: {stats['tests_skipped']} (--include-tests to count them)")
+    if unsupported:
+        print("  NOT scanned (no patterns for these languages): "
+              + ", ".join(f"{ext} {n}" for ext, n in sorted(unsupported.items(), key=lambda kv: -kv[1])),
+              file=sys.stderr)
     print(f"  Distinct nouns: {len(nouns)}")
     print(f"  Distinct verbs: {len(verbs)}")
     print(f"  Pruned: {sum(len(v) for v in pruned.values())} terms")
