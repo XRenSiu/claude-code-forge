@@ -22,7 +22,7 @@ description: |
   constitution from a static repo. Do NOT use for: a single Territory's resident
   invariants (that is invariant-extract), or task-level acceptance criteria (acceptance-spec).
 argument-hint: "[repo path] [--auto]"
-version: 0.11.2
+version: 0.12.0
 user-invocable: true
 # imported into AI-DLC 2026-09-05 from looper v0.2.0; body kept, AI-DLC wiring added (see 接线 / 术语映射)
 ---
@@ -153,13 +153,21 @@ framework noise (`Middleware`); a rejected canonical → `rejected_names`; a for
   (class/type/table names, API path segments) and verbs, with example locations. Named-table
   output so classification has clean material. It exists; the engine runs it — the body does
   not narrate a call sequence.
-  **Two channels.** Class/type declarations in TS/JS/Py/Go/Rust/Java/Kotlin, *and* (on by
+  **Two channels.** Class/type declarations in TS/JS/Vue SFC/Py/Go/Rust/Java/Kotlin, *and* (on by
   default) YAML/JSON: `$defs` keys, JSON-Schema `properties` children, `enum` members, and
   discriminator (`kind`/`type`) values, plus plain mapping keys down to `--key-depth`. Each
   noun carries its source tag, and the report puts *declarations* above *plain keys* — a repo
   whose objects live in schemas, not classes, otherwise scores **zero nouns** and the operator
   falls back to hand-counting. `--exclude` takes path-segment **names, matched at any depth**,
   not globs.
+  **What the code channel will not count silently** (a Vue 3 app once scored its 478 `.vue` files as
+  nothing, its #2 "noun" came only from spec files, and constants led the table): Vue SFC `<script>`
+  blocks are read (as TS when `lang="ts"`); test files are skipped by default and the skip is counted
+  (`--include-tests` to count them — `--exclude` takes names, so colocated specs could not be excluded);
+  ALL_CAPS identifiers go to a listed "Constants" prune group; source files in a language with no
+  patterns (`.swift`, `.svelte`, `.php`, …) are reported per extension as **not scanned**. A domain whose
+  types live in an external SDK still declares nothing here — that is a fact for `decisions.md`, and the
+  docs channel (or `count_terms.py` over the code) carries it.
 - **`scripts/count_terms.py`** — the docs channel's counting primitive: a terms file (canonical
   label = variants, literal or `/regex/`) × named corpus globs → a reproducible count table with
   `file:line` evidence. `01b_docs_terms.md`'s frequencies are a measurement, not a recollection.
@@ -340,7 +348,9 @@ DOS 说的是「系统里有什么、叫什么、什么不可违反」。它不�
 
 - **命令必须真能跑**：`--probe` 逐条执行并比对期望退出码。跑不通的命令比没有命令更糟——
   实现者会照着它试三次再去猜。没有 `--probe` 的一次检查，输出里写明 `probed=false`：那时候
-  这份地图里的命令是**声明**，不是事实。
+  这份地图里的命令是**声明**，不是事实。probe 本身也必须安全：会破坏本机状态的命令（比如会清空本机
+  应用数据目录的 E2E）在期望列写 `no-probe: <理由>`，probe 跳过并记 flag；理由不许空，「全套测试」不许不探测。probe 用的工具链也要说出来：`.nvmrc` / `.node-version` 与 `node -v`
+  不一致时出 flag，失败条目的拒绝里写明先排除环境——在错的 Node 上跑出来的红，证不了命令写错了。
 - **陷阱必须有来路**（`ledger:` / `issue:#N` / `commit:sha` / `file:`）。没有来路的陷阱是想出来的，
   不是这个仓库里的——与 `invariant-extract` 的 provenance 纪律同源。
 - **占位符不算填写**；没有的项写 `无`（那是一条信息：实现者不必去找）。

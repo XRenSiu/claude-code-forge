@@ -10,6 +10,13 @@
 且每一样都要能被核对：
 
   - 命令必须真能跑（`--probe` 执行并记退出码）——跑不通的命令比没有命令更糟
+  - 但 probe 本身必须安全（vana-builder V-12）：一条会删本机应用数据的 E2E 命令，`--probe` 原来照跑不误。
+    期望列写 `no-probe: <理由>`（或 `不探测：<理由>`）的行不执行，记为 `skipped(declared)` 并出 flag——
+    它的可执行性没证，是声明不是事实；理由不许空；「全套测试」不许不探测（红-绿是实现者唯一的自证手段）
+  - probe 在谁的工具链上跑要说出来（vana-builder V-13）：仓库 `.nvmrc` 写 22.23.2、shell 里是 Node 25，
+    `npm test` 挂在 Node 25 的 localStorage 上，报告却只说「跑不通」。`--probe` 前比对 `.nvmrc` /
+    `.node-version` 与 `node -v`：不一致出 flag，失败的那几条在拒绝里写明先排除环境——仍然是拒，
+    一次在错误工具链上的 probe 证不了命令好，也证不了命令坏
   - 陷阱必须有来路（ledger / issue / commit）——没有来路的条目是想出来的，不是仓库里的
   - 占位符不算填写
   - `file:` 来路必须指得到东西（vana-builder V-08）：宿主仓库常常已经在 CLAUDE.md / .claude/rules/ 里写过
@@ -44,6 +51,7 @@ PLACEHOLDER = re.compile(r"<[^>\n]{0,40}>|TODO|待补|FIXME", re.I)
 def unfilled(text):
     """占位符检测：反引号里的 `plugins/<name>/…` 是路径模式，不是没填完。"""
     return bool(PLACEHOLDER.search(re.sub(r"`[^`]*`", "", text)))
+NO_PROBE = re.compile(r"(?:no-probe|不探测)\s*[:：]\s*(.*)$", re.I)
 PROV = re.compile(r"(ledger:|issue:#?\d+|commit:[0-9a-f]{7,}|pr:#?\d+|file:)", re.I)
 FILE_REF = re.compile(r"file:([^\s`|#:\"「]+)(?:#L(\d+)|:(\d+)|#\"([^\"]+)\"|#「([^」]+)」)?")
 CODE = re.compile(r"`([^`]+)`")
@@ -75,6 +83,27 @@ _DUR = re.compile(r"~?\s*([\d.]+)\s*(ms|s|sec|min|m|h)\b", re.I)
 _MULT = {"ms": 0.001, "s": 1, "sec": 1, "min": 60, "m": 60, "h": 3600}
 
 
+def toolchain_mismatch(repo):
+    """→ None，或 (声明文件, 声明版本, 实际版本)。只比数字段：`22` 认 22.x.y，`lts/*` 这类别名不比。"""
+    for fn in (".nvmrc", ".node-version"):
+        path = os.path.join(repo, fn)
+        if not os.path.isfile(path):
+            continue
+        want = open(path, encoding="utf-8").read().strip().lstrip("v")
+        if not re.fullmatch(r"\d+(\.\d+){0,2}", want):
+            return None
+        try:
+            got = subprocess.run(["node", "-v"], capture_output=True, text=True, timeout=10).stdout.strip().lstrip("v")
+        except (OSError, subprocess.TimeoutExpired):
+            got = ""
+        if not got:
+            return (fn, want, "（node 不在 PATH 上）")
+        if got.split(".")[:len(want.split("."))] != want.split("."):
+            return (fn, want, got)
+        return None
+    return None
+
+
 def declared_timeout(cell, default):
     """→ 该行声明的秒数（留 50% 余量），声明不出来就用 --timeout。"""
     m = _DUR.search((cell or "").replace("*", ""))
@@ -104,6 +133,10 @@ def main() -> int:
         print("\n".join("REJECT  " + r for r in rejects)); return 1
 
     # ---- 跑起来 ----
+    mismatch = toolchain_mismatch(a.repo) if a.probe else None
+    if mismatch:
+        flags.append(f"工具链不一致：{mismatch[0]} 声明 Node {mismatch[1]}，probe 用的是 {mismatch[2]}——"
+                     "下面的通过 / 失败都不代表命令在仓库要求的环境里的样子")
     cmd_rows = rows(md, "跑起来") or []
     if not cmd_rows:
         rejects.append("「跑起来」一节没有任何行——实现者第一件事就是跑测试")
@@ -123,6 +156,20 @@ def main() -> int:
             continue
         if unfilled(cmd):
             rejects.append(f"「{purpose}」的命令还是占位符：{cmd}")
+            continue
+        np_ = NO_PROBE.search((r[2] if len(r) > 2 else "").strip())
+        if np_:
+            why = np_.group(1).strip()
+            if not why:
+                rejects.append(f"「{purpose}」声明了不探测却没写理由——`no-probe: <为什么不能在这台机器上跑>`")
+                continue
+            if "全套测试" in purpose:
+                rejects.append(f"「{purpose}」不许声明不探测——红-绿是实现者唯一的自证手段，跑不了的全套测试要先修成能跑")
+                continue
+            if a.probe:
+                probes.append({"purpose": purpose, "cmd": cmd, "exit": "skipped(declared)",
+                               "want": None, "seconds": 0.0, "ok": True, "reason": why})
+                flags.append(f"「{purpose}」声明不探测（{why}），本次未执行：`{cmd}`——它的可执行性没证，是声明不是事实")
             continue
         if a.probe and os.environ.get("AGENT_MAP_NO_RECURSE") and re.search(
                 re.escape(os.environ["AGENT_MAP_NO_RECURSE"]), cmd):
@@ -157,7 +204,8 @@ def main() -> int:
                              "差三倍以上的耗时会把人骗去等一个错误的时长，改掉声明")
             if not ok:
                 rejects.append(f"「{purpose}」跑不通：`{cmd}` → exit {code}，期望 {want}（{'; '.join(tail)[:120]}）"
-                               "——跑不通的命令比没有命令更糟，实现者会照着它试三次再去猜")
+                               "——跑不通的命令比没有命令更糟，实现者会照着它试三次再去猜"
+                               + (f"。先排除环境：{mismatch[0]} 要 Node {mismatch[1]}，这次是 {mismatch[2]}" if mismatch else ""))
     for must in ("全套测试",):
         if not any(must in n for n in named):
             rejects.append(f"「跑起来」缺一行 {must}——红-绿是实现者的唯一自证手段")
@@ -223,6 +271,7 @@ def main() -> int:
                      "引用 CLAUDE.md / rules 里已有的规则时带上原文")
 
     res = {"path": a.path, "probed": bool(a.probe), "probes": probes, "file_refs": refs,
+           "toolchain": ({"declared_in": mismatch[0], "declared": mismatch[1], "actual": mismatch[2]} if mismatch else None),
            "sections": SECTIONS, "rejects": rejects, "flags": flags,
            "verdict": "reject" if rejects else "pass"}
     if a.json:

@@ -2020,6 +2020,64 @@ expect "vana V-08: a file: provenance pointing at nothing is rejected" 1 py "$VA
 expect "vana V-08: a line anchor past the end of the file is rejected" 1 py "$VAM" am/line_eof.md --repo am
 expect "vana V-08: an unanchored file: provenance passes with a flag, not silently" 0 \
   bash -c "python3 '$VAM' am/bare.md --repo am --json | python3 -c \"import json,sys; d=json.load(sys.stdin); assert d['verdict']=='pass' and any('原文锚点' in f for f in d['flags']), d\""
+
+# V-10：inventory 看不见 .vue、把 spec 里的 mock 当名词、把常量当名词、对没扫的语言一声不吭
+INVS="$S/dos-extract/scripts/inventory.py"; IV="$VV/inv10"; mkdir -p "$IV/src/comp" "$IV/src/__tests__" "$IV/ios"
+cat > "$IV/src/comp/topic-card.vue" <<'VUE'
+<template><div>{{ topic.title }}</div></template>
+<script setup lang="ts">
+import type Legacy from './legacy'
+interface Topic { title: string }
+type Sheet = { topics: Topic[] }
+const MAX_TOPICS = 10
+</script>
+VUE
+printf 'export class Workbook {}\nexport const PX_X = 1\n' > "$IV/src/model.ts"
+printf 'class GhostMock {}\n' > "$IV/src/model.spec.ts"
+printf 'class AlsoGhost {}\n' > "$IV/src/__tests__/helper.ts"
+printf 'class Swifty {}\n' > "$IV/ios/a.swift"
+python3 "$INVS" "$IV" -o "$IV/inv.md" >/dev/null 2>&1
+expect "vana V-10: declarations inside a Vue SFC's <script setup lang=ts> are counted" 0 \
+  bash -c "grep -q '\*\*Topic\*\*' '$IV/inv.md' && grep -q '\*\*Sheet\*\*' '$IV/inv.md' && grep -q 'Vue SFCs: 1' '$IV/inv.md'"
+expect "vana V-10: an \`import type X from\` is an import, not a declaration" 1 grep -q '\*\*Legacy\*\*' "$IV/inv.md"
+expect "vana V-10: colocated spec files and __tests__/ are skipped by default and the skip is counted" 0 \
+  bash -c "! grep -q 'GhostMock\|AlsoGhost' '$IV/inv.md' && grep -q 'test files skipped: 2' '$IV/inv.md'"
+expect "vana V-10: --include-tests counts them (twin)" 0 \
+  bash -c "python3 '$INVS' '$IV' -o '$IV/inv-t.md' --include-tests >/dev/null 2>&1 && grep -q '\*\*GhostMock\*\*' '$IV/inv-t.md'"
+expect "vana V-10: ALL_CAPS constants are pruned into their own listed group, not counted as nouns" 0 \
+  bash -c "! grep -q '^- \*\*PX_X\*\*' '$IV/inv.md' && grep -q 'Constants (ALL_CAPS)' '$IV/inv.md' && grep -q '\`MAX_TOPICS\`' '$IV/inv.md'"
+expect "vana V-10: source files in a language with no patterns are reported as not scanned, per extension" 0 \
+  bash -c "grep -q 'not scanned.*\`.swift\` 1' '$IV/inv.md'"
+
+# V-12：--probe 原来会照跑一条会删本机应用数据的 E2E 命令；声明不探测要带理由，全套测试不许
+NP="$VV/np"; mkdir -p "$NP"; AMG="$S/dos-extract/eval/fixtures/agent-map-good.md"
+python3 - "$AMG" "$NP" <<'PYNP'
+import sys
+src, d = open(sys.argv[1], encoding="utf-8").read(), sys.argv[2]
+row = "| 单个测试文件 | `python3 -c \"print('one test')\"` | exit 0 | 0.1s |\n"
+assert src.count(row) == 1
+def mk(name, extra):
+    open(f"{d}/{name}.md", "w", encoding="utf-8").write(src.replace(row, row + extra))
+mk("declared", f"| E2E | `touch {d}/SENTINEL` | no-probe: 会清空本机应用数据目录 | ~1s |\n")
+mk("noreason", f"| E2E | `touch {d}/SENTINEL` | no-probe: | ~1s |\n")
+open(f"{d}/fullsuite.md", "w", encoding="utf-8").write(src.replace(
+    "| 全套测试 | `python3 -c \"import sys; sys.exit(0)\"` | exit 0 | 0.1s |",
+    "| 全套测试 | `python3 -c \"import sys; sys.exit(0)\"` | 不探测：太慢 | 0.1s |"))
+PYNP
+expect "vana V-12: a row declared no-probe is not executed under --probe, and says so in a flag" 0 \
+  bash -c "python3 '$VAM' '$NP/declared.md' --repo '$NP' --probe --json > '$NP/out.json'; [ \$? = 0 ] && [ ! -e '$NP/SENTINEL' ] && python3 -c \"import json; d=json.load(open('$NP/out.json')); p=[x for x in d['probes'] if x['exit']=='skipped(declared)']; assert p and p[0]['reason'], d; assert any('声明不探测' in f for f in d['flags']), d['flags']\""
+expect "vana V-12: no-probe without a reason is rejected" 1 py "$VAM" "$NP/noreason.md" --repo "$NP" --probe
+expect "vana V-12: the full test suite may not be declared no-probe" 1 py "$VAM" "$NP/fullsuite.md" --repo "$NP" --probe
+
+# V-13：probe 在错的工具链上跑，报告只说「跑不通」
+TC="$VV/tc"; mkdir -p "$TC/bad" "$TC/alias"; printf '0.0.1\n' > "$TC/bad/.nvmrc"; printf 'lts/*\n' > "$TC/alias/.nvmrc"
+sed 's/| 全套测试 | `python3 -c "import sys; sys.exit(0)"` | exit 0 | 0.1s |/| 全套测试 | `python3 -c "import sys; sys.exit(1)"` | exit 0 | 0.1s |/' "$AMG" > "$TC/failing.md"
+expect "vana V-13: a .nvmrc the probing shell does not satisfy is flagged, even when every command passes" 0 \
+  bash -c "python3 '$VAM' '$AMG' --repo '$TC/bad' --probe --json | python3 -c \"import json,sys; d=json.load(sys.stdin); assert d['verdict']=='pass' and d['toolchain'] and d['toolchain']['declared']=='0.0.1', d; assert any('工具链不一致' in f for f in d['flags']), d['flags']\""
+expect "vana V-13: a failing command under a mismatched toolchain says to rule out the environment first (still a reject)" 0 \
+  bash -c "python3 '$VAM' '$TC/failing.md' --repo '$TC/bad' --probe --json > '$TC/out.json'; [ \$? = 1 ] && python3 -c \"import json; d=json.load(open('$TC/out.json')); assert any('先排除环境' in r for r in d['rejects']), d['rejects']\""
+expect "vana V-13: an alias such as lts/* is not compared (twin — no false mismatch)" 0 \
+  bash -c "python3 '$VAM' '$AMG' --repo '$TC/alias' --probe --json | python3 -c \"import json,sys; d=json.load(sys.stdin); assert d['toolchain'] is None and not any('工具链' in f for f in d['flags']), d\""
 popd >/dev/null
 
 # ---- grill: 对齐环的机械部分（2026-09-17）。停机不靠"引擎觉得对齐了"，靠清单计数与分歧率；默认值进不来。

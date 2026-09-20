@@ -84,12 +84,12 @@ flag 不等于 reject。预门过了但带 flag，意思是「机器判不了这
 | 脚本 | 所属 skill | 干什么 | 关键退出码 |
 |---|---|---|---|
 | `verify_dos.py` | dos-extract | dos.yaml 预门：>7 对象拒、UI/impl 后缀名拒、关系引用未声明对象拒、`open_questions` 空拒 | 0 · 1 拒 |
-| `inventory.py` | dos-extract | 演绎扫描：名词 / 动词频次表，给分类判断当材料 | 0 |
+| `inventory.py` | dos-extract | 演绎扫描：名词 / 动词频次表，给分类判断当材料。代码通道含 Vue 单文件组件的 `<script>` 块；默认跳过测试文件（`*.spec.*` / `*.test.*` / `__tests__/` 等，表头计数，`--include-tests` 计入）；ALL_CAPS 常量进剪枝组；没有提取规则的语言（`.swift` / `.svelte` / `.php`…）按扩展名报「not scanned」——没扫和扫了没有，在频次表里长得一样 | 0 |
 | `count_terms.py` | dos-extract | 文档通道的机械原语：词频统计 | 0（除非文件读不了） |
 | `dos_closure.py` | dos-extract | **「一个 DOS 词能不能被解析」的唯一定义**；`verify_issue.py`、`lint_cards.py`、`verify_vocabulary.py` 都 import 它 | 库，非命令行 |
 | `verify_vocabulary.py` | dos-extract | **跨制品术语传感器（B 档）**：契约 / 卡 / spec / issue / PR body 的**散文**里出现、`dos.yaml` 解析不了的领域名词，每条带 file:line 与本体里最近的可解析邻居；另报本体里无人使用的词（弱证据，不计入）。`--out` 缺省**不落文件**（B 档随手跑，不该在工作区留残留），要 facts 显式给 `--out`，要机器读用 `--json` | 0 过 · 1 超阈值 · 2 IO · **3 没有本体 = 未检**（`--require-ontology` → 1） |
 | `reconcile_dos.py` | dos-extract | 应然本体（psl-derive 的提案）↔ 现状本体逐条对账 | 0 · 1 有冲突 |
-| `verify_agent_map.py` | dos-extract | **仓库地图的预门**：`--probe` 逐条真跑命令并比对期望退出码；陷阱必须有来路；占位符拒；`file:` 来路要指得到文件、行号不越界、`#"原文"` 仍逐字在源文件里（引用 CLAUDE.md / rules 而不是再抄一份，源头改了这一行就红）；没锚原文的 `file:` 记 flag | 0 · 1 拒 · 2 IO |
+| `verify_agent_map.py` | dos-extract | **仓库地图的预门**：`--probe` 逐条真跑命令并比对期望退出码（期望列 `no-probe: <理由>` 的行不执行、记 flag，理由必填，全套测试不许；probe 前比对 `.nvmrc` / `.node-version` 与 `node -v`，不一致出 flag，失败条目的拒绝里写明先排除环境）；陷阱必须有来路；占位符拒；`file:` 来路要指得到文件、行号不越界、`#"原文"` 仍逐字在源文件里（引用 CLAUDE.md / rules 而不是再抄一份，源头改了这一行就红）；没锚原文的 `file:` 记 flag | 0 · 1 拒 · 2 IO |
 | `verify_card.py` | invariant-extract | 不变量卡：无 provenance 拒、hard 必须 propose、◊ 混进 □ 拒 | 0 · 1 拒 |
 
 ### 计划与实现（R4 / R5）
