@@ -16,7 +16,7 @@
 运行时遵循 SKILL.state（状态文件是充分统计量，脚本校验迁移）与 WikiSkill（账本只增不删）。
 流程对齐 *Spec Loop v1.2 × done_when Pipeline*：U1–U3 / G1、L1–L8 / G2 / G3、X1–X3。
 
-## 二十九个 skill（九环 + 脊柱，见 [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)）
+## 三十个 skill（九环 + 脊柱，见 [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)）
 
 > v0.6.0：按 loop engineering / graph engineering 的透镜重看（[`docs/proposals/loop-graph-engineering.md`](docs/proposals/loop-graph-engineering.md)）。图（`graph.yaml`）与六个环（`loops.yaml`）成为数据并被 lint；每个环绑到 `/goal` `/loop` Stop hook `/schedule`（`triggers.yaml`）；收敛检测加 oscillation / plateau / impossible（routing v2）；账本有了类型边伴生 `trace.jsonl`；`/pr --pre-review`；新 skill `/tune` 闭合 hill-climbing 环。
 
@@ -180,7 +180,7 @@ specs/<slug>/               # 归档（metrics.py 的数据源）
 
 ## 诚实声明
 
-所有 29 个 skill 处于 `static_only`：结构过审、脚本在 fixtures 上冒烟（`bash plugins/ai-dlc/eval/smoke.sh`）。
+所有 30 个 skill 处于 `static_only`：结构过审、脚本在 fixtures 上冒烟（`bash plugins/ai-dlc/eval/smoke.sh`）。
 从仓库根或插件目录跑都行（v1.6.0 起冒烟不再依赖 cwd）；条数以套件结尾那一行为准，文档不手抄。
 **行为层对比不再是零**：`eval/effect/` 是带 / 不带 skill 的对照题库与跑分器，已在 1 个任务 × 3 个 arm 上真跑过一轮（`eval/effect/baseline.md`）。那一轮的主要产物是**题目自己的 bug**，不是 arm 的排名。`score.py` 在样本 < 5 个任务时一律回 `insufficient_sample`，不许拿它宣称插件有效。
 v0.6.0 的收敛阈值（指纹历史 6、震荡周期 2–3、plateau 3 轮、sycophancy 0.95）与 tune 的 40% / 50% 规则是文献先验，未在真实运行上校准。
