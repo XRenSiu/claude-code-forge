@@ -170,6 +170,19 @@ The engine runs the extraction; these gates do not move:
   `invariant.proposed·signed` projection / UI sign-off) ships in implementation PRs;
   until then candidates live in the workspace and on the legislation inbox.
 
+## 冻结前的仪式(v0.5.0)
+
+卡是**草稿**:带着未裁的冲突、低置信条目是它应该有的样子。**冻结是另一回事**——几周后说"把它冻上"的
+那个人,不会记得当初留了什么没定。所以两处关口都检同一件事,谁也绕不过谁:
+
+- `verify_card.py <card> --ready-to-sign` —— 未裁的冲突(`conflicts_for_legislation[].resolution` 为空)、
+  没人裁过的 `confidence: low` 条目、`survival_test != pass` 的条目,一律从"草稿的未决项"升成 **REJECT**,
+  并逐条点名。不加这个 flag 时行为不变,起草照旧宽松。
+- `lock_done_when.py sign` —— 按**形状**认卡(有 `territory_id` + `hard_invariants`),自己去跑上面那条检查,
+  不过就拒签(exit 2)。所以"跳过检查直接签"这条路不存在。
+  真要带病签:`--force-unresolved --reason "…"`,理由与未决项清单一起写进锁文件——
+  **一个没写下来的例外,和一次疏忽长得一模一样**。
+
 ## High-risk — never do (non-waivable)
 
 - **Never auto-install a hard invariant.** Hard □ enters only by human signature at G2.
@@ -180,6 +193,8 @@ The engine runs the extraction; these gates do not move:
 - **Never re-legislate what is already R00x.** Dedup against `dos.yaml.rules`.
 - **Never over-generalize an abduction beyond its obstacle.** Narrowest rule, bound to
   the failure that revealed it.
+- **Never freeze a card whose conflicts nobody ruled on.** The refusal lives in `sign`; going around it
+  needs `--force-unresolved --reason`, and the reason lands in the lock.
 - **Never write `Territory.invariants` directly for a hard invariant.** Direct writes
   bypass the signing seam; emit a proposal.
 

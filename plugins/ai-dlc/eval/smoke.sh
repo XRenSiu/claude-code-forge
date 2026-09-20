@@ -1076,6 +1076,91 @@ assert t['registered_gaps'][0]['destination'] in ('done_when','issue','backlog')
 assert t['hard_invariants'][0]['altitude']=='territory'\""
 # dogfood 2026-09-05 (I-27): the template's comments carried another project's rule numbering
 # (R001 isolation / R002 gate-signing) beside ai-dlc's own R001/R002 on the same card.
+# V-17（vana-builder 2026-09-20）：锁里的路径是仓库根相对的，在子目录 verify 把「改了」报成「不见了」——
+# 判决一样，原因写错；错误的原因会把下一个人送到错误的地方去找。
+LV="$TMP/lockroot"; rm -rf "$LV"; mkdir -p "$LV/docs/inv"; pushd "$LV" >/dev/null
+git init -q -b main . && git config user.email t@t && git config user.name t
+printf 'schema: 2\n' > docs/inv/contract.yaml
+python3 "$S/ai-dlc/scripts/lock_done_when.py" sign --signer-kind human --by t --stage g2 --out docs/inv/x.lock docs/inv/contract.yaml >/dev/null
+printf 'schema: 2\nchanged: true\n' > docs/inv/contract.yaml
+printf '# proposal\n' > docs/inv/change-proposal-001.md
+expect "vana V-17: 子目录里 verify 把改动报成 changed（不是 missing），并说明按仓库根解析" 2 \
+  bash -c "cd '$LV/docs/inv' && python3 '$S/ai-dlc/scripts/lock_done_when.py' verify --lock x.lock > out.json; rc=\$?; python3 -c \"
+import json
+d = json.load(open('$LV/docs/inv/out.json'))
+assert d['changed'] == ['docs/inv/contract.yaml'], d
+assert d['missing'] == [], d
+assert d['resolved_from_repo_root'] and '仓库根' in d['note'], d
+assert d['proposals'], d\" || exit 9; exit \$rc"
+expect "vana V-17: 真的被删掉时仍然报 missing（twin — 回退解析没把删除掩盖掉）" 2 \
+  bash -c "cd '$LV' && rm docs/inv/contract.yaml && cd docs/inv && python3 '$S/ai-dlc/scripts/lock_done_when.py' verify --lock x.lock > out2.json; rc=\$?; python3 -c \"
+import json
+d = json.load(open('$LV/docs/inv/out2.json'))
+assert d['missing'] == ['docs/inv/contract.yaml'] and d['changed'] == [], d\" || exit 9; exit \$rc"
+popd >/dev/null
+
+echo "== ratify / agenda.py（冻结前的仪式，V-16）"
+RTF="$S/ratify"; RAG="$RTF/scripts/agenda.py"; RFX="$RTF/eval/fixtures/card_open_conflict.yaml"
+RT="$TMP/ratify"; mkdir -p "$RT"; cp "$RFX" "$RT/card.yaml"
+expect "ratify: 议程从文件读出未决项，不靠引擎记得" 0 \
+  bash -c "python3 '$RAG' '$RT/card.yaml' --json | python3 -c \"import json,sys; d=json.load(sys.stdin); assert d['open']==1 and d['items'][0]['kind']=='conflict', d; assert d['items'][0]['evidence']['a'] and d['items'][0]['where'].startswith('conflicts_for_legislation'), d\""
+expect "ratify: --check 在有未决项时退出 1" 1 py "$RAG" "$RT/card.yaml" --check
+expect "ratify: 拖延不算裁决（待定 / TBD 被拒）" 2 \
+  py "$RAG" "$RT/card.yaml" --rule 1 --resolution "待定，回头再说" --by "某人"
+expect "ratify: 空裁决被拒" 2 py "$RAG" "$RT/card.yaml" --rule 1 --resolution "  " --by "某人"
+expect "ratify: 没有姓名的裁决被拒" 2 py "$RAG" "$RT/card.yaml" --rule 1 --resolution "保留规则，现状按 bug 修" --by ""
+expect "ratify: 裁决写回时盖上姓名与日期" 0 \
+  bash -c "python3 '$RAG' '$RT/card.yaml' --rule 1 --resolution '保留规则，现状按 bug 修' --by '张三' >/dev/null && python3 -c \"
+import yaml, re
+d = yaml.safe_load(open('$RT/card.yaml'))
+r = d['conflicts_for_legislation'][0]['resolution']
+assert re.match(r'^20[0-9]{2}-[0-9]{2}-[0-9]{2} 张三：', r), r\""
+expect "ratify: 裁完之后 --check 通过（twin）" 0 py "$RAG" "$RT/card.yaml" --check
+expect "ratify: 裁完之后同一张卡过得了冻结前判据（twin）" 0 \
+  py "$S/invariant-extract/scripts/verify_card.py" "$RT/card.yaml" --ready-to-sign
+expect "ratify: 受委托签署没有授权原话会被拒" 1 \
+  bash -c "cd '$RT' && python3 '$S/ai-dlc/scripts/lock_done_when.py' sign --signer-kind delegated_agent --by '张三' --stage g2 --out .r.lock card.yaml"
+expect "ratify: 带授权原话的受委托签署落地，并把授权写进锁" 0 \
+  bash -c "cd '$RT' && python3 '$S/ai-dlc/scripts/lock_done_when.py' sign --signer-kind delegated_agent --by '张三' --authorization '2026-09-20 张三在对话里说：裁决如上，代我签' --stage g2 --out .r.lock card.yaml && python3 -c \"
+import json
+d = json.load(open('$RT/.r.lock'))
+assert d['signer_kind'] == 'delegated_agent' and '代我签' in d['authorization'], d\""
+expect "ratify: 议程为空时明说，而不是打印空清单" 0 \
+  bash -c "python3 '$RAG' '$RT/card.yaml' | grep -q '议程为空'"
+
+# V-15（vana-builder 2026-09-20）：一张带未裁冲突的卡，`sign` 照签不误、退出码 0——"直接说冻结"就把
+# 没定的东西冻上了。两处关口检同一件事：--ready-to-sign 把未决项升成拒，sign 按形状认卡并自己去跑它。
+SGN="$TMP/v15sign"; mkdir -p "$SGN"; LDW2="$S/ai-dlc/scripts/lock_done_when.py"
+python3 - "$S/invariant-extract/eval/fixtures" "$SGN" <<'PYCARD'
+import sys, yaml, os
+fx, out = sys.argv[1], sys.argv[2]
+good = yaml.safe_load(open(os.path.join(fx, "card_good.yaml"), encoding="utf-8"))
+assert good and good.get("hard_invariants") and good.get("territory_id"), "card_good.yaml is not a usable card"
+good.setdefault("conflicts_for_legislation", [])
+open_card = dict(good)
+open_card["conflicts_for_legislation"] = [{"a": "INV-x", "b": "现状 y", "note": "n"}]
+yaml.safe_dump(open_card, open(os.path.join(out, "open.card.yaml"), "w"), allow_unicode=True, sort_keys=False)
+ruled = dict(good)
+ruled["conflicts_for_legislation"] = [{"a": "INV-x", "b": "现状 y", "note": "n",
+                                       "resolution": "2026-09-20 人裁：保留 INV-x，现状按 issue 修"}]
+yaml.safe_dump(ruled, open(os.path.join(out, "ruled.card.yaml"), "w"), allow_unicode=True, sort_keys=False)
+PYCARD
+expect "vana V-15: a draft card may carry an unresolved conflict (drafting stays permissive)" 0 \
+  py "$IXV" "$SGN/open.card.yaml"
+expect "vana V-15: --ready-to-sign turns that same open item into a reject, by name" 1 \
+  py "$IXV" "$SGN/open.card.yaml" --ready-to-sign
+expect "vana V-15: sign recognises an invariant card by shape and refuses to freeze it with open items" 2 \
+  bash -c "cd '$SGN' && python3 '$LDW2' sign --signer-kind human --by tester --stage g2 --out .v15.lock open.card.yaml"
+expect "vana V-15: the refusal names the unresolved conflict rather than a generic error" 0 \
+  bash -c "cd '$SGN' && python3 '$LDW2' sign --signer-kind human --by tester --stage g2 --out .v15.lock open.card.yaml 2>&1 | grep -q 'conflict unresolved'"
+expect "vana V-15: once the ruling is recorded, the same card signs (twin)" 0 \
+  bash -c "cd '$SGN' && python3 '$LDW2' sign --signer-kind human --by tester --stage g2 --out .v15ok.lock ruled.card.yaml"
+expect "vana V-15: --force-unresolved without a reason is refused" 2 \
+  bash -c "cd '$SGN' && python3 '$LDW2' sign --signer-kind human --by tester --stage g2 --out .v15f.lock --force-unresolved open.card.yaml"
+expect "vana V-15: forcing with a reason signs and writes reason + open items into the lock" 0 \
+  bash -c "cd '$SGN' && python3 '$LDW2' sign --signer-kind human --by tester --stage g2 --out .v15f.lock --force-unresolved --reason '演练' open.card.yaml && python3 -c \"import json; d=json.load(open('$SGN/.v15f.lock')); o=d['signed_with_open_items']; assert o['reason']=='演练' and o['items'], d\""
+expect "vana V-15: a plain contract file is unaffected by the card check (no false positive)" 0 \
+  bash -c "cd '$SGN' && printf 'schema: 2\\n' > plain.yaml && python3 '$LDW2' sign --signer-kind human --by tester --stage g2 --out .v15p.lock plain.yaml"
 expect "invariant_card.yaml uses ai-dlc's G2 wording, not a borrowed R00n gate id (I-27)" 0 bash -c "! grep -qE '\\(R00[0-9]\\)' '$S/invariant-extract/assets/invariant_card.yaml' && grep -q 'G2' '$S/invariant-extract/assets/invariant_card.yaml'"
 # dogfood 2026-09-05 (I-11/I-37): the DOS template had nowhere to record a synonym, a downstream
 # translation, a rule alias, or a materialised derived view.

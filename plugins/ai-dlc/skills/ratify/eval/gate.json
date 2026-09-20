@@ -1,0 +1,25 @@
+{
+  "skill": "plugins/ai-dlc/skills/ratify",
+  "tier": "scaffold",
+  "evaluated_layers": ["structural"],
+  "gate_pass": "static_only",
+  "structural": {
+    "findings": [],
+    "failure_taxonomy": {"underfill": 0, "overfill": 0, "wrong-layer": 0, "wrong-route": 0, "no-exit": 0, "seam-misplacement": 0},
+    "waived_count": 0
+  },
+  "effect": null,
+  "discrimination": null,
+  "fix_list": [
+    "L2: run the ritual on ≥2 real cards and check that every item the file carried was presented, and that no ruling was invented when the human said 不知道",
+    "agenda.py only knows an invariant card's three open-item kinds; a done_when contract's open items go through its own validator, so ratify on a contract is thinner than on a card"
+  ],
+  "provenance": {
+    "date": "2026-09-20",
+    "evaluator": "AUTHOR-RUN structural pass + plugins/ai-dlc/eval/smoke.sh. NOT a decorrelated read, NOT an L2 run.",
+    "scripts_run": {
+      "agenda.py": "lists the open items of the vana invariant card from the file (1 unresolved conflict), refuses a deferral as a ruling, stamps date + name on write-back"
+    },
+    "why_it_exists": "dogfood vana-builder V-16: V-15 made `sign` refuse a card with open items, but nothing walked the human through resolving them — the user's words: 『还是需要 skill 的吧？不然我怎么同意呢？我不想手打命令』"
+  }
+}

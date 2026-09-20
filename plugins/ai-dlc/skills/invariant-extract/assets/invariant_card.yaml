@@ -102,6 +102,10 @@ conflicts_for_legislation:
   - a: ""
     b: ""
     note: ""
+    resolution: ""               # 人的裁决:谁、什么时候、裁了什么、依据。**冻结前必填** ——
+                                 # `verify_card.py --ready-to-sign` 与 `lock_done_when.py sign` 都检它。
+                                 # 草稿阶段允许空(那正是草稿的用途);签字阶段不允许,因为几周后说"冻结"的
+                                 # 那个人不会记得当初留了什么没定。
 
 # —— 与 dos.yaml.rules 去重的记录(已升宪法的不重复立法) ——
 deduped_against_constitution:

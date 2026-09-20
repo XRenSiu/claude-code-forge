@@ -36,7 +36,7 @@ flag 不等于 reject。预门过了但带 flag，意思是「机器判不了这
 | 脚本 | 干什么 | 关键退出码 |
 |---|---|---|
 | `aidlc_state.py` | 生命周期状态机：`init` / `show` / `set` / `advance` / `gate` / `card` / `size` / `plan` / `doctor` / `repo` / `note` / `notes` / `autonomy` / `fail` / `escape` / `acceptance` / `waive` / `report` / `check-clean` / `graph` / `loops` / `ledger` / `archive`。**状态由它拥有，不手改**。`advance` 对着文件检：`implement` 跑 `lint_cards.py`，`pr` 读 final-state.json + `meets_done_when.py` 的报告，`archive` 读 release.notes 的 post-deploy 行与指着 merge.sha 的 tag，implement / acceptance / pr / merge 重跑锁校验；implement 还要 G2 裁决（cards 被跳过时也要）、l5 锁与已核验的红基线，pr 要红→绿证据与干净的锁历史，g3 / merge 要 pr-poll 的裁决文件，release / archive 要 merge.sha 已在 branch.base 里；`advance g2` 给契约校验带上 `--repo`（forbidden_paths 要盖住这个仓库真实的测试文件）。`doctor` 还报：会话里装的插件版本 vs 这份脚本 vs marketplace 登记（读 `CLAUDE_CONFIG_DIR`，缺省 `~/.claude`）、宿主项目级 / 用户级里与插件同名或近名的 skill / command | 0 成功 · 1 前置不满足（`doctor` 的 1 = 有 error 级发现，它从不阻断门禁）· 2 用法 |
-| `lock_done_when.py` | 契约的两段锁：`sign --stage g2\|l5` 算文件哈希并记签字人 | 0 · 1 拒 · 2 IO |
+| `lock_done_when.py` | 契约的两段锁：`sign --stage g2\|l5` 算文件哈希并记签字人；按形状认出不变量卡（有 `territory_id` + `hard_invariants`）并自己跑 `verify_card.py --ready-to-sign`，带未决项拒签，`--force-unresolved --reason` 强签时把理由与未决项清单写进锁 | 0 · 1 拒 · 2 IO |
 | `trace.py` | 决策迹查询：`why <AC-id>` / `impact` / `render` / `lint` | 0 · 1 · 2 |
 | `verify_graph.py` | `graph.yaml` 的五条 lint（写范围有界 / 圈必须归环 / 评估者→实现者只带 fix_prompt / 人节点有恢复绑定 / fan_in 有 merge） | 0 · 1 拒 |
 | `verify_loop.py` | `loops.yaml` 的环契约（generator ≠ verifier、stop 四键齐） | 0 · 1 拒 |
@@ -90,7 +90,8 @@ flag 不等于 reject。预门过了但带 flag，意思是「机器判不了这
 | `verify_vocabulary.py` | dos-extract | **跨制品术语传感器（B 档）**：契约 / 卡 / spec / issue / PR body 的**散文**里出现、`dos.yaml` 解析不了的领域名词，每条带 file:line 与本体里最近的可解析邻居；另报本体里无人使用的词（弱证据，不计入）。`--out` 缺省**不落文件**（B 档随手跑，不该在工作区留残留），要 facts 显式给 `--out`，要机器读用 `--json` | 0 过 · 1 超阈值 · 2 IO · **3 没有本体 = 未检**（`--require-ontology` → 1） |
 | `reconcile_dos.py` | dos-extract | 应然本体（psl-derive 的提案）↔ 现状本体逐条对账 | 0 · 1 有冲突 |
 | `verify_agent_map.py` | dos-extract | **仓库地图的预门**：`--probe` 逐条真跑命令并比对期望退出码（期望列 `no-probe: <理由>` 的行不执行、记 flag，理由必填，全套测试不许；probe 前比对 `.nvmrc` / `.node-version` 与 `node -v`，不一致出 flag，失败条目的拒绝里写明先排除环境）；陷阱必须有来路；占位符拒；`file:` 来路要指得到文件、行号不越界、`#"原文"` 仍逐字在源文件里（引用 CLAUDE.md / rules 而不是再抄一份，源头改了这一行就红）；没锚原文的 `file:` 记 flag | 0 · 1 拒 · 2 IO |
-| `verify_card.py` | invariant-extract | 不变量卡：无 provenance 拒、hard 必须 propose、◊ 混进 □ 拒 | 0 · 1 拒 |
+| `agenda.py` | ratify | 冻结前的议程：从制品里读出未决项（未裁的冲突 / 没人裁过的低置信 / 未过存活测试）并带证据与写回位置；`--rule … --resolution … --by …` 写回一条裁决并盖姓名日期；拖延（待定 / TBD）、空裁决、无姓名一律拒；`--check` 只返回退出码 | 0 · 1 仍有未决 · 2 用法 |
+| `verify_card.py` | invariant-extract | 不变量卡：无 provenance 拒、hard 必须 propose、◊ 混进 □ 拒；`--ready-to-sign` 是冻结前的仪式——未裁的冲突 / 没人裁过的低置信条目 / 未过存活测试的条目从「草稿的未决项」升成拒，并点名 | 0 · 1 拒 |
 
 ### 计划与实现（R4 / R5）
 

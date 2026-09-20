@@ -1,0 +1,90 @@
+territory_id: vana-desktop-engineering
+dos_ref: docs/ontology/map/dos.yaml
+purpose:
+  name: 交付一个不因跨进程、IPC、资源清理或同步状态误判而崩溃或丢用户数据的 Electron 桌面应用
+  kpi: 线上崩溃与数据丢失类缺陷数
+  aspect: safety
+  scope_ref: docs/ontology/map/dos.yaml#scope（内容结构）+ CLAUDE.md#Hard constraints（工程约束）
+extracted_at: '2026-09-20T06:35:00Z'
+mode: interactive
+channel_2_input:
+  failure_memory_count: 62
+  dry: false
+  snapshot_at: '2026-09-20T06:00:00Z'
+  sources:
+  - ref: .dos-extract/03_failure_memory.md · 关闭的 bug issue（含 P1）
+    entries: 20
+    kind: '线上被用户报到、已修复并关闭的缺陷，含 #2145 这类数据丢失事故'
+  - ref: .dos-extract/03_failure_memory.md · fix 提交
+    entries: 30
+    kind: git log 里 subject 指明缺陷类别的修复提交（47 个 sha）
+  - ref: .dos-extract/03_failure_memory.md · harness 规则与 hook
+    entries: 5
+    kind: CLAUDE.md 硬约束、.claude/rules、guard.mjs / session-check.mjs 里写明「为什么存在」的条目
+  - ref: .dos-extract/03_failure_memory.md · 文档记录的历史事故
+    entries: 7
+    kind: docs/architecture 里「历史形态提醒 / 陷阱 / 注意」段落记的旧事故
+  corroboration_read:
+  - .dos-extract/04_execution_points.md（55 个执行点，通道一；其中 28 个带 verbatim 的「为什么」注释）
+  - git log --oneline -400（104 条 fix 提交的全集，取样 58）
+projected_out_obstacles:
+- obstacle_ref: F-05 / F-06 / F-07 / F-08（driftbeacon 传输走 undici 被企业网络静默丢弃；身份在 flush
+    时读导致事件归错人）
+  why_empty: 丢的是埋点事件不是用户数据，也不崩溃。KPI 是线上崩溃与数据丢失，投影为 ∅；归「可观测性 / 数据上报」领地，那里 KPI 是事件完整率
+registered_gaps:
+- ref: 本次抽取
+  gap: 工程领地没有自己的 DOS：dos_ref 指向的只覆盖导图内容上下文，工程词汇（进程、IPC 通道、恢复目录、守卫）无处闭包
+  destination: backlog
+  note: 等这张卡的条目稳定后再抽工程上下文的 DOS 更省事；现在抽会跟着卡一起改
+hard_invariants:
+- id: INV-vana-001
+  statement: WHEN 一个表示「已连接 / 已就绪」的状态被置位，THE SYSTEM SHALL 只由它所断言的那件事本身的确认事件驱动，NEVER
+    由「收到了任意第一条消息」这类先到信号推断
+  ears_type: unwanted
+  survival_test: pass
+  strength: hard
+  altitude: territory
+  aspect: safety
+  channel: both
+  provenance:
+    execution_point: app/renderer/pages/editor/compositions/collaboration/doc/hocuspocus.ts（resolveConnectionAttempt
+      由 onMessage 调用）
+    obstacle_ref: issue:#2145 根因② · commit:26441a86e4（activeSheetViewerInited 首帧从不完整
+      figure 置位）
+  narrowest_rule_note: 不禁止乐观置位本身，只禁止「用先到的任意消息推断」这一种来源——#2145 里服务端回的是 PermissionDenied，照样被读成
+    Connected；再窄就只覆盖 hocuspocus 一处，放不过 activeSheetViewerInited 这个同类
+  confidence: high
+  disposition: propose
+  golden_regression: true
+overridable_defaults:
+- id: DEF-vana-001
+  statement: app/ 下新增文件名用 lowercase-dashes；待删代码以 _deprecated_ 前缀标记并更新其引用方
+  authority_level: harness 规则维护者（.claude/rules/harness.md）可为 vendored / 第三方目录开例外，需在该目录写明
+  survival_test: pass
+  strength: overridable
+  altitude: territory
+  aspect: correctness
+  channel: both
+  provenance:
+    execution_point: .claude/hooks/guard.mjs（file-naming 规则，BLOCK）
+    obstacle_ref: file:CLAUDE.md:51（硬约束 4）· commit:cb1e288dd6（_deprecated_ 标记曾豁免全部规则，而它的两个引用方仍在打包）
+  narrowest_rule_note: 命名本身不导致崩溃，放在可覆盖栏；但 _deprecated_ 不得豁免其它规则这一点由 INV-vana-008 /
+    010 兜底
+  confidence: high
+  disposition: carded
+kicked_to_done_when:
+- id: DW-vana-001
+  statement: PNG / JPG 导出必须包含主题上的 marker
+  why_diamond: 是一次具体缺陷的验收条件（issue:#2005），不是每次运行都要维持的常驻规则
+  handoff_to: donewhen-extract
+conflicts_for_legislation:
+- a: INV-vana-003（未同步的编辑必须有进程外可恢复的本地副本）
+  b: open-handler.js:130 现状：cloud:// 被显式排除在崩溃恢复外，并 rmdirSync 恢复目录（issue:#2145 根因⑤）
+  note: 排除很可能是有意的（云端内容不落盘的隐私 / 企业合规考虑）。若确属有意，INV-003 要改写成「未同步窗口内允许加密落盘」或改判为可覆盖默认；这是人的裁决，不是脚本能判的
+deduped_against_constitution: []
+constitution_promotion_suspects:
+- statement: 一个检查在无法确定它的判定输入时必须失败，不得静默放行
+  narrowed_card_id: INV-vana-010
+  why_purpose_independent: 代入任何领地的目的都成立：守卫的价值等于它在该管的那一刻真的管了；'查不到所以通过'把门变成装饰。本仓库四次踩到（guard
+    的 cwd、根目录前缀、截断的线程页、缺 /api 的地址）
+  routed_to: legislation

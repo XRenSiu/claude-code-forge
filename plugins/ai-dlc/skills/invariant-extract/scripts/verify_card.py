@@ -7,7 +7,7 @@ check of the PRODUCT against "what a correct invariant looks like". This enforce
 mechanical half of that check and FLAGS (does not rubber-stamp) the semantic half.
 
 Usage:
-    python verify_card.py <invariant_card.yaml> [--dos <dos.yaml>] [--near-duplicate 0.6]
+    python verify_card.py <invariant_card.yaml> [--dos <dos.yaml>] [--near-duplicate 0.6] [--ready-to-sign]
 
 Exit code 0 = no rejects (card may still carry needs_semantic_review flags for a judge).
 Exit code 1 = at least one REJECT (a hard guarantee was breached) or the card is unreadable.
@@ -30,6 +30,18 @@ Mechanical guarantees enforced (a breach is a REJECT — the non-waivable half):
         unfalsifiable; the count has to decompose into named failure-memory sources
   - registered_gaps entries carry a destination in {done_when, issue, backlog} .. a registered gap is
         "not built yet", not "was violated": negating it yields a ◊, never a □
+
+`--ready-to-sign` — the pre-signature ritual (dogfood vana-builder V-15). A draft card is SUPPOSED to
+carry unresolved items; that is what a draft is for. Freezing one is a different act, and the operator
+who says "冻结" weeks later does not remember what was left open. This mode turns exactly those into
+REJECTs and names them:
+  - every `conflicts_for_legislation` entry carries a `resolution` (who ruled what, and when)
+  - no carded entry is left `confidence: low` without a `resolution_note` — low confidence is the
+    skill's own signal that a human has to look
+  - `survival_test` is `pass` on every carded entry (in draft mode that is only a flag)
+Without the flag nothing changes: drafting stays permissive. `lock_done_when.py sign` runs this mode
+itself when a file it is asked to sign looks like an invariant card, so the ritual cannot be skipped by
+going straight to the signing command.
 
 Semantic half — FLAGGED as needs_semantic_review, never auto-passed:
   - survival_test == 'pass' (does it truly survive an unrelated Run under this purpose?)
@@ -175,11 +187,33 @@ def check_entry(entry, expected_strength, dos_ids, dos_stmts, threshold):
     return rejects, flags
 
 
+def signing_blockers(card):
+    """The items a draft may carry and a signature may not. Returns [] when the card is ready."""
+    out = []
+    for c in (card.get("conflicts_for_legislation") or []):
+        if not str((c or {}).get("resolution") or "").strip():
+            out.append(f"conflict unresolved: {str((c or {}).get('a'))[:70]!r} vs {str((c or {}).get('b'))[:70]!r} "
+                       "— record `resolution:` (who ruled what, when) before freezing it")
+    for col in ("hard_invariants", "overridable_defaults"):
+        for e in (card.get(col) or []):
+            eid = (e or {}).get("id", "?")
+            if (e or {}).get("confidence") == "low" and not str((e or {}).get("resolution_note") or "").strip():
+                out.append(f"{eid}: confidence low and no `resolution_note` — low confidence is this skill's own "
+                           "signal that a human must look; say what was decided, or drop the entry")
+            if (e or {}).get("survival_test") != "pass":
+                out.append(f"{eid}: survival_test is {(e or {}).get('survival_test')!r}, not 'pass' — a candidate "
+                           "that has not survived the □/◊ test cannot be frozen as law")
+    return out
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("card")
     ap.add_argument("--dos")
+    ap.add_argument("--ready-to-sign", action="store_true",
+                    help="pre-signature ritual: unresolved conflicts / low-confidence entries / failed survival "
+                         "tests become REJECTs instead of being carried as a draft's open items")
     ap.add_argument("--near-duplicate", type=float, default=0.6,
                     help="Jaccard threshold for the near-duplicate flag (default 0.6)")
     a = ap.parse_args()
@@ -251,6 +285,10 @@ def main():
                            f"{dest!r} not one of done_when|issue|backlog — a registered gap is 'not "
                            f"built yet', not 'was violated'; negating it yields a ◊, never a □")
 
+    blockers = signing_blockers(card)
+    if a.ready_to_sign:
+        rejects = rejects + blockers
+
     report = {
         "card": a.card,
         "territory_id": card.get("territory_id"),
@@ -264,6 +302,8 @@ def main():
         "conflicts_for_legislation": len(card.get("conflicts_for_legislation") or []),
         "channel_2": {"failure_memory_count": count, "dry": bool(c2.get("dry")),
                       "sources": len(sources), "snapshot_at": c2.get("snapshot_at") or None},
+        "ready_to_sign": (None if not a.ready_to_sign else not blockers),
+        "signing_blockers": blockers,
         "rejects": rejects,
         "needs_semantic_review": flags,
         "exit": "REJECT" if rejects else "MECHANICALLY_CLEAN",
