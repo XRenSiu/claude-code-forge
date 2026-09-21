@@ -1150,6 +1150,31 @@ import json
 d = json.load(open('$RT/.r.lock'))
 assert d['signer_kind'] == 'delegated_agent' and '代我签' in d['authorization'], d\""
 expect "ratify: 议程为空时明说，而不是打印空清单" 0 \
+
+# dogfood 2026-09-21：人问「我要签 G1，怎么操作」——答案本来是手打 aidlc_state.py gate g1，
+# 而那正是 /ratify 当初被要求存在的理由。G1 与卡是同一段仪式、不同的制品，所以接进同一个 skill，
+# 不另开一个：两个 skill 教同一件事早晚会漂成两套说法。
+FXR="$S/ratify/eval/fixtures"
+expect "ratify reads a G1 record's agenda from the file, four questions included" 0 bash -c "python3 '$S/ratify/scripts/agenda.py' '$FXR/g1_record_blank.md' --json | python3 -c \"import json,sys; d=json.load(sys.stdin); ids=[i['id'] for i in d['items']]; assert {'Q1','Q2','Q3','Q4'} <= set(ids), ids\""
+# 模板自带的是**问题**，不是答案。拿「这一节有没有文字」去判，会永远判成已答——一道永远不响的闸。
+expect "the four questions count as unanswered until someone answers them" 0 bash -c "python3 '$S/ratify/scripts/agenda.py' '$FXR/g1_record_blank.md' --json | python3 -c \"import json,sys; d=json.load(sys.stdin); assert sum(1 for i in d['items'] if i['kind']=='four_question')==4, d['items']\""
+# PSL 的每条 Open Question 都要有一行——从 PSL 文件里读，不从记忆里挑
+expect "every Open Question in the PSL becomes an agenda item" 0 bash -c "python3 '$S/ratify/scripts/agenda.py' '$FXR/g1_record_blank.md' --json | python3 -c \"import json,sys; d=json.load(sys.stdin); ids=[i['id'] for i in d['items']]; assert 'OQ-1' in ids and 'OQ-2' in ids, ids\""
+expect "an Open Question ruling without a verdict is refused (三选一，不是自由作文)" 2 bash -c "cp '$FXR/g1_record_blank.md' '$TMP/g1a.md'; cp '$FXR/PSL-fixture.md' '$TMP/PSL-fixture.md'; python3 '$S/ratify/scripts/agenda.py' '$TMP/g1a.md' --rule OQ-1 --resolution 'x' --by '人'"
+expect "a deferral is refused on a G1 record too" 2 bash -c "cp '$FXR/g1_record_blank.md' '$TMP/g1b.md'; cp '$FXR/PSL-fixture.md' '$TMP/PSL-fixture.md'; python3 '$S/ratify/scripts/agenda.py' '$TMP/g1b.md' --rule OQ-1 --verdict answer --resolution '待定' --by '人'"
+expect "a ruling lands inside the table, stamped with who and when" 0 bash -c "cp '$FXR/g1_record_blank.md' '$TMP/g1c.md'; cp '$FXR/PSL-fixture.md' '$TMP/PSL-fixture.md'; python3 '$S/ratify/scripts/agenda.py' '$TMP/g1c.md' --rule OQ-1 --verdict accept_seam --resolution '等埋点' --by '张三' >/dev/null && python3 - '$TMP/g1c.md' <<'PY'
+import sys,re
+t=open(sys.argv[1],encoding='utf-8').read().splitlines()
+i=next(n for n,l in enumerate(t) if l.startswith('| OQ-1 |'))
+assert '张三' in t[i] and re.search(r'\d{4}-\d{2}-\d{2}', t[i]), t[i]
+# 该行必须还在表里：它后面一行要么仍是表行，要么是空行——不能落在散文之后
+assert t[i-1].strip().startswith('|'), t[i-1]
+PY"
+# 裁「阻塞」是人自己下的判断，绕过它等于替人改主意
+expect "an Open Question ruled 阻塞 is surfaced as a blocker, not silently closed" 0 bash -c "cp '$FXR/g1_record_blank.md' '$TMP/g1d.md'; cp '$FXR/PSL-fixture.md' '$TMP/PSL-fixture.md'; python3 '$S/ratify/scripts/agenda.py' '$TMP/g1d.md' --rule OQ-1 --verdict blocking --resolution '要跟服务端一起定' --by '张三' >/dev/null && python3 '$S/ratify/scripts/agenda.py' '$TMP/g1d.md' --json | python3 -c \"import json,sys; d=json.load(sys.stdin); assert any(i['kind']=='blocking_oq' and i['id']=='OQ-1' for i in d['items']), d['items']\""
+# 应然↔现状对账：模板自带表头，表头不是数据行
+expect "the reconciliation table's own header does not count as filled in" 0 bash -c "python3 '$S/ratify/scripts/agenda.py' '$FXR/g1_record_blank.md' --dos '$FX/dos.yaml' --json | python3 -c \"import json,sys; d=json.load(sys.stdin); assert any(i['kind']=='reconciliation' for i in d['items']), [i['id'] for i in d['items']]\""
+expect "the invariant-card path still works unchanged (twin)" 0 bash -c "python3 '$S/ratify/scripts/agenda.py' '$FXR/card_open_conflict.yaml' --json | python3 -c \"import json,sys; d=json.load(sys.stdin); assert d['open']==1 and d['items'][0]['kind']=='conflict', d\""
   bash -c "python3 '$RAG' '$RT/card.yaml' | grep -q '议程为空'"
 
 # V-15（vana-builder 2026-09-20）：一张带未裁冲突的卡，`sign` 照签不误、退出码 0——"直接说冻结"就把

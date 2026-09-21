@@ -5,9 +5,10 @@ description: >-
   的那段仪式——未决项逐条从文件里读出来呈给人（不是凭记忆挑几条）、一条一条当场裁、裁决带姓名与日期写回制品、
   再跑一次判据、最后才签；签字要么人自己来，要么以**受委托签署**落地并把人的授权原话写进锁文件。效果：人只回答
   「这条怎么办」，不需要记得还剩什么没定，也不需要敲命令。Use when: "冻结这张卡" / "签了吧" / "批准" / "立法" /
-  "ratify" / "freeze the invariant card" / "把不变量定下来" / 抽完不变量或写完契约准备签字时。NOT for:
-  起草不变量（/invariant-extract）、写契约（/donewhen-extract）、一次交付运行里的 G2（那是 `aidlc_state.py gate g2`，
-  有 slug 与状态机）。前置：有一份可锁的制品文件、python3 + pyyaml。
+  "ratify" / "freeze the invariant card" / "把不变量定下来" / "我要签 G1" / "签了这个门" /
+  抽完不变量、写完契约、或 /psl-derive 出完形态草案准备过 G1 时。NOT for:
+  起草不变量（/invariant-extract）、写契约（/donewhen-extract）、写世界（/psl）、推形态（/psl-derive）。
+  前置：有一份可裁可签的制品（不变量卡 / 契约 / G1 记录）、python3 + pyyaml。
 argument-hint: "<card.yaml | contract.yaml> [--out <lock 路径>] [--stage g2|l5]"
 version: 0.1.0
 user-invocable: true
@@ -39,8 +40,14 @@ deletion 测试：撤掉本 skill，人说「冻结吧」，引擎会直接去�
   - `delegated_agent`：人在对话里明确授权、由 agent 代跑，此时 `--authorization` **必填**，把人的授权原话
     （谁、什么时候、授权了什么）写进锁文件。没有 `--authorization` 的受委托签署会被脚本直接拒。
   **没有第三种。** 模型不得以 `human` 身份签字——那是伪造签名，不是省事。
-- **制品的种类**。不变量卡（`territory_id` + `hard_invariants`）、done_when 契约、签字版形态草案都可锁；
-  `sign` 对不变量卡会自己去跑卡的仪式检查，所以「跳过 ratify 直接签」这条路在卡上不存在。
+- **制品的种类**。不变量卡（`territory_id` + `hard_invariants`）、done_when 契约、**G1 世界裁决记录**
+  都走这段仪式；`sign` 对不变量卡会自己去跑卡的仪式检查，所以「跳过 ratify 直接签」这条路在卡上不存在。
+- **末端不同，仪式相同**。卡与契约签在 `lock_done_when.py sign`；G1 签在
+  `aidlc_state.py gate g1 --verdict pass --by <人> --signer-kind human --record <g1-record.md>`。
+  两者前面那一段——从文件里读出未决项、逐条呈、当场裁、带姓名日期写回、再跑判据——是同一段。
+  之所以不为 G1 另开一个 skill：人要的是「从草稿到签字」这段仪式本身，两个 skill 教同一件事早晚会漂成两套说法。
+- **G1 裁的是推导产物，不是世界**。`gate g1` 要求 `world.derived_dir` 指向一个真实存在的 `derived/`
+  （`/psl-derive` 的产出）。只有 PSL 没有形态草案时签不了，也不该签——"日历筛选器"那类错误发生在**推导**那一步。
 
 ## 判据（φ）：什么算一条裁决
 
@@ -51,6 +58,9 @@ deletion 测试：撤掉本 skill，人说「冻结吧」，引擎会直接去�
 - **「不知道」也是合法答案**，处理同上：转成开放问题，不要猜一个答案填进去。一条猜出来的裁决会以
   「已裁决」的样子活很久。
 - **裁决要能被复核**：写回时自动带日期与姓名。姓名是人的名字，不是 agent 的。
+- **G1 上，PSL 的每一条 Open Question 都要有一行**，三选一：接受 seam / 现在回答 / 阻塞。
+  跳过不是选项——承重空槽会以默认值的形态混进实现。
+  **裁为「阻塞」的，G1 不能 PASS**：`agenda.py` 会把它单列出来，这不是提醒，是拦。
 
 ## 控制（γ）：顺序不可调换
 
@@ -67,9 +77,16 @@ deletion 测试：撤掉本 skill，人说「冻结吧」，引擎会直接去�
 
 ## 原语（Π）
 
-- `scripts/agenda.py <制品> [--json]` —— 未决项清单（冲突 / 低置信 / 未过存活测试），带证据与写回位置；
-  `--rule <n|id> --resolution "…" --by "<人名>"` 写回一条裁决（自动盖日期）；`--check` 只返回退出码。
+- `scripts/agenda.py <制品> [--json]` —— 未决项清单，带证据与写回位置；`--check` 只返回退出码；
+  `--rule <n|id> --resolution "…" --by "<人名>"` 写回一条裁决（自动盖日期）。制品种类自动认：
+  - **不变量卡**：冲突 / 低置信 / 未过存活测试；
+  - **G1 记录**：四问未答 · PSL 的每条 Open Question · 分歧集与 flag · 应然↔现状对账 ·
+    明确不做为空 · 外部证据 · 决定与签字版哈希。裁 OQ 时 `--verdict accept_seam|answer|blocking` 必填；
+    `--psl` / `--derived` / `--dos` 指出要核对的那三样（不给就从记录 header 读 PSL）。
 - `../invariant-extract/scripts/verify_card.py <卡> --ready-to-sign` —— 冻结前的判据。
+- `../ai-dlc/scripts/aidlc_state.py gate g1 --verdict pass|reject --by <人名> --signer-kind human
+  [--authorization "…"] --record <g1-record.md>` —— G1 的签字端；它自己还会核形态草案的 sha256
+  与记录里写的是否一致，不一致直接拒。
 - `../ai-dlc/scripts/lock_done_when.py sign --signer-kind human|delegated_agent --by <人名>
   [--authorization "…"] [--stage g2|l5] [--out <lock>] <文件...>` —— 冻结；卡上带未决项会被它自己拒。
 - `../ai-dlc/scripts/lock_done_when.py verify --lock <lock>` —— 之后核对：被锁文件改了而没附变更提案 → 拒。
@@ -83,6 +100,8 @@ deletion 测试：撤掉本 skill，人说「冻结吧」，引擎会直接去�
 - **绝不跳过第 4 步的复检**。裁决会改内容，改完的内容没被判据看过就不该被冻。
 - **绝不在人没明确说「同意 / 签吧」时执行签字**——本 skill 的存在不等于授权。
 - **绝不用 `--force-unresolved` 绕过未决项**，除非人明确要求且给出理由；理由会写进锁，那是给未来的人看的。
+- **绝不在有「阻塞」OQ 时把 G1 判成 PASS**。阻塞是人自己下的判断，绕过它等于替人改主意。
+- **绝不在没有 `derived/` 时签 G1**——那是在签空气；先 `/psl-derive`。
 
 ## 接线（在 AI-DLC 里的位置）
 
