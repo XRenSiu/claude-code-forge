@@ -10,7 +10,7 @@ description: >-
   起草不变量（/invariant-extract）、写契约（/donewhen-extract）、写世界（/psl）、推形态（/psl-derive）。
   前置：有一份可裁可签的制品（不变量卡 / 契约 / G1 记录）、python3 + pyyaml。
 argument-hint: "<card.yaml | contract.yaml> [--out <lock 路径>] [--stage g2|l5]"
-version: 0.1.0
+version: 0.2.0
 user-invocable: true
 # 只能由人显式调起：它的终点是一次签字——冻结之后改被锁文件要走变更提案。
 # 不能因为对话里出现「差不多了」「可以了」就被模型自行调起。
