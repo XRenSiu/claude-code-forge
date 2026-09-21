@@ -16,6 +16,10 @@ Hard lines enforced (a breach forbids activation — the four jud据):
   - ☐1 kind=eval_case: mutation_score present and >= min-mutation
   - ☐2 kind=rubric:    krippendorff_alpha present and >= min-alpha (default 0.80)
   - ☐3 holdout_ref non-empty AND holdout_unexposed_confirmed (no holdout, no certification)
+  - ☐3 holdout_result present, counts add up, every failure classified + routed; any
+        implementation_gap failure -> reject (existing is not running; red is not certified)
+  - a live defect found while calibrating that is still `open` with no routed_to -> reject
+  - an open_item flagged blocks_activation and not closed -> reject (overrides the four jud据)
   - ☐4 isolation_attested true (no isolation, no evaluation)
   - surviving_mutants present but not each logged as a gate gap (eval_case_to_add) -> fail (no silent caps)
   - thresholds loosened below the standing hard lines (0.80 alpha) -> fail (lines only ratchet tighter)
@@ -36,6 +40,10 @@ except ImportError:
 
 HARD_ALPHA_FLOOR = 0.80      # the standing hard line; --min-alpha may only raise it, never lower
 HARD_MUTATION_FLOOR = 0.70   # likewise for mutation score; --min-mutation only ratchets tighter
+
+# Every holdout failure is one of exactly three things. The set is closed on purpose: "it's fine"
+# is not a disposition, and an unclassified failure is an unanswered one.
+HOLDOUT_DISPOSITIONS = {"implementation_gap", "contract_dispute", "holdout_error"}
 
 
 def load(path):
@@ -103,13 +111,77 @@ def main():
     if kind not in ("eval_case", "rubric"):
         rejects.append(f"kind must be eval_case|rubric, got {kind!r}")
 
-    # ☐3 holdout
+    # ☐3 holdout — 存在 + 未泄漏 + **跑过且结果有交代**
     holdout = (rep.get("holdout_ref") or "").strip()
     c3 = bool(holdout) and bool(rep.get("holdout_unexposed_confirmed"))
     if not holdout:
         rejects.append("☐3 holdout_ref empty — no holdout, no certification (SpecBench)")
     elif not rep.get("holdout_unexposed_confirmed"):
         rejects.append("☐3 holdout_unexposed_confirmed false — a leaked holdout certifies nothing")
+
+    # holdout 存在 ≠ holdout 跑过。dogfood C-05 (2026-09-20 vana): a report carried 2 failing
+    # holdout cases and still came out PASS — the script had checked only that the slice existed
+    # and was unexposed. A golden set that was never run, or was run and quietly left red,
+    # certifies nothing. Same no-silent-caps discipline as surviving_mutants.
+    hr = rep.get("holdout_result")
+    if not isinstance(hr, dict):
+        c3 = False
+        rejects.append("☐3 holdout_result missing — the slice exists but was never run; existing is not running")
+    else:
+        total = hr.get("total")
+        passed = hr.get("passed")
+        failed = hr.get("failed")
+        if not isinstance(total, int) or total <= 0:
+            c3 = False
+            rejects.append(f"☐3 holdout_result.total {total!r} — a holdout with no cases certifies nothing")
+        elif not (isinstance(passed, int) and isinstance(failed, int) and passed + failed == total):
+            c3 = False
+            rejects.append(f"☐3 holdout_result counts do not add up: passed {passed!r} + failed {failed!r} != total {total!r} "
+                           "— something was not counted")
+        # A copied-but-unfilled template carries one all-blank stub entry; that is not a failure
+        # record, it is the shape of one. Drop blanks before counting, so `failed: 0` plus the
+        # stub does not read as an unclassified failure.
+        fails = [f for f in (hr.get("failures") or [])
+                 if isinstance(f, dict) and any(str(v or "").strip() for v in f.values())]
+        if isinstance(failed, int) and len(fails) != failed:
+            c3 = False
+            rejects.append(f"☐3 holdout_result.failed {failed} but {len(fails)} failure(s) logged — no silent caps")
+        for f in fails:
+            case = f.get("case") or "<unnamed>"
+            disp = (f.get("disposition") or "").strip()
+            if disp not in HOLDOUT_DISPOSITIONS:
+                c3 = False
+                rejects.append(f"☐3 holdout failure {case!r} disposition {disp!r} not one of {sorted(HOLDOUT_DISPOSITIONS)} "
+                               "— an unclassified failure is an unanswered one")
+            if not (f.get("routed_to") or "").strip():
+                c3 = False
+                rejects.append(f"☐3 holdout failure {case!r} has no routed_to — every failure needs a destination")
+            if disp == "implementation_gap":
+                c3 = False
+                rejects.append(f"☐3 holdout failure {case!r} is an implementation_gap — the artefact does not satisfy "
+                               "the golden set; certifying the ruler while the thing it measures is red is backwards")
+            elif disp == "contract_dispute":
+                flags.append(f"holdout failure {case!r} is a contract dispute — a human must rule; "
+                             "do NOT edit the holdout before the ruling (that is changing the ruler to match the answer)")
+            elif disp == "holdout_error":
+                flags.append(f"holdout failure {case!r} was ruled a holdout_error — confirm the golden case really was "
+                             "wrong, rather than the artefact being wrong")
+
+    # 现网缺陷与未决项:没修完的洞、没裁完的争议,不得被 pass 掩掉
+    for d in (rep.get("live_defects_found") or []):
+        if not isinstance(d, dict):
+            continue
+        did = d.get("id") or d.get("title") or "<unnamed>"
+        if (d.get("status") or "").strip() == "open" and not (d.get("routed_to") or "").strip():
+            rejects.append(f"live defect {did!r} is open with no routed_to — an open defect found while calibrating "
+                           "still needs a destination")
+    for o in (rep.get("open_items") or []):
+        if not isinstance(o, dict):
+            continue
+        oid = o.get("id") or o.get("title") or "<unnamed>"
+        if o.get("blocks_activation") and (o.get("status") or "").strip() != "closed":
+            rejects.append(f"open item {oid!r} is marked blocks_activation and is not closed — activation forbidden "
+                           "regardless of the four jud据")
 
     # ☐4 isolation
     c4 = bool(rep.get("isolation_attested"))

@@ -1199,6 +1199,43 @@ expect "calibrated eval_case set passes meta-gate" 0 py "$S/calibrate/scripts/ve
 expect "missing holdout forbids activation" 1 py "$S/calibrate/scripts/verify_calibration.py" "$FXA/report_bad_noholdout.yaml"
 expect "loosening alpha below 0.80 rejected" 1 py "$S/calibrate/scripts/verify_calibration.py" "$FXA/report_good.yaml" --min-alpha 0.5
 
+# C-05（2026-09-20 vana dogfood）：☐3 只查了 holdout **存在且未泄漏**，没查它**跑没跑、跑成什么样**。
+# 当时那份报告带着 2 条挂掉的 holdout 用例，四判据全绿，照样 PASS。存在不等于跑过；
+# 跑红了还当没看见，与没跑没有区别。
+#
+# 这一组每条都同时钉两件事：**拒了**（exit 1）**且说了为什么**（消息命中）。
+# 只 grep 消息不看退出码，会让一个 PASS 的报告里碰巧出现该字样也算过；
+# 只看退出码不看消息，换个理由拒也算过——两者都不是这条判据要守的东西。
+STRIP='import sys,yaml; d=yaml.safe_load(open(sys.argv[1])); d.pop("holdout_result",None); yaml.safe_dump(d,sys.stdout,allow_unicode=True)'
+expect "holdout that was never run forbids activation (存在 != 跑过)" 0 bash -c "python3 -c '$STRIP' '$FXA/report_good.yaml' > '$TMP/cal_noresult.yaml' && python3 '$S/calibrate/scripts/verify_calibration.py' '$TMP/cal_noresult.yaml' > '$TMP/o_noresult.json' 2>&1; [ \$? -eq 1 ] && grep -q 'never run' '$TMP/o_noresult.json'"
+expect "a holdout failure that is an implementation_gap forbids activation, and says why" 0 bash -c "python3 '$S/calibrate/scripts/verify_calibration.py' '$FXA/report_holdout_impl_gap.yaml' > '$TMP/o_implgap.json' 2>&1; [ \$? -eq 1 ] && grep -q 'implementation_gap' '$TMP/o_implgap.json'"
+# 正例的边界：contract_dispute 不是拒，是交人裁——两者混为一谈会让「法没说清」被当成「代码没做到」
+expect "a holdout failure ruled a contract dispute passes, flagged for a human" 0 py "$S/calibrate/scripts/verify_calibration.py" "$FXA/report_holdout_dispute.yaml"
+expect "...and the flag says not to edit the holdout before the ruling" 0 bash -c "python3 '$S/calibrate/scripts/verify_calibration.py' '$FXA/report_holdout_dispute.yaml' | grep -q 'do NOT edit the holdout before the ruling'"
+expect "holdout counts that do not add up are rejected (something was not counted)" 0 bash -c "sed 's/passed: 22/passed: 21/' '$FXA/report_holdout_dispute.yaml' > '$TMP/cal_badcount.yaml' && python3 '$S/calibrate/scripts/verify_calibration.py' '$TMP/cal_badcount.yaml' > '$TMP/o_badcount.json' 2>&1; [ \$? -eq 1 ] && grep -q 'do not add up' '$TMP/o_badcount.json'"
+expect "a holdout failure with no routed_to is rejected (no silent caps)" 0 bash -c "sed 's|^      routed_to: .*|      routed_to: \"\"|' '$FXA/report_holdout_dispute.yaml' > '$TMP/cal_noroute.yaml' && python3 '$S/calibrate/scripts/verify_calibration.py' '$TMP/cal_noroute.yaml' > '$TMP/o_noroute.json' 2>&1; [ \$? -eq 1 ] && grep -q 'no routed_to' '$TMP/o_noroute.json'"
+expect "an unclassified holdout failure is rejected (未分类 = 未回答)" 0 bash -c "sed 's/disposition: contract_dispute/disposition: probably_fine/' '$FXA/report_holdout_dispute.yaml' > '$TMP/cal_baddisp.yaml' && python3 '$S/calibrate/scripts/verify_calibration.py' '$TMP/cal_baddisp.yaml' > '$TMP/o_baddisp.json' 2>&1; [ \$? -eq 1 ] && grep -q 'not one of' '$TMP/o_baddisp.json'"
+# 校准顺带查出的现网缺陷与未决项：pass 不得把它们掩掉
+expect "an open live defect with no destination forbids activation" 0 bash -c "cp '$FXA/report_good.yaml' '$TMP/cal_livedefect.yaml' && printf 'live_defects_found:\n  - id: C-09\n    title: guard and dispatcher disagree\n    status: open\n    routed_to: \"\"\n' >> '$TMP/cal_livedefect.yaml' && python3 '$S/calibrate/scripts/verify_calibration.py' '$TMP/cal_livedefect.yaml' > '$TMP/o_livedefect.json' 2>&1; [ \$? -eq 1 ] && grep -q 'open with no routed_to' '$TMP/o_livedefect.json'"
+expect "an unclosed blocks_activation open item overrides four green jud据" 0 bash -c "cp '$FXA/report_good.yaml' '$TMP/cal_openitem.yaml' && printf 'open_items:\n  - id: OPEN-01\n    title: normalisation ruling pending\n    status: open\n    blocks_activation: true\n' >> '$TMP/cal_openitem.yaml' && python3 '$S/calibrate/scripts/verify_calibration.py' '$TMP/cal_openitem.yaml' > '$TMP/o_openitem.json' 2>&1; [ \$? -eq 1 ] && grep -q 'blocks_activation' '$TMP/o_openitem.json'"
+expect "...and a closed one does not block" 0 bash -c "cp '$FXA/report_good.yaml' '$TMP/cal_openitem_ok.yaml' && printf 'open_items:\n  - id: OPEN-01\n    title: normalisation ruling\n    status: closed\n    blocks_activation: true\n' >> '$TMP/cal_openitem_ok.yaml' && python3 '$S/calibrate/scripts/verify_calibration.py' '$TMP/cal_openitem_ok.yaml'"
+# 模板本身：未填的模板该因「没填」被拒，不该因它自带的空白样例条目被误判成一条未分类失败
+expect "the blank report template is rejected for being blank, not for its stub failure entry" 0 bash -c "python3 '$S/calibrate/scripts/verify_calibration.py' '$S/calibrate/assets/calibration_report.yaml' > '$TMP/cal_tpl.json' 2>&1; [ \$? -eq 1 ] && ! grep -q 'not one of' '$TMP/cal_tpl.json'"
+
+# C-04：源码版本与会话里装的那一版漂移，V-01 能看见，但修法是 CLAUDE.md 里手抄的三步——手抄会漏。
+# 2026-09-20 就漏过一次：源码 v1.12.0 已推上 main，会话里装的还是 v1.9.2，/ratify 整场调不到。
+DRIFT="$TMP/drift-cfg"; mkdir -p "$DRIFT/plugins"
+printf '{"plugins":{"ai-dlc@claude-code-forge":[{"version":"0.0.1","installPath":"/nowhere"}]}}\n' > "$DRIFT/plugins/installed_plugins.json"
+DRY='import json,sys; d=json.load(sys.stdin); assert d["ok"] and d["dry_run"] is True and d["already_current"] is False, d'
+NAMES='import json,sys; d=json.load(sys.stdin); assert d["cache_dir"].endswith(d["source_version"]) and d["installed_plugins"].endswith("installed_plugins.json") and d["installed_version"]=="0.0.1", d'
+expect "sync-install dry-runs by default (写用户级配置是副作用，副作用要显式要)" 0 bash -c "CLAUDE_CONFIG_DIR='$DRIFT' python3 '$SS' sync-install --json | python3 -c '$DRY'"
+expect "sync-install names the cache dir, the record, and the version it would replace" 0 bash -c "CLAUDE_CONFIG_DIR='$DRIFT' python3 '$SS' sync-install --json | python3 -c '$NAMES'"
+expect "sync-install says a new session is required (skill 列表在会话启动时定型)" 0 bash -c "CLAUDE_CONFIG_DIR='$DRIFT' python3 '$SS' sync-install | grep -q 会话"
+expect "a dry run writes nothing (副作用要显式要)" 0 bash -c "CLAUDE_CONFIG_DIR='$DRIFT' python3 '$SS' sync-install >/dev/null && grep -q '0.0.1' '$DRIFT/plugins/installed_plugins.json' && [ ! -d '$DRIFT/plugins/cache' ]"
+expect "sync-install refuses when the plugin was never installed here" 0 bash -c "CLAUDE_CONFIG_DIR='$TMP/empty-cfg' python3 '$SS' sync-install > '$TMP/si.txt' 2>&1; [ \$? -eq 1 ] && grep -q 没装过插件 '$TMP/si.txt'"
+expect "sync-install --write installs the source version and reports the skill count" 0 bash -c "CLAUDE_CONFIG_DIR='$DRIFT' python3 '$SS' sync-install --write --json > '$TMP/si2.json' && python3 -c \"import json;d=json.load(open('$TMP/si2.json'));assert d['ok'] and d['dry_run'] is False and d['skills_installed']>20,d\" && grep -q \"\$(python3 -c \"import json;print(json.load(open('$ROOT/.claude-plugin/plugin.json'))['version'])\")\" '$DRIFT/plugins/installed_plugins.json'"
+expect "...and the installed copy really carries the skills (not just a bumped record)" 0 bash -c "test -f \"$DRIFT/plugins/cache/claude-code-forge/ai-dlc/\$(python3 -c \"import json;print(json.load(open('$ROOT/.claude-plugin/plugin.json'))['version'])\")/skills/calibrate/SKILL.md\""
+
 echo "== ai-dlc / G1 requires derivation products (PSL track)"
 ST2="$TMP/state-psl"; mkdir -p "$ST2"; pushd "$ST2" >/dev/null
 expect "init psl track" 0 py "$SS" init --slug demo-psl --title "psl feature" --track psl

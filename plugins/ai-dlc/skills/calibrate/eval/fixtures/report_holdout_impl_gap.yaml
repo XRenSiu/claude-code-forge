@@ -1,0 +1,29 @@
+# 反例：holdout 跑了，挂了一条，而且挂的原因是产物不满足黄金集。
+# 四判据其余全绿、mutation 0.85 —— 旧版脚本会判 PASS，因为它只查 holdout 存在且未泄漏。
+# dogfood C-05：一块跑红了还当没看见的黄金集，证明不了任何事。
+standard_ref: "DW-001 eval_case set"
+kind: eval_case
+source_compile_ref: manifest_good.yaml
+mode: auto
+mutation:
+  tool: Stryker
+  total_mutants: 20
+  killed: 17
+  mutation_score: 0.85
+  surviving_mutants:
+    - { mutant: "rank.ts:12 >= → >", slipped_through: "tie ordering", eval_case_to_add: "tie at equal richness keeps insertion order" }
+agreement: { reference_solutions: 0, krippendorff_alpha: 0.0 }
+holdout_ref: "hidden/variants-of-frozen-ACs-2026-09-05"
+holdout_unexposed_confirmed: true
+holdout_result:
+  ran_at: "2026-09-05T10:00:00Z"
+  total: 24
+  passed: 23
+  failed: 1
+  failures:
+    - case: "rank keeps insertion order at equal richness"
+      disposition: implementation_gap
+      routed_to: "issue:#412"
+isolation_attested: true
+cross_vendor_required: false
+verdict: { c1_mutation_pass: true, c2_agreement_pass: true, c3_holdout_pass: true, c4_isolation_pass: true, result: pass }

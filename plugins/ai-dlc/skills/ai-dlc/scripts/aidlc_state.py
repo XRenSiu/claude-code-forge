@@ -1608,12 +1608,107 @@ def plugin_version_findings():
             if not running_install and iv != mine:
                 out.append({"severity": "warn", "check": "plugin version 漂移",
                             "hint": f"这些脚本是 {name} v{mine}（{here}），会话里的 skill 来自安装的 v{iv}（{key} · {ip}）。"
-                                    "终端里跑的闸与 skill 让模型遵守的规则不是同一版——更新安装后开新会话"})
+                                    "终端里跑的闸与 skill 让模型遵守的规则不是同一版——"
+                                    "`aidlc_state.py sync-install --write` 把源码装成 v"
+                                    f"{mine}，然后开新会话（skill 列表在会话启动时定型）"})
             if _vtuple(listed) and _vtuple(iv) and _vtuple(listed) > _vtuple(iv):
                 out.append({"severity": "warn", "check": "plugin 未更新",
                             "hint": f"装的是 v{iv}，marketplace {mkt} 已登记 v{listed}：在 /plugin 里更新 {key}，"
                                     "然后开新会话（skill 列表在会话启动时定型）"})
     return out
+
+
+def cmd_sync_install(a):
+    """把源码这一版装进 Claude Code 的 plugin cache（dogfood C-04）。
+
+    plugin_version_findings 能**看见**漂移，但看见之后的修法是 CLAUDE.md 里手抄的三步：
+    cp -R 到 cache/<marketplace>/<name>/<version>、改 installed_plugins.json、重启会话。
+    手抄三步的问题不是麻烦，是**会漏**——2026-09-20 就漏过一次：源码已到 v1.12.0、
+    /ratify 已经写完并推上 main，而会话里装的还是 v1.9.2，那个 skill 整场都调不到，
+    doctor 没人跑，于是没有任何东西说过一句话。
+
+    默认只打印计划（dry-run）。写用户级配置是副作用，副作用要显式要：`--write`。
+    """
+    def emit(d, code=0):
+        if getattr(a, "json", False):
+            print(json.dumps(d, ensure_ascii=False, indent=2))
+        elif d.get("ok"):
+            head = "计划（未写）" if d.get("dry_run") else "已同步"
+            print(f"{head}: {d['plugin']}@{d['marketplace']} 源码 v{d['source_version']} "
+                  f"← 已装 v{d.get('installed_version')}")
+            print(f"  cache: {d['cache_dir']}")
+            print(f"  记录:  {d['installed_plugins']}")
+            if d.get("skills_installed") is not None:
+                print(f"  skill: {d['skills_installed']} 个")
+            print(f"\n{d['next']}")
+        else:
+            sys.stderr.write(f"sync-install: {d['error']}\n")
+        sys.exit(code)
+
+    me = _read_json(os.path.join(PLUGIN_ROOT, ".claude-plugin", "plugin.json")) or {}
+    name, version = me.get("name"), me.get("version")
+    if not name or not version:
+        emit({"ok": False, "error": f"读不到 {PLUGIN_ROOT}/.claude-plugin/plugin.json 的 name/version"}, 1)
+
+    cfg = claude_config_dir()
+    ipath = os.path.join(cfg, "plugins", "installed_plugins.json")
+    inst = _read_json(ipath)
+    if not isinstance(inst, dict):
+        emit({"ok": False, "error": f"读不到 {ipath}：这台机器上没装过插件，先在 /plugin 里装一次再同步"}, 1)
+
+    keys = [k for k in (inst.get("plugins") or {}) if k.split("@", 1)[0] == name]
+    if not keys:
+        emit({"ok": False, "error": f"{ipath} 里没有 {name}@<marketplace>：先在 /plugin 里装一次，"
+                                    "本命令只负责把已装的那份更新到源码版本，不负责首次安装"}, 1)
+    if len(keys) > 1:
+        emit({"ok": False, "error": f"{name} 在多个 marketplace 下都装了（{keys}）：不猜该更新哪一个"}, 1)
+    key = keys[0]
+    marketplace = key.split("@", 1)[1]
+    dest = os.path.join(cfg, "plugins", "cache", marketplace, name, version)
+
+    entries = inst["plugins"][key]
+    entries = entries if isinstance(entries, list) else [entries]
+    current = next((e.get("version") for e in entries if isinstance(e, dict)), None)
+
+    plan = {
+        "plugin": name, "marketplace": marketplace,
+        "source": os.path.realpath(PLUGIN_ROOT),
+        "source_version": version, "installed_version": current,
+        "cache_dir": dest, "installed_plugins": ipath,
+        "already_current": current == version and os.path.isdir(dest),
+    }
+    if not a.write:
+        plan["ok"] = True
+        plan["dry_run"] = True
+        plan["next"] = ("已经是同一版，无需同步" if plan["already_current"]
+                        else "加 --write 执行；执行后必须**开新会话**——skill 列表在会话启动时定型，"
+                             "改了 cache 与 settings 都不会热加载")
+        emit(plan)
+
+    if os.path.isdir(dest):
+        shutil.rmtree(dest)
+    os.makedirs(os.path.dirname(dest), exist_ok=True)
+    shutil.copytree(PLUGIN_ROOT, dest)
+
+    stamp = _dt.datetime.now(_dt.timezone.utc).isoformat().replace("+00:00", "Z")
+    for e in entries:
+        if isinstance(e, dict):
+            e["version"] = version
+            e["installPath"] = dest
+            e["lastUpdated"] = stamp
+    inst["plugins"][key] = entries
+    tmp = ipath + ".aidlc-tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
+        json.dump(inst, f, indent=2, ensure_ascii=False)
+        f.write("\n")
+    os.replace(tmp, ipath)
+
+    plan["ok"] = True
+    plan["dry_run"] = False
+    plan["skills_installed"] = len(_skill_names(os.path.join(dest, "skills")))
+    plan["next"] = ("**开新会话**才生效：skill 列表在会话启动时定型，本进程里改 cache 不会热加载。"
+                    "不开新会话的话，这一版新增的 skill 会报 Unknown skill")
+    emit(plan)
 
 
 def _skill_names(d):
@@ -2498,6 +2593,10 @@ def main():
     s.add_argument("--allow-unknown", action="store_true"); s.add_argument("--sizing")
     s = P("plan"); s.add_argument("--sizing"); s.add_argument("--json", action="store_true")
     s = P("doctor"); s.add_argument("--json", action="store_true")
+    s = P("sync-install"); s.add_argument("--json", action="store_true")
+    s.add_argument("--write", action="store_true",
+                   help="真的写：把源码这一版复制进 plugin cache 并更新 installed_plugins.json。"
+                        "默认只打印计划——写用户级配置是副作用，副作用要显式要")
     s = P("repo"); s.add_argument("--json", action="store_true")
     s.add_argument("--scope", help="限界上下文的制品目录：先在这里找，找不到再回落到仓库根（目录不存在会被报出来）")
     s.add_argument("--path", choices=repo_assets.KEYS,
@@ -2552,10 +2651,13 @@ def main():
     # 改名后的根解析：init 永远写新根，其余命令在新根不存在时回退到旧根并说明（resolve_root）
     if a.cmd != "init":
         a.root, root_note = resolve_root(a.root)
-        # doctor / repo 查的是装置与仓库，不是「这一次运行」——第一次把 /ai-dlc 带进一个仓库时
-        # 恰恰还没有任何 run，那时候「run init first」是噪音而不是提示。
-        if root_note and a.cmd not in ("doctor", "repo"):
+        # doctor / repo / sync-install 查的是装置与仓库，不是「这一次运行」——第一次把 /ai-dlc
+        # 带进一个仓库时恰恰还没有任何 run，那时候「run init first」是噪音而不是提示。
+        if root_note and a.cmd not in ("doctor", "repo", "sync-install"):
             sys.stderr.write(f"aidlc_state: {root_note}\n")
+    if a.cmd == "sync-install":
+        # 装置层面的事，与任何一次 run 无关：连仓库都不必是接入了 AI-DLC 的那个。
+        return cmd_sync_install(a)
     if a.cmd in ("doctor", "repo") and not (a.slug or os.path.isdir(a.root)):
         # 这两条在没有任何 run 的仓库里也要能跑：doctor 查的是装置，repo 查的是仓库——
         # 都不是「这一次运行」。第一次把 /ai-dlc 带进一个仓库时，恰恰还没有任何 run。
@@ -2566,7 +2668,8 @@ def main():
             "note": cmd_note, "notes": cmd_notes, "autonomy": cmd_autonomy,
             "fail": cmd_fail, "waive": cmd_waive, "report": cmd_report, "check-clean": cmd_check_clean,
             "escape": cmd_escape, "acceptance": cmd_acceptance,
-            "graph": cmd_graph, "ledger": cmd_ledger, "archive": cmd_archive}[a.cmd](a)
+            "graph": cmd_graph, "ledger": cmd_ledger, "archive": cmd_archive,
+            "sync-install": cmd_sync_install}[a.cmd](a)
 
 
 if __name__ == "__main__":

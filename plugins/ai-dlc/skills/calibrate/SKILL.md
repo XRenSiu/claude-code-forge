@@ -115,8 +115,18 @@ A standard failing ANY of the four is **forbidden to go live** — that is the m
 
 - **The report is a named-field structure** (`assets/calibration_report.yaml`): the standard under
   test fills named slots (standard_ref / kind / mutation_score / surviving_mutants / agreement_alpha /
-  holdout_ref / isolation_attested / verdict), so a missing mutation score can't hide and surviving
-  mutants can't be swallowed. Emit the report; do not hand-wave "looks calibrated."
+  holdout_ref / **holdout_result** / isolation_attested / **live_defects_found** / **open_items** /
+  verdict), so a missing mutation score can't hide and surviving mutants can't be swallowed.
+  Emit the report; do not hand-wave "looks calibrated."
+- **Three slots exist because calibrating produces more than a score** (dogfood C-05, 2026-09-20 vana):
+  - `holdout_result` — **存在 ≠ 跑过**. The slice's counts, and every failure classified as exactly one of
+    `implementation_gap` / `contract_dispute` / `holdout_error` with a `routed_to`. An unclassified
+    failure is an unanswered one.
+  - `live_defects_found` — measuring a ruler makes you look hard at the thing it measures, and you find
+    **real** defects there. They are not mutants and never touch `mutation_score`, but they need somewhere
+    to land; otherwise they live only in the conversation, and the conversation ends.
+  - `open_items` — pass ≠ nothing left hanging. A dispute awaiting a human ruling, an unsolved piece of
+    infrastructure. `blocks_activation: true` forbids activation even with all four jud据 green.
 - **The mutation harness** is the documented tool table (PIT·JVM / Stryker·TS / mutmut·cosmic-ray·Py)
   + the rule that each `failure_memory` bad sample enrolls as a natural mutant. The **agreement
   harness** is the reference-solution set + the Krippendorff α computation. Patterns:
@@ -133,6 +143,14 @@ It rejects (forbids activation) on:
 - `surviving_mutants` non-empty but not each logged as a gate gap → **reject** (no silent caps);
 - `holdout_ref` empty **or** `holdout_unexposed_confirmed` false → **reject** (☐3: no holdout — or a
   leaked one — certifies nothing);
+- `holdout_result` missing, counts that don't add up, or a failure without a `disposition`/`routed_to`
+  → **reject** (☐3: the slice existing is not the slice having been run); any failure dispositioned
+  `implementation_gap` → **reject** — certifying the ruler while the thing it measures is red is
+  backwards. `contract_dispute` passes but is flagged for a human ruling, and **the holdout must not be
+  edited before that ruling** — changing the ruler to match the answer is the exact move this gate exists
+  to stop;
+- a `live_defects_found` entry still `open` with no `routed_to` → **reject**; an `open_items` entry with
+  `blocks_activation: true` that is not `closed` → **reject** (it overrides all four jud据);
 - `isolation_attested` not true → **reject** (☐4: no isolation, no evaluation);
 - thresholds loosened below the standing hard lines → **reject** (the lines only ratchet tighter).
 

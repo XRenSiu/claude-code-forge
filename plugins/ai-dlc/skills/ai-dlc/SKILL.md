@@ -221,8 +221,11 @@ S 档 optional（三行修复上一次全仓库本体提取，成本高到没人
 ## 原语（Π 的存在性——不叙述调用顺序）
 
 - `scripts/aidlc_state.py` — init / show / set / advance / gate / card / fail / escape / acceptance / report / check-clean /
-  graph check|next|render / loops / ledger / archive（`--help`）。`fail` 多了 `--score` 与 `--by`；`loops` 一屏看七个环的预算消耗；
+  graph check|next|render / loops / ledger / archive / sync-install（`--help`）。`fail` 多了 `--score` 与 `--by`；`loops` 一屏看七个环的预算消耗；
   `check-clean --as-hook` 是 Stop hook 的出口（模板 `assets/hooks/stop-clean-state.json`，不自动安装）。
+  `sync-install` 把源码这一版装进 plugin cache 并更新 `installed_plugins.json`——`doctor` 能**看见**版本漂移，
+  但修它原本是手抄三步，而手抄会漏（2026-09-20：源码 v1.12.0 已推上 main，会话里装的还是 v1.9.2，新 skill 整场调不到）。
+  默认只打印计划，`--write` 才动；写完必须**开新会话**——skill 列表在会话启动时定型。
   v1.4.0：**advance 对着文件检，不对着 flag 检**——`implement` 自己跑 `lint_cards.py`（`cards.lint_passed` 不可 set）、
   `pr` 读 final-state.json（DONE ∧ 无 unevaluated review ∧ 声明了阈值就要有 `meets_done_when.py` 的 met）、
   `archive` 读 release.notes 的 post-deploy 行、implement / acceptance / pr / merge 重跑 `lock_done_when.py verify`；

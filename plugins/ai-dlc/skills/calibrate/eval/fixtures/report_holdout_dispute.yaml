@@ -1,0 +1,32 @@
+# 正例的边界：holdout 挂了两条，但归因是**契约争议**（黄金集与实现对判据的读法不同），
+# 每条都有去处。这该放行 + 标 needs_semantic_review 交人裁，而不是拒。
+# 关键在于它与 implementation_gap 的区别：前者是「法没说清」，后者是「代码没做到」。
+standard_ref: "DW-001 eval_case set"
+kind: eval_case
+source_compile_ref: manifest_good.yaml
+mode: auto
+mutation:
+  tool: Stryker
+  total_mutants: 20
+  killed: 17
+  mutation_score: 0.85
+  surviving_mutants:
+    - { mutant: "rank.ts:12 >= → >", slipped_through: "tie ordering", eval_case_to_add: "tie at equal richness keeps insertion order" }
+agreement: { reference_solutions: 0, krippendorff_alpha: 0.0 }
+holdout_ref: "hidden/variants-of-frozen-ACs-2026-09-05"
+holdout_unexposed_confirmed: true
+holdout_result:
+  ran_at: "2026-09-05T10:00:00Z"
+  total: 24
+  passed: 22
+  failed: 2
+  failures:
+    - case: "whitespace inside a safe scheme stays safe"
+      disposition: contract_dispute
+      routed_to: "change-proposal-002.md 争议三"
+    - case: "newline before the colon stays safe"
+      disposition: contract_dispute
+      routed_to: "change-proposal-002.md 争议三"
+isolation_attested: true
+cross_vendor_required: false
+verdict: { c1_mutation_pass: true, c2_agreement_pass: true, c3_holdout_pass: true, c4_isolation_pass: true, result: pass }

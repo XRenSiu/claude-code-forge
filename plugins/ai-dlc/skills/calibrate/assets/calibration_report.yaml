@@ -32,6 +32,24 @@ agreement:
 # —— 两条非协商项 ——
 holdout_ref: ""                  # ☐3:执行者永远看不见的那一块黄金集引用(必填非空,否则 fail)
 holdout_unexposed_confirmed: false  # 人确认 holdout 从未进任何 executor 通道(未当 few-shot/未注入 prompt)
+
+# ☐3 的后半截:holdout **存在** ≠ holdout **跑过**。
+# dogfood C-05(2026-09-20 vana):报告里 holdout 有 2 条在挂,四判据全绿照样 PASS ——
+# 脚本只查了它非空且未泄漏,没查它的结果。一块没跑过(或跑挂了还当没看见)的黄金集证明不了任何事。
+holdout_result:
+  ran_at: ""
+  total: 0
+  passed: 0
+  failed: 0                      # passed + failed 必须等于 total,否则 fail(数对不上 = 有东西没被数)
+  failures:                      # failed > 0 时**逐条落账**,与 surviving_mutants 同一条纪律(no silent caps)
+    - case: ""                   # 哪一条挂了
+      disposition: ""            # implementation_gap | contract_dispute | holdout_error —— 三选一,必填
+      routed_to: ""              # 去处:issue / change-proposal-*.md / 已修的文件。空 = fail
+      # implementation_gap:产物没满足黄金集 ⇒ **直接 fail**,标准不得上线
+      # contract_dispute:黄金集与实现对判据的读法不同 ⇒ 交人裁(needs_semantic_review),裁决前不要改 holdout
+      # holdout_error:黄金集这一条本身写错了 ⇒ 改黄金集,但要写清为什么它是错的
+  note: ""
+
 isolation_attested: false        # ☐4:G2 独立进程/只读快照/输入只含产出+rubric;领地开则 cross-vendor
 cross_vendor_required: false     # 领地 cross_vendor_review 是否开
 
@@ -46,7 +64,34 @@ verdict:
     spec_compile: []             # 待重编的电池/rubric 维
     spec_authors: []             # 待收紧的 done_when / 不变量
 
+# —— 校准顺带查出的**现网**缺陷(不是注入的 mutant) ——
+# dogfood C-05:量一把尺子的过程会撞见被量的那段代码本身的洞。它们不进 mutation_score 的分子分母
+#(那只统计注入故障),但**必须有地方落**——否则它们只活在对话里,而对话会结束。
+# 一条现网缺陷若未修复,它同时是 activation 的阻断项:法已生效而实现不满足,标准上线就是在背书一个谎。
+live_defects_found:
+  - id: ""                       # C-01 / C-02 …
+    title: ""
+    detail: ""                   # 复现路径 + 证据(file:line / 实测输出)
+    also_violates: ""            # 它同时撞了哪条别的不变量(常有——洞很少只违反一条)
+    status: ""                   # fixed | open
+    fix: ""                      # status=fixed:改法是什么
+    fix_verified_by: ""          # status=fixed:哪条 eval_case / 哪个 mutant 证明它被修好了
+    routed_to: ""                # status=open:去处(issue / backlog),空 = fail
+
+# —— 未决项:pass 不等于没有悬着的事 ——
+# 元闸门只答「这把尺子够不够格上线」。够格,但仍可能有待人裁的分歧、没解决的基建问题。
+# 不写下来,它们就会以「已经 pass 了」的名义消失。
+open_items:
+  - id: ""                       # OPEN-01 …
+    title: ""
+    detail: ""
+    status: ""                   # open | closed
+    blocks_activation: false     # true:元闸门即便四判据全绿也不得放行
+    ruling: ""                   # 已裁:裁决内容 + 裁决人 + 日期
+
 # —— 签字/激活(pass 后) ——
 activation:
+  allowed: false                 # 元闸门 pass 且无阻断项时才 true
+  reason: ""
   rubric_sign_required: false    # kind=rubric:必须人签(R002),元闸门 verdict 是签字前置不是替代
   signed_by: ""                  # 人签事件引用(rubric 专用)

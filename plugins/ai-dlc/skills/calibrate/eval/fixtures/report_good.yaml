@@ -14,6 +14,7 @@ mutation:
 agreement: { reference_solutions: 0, krippendorff_alpha: 0.0, inconsistent_dimensions: [], dropped_rubric_sets: [] }
 holdout_ref: "hidden/variants-of-frozen-ACs-2026-09-05"
 holdout_unexposed_confirmed: true
+holdout_result: { ran_at: "2026-09-05T10:00:00Z", total: 24, passed: 24, failed: 0, failures: [] }
 isolation_attested: true
 cross_vendor_required: false
 verdict: { c1_mutation_pass: true, c2_agreement_pass: true, c3_holdout_pass: true, c4_isolation_pass: true, result: pass, gaps_routed_to: { spec_compile: [], spec_authors: [] } }
