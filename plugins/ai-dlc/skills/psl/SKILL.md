@@ -9,7 +9,7 @@ description: |
   触发词：PSL、产品世界、世界建模、把需求写成世界、"这需求 Agent 会不会做偏"、体验说不清、生成规则 vs 功能规格。
   NOT for deterministic requirements（支付校验 / 合规字段 / 报表列宽）——那里 PRD 的精确恰好够用，套世界模型是过填。
 argument-hint: "[一句/一段产品需求，或需求文件路径] [可选：物料文件路径…] [--afk]"
-version: 0.3.0
+version: 0.3.1
 user-invocable: true
 # imported into AI-DLC 2026-09-05 from looper v0.2.0; body kept, AI-DLC wiring added (see 接线 / 术语映射)
 ---
