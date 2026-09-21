@@ -440,7 +440,13 @@ def main():
             if not banned:
                 flags.append(f"G1 record{'s' if len(sources) > 1 else ''} {', '.join(sources)} has no machine-readable 「明确不做」 section — the "
                              "issue's wording cannot be checked against what the signed form refused")
-            watched = "\n".join(secs.get(k, "") for k in ("assumptions", "acceptance", "intent", "scope"))
+            # 扫的是 issue **主张**什么，不是它**否掉**什么。
+            # Scope 的 `dont:` 那一行里出现一个被 G1 否决的词，是这份 issue 在**同意**那条否决——
+            # 它正该写在那里。把同意报成冲突，会让一份写对的 issue 触发一串 flag，
+            # 而一串永远会响的 flag 等于没有 flag（dogfood 2026-09-21：六条全是 dont 里的引用）。
+            scope_text = "\n".join(l for l in secs.get("scope", "").splitlines()
+                                   if not re.match(r"\s*[-*]\s*dont\s*:", l))
+            watched = "\n".join([secs.get(k, "") for k in ("assumptions", "acceptance", "intent")] + [scope_text])
             for term in dict.fromkeys(banned):
                 if term and term in watched:
                     flags.append(f"issue text uses `{term}`, which the G1 record lists under 明确不做 "

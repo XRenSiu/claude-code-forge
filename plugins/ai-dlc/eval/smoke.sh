@@ -146,6 +146,13 @@ G1T="$S/ai-dlc/assets/g1_record.md"
 G1F="$TMP/g1_filled.md"; sed 's|^> - |- |' "$G1T" > "$G1F"
 PSLI2="$TMP/psl_issue_banned.md"; sed 's|^- do: |- do: report each finding once; |' "$PSLI" > "$PSLI2"
 expect "G1 record written to the template's 明确不做 shape arms the issue cross-check (I-45)" 0 bash -c "python3 '$S/issue/scripts/verify_issue.py' '$PSLI2' --dos '$FX/dos.yaml' --g1 '$G1F' | grep -q 'uses \`finding\`, which the G1 record lists under 明确不做'"
+# …but the same word inside the issue's own `dont:` is the issue **agreeing** with that refusal —
+# that is exactly where a banned term belongs. Flagging agreement as conflict made a correctly
+# written issue trip six flags at once (dogfood 2026-09-21), and a flag that always fires is not
+# a flag. The check reads what the issue CLAIMS: assumptions / acceptance / intent / scope-minus-dont.
+PSLI3="$TMP/psl_issue_banned_in_dont.md"; sed 's|^- dont: |- dont: report a finding twice; |' "$PSLI" > "$PSLI3"
+expect "a banned term inside the issue's own dont: is agreement, not a conflict (twin)" 0 bash -c "python3 '$S/issue/scripts/verify_issue.py' '$PSLI3' --dos '$FX/dos.yaml' --g1 '$G1F' > '$TMP/dontchk.json' 2>&1; ! grep -q 'lists under 明确不做' '$TMP/dontchk.json'"
+expect "...and the do: half still flags, so the check did not simply stop working" 0 bash -c "python3 '$S/issue/scripts/verify_issue.py' '$PSLI2' --dos '$FX/dos.yaml' --g1 '$G1F' | grep -q 'lists under 明确不做'"
 # I-22: the record's primary attribution is what the operator types into `gate --attribution`. If the
 # template names a value the script does not accept, the record and the counter disagree silently.
 cat > "$TMP/attr_agree.py" <<'ATTREOF'
