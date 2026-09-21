@@ -16,7 +16,7 @@ description: |
   (spec-compile — it produces the ruler, calibrate certifies it), or the runtime post-supersede
   calibration QUESTION (that is the `calibration.resolved` event — a SIGNAL into this skill, not it).
 argument-hint: "<standard ref: eval_case set id | rubric_version id> [--mirror mutation|agreement] [--auto]"
-version: 0.1.1
+version: 0.2.0
 user-invocable: true
 # imported into AI-DLC 2026-09-05 from qanat/.claude/skills; body kept, AI-DLC wiring added (see 接线 / 术语映射)
 ---
