@@ -64,12 +64,20 @@ deletion 测试：撤掉本 skill，引擎会把需求原文当 body 直接建 i
   友好 / fast / reliable / most / better…）而没有数字阈值 → 不是验收条件。
 - **happy 带 unhappy 孪生**：每条事件型 AC（"当 X 时系统应 Y"）配一条 unwanted（"当 <边界 /
   恶意 / 失败输入> 时系统应 <拒绝 / 降级 / 报错>"）。未定义的失败语义正是被钻的缝。
+  成对的写法有三种，都认：同一个 `observe` 上有一条 unwanted；happy 这半写 `paired_with`；
+  unwanted 那半写 `paired_with`（模板示范的就是这一种）。但 **`paired_with` 必须指向一条真的
+  `ears_type: unwanted`**——指向另一条 happy 曾经也能过门，于是两条 happy 互相指认、双双"有孪生"，
+  而没有任何一条边被盖住。一道喊一声名字就能翻过去的栅栏（dogfood 2026-09-21）。
 - **AC v2 形状**：`kind: mechanical` 必有 `observe`（route / cli / ui data-test / db_field / event）
   + `given` + `expect`；`kind: human` 必有 `statement` + `judge ∈ {product, design, tech}` +
   `evidence ∈ {checklist, demo}`。详见 `references/acceptance-shape.md`。
 - **observe 是观察边界，不是实现结构**：出现 `src/…`、`.ts/.py/…` 文件名、函数名 → 拒（契约不该
   规定实现结构；文件级存在性下放到任务卡）。
 - **范围四项非空**；**轨道已判定**（psl | task）；**依赖 DOS** 字段存在（可为 `none`，但要写）。
+- **受已冻结的常驻不变量约束时写 `territory_invariants:`**，不要塞进 `invariants:`。后者是 dos.yaml
+  的规则、要走闭包；前者的家是不变量卡（人签 + 哈希锁）。塞错了会被报成"world not built for these"——
+  一条把**已生效的法**说成"世界没建"的判据，会把人推去改 DOS，而那儿本来就不该有它们。
+  这个声明是被检查的：卡里没有该 id 就拒；卡找不到是**未检**，不是通过。
 - **bug 类**：复现步骤 ≥ 1 条、期望 vs 实际都在、至少一条 AC 是回归守卫。
 - **escape 类**：归因层 ∈ {card, plan, task, ontology, world} + "为什么该层的门没拦住"一句。
 - 残差（机器不判，路由到人）：这些 AC 是不是**这次**最窄的可证伪条件；阈值是否反映 KPI 而非
@@ -81,6 +89,7 @@ deletion 测试：撤掉本 skill，引擎会把需求原文当 body 直接建 i
   机械预门：exit 0 过（可带 flags）、1 拒、2 IO；`--dos` 下闭包失败还会在输出里给
   `force_track: psl`；`--require-dos` 把"闭包未检"从一条 flag 升成 reject，并在没给 `--dos` 时
   自动发现项目里的 `dos.yaml`（输出里 `dos_source: discovered` 说明它是发现来的）。
+  `--card-root <dir>` 指定去哪儿找不变量卡（默认 cwd），供 `territory_invariants` 核对。
   **建 issue 前必须跑**。
 - `assets/issue_template.md` — 产物的段落序（Intent / Track / Scope / Acceptance / Assumptions /
   Depends on DOS / Repro（bug）/ Attribution（escape）/ Links）。

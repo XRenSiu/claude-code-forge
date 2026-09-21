@@ -1,0 +1,12 @@
+# 最小不变量卡，只为让 territory_invariants 的核对有东西可查
+territory_id: "fixture-territory"
+hard_invariants:
+  - id: INV-fx-001
+    statement: "WHEN x THE SYSTEM SHALL y, NEVER z"
+    strength: hard
+    disposition: propose
+overridable_defaults:
+  - id: DEF-fx-001
+    statement: "默认 y，可覆盖"
+    strength: overridable
+    disposition: propose

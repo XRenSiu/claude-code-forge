@@ -111,6 +111,26 @@ FX="$S/issue/eval/fixtures"
 expect "good issue passes" 0 py "$S/issue/scripts/verify_issue.py" "$FX/good_issue.md" --dos "$FX/dos.yaml"
 expect "vague expect rejected" 1 py "$S/issue/scripts/verify_issue.py" "$FX/bad_vague.md"
 expect "missing unhappy twin rejected" 1 py "$S/issue/scripts/verify_issue.py" "$FX/bad_no_twin.md"
+
+# dogfood 2026-09-21（vana，第一次真的拿 /issue 写一条需求时撞出来的两条）
+#
+# ① 模板把 paired_with 示范在 unwanted 那半上，脚本却只认 happy 那半上的（或两条同 observe）。
+#    照模板写、两半 observe 又不同 → 被判「没有孪生」，而它明明写了配对。
+expect "a twin declared on the unwanted half counts, even on a different observe" 0 py "$S/issue/scripts/verify_issue.py" "$FX/twin_reverse_paired.md"
+# ② 更要紧的：paired_with 原来只查「这个 id 存在」。两条 happy AC 互相指认，
+#    双双算「有孪生」，而没有任何一条边被盖住——一道喊一声名字就能翻过去的栅栏。
+expect "paired_with pointing at another happy AC is not a twin (fail-open closed)" 1 py "$S/issue/scripts/verify_issue.py" "$FX/twin_points_at_happy.md"
+expect "...and it says why, instead of a generic no-twin message" 0 bash -c "python3 '$S/issue/scripts/verify_issue.py' '$FX/twin_points_at_happy.md' > '$TMP/tw.json' 2>&1; [ \$? -eq 1 ] && grep -q 'not .ears_type: unwanted.' '$TMP/tw.json'"
+expect "paired_with naming no AC at all is reported as that" 1 bash -c "sed 's/paired_with: AC-001-a/paired_with: AC-404-z/' '$FX/good_issue.md' > '$TMP/tw_ghost.md'; python3 '$S/issue/scripts/verify_issue.py' '$TMP/tw_ghost.md'"
+
+# territory_invariants：已冻结的常驻不变量不是 DOS 规则,不走闭包,但声明要被核对。
+# 塞进 invariants: 会被报成「world not built for these」——把**已生效的法**说成世界没建,
+# 会把人推去改 DOS,而那儿本来就不该有它们。
+CR="$FX/card-root"
+expect "a territory invariant that exists in the card passes" 0 py "$S/issue/scripts/verify_issue.py" "$FX/territory_invariant_known.md" --card-root "$CR"
+expect "a territory invariant no card holds is rejected" 1 py "$S/issue/scripts/verify_issue.py" "$FX/territory_invariant_unknown.md" --card-root "$CR"
+expect "territory_invariants never go through DOS closure (they are not dos.yaml rules)" 0 bash -c "python3 '$S/issue/scripts/verify_issue.py' '$FX/territory_invariant_known.md' --card-root '$CR' --dos '$FX/dos.yaml' > '$TMP/ti.json' 2>&1; ! grep -q 'INV-fx-001' '$TMP/ti.json'"
+expect "no card reachable is unchecked, not passed" 0 bash -c "python3 '$S/issue/scripts/verify_issue.py' '$FX/territory_invariant_known.md' --card-root '$TMP' | grep -q 'unchecked, not passed'"
 expect "file-path observe rejected" 1 py "$S/issue/scripts/verify_issue.py" "$FX/bad_filepath_observe.md"
 expect "DOS closure failure rejected (force psl)" 1 py "$S/issue/scripts/verify_issue.py" "$FX/closure_fail.md" --dos "$FX/dos.yaml"
 expect "closure fail output carries force_track psl" 0 bash -c "python3 '$S/issue/scripts/verify_issue.py' '$FX/closure_fail.md' --dos '$FX/dos.yaml' | grep -q '\"force_track\": \"psl\"'"

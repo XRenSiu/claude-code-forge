@@ -33,7 +33,7 @@ acceptance:
     observe: route:POST /search/time
     given: { input: "", fixture: none }
     expect: { status: 400, error: "empty_query" }
-    paired_with: AC-001-a
+    paired_with: AC-001-a            # 哪一半带这个字段都行；但它必须指向 unwanted 的那一半
   - id: AC-002-a
     req: REQ-002
     kind: human
@@ -57,8 +57,11 @@ existence:                                # 只留观察边界，不写文件 / 
 
 ## Depends on DOS
 
-- objects: [Memory, Era]                 <!-- 结构化字段；闭包只查这里。无则写 none -->
-- invariants: [R003]
+- objects: [Memory, Era]                 <!-- 结构化字段；DOS 闭包只查这里。无则写 none -->
+- invariants: [R003]                     <!-- dos.yaml 里的规则；同样走闭包 -->
+- territory_invariants: [INV-x-003]      <!-- 已冻结的常驻不变量（不变量卡）。**不走 DOS 闭包**——
+                                              它们的家是人签 + 哈希锁死的卡，不是 dos.yaml。
+                                              声明会被核对：卡里没有这个 id 就拒；卡找不到是未检不是通过。无则省略 -->
 
 ## Links
 

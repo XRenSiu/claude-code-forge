@@ -106,12 +106,60 @@ def is_vague(s):
     return None
 
 
+
+# —— territory_invariants：已冻结的常驻不变量（不变量卡），不是 DOS 规则 ——
+#
+# dogfood 2026-09-21（vana）：一条 issue 声明自己受 INV-vana-003 / 004 约束，没有地方可写。
+# 塞进 `invariants:` 会被当成 DOS 规则去闭包，于是报「world not built for these」——
+# 而它们不是没建，是在**另一份、更权威的**制品里（人签 + 哈希锁死的不变量卡）。
+# 一条把已生效的法报成「世界没建」的判据，会把人推向去改 DOS，而那儿本来就不该有它们。
+#
+# 声明必须被检查，否则就是装饰：卡找得到就逐个核对 id；卡找不到是**未检**，不是通过。
+def card_invariant_ids(root):
+    """→ (ids, sources)。扫 invariants/ 下每张卡的 hard_invariants / overridable_defaults。"""
+    ids, sources = set(), []
+    try:
+        import repo_assets
+    except ImportError:
+        return None, []
+    try:
+        hit = repo_assets.find(root, "invariants") if hasattr(repo_assets, "find") else None
+    except Exception:
+        hit = None
+    cand = [hit] if hit else [os.path.join(root, d) for d in ("invariants", "docs/invariants", ".aidlc/invariants")]
+    for d in cand:
+        if not d or not os.path.isdir(d):
+            continue
+        for fn in sorted(os.listdir(d)):
+            if not fn.endswith((".yaml", ".yml")):
+                continue
+            try:
+                import yaml as _yaml
+                with open(os.path.join(d, fn), encoding="utf-8") as f:
+                    card = _yaml.safe_load(f) or {}
+            except Exception:
+                continue
+            if not isinstance(card, dict):
+                continue
+            found = False
+            for key in ("hard_invariants", "overridable_defaults"):
+                for e in (card.get(key) or []):
+                    if isinstance(e, dict) and e.get("id"):
+                        ids.add(str(e["id"])); found = True
+            if found:
+                sources.append(os.path.join(d, fn))
+        if sources:
+            break
+    return (ids if sources else None), sources
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("body"); ap.add_argument("--dos"); ap.add_argument("--kind", choices=["feature", "bug", "escape"], default="feature")
     ap.add_argument("--require-dos", dest="require_dos", action="store_true",
                     help="把「闭包未检」从 flag 升成 reject；没给 --dos 时先自动发现 dos.yaml")
     ap.add_argument("--dos-scope", dest="dos_scope", help="monorepo：先在这个目录里找 dos.yaml（如 plugins/ai-dlc），找不到再回落到仓库根")
+    ap.add_argument("--card-root", dest="card_root",
+                    help="在哪里找不变量卡（默认当前工作目录）。territory_invariants 的 id 要在卡里真的存在")
     ap.add_argument("--g1", help="G1 record; on the PSL track the issue text is checked against the negations it writes down (dogfood I-45)")
     a = ap.parse_args()
     dos_source = "given" if a.dos else None
@@ -208,19 +256,58 @@ def main():
                 if ac.get("ears_type") == "unwanted":
                     stats["unwanted"] += 1
             # twin check
-            by_obs = {}
+            #
+            # Three ways a happy AC can have a twin, and the twin must really BE one:
+            #   ① an `unwanted` AC shares its observe;
+            #   ② this AC's `paired_with` points at an `unwanted` AC;
+            #   ③ an `unwanted` AC points back at this one — the placement the template
+            #      itself demonstrates (`paired_with` on the unwanted half).
+            #
+            # ③ used to be missing, so a body written the way the template shows, with the
+            # two halves on different observes, was rejected for "no unhappy twin" while
+            # carrying the pairing it was asked for (dogfood 2026-09-21, vana).
+            #
+            # ② used to be `ac.get("paired_with") in ids` — any existing id satisfied it,
+            # including another HAPPY AC. Two happy ACs pointing at each other both passed
+            # and neither edge was covered: a fence you climb by naming it. The twin must
+            # carry `ears_type: unwanted`, and pointing at something that is not one is
+            # reported as that, not as a generic "no twin".
+            by_obs, by_id = {}, {}
             for ac in acs:
                 if isinstance(ac, dict):
                     by_obs.setdefault(str(ac.get("observe")), []).append(ac)
+                    if ac.get("id"):
+                        by_id[ac.get("id")] = ac
+
+            def _unwanted(x):
+                return isinstance(x, dict) and x.get("ears_type") == "unwanted"
+
+            # 悬空引用先报，不管它写在哪一半。打错孪生 id 时，人以为自己声明了配对、
+            # 其实没有，而且没有任何声音——本条恰好能过门只是因为两半的 observe 碰巧相同。
+            for ac in acs:
+                if not isinstance(ac, dict):
+                    continue
+                pw = ac.get("paired_with")
+                if pw and pw not in by_id:
+                    rejects.append(f"{ac.get('id')}: `paired_with: {pw}` names no AC in this body")
+
             for ac in acs:
                 if not isinstance(ac, dict) or ac.get("kind") != "mechanical":
                     continue
                 et = ac.get("ears_type", "event")
                 if et in ("event", "state"):
-                    sib = [x for x in by_obs.get(str(ac.get("observe")), []) if x is not ac and x.get("ears_type") == "unwanted"]
-                    paired = ac.get("paired_with") in ids
-                    if not sib and not paired:
-                        rejects.append(f"{ac.get('id')}: happy AC has no unhappy twin (add an `unwanted` AC on the same observe or paired_with)")
+                    aid = ac.get("id")
+                    sib = [x for x in by_obs.get(str(ac.get("observe")), []) if x is not ac and _unwanted(x)]
+                    pw = ac.get("paired_with")
+                    fwd = _unwanted(by_id.get(pw))
+                    back = any(_unwanted(x) and x.get("paired_with") == aid for x in acs)
+                    if not sib and not fwd and not back:
+                        if pw and pw in by_id:
+                            rejects.append(f"{aid}: `paired_with: {pw}` points at an AC that is not `ears_type: unwanted` "
+                                           "— a twin has to be the unhappy half, not another happy AC")
+                        else:
+                            rejects.append(f"{aid}: happy AC has no unhappy twin (add an `unwanted` AC on the same observe, "
+                                           "or `paired_with` between the two halves — either direction)")
             for ex in doc.get("existence") or []:
                 s = json.dumps(ex, ensure_ascii=False)
                 if FILEPATH_RE.search(s) or "file:" in s or "function:" in s:
@@ -257,6 +344,18 @@ def main():
         kv = kv_lines(secs["depends on dos"])
         objs = [t.strip() for t in re.sub(r"[\[\]]", "", kv.get("objects", "")).split(",") if t.strip() and t.strip().lower() != "none"]
         invs = [t.strip() for t in re.sub(r"[\[\]]", "", kv.get("invariants", "")).split(",") if t.strip() and t.strip().lower() != "none"]
+        terr = [t.strip() for t in re.sub(r"[\[\]]", "", kv.get("territory_invariants", "")).split(",") if t.strip() and t.strip().lower() != "none"]
+        # 常驻不变量不走 DOS 闭包——它们的家是不变量卡，不是 dos.yaml
+        if terr:
+            known, srcs = card_invariant_ids(a.card_root or os.getcwd())
+            if known is None:
+                flags.append(f"territory_invariants {terr} declared but no invariant card found — "
+                             "unchecked, not passed. Run /invariant-extract and commit invariants/ to git.")
+            else:
+                unknown = [t for t in terr if t not in known]
+                if unknown:
+                    rejects.append(f"territory_invariants {unknown} are in no invariant card ({', '.join(srcs)}) — "
+                                   "a frozen invariant this issue claims to obey has to exist")
         if not kv.get("objects"):
             rejects.append("Depends on DOS: `objects:` line missing (write `none` if truly none)")
         if a.dos:
