@@ -61,7 +61,11 @@ PROSE_PATTERN = re.compile(r"智能理解|智能地|intelligently|automatically\
 DEFAULT_FILL_PATTERN = re.compile(r"\bTBD\b|\bTODO\b|暂定|默认假设", re.IGNORECASE)
 
 # 规律定义行：允许前置 bullet / 表格竖线 / 有序号，以及 `[Σ]` `[γ→人]` 这类标签，之后紧跟 PSL-NNN
-LAW_DEF_RE = re.compile(r"^\s*(?:[-*+]\s+|\|\s*|\d+[.、)]\s+)?(?:\[[^\]]*\]\s*)*(PSL-\d{3,})\b")
+# 定义行 = 顶格的一行，或带列表 / 表格 / 编号标记的一行。
+# **缩进且没有标记 = 续行**，里面出现的 PSL-NNN 是引用不是定义——
+# 「PSL-006 与本条不矛盾」这种换行后接着写的引用，曾被读成第二次定义，
+# 报出来的还是「被定义了两次」，把人指向一个根本不存在的重复条目（dogfood 2026-09-21）。
+LAW_DEF_RE = re.compile(r"^(\s*)((?:[-*+]\s+|\|\s*|\d+[.、)]\s+))?(?:\[[^\]]*\]\s*)*(PSL-\d{3,})\b")
 # 分层标记：只在 id 之后的一小段里认，避免正文提到"形态层"时误判
 LAYER_RE = re.compile(r"[（(]\s*(内容层|形态层|content|form)\s*[)）]|\[\s*layer\s*[:：]\s*(content|form|内容|形态)\s*\]", re.I)
 CONTENT_LAYER = {"内容层", "content", "内容"}
@@ -146,8 +150,10 @@ def parse_laws(lines):
         m = LAW_DEF_RE.match(line)
         if not m:
             continue
-        law_id = m.group(1)
-        tail = line[m.end(1):m.end(1) + 40]
+        indent, bullet, law_id = m.group(1), m.group(2), m.group(3)
+        if indent and not bullet:
+            continue  # 续行里的引用，不是定义
+        tail = line[m.end(3):m.end(3) + 40]
         lm = LAYER_RE.search(tail)
         marker = (lm.group(1) or lm.group(2)).lower() if lm else None
         layer = "content" if marker in CONTENT_LAYER else "form"

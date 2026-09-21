@@ -823,6 +823,10 @@ expect "PSL with Step N in Workflow rejected" 1 py "$S/psl/scripts/verify_psl.py
 # otherwise /psl hands on a product its own downstream refuses
 expect "PSL with no PSL-NNN rule ids rejected (I-02)" 1 py "$S/psl/scripts/verify_psl.py" "$FXPSL/PSL-no-rule-ids.md"
 expect "PSL reusing one rule id for two rules rejected (I-02)" 1 py "$S/psl/scripts/verify_psl.py" "$FXPSL/PSL-dup-rule-id.md"
+# dogfood 2026-09-21：续行开头引用另一条规律（「PSL-006 与本条不矛盾：…」）曾被读成第二次定义。
+# 假拒比漏判更难查——报出来的是「被定义了两次」，把人指向一个根本不存在的重复条目。
+expect "a law referenced at the start of a wrapped line is a reference, not a second definition" 0 py "$S/psl/scripts/verify_psl.py" "$S/psl/eval/fixtures/PSL-continuation-ref.md"
+expect "...while a real duplicate definition is still rejected (twin)" 1 py "$S/psl/scripts/verify_psl.py" "$S/psl/eval/fixtures/PSL-dup-rule-id.md"
 expect "verify_psl names the duplicated id and both lines (I-02)" 0 bash -c "python3 '$S/psl/scripts/verify_psl.py' '$FXPSL/PSL-dup-rule-id.md' | grep -q 'PSL-004.*被定义了两次'"
 # I-20: the rule index carries a layer marker so verify_derived knows which rules a form draft may skip
 expect "verify_psl reports the form/content split of the rule index (I-20)" 0 bash -c "python3 '$S/psl/scripts/verify_psl.py' '$FXD/PSL-memory-time-search.md' | grep -q 'form 7 / content 1'"
