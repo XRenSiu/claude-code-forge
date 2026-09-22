@@ -131,6 +131,14 @@ expect "a territory invariant that exists in the card passes" 0 py "$S/issue/scr
 expect "a territory invariant no card holds is rejected" 1 py "$S/issue/scripts/verify_issue.py" "$FX/territory_invariant_unknown.md" --card-root "$CR"
 expect "territory_invariants never go through DOS closure (they are not dos.yaml rules)" 0 bash -c "python3 '$S/issue/scripts/verify_issue.py' '$FX/territory_invariant_known.md' --card-root '$CR' --dos '$FX/dos.yaml' > '$TMP/ti.json' 2>&1; ! grep -q 'INV-fx-001' '$TMP/ti.json'"
 expect "no card reachable is unchecked, not passed" 0 bash -c "python3 '$S/issue/scripts/verify_issue.py' '$FX/territory_invariant_known.md' --card-root '$TMP' | grep -q 'unchecked, not passed'"
+# 2026-09-22（dogfood vana-builder）：--card-root 的帮助文本写「在哪里找不变量卡」，照字面把卡所在的目录
+# 给进去时，三个兜底候选全落空（它们都是相对 root 再拼 invariants/ 的），闸安静退化成「未检」。
+# 自动发现那条腿本该兜住，但 find(key, root=...) 被写成 find(root, "invariants") —— 两个位置参数调了个个儿，
+# 从来没命中过。一个最自然的取值会关掉的闸，等于没有闸。
+expect "--card-root pointed AT the invariants dir finds the card (not silently unchecked)" 0 \
+  bash -c "python3 '$S/issue/scripts/verify_issue.py' '$FX/territory_invariant_known.md' --card-root '$CR/invariants' | grep -qv 'unchecked, not passed'"
+expect "--card-root pointed AT the invariants dir still rejects an id no card holds (twin)" 1 \
+  py "$S/issue/scripts/verify_issue.py" "$FX/territory_invariant_unknown.md" --card-root "$CR/invariants"
 expect "file-path observe rejected" 1 py "$S/issue/scripts/verify_issue.py" "$FX/bad_filepath_observe.md"
 expect "DOS closure failure rejected (force psl)" 1 py "$S/issue/scripts/verify_issue.py" "$FX/closure_fail.md" --dos "$FX/dos.yaml"
 expect "closure fail output carries force_track psl" 0 bash -c "python3 '$S/issue/scripts/verify_issue.py' '$FX/closure_fail.md' --dos '$FX/dos.yaml' | grep -q '\"force_track\": \"psl\"'"
@@ -1869,8 +1877,36 @@ expect "agent-map: a trap with no provenance is rejected" 1 \
   py "$S/dos-extract/scripts/verify_agent_map.py" "$AMF/agent-map-notrace.md" --repo "$ROOT/../.."
 expect "agent-map: the unfilled template is rejected (placeholders are not entries)" 1 \
   py "$S/dos-extract/scripts/verify_agent_map.py" "$S/dos-extract/assets/agent_map_template.md" --repo "$ROOT"
+# sync_issue：环里 issue 只被写一次，之后 G1 / 契约 / G2 / 卡全发生在它后面，
+# 团队唯一会读的那份东西停在需求阶段。它先是一道对账，才是一个渲染器——
+# 九个场景的变异证明在 eval/fixtures/sync_issue_reconcile.py（含「对得上时一条都不许报」的反向用例）。
+expect "sync_issue: the reconciliation says yes and no in the right nine places" 0 \
+  py "$ROOT/eval/fixtures/sync_issue_reconcile.py" "$S/ai-dlc/scripts/sync_issue.py"
+expect "sync_issue: drop the superseded-hash exemption and the proof goes red (mutation)" 1 \
+  bash -c "d=\$(mktemp -d); sed 's/historical = SUPERSEDE_RE.search(line)/historical = False/' '$S/ai-dlc/scripts/sync_issue.py' > \"\$d/m.py\"; python3 '$ROOT/eval/fixtures/sync_issue_reconcile.py' \"\$d/m.py\""
+expect "sync_issue: drop the in-git check and the proof goes red (mutation)" 1 \
+  bash -c "d=\$(mktemp -d); sed 's/        t = tracked_by_git(rel, paths\[\"repo\"\])/        t = True/' '$S/ai-dlc/scripts/sync_issue.py' > \"\$d/m.py\"; python3 '$ROOT/eval/fixtures/sync_issue_reconcile.py' \"\$d/m.py\""
+# 发帖纪律用假 gh 记账来证，不靠读源码：裸跑零写 · 首次发帖 · 再跑改帖（否则每次 advance 灌一层楼）。
+expect "sync_issue: bare run writes nothing; --post posts once then edits" 0 \
+  bash "$ROOT/eval/fixtures/sync_issue_post_optin.sh" "$S/ai-dlc/scripts/sync_issue.py"
+expect "sync_issue: make --post unconditional and the proof goes red (mutation)" 1 \
+  bash -c "d=\$(mktemp -d); sed 's/    if a.post:/    if True:/' '$S/ai-dlc/scripts/sync_issue.py' > \"\$d/m.py\"; bash '$ROOT/eval/fixtures/sync_issue_post_optin.sh' \"\$d/m.py\""
+expect "sync_issue: make every post a NEW comment and the proof goes red (mutation)" 1 \
+  bash -c "d=\$(mktemp -d); sed 's/        if ids:/        if False:/' '$S/ai-dlc/scripts/sync_issue.py' > \"\$d/m.py\"; bash '$ROOT/eval/fixtures/sync_issue_post_optin.sh' \"\$d/m.py\""
+
 expect "agent-map: the slice drops rows a card cannot touch" 0 \
   bash -c "out=\$(python3 '$S/plan-cards/scripts/slice_agent_map.py' '$AMF/agent-map-good.md' --card '$AMF/slice-card.yaml'); echo \"\$out\" | grep -q '跑起来\|怎么跑起来' && ! echo \"\$out\" | grep -q 'dogfood'"
+# 2026-09-22（dogfood vana-builder）：禁区曾与目录职责同一条相交筛，于是 fixture 与真仓库里
+# 禁区表都被筛成空——每张卡都看不到那句唯一会拦住它的话。禁区的语义是「不能碰」，
+# 按「本卡能碰什么」筛它，筛掉的恰恰是要防的那些。
+expect "agent-map: the forbidden-zone table survives a card that intersects none of it" 0 \
+  bash -c "python3 '$S/plan-cards/scripts/slice_agent_map.py' '$AMF/agent-map-good.md' --card '$AMF/slice-card.yaml' | grep -q '\.aidlc/'"
+expect "agent-map: a card whose whitelist reaches into a forbidden zone is reported (exit 3)" 3 \
+  bash -c "d=\$(mktemp -d); sed 's#allowed_files: \[\"plugins/ai-dlc/skills/qa-reviewer/scripts/\*\*\"\]#allowed_files: [\"plugins/ai-dlc/skills/qa-reviewer/scripts/**\", \".aidlc/**\"]#' '$AMF/slice-card.yaml' > \"\$d/c.yaml\"; python3 '$S/plan-cards/scripts/slice_agent_map.py' '$AMF/agent-map-good.md' --card \"\$d/c.yaml\" >/dev/null"
+expect "agent-map: writable and read-only directory rows are separated, not merged" 0 \
+  bash -c "out=\$(python3 '$S/plan-cards/scripts/slice_agent_map.py' '$AMF/agent-map-good.md' --card '$AMF/slice-card.yaml'); echo \"\$out\" | grep -q '本卡可改的目录' && ! echo \"\$out\" | grep -q '本卡碰得到的目录'"
+expect "agent-map: prefix matching is path-segment aware (app/main is not app/mainland)" 0 \
+  python3 -c "import importlib.util as u; s=u.spec_from_file_location('sl','$S/plan-cards/scripts/slice_agent_map.py'); m=u.module_from_spec(s); s.loader.exec_module(m); assert not m.globs_touch('app/main/**','app/mainland/x.ts'); assert m.globs_touch('app/main/**','app/main/x.ts')"
 
 expect "size: init records M/default — omission gives the stricter path" 0 \
   bash -c "d=\"$TMP/sz\"; rm -rf \"\$d\"; python3 '$S/ai-dlc/scripts/aidlc_state.py' init --root \"\$d\" --slug s --title t --track task >/dev/null; python3 -c \"import json;d=json.load(open('\$d/s/state.json'));assert d['intake']=={'size':'M','size_source':'default','size_evidence':{}},d['intake']\""

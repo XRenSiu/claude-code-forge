@@ -12,7 +12,7 @@ description: >-
   只想发 PR（/pr）、只想审别人的 PR（/pr-review）、只想盯一个已有 PR 的评论（/review-loop）——
   单点动作直接用对应 skill，进流水线反而慢。前置：git 仓库内、gh 已认证、python3。
 argument-hint: "<需求一句话 | 需求文件路径 | #issue> [--track psl|task] [--resume <slug>] [--autopilot] [--dry-run]"
-version: 1.8.0
+version: 1.9.0
 user-invocable: true
 # 只能由人显式调起：它会建 issue、开分支、发 PR、自动回帖——都是公开且部分不可逆的动作，
 # 不能因为对话里出现"需求""流程"就被模型自行调起。它是编排者，没有别的 skill 依赖它。
@@ -219,6 +219,22 @@ S 档 optional（三行修复上一次全仓库本体提取，成本高到没人
 但那是提案，确认权在人。预算按轨道分（PSL 轨 task 回流 2，TASK 轨 1；单卡 3 两轨相同）。
 
 ## 原语（Π 的存在性——不叙述调用顺序）
+
+- `scripts/sync_issue.py <issue#> [--slug S] [--stage S] [--out F] [--post]` —— **把一个阶段的结果送回它的 issue，
+  并核对 issue 说的还是不是真的。** 环是 intake → track → issue → … → pr：**issue 只被写一次**，
+  而 G1 的裁决、冻结的判据、G2 的锁、任务卡的白名单全发生在它后面，落在 `.aidlc/<slug>/` 与 `docs/` 里。
+  于是团队唯一会读的那份东西停在需求阶段，两边慢慢长成两个不同的说法，而**没有任何一步会发现**。
+  它先是一道对账，才是一个渲染器：
+  - 渲染只读文件（`state.json` / `.done_when.lock` / `done_when.yaml` / `cards/*.yaml` / `notes.md`），
+    没落在文件里的东西写不出来——与 `advance` 同一条纪律：对着文件检，不对着谁的说法检；
+  - 对账三项：issue 正文的 AC id 集合 vs 冻结契约（任一方向的差都是「两份说法」）· 正文里的哈希
+    是不是锁里那份（按**前缀**比，`abcdef12…` 这种 8 位写法要认；明写了「已被 supersede」的旧值算**来路**不算漂移）·
+    **被锁文件在不在版本库**——一份锁住了未入库文件的签名，是没人能核对的签名，那不是文档不同步，是冻结机制悬空。
+  - 发帖是对外副作用，**默认不发**；`--post` 按 `slug`+`stage` 打标记，同一阶段再跑是**改那条帖**不是再灌一层楼。
+  - 退出码 0 / 1（有漂移，正文照常产出）/ 2。
+  > 来路：dogfood vana-builder #2321（2026-09-22）。issue 的 AC 编号与冻结版整体错位两位、签字版哈希是补签之前的、
+  > 一条 AC 在冻结时掉了没人知道，而被 G2 签住的 `done_when.yaml` / `.done_when.lock` / `cards/` 只写在
+  > `.git/info/exclude` 里——**本机私有，别人 clone 下来打不开**。G2 那个签名保护的是一份没人能核对的文件。
 
 - `scripts/aidlc_state.py` — init / show / set / advance / gate / card / fail / escape / acceptance / report / check-clean /
   graph check|next|render / loops / ledger / archive / sync-install（`--help`）。`fail` 多了 `--score` 与 `--by`；`loops` 一屏看七个环的预算消耗；
