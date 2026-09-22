@@ -123,10 +123,17 @@ def card_invariant_ids(root):
     except ImportError:
         return None, []
     try:
-        hit = repo_assets.find(root, "invariants") if hasattr(repo_assets, "find") else None
+        # find(key, root=...) —— 曾写成 find(root, "invariants")，两个位置参数正好调了个个儿：
+        # key 收到目录、root 收到字面量 "invariants"。这条腿从来没命中过，于是只剩下面的兜底候选，
+        # 而兜底是相对 root 拼的——`--card-root docs/invariants` 这个最自然的取值恰好全部落空，
+        # 闸就安静地退化成「未检」。一个最自然的取值会关掉的闸，等于没有闸。
+        hit = repo_assets.find("invariants", root=root) if hasattr(repo_assets, "find") else None
     except Exception:
         hit = None
-    cand = [hit] if hit else [os.path.join(root, d) for d in ("invariants", "docs/invariants", ".aidlc/invariants")]
+    # root 本身就是卡所在目录（`--card-root docs/invariants`）也要认——帮助文本写的是
+    # 「在哪里找不变量卡」，照字面给的人不该拿到一条静默的 flag。
+    cand = [hit] if hit else []
+    cand += [root] + [os.path.join(root, d) for d in ("invariants", "docs/invariants", ".aidlc/invariants")]
     for d in cand:
         if not d or not os.path.isdir(d):
             continue

@@ -9,7 +9,7 @@ description: >-
   "split into cards" / "task cards" / 契约已 G2 冻结、准备实现之前。NOT for: 写契约（/donewhen-extract）、
   写测试（/test-suite-generator）、实现卡（/implement）。前置：`.done_when.lock` 存在（G2 已签）。
 argument-hint: "<specs/<feature>/ 或 done_when.yaml> [--spec spec.md] [--dos dos.yaml] [--out cards/] [--max-context 40000]"
-version: 0.7.2
+version: 0.8.0
 user-invocable: true
 ---
 
@@ -67,14 +67,27 @@ implement` 对 `cards.dir` **自己跑** `lint_cards.py`；`cards.lint_passed` �
 - `references/splitting.md` —— 拆分启发式（按观察边界 / 按 DOS 对象 / 先契约后 UI / 投影与数据源同卡）、
   共享文件处置、上下文估算法、以及 L4 对契约层 REQ 粒度的反压。
 
-## 仓库地图切片（v0.2.0）
+## 仓库地图切片（v0.3.0）
 
 卡给实现者卡 + AC 子集 + 红基线 + 约束，**没给**测试怎么跑、构建怎么起、这块目录谁管、边上哪里不能碰。
-`scripts/slice_agent_map.py <agent-map.md> --card cards/CARD-xx.yaml --out slice.md` 把仓库地图按本卡切：
-命令一节**全给**（红-绿自证靠它），目录 / 禁区 / 陷阱只给与 `allowed_files` 相交的行。
-切出来的块拼进 `../implement/assets/card_context.md` 的「仓库怎么干活」一节。
+`scripts/slice_agent_map.py <agent-map.md> --card cards/CARD-xx.yaml --out slice.md` 把仓库地图按本卡切。
 
-给整份地图是噪音（2607.27250：堆仓库知识不提高正确率），给零行是让实现者去猜。切片是这两者之间那个东西。
+给整份地图是噪音（2607.27250：堆仓库知识不提高正确率），给零行是让实现者去猜。切片是这两者之间那个东西——
+但**三节各有各的切法，用同一把筛子会把其中一节筛没**：
+
+| 节 | 怎么切 | 为什么 |
+|---|---|---|
+| 跑起来 | **全给** | 实现者的红-绿自证靠它 |
+| 目录职责 | 按 `allowed_files` 切成「可改」，只被 `forbidden_files` 命中的另起一张「读得到但不许改」 | 两张表混在一起时实现者分不出哪几行是给它写的 |
+| **禁区** | **全给，不筛** | 禁区的语义是「不能碰」。按「本卡能碰什么」筛它，**筛掉的恰恰是要防的那些**——一条与 `allowed_files` 不相交的禁区行不是噪音，它是唯一会拦住实现者走错的那句话 |
+| 已知陷阱 | 按 `allowed_files` 与 `dos_slice.objects` 切 | 一个碰不到的坑是噪音 |
+
+反过来，一条**与 `allowed_files` 相交**的禁区行是矛盾：卡授权去改一个禁区。脚本把它标在产物里、
+报在 stderr、并 **exit 3**（切片照常产出——拒绝出片只会让人绕过它）。那是切卡的错，不是实现者的自由裁量。
+
+> 来路：dogfood vana-builder 2026-09-22。三张卡切出来，禁区表**全是空的**——fixture 里也一样，
+> 那张 agent-map 唯一的禁区行（`.aidlc/` 运行时状态）从来没有出现在任何一张卡上。
+> 同批修掉的还有前缀比较：`pa.startswith(pb)` 是字符串前缀，`app/main` 会命中 `app/mainland/**`。
 
 ## 门（γ）
 
