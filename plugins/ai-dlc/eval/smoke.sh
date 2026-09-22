@@ -1425,6 +1425,18 @@ CRB="$TSG/capture_red_baseline.py"
 expect "capture_red_baseline: untracked instrument does not vote on the baseline (I-62)" 0 bash -c "python3 '$CRB' tests/run_tests.sh --out '$RB/RED_BASELINE.txt' >/dev/null && grep -q 'instrument ABSENT' '$RB/RED_BASELINE.txt' && grep -q 'git status --porcelain (clean checkout): <empty>' '$RB/RED_BASELINE.txt' && grep -q 'instrument.py' '$RB/RED_BASELINE.txt'"
 expect "capture_red_baseline: records the runner's own exit, does not propagate it (I-62)" 0 bash -c "grep -q 'runner exit: 1' '$RB/RED_BASELINE.txt'"
 expect "capture_red_baseline --verify: a baseline with the evidence passes (I-62)" 0 py "$CRB" --verify "$RB/RED_BASELINE.txt"
+# I-70（dogfood vana-builder 2026-09-22）：一个 linked worktree 里**没有** node_modules / venv / target，
+# 所以绝大多数仓库里 runner 在那儿的第一次失败是「跑都没跑起来」——而 `runner exit: 1` 与「全红」
+# 在产物里长得一模一样。防装饰性闸的脚本自己成了装饰性闸。--must-mention 要求输出里必须提到
+# 某个测试名，提不到就判「未求值」：**exit 3，且不写基线**。
+expect "capture_red_baseline: output that never mentions the tests is unevaluated, not red (I-70)" 3 \
+  py "$CRB" tests/run_tests.sh --must-mention "a_test_name_the_runner_never_prints" --out "$RB/SHOULD_NOT_EXIST.txt"
+expect "capture_red_baseline: and it writes no baseline when it refuses (I-70)" 0 \
+  bash -c "! test -f '$RB/SHOULD_NOT_EXIST.txt'"
+expect "capture_red_baseline: a mention the runner does print is accepted and recorded as evidence (I-70)" 0 \
+  bash -c "python3 '$CRB' tests/run_tests.sh --must-mention 'instrument ABSENT' --out '$RB/WITH_EVIDENCE.txt' >/dev/null && grep -q 'ran-the-tests evidence: output mentions' '$RB/WITH_EVIDENCE.txt'"
+expect "capture_red_baseline: omitting --must-mention says so in the artefact, rather than implying evidence (I-70)" 0 \
+  bash -c "grep -q 'ran-the-tests evidence: NONE GIVEN' '$RB/RED_BASELINE.txt'"
 grep -v 'clean_checkout:\|porcelain (clean checkout)' "$RB/RED_BASELINE.txt" > "$RB/NO_EVIDENCE.txt"
 expect "capture_red_baseline --verify: a baseline without the evidence is rejected (I-62)" 1 py "$CRB" --verify "$RB/NO_EVIDENCE.txt"
 sed 's/porcelain (clean checkout): <empty>/porcelain (clean checkout): ?? instrument.py/' "$RB/RED_BASELINE.txt" > "$RB/DIRTY_EVIDENCE.txt"
@@ -1441,12 +1453,21 @@ if [[ -z "${SMOKE_NESTED:-}" ]]; then
   # the mutant run". With the copy taken from the working tree, one already-red expectation made every
   # mutant look killed — and every mutation proof in the register rests on this tool. Now the baseline
   # must be green and the verdict is the delta.
+  # 这两条各自跑一次嵌套的 --mutate，而 --mutate 自己又跑**两轮**（基线 + 变异体）。
+  # 第一条原先不带 --only，于是一轮外层冒烟里塞进两轮完整的 773 条，外加三份插件拷贝——
+  # 在 16 GB 的机器上两次都被系统按内存杀在同一处（2026-09-22）。
+  # --only 的过滤串必须同时盖住 metrics（毒药让它红，才验得到「基线不绿就拒」）
+  # 与 derive_counts（被变异的那个），否则这条断言测的就不是它声称的东西。
+  # POISON 也必须清理：它是整份插件的拷贝，之前一次不删，/var/folders 里积了 152 份。
+  MUT_ONLY='metrics export|derive_counts on example'
   expect "smoke --mutate: a red baseline is refused, not counted as a kill (harness cr-001)" 3 bash -c "
-    POISON=\"\$(mktemp -d)\"; cp -R '$ROOT' \"\$POISON/ai-dlc\"
+    POISON=\"\$(mktemp -d)\"; trap 'rm -rf \"\$POISON\"' EXIT
+    cp -R '$ROOT' \"\$POISON/ai-dlc\"
     printf 'raise SystemExit(9)\n' | cat - '$ROOT/skills/retro/scripts/metrics.py' > \"\$POISON/ai-dlc/skills/retro/scripts/metrics.py\"
-    bash \"\$POISON/ai-dlc/eval/smoke.sh\" --mutate skills/test-suite-generator/scripts/derive_counts.py 'the count primitive' 'the counting primitive' >/dev/null 2>&1"
+    bash \"\$POISON/ai-dlc/eval/smoke.sh\" --only '$MUT_ONLY' --mutate skills/test-suite-generator/scripts/derive_counts.py 'the count primitive' 'the counting primitive' >/dev/null 2>&1"
   expect "smoke --mutate: an expectation red both before and after does not count as a kill (harness cr-001)" 1 bash -c "
-    POISON=\"\$(mktemp -d)\"; cp -R '$ROOT' \"\$POISON/ai-dlc\"
+    POISON=\"\$(mktemp -d)\"; trap 'rm -rf \"\$POISON\"' EXIT
+    cp -R '$ROOT' \"\$POISON/ai-dlc\"
     bash \"\$POISON/ai-dlc/eval/smoke.sh\" --only 'derive_counts on example' --mutate skills/test-suite-generator/scripts/derive_counts.py 'the count primitive' 'the counting primitive' >/dev/null 2>&1"
 fi
 
@@ -2375,5 +2396,13 @@ expect "docs: the evaluation doc still states the plugin is not L2-verified" 0 \
   bash -c "grep -q 'static_only' '$ROOT/docs/evaluation.md' && grep -q '出题人与被测者同源' '$ROOT/docs/evaluation.md'"
 
 echo
-echo "smoke: $pass passed, $fail failed${ONLY:+, $skipped skipped (--only $ONLY)}  (tmp: $TMP)"
+# 绿了就把 $TMP 删掉，红了留着——证据在需要时留下，不需要时不留垃圾。
+# 带 --mutate 时 $TMP 里装着两份整包插件拷贝，一次运行几百 MB；从不清理的话
+# /var/folders 会一直长（2026-09-22 实测积到 1624 个目录 / 3.9 GB，把冒烟自己跑到了 OOM）。
+if [[ $fail -eq 0 ]]; then
+  echo "smoke: $pass passed, $fail failed${ONLY:+, $skipped skipped (--only $ONLY)}  (tmp 已清理)"
+  rm -rf "$TMP"
+else
+  echo "smoke: $pass passed, $fail failed${ONLY:+, $skipped skipped (--only $ONLY)}  (tmp 保留供排查: $TMP)"
+fi
 [[ $fail -eq 0 ]]
