@@ -56,7 +56,14 @@ def main():
         ("the cards dir is not in git", "AC-001-a AC-002-a c.yaml `abcdef12…`", lock, ["untracked.yaml"], 1),
         # 读不到 = 没检，不是通过
         ("the issue body could not be read", None, lock, [], 1),
+        # 提到文件却没给哈希：读者直接打开文件，不会被骗 → note，不是 drift。
+        # 一条在无害情形上也响的检查，会把人训练成忽略它。
+        ("a file named with no hash at all", "AC-001-a AC-002-a see c.yaml", lock, [], 0),
+        # 入库了、却没人知道它在哪，也是一种够不着 → note。
+        ("a locked file the body never mentions", "AC-001-a AC-002-a `abcdef12…`", lock, [], 0),
     ]
+    # 上面两条不止要「不是 drift」，还必须**真的报出来**——否则降级就等于删掉
+    must_note = {"a file named with no hash at all", "a locked file the body never mentions"}
     bad = 0
     for name, body, lk, extra, want in cases:
         drift, notes = m.reconcile(body, dw, lk, paths, extra)
@@ -64,6 +71,10 @@ def main():
         if got != want:
             bad += 1
             sys.stderr.write("FAIL %s — want drift=%d got %d: %s\n" % (name, want, got, drift[:2]))
+        if name in must_note and not notes:
+            bad += 1
+            sys.stderr.write("FAIL %s — demoted to a note but no note was reported; "
+                             "that is deletion, not demotion\n" % name)
     if bad:
         sys.stderr.write("sync_issue reconcile: %d/%d 场景不符\n" % (bad, len(cases)))
         return 1

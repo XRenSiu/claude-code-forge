@@ -288,8 +288,10 @@ def reconcile(body, dw, lock, paths, extra_paths):
             named = os.path.basename(path) in body
             matched = any(sha.startswith(h) for h in seen_hex)
             if named and not matched:
-                drift.append("issue 提到 `%s`，但正文里没有任何与它当前 sha256 `%s…` 相符的哈希"
-                             "——读的人核对不了这份文件是不是锁里那份"
+                # note，不是 drift：提到文件却没给哈希，读者直接打开文件就是了，不会被骗。
+                # 会骗人的是**错的**哈希，那由下面那条（hex 与任何被锁文件都对不上）抓。
+                # 一条在无害情形上也响的检查，会把人训练成忽略它——这和放过真问题是同一种损失。
+                notes.append("issue 提到 `%s` 但没带它当前的 sha256 `%s…`；要让人当场核对得加上"
                              % (os.path.basename(path), sha[:8]))
         # 一个对不上的哈希，只有在正文把它当**现值**呈现时才误导人。
         # 明写了「已被 supersede」的旧值是**来路**，不是漂移——把它报成漂移，
@@ -304,6 +306,16 @@ def reconcile(body, dw, lock, paths, extra_paths):
                  "当来路读，不当漂移" if historical else
                  "正文里的哈希 `%s…` 与任何被锁文件都对不上，且没说它是旧值——"
                  "照它核对的人会得到「对不上」然后不知道该信哪个") % h[:8])
+
+    # 入库了、却没人知道它在哪，也是一种够不着。
+    # 「issue 上有没有路径指过去」不是文档洁癖：`.aidlc/` 刚从本机私有的 exclude 里捞进 git，
+    # 而 issue 的 Links 一条交付期产物都没列——读的人仍然找不到契约、锁、卡、红基线。
+    # 这一条报 note 不报 drift：它是**不完整**，不是**互相矛盾**，两者不该同权。
+    for f in (lock or {}).get("files") or []:
+        base = os.path.basename(f["path"])
+        if base not in body and f["path"] not in body:
+            notes.append("被锁住的 `%s` 在 issue 正文里从没被提到——它进了版本库，但读 issue 的人没有路径能找到它"
+                         % f["path"])
 
     # 最重的一条：被签住的文件如果不在版本库，这个签名没人能核对
     to_check = [f["path"] for f in (lock or {}).get("files") or []]

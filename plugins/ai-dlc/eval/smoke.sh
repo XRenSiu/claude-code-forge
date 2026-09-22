@@ -5,6 +5,12 @@
 # Usage:
 #   bash plugins/ai-dlc/eval/smoke.sh                      # the whole suite (must end "0 failed")
 #   bash plugins/ai-dlc/eval/smoke.sh --only <ERE>         # only expectations whose label matches
+#
+#   内存紧的机器上分两趟跑，合起来是全覆盖（--mutate 那一段每条要展开两轮嵌套运行，
+#   单条峰值只有 ~32 MB，但整套累积下来会把一台还开着 Docker / 浏览器的机器跑到 OOM）：
+#     SMOKE_NESTED=1 bash …/smoke.sh                       # 768 条，跳过 --mutate 块
+#     bash …/smoke.sh --only 'smoke --mutate'              # 那 5 条
+#   两趟的并集恰是全集：--mutate 块整体由 `if [[ -z "${SMOKE_NESTED:-}" ]]` 守着。
 #   bash plugins/ai-dlc/eval/smoke.sh --mutate <file> <old-string> <new-string>
 #
 # --mutate is the self-check (I-80): it copies the plugin to a scratch dir TWICE — once unmutated
