@@ -23,6 +23,15 @@ This script makes the clean checkout mechanical instead of remembered:
 `--verify` re-reads a recorded baseline and fails if that evidence is absent, so
 "the baseline is honest" is a check, not a promise.
 
+**A non-zero exit is not by itself a red baseline (I-70).** A linked worktree starts
+with no `node_modules` / `venv` / `target`, so in most repositories the runner's FIRST
+failure there is the harness never starting — and `runner exit: 1` reads exactly the
+same as "every test failed because nothing is implemented". That is the decorative-gate
+pathology inside the very script meant to prevent it. So `--must-mention` (repeatable)
+names strings that MUST appear in the runner's output — a test name from the manifest is
+the natural choice. Missing → **exit 3, and NO baseline is written**: the runner produced
+no evidence it ran the tests at all, which is *unevaluated*, not red.
+
 Usage:
     python capture_red_baseline.py <runner-path-relative-to-repo-root> \\
         [--repo DIR] [--out RED_BASELINE.txt] [--version X.Y.Z] [--based-on "REQ-001..011"] [--note TEXT]
@@ -90,6 +99,10 @@ def main():
     ap.add_argument("--version", default="<skill-version>",
                     help="value of SKILL.md frontmatter version: (do NOT hardcode a literal)")
     ap.add_argument("--based-on", default="", help="REQ ids this suite covers, for the header")
+    ap.add_argument("--must-mention", dest="must_mention", action="append", default=[],
+                    help="这些字符串必须出现在 runner 的输出里，否则判定「测试根本没跑」并拒绝写基线"
+                         "（可重复）。干净 worktree 没有 node_modules，跑不起来时的 exit 1 与"
+                         "「全红」长得一模一样——非零退出本身不是红基线")
     ap.add_argument("--note", default="", help="one extra header line (e.g. why this revision)")
     ap.add_argument("--verify", metavar="RED_BASELINE.txt",
                     help="check a recorded baseline carries the clean-checkout evidence")
@@ -132,6 +145,24 @@ def main():
         shutil.rmtree(tmp, ignore_errors=True)
         subprocess.run(["git", "worktree", "prune"], cwd=repo, capture_output=True, text=True)
 
+    missing = [m for m in (args.must_mention or []) if m not in output]
+    if missing:
+        sys.stderr.write(
+            "capture_red_baseline.py: runner exit %d, but its output never mentions %s.\n"
+            "The tests did not run — most likely the linked worktree has no dependencies "
+            "installed (a fresh `git worktree` starts without node_modules / venv / target).\n"
+            "A non-zero exit from a harness that never started is NOT a red baseline; it is "
+            "unevaluated. No baseline written.\n" % (rc, missing)
+        )
+        sys.stderr.write("\n--- last 20 lines of runner output ---\n")
+        sys.stderr.write("\n".join(output.rstrip("\n").splitlines()[-20:]) + "\n")
+        sys.exit(3)
+    if not args.must_mention:
+        sys.stderr.write(
+            "capture_red_baseline.py: no --must-mention given, so nothing proves the runner "
+            "actually executed the tests rather than failing to start. Pass a test name from "
+            "the manifest.\n")
+
     now = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     excluded = (f"{len(dirty_lines)} working-tree entries excluded "
                 f"({', '.join(ln.strip()[:40] for ln in dirty_lines[:5])}"
@@ -148,6 +179,9 @@ def main():
         f"date: {now}",
         f"command: bash {args.runner}",
         f"runner exit: {rc}",
+        (f"ran-the-tests evidence: output mentions {args.must_mention}"
+         if args.must_mention else
+         "ran-the-tests evidence: NONE GIVEN (--must-mention omitted)"),
         "",
         "## output",
         output.rstrip("\n"),

@@ -17,7 +17,7 @@ description: >-
   test suite" / "build verification battery" / "/test-suite-generator" /
   pointing at any specs/<feature>/ directory.
 argument-hint: "<path to specs/<feature>/ or path to done_when.yaml>"
-version: 1.4.0
+version: 1.5.0
 user-invocable: true
 # imported into AI-DLC 2026-09-05 from done-when-pipeline v1.1.0 (canonical copy in this repo; qanat holds an older copy); body kept, AI-DLC wiring section added
 ---
@@ -357,7 +357,8 @@ Per skillwise THEORY.md §3, the mechanical sub-parts ship as runnable primitive
   pyramid is non-empty", which is a criterion, not a number.
 - `scripts/check_verbatim_names.py` — asserts every contract test name appears verbatim in the generated files (iron rule 9 traceability gate); `--manifest` for v2, and an empty name set is a failure.
 - `scripts/verify_red_green.py <RED_BASELINE.txt> --runner <runner>` — the GREEN half: every test recorded red in the baseline must now appear and pass, **a vanished red test is not green** (deleting a test is the cheapest green), and the baseline's HEAD must be an ancestor of HEAD. Exit 0 green · 1 not green · 3 unevaluated (no clean-checkout evidence / not an ancestor / unrecognisable runner output — not a pass).
-- `scripts/capture_red_baseline.py` — captures the RED baseline in a `git worktree` checkout of HEAD and writes the clean-tree evidence into the file; `--verify` re-checks a recorded baseline for that evidence.
+- `scripts/capture_red_baseline.py` —— `--must-mention <串>`（可重复）是**「测试到底跑没跑」的证据**：linked worktree 里没有 node_modules / venv / target，跑不起来时的 `runner exit: 1` 与「全红」在产物里长得一样。提不到就 **exit 3 且不写基线**——未求值不是红。
+- （同一脚本） — captures the RED baseline in a `git worktree` checkout of HEAD and writes the clean-tree evidence into the file; `--verify` re-checks a recorded baseline for that evidence.
 
 ## Wiring in AI-DLC
 
