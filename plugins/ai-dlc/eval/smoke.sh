@@ -2126,6 +2126,25 @@ expect "vana V-05: without --repo the coverage is reported unchecked, not passed
   bash -c "python3 '$V2V' done_when.yaml | python3 -c \"import json,sys; assert json.load(sys.stdin)['test_coverage']=={'checked': False}\""
 expect "vana V-05: declaring test_globs and forbidding them passes" 0 py "$V2V" dw_globs.yaml --repo .
 expect "vana V-05: a declared test glob missing from forbidden_paths is rejected" 1 py "$V2V" dw_globs_unforbidden.yaml --repo .
+# V-05 的另一半（dogfood 2026-09-21）：加了覆盖闸，却留着无条件要求 `tests/**` 的那一行。
+# colocated 的仓库于是被迫列一个自己根本没有的目录——契约里多一行谁都不看的样板，
+# 而一份有样板的清单很快整份没人看。`tests/**` 是本插件的**缺省值**，不是普世真理：
+# 仓库用 test_globs 说清自己把测试放在哪之后，缺省就该让位，由 --repo 的覆盖闸去把关。
+python3 -c "
+import yaml
+d=yaml.safe_load(open('dw_globs.yaml')); d['constraints']['forbidden_paths'].remove('tests/**')
+yaml.safe_dump(d,open('dw_globs_no_tests_dir.yaml','w'),allow_unicode=True,sort_keys=False)
+d2=yaml.safe_load(open('done_when.yaml')); d2['constraints']['forbidden_paths'].remove('tests/**')
+yaml.safe_dump(d2,open('dw_no_globs_no_tests_dir.yaml','w'),allow_unicode=True,sort_keys=False)"
+expect "vana V-05b: a repo that declares test_globs need not list a tests/ dir it does not have" 0 py "$V2V" dw_globs_no_tests_dir.yaml --repo .
+expect "vana V-05b: ...but drop tests/** with no test_globs declared and it is still required (twin)" 1 py "$V2V" dw_no_globs_no_tests_dir.yaml --repo .
+expect "vana V-05b: the coverage gate is what actually holds — globs that freeze nothing still reject" 1 bash -c "
+python3 -c \"
+import yaml
+d=yaml.safe_load(open('dw_globs_no_tests_dir.yaml'))
+d['constraints']['test_globs']=['nowhere/**']; d['constraints']['forbidden_paths']=['nowhere/**','done_when.yaml']
+yaml.safe_dump(d,open('dw_globs_bogus.yaml','w'),allow_unicode=True,sort_keys=False)\"
+python3 '$V2V' dw_globs_bogus.yaml --repo ."
 expect "vana V-05: advance g2 runs the coverage check against the repository it stands in" 0 bash -c "
 python3 '$SS' init --slug v5 --title t --track task >/dev/null; python3 '$SS' advance --slug v5 track >/dev/null
 python3 '$SS' advance --slug v5 issue >/dev/null; python3 '$SS' set --slug v5 issue.number=5 >/dev/null

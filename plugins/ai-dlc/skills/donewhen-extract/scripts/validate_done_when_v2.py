@@ -19,8 +19,10 @@ Mechanical guarantees (REJECT):
   - human: statement + judge ∈ {product, design, tech} + evidence ∈ {checklist, demo}
   - event/state happy AC has an unwanted sibling on the same observe or paired_with resolves to one
   - existence entries: only route / db_field / ui / cli / event / frontend_component keys (no file / function)
-  - constraints.forbidden_paths (if present) contains tests/**, done_when.yaml, and every glob in
-    constraints.test_globs (optional non-empty list — where THIS repository keeps its tests, e.g. **/*.spec.ts)
+  - constraints.forbidden_paths (if present) contains done_when.yaml and every glob in
+    constraints.test_globs (optional non-empty list — where THIS repository keeps its tests, e.g. **/*.spec.ts).
+    `tests/**` is required only when test_globs is absent: it is this plugin's default, and a repository
+    that declares where its tests actually live should not also list a directory it does not have.
   - --repo DIR (advance g2 passes it): forbidden_paths must cover at least one of the test files git tracks
     there. `tests/**` is where this plugin writes tests, not where every repository keeps them — a repository
     with 300 colocated `*.spec.ts` and a forbidden set of `tests/**` froze no test at all, and C6
@@ -290,7 +292,13 @@ def main():
     fp = cons.get("forbidden_paths")
     coverage = {"checked": False}
     if fp is not None:
-        for must in ["tests/**", "done_when.yaml"] + [g for g in (tg or []) if g not in ("tests/**", "done_when.yaml")]:
+        # `tests/**` 是**缺省值**，不是普世真理：它是本插件写测试的地方。
+        # 仓库一旦用 test_globs 声明了自己把测试放在哪（并由 --repo 的覆盖闸验证），
+        # 这个缺省就该让位——否则 colocated 的仓库被迫列一个自己根本没有的路径，
+        # 契约里多一行谁都不看的样板，而一份有样板的清单很快整份没人看
+        #（dogfood vana-builder，V-05 的另一半：当时加了覆盖闸，没拿掉这条无条件要求）。
+        default_test_globs = [] if tg else ["tests/**"]
+        for must in default_test_globs + ["done_when.yaml"] + [g for g in (tg or []) if g != "done_when.yaml"]:
             if must not in fp:
                 rejects.append(f"constraints.forbidden_paths must include {must}"
                                + (" (declared in constraints.test_globs)" if tg and must in tg else ""))
