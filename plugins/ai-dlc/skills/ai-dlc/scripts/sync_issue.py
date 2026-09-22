@@ -115,12 +115,56 @@ def sec_gate(st, gate):
 
 
 def sec_lock(lock):
+    """锁的标题跟着锁自己的 stage 走。
+
+    写死成「G2 锁住了什么」会在签了 L5 之后骗人：G2 冻的是判据，L5 冻的是**测试**，
+    而读的人会以为 G2 那一签就把测试也锁上了。"""
     if not lock:
         return None
+    stage = (lock.get("stage") or "?").upper()
     rows = "\n".join(f"| `{f['path']}` | `{f['sha256'][:16]}…` | {f.get('role', '—')} |"
                      for f in lock.get("files") or [])
-    return ("被锁住的文件（改其中任何一份都要同一 diff 附变更提案并重新签锁）：\n\n"
+    what = ("判据、签字版的世界与形态，以及全部测试资产——测试由非实现者写、写完锁住（R004）"
+            if stage == "L5" else "判据、签字版的世界与形态")
+    return (f"当前锁的阶段是 **{stage}**，锁住 {len(lock.get('files') or [])} 份：{what}。\n"
+            "改其中任何一份都要同一 diff 附变更提案并重新签锁。\n\n"
             "| 文件 | sha256 | 角色 |\n|---|---|---|\n" + rows)
+
+
+def sec_tests(manifest, red_baseline):
+    """L5 这一阶段的**结果**：测试量与那份红。
+
+    此前渲染器只到 G2 为止——契约、锁、卡。于是「测试写完了、是红的、红得有证据」
+    这件事在 issue 上完全看不见，而它恰恰是 implement 之前最后一个可核对的产物。"""
+    if not manifest and not red_baseline:
+        return None
+    out = []
+    if manifest:
+        b = manifest.get("behavior") or {}
+        u = b.get("unit_tests") or {}
+        i = b.get("integration_tests") or {}
+        n = lambda x: len(x) if isinstance(x, list) else 0
+        out.append("| 层 | 条数 |\n|---|---|")
+        out.append("| existence | %d |" % n(manifest.get("existence")))
+        out.append("| unit | %d（%d 例 / %d 属性）|" % (
+            n(u.get("example_based")) + n(u.get("property_based")),
+            n(u.get("example_based")), n(u.get("property_based"))))
+        out.append("| integration | %d |" % (
+            n(i.get("example_based")) + n(i.get("property_based"))))
+        out.append("| e2e | %d |" % n(b.get("e2e_tests")))
+        for k in manifest.get("known_red") or []:
+            out.append("")
+            out.append("**本轮必定红且不得为绿而改判据**：`%s` —— %s" % (k.get("id"), k.get("why")))
+            if k.get("do_not"):
+                out.append("> 不许：%s" % k["do_not"])
+    if red_baseline:
+        keep = [ln for ln in red_baseline.splitlines()
+                if ln.startswith(("clean_checkout:", "runner exit:", "ran-the-tests evidence:", "git HEAD:"))
+                or " failed" in ln and "Tests" in ln]
+        if keep:
+            out += ["", "红基线（`capture_red_baseline.py`，跑在 HEAD 的干净检出上）：", "",
+                    "```", *[k.strip() for k in keep], "```"]
+    return "\n".join(out) if out else None
 
 
 def sec_contract(dw):
@@ -203,7 +247,8 @@ def render(st, slug, stage, paths, artefacts):
               ("G1 世界裁决", sec_gate(st, "g1")),
               ("判据契约", sec_contract(dw)),
               ("G2 判据冻结", sec_gate(st, "g2")),
-              ("G2 锁住了什么", sec_lock(lock)),
+              ("锁住了什么", sec_lock(lock)),
+              ("测试与红基线（L5）", sec_tests(artefacts.get("manifest"), artefacts.get("red_baseline"))),
               ("G3 例外复核", sec_gate(st, "g3")),
               ("任务卡", sec_cards(paths.get("cards_dir"))),
               ("解释 / 偏离 / 取舍（逐字，不筛选）", sec_notes(notes_md))]
@@ -345,12 +390,18 @@ def main():
     dw_path = ((st.get("contract") or {}).get("done_when")
                or os.path.join(base, "done_when.yaml"))
     cards_dir = (st.get("cards") or {}).get("dir")
+    tm_path = (st.get("contract") or {}).get("tests_manifest")
+    rb_path = (st.get("contract") or {}).get("red_baseline")
     paths = {"state": os.path.join(base, "state.json"), "repo": repo_root,
              "cards_dir": os.path.join(repo_root, cards_dir) if cards_dir and not os.path.isabs(cards_dir) else cards_dir}
     artefacts = {
         "done_when": load_yaml(dw_path if os.path.isabs(dw_path) else os.path.join(repo_root, dw_path)),
         "lock": load_json(os.path.join(base, ".done_when.lock")),
         "notes": read_text(os.path.join(base, "notes.md")),
+        "manifest": load_yaml(tm_path if os.path.isabs(tm_path) else os.path.join(repo_root, tm_path))
+                    if tm_path else None,
+        "red_baseline": read_text(rb_path if os.path.isabs(rb_path) else os.path.join(repo_root, rb_path))
+                        if rb_path else None,
     }
 
     text = render(st, slug, stage, paths, artefacts)

@@ -53,6 +53,13 @@ cat > "$R/.aidlc/s/state.json" <<'J'
 J
 printf 'schema: 2\nfeature: f\nacceptance:\n  - {id: AC-001-a, req: REQ-001, kind: mechanical, observe: "route:GET /x"}\n' \
   > "$R/.aidlc/s/done_when.yaml"
+# 锁的 stage 决定那一节的标题：写死成「G2 锁住了什么」会在签了 L5 之后骗人——
+# G2 冻的是判据，L5 冻的是**测试**，读的人会以为 G2 那一签就把测试也锁上了。
+cat > "$R/.aidlc/s/.done_when.lock" <<'L'
+{"version":1,"stage":"l5","signed_by":"t","signer_kind":"human","signed_at":"2026-09-22T00:00:00Z",
+ "files":[{"path":".aidlc/s/done_when.yaml","sha256":"aa","role":"contract"},
+          {"path":"a.spec.ts","sha256":"bb","role":"contract"}]}
+L
 
 run() { ( cd "$R" && GH_LOG="$LOG" GH_STORE="$STORE" PATH="$T/bin:$PATH" python3 "$SI" 1 --repo o/r --root .aidlc --slug s "$@" ); }
 
@@ -64,6 +71,8 @@ grep -q "issue comment" "$LOG" && fail "没给 --post 却发了帖"
 grep -q "\-X PATCH" "$LOG"     && fail "没给 --post 却改了帖"
 [ -s "$T/a.md" ] || fail "--out 没写出正文"
 grep -q "aidlc:sync slug=s stage=cards" "$T/a.md" || fail "正文里没有 stage 标记"
+grep -q "当前锁的阶段是 \*\*L5\*\*" "$T/a.md" || fail "锁那一节没有跟着锁自己的 stage 走"
+grep -q "G2 锁住了什么" "$T/a.md" && fail "锁是 l5，标题却还写着 G2"
 
 # ② 第一次 --post：发一条
 run --post >/dev/null 2>&1
