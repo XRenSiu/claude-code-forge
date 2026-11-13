@@ -14,6 +14,11 @@ user-invocable: true
 
 # retro — 先测基线，再看病在哪层
 
+## 区分验证失败域
+
+读取 trace 中 `verification_*` 事件的 `failure_domain` 与原始证据。实现缺陷、环境故障、检查器故障和失效结果分别统计，不能把环境等待算成代码返工。已复现的项目防线缺口交 Project Harness evolve；流程参数交 tune；正式检查包的更新走独立审批与校准。接线见 [verification.md](../ai-dlc/references/verification.md)。
+
+
 产物：`retro/retro-<date>.md`（基线表 + 发现 + 提案，形状 `assets/retro_template.md`）与 `metrics.json`。
 本文件写：度量在流水线里是什么、什么算一条有用的发现、原语与出口、提案的去向。怎么解读是你的份额，
 但每条提案必须有去向和验收方式。

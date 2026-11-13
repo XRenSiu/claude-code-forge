@@ -88,10 +88,10 @@ write_counters() {
 
 # 评审环的出口留一份**文件**：aidlc_state.py 的 advance g3 / merge 读 pr-<N>.done.json，不读引擎 set 的 review.done。
 # `done`（联网取数）与 `predicate`（离线给事实）都写它，所以谓词离线可验、出口也离线可核。
-record_done() { # record_done <rc> <verdict-json>
-  local rc="$1" vj="$2" out="$STATE_DIR/pr-$PR.done.json"
+record_done() { # record_done <rc> <verdict-json> [observed-pr-head]
+  local rc="$1" vj="$2" out="$STATE_DIR/pr-$PR.done.json" head="${3:-$(git rev-parse HEAD 2>/dev/null || echo "")}"
   jq -n --argjson pr "$PR" --argjson rc "$rc" --argjson v "$vj" \
-        --arg at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" --arg sha "$(git rev-parse HEAD 2>/dev/null || echo "")" \
+        --arg at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" --arg sha "$head" \
         '{pr: $pr, exit: $rc, at: $at, head_sha: $sha} + $v' > "$out.tmp" && mv "$out.tmp" "$out"
 }
 
@@ -109,7 +109,7 @@ init_watermark() {
 }
 
 pr_state() {
-  gh pr view "$PR" --json state,reviewDecision,mergedAt,closedAt,isDraft,url
+  gh pr view "$PR" --json state,reviewDecision,mergedAt,closedAt,isDraft,url,headRefOid
 }
 
 fetch_delta() {
@@ -447,7 +447,7 @@ PYSR
     if [[ "$state" == "MERGED" || "$state" == "CLOSED" ]]; then
       vj="$(jq -n --argjson s "$st" '{done: true, reason: "terminal", pr_state: $s}')"
       printf '%s\n' "$vj"
-      record_done 10 "$vj"
+      record_done 10 "$vj" "$(jq -r .headRefOid <<<"$st")"
       exit 10
     fi
     decision="$(jq -r .reviewDecision <<<"$st")"
@@ -458,8 +458,13 @@ PYSR
     set +e
     vj="$(done_predicate "$decision" "$unresolved" "$cst" "$ccnt" "$truncated" "$SOLO")"; rc=$?
     set -e
+    current_head="$(gh pr view "$PR" --json headRefOid -q .headRefOid)"
+    if [[ "$current_head" != "$(jq -r .headRefOid <<<"$st")" ]]; then
+      rc=1
+      vj='{"done":false,"missing":["candidate_changed_during_review"]}'
+    fi
     printf '%s\n' "$vj"
-    record_done "$rc" "$vj"
+    record_done "$rc" "$vj" "$current_head"
     exit "$rc"
     ;;
 

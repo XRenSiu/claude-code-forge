@@ -33,6 +33,14 @@ flag 不等于 reject。预门过了但带 flag，意思是「机器判不了这
 
 ### 脊柱与状态（`skills/ai-dlc/scripts/`）
 
+验证接线见 [verification.md](../skills/ai-dlc/references/verification.md)。`aidlc_state.py verification` 提供 configure/status/run/prepare/submit/poll/check/task，submit/poll 的退出 3 表示等待；这些结果不授予交付权限。
+
+| 新接口 | 职责 | 退出语义 |
+|---|---|---|
+| `verification.py` | 状态机使用的适配模块：项目运行时、自检/评审绑定、HTTPS 客户端、阶段刷新、任务失效 | 模块，错误由 verification 子命令记录 |
+| `compile_acceptance.py` | 显式映射 done_when AC/义务到可信合同提案 | 0 可送审批 · 1 有未决项 · 2 无效输入 |
+| `verification-config.example.json` | 项目外的集成配置模板，默认 trusted=null | 模板本身不启用正式门禁 |
+
 | 脚本 | 干什么 | 关键退出码 |
 |---|---|---|
 | `aidlc_state.py` | 生命周期状态机：`init` / `show` / `set` / `advance` / `gate` / `card` / `size` / `plan` / `doctor` / `repo` / `note` / `notes` / `autonomy` / `fail` / `escape` / `acceptance` / `waive` / `report` / `check-clean` / `graph` / `loops` / `ledger` / `archive` / `sync-install`。**状态由它拥有，不手改**。`advance` 对着文件检：`implement` 跑 `lint_cards.py`，`pr` 读 final-state.json + `meets_done_when.py` 的报告，`archive` 读 release.notes 的 post-deploy 行与指着 merge.sha 的 tag，implement / acceptance / pr / merge 重跑锁校验；implement 还要 G2 裁决（cards 被跳过时也要）、l5 锁与已核验的红基线，pr 要红→绿证据与干净的锁历史，g3 / merge 要 pr-poll 的裁决文件，release / archive 要 merge.sha 已在 branch.base 里；`advance g2` 给契约校验带上 `--repo`（forbidden_paths 要盖住这个仓库真实的测试文件）。`doctor` 还报：会话里装的插件版本 vs 这份脚本 vs marketplace 登记（读 `CLAUDE_CONFIG_DIR`，缺省 `~/.claude`），而 `sync-install` 是那条发现的**修法**：把源码这一版复制进 plugin cache 并更新 `installed_plugins.json`，默认 dry-run、`--write` 才动、写完要开新会话（skill 列表在会话启动时定型）、宿主项目级 / 用户级里与插件同名或近名的 skill / command | 0 成功 · 1 前置不满足（`doctor` 的 1 = 有 error 级发现，它从不阻断门禁）· 2 用法 |

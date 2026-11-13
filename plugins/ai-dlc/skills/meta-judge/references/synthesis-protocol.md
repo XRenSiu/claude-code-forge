@@ -133,6 +133,8 @@ If the conflict is between a finding F1 (originator: role-A) and a rebuttal F2 (
 
 Apply rules-source to surviving (deduped, weighted) findings. For each rule:
 
+Retain QA decisions, execution coverage and maintenance evidence alongside findings. A missing product-defect finding does not clear a failed required check; the rules-source cannot waive the approved check plan through severity weighting.
+
 1. **Rule fires** (condition matches a finding) → record `triggered_by: <merged_finding_id>` plus the rule's effect.
 2. **Rule passes** (condition does not match) → record `passed: true` for the audit trail.
 3. **Rule cannot be evaluated** (would require code re-reading or external resource the rules source assumed) → record `cannot_evaluate: <reason>` and treat as `NEEDS_HUMAN` for that rule's domain.
@@ -142,6 +144,7 @@ After rule application, classify in strict order (first match wins):
 ### A. `NEEDS_HUMAN` (escape hatch)
 
 Triggered when any of:
+- Required-check coverage or current execution evidence is unknown, or a required review is incomplete/unmarked.
 - Any conflict from action 3 ended in "comparable evidence, cannot decide".
 - Any `pm-reviewer` finding has `verdict: requires_human_verification`.
 - Cross-vendor evaluators disagreed on a P0/P1 finding (independent of arbitration result).
@@ -152,6 +155,7 @@ Skill output ends with state `NEEDS_HUMAN`; the user (or upstream orchestrator l
 ### B. `BLOCK_MERGE`
 
 Triggered when:
+- Any check required by the approved plan has a known non-PASS result, including maintenance failures, errors, timeouts and skips. Preserve its check ID and evidence; route environment/checker repairs to their owners rather than inventing a product defect.
 - Any rule with `severity: blocking` fires.
 - Aggregate severity policy violated (e.g. rule says "no P0 findings"; a P0 survived).
 - A non-blocking rule fires with a context flag (e.g. `--context` says `is_hotfix: false` AND a "minor refactor risk" rule fires).

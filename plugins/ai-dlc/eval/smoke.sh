@@ -28,6 +28,9 @@
 set -u
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 S="$ROOT/skills"
+# Integration fixtures use the actual neighboring plugins even when --mutate copies AI-DLC.
+export AIDLC_TEST_HARNESS_SOURCE="${AIDLC_TEST_HARNESS_SOURCE:-$ROOT/../project-harness/skills/bootstrap-project-harness}"
+export AIDLC_TEST_ACCEPTANCE_SOURCE="${AIDLC_TEST_ACCEPTANCE_SOURCE:-$ROOT/../trusted-acceptance/skills/accept-change/scripts}"
 TMP="$(mktemp -d)"
 ONLY=""; MUT_FILE=""; MUT_OLD=""; MUT_NEW=""
 while [[ $# -gt 0 ]]; do
@@ -46,6 +49,15 @@ expect() { # expect <label> <want_exit> <cmd...>
   if [[ "$rc" == "$want" ]]; then pass=$((pass+1)); echo "PASS  [$rc] $label"; else fail=$((fail+1)); echo "FAIL  [got $rc want $want] $label"; echo "$out" | head -20 | sed 's/^/      /'; fi
 }
 py() { python3 "$@"; }
+
+# Public adapters are tested with real Git, the generated Harness runtime and local HTTPS.
+# Full integration needs Node 22+ and openssl in addition to the legacy Python/git/jq tools.
+if [[ -z "$MUT_FILE" ]]; then
+  expect "verification integration suite" 0 py "$ROOT/eval/test_verification.py"
+  expect "verification rejects incomplete local review" 0 py "$ROOT/eval/test_verification.py" VerificationTests.test_minimal_done_and_bad_completeness_are_rejected
+  expect "verification binds PR review head" 0 py "$ROOT/eval/test_verification.py" VerificationTests.test_review_verdict_is_bound_to_current_head
+  expect "verification force gate" 0 py "$ROOT/eval/test_verification.py" VerificationTests.test_sizing_and_force_cannot_waive_configured_gate
+fi
 
 if [[ -n "$MUT_FILE" ]]; then
   # --- mutation self-check (I-80): does the suite kill this mutant? ---------------------
@@ -482,6 +494,8 @@ echo "# amended" >> done_when.yaml && echo "proposal" > change-proposal-001.md &
 py "$LDW" sign --signer-kind human --by human done_when.yaml >/dev/null
 expect "pending failure report blocks merge too" 0 bash -c "python3 '$SS' fail --slug hist --signal hidden_variant_fail --evidence 'holdout 3/10' >/dev/null; python3 '$SS' advance --slug hist merge | grep -q 'pending failure report'"
 echo "# fr" > fr.md; py "$SS" report --slug hist --path fr.md >/dev/null
+expect "lock history: a changed candidate also invalidates its prior PR review" 0 bash -c "python3 '$SS' advance --slug hist merge | grep -q 'stale or missing head_sha'"
+bash "$PPL" predicate 1 APPROVED 0 green 1 false >/dev/null
 expect "lock history: the same move WITH its change proposal in the same commit passes (twin)" 0 py "$SS" advance --slug hist merge
 popd >/dev/null
 

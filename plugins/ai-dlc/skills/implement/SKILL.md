@@ -14,6 +14,11 @@ user-invocable: true
 
 # implement — 一张卡，一个看不见评审的实现者
 
+## 项目检查接入
+
+AI-DLC 已配置 Harness 时，复用项目原生检查与 `verification run` 产生自检证据，按 [验证接线](../ai-dlc/references/verification.md) 保留未运行项与版本绑定。bootstrap 用于项目接入，evolve 只处理经过复现的防线缺口。实现者仍按卡和冻结标准修复；收到环境/检查器故障时交对应维护者，不擅自修改本轮验收预期。代码或依赖变化后旧结果失效，最终候选另行送验。
+
+
 产物是限定在卡白名单内的 diff、按 `/commit` 规则落地的 commit（footer `Card: CARD-xx`）、以及状态机里
 该卡的 `done` 状态。本文件写：实现者能看到什么、什么算做完、原语与门、失败怎么走。怎么写代码是引擎的份额。
 

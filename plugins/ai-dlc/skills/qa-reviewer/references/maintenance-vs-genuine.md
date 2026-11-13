@@ -15,7 +15,7 @@ Borrowed from Playwright Healer Agent. Every test failure goes through this clas
 
 | Category | What it means | What to do |
 |---|---|---|
-| `maintenance` | The test rotted (selector / fixture / timing). Impl is fine. | Surface in `maintenance_issues:`. Optionally auto-fix if `--auto-fix-maintenance`. Not a finding. |
+| `maintenance` | The test rotted (selector / fixture / timing). Impl is fine. | Surface in `maintenance_issues:`. Optionally auto-fix if `--auto-fix-maintenance`. It is not by itself a product-defect finding; the required check remains unverified and blocks acceptance until rerun successfully. |
 | `genuine` | The impl is wrong (assertion captures real behavior; impl violates it). | Becomes a finding in `qa_report.findings:`. Severity from runner. |
 | `needs_human` | Cannot decide with confidence. | Becomes a finding tagged `classification_uncertain: true`. Surface the specific question for human input. |
 
@@ -50,6 +50,8 @@ Likely **genuine** if:
 - The runner's diff shows a structural mismatch (extra field, missing field, wrong type).
 
 Classifier should diff `expected` vs `actual` and ask: "is the difference due to time / randomness / environment, or due to logic?" Time/random/env = maintenance, logic = genuine.
+
+A later passing retry does not erase earlier attempts. Preserve the history and require the project's approved flake policy; a maintenance label does not authorize weakening the current assertion.
 
 ### Timing / flake failure (E2E, integration)
 

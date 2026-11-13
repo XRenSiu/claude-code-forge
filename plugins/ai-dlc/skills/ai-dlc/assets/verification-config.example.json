@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "project_id": "example-project",
+  "artifacts_dir": "/tmp/aidlc-verification-artifacts",
+  "harness": {
+    "manifest": ".harness/project.json",
+    "runner": "scripts/project-verify.mjs",
+    "node": "node",
+    "environment_keys": ["CI"],
+    "timeout_seconds": 900,
+    "required_stages": ["pr", "merge"]
+  },
+  "trusted": null
+}

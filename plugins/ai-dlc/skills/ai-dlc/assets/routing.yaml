@@ -1,3 +1,4 @@
+# verification 的环境/检查器/未决/obsolete 结果走独立失败域，不能作为 card_test_fail 消耗代码预算；仅 needs_repair 进入下列实现路由。
 # routing.yaml — X2 回流路由表（数据，不是 prompt 里的一段话）
 #
 # 谁读它：scripts/aidlc_state.py fail --signal <signal>  → 输出路由决定 + 更新分层计数。

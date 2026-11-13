@@ -21,6 +21,11 @@ disable-model-invocation: true
 
 # review-loop — 提 PR 之后，跟进 review 直到收敛
 
+## 评审版本与可信门禁
+
+评审出口绑定实际 PR head；消费端与当前检出比较，变化后重新评审。`none_configured` 只表示没有配置普通 PR checks，不满足已配置的可信验收要求。AI-DLC 在交付前按 [验证接线](../ai-dlc/references/verification.md) 重新取对应候选和阶段的结果；评审完成与允许交付分别判断。
+
+
 本文件只写引擎给不出的东西——终止绑定、预算、安全边界、判据、依赖事实、原语契约。步骤怎么
 编排是你（引擎）自己的份额。
 

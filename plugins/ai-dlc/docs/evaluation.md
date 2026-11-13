@@ -16,6 +16,8 @@
 
 ## L1：为什么冒烟必须配变异证明
 
+Project Harness / Trusted Acceptance 接线另有 `python3 eval/test_verification.py -v`：使用实际生成的项目运行时、临时 Git 仓库和本机 HTTPS 服务验证状态迁移、产物绑定、幂等、失效与拒绝路径。测试需要 Node 22+、OpenSSL、Python 与 PyYAML；完整 smoke 会调用它。HTTPS 服务是测试替身，不证明生产审批、权限隔离或交付授权。独立前向使用也应以相同边界报告，不能升级 `static_only` 为生产验收。
+
 一条永远绿的期望比没有期望更糟。它宣称了一份没人有的覆盖。所以每条新增期望都要配一条孪生：
 把被测的东西故意改坏，确认它真的变红。
 

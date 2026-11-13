@@ -1,5 +1,7 @@
 # AI-DLC (v1.2.1)
 
+当前版本支持 Project Harness 与 Trusted Acceptance 的可选接入：自检、评审、正式验收分开记录，候选变化使旧结果失效，交付阶段重新查询可信入口。配置与迁移见 [验证接线](skills/ai-dlc/references/verification.md)。本地适配器不部署控制服务或授予发布权限。
+
 > **2026-09-08 改名**：本插件原名 `sdlc`，现名 **AI-DLC**——目录 `plugins/ai-dlc/`，斜杠命令 `/ai-dlc`，
 > 运行时目录 `.aidlc/`（旧的 `.sdlc/` 仍可读，见 `aidlc_state.py` 的 `resolve_root`），状态脚本 `aidlc_state.py`。
 > 归档目录与历史报告**保持原样未改写**，理由见 [`dogfood/RENAME-NOTE.md`](dogfood/RENAME-NOTE.md)。

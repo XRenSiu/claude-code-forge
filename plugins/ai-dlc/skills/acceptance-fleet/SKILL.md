@@ -29,6 +29,13 @@ user-invocable: true
 
 # acceptance-fleet — Step 5-6 orchestrator (v1.0+ pure dispatch)
 
+## Verdict authority
+
+Fleet DONE means the local review process converged for its recorded inputs. It is not trusted acceptance or delivery authorization. Always emit the explicit `unevaluated_reviews` array, including when empty. When composed with AI-DLC, record the result through `aidlc_state.py acceptance`; use [the verification integration](../ai-dlc/references/verification.md) for candidate binding, Harness evidence and remote results. Return reproducible repair evidence to the orchestrator; do not start a second autonomous repair loop. Context/model separation reduces review bias but does not establish a permissions boundary.
+
+For an enrolled task, capture `verification status` → `current_source` before dispatch, review that fixed candidate, and emit the captured object as `input_binding` in final-state.json. Keep review artifacts outside the product tree. If the candidate changes during review, rerun against the new candidate; never relabel an old verdict with a fresh binding.
+
+
 You are invoked to verify an implementation against a `done_when.yaml` contract by dispatching the 6 standalone review skills, synthesizing their findings via `/meta-judge`, and decoding the verdict into a four-state ratchet decision (DONE / FIX / SPEC_DRIFT / GAMING_RISK).
 
 **Say once at the start, then start working:**

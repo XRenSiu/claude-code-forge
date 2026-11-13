@@ -1,3 +1,4 @@
+# verification 是跨阶段前置条件：项目自检、Fleet 评审、可信阶段结论独立；阶段图不承载外部签发权限。
 # graph.yaml — AI-DLC 的执行图（声明，不是运行时）
 #
 # 谁读它：scripts/verify_graph.py（lint 五条）· scripts/aidlc_state.py graph next|render|check

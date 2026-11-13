@@ -43,6 +43,9 @@ Usage:
                         # (after the runtime dir is gone: `--root specs --slug <slug>` works on the archive itself)
   aidlc_state.py acceptance [--slug S] --result final-state.json [--meets meets_done_when.yaml]
                         # records the fleet verdict; meets_done_when comes ONLY from meets_done_when.py's report
+  aidlc_state.py verification configure|status|run|prepare|submit|poll|check|task [--slug S]
+                        # project self-check, local review and remote acceptance remain separate;
+                        # see references/verification.md for the operator-owned config and protocol
   aidlc_state.py waive   [--slug S] --signal SIG --reason R --by WHO
                         [--signer-kind human|delegated_agent] [--authorization TEXT]
                         [--fingerprint FP] [--card CARD-xx] [--layer L] [--stage S] [--scope TEXT] [--ref type:target ...]
@@ -105,6 +108,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import repo_assets  # noqa: E402  —— X1 仓库级制品的发现与 git 核对（同目录）
+import verification  # noqa: E402  —— self-check / review / trusted acceptance are distinct
 
 ROOT_DEFAULT = ".aidlc"
 LEGACY_ROOT = ".sdlc"   # 改名前的运行时目录；见 resolve_root
@@ -227,11 +231,12 @@ def load(root, slug):
     if not os.path.isfile(sp):
         die(f"state not found: {sp}")
     with open(sp, encoding="utf-8") as f:
-        return json.load(f)
+        return verification.migrate(json.load(f))
 
 
 def save(root, slug, st):
     _, sp, _ = paths(root, slug)
+    verification.migrate(st)
     st["updated_at"] = now()
     atomic_write(sp, json.dumps(st, ensure_ascii=False, indent=2) + "\n")
 
@@ -575,13 +580,18 @@ def review_evidence_unmet(st, root):
     if not os.path.isfile(p):
         return [f"review.done=done needs the review ring's own verdict file {p} (written by `pr-poll.sh done <pr>`; offline: `pr-poll.sh predicate …`)"]
     try:
-        d = json.load(open(p, encoding="utf-8"))
+        d = verification.read_json(p)
     except Exception as e:
         return [f"{p} is not JSON ({e})"]
     if d.get("exit") not in (0, 10):
         return [f"{p} records exit {d.get('exit')} (missing: {d.get('missing')}) — the review ring did not converge"]
     if str(d.get("pr")) != str(n):
         return [f"{p} is about PR {d.get('pr')}, state says {n}"]
+    ok, head = git_ok("rev-parse", "--verify", "HEAD")
+    if not ok or not d.get("head_sha") or d["head_sha"] != head:
+        return [f"{p} is stale or missing head_sha — rerun review for the current candidate"]
+    if d.get("pr_state", {}).get("state") == "CLOSED":
+        return [f"{p} records a closed, unmerged PR"]
     return []
 
 
@@ -709,10 +719,13 @@ def evaluation_unmet(st, path):
     if not os.path.isfile(path):
         return [f"acceptance.evaluation_result {path} is not a file (final-state.json)"]
     try:
-        with open(path, encoding="utf-8") as f:
-            fs = json.load(f)
+        fs = verification.read_json(path)
     except Exception as e:
         return [f"acceptance.evaluation_result {path} is not JSON ({e})"]
+    try:
+        verification.review_issues(fs)
+    except ValueError as e:
+        return [f"invalid local review result: {e}"]
     out = []
     sd = fs.get("state_decision") or fs.get("state")
     if sd == "NEEDS_HUMAN":
@@ -914,6 +927,7 @@ def prereqs(st, target, skips=None, root=ROOT_DEFAULT):
             unmet.extend(review_evidence_unmet(st, root))
             unmet.extend(tier_skip_review_unmet(st))
         unmet.extend(pending_unmet(st))
+        unmet.extend(review_evidence_unmet(st, root))  # G3 cannot make an old review current
         unmet.extend(lock_unmet(st))
         unmet.extend(lock_history_unmet(st))
     elif target == "release":
@@ -953,7 +967,7 @@ def cmd_init(a):
         die(f"already initialised: {sp} (use show / advance)", 1)
     os.makedirs(d, exist_ok=True)
     st = {
-        "version": 1, "slug": a.slug, "title": a.title, "track": a.track or "unset",
+        "version": 2, "slug": a.slug, "title": a.title, "track": a.track or "unset",
         "stage": "intake", "created_at": now(), "updated_at": now(),
         "gates": {"g1": {"required": a.track == "psl", "verdict": "pending"},
                   "g2": {"required": True, "verdict": "pending"},
@@ -983,6 +997,12 @@ def cmd_init(a):
         st["learnings"] = {"path": lp, "sha256": hashlib.sha256(body.encode("utf-8")).hexdigest(),
                            "rules": len([l for l in body.splitlines() if l.startswith("- [n-")]),
                            "compiled_at": now()}
+    verification.migrate(st)
+    if a.verification_config:
+        try:
+            verification.configure(st, a.verification_config)
+        except (OSError, ValueError, KeyError) as e:
+            die(str(e), 1)
     save(a.root, a.slug, st)
     ledger_append(a.root, a.slug, "init", f"title={a.title} track={st['track']}"
                   + (f" | learnings compiled: {st['learnings']['rules']} rules from {lp}" if st.get("learnings") else ""),
@@ -1046,6 +1066,18 @@ def cmd_advance(a):
     st = load(a.root, a.slug)
     if a.stage not in ORDER:
         die(f"unknown stage {a.stage}; stages: {ORDER}", 1)
+    integration_unmet = verification.guard(st, a.root, a.stage)
+    if integration_unmet:
+        save(a.root, a.slug, st)
+        verification_stage = "acceptance" if a.stage == "pr" else a.stage
+        failure_route = st["verification"]["trusted"]["runs"].get(verification_stage, {}).get("route", verification.route("blocked"))
+        if failure_route["domain"] == "none":
+            failure_route = verification.route("blocked")
+        ledger_append(a.root, a.slug, "verification_blocked", "; ".join(integration_unmet), stage=st["stage"],
+                      extra={"failure_domain": failure_route["domain"]})
+        print(json.dumps({"ok": False, "stage": st["stage"], "target": a.stage,
+                          "unmet": integration_unmet, "route": failure_route, "force_allowed": False}, ensure_ascii=False, indent=2))
+        sys.exit(1)
     skips = effective_skips(st)
     jumped = jumped_stages(st, a.stage, skips)
     problems = []
@@ -1828,6 +1860,14 @@ def cmd_doctor(a):
                                  "有意不自动安装）。装上之后，卡还 doing 且工作区脏、或升级后没写失败报告，就结束不了 session")
     st = state_or_empty(a.root, a.slug)
     if st:
+        try:
+            verification.migrate(st)
+            integration = verification.configuration(st)
+            add("info", "verification/project", "not_configured" if integration is None else
+                "self_check=" + st["verification"]["self_check"]["status"] + "; static wiring only; use verification status/run")
+            add("info", "verification/trusted", st["verification"]["trusted"]["status"] + "; cached state, not a live control check")
+        except (OSError, ValueError, KeyError) as e:
+            add("error", "verification/config", str(e))
         if get_path(st, "pending.failure_report"):
             add("warn", "pending failure report", "有一次升级还没写失败报告（`report --path …`）")
         if get_path(st, "intake.size_source") in ("default", None):
@@ -2509,11 +2549,72 @@ def cmd_acceptance(a):
         set_path(st, "acceptance.meets_done_when_report", a.meets)
         refs.append({"type": "references", "target": a.meets})
         note += f" · meets_done_when={v}"
+    try:
+        verification.record_review(st, a.root, a.result)
+    except (OSError, ValueError, KeyError, TypeError, subprocess.SubprocessError) as e:
+        die(str(e), 1)
     save(a.root, a.slug, st)
     ledger_append(a.root, a.slug, "acceptance", note, stage=st["stage"], decision=str(fs.get("state_decision") or fs.get("state") or ""), refs=refs)
     print(json.dumps({"ok": True, "evaluation_result": a.result, "state_decision": fs.get("state_decision") or fs.get("state"),
                       "meets_done_when": get_path(st, "acceptance.meets_done_when"),
                       "meets_done_when_verdict": get_path(st, "acceptance.meets_done_when_verdict")}, ensure_ascii=False))
+
+
+def cmd_verification(a):
+    """Versioned adapters; only the trusted client can populate remote result caches."""
+    st = load(a.root, a.slug)
+    result, code = {}, 0
+    try:
+        if a.action == "configure":
+            verification.require(a.config, "--config is required")
+            verification.configure(st, a.config)
+            result = st["verification"]
+        elif a.action == "run":
+            result = verification.run_harness(st, a.root)
+            code = 0 if result["status"] == "passed" else 1 if result["status"] == "failed" else 2
+        elif a.action == "prepare":
+            verification.require(a.request and a.contract and a.proposal and a.artifact, "--request, --contract, --proposal and --artifact are required")
+            result = verification.prepare(st, a.root, a.request, a.contract, a.proposal, a.artifact)
+        elif a.action in ("submit", "poll"):
+            verification.require(a.stage in verification.STAGES, "--stage acceptance|merge|release is required")
+            result = verification.refresh(st, a.root, a.stage, submit=a.action == "submit")
+            code = 0 if result["status"] == "accepted" else 3 if result["status"] == "pending" else 2
+        elif a.action == "check":
+            verification.require(a.stage, "--stage is required")
+            target = "pr" if a.stage == "acceptance" else a.stage
+            issues = verification.guard(st, a.root, target)
+            config = verification.configuration(st)
+            required = verification.required_stage(config, target)
+            cached = st["verification"]["trusted"]["runs"].get(required, {})
+            result = {"unmet": issues, "configured": config is not None, "trusted_required": required is not None,
+                      "trusted_status": cached.get("status", "not_requested" if required else "not_configured"), "authority": "local_precondition",
+                      "delivery_authorization": "not_granted"}
+            code = 1 if issues else 0
+        elif a.action == "task":
+            verification.require(a.task_status and a.reason, "--task-status and --reason are required")
+            revision = a.revision if a.revision is not None else st["task"]["revision"]
+            result = verification.task_update(st, a.task_status, revision, a.reason)
+        else:
+            config = verification.configuration(st)
+            result = {"task": st["task"], "verification": st["verification"],
+                      "configured": config is not None, "remote_refreshed": False,
+                      "current_source": verification.source(st, a.root) if config is not None else None,
+                      "local_unmet": verification.local_issues(st, a.root, "pr"), "delivery_authorization": "not_granted"}
+    except (OSError, ValueError, KeyError, TypeError, subprocess.SubprocessError) as e:
+        result, code = {"error": str(e), "delivery_authorization": "not_granted"}, 2
+        if a.action in ("submit", "poll"):
+            record = st["verification"]["trusted"]["runs"].get(a.stage)
+            if record is not None:
+                record["last_error"] = str(e)
+                result["route"] = record.get("route", verification.route("blocked"))
+    if a.action != "status":
+        save(a.root, a.slug, st)
+        ledger_append(a.root, a.slug, "verification_" + a.action,
+                      result.get("error") or result.get("decision") or result.get("status") or a.action,
+                      stage=st["stage"], decision=result.get("decision", ""),
+                      extra={"failure_domain": result.get("route", {}).get("domain", "none")})
+    print(json.dumps({"ok": code == 0, **result}, ensure_ascii=False, indent=2))
+    sys.exit(code)
 
 
 def cmd_ledger(a):
@@ -2567,6 +2668,8 @@ def main():
     P = lambda name: sub.add_parser(name, parents=[common])
 
     s = P("init"); s.add_argument("--title", required=True); s.add_argument("--track", choices=["psl", "task"])
+    s.add_argument("--verification-config", default=os.environ.get("AIDLC_VERIFICATION_CONFIG"),
+                   help="operator-owned integration config outside the candidate; optional for legacy local workflows")
     s.add_argument("--scope", help="限界上下文的制品目录（如 plugins/ai-dlc，或横跨多个代码目录时的 docs/ontology/copilot）。"
                                    "记进 world.scope，之后每次发现都带上它——一个 bounded context 一份本体；不必是代码目录")
     P("show")
@@ -2631,6 +2734,12 @@ def main():
     s.add_argument("--found-via", dest="found_via"); s.add_argument("--archive"); s.add_argument("--ref", action="append")
     s = P("acceptance"); s.add_argument("--result", required=True, help="final-state.json")
     s.add_argument("--meets", help="meets_done_when.py 的报告（verdict + done_when_sha256）")
+    s = P("verification")
+    s.add_argument("action", choices=["configure", "status", "run", "prepare", "submit", "poll", "check", "task"])
+    s.add_argument("--config"); s.add_argument("--request"); s.add_argument("--contract"); s.add_argument("--proposal"); s.add_argument("--artifact")
+    s.add_argument("--stage", choices=["pr", "acceptance", "merge", "release"])
+    s.add_argument("--task-status", choices=["active", "cancelled", "superseded"])
+    s.add_argument("--revision", type=int); s.add_argument("--reason")
     s = P("report"); s.add_argument("--path", required=True); s.add_argument("--by")
     s = P("check-clean"); s.add_argument("--as-hook", action="store_true")
     s = P("graph"); s.add_argument("action", choices=["check", "next", "render"]); s.add_argument("--graph"); s.add_argument("--full", action="store_true")
@@ -2640,6 +2749,15 @@ def main():
     s = P("archive"); s.add_argument("--to", required=True)
 
     a = p.parse_args()
+    readonly = {"show", "doctor", "repo", "graph", "loops", "notes", "check-clean", "sync-install"}
+    if a.cmd in readonly or (a.cmd == "verification" and a.action == "status"):
+        return dispatch(a)
+    lock_root = a.root if a.cmd == "init" else resolve_root(a.root)[0]
+    with verification.writer_lock(lock_root):
+        return dispatch(a)
+
+
+def dispatch(a):
     if a.cmd == "init":
         if not a.slug:
             die("init requires --slug")
@@ -2667,7 +2785,7 @@ def main():
             "size": cmd_size, "plan": cmd_plan, "doctor": cmd_doctor, "repo": cmd_repo,
             "note": cmd_note, "notes": cmd_notes, "autonomy": cmd_autonomy,
             "fail": cmd_fail, "waive": cmd_waive, "report": cmd_report, "check-clean": cmd_check_clean,
-            "escape": cmd_escape, "acceptance": cmd_acceptance,
+            "escape": cmd_escape, "acceptance": cmd_acceptance, "verification": cmd_verification,
             "graph": cmd_graph, "ledger": cmd_ledger, "archive": cmd_archive,
             "sync-install": cmd_sync_install}[a.cmd](a)
 

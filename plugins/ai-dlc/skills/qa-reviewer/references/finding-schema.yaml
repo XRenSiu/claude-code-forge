@@ -109,7 +109,8 @@ qa_report:
       proposed_fix: <text | null>            # one-line, only if obvious
       tags: [<string>, ...]                  # OPTIONAL — e.g. ["regression", "race-condition"]
 
-  # ====== MAINTENANCE ISSUES (non-blocking) ======
+  # ====== MAINTENANCE ISSUES (diagnostic category; required non-PASS still blocks) ======
+  # Record affected required checks in decision_reasons and return NO-GO until verified.
   maintenance_issues:                        # classifier-maintenance failures; surfaced but not findings
     - test_file: <path>
       test_line: <int>

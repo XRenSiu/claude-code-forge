@@ -14,6 +14,11 @@ user-invocable: true
 
 # release — 合入不是终点，交付才是
 
+## 分阶段验收
+
+已接入 AI-DLC 时，发布前执行 `aidlc_state.py verification check --stage release`，并遵循 [验证接线](../ai-dlc/references/verification.md)。merge 的通过不能替代 release；产物或环境变化需要新绑定。该检查是本地前置条件，实际发布系统仍须原子核对当前任务、产物与授权。入口缺失或刷新失败时不得宣称正式验收通过。
+
+
 产物：`CHANGELOG.md` 新条目、git tag `vX.Y.Z`、`releases/vX.Y.Z.md`（发布说明：变更 / 验证 / 回滚 / 逃逸缺陷入口）、
 部署后验证记录。本文件写：发布在流水线里是什么、什么算交付完成、原语与出口、不可逆动作前的门。
 用什么部署系统是你的份额（或仓库的事）。

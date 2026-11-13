@@ -1,3 +1,4 @@
+# 正式验收可由 PR 事件启动：先建草稿 PR，默认在 merge/release 刷新对应结果；轮询复用 request/run，不新建修复循环。
 # triggers.yaml — 每个环由什么触发、怎么绑到 Claude Code 原生原语
 #
 # 为什么存在：AI-DLC 的环原来只有一种触发——pr-poll.sh 的 bash sleep。Claude Code 现在有四个原生原语：

@@ -17,7 +17,10 @@
   ],
   "properties": {
     "version": {
-      "const": 1
+      "enum": [
+        1,
+        2
+      ]
     },
     "slug": {
       "type": "string",
@@ -652,6 +655,169 @@
           }
         }
       }
+    },
+    "task": {
+      "type": "object",
+      "required": [
+        "id",
+        "revision",
+        "status"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "status": {
+          "enum": [
+            "active",
+            "cancelled",
+            "superseded"
+          ]
+        },
+        "reason": {
+          "type": "string"
+        }
+      }
+    },
+    "verification": {
+      "type": "object",
+      "required": [
+        "self_check",
+        "review",
+        "trusted"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "config": {
+          "type": "object",
+          "required": [
+            "path",
+            "digest",
+            "client"
+          ],
+          "properties": {
+            "path": {
+              "type": "string"
+            },
+            "digest": {
+              "type": "string",
+              "pattern": "^sha256:[a-f0-9]{64}$"
+            },
+            "client": {
+              "type": [
+                "object",
+                "null"
+              ]
+            }
+          }
+        },
+        "self_check": {
+          "type": "object",
+          "required": [
+            "status"
+          ],
+          "properties": {
+            "status": {
+              "enum": [
+                "not_configured",
+                "not_run",
+                "incomplete",
+                "failed",
+                "passed",
+                "stale"
+              ]
+            },
+            "authority": {
+              "const": "project_self_check"
+            }
+          }
+        },
+        "review": {
+          "type": "object",
+          "required": [
+            "status"
+          ],
+          "properties": {
+            "status": {
+              "enum": [
+                "not_run",
+                "legacy_local",
+                "needs_work",
+                "complete",
+                "stale"
+              ]
+            },
+            "authority": {
+              "const": "local_review"
+            }
+          }
+        },
+        "trusted": {
+          "type": "object",
+          "required": [
+            "status",
+            "runs"
+          ],
+          "properties": {
+            "status": {
+              "enum": [
+                "not_configured",
+                "not_requested",
+                "requested"
+              ]
+            },
+            "runs": {
+              "type": "object",
+              "propertyNames": {
+                "enum": [
+                  "acceptance",
+                  "merge",
+                  "release"
+                ]
+              },
+              "additionalProperties": {
+                "type": "object",
+                "required": [
+                  "status",
+                  "authority",
+                  "request_ref",
+                  "request_digest",
+                  "source",
+                  "artifact_ref",
+                  "required_check_ids"
+                ],
+                "properties": {
+                  "status": {
+                    "enum": [
+                      "prepared",
+                      "pending",
+                      "blocked",
+                      "accepted",
+                      "obsolete",
+                      "stale"
+                    ]
+                  },
+                  "authority": {
+                    "enum": [
+                      "not_granted",
+                      "control_endpoint"
+                    ]
+                  },
+                  "delivery_authorization": {
+                    "const": "not_granted"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "$defs": {
@@ -698,5 +864,22 @@
         }
       }
     }
-  }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "version": {
+            "const": 2
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "task",
+          "verification"
+        ]
+      }
+    }
+  ]
 }

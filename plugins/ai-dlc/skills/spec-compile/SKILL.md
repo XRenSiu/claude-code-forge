@@ -24,6 +24,11 @@ user-invocable: true
 
 # spec-compile
 
+## 可信验收映射
+
+项目接入可信验收时，按 [验证接线](../ai-dlc/references/verification.md) 用 `compile_acceptance.py` 生成 done_when → 检查覆盖与合同提案。保留阈值、结构约束、回归底线和人判项；缺能力进入未决项。提案不带审批权，正式检查由控制端独立批准、固定和校准。
+
+
 Compile any spec — a 常驻不变量 invariant or a 本次验收 `done_when` clause — into a **standard a gate can
 run**. One compiler, three production lines, **routed by decidability, not by level**. This
 skill describes the decidability ladder the routing rides on, what each line emits, the

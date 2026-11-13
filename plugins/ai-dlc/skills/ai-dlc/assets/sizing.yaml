@@ -1,3 +1,4 @@
+# 本网格只裁剪本地卡/Fleet 成本；verification 的项目必跑与可信阶段要求独立执行，S 与 --force 均不豁免。
 # sizing.yaml — 体量分档与阶段网格（数据，不是 prompt 里的一段话）
 #
 # 谁读它：scripts/aidlc_state.py（size 推导档位 · plan 算有效阶段 · next_allowed / prereqs 按网格放行）

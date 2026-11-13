@@ -30,6 +30,11 @@ user-invocable: true
 
 # meta-judge — synthesize, do not re-review
 
+## Verdict authority
+
+PASS is a synthesis of local review evidence. It cannot grant formal acceptance, merge or release authority. A required check that failed, timed out or was not evaluated remains blocking even if QA classifies its cause as maintenance. In AI-DLC, the orchestrator consumes this review separately from project self-checks and the control service result; see [verification integration](../ai-dlc/references/verification.md). Keep human obligations explicit; local signer text is not authenticated external approval.
+
+
 You are invoked to consolidate multiple review outputs into a single verdict. You **do not** re-review the code. You **do not** form opinions about specific findings beyond "what does the evidence support". You **do** dedupe, weight, arbitrate, classify — those four actions, full stop.
 
 **Say once at the start, then start working:**
@@ -168,8 +173,8 @@ Apply the four-state classifier (see `references/synthesis-protocol.md` § "Acti
 
 | State | Condition |
 |---|---|
-| `NEEDS_HUMAN` | Any review whose M0 `completion:` is `incomplete` or `unmarked` (or a `review-completeness.yaml` verdict that is not `pass`) OR any unresolved arbitration OR `pm-reviewer` `requires_human_verification` OR cross-vendor disagreement on P0/P1 with comparable evidence OR rule cannot be evaluated |
-| `BLOCK_MERGE` | Any rule fires with severity `blocking` OR aggregate severity policy violated |
+| `NEEDS_HUMAN` | Any review whose M0 `completion:` is `incomplete` or `unmarked` (or a `review-completeness.yaml` verdict that is not `pass`) OR required-check coverage or current evidence is unknown OR any unresolved arbitration OR `pm-reviewer` `requires_human_verification` OR cross-vendor disagreement on P0/P1 with comparable evidence OR rule cannot be evaluated |
+| `BLOCK_MERGE` | Any required check has a known non-PASS result (including maintenance failures) OR any rule fires with severity `blocking` OR aggregate severity policy violated |
 | `PASS` | All rules pass, no blocking findings, no unresolved NEEDS_HUMAN |
 
 There is no fourth state. The four-state ratchet (DONE/FIX/SPEC_DRIFT/GAMING_RISK) is an `/acceptance-fleet` concept, not a meta-judge concept. Meta-judge emits three states; `/acceptance-fleet` *consumes* meta-judge output and maps it to its own four-state ratchet using additional signals (`gaming_risk_score`, spec-drift-detector trajectory, etc.).

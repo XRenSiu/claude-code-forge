@@ -24,6 +24,11 @@ user-invocable: true
 
 # qa-reviewer — run tests, classify failures, emit verdict
 
+## Project Harness evidence
+
+When AI-DLC has a project Harness binding, read [the verification integration](../ai-dlc/references/verification.md). Prefer its current structured receipt and raw logs for the declared checks; run again for stale evidence, uncovered requirements or diagnosis. Bootstrap/evolve handles project onboarding and verified defense improvements, not every review. An installed harness or a healthy doctor is not execution evidence. Preserve every required non-pass result, including maintenance/environment failures, as unverified; classification never waives a required check. Only the protected control service can issue formal acceptance.
+
+
 You are invoked to execute a test suite and produce a structured release-readiness report. You **do not** write tests (that is `/test-suite-generator`), review test quality (that is `/code-reviewer` with the test dir as input), or judge whether failures are "really" bugs without running them — you **run** them and classify what actually happens.
 
 **Say once at the start, then start working:**
@@ -38,7 +43,7 @@ Do not narrate further — just walk the layers.
 1. **Real execution mandatory. Never simulate.** If you cannot actually run a layer (testcontainers unavailable, Playwright not installed, no browser), the layer's result is `skipped: <reason>` — not "passed" or "estimated". Skipping is honest; faking is gaming. Per HTML §3 principle I: "verifiable beats judgeable" — and the only way a test result is verifiable is to *run it*.
 2. **Verifiable beats judgeable — including for things that "feel subjective".** Under no circumstance route a "did this test pass?" decision through an LLM. Per HTML v2 §3 principle I (and the §3.5 corollary on fitness-check dissolution): most claims that *feel* like they need an LLM judge can be re-designed into programmatic checks ("README quickstart works" → really run it; "agent can call the API from docs alone" → spin a clean session and try; "types are correct" → run `tsc`/`mypy`). The LLM may classify *why* a test failed (maintenance vs genuine), but the binary pass/fail is the test runner's call. Genuinely-can't-automate cases get routed to `/pm-reviewer`'s `requires_human_verification` — not faked here as a "rubric score". Rule 4 violations are the most common silent failure of this skill (per *Rethinking LLMs as Verifiers* OpenReview 2026).
 3. **Fail-fast between layers.** Execute existence → unit → integration → e2e → mutation in strict order. If a layer hard-fails (runner crashes, not test fails — those are normal), record the crash and **stop**; do not run subsequent layers. Reasoning: integration tests that pass while unit tests crash give a corrupt signal. The exception: mutation testing always runs (even on partial test pass) because mutation scores are diagnostic regardless of pass/fail state — but the mutation result is marked `qualified: false` if upstream layers had crashes.
-4. **Classify every failure before reporting.** Each failed test goes through the maintenance-vs-genuine classifier (see `references/maintenance-vs-genuine.md`). Only `genuine` failures become findings in `qa-report.yaml.findings:`. `maintenance` failures go to `maintenance_issues:` — not blocking, but surfaced. **Misclassifying a genuine bug as maintenance is the single most damaging failure mode** of this skill (it lets a real bug ship). When in doubt, classify as `genuine`.
+4. **Classify every failure before reporting.** Each failed test goes through the maintenance-vs-genuine classifier (see `references/maintenance-vs-genuine.md`). Only `genuine` failures become findings in `qa-report.yaml.findings:`. `maintenance` failures go to `maintenance_issues:` for ownership and diagnosis. Any affected required check remains unverified and blocks verification until it passes under the original or explicitly reapproved binding. **Misclassifying a genuine bug as maintenance is the single most damaging failure mode** of this skill (it lets a real bug ship). When in doubt, classify as `genuine`.
 5. **Mutation testing is part of the contract, not an optional bonus.** Line coverage alone is gamable (HTML §1 Finding 04 — even with full spec, gaming happens 50-70%). Mutation kill rate is the gate that closes the loop. If the test suite has no `mutation.config`, fail loud — do not silently skip. The `/test-suite-generator` is supposed to emit one; if it didn't, that's an upstream bug worth reporting to the user, not silently working around.
 6. **Every finding carries reproducible evidence.** `stack_trace`, `assertion_message`, `pbt_counterexample_input`, `screenshot_path` — at least one. A finding without evidence is a guess; drop it. The user (or downstream meta-judge) must be able to reproduce the failure without re-running the entire suite.
 7. **Thresholds come from a config file, not from your judgment.** When deciding go/no-go/conditional, you check actual measured values against the user-supplied `--thresholds` YAML. You do not invent "I think 0.7 mutation kill rate is enough." The whole point of the skill is that the threshold is *outside* the model.
@@ -176,6 +181,7 @@ The classifier MAY emit `needs_human` when it cannot decide with confidence — 
 Apply thresholds in strict order. First match wins.
 
 1. **NO-GO** if:
+   - Any check required by the approved check plan lacks a current PASS, including maintenance failures, crashes, timeouts, skips and incomplete execution. Preserve the check ID and evidence reference in `decision_reasons`; a product-defect finding is not required to report this blocker.
    - Any L1 existence failure remains (P0 — symbol missing).
    - Any genuine failure with severity P0 in L2-L4.
    - Mutation kill rate < `thresholds.mutation_kill_rate_min`.
@@ -188,6 +194,8 @@ Apply thresholds in strict order. First match wins.
 3. **GO** otherwise.
 
 Conditional means "the user must accept the risk explicitly." It is not a soft no-go; it's "you decide." A `qa-report.yaml` with `decision: conditional` *will* allow downstream `/meta-judge` to gate, but `/meta-judge` is the one that finally decides — `qa-reviewer` reports facts; `meta-judge` (or the user) applies policy.
+
+Conditional review cannot waive a required check or grant trusted acceptance. Changing that requirement needs an explicitly reapproved check plan and new evidence under its binding.
 
 ---
 

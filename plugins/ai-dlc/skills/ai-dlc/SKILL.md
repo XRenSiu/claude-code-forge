@@ -1,16 +1,12 @@
 ---
 name: ai-dlc
 description: >-
-  补引擎自己给不出的三个缺口：跨会话的生命周期状态（SKILL.state 式的充分统计量——脚本校验
-  迁移，引擎只提议，历史进只增不删的账本）、失败按层归因回流而不是"塞回实现层再试一次"的
-  路由表 + 分层预算 + 指纹终止（X2），以及三道只能人签的门（G1 世界裁决 / G2 判据冻结 /
-  G3 例外复核）的不可跳过绑定。效果：一句需求或一个 issue → 双轨判定 → issue → 分支 →
-  done_when 冻结 → 任务卡 → 按卡实现 + 提交 → PR → review 跟进 → 合入归档 → 逃逸缺陷登记，
-  每一步的产物要么能被机器检，要么被一道门挡住。Use when: "走一遍完整开发流程" / "从需求到
-  合入" / "aidlc" / "按流水线做这个需求" / "帮我把这个 issue 做完提 PR" / "resume AI-DLC" /
-  "ship this feature end to end" / "run the lifecycle"。NOT for: 只想提交一次 commit（/commit）、
-  只想发 PR（/pr）、只想审别人的 PR（/pr-review）、只想盯一个已有 PR 的评论（/review-loop）——
-  单点动作直接用对应 skill，进流水线反而慢。前置：git 仓库内、gh 已认证、python3。
+  编排从需求或 issue 到交付的生命周期：契约冻结、任务卡、实现、评审、失败按层回流、预算和归档。
+  支持 Project Harness 自检与 Trusted Acceptance 接入，分别记录本地检查、语义评审和指定候选的
+  正式阶段验收。保留 G1/G2/G3 决策与委托记录；真实交付由受保护系统核验权限和当前候选。
+  用于“走完整开发流程”“从需求到合入”“aidlc”“完成这个 issue”或恢复已有 AI-DLC 任务。
+  单次提交、单 PR 评审、发布等明确单点请求使用对应 Skill。前置：git、已认证 gh、Python 3.9+；
+  YAML 契约需要 PyYAML，Harness 接入需要项目指定的 Node 22+。
 argument-hint: "<需求一句话 | 需求文件路径 | #issue> [--track psl|task] [--resume <slug>] [--autopilot] [--dry-run]"
 version: 1.11.0
 user-invocable: true
@@ -20,6 +16,13 @@ disable-model-invocation: true
 ---
 
 # AI-DLC — 一条流水线，每一步能被机器检或被门挡住
+
+## 项目验证与正式验收
+
+接入 Project Harness 或可信验收时先读 [verification.md](references/verification.md)。`verification` 子命令分别管理项目自检、评审和可信入口结果；旧任务保持本地语义，正式入口缺失显示 `not_configured`。配置后，候选/合同/运行时/环境变化会使证据失效，交付前重新查询对应阶段结果，S 档与 `--force` 不豁免这项要求。
+
+AI-DLC 持有任务状态并调度返工。项目 Harness 执行原生检查，Fleet 完成语义评审，受保护服务签发阶段验收；实际交付还要独立核验当前候选与授权。默认在 merge/release 设正式要求，让草稿 PR 可以先建立以触发验收。人判 AC 的认证证据能力未接入时保持未完成，不由模型补签。
+
 
 本文件只写引擎给不出的东西：生命周期的形状（Σ）、每个阶段"做完了"怎么判（φ）、脚本拥有的
 状态与门（γ）、原语的存在性（Π）。**怎么走、先后、如何并行是你（引擎）的份额——下面的顺序

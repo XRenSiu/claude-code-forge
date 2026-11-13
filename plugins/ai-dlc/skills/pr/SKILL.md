@@ -16,6 +16,11 @@ user-invocable: true
 
 # pr — 一份能被机器检、能被人按图索骥的 PR
 
+## 正式验收与 PR 顺序
+
+已接入 AI-DLC 时读取 [验证接线](../ai-dlc/references/verification.md)。本地自检和评审完成后可以创建草稿 PR，让 PR 事件启动可信验收；默认正式门禁在 merge/release 核对。S 档豁免只减少本地流程成本，不豁免项目政策。PR 更新、rebase 或合并基线变化后，旧候选结果不可用于交付。
+
+
 产物是一个 GitHub PR：body 按 `assets/pr_template.md` 的段落序呈现（产物序，出口可检）。本文件
 写：PR 在流水线里是什么、什么算写对、原语与出口、建之前的门。先 rebase 还是先写 body、要不要拆
 是你的份额——除非下面说了它是不可逆的。
