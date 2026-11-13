@@ -23,7 +23,7 @@ description: >-
   verdict" / "decide merge based on findings" / "/meta-judge" / pointing at
   a directory of review outputs.
 argument-hint: "<reviews_source: directory or list> --rules=<path> [--context=<json with PR metadata>]"
-version: 1.2.1
+version: 1.3.0
 user-invocable: true
 # imported into AI-DLC 2026-09-05 from done-when-pipeline v1.1.0 (canonical copy in this repo; qanat holds an older copy); body kept, AI-DLC wiring section added
 ---

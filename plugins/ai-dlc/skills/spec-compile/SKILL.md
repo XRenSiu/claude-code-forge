@@ -17,7 +17,7 @@ description: |
   (invariant-extract / donewhen-extract), or proving the compiled ruler is load-bearing
   (that is calibrate — spec-compile produces the ruler, calibrate certifies it).
 argument-hint: "<spec ref: R00x id | done_when card | contract id> [--line structural|behavioral|judgment] [--auto]"
-version: 0.1.1
+version: 0.2.0
 user-invocable: true
 # imported into AI-DLC 2026-09-05 from qanat/.claude/skills; body kept, AI-DLC wiring added (see 接线 / 术语映射)
 ---
