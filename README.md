@@ -14,6 +14,7 @@
 - **[AI-DLC](#ai-dlc)** — the complete lifecycle: PSL world-building → derivation → G1, issue → commit → PR → review-loop → merge, DOS ontology + invariants, done_when v2 → tests → six-skill acceptance fleet → meta-judge → release → retro; 27 skills in nine rings, script-validated state, failure routing by layer, three human-only gates
 - **[Humanize](#humanize)** — make AI-written technical prose read like a competent human wrote it, at the discourse level where readers actually get lost; write proposals / design docs / ADRs in the shape senior engineers use; learn your own voice from your samples
 - **[Trusted Acceptance](#trusted-acceptance)** — one acceptance skill with frozen contracts, evidence-bound checks and a protected-control API client; includes an advisory gate and runnable regression examples
+- **[Project Harness](#project-harness)** — survey, bootstrap, verify and evolve a project-owned coding harness while preserving native rules and evidence-backed self-checks
 
 ## Contents
 
@@ -30,6 +31,7 @@
 - [AI-DLC](#ai-dlc)
 - [Humanize](#humanize)
 - [Trusted Acceptance](#trusted-acceptance)
+- [Project Harness](#project-harness)
 - [Marketplace Management](#marketplace-management)
 - [Plugin Management](#plugin-management)
 - [Contributing](#contributing)
@@ -132,6 +134,7 @@
 | [Ratchet](plugins/ratchet/) | 1.0.0 | Goal-driven master/subagent autonomous loop. Master only evaluates (via frozen script or independent judge subagent), subagent only executes; stalled or cheating workers are killed and restarted. Suitable for long-running tasks with verifiable deliverables and explicit termination conditions. | - |
 | [Humanize](plugins/humanize/) | 0.1.1 | 去AI味 at the discourse level. `/humanize` rewrites a draft (zh/en) so a competent human could have written it — targets given-new inversion, broken topic strings, participle/以实现 tails, lists replacing argument, stance flattening, generic openings, summary closers, plus the solved lexical layer and Chinese translationese — with three gates: `humanlint.py` (23 metrics, 0-100 index), `factdiff.py` (numbers/dates/identifiers zero add-or-drop), and a context-isolated `cold-reader` agent. `/techdoc` writes proposals / design docs / ADRs / postmortems in the senior-engineer shape (incident first, decision in one sentence, alternatives killed, all consequences, rollout/rollback, open questions) gated by `verify_techdoc.py`. `/voice-profile` distills your own 3–5 samples into an executable voice file. All `static_only`. | python3 |
 | [Trusted Acceptance](plugins/trusted-acceptance/) | 0.1.0 | `/accept-change`: contract proposals, protected-run submission, evidence analysis and failure routing. Includes an advisory deterministic gate; production control deployment required for formal acceptance. | Python 3.9+ |
+| [Project Harness](plugins/project-harness/) | 0.1.1 | `/bootstrap-project-harness`: read-only survey, reviewable plans, safe apply/recovery and evidence-backed project verification. | Node.js 22+ |
 
 ### Which plugin to use?
 
@@ -144,6 +147,7 @@
 | Complex bug with multiple possible root causes | Forge Teams `/forge-fix` or Adversarial Debugger |
 | Check if a requirement is implemented | Forge Teams `/forge-verify` |
 | Accept a pinned delivery candidate against approved rules and independent evidence | Trusted Acceptance `/accept-change` |
+| Establish or improve a project coding harness and verify its checks | Project Harness `/bootstrap-project-harness` |
 | Verify + auto-implement missing features | Forge Teams `/forge-verify --fix` |
 | Need parallel implementation acceleration | Forge Teams |
 | Clone a live website (design DNA or pixel-perfect Next.js) | Design Clone |
@@ -563,6 +567,17 @@ live here; PSL/DOS world-building and contract/test generation are optional neig
 ```
 
 The plugin includes a Python standard-library client, an advisory decision core and real local HTTP regression examples. A protected control service, project adapters and a formal publishing identity must still be deployed before claiming independent formal acceptance. See [the plugin README](plugins/trusted-acceptance/README.md).
+
+## Project Harness
+
+`/bootstrap-project-harness` surveys existing project assets, proposes a reviewable incremental plan, applies it with conflict/recovery handling, and verifies checks with candidate-bound receipts. It supports audit, bootstrap/upgrade, verify/doctor and evolve modes using Node.js 22+ standard-library tools.
+
+```text
+/plugin install project-harness@claude-code-forge
+/project-harness:bootstrap-project-harness 为当前项目建立最小 harness，并实际验证
+```
+
+Imported from the supplied v0.1.1 skill archive with source hashes and matching regression tests. Local receipts remain project self-checks; formal acceptance stays with protected CI or Trusted Acceptance. See [the plugin README](plugins/project-harness/README.md).
 
 ## Marketplace Management
 

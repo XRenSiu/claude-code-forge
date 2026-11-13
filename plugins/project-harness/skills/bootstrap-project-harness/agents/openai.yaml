@@ -1,0 +1,4 @@
+interface:
+  display_name: "Project Harness"
+  short_description: "调查并搭建项目 AI 开发环境，保留已有资产，验证检查执行与结果"
+  default_prompt: "使用 $bootstrap-project-harness 为当前项目建立或完善最小 harness，并实际验证生成结果。"

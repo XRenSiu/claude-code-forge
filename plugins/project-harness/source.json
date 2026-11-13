@@ -1,0 +1,122 @@
+{
+  "archive": "bootstrap-project-harness-0.1.1.tar.gz",
+  "archive_sha256": "cb50ee10f92e659ccac7184448adf4013c6ac4779ec849569a5d69404d9de6c4",
+  "version": "0.1.1",
+  "skill_files": [
+    {
+      "path": "SKILL.md",
+      "sha256": "61dfdb669b5fcc276e32c80ba4a1d6f5c8670d62ba9a8766b42394df84ed1644"
+    },
+    {
+      "path": "scripts/harness.mjs",
+      "sha256": "ed07b7d988e7a8aef9d710b48e951c09a8d7923406fd54b0130441e6fdb3be55"
+    },
+    {
+      "path": "scripts/codex-check.mjs",
+      "sha256": "979347065fd087d108ee7a8238481f2e6a6c527c727931bc4d36f4c1309653c6"
+    },
+    {
+      "path": "scripts/lib/environment.mjs",
+      "sha256": "49053b3890cef085a5d53c550be2a349b69bd465de6586fb758c8cab8681db70"
+    },
+    {
+      "path": "scripts/lib/plan.mjs",
+      "sha256": "e6afcd9f2d5448b5215d628bdc2c5040d1007a70b0a397c330ed4c06deb12cc5"
+    },
+    {
+      "path": "scripts/lib/core.mjs",
+      "sha256": "1015fcf4d51a9ee13394773c7187c109e7cfc949b8380a6c340d90a7b9e561a2"
+    },
+    {
+      "path": "scripts/lib/contracts.mjs",
+      "sha256": "544f1ec279b67bb0e6d0404078be23511b3a938b244366556a40e459a09ca23e"
+    },
+    {
+      "path": "scripts/lib/verify.mjs",
+      "sha256": "11e3dbb010db6e53a1727c7eb2f6ddc9f480a290668466e44195b972a907f85f"
+    },
+    {
+      "path": "scripts/lib/survey.mjs",
+      "sha256": "c0c56d7faa9c5c6c0a621b3c8249a85d6d5faf31da45bc7b642a5c8f08a91438"
+    },
+    {
+      "path": "scripts/lib/reporters.mjs",
+      "sha256": "3235dc15c5d20c6adcef2c96555c2a389fe41d02ad58313cc518b2e3eb2ad062"
+    },
+    {
+      "path": "scripts/lib/doctor.mjs",
+      "sha256": "c8f7254863772da49fdc7f645925f713a7a78f3113adae7f9b37df5671a37f69"
+    },
+    {
+      "path": "scripts/lib/apply.mjs",
+      "sha256": "c277db3ab2855ff650634ef2b05e22f860bd936334ec4c29d8daae05540985c6"
+    },
+    {
+      "path": "scripts/lib/bootstrap.mjs",
+      "sha256": "5c35c59003cbfa4f56911bb884b31d343dd992c3a74d1ebd46f06f6b01f8643b"
+    },
+    {
+      "path": "agents/openai.yaml",
+      "sha256": "500468768d8e9b0d896b0f08ec2728d5d5d4bc188020eff3420683c6d42d7d86"
+    },
+    {
+      "path": "references/codex-host.md",
+      "sha256": "cdaba82196b483e9a46eb0d47dbf053653ce4defab66a585b653e3333a79597c"
+    },
+    {
+      "path": "references/commands.md",
+      "sha256": "b024eb97a02628b37f5344f007e7fc3c995bce37aa33fd6f2a0eb6d531ee2ec7"
+    },
+    {
+      "path": "references/adapters.md",
+      "sha256": "e4b0b57c27f991064c7bfa39ee38824ca38167f1e557d23b443550f5e023a787"
+    },
+    {
+      "path": "references/verification.md",
+      "sha256": "7ee2b81e1c7cb304d81eabd242f741a60e2ce2f6366a5ab286c70eea25639893"
+    },
+    {
+      "path": "references/discovery.md",
+      "sha256": "19cdce835f87009acc2c823acd3d4c33a7d35bf42b2cf59a84b94e43d4484388"
+    },
+    {
+      "path": "references/upstreams.md",
+      "sha256": "2de0d523fa6afd23c692bdec71f7831c884d3f1c65f0f4183eceb8f6f0219705"
+    },
+    {
+      "path": "references/safe-apply.md",
+      "sha256": "f9b4a112e017ba189e20b823fa41a797972f0b5dc3a2b43b0fdfa1be8d6670b8"
+    },
+    {
+      "path": "references/evolution.md",
+      "sha256": "0b5a7600d5401bae6db976d0e37c980d73a28db9afb3a09a90ee9fb5e4c11f9a"
+    }
+  ],
+  "packaging_changes": [
+    "Added top-level version: 0.1.1 to SKILL.md for marketplace version synchronization",
+    "Excluded macOS AppleDouble metadata"
+  ],
+  "tests_source": "Matching project-harness developer tests; imports changed from ../skill/ to ../skills/",
+  "test_files": [
+    {
+      "path": "bootstrap.test.mjs",
+      "sha256": "d7375cfdacbb133ac20f31f99913717c787162a0f4dc41182993163d85016d3e"
+    },
+    {
+      "path": "environment.test.mjs",
+      "sha256": "cceb6359b719f891d1ea0bbd287207741a76a871407ffd8cee50f822ef7d6886"
+    },
+    {
+      "path": "helpers.mjs",
+      "sha256": "babbaedeccced6be98bf931cd6908a61cf6d3d36e5a8d7b874b313e6df672fe2"
+    },
+    {
+      "path": "verification.test.mjs",
+      "sha256": "5254e415b2c49b8f448b7b2ad5dc3fd7369b00b940b0b89096a790b94e3c03f5"
+    },
+    {
+      "path": "writer.test.mjs",
+      "sha256": "ec5c6c922c74e758cae8fc5304c4d9a4de8abb80bb1adf1033e1ff5f1c63cb64"
+    }
+  ]
+}
