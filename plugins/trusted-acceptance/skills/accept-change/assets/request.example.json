@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "idempotency_key": "example-request-1",
+  "binding": {
+    "project_id": "synthetic-sharing",
+    "task_id": "SHARE-123",
+    "task_revision": 1,
+    "candidate_sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "artifact_digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "contract_digest": "sha256:75a336a144860aef69459e774d6b18ed649ad48f25c3bbbc48919fc4b8a6d9a6",
+    "check_bundle_digest": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+    "adapter_digest": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+    "environment_digest": "sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+    "stage": "acceptance"
+  }
+}

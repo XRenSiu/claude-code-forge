@@ -1,0 +1,6 @@
+{
+  "schema_version": 1,
+  "endpoint": "https://acceptance.example.invalid/v1",
+  "token_env": "ACCEPTANCE_CONTROL_TOKEN",
+  "timeout_seconds": 30
+}

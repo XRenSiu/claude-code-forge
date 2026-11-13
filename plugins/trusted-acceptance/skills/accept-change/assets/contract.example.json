@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "project_id": "synthetic-sharing",
+  "task_id": "SHARE-123",
+  "task_revision": 1,
+  "contract_id": "revoke-contract@1",
+  "request_ref": "synthetic-request@1",
+  "product_rules_ref": "synthetic-sharing-policy@1",
+  "criteria": [
+    {
+      "id": "AC-REVOKE",
+      "source_ref": "synthetic-sharing-policy@1#new-read",
+      "given": "An anonymous visitor can read a synthetic shared document",
+      "when": "The fixture owner revokes sharing and receives success",
+      "expected": "A new anonymous read returns 403 or 404 without the document body",
+      "required": true,
+      "check_id": "revoke-new-read",
+      "evidence_types": [
+        "request-response"
+      ],
+      "scope": "Local HTTP fixture; no CDN, member access or offline cache",
+      "method": "Observe independent HTTP reads before and after the owner revokes access"
+    }
+  ],
+  "required_check_ids": [
+    "revoke-new-read"
+  ],
+  "unresolved_questions": [],
+  "approval_ref": "synthetic-policy-decision-1"
+}

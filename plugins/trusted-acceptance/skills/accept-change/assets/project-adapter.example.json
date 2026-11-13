@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "project_id": "product-web",
+  "adapter_revision": 1,
+  "status": "proposal",
+  "runtime": {
+    "recipe_id": "web-preview-v1",
+    "health_probe": "web-ready-v1",
+    "cleanup_recipe": "remove-test-instance-v1"
+  },
+  "fixtures": {
+    "recipe_id": "sharing-fixtures-v1",
+    "identities": [
+      "owner",
+      "member",
+      "anonymous"
+    ]
+  },
+  "check_catalog": {
+    "build-and-types": "existing-ci/build-v1",
+    "module-boundaries": "architecture/check-v1",
+    "sharing-regression": "playwright/sharing-v1",
+    "revoke-new-read": "external-probes/revoke-v1"
+  },
+  "evidence": {
+    "required_by_check": "policies/evidence-v1",
+    "sensitive_data_policy": "synthetic-data-and-redaction-v1"
+  },
+  "capabilities": {
+    "web_ui": "supported-after-verification",
+    "public_read_api": "supported-after-verification",
+    "offline_desktop_cache": "unsupported"
+  }
+}

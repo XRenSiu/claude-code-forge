@@ -414,6 +414,28 @@
         "chinese",
         "static-only"
       ]
+    },
+    {
+      "name": "trusted-acceptance",
+      "description": "Independent acceptance entrypoint: frozen contracts, pinned candidates, protected-run submission, evidence analysis and failure routing. Includes a strict protocol client, advisory decision core and synthetic regression tests; production trust requires a separately protected control deployment.",
+      "version": "0.1.0",
+      "author": {
+        "name": "XRenSiu",
+        "email": "xrensiu@gmail.com"
+      },
+      "homepage": "https://github.com/XRenSiu/claude-code-forge/tree/main/plugins/trusted-acceptance",
+      "repository": "https://github.com/XRenSiu/claude-code-forge",
+      "license": "MIT",
+      "source": "./plugins/trusted-acceptance",
+      "category": "development",
+      "tags": [
+        "trusted-acceptance",
+        "accept-change",
+        "acceptance-contract",
+        "evidence",
+        "fail-closed",
+        "candidate-binding"
+      ]
     }
   ]
 }
