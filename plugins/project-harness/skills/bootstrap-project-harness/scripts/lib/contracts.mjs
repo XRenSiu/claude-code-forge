@@ -15,10 +15,17 @@ export const checkSchema = obj({
   effects: { enum: ['read-only', 'temporary-artifacts', 'writes-project', 'external'] }
 }, ['id', 'executable', 'argv', 'cwd', 'reporter', 'depends_on', 'timeout_ms', 'required', 'effects'])
 const operation = obj({ path: s, content: { type: ['string', 'null'] }, before_hash: nullableHash, after_hash: nullableHash, reason: s, source: s })
+const identifier = { ...s, pattern: '^[a-z0-9][a-z0-9-]*$' }
+const manifestProperties = { schema_version: version, factory_version: s, host: { enum: ['codex', 'claude-code', 'dual', 'portable'] }, stack: s, node_major: { type: ['integer', 'null'] }, assets: arr(obj({ path: s, hash: s, owner: s })), checks: arr(checkSchema), sources: arr(s), limitations: arr(s) }
 export const schemas = {
+  context: obj({ schema_version: version, project: s, summary: s,
+    rules: arr(obj({ id: identifier, title: s, scopes: arr(s), sources: arr(s), body: s })),
+    workflows: arr(obj({ id: identifier, title: s, when: s, steps: arr(s), sources: arr(s) })),
+    assessment: arr(obj({ area: { enum: ['toolchain', 'architecture', 'testing', 'security', 'delivery', 'ci', 'hosts', 'skills', 'hooks', 'maintenance'] }, status: { enum: ['configured', 'manual', 'not-applicable', 'gap'] }, detail: s, sources: arr(s) }))
+  }),
   inventory: obj({ schema_version: version, factory_version: s, root: s, created_at: s, candidate: { type: 'object' }, scan: { type: 'object' }, packages: arr({ type: 'object' }), assets: arr({ type: 'object' }), facts: arr({ type: 'object' }), conflicts: arr({ type: 'object' }), unknowns: arr({ type: 'object' }) }),
   plan: obj({ schema_version: version, factory_version: s, root: s, created_at: s, purpose: s, authorization_ref: s, operations: arr(operation), checks: arr(checkSchema), digest: s }),
-  manifest: obj({ schema_version: version, factory_version: s, host: { enum: ['codex', 'claude-code', 'portable'] }, stack: s, node_major: { type: ['integer', 'null'] }, assets: arr(obj({ path: s, hash: s, owner: s })), checks: arr(checkSchema), sources: arr(s), limitations: arr(s) }),
+  manifest: obj({ ...manifestProperties, context: obj({ profile: { const: '.harness/context.json' }, lock: { const: '.harness/context-lock.json' } }) }, Object.keys(manifestProperties)),
   receipt: obj({ schema_version: version, evidence_kind: { const: 'project-self-check' }, factory_version: s, created_at: s, candidate: { type: 'object' }, candidate_after: { type: 'object' }, manifest_digest: s, environment: { type: 'object' }, expected_checks: arr(s), results: arr({ type: 'object' }), execution_complete: bool, checks_passed: bool, limitations: arr(s), external_acceptance: { type: 'object' } })
 }
 

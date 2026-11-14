@@ -25,12 +25,13 @@ export function survey(path, { maxFiles = 25000 } = {}) {
         if (managers.length > 1) conflicts.push({ path: name, reason: 'Multiple package-manager lockfiles', candidates: managers })
         const declared = pkg.packageManager?.split('@')[0]
         if (declared && managers.length && !managers.includes(declared)) conflicts.push({ path: name, reason: 'packageManager conflicts with lockfile', candidates: [...managers, declared] })
-        packages.push({ path: name, hash: hash(content), name: pkg.name || null, engines: pkg.engines || {}, package_manager: managers.length > 1 ? null : declared || managers[0] || null, lockfiles: locks, scripts: pkg.scripts || {}, workspaces: pkg.workspaces || null, tools: Object.keys({ ...pkg.dependencies, ...pkg.devDependencies }).filter(k => /eslint|vitest|typescript|playwright|electron|^vue$/.test(k)) })
+        packages.push({ path: name, hash: hash(content), name: pkg.name || null, engines: pkg.engines || {}, package_manager: managers.length > 1 ? null : declared || managers[0] || null, package_manager_version: pkg.packageManager || null, lockfiles: locks, scripts: pkg.scripts || {}, workspaces: pkg.workspaces || null, tools: Object.keys({ ...pkg.dependencies, ...pkg.devDependencies }).filter(k => /eslint|vitest|typescript|playwright|electron|^vue$|^react$|^pinia$/.test(k)) })
       } catch (error) { unknowns.push({ path: name, reason: `Invalid package.json: ${error.message}` }) }
     }
     let kind
-    if (/(^|\/)(AGENTS|CLAUDE)\.md$/.test(name)) kind = 'instructions'
-    else if (/^(\.claude\/rules\/|\.github\/workflows\/)|(^|\/)(eslint|vitest|playwright|tsconfig)[^/]*\.|(^|\/)\.eslintrc/.test(name)) kind = 'configuration'
+    if (/(^|\/)(AGENTS(?:\.override)?|CLAUDE)\.md$/.test(name)) kind = 'instructions'
+    else if (/(^|\/)\.claude\/(rules\/|settings(?:\.local)?\.json)|^\.codex\/config\.toml$|^(\.github\/workflows\/|\.gitlab-ci\.yml)|(^|\/)(eslint|vitest|playwright|tsconfig)[^/]*\.|(^|\/)\.eslintrc/.test(name)) kind = 'configuration'
+    else if (/(^|\/)(README|DESIGN|CONTRIBUTING)\.md$/.test(name) || /^docs\/.*\.md$/.test(name)) kind = 'documentation'
     else if (/\/SKILL\.md$/.test(name)) kind = 'skill'
     else if (/^(docs\/(guides|architecture)|test\/harness|eval)\//.test(name)) kind = 'existing-harness'
     if (kind) {

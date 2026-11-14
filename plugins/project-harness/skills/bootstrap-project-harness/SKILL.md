@@ -6,7 +6,7 @@ description: 调查、搭建、验证和改进项目的 Coding Harness。适用�
 
 # Project Harness
 
-用项目已有的规范、开发入口和工具链建立最小可维护 harness。模型负责理解、选型与解释；附带脚本负责调查、变更协议和可复核执行。需要 Node 22+，无安装依赖。所有路径相对本 skill 所在目录解析，不依赖当前工作目录。
+用项目已有的规范、开发入口和工具链建立完整、可维护的开发 harness：项目规则、双宿主上下文、开发工作流、原生检查、诊断与演进。模型负责理解、选型与解释；附带脚本负责调查、变更协议和可复核执行。需要 Node 22+，无安装依赖。所有路径相对本 skill 所在目录解析，不依赖当前工作目录。
 
 先按用户意图选择 **audit / bootstrap / verify / evolve**。当前会话已授权的本地工作继续推进；计划摘要与 `authorization_ref` 仅记录审阅范围，不提供授权。对范围外动作或真实架构冲突才请求决策。
 
@@ -18,13 +18,14 @@ description: 调查、搭建、验证和改进项目的 Coding Harness。适用�
 
 ## Bootstrap / upgrade
 
-读取 [commands.md](references/commands.md) 与 [safe-apply.md](references/safe-apply.md)，根据 [adapters.md](references/adapters.md) 选择技术栈与宿主。
+读取 [commands.md](references/commands.md)、[safe-apply.md](references/safe-apply.md) 和 [development-context.md](references/development-context.md)，根据 [adapters.md](references/adapters.md) 选择技术栈与宿主。
 
 1. 先 survey，确定已有规范的唯一来源、实际命令、约束依据和副作用。用户请求生成或改进 harness 时可在授权范围落地。
-2. `bootstrap` 只生成最小接入 plan。它绑定已有 Vitest，或读取显式 checks 文件；没有受支持的检查时保留未完成状态。已有项目用 `plan --proposal` 修改实际原生配置，不复制规则语义到另一套检查器。
-3. 审阅 plan 中的完整文件内容、hash、理由、命令和授权范围。原生配置/指令冲突由模型读取后做最小合并，重建 proposal；不要绕过冲突。
-4. 通过 `apply --accept-plan <digest>` 落地。这个参数绑定已审阅内容，不替代用户授权。任务状态目录置于项目外。
-5. 按下一节实际验证。向用户交付路径、改动、规则依据、可复核收据、限制和下次使用命令。安装、生成、宿主发现和业务收益分别报告。
+2. 默认建立完整开发 harness：读取实际文档与模块源码，整理有依据的 rules、目录作用范围、开发工作流和十项接入评估，准备 context JSON。双宿主用 `bootstrap --host dual --context <file>`，保留已有原生检查，必要时显式传 checks。缺少受支持的原生检查时保留未完成状态；只检查规则一致性不能算项目验证通过。仅在用户明确要求验证运行器时使用不带 context 的低层入口。
+3. 对 CI、hooks、skills、宿主加载和维护流程逐项评估，授权范围内补齐有实际用途的缺口。不要为了结构齐全生成无用目录，也不要把所有缺口记成 manual 就结束。既有架构和工具规则按来源保留，不能由依赖名称发明新规范。
+4. 审阅 plan 中的完整文件内容、hash、理由、命令和授权范围。原生配置/指令冲突由模型读取后做最小合并，重建 proposal；不要绕过冲突。
+5. 通过 `apply --accept-plan <digest>` 落地。这个参数绑定已审阅内容，不替代用户授权。任务状态目录置于项目外。
+6. 按下一节实际验证。向用户交付路径、改动、规则依据、可复核收据、限制和下次使用命令。安装、生成、宿主发现和业务收益分别报告。
 
 ## Verify / doctor
 

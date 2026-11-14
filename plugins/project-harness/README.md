@@ -2,13 +2,13 @@
 
 **v0.1.1** · Node.js 22+ · 无安装依赖 · MIT（继承仓库 LICENSE）。
 
-`/bootstrap-project-harness` 调查现有项目、生成可审阅计划、处理冲突并落地最小 Coding Harness，再执行检查并保存绑定候选的收据。保留已有原生规则、文档和工具链，支持 Codex、Claude Code 与 portable 宿主。
+`/bootstrap-project-harness` 调查现有项目、生成可审阅计划、处理冲突并落地完整开发 Harness，再执行检查并保存绑定候选的收据。保留已有原生规则、文档和工具链，支持 Codex、Claude Code 与 portable 宿主。
 
 ## 安装和使用
 
 ```text
 /plugin install project-harness@claude-code-forge
-/project-harness:bootstrap-project-harness 为当前项目建立或完善最小 harness，并实际验证
+/project-harness:bootstrap-project-harness 为当前项目建立或完善完整开发 harness，并实际验证
 ```
 
 安装或更新后新开 Claude Code 会话。也可以从源码加载：
@@ -22,8 +22,8 @@ Codex 使用完整 `skills/bootstrap-project-harness/` 目录及其 `agents/open
 | 意图 | 作用 |
 |---|---|
 | audit | 只读调查规范、命令、资产、冲突与未知，不运行项目命令 |
-| bootstrap / upgrade | 生成内容和 hash 可审阅的计划，复用原生配置，安全应用并保留恢复日志 |
-| verify / doctor | verify 实际执行检查图；doctor 只检查接线、漂移、环境和收据 |
+| bootstrap / upgrade | 整理有来源的规则与工作流、生成双宿主入口，复用原生配置，安全应用并保留恢复日志 |
+| verify / doctor | verify 实际执行检查图；doctor 检查规则、来源、入口、漂移、环境和收据 |
 | evolve | 从已验证根因选取测试、原生规则或文档的最小改进 |
 
 脚本可直接调用：
@@ -36,9 +36,15 @@ node plugins/project-harness/skills/bootstrap-project-harness/scripts/harness.mj
 
 完整入口见 [SKILL.md](skills/bootstrap-project-harness/SKILL.md)，命令参数与退出码见 [commands.md](skills/bootstrap-project-harness/references/commands.md)。
 
+## 开发上下文
+
+默认使用 `--host dual --context <reviewed-profile.json>`。生成 `.claude/rules/`、根与模块 `AGENTS.md`、`docs/development/` 中的规则/工作流/接入评估，以及项目独立的 `project-context.mjs` 和 `project-doctor.mjs`。规则定义统一维护在 `.harness/context.json`；来源变化提示复核，派生文件或入口损坏会使检查失败。
+
+完整合同与十项覆盖要求见 [development-context.md](skills/bootstrap-project-harness/references/development-context.md)。低层不带 context 的命令仍可生成验证运行器，但明确标为 verification-only，不能当成完整开发环境交付。
+
 ## 导入来源与验证
 
-从用户提供的 `bootstrap-project-harness-0.1.1.tar.gz` 导入。归档摘要及逐文件原始摘要保存在 [source.json](source.json)。保留全部 22 个 Skill 文件，仅在 SKILL.md frontmatter 加入仓库要求的 `version: 0.1.1`；忽略 macOS AppleDouble 元数据。脚本和参考文件保持原包内容。
+从用户提供的 `bootstrap-project-harness-0.1.1.tar.gz` 导入。归档摘要及逐文件原始摘要保存在 [source.json](source.json)。v0.1.1 导入时保留全部 22 个 Skill 文件，忽略 macOS AppleDouble 元数据。`source.json` 保留原始导入来源；v0.2.0 在此基础上增加项目上下文编译、双宿主规则、工作流、覆盖评估与独立诊断，并修正 Electron 被直接标成 Vue 的技术栈推断。当前源码已不同于原归档。
 
 随包加入匹配开发项目的回归测试，只有模块导入路径由 `../skill/` 调整为本插件的 `../skills/`。运行：
 
@@ -48,7 +54,7 @@ claude plugin validate plugins/project-harness
 claude plugin validate plugins/project-harness/skills
 ```
 
-测试覆盖只读调查、可恢复写入、过期计划拒绝、重复生成、独立项目运行器、检查依赖图、失败/超时/取消、报告缺失、零测试、候选变化与临时环境影响。使用一次性 fixture，不给本仓库自动生成 Harness，也不递归启动模型会话。
+测试覆盖双宿主作用域、根入口路由、来源漂移、手改冲突、规则退役、宿主切换、重复生成、独立上下文运行器，以及只读调查、可恢复写入、过期计划拒绝、重复生成、独立项目运行器、检查依赖图、失败/超时/取消、报告缺失、零测试、候选变化与临时环境影响。使用一次性 fixture，不给本仓库自动生成 Harness，也不递归启动模型会话。
 
 本次导入验证针对插件包装及确定性工具。实际模型使用效果、Windows 进程清理和 Electron 桌面行为需要各自的运行验证。源参考文件中的开发报告/锁文件属于原开发仓库，未包含在此 Skill 归档中。
 

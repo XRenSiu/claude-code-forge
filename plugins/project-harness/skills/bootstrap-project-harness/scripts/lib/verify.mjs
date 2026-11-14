@@ -70,9 +70,10 @@ export async function verify(rootPath, manifest, { outputDir, signal } = {}) {
   const candidate = snapshot(root)
   const results = []
   const pending = new Map(manifest.checks.map(check => [check.id, check]))
-  const nodeOk = manifest.node_major === null || Number(process.versions.node.split('.')[0]) === manifest.node_major
+  const nodeMajor = Number(process.versions.node.split('.')[0])
+  const nodeOk = nodeMajor >= 22 && (manifest.node_major === null || nodeMajor === manifest.node_major)
   if (!nodeOk) {
-    for (const check of pending.values()) results.push({ id: check.id, status: 'NOT_RUN', reason: `Node ${manifest.node_major} required; current ${process.versions.node}` })
+    for (const check of pending.values()) results.push({ id: check.id, status: 'NOT_RUN', reason: `Node ${manifest.node_major ?? '22+'} required; current ${process.versions.node}` })
     pending.clear()
   }
   while (pending.size) {

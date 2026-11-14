@@ -13,10 +13,11 @@ Two independent dimensions: stack bindings describe how the project checks work;
 
 | Host | Generated entry | What is not inferred |
 | --- | --- | --- |
-| Codex | managed verification pointer in AGENTS.md or its internal authoritative symlink target | .claude rules/hooks do not automatically become Codex rules/hooks |
-| Claude Code | managed pointer in CLAUDE.md | presence does not prove session loading or hook execution |
-| Portable | runtime, manifest and usage doc only | no host activation |
+| Codex | root rules/routing and directory AGENTS.md managed blocks; internal aliases share one edit | .claude rules/hooks do not automatically become Codex rules/hooks |
+| Claude Code | CLAUDE.md entry and source-derived .claude/rules with paths | presence does not prove session loading or hook execution |
+| Dual | both host adapters from one project context | scope semantics use directory subtrees; real loading remains separate |
+| Portable | runtime, manifest and development reference docs | no host activation |
 
 Install the factory itself in the host's supported skill directory. The development package installs in `~/.codex/skills/bootstrap-project-harness` for the current Codex environment; project-scoped distribution can use `.agents/skills/`. Claude uses `.claude/skills/`. The same self-contained skill content works through thin host metadata. Do not mirror the whole `.claude` tree into a different host and claim parity.
 
-v0.1 emits no hooks because their payload/version contracts require separate runtime qualification. It reuses native CLI/CI enforcement. Future adapters should declare supported syntax, resolution, platform and host version and add real fixtures. A static doctor never upgrades itself to a live compatibility verdict.
+The generator emits no hooks by default because their payload/version contracts require separate runtime qualification. It reuses native CLI/CI enforcement. Future adapters should declare supported syntax, resolution, platform and host version and add real fixtures. A static doctor never upgrades itself to a live compatibility verdict.

@@ -4,7 +4,7 @@ All commands require Node 22+. `<skill>` is the installed skill directory. Use a
 
 ```sh
 node <skill>/scripts/harness.mjs survey --root <repo> --out <task>/inventory.json
-node <skill>/scripts/harness.mjs bootstrap --root <repo> --host codex --authorization-ref "current user request" --checks <task>/checks.json --out <task>/plan.json
+node <skill>/scripts/harness.mjs bootstrap --root <repo> --host dual --context <task>/context.json --authorization-ref "current user request" --checks <task>/checks.json --out <task>/plan.json
 node <skill>/scripts/harness.mjs plan --root <repo> --proposal <task>/proposal.json --out <task>/plan.json
 node <skill>/scripts/harness.mjs apply --root <repo> --plan <task>/plan.json --accept-plan <plan-digest> --state-dir <task>/transactions
 node <skill>/scripts/harness.mjs verify --root <repo> --artifact-dir <task>/runs --out <task>/verification.json
@@ -12,7 +12,17 @@ node <skill>/scripts/harness.mjs doctor --root <repo> --receipt <receipt-file> -
 node <skill>/scripts/harness.mjs recover --root <repo> --journal <unfinished-journal>
 ```
 
-`bootstrap` emits a plan, never writes the project. Omit `--checks` to discover root Vitest or preserve existing bindings. A project with no discoverable supported checks gets an empty binding set; verification cannot pass until populated. Host choices: `codex`, `claude-code`, `portable`. Existing managed asset edits produce a merge conflict rather than overwrite.
+`bootstrap` emits a plan, never writes the project. Omit `--checks` to discover root Vitest or preserve existing bindings. A project with no discoverable supported checks gets an empty binding set; verification cannot pass until populated. Host choices: `dual`, `codex`, `claude-code`, `portable`. A supplied context defaults new installations to `dual`; upgrades preserve their host unless explicitly changed. Existing managed asset edits produce a merge conflict rather than overwrite.
+
+Development bootstrap requires a source-backed profile under the skill workflow; see [development-context.md](development-context.md). `--context` writes the reviewed definition to `.harness/context.json`, compiles rules/workflows/host entries and adds the required `harness-context` check. Existing context is reused when omitted; changed profiles/sources require explicit review and `--context` to refresh fingerprints. The low-level no-context path remains verification-only.
+
+Project-owned commands after adoption:
+
+```sh
+node scripts/project-context.mjs
+node scripts/project-doctor.mjs /path/outside/project/run/receipt.json
+node scripts/project-verify.mjs /path/outside/project/results
+```
 
 Custom proposal shape:
 

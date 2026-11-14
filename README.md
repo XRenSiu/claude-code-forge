@@ -134,7 +134,7 @@
 | [Ratchet](plugins/ratchet/) | 1.0.0 | Goal-driven master/subagent autonomous loop. Master only evaluates (via frozen script or independent judge subagent), subagent only executes; stalled or cheating workers are killed and restarted. Suitable for long-running tasks with verifiable deliverables and explicit termination conditions. | - |
 | [Humanize](plugins/humanize/) | 0.1.1 | 去AI味 at the discourse level. `/humanize` rewrites a draft (zh/en) so a competent human could have written it — targets given-new inversion, broken topic strings, participle/以实现 tails, lists replacing argument, stance flattening, generic openings, summary closers, plus the solved lexical layer and Chinese translationese — with three gates: `humanlint.py` (23 metrics, 0-100 index), `factdiff.py` (numbers/dates/identifiers zero add-or-drop), and a context-isolated `cold-reader` agent. `/techdoc` writes proposals / design docs / ADRs / postmortems in the senior-engineer shape (incident first, decision in one sentence, alternatives killed, all consequences, rollout/rollback, open questions) gated by `verify_techdoc.py`. `/voice-profile` distills your own 3–5 samples into an executable voice file. All `static_only`. | python3 |
 | [Trusted Acceptance](plugins/trusted-acceptance/) | 0.1.0 | `/accept-change`: contract proposals, protected-run submission, evidence analysis and failure routing. Includes an advisory deterministic gate; production control deployment required for formal acceptance. | Python 3.9+ |
-| [Project Harness](plugins/project-harness/) | 0.1.1 | `/bootstrap-project-harness`: read-only survey, reviewable plans, safe apply/recovery and evidence-backed project verification. | Node.js 22+ |
+| [Project Harness](plugins/project-harness/) | 0.1.1 | `/bootstrap-project-harness`: project-specific rules, Claude/Codex context, workflows, diagnostics and evidence-backed native verification. | Node.js 22+ |
 
 ### Which plugin to use?
 
@@ -574,10 +574,10 @@ The plugin includes a Python standard-library client, an advisory decision core 
 
 ```text
 /plugin install project-harness@claude-code-forge
-/project-harness:bootstrap-project-harness 为当前项目建立最小 harness，并实际验证
+/project-harness:bootstrap-project-harness 按项目实际情况完善开发 harness、规则和双宿主入口，并实际验证
 ```
 
-Imported from the supplied v0.1.1 skill archive with source hashes and matching regression tests. Local receipts remain project self-checks; formal acceptance stays with protected CI or Trusted Acceptance. See [the plugin README](plugins/project-harness/README.md).
+Originally imported from the supplied v0.1.1 skill archive; v0.2.0 adds source-backed project rules, dual-host scope routing, workflows, adoption assessment and standalone context diagnostics. Local receipts remain project self-checks; formal acceptance stays with protected CI or Trusted Acceptance. See [the plugin README](plugins/project-harness/README.md).
 
 ## Marketplace Management
 

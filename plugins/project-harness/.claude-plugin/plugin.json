@@ -1,6 +1,6 @@
 {
   "name": "project-harness",
-  "description": "Bootstrap and improve project-owned coding harnesses with one bootstrap-project-harness skill: read-only survey, reviewable plans, conflict-aware apply/recovery, evidence-backed verification and doctor checks. Node 22+ standard library; local receipts are self-checks, not protected acceptance.",
+  "description": "Project-owned development harness: source-backed scoped rules for Claude Code and Codex, project workflows, adoption assessment, conflict-aware regeneration, standalone diagnostics and evidence-backed native verification.",
   "version": "0.1.1",
   "author": {
     "name": "XRenSiu",
