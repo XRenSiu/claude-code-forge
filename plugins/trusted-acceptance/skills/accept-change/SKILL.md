@@ -3,7 +3,7 @@ name: accept-change
 description: >
   验收固定版本的项目改动：依据原始需求和已批准规则形成检查提案，调用受保护验收入口，读取逐项证据并分流失败。
   用于独立交付验收、可信验收和验收失败分析；不代替实现、自测或发布授权。
-version: 0.2.0
+version: 0.3.0
 ---
 
 # Accept Change

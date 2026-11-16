@@ -8,7 +8,7 @@ description: >-
   单次提交、单 PR 评审、发布等明确单点请求使用对应 Skill。前置：git、已认证 gh、Python 3.9+；
   YAML 契约需要 PyYAML，Harness 接入需要项目指定的 Node 22+。
 argument-hint: "<需求一句话 | 需求文件路径 | #issue> [--track psl|task] [--resume <slug>] [--autopilot] [--dry-run]"
-version: 1.13.0
+version: 1.14.0
 user-invocable: true
 # 只能由人显式调起：它会建 issue、开分支、发 PR、自动回帖——都是公开且部分不可逆的动作，
 # 不能因为对话里出现"需求""流程"就被模型自行调起。它是编排者，没有别的 skill 依赖它。

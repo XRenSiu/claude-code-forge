@@ -1,6 +1,6 @@
 ---
 name: bootstrap-project-harness
-version: 0.3.0
+version: 0.4.0
 description: 调查、搭建、验证和改进项目的 Coding Harness。适用于建立 AI 开发环境、诊断项目规则或验证流程不生效、将已验证的重复错误转为可执行防线；普通业务功能沿用项目现有流程。
 ---
 
