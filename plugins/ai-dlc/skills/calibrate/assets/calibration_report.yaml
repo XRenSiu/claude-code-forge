@@ -95,3 +95,9 @@ activation:
   reason: ""
   rubric_sign_required: false    # kind=rubric:必须人签(R002),元闸门 verdict 是签字前置不是替代
   signed_by: ""                  # 人签事件引用(rubric 专用)
+
+# Indexed product qualification: paths relative to this report. Required for enrolled eval_case gates.
+# execution_evidence:
+#   receipt: /outside/calibration/calibration.json
+#   plan: /project/.harness/calibration/entry.json
+#   features: /project/.harness/features.json

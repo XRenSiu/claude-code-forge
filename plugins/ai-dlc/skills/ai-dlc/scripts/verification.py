@@ -13,6 +13,8 @@ import shutil
 import subprocess
 import sys
 import uuid
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'calibrate/scripts'))
+from verification_evidence import validate_product, entry_from_index
 
 MAX_JSON = 2 * 1024 * 1024
 STAGES = {"acceptance", "merge", "release"}
@@ -266,7 +268,7 @@ def harness_identity(config):
     return identity, env, node
 
 
-def receipt_issues(receipt, manifest):
+def receipt_issues(receipt, manifest, artifact_root=None, feature_index=None):
     require(isinstance(receipt, dict) and receipt.get("schema_version") == 1 and receipt.get("evidence_kind") == "project-self-check", "unsupported self-check receipt")
     checks = manifest.get("checks")
     require(isinstance(checks, list) and checks and all(isinstance(c, dict) and isinstance(c.get("id"), str) and type(c.get("required")) is bool for c in checks), "nonempty explicit check bindings required")
@@ -285,6 +287,22 @@ def receipt_issues(receipt, manifest):
     for result in results:
         if result["id"] in required and result.get("status") != "PASS":
             issues.append(result["id"] + ": required check is " + str(result.get("status")))
+        check = next(c for c in checks if c['id'] == result['id'])
+        if check.get('reporter') == 'product-json':
+            try:
+                require(artifact_root is not None and feature_index is not None, 'product evidence needs the current feature index and attempt directory')
+                folder = Path(result['artifacts']).resolve()
+                require(under(folder, artifact_root), 'product evidence is outside this attempt')
+                report_path = (folder / check['report_file']).resolve()
+                require(under(report_path, folder), 'product report escapes its check directory')
+                observed = validate_product(report_path, check['expected_claims'], {
+                    'candidate_digest': 'sha256:' + receipt['candidate']['content_digest'],
+                    'feature_index_digest': digest(feature_index), 'check_id': check['id']})
+                entry = entry_from_index(feature_index, observed['binding']['feature_id'], observed['binding']['entry_id'])
+                require(entry['check_id'] == check['id'] and set(entry['claims']) == set(check['expected_claims']), 'product entry/check mismatch')
+                require(observed['status'] == result['status'], 'product result contradicts raw observations')
+            except (OSError, ValueError, KeyError, TypeError) as error:
+                issues.append(result['id'] + ': ' + str(error))
     for key in ("candidate", "candidate_after"):
         candidate = receipt.get(key, {})
         require(isinstance(candidate, dict), "invalid receipt " + key)
@@ -332,13 +350,16 @@ def run_harness(st, runtime_root):
         receipt_path = Path(result["receipt"]).resolve()
         require(under(receipt_path, folder), "runner receipt must be in this attempt's artifact directory")
         receipt = read_json(receipt_path)
-        issues = receipt_issues(receipt, read_json(repo_root() / h["manifest"]))
+        manifest = read_json(repo_root() / h["manifest"])
+        features = read_json(repo_root() / manifest['features']) if manifest.get('features') else None
+        issues = receipt_issues(receipt, manifest, folder, features)
         if source(st, runtime_root) != before or harness_identity(config)[0] != identity:
             issues.append("candidate, contract, runtime or environment changed during execution")
         if run.returncode != 0:
             issues.append("runner exit " + str(run.returncode))
         record.update(status="passed" if not issues else "failed", receipt_ref=str(receipt_path),
-                      receipt_digest=file_digest(receipt_path), issues=issues)
+                      receipt_digest=file_digest(receipt_path), issues=issues,
+                      product_entries=[r['binding'] for r in receipt['results'] if r.get('binding')])
     except (OSError, ValueError, KeyError, subprocess.TimeoutExpired) as error:
         record.update(status="incomplete", issues=[str(error)])
     write_new(folder / "verification.json", record)
@@ -383,6 +404,17 @@ def local_issues(st, runtime_root, stage):
         elif file_digest(record["receipt_ref"]) != record["receipt_digest"]:
             record["status"] = "stale"
             issues.append("self-check receipt changed")
+        else:
+            try:
+                manifest = read_json(repo_root() / h["manifest"])
+                features = read_json(repo_root() / manifest['features']) if manifest.get('features') else None
+                raw_issues = receipt_issues(read_json(record['receipt_ref']), manifest, record['history_ref'], features)
+                if raw_issues:
+                    record['status'] = 'stale'
+                    issues.extend(raw_issues)
+            except (OSError, ValueError, KeyError, TypeError) as error:
+                record['status'] = 'stale'
+                issues.append('self-check evidence changed: ' + str(error))
     review = st["verification"]["review"]
     if stage in {"pr", "merge"} and st.get("acceptance", {}).get("evaluation_result"):
         if review.get("source") != current or not review.get("report_ref") or file_digest(review["report_ref"]) != review.get("report_digest"):

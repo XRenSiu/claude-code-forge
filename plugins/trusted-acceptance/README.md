@@ -83,3 +83,5 @@ python3 plugins/trusted-acceptance/evaluations/demo.py --variant ui-only --out /
 正式接入需独立保护合同/政策/检查包、候选运行区、观察器/证据库和签发凭据，持久化任务/预算/全部尝试，实现幂等、租约和原子状态复核，再接 required check 与交付授权。具体条件见 [控制区说明](acceptance-control/README.md)。哈希、额外进程、另一个模型或额外 CI job 本身不证明这些边界成立。
 
 本地测试证明协议和列出的程序规则可运行，并在合成 HTTP 任务上识别对应缺陷。尚未做真实项目接入、Skill 有/无对照、独立保留集评测或生产误放行/误拦截测量；行为评测方案见 [evaluations/behavioral.md](evaluations/behavioral.md)。
+
+Product operation and checker calibration chains can now be independently checked with `validate-calibration`; see [the evidence contract](skills/accept-change/references/calibration-evidence.md). This checks local artifact integrity and does not deploy protected acceptance.

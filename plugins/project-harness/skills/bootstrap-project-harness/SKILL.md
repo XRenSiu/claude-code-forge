@@ -37,6 +37,10 @@ description: 调查、搭建、验证和改进项目的 Coding Harness。适用�
 
 诊断时临时修改检查参数得到的成功收据，不能替代项目原始绑定。可在授权范围修复的本地环境问题应继续处理，再按原绑定复跑；确有无法消除的限制时，明确报告哪些必跑项仍未完成。
 
+## Product verification
+
+用户要求真实产品操作、功能验证入口或检查器校准时，按 [product-verification.md](references/product-verification.md) 落地 feature index、五阶段驱动和原始证据。沿已有检查图绑定 `product-json`；校准必须实际执行正常候选、故障副本和恢复候选。不要把启动成功、报告字段或变异数量当作产品效果。
+
 ## Evolve
 
 读取 [evolution.md](references/evolution.md)。从验证过的根因选择测试、原生规则或已有文档的最小改进，复用 survey → plan → apply → verify。不要为每次失败新增一份经验文件。

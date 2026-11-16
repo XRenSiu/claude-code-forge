@@ -409,3 +409,7 @@ slug · 轨道 · 到达阶段 · issue# / branch / PR# / merge sha · 三道门
 `eval/gate.json`：`static_only`——结构过审 + 四个脚本在 fixtures 上冒烟（transition 拒绝 /
 waiver 记账 / 指纹升级 / 卡冲突 / 锁篡改被拒与附提案放行）。行为层（带/不带本 skill 在真实
 需求上的对比）未跑；静态读不是裁决。
+
+## 产品功能验证索引
+
+接入 Project Harness 功能索引时，沿 feature/entry 定位真实操作与未覆盖范围，按 [verification.md](references/verification.md) 复用原生检查图。自测导入与阶段推进都复核原始产品证据；合同映射可声明 feature_entries，校准必须提供正常、故障、恢复执行链。索引和本地校准不授予正式验收或交付权限。

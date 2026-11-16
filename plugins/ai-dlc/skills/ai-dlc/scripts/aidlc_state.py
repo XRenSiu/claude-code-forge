@@ -557,7 +557,13 @@ def calibration_unmet(st, sizing=None):
         vc = os.path.join(HERE, "..", "..", "calibrate", "scripts", "verify_calibration.py")
         if not os.path.isfile(vc):
             return ["verify_calibration.py not found next to calibrate — cannot certify the standard"], None
-        r = subprocess.run([sys.executable, vc, rep], capture_output=True, text=True)
+        command = [sys.executable, vc, rep]
+        manifest_path = '.harness/project.json'
+        if os.path.isfile(manifest_path):
+            with open(manifest_path, encoding='utf-8') as stream:
+                if json.load(stream).get('features'):
+                    command.extend(['--require-execution-evidence', '--project-root', str(verification.repo_root())])
+        r = subprocess.run(command, capture_output=True, text=True)
         if r.returncode != 0:
             return [f"calibration report {rep} fails the meta-gate (verify_calibration.py exit {r.returncode}) — an uncalibrated standard is not evidence"], None
         return [], None

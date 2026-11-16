@@ -6,6 +6,8 @@ import { VERSION, digest, inside, now, projectRoot, safePath, snapshot, writeJso
 import { validate, validateChecks } from './contracts.mjs'
 import { parseReport } from './reporters.mjs'
 import { describeEnvironment } from './environment.mjs'
+import { productBinding } from './product.mjs'
+import { validateFeatures } from './features.mjs'
 
 export function runProcess(executable, args, { cwd, env, input = '', timeoutMs = 120000, signal, maxOutput = 8 * 1024 * 1024 } = {}) {
   return new Promise(resolveResult => {
@@ -37,7 +39,7 @@ export function runProcess(executable, args, { cwd, env, input = '', timeoutMs =
     })
   })
 }
-async function runCheck(root, check, runDir, signal) {
+async function runCheck(root, check, runDir, signal, expectedBinding) {
   if (check.platforms && !check.platforms.includes(process.platform)) return { id: check.id, status: 'NOT_APPLICABLE', reason: `Declared platform scope: ${check.platforms.join(', ')}` }
   if (signal?.aborted) return { id: check.id, status: 'NOT_RUN', reason: 'Cancelled before start' }
   const dir = join(runDir, check.id)
@@ -53,7 +55,10 @@ async function runCheck(root, check, runDir, signal) {
     if (processResult.failure || processResult.signal) parsed = { status: 'ERROR', reason: processResult.failure || `Terminated by ${processResult.signal}` }
     else {
       const report = check.report_file ? readFileSync(safePath(dir, check.report_file), 'utf8') : processResult.stdout
-      parsed = parseReport(check, report, processResult.code)
+      parsed = parseReport(check, report, processResult.code, dir)
+      if (check.reporter === 'product-json' && parsed.status !== 'ERROR') {
+        if (!expectedBinding || Object.entries(expectedBinding).some(([key, value]) => parsed.binding?.[key] !== value)) parsed = { status: 'ERROR', reason: 'Product receipt binding does not match current candidate, index, checker, fixture or environment' }
+      }
     }
     return { id: check.id, ...parsed, executable: check.executable, argv, cwd: check.cwd, environment, exit_code: processResult.code, duration_ms: processResult.duration_ms, artifacts: dir }
   } catch (error) { return { id: check.id, status: 'ERROR', reason: error.message, artifacts: dir } }
@@ -68,6 +73,11 @@ export async function verify(rootPath, manifest, { outputDir, signal } = {}) {
   const runDir = join(physicalOutput, `run-${Date.now()}-${randomUUID().slice(0, 8)}`)
   mkdirSync(runDir, { recursive: true })
   const candidate = snapshot(root)
+  const bindings = new Map()
+  if (manifest.features) {
+    const index = validateFeatures(root, JSON.parse(readFileSync(safePath(root, manifest.features), 'utf8')), manifest.checks)
+    for (const feature of index.features) for (const entry of feature.entries) bindings.set(entry.check_id, productBinding(root, index, feature.id, entry.id, candidate.content_digest))
+  }
   const results = []
   const pending = new Map(manifest.checks.map(check => [check.id, check]))
   const nodeMajor = Number(process.versions.node.split('.')[0])
@@ -81,7 +91,7 @@ export async function verify(rootPath, manifest, { outputDir, signal } = {}) {
     if (!wave.length) throw new Error('Unresolvable check graph')
     const waveResults = await Promise.all(wave.map(async check => {
       if (check.depends_on.some(id => results.find(r => r.id === id).status !== 'PASS')) return { id: check.id, status: 'NOT_RUN', reason: 'Prerequisite did not pass' }
-      return runCheck(root, check, runDir, signal)
+      return runCheck(root, check, runDir, signal, bindings.get(check.id))
     }))
     for (const result of waveResults) { results.push(result); pending.delete(result.id) }
   }
@@ -96,7 +106,7 @@ export async function verify(rootPath, manifest, { outputDir, signal } = {}) {
   const required = results.filter(r => manifest.checks.find(c => c.id === r.id).required && r.status !== 'NOT_APPLICABLE')
   const receipt = validate('receipt', {
     schema_version: 1, evidence_kind: 'project-self-check', factory_version: VERSION, created_at: now(), candidate, candidate_after: candidateAfter,
-    manifest_digest: digest(manifest), environment: { node: process.versions.node, platform: process.platform, arch: process.arch, ...describeEnvironment(root), runner_digest: digest(['verify.mjs', 'reporters.mjs', 'environment.mjs', 'core.mjs', 'contracts.mjs'].map(name => readFileSync(new URL(`./${name}`, import.meta.url), 'utf8'))) },
+    manifest_digest: digest(manifest), environment: { node: process.versions.node, platform: process.platform, arch: process.arch, ...describeEnvironment(root), runner_digest: digest(['verify.mjs', 'reporters.mjs', 'environment.mjs', 'core.mjs', 'contracts.mjs', 'product.mjs', 'features.mjs'].map(name => readFileSync(new URL(`./${name}`, import.meta.url), 'utf8'))) },
     expected_checks: manifest.checks.map(c => c.id), results, execution_complete: complete,
     checks_passed: complete && required.length > 0 && required.every(r => r.status === 'PASS'), limitations,
     external_acceptance: { status: 'NOT_REQUESTED' }

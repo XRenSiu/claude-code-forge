@@ -5,6 +5,7 @@ import { VERSION, digest, fileState, hash, projectRoot, safePath } from './core.
 import { validate } from './contracts.mjs'
 import { makePlan } from './plan.mjs'
 import { survey } from './survey.mjs'
+import { validateFeatures, featureChecks, renderFeatures } from './features.mjs'
 import { contextPath, contextLockPath, contextCheck, renderContext, extractBlock, replaceBlock, sourceFingerprint, instructionDirectories } from './context.mjs'
 
 const libDir = dirname(fileURLToPath(import.meta.url))
@@ -17,13 +18,15 @@ export function defaultChecks(inventory) {
   if (rootPackage.tools.includes('vitest')) return [{ ...common, id: 'unit-tests', executable: 'node', argv: ['node_modules/vitest/vitest.mjs', 'run', '--reporter=json', '--outputFile={artifact_dir}/vitest.json'], reporter: 'vitest-json', report_file: 'vitest.json' }]
   return []
 }
-export function bootstrap(rootPath, { host, authorizationRef, checks, context, purpose = 'Adopt a project development harness with native verification' } = {}) {
+export function bootstrap(rootPath, { host, authorizationRef, checks, context, features, purpose = 'Adopt a project development harness with native verification' } = {}) {
   const reviewedContext = context !== undefined
   const root = projectRoot(rootPath), inventory = survey(root)
   if (!inventory.scan.complete) throw new Error('Cannot automatically bootstrap with a truncated survey')
   if (inventory.conflicts.length) throw new Error('Resolve package-manager conflicts before bootstrap')
   const manifestPath = '.harness/project.json'
   const previous = existsSync(join(root, manifestPath)) ? validate('manifest', JSON.parse(readFileSync(safePath(root, manifestPath), 'utf8'))) : null
+  features ||= previous?.features ? JSON.parse(readFileSync(safePath(root, previous.features), 'utf8')) : null
+  if (features) validateFeatures(root, features)
   host ||= previous?.host || (context ? 'dual' : 'codex')
   context ||= existsSync(join(root, contextPath)) ? JSON.parse(readFileSync(safePath(root, contextPath), 'utf8')) : null
   if (!['codex', 'claude-code', 'dual', 'portable'].includes(host)) throw new Error(`Unsupported host: ${host}`)
@@ -55,10 +58,24 @@ export function bootstrap(rootPath, { host, authorizationRef, checks, context, p
   }
   const runner = `#!/usr/bin/env node\nimport { dirname, resolve } from 'node:path'\nimport { fileURLToPath } from 'node:url'\nimport { readJson } from '../.harness/runtime/core.mjs'\nimport { verify } from '../.harness/runtime/verify.mjs'\nconst root = resolve(dirname(fileURLToPath(import.meta.url)), '..')\nconst outputDir = process.argv[2]\nif (!outputDir) { console.error('Usage: node scripts/project-verify.mjs <artifact-directory-outside-project>'); process.exit(2) }\nconst controller = new AbortController()\nfor (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, () => controller.abort())\ntry {\n  const { receipt, path } = await verify(root, readJson(resolve(root, '.harness/project.json')), { outputDir, signal: controller.signal })\n  console.log(JSON.stringify({ receipt: path, checks_passed: receipt.checks_passed, results: receipt.results.map(({ id, status }) => ({ id, status })) }, null, 2))\n  process.exitCode = receipt.checks_passed ? 0 : receipt.execution_complete ? 1 : 2\n} catch (error) { console.error(error.message); process.exitCode = 2 }\n`
   asset('scripts/project-verify.mjs', runner, 'Project-owned verification entry without a factory runtime dependency')
-  for (const name of ['core.mjs', 'contracts.mjs', 'reporters.mjs', 'environment.mjs', 'verify.mjs', 'context.mjs', 'doctor.mjs']) asset(`.harness/runtime/${name}`, readFileSync(join(libDir, name), 'utf8'), 'Pinned runtime; upgrade with the factory')
+  for (const name of ['core.mjs', 'contracts.mjs', 'reporters.mjs', 'environment.mjs', 'verify.mjs', 'context.mjs', 'doctor.mjs', 'features.mjs', 'product.mjs', 'calibration.mjs']) asset(`.harness/runtime/${name}`, readFileSync(join(libDir, name), 'utf8'), 'Pinned runtime; upgrade with the factory')
   let selectedChecks = checks || previous?.checks || defaultChecks(inventory)
+  if (features) {
+    const path = '.harness/features.json', state = fileState(safePath(root, path, { write: true })), content = JSON.stringify(features, null, 2) + '\n'
+    if (hash(content) !== state.hash) operations.push({ path, content, before_hash: state.hash, reason: 'Reviewed project-owned feature verification index', source: 'Product sources and existing checks' })
+    for (const check of featureChecks(features)) {
+      const existing = selectedChecks.find(c => c.id === check.id)
+      if (!existing) selectedChecks = [...selectedChecks, check]
+    }
+    validateFeatures(root, features, selectedChecks)
+    asset('docs/verification-features.md', renderFeatures(features), 'Render user entry points and verification coverage', 'project-harness-features')
+    const productEntry = `#!/usr/bin/env node\nimport { dirname, resolve } from 'node:path'\nimport { fileURLToPath } from 'node:url'\nimport { readJson } from '../.harness/runtime/core.mjs'\nimport { runProduct } from '../.harness/runtime/product.mjs'\nconst root = resolve(dirname(fileURLToPath(import.meta.url)), '..')\nconst [feature, entry, output] = process.argv.slice(2)\nconst controller = new AbortController()\nfor (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, () => controller.abort())\ntry {\n  const result = await runProduct(root, readJson(resolve(root, '.harness/features.json')), feature, entry, output, { signal: controller.signal })\n  console.log(JSON.stringify({ status: result.status, receipt: resolve(output, 'product.json') }))\n  process.exitCode = result.status === 'PASS' ? 0 : result.status === 'FAIL' ? 1 : 2\n  process.stdout.write('', () => process.exit(process.exitCode))\n} catch (error) { console.error(error.message); process.exitCode = 2 }\n`
+    asset('scripts/project-product.mjs', productEntry, 'Run an indexed real product entry and retain observations after cleanup')
+    const calibrationEntry = `#!/usr/bin/env node\nimport { dirname, resolve } from 'node:path'\nimport { fileURLToPath } from 'node:url'\nimport { calibrate } from '../.harness/runtime/calibration.mjs'\nconst root = resolve(dirname(fileURLToPath(import.meta.url)), '..')\ntry {\n  const result = await calibrate(root, process.argv[2], process.argv[3])\n  console.log(JSON.stringify(result))\n  process.exitCode = result.status === 'PASS' ? 0 : 1\n} catch (error) { console.error(error.message); process.exitCode = 2 }\n`
+    asset('scripts/project-calibrate.mjs', calibrationEntry, 'Run representative product faults in disposable source copies')
+  }
   const doc = `# Project verification\n\nRun with the project's required Node version:\n\n\`\`\`sh\nnode scripts/project-verify.mjs /tmp/project-harness-results\n\`\`\`\n\nThe authoritative command bindings are in [.harness/project.json](../.harness/project.json). Review their effects before running. The JSON receipt names the candidate digest, expected checks, actual counts, errors and skipped scope. Exit 0 requires a nonempty set of applicable required checks with evidence. Exit 1 means completed checks failed. Exit 2 means execution was incomplete.\n\nKeep native lint, test, CI and module documentation as their existing sources of truth. Update bindings when those commands change. Generated runtime assets are versioned with this repository. Use the bootstrap-project-harness skill to survey, diagnose or propose a reviewed upgrade. It preserves local changes and reports merge conflicts.\n\nKeep the system temporary directory outside repositories and package trees. Evidence output is not a replacement for TMPDIR: temporary fixtures may otherwise inherit an enclosing Git root or JavaScript module scope. Receipts record effective Node/temp context and environment fingerprints; they do not certify all machine state.\n\nA local receipt is a self-check, not external acceptance. Desktop behavior and host loading require their own real-session evidence.\n`
-  asset('docs/project-harness.md', doc + (context ? '\nDevelopment rules, workflows and adoption decisions: [development/README.md](development/README.md). Run `node scripts/project-context.mjs` to check generated guidance, source drift and host wiring; run `node scripts/project-doctor.mjs [receipt.json]` for full static diagnostics. These commands work without the factory installation.\n' : '\nThis is a verification-only installation. To adopt a development harness, prepare a source-backed context profile using the skill and rerun bootstrap with `--context`.\n'), 'Verification usage and maintenance ownership')
+  asset('docs/project-harness.md', doc + (features ? '\nProduct routes, expected observations and unverified surfaces: [verification-features.md](verification-features.md). Each entry owns launch/doctor/drive/observe/cleanup. Run `node scripts/project-calibrate.mjs <reviewed-plan.json> <new-outside-directory>` to check representative faults; this is local evidence, not protected qualification.\n' : '') + (context ? '\nDevelopment rules, workflows and adoption decisions: [development/README.md](development/README.md). Run `node scripts/project-context.mjs` to check generated guidance, source drift and host wiring; run `node scripts/project-doctor.mjs [receipt.json]` for full static diagnostics. These commands work without the factory installation.\n' : '\nThis is a verification-only installation. To adopt a development harness, prepare a source-backed context profile using the skill and rerun bootstrap with `--context`.\n'), 'Verification usage and maintenance ownership')
   const hostEntries = host === 'dual' ? ['AGENTS.md', 'CLAUDE.md'] : host === 'portable' ? [] : [host === 'claude-code' ? 'CLAUDE.md' : 'AGENTS.md']
   for (const hostEntry of hostEntries) {
     const block = `${startMarker}\nProject verification: see [docs/project-harness.md](docs/project-harness.md).\nRun \`node scripts/project-verify.mjs <artifact-directory-outside-project>\` after reviewing the bound checks.\n${endMarker}`
@@ -97,10 +114,11 @@ export function bootstrap(rootPath, { host, authorizationRef, checks, context, p
     operations.push({ path: old.path, content: null, before_hash: state.hash, reason: 'Remove obsolete generated guidance after scope/host change', source: contextPath }); removed.add(old.path)
   }
   const pinnedNode = inventory.facts.find(f => f.kind === 'node-pin')?.value
-  const sources = [...new Set([...(previous?.sources || []), ...inventory.assets.filter(a => a.kind === 'instructions' || a.kind === 'configuration').map(a => a.path), ...hostEntries, ...contextSources, ...(context ? [contextPath] : [])])].filter(p => !removed.has(p) && !generated.has(p) && !nextBlocks.some(b => b.path === p && p !== 'AGENTS.md' && p !== 'CLAUDE.md')).sort()
+  const sources = [...new Set([...(previous?.sources || []), ...inventory.assets.filter(a => a.kind === 'instructions' || a.kind === 'configuration').map(a => a.path), ...hostEntries, ...contextSources, ...(context ? [contextPath] : []), ...(features ? ['.harness/features.json'] : [])])].filter(p => !removed.has(p) && !generated.has(p) && !nextBlocks.some(b => b.path === p && p !== 'AGENTS.md' && p !== 'CLAUDE.md')).sort()
   const tools = inventory.packages.flatMap(p => p.tools)
   const stack = [tools.includes('typescript') ? 'typescript' : 'node', ...(tools.includes('vue') ? ['vue'] : []), ...(tools.includes('electron') ? ['electron'] : [])].join('-')
   const manifest = validate('manifest', { schema_version: 1, factory_version: VERSION, host, stack, node_major: /^v?\d+/.test(pinnedNode || '') ? Number(pinnedNode.match(/\d+/)[0]) : previous?.node_major ?? null, assets: [...generated].map(([path, content]) => ({ path, hash: hash(content), owner: owners.get(path) })), checks: selectedChecks, sources, limitations: [...new Set([...(previous?.limitations || []), 'Host discovery requires a real new-session smoke test', 'Desktop/native runtime is not certified by static or unit checks', 'Submodule and installed dependency contents are outside the project candidate digest', 'External CI acceptance is not configured by this local generator', ...(context ? [] : ['Verification-only installation: development rules and workflows are not configured'])])], ...(context ? { context: { profile: contextPath, lock: contextLockPath } } : {}) })
+  if (features) manifest.features = '.harness/features.json'
   const manifestState = fileState(join(root, manifestPath))
   const content = JSON.stringify(manifest, null, 2) + '\n'
   if (manifestState.hash !== hash(content)) operations.push({ path: manifestPath, content, before_hash: manifestState.hash, reason: 'Bind existing tools, generated asset ownership and declared coverage', source: 'survey + selected checks' })

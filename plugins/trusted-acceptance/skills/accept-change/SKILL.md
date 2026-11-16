@@ -30,6 +30,10 @@ version: 0.1.0
 5. **读事实与分流。** 按 [evidence.md](references/evidence.md) 读逐项证据，按 [triage.md](references/triage.md) 处理结果。只把可复现的实现缺陷交回项目 Harness；本 Skill 不在验收过程中修改产品代码、正式断言或被测预期。
 6. **报告与交接。** 输出指定候选和阶段的结论、证据、限制、下一步。即使 `accepted_for_stage`，也不意味着允许合并/发布；执行交付前由交付系统再次原子核对当前任务状态、候选和授权。
 
+## 产品验证与校准链
+
+涉及真实产品或检查器资格时，读取 [calibration-evidence.md](references/calibration-evidence.md)。从功能索引定位真实操作，核对原始观察以及正常、故障、恢复的执行证据；`validate-calibration` 可独立复核链条，输出仍是 local_advisory。冻结的检查包、独立采集者与隐藏 holdout 必须由控制区提供，不能用本地通过代替。
+
 ## 调用脚本
 
 以下 `SKILL_DIR` 是本文件所在目录，`CONTROL_CONFIG` 是维护者提供且位于候选写权限之外的配置路径。先确定实际路径，不照抄示例变量。Python 3.9+，仅用标准库。

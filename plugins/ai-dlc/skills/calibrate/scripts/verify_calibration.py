@@ -31,6 +31,9 @@ Semantic half — FLAGGED as needs_semantic_review, never auto-passed:
 """
 import sys
 import json
+from pathlib import Path
+from verification_evidence import validate_calibration, current_project_binding, entry_from_index, load as load_evidence
+import subprocess
 
 try:
     import yaml
@@ -78,6 +81,33 @@ def main():
 
     rejects, flags = [], []
     kind = (rep.get("kind") or "").strip()
+    execution = rep.get("execution_evidence")
+    execution_result = None
+    if execution:
+        try:
+            base = Path(path).resolve().parent
+            execution_result = validate_calibration(base / execution["receipt"], load_evidence(base / execution["plan"]), load_evidence(base / execution["features"]))
+            if '--require-execution-evidence' in sys.argv:
+                project = sys.argv[sys.argv.index('--project-root') + 1] if '--project-root' in sys.argv else Path.cwd()
+                binding = execution_result['binding']
+                expected = current_project_binding(project, binding['feature_id'], binding['entry_id'])
+                index = load_evidence(Path(project) / '.harness/features.json')
+                entry = entry_from_index(index, binding['feature_id'], binding['entry_id'])
+                plan_path = (Path(project) / entry['calibration_plan']).resolve()
+                if Path(project).resolve() not in plan_path.parents or load_evidence(plan_path) != load_evidence(base / execution['plan']):
+                    rejects.append('execution_evidence: plan differs from the current indexed calibration plan')
+                if binding != expected:
+                    rejects.append('execution_evidence: not the current project candidate/index/checker/fixture/environment')
+            mutation = rep.get("mutation") or {}
+            for key in ("total_mutants", "killed", "mutation_score"):
+                if mutation.get(key) != execution_result[key]:
+                    rejects.append("execution_evidence: reported " + key + " differs from measured attempts")
+        except (OSError, ValueError, KeyError, TypeError, AttributeError, subprocess.SubprocessError) as error:
+            rejects.append("execution_evidence: " + str(error))
+    elif kind == "eval_case" and "--require-execution-evidence" in sys.argv:
+        rejects.append("execution_evidence required: provide the receipt, reviewed plan and feature index")
+    else:
+        flags.append("No raw product calibration evidence supplied; this is a report self-check, not measured checker qualification")
 
     # the hard lines only ratchet tighter — a report cannot pass by lowering a threshold
     if min_alpha < HARD_ALPHA_FLOOR:
@@ -199,11 +229,13 @@ def main():
         "report": path,
         "standard_ref": rep.get("standard_ref"),
         "kind": kind,
+        "authority": "local_advisory",
+        "execution_evidence": execution_result or {"status": "NOT_PROVIDED" if not execution else "INVALID"},
         "jud据": {"c1_mutation": c1, "c2_agreement": c2, "c3_holdout": c3, "c4_isolation": c4},
         "rejects": rejects,
         "needs_semantic_review": flags,
         "meta_gate": result.upper(),
-        "activation": "ALLOWED (rubric still needs human sign, R002)" if result == "pass" else "FORBIDDEN",
+        "activation": "LOCAL POLICY CHECK PASSED (independent provenance and rubric sign-off remain external)" if result == "pass" else "FORBIDDEN",
     }
     print(json.dumps(report, ensure_ascii=False, indent=2))
     sys.exit(0 if result == "pass" else 1)

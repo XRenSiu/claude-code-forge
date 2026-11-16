@@ -5,6 +5,7 @@ import { validate, validateChecks } from './contracts.mjs'
 import { isCurrentReceipt } from './verify.mjs'
 import { describeEnvironment } from './environment.mjs'
 import { inspectContext } from './context.mjs'
+import { validateFeatures } from './features.mjs'
 
 export function doctor(rootPath, manifest, { receipt } = {}) {
   const root = projectRoot(rootPath), findings = []
@@ -26,6 +27,11 @@ export function doctor(rootPath, manifest, { receipt } = {}) {
     add('UNKNOWN', 'host-live-discovery', 'File presence does not establish host loading; run a new host session and retain its trace')
   }
   findings.push(...inspectContext(root, manifest))
+  if (manifest.features) {
+    try { validateFeatures(root, JSON.parse(readFileSync(safePath(root, manifest.features), 'utf8')), manifest.checks); add('PASS', 'feature-index', 'Feature sources, drivers, fixtures and required checks are linked') }
+    catch (error) { add('FAIL', 'feature-index', error.message) }
+    add('UNKNOWN', 'product-live', 'Feature index validity does not prove product behavior; run the mapped entries')
+  }
   if (!manifest.checks.length) add('FAIL', 'checks', 'No check bindings; add a native checker with a supported reporter')
   if (manifest.checks.some(c => c.reporter === 'exit-code')) add('WARN', 'exit-only', 'Exit-only bindings cannot produce PASS evidence')
   if (manifest.node_major !== null && Number(process.versions.node.split('.')[0]) !== manifest.node_major) add('FAIL', 'node-version', `Expected ${manifest.node_major}; got ${process.versions.node}`)

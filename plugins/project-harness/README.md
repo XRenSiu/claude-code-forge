@@ -42,6 +42,10 @@ node plugins/project-harness/skills/bootstrap-project-harness/scripts/harness.mj
 
 完整合同与十项覆盖要求见 [development-context.md](skills/bootstrap-project-harness/references/development-context.md)。低层不带 context 的命令仍可生成验证运行器，但明确标为 verification-only，不能当成完整开发环境交付。
 
+## 真实产品验证
+
+功能索引把用户入口连接到实际驱动、检查断言和未覆盖范围。产品运行器执行启动、健康检查、操作、观察与清理，保留原始证据；校准运行器在临时副本中注入故障，检查对应业务断言是否抓住故障，并保留正常 → 故障 → 恢复证据链。详见 [驱动与索引合同](skills/bootstrap-project-harness/references/product-verification.md)。本地结果不签发正式验收。
+
 ## 导入来源与验证
 
 从用户提供的 `bootstrap-project-harness-0.1.1.tar.gz` 导入。归档摘要及逐文件原始摘要保存在 [source.json](source.json)。v0.1.1 导入时保留全部 22 个 Skill 文件，忽略 macOS AppleDouble 元数据。`source.json` 保留原始导入来源；v0.2.0 在此基础上增加项目上下文编译、双宿主规则、工作流、覆盖评估与独立诊断，并修正 Electron 被直接标成 Vue 的技术栈推断。当前源码已不同于原归档。

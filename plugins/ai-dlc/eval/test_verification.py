@@ -216,6 +216,20 @@ class VerificationTests(unittest.TestCase):
         self.assertEqual(st["verification"]["trusted"]["status"], "not_configured")
         self.assertEqual(st["version"], 2)
 
+    def test_feature_mapping_binds_index_and_check_without_inventing_approval(self):
+        index = {"schema_version": 1, "features": [{"id": "access", "entries": [{"id": "http", "check_id": "behavior", "claims": ["denied"]}]}]}
+        (self.root / 'features.json').write_text(json.dumps(index))
+        self.mapping['feature_index'] = 'features.json'
+        self.mapping['criteria'][0]['feature_entries'] = ['access/http']
+        proposal = compile_proposal(self.dw, self.mapping)
+        self.assertEqual(proposal['feature_index_digest'], v.digest(index))
+        self.assertEqual(proposal['unmapped_feature_entries'], [])
+        self.assertEqual(proposal['authority'], 'proposal_only')
+        self.assertNotIn('approval_ref', proposal['contract'])
+        self.mapping['criteria'][0]['local_check_ids'] = ['wrong']
+        with self.assertRaisesRegex(ValueError, 'local_check_ids'):
+            compile_proposal(self.dw, self.mapping)
+
     def test_minimal_done_and_bad_completeness_are_rejected(self):
         for document in ({"state_decision": "DONE"}, {"state_decision": "DONE", "unevaluated_reviews": ""}, []):
             with self.subTest(document=document), self.assertRaises(v.VerificationError):

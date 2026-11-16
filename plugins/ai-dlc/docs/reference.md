@@ -121,6 +121,7 @@ flag 不等于 reject。预门过了但带 flag，意思是「机器判不了这
 | `capture_red_baseline.py` | test-suite-generator | **红基线**：实现前跑一次，记录哪些测试是红的；实现者拿它自证红→绿 | 0 · 1 基线不是红 |
 | `verify_red_green.py` | test-suite-generator | **红→绿证据的另一半**：基线里每条红测试现在都必须出现且通过；**消失的红测试算不绿**（删测试是最便宜的变绿）；基线 HEAD 必须是当前 HEAD 的祖先 | 0 green · 1 not green · 2 IO · **3 unevaluated**（基线无干净检出证据 / 非祖先 / 认不出测试行）——不是通过 |
 | `verify_compile.py` | spec-compile | 可判性阶梯的产物检（fitness fn / eval_case / 评判程序） | 0 · 1 拒 |
+| `verification_evidence.py` | calibrate / ai-dlc | 原始产品与校准证据链、当前候选/index/checker/fixture/env 绑定；与 trusted-acceptance 副本逐字一致 | 模块；拒绝缺失、篡改或过期证据 |
 | `verify_calibration.py` | calibrate | **标准的标准**：mutation score / Krippendorff α ≥ 0.80 / holdout / 隔离，四不可破 | 0 元闸过 · 1 拒 |
 
 ### 验收（R6）

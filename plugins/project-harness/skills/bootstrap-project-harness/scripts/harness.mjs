@@ -10,7 +10,7 @@ import { doctor } from './lib/doctor.mjs'
 
 const [command, ...argv] = process.argv.slice(2)
 const opts = {}
-const allowed = new Set(['root', 'out', 'proposal', 'plan', 'state-dir', 'accept-plan', 'manifest', 'artifact-dir', 'receipt', 'host', 'checks', 'context', 'authorization-ref', 'journal', 'max-files'])
+const allowed = new Set(['root', 'out', 'proposal', 'plan', 'state-dir', 'accept-plan', 'manifest', 'artifact-dir', 'receipt', 'host', 'checks', 'context', 'features', 'authorization-ref', 'journal', 'max-files'])
 try {
   for (let i = 0; i < argv.length; i += 2) {
     const key = argv[i].replace(/^--/, '')
@@ -29,7 +29,7 @@ try {
       if (!Number.isInteger(maxFiles) || maxFiles < 1) throw new Error('--max-files must be a positive integer')
       result = survey(root, { maxFiles })
     } else if (command === 'bootstrap') {
-      const created = bootstrap(root, { host: opts.host, authorizationRef: requireOpt('authorization-ref'), checks: opts.checks ? readJson(opts.checks) : undefined, context: opts.context ? readJson(opts.context) : undefined })
+      const created = bootstrap(root, { host: opts.host, authorizationRef: requireOpt('authorization-ref'), checks: opts.checks ? readJson(opts.checks) : undefined, context: opts.context ? readJson(opts.context) : undefined, features: opts.features ? readJson(opts.features) : undefined })
       result = created.plan
     } else if (command === 'plan') result = makePlan(root, readJson(requireOpt('proposal')))
     else if (command === 'apply') result = apply(root, readJson(requireOpt('plan')), { stateDir: requireOpt('state-dir'), acceptedDigest: requireOpt('accept-plan') })

@@ -8,7 +8,7 @@ const obj = (properties, required = Object.keys(properties), extra = false) => (
 const version = { const: 1 }
 export const checkSchema = obj({
   id: { ...s, pattern: '^[a-z0-9][a-z0-9-]*$' }, executable: s, argv: arr(text), cwd: text,
-  reporter: { enum: ['vitest-json', 'eslint-json', 'tap', 'claims-json', 'exit-code'] },
+  reporter: { enum: ['vitest-json', 'eslint-json', 'tap', 'claims-json', 'product-json', 'exit-code'] },
   depends_on: arr(s), timeout_ms: { type: 'integer', minimum: 1, maximum: 3600000 }, required: bool,
   report_file: s, stdin: text, expected_claims: arr(s), platforms: arr(s),
   env: { type: 'object', additionalProperties: text }, reason: s,
@@ -25,7 +25,7 @@ export const schemas = {
   }),
   inventory: obj({ schema_version: version, factory_version: s, root: s, created_at: s, candidate: { type: 'object' }, scan: { type: 'object' }, packages: arr({ type: 'object' }), assets: arr({ type: 'object' }), facts: arr({ type: 'object' }), conflicts: arr({ type: 'object' }), unknowns: arr({ type: 'object' }) }),
   plan: obj({ schema_version: version, factory_version: s, root: s, created_at: s, purpose: s, authorization_ref: s, operations: arr(operation), checks: arr(checkSchema), digest: s }),
-  manifest: obj({ ...manifestProperties, context: obj({ profile: { const: '.harness/context.json' }, lock: { const: '.harness/context-lock.json' } }) }, Object.keys(manifestProperties)),
+  manifest: obj({ ...manifestProperties, features: { const: '.harness/features.json' }, context: obj({ profile: { const: '.harness/context.json' }, lock: { const: '.harness/context-lock.json' } }) }, Object.keys(manifestProperties)),
   receipt: obj({ schema_version: version, evidence_kind: { const: 'project-self-check' }, factory_version: s, created_at: s, candidate: { type: 'object' }, candidate_after: { type: 'object' }, manifest_digest: s, environment: { type: 'object' }, expected_checks: arr(s), results: arr({ type: 'object' }), execution_complete: bool, checks_passed: bool, limitations: arr(s), external_acceptance: { type: 'object' } })
 }
 
@@ -62,7 +62,7 @@ export function validateChecks(checks) {
     validateValue(check, checkSchema)
     if (ids.has(check.id)) throw new Error(`Duplicate check: ${check.id}`)
     ids.add(check.id)
-    if (check.reporter === 'claims-json' && !check.expected_claims?.length) throw new Error(`${check.id}: claims-json requires expected_claims`)
+    if (['claims-json', 'product-json'].includes(check.reporter) && !check.expected_claims?.length) throw new Error(`${check.id}: ${check.reporter} requires expected_claims`)
     if (check.expected_claims && new Set(check.expected_claims).size !== check.expected_claims.length) throw new Error(`${check.id}: duplicate expected claims`)
   }
   const done = new Set(), visiting = new Set()

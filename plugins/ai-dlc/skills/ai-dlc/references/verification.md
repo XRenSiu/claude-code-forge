@@ -187,3 +187,11 @@ python3 "$AI_DLC/scripts/aidlc_state.py" acceptance --slug quantity-change --res
 ```
 
 final-state.json 中 `input_binding` 是开始评审时保存的完整 `current_source`，`unevaluated_reviews` 必须如实列出未完成的审查。只有实际评审收敛才能写 DONE；没有执行 Fleet 的接入演示不得伪造其结论。正式送验还需上文的真实审批、固定产物与控制入口。
+
+## Product entries and raw calibration
+
+If the Harness manifest declares `features`, `verification run` validates each `product-json` receipt against the current index, candidate digest, required claims and underlying raw artifacts. `advance` rechecks those artifacts; deleting or changing raw evidence makes self-check stale even if the top receipt is unchanged. Lifecycle and observed assertions remain separate from test-suite counts.
+
+`compile_acceptance.py` mappings may include `feature_index` (relative to done_when) and per-criterion `feature_entries: ["feature-id/entry-id"]`. Each referenced entry must exist and its check must be in `local_check_ids`. The proposal binds the index digest and reports unmapped feature entries as scope information, not as inferred obligations. Product promises still come from the approved ACs.
+
+For indexed eval_case calibration, the meta-gate requires `execution_evidence` with `receipt`, `plan` and `features` paths relative to the calibration report. It validates the raw chain and recomputes total/killed/score. The lifecycle passes `--project-root` and independently measures the current Git candidate, index, checker, fixture and selected Node environment; a self-consistent chain from another project or an older candidate is rejected. The entry must bind `calibration_plan`; the supplied plan must equal that current reviewed file, so dropping difficult faults cannot qualify the checker. Existing holdout, isolation and agreement requirements still apply. Missing holdout stays unqualified even when all visible faults are caught. Projects without a feature index retain their legacy report checks, visibly flagged as report-only when raw execution evidence is absent.

@@ -69,6 +69,10 @@ def write_new(path, payload):
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
+    evidence = sub.add_parser("validate-calibration", help="verify local raw calibration evidence; never issue formal acceptance")
+    evidence.add_argument("file")
+    evidence.add_argument("--plan", required=True, help="reviewed calibration plan")
+    evidence.add_argument("--features", required=True, help="reviewed feature index")
     for name in ("validate-request", "validate-contract"):
         cmd = sub.add_parser(name)
         cmd.add_argument("file")
@@ -81,6 +85,10 @@ def main(argv=None):
             cmd.add_argument("--run-id", required=True)
     args = parser.parse_args(argv)
     try:
+        if args.command == "validate-calibration":
+            from verification_evidence import validate_calibration
+            print(json.dumps(validate_calibration(args.file, load(args.plan), load(args.features)), ensure_ascii=False))
+            return 0
         if args.command in ("validate-request", "validate-contract"):
             document = load(args.file)
             if args.command == "validate-contract":
@@ -107,7 +115,7 @@ def main(argv=None):
         if result["state"] != "complete":
             return 3
         return 0 if result["verification_decision"] == "accepted_for_stage" else 2
-    except (ProtocolError, OSError, ValueError) as error:
+    except (ProtocolError, OSError, ValueError, KeyError, TypeError, AttributeError) as error:
         print("acceptance: " + str(error), file=sys.stderr)
         return 4
 
