@@ -1,6 +1,6 @@
 # Project Harness
 
-**v0.2.0** · Node.js 22+ · 无安装依赖 · MIT（继承仓库 LICENSE）。
+**v0.3.0** · Node.js 22+ · 无安装依赖 · MIT（继承仓库 LICENSE）。
 
 `/bootstrap-project-harness` 调查现有项目、生成可审阅计划、处理冲突并落地完整开发 Harness，再执行检查并保存绑定候选的收据。保留已有原生规则、文档和工具链，支持 Codex、Claude Code 与 portable 宿主。
 

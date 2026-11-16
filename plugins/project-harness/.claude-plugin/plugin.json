@@ -1,7 +1,7 @@
 {
   "name": "project-harness",
   "description": "Project-owned development harness: source-backed scoped rules for Claude Code and Codex, project workflows, adoption assessment, conflict-aware regeneration, standalone diagnostics and evidence-backed native verification.",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "author": {
     "name": "XRenSiu",
     "email": "xrensiu@gmail.com"
