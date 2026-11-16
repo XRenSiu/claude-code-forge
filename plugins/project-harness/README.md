@@ -44,7 +44,7 @@ node plugins/project-harness/skills/bootstrap-project-harness/scripts/harness.mj
 
 ## 真实产品验证
 
-功能索引把用户入口连接到实际驱动、检查断言和未覆盖范围。产品运行器执行启动、健康检查、操作、观察与清理，保留原始证据；校准运行器在临时副本中注入故障，检查对应业务断言是否抓住故障，并保留正常 → 故障 → 恢复证据链。详见 [驱动与索引合同](skills/bootstrap-project-harness/references/product-verification.md)。本地结果不签发正式验收。
+功能索引把用户入口连接到实际驱动、检查断言和未覆盖范围。产品运行器执行启动、健康检查、操作、观察与清理，保留原始证据；校准运行器在临时副本中注入故障，检查对应业务断言是否抓住故障，并保留正常 → 故障 → 恢复证据链。doctor 可重读每个入口的原始证据并区分未运行、当前通过、过期和损坏；每次运行绑定独立 invocation，拒绝同一候选的旧报告重放。升级后须重跑生成新格式证据。详见 [驱动与索引合同](skills/bootstrap-project-harness/references/product-verification.md)。本地结果不签发正式验收。
 
 ## 导入来源与验证
 

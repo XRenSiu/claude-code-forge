@@ -1,11 +1,11 @@
 import { validateProduct } from './product.mjs'
 const count = value => Number.isInteger(value) && value >= 0
 const error = reason => ({ status: 'ERROR', reason })
-export function parseReport(check, text, exitCode, artifactDir) {
+export function parseReport(check, text, exitCode, artifactDir, productOptions) {
   if (check.reporter === 'exit-code') return { status: exitCode === 0 ? 'NOT_RUN' : 'ERROR', reason: 'Exit status alone does not demonstrate assertions or scanned files' }
   try {
     if (check.reporter === 'product-json') {
-      const result = validateProduct(JSON.parse(text), artifactDir, check.expected_claims)
+      const result = validateProduct(JSON.parse(text), artifactDir, check.expected_claims, productOptions)
       if ((result.status === 'PASS' && exitCode !== 0) || (result.status === 'FAIL' && exitCode !== 1)) return error('Product exit code contradicts observations')
       return result
     }

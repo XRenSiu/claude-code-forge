@@ -13,6 +13,7 @@ from pathlib import Path
 
 MAX_BYTES = 8 * 1024 * 1024
 DIGEST = re.compile(r"sha256:[a-f0-9]{64}\Z")
+INVOCATION = re.compile(r"[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}\Z")
 
 
 def require(condition, message):
@@ -101,10 +102,14 @@ def current_project_binding(root, feature_id, entry_id, node='node'):
             'fixture_digest': files(entry['fixture_files']), 'environment_digest': digest(environment)}
 
 
-def validate_product(path, expected_claims=None, expected_binding=None):
+def validate_product(path, expected_claims=None, expected_binding=None, expected_invocation=None, evidence_types=None):
     report = load(path)
     require(report.get("schema_version") == 1 and report.get("evidence_kind") == "product-observation"
             and report.get("authority") == "project-self-check", "unsupported product receipt")
+    invocation = report.get('invocation_id')
+    require(isinstance(invocation, str) and INVOCATION.fullmatch(invocation), 'missing product invocation identity; rerun the entry')
+    if expected_invocation is not None:
+        require(invocation == expected_invocation, 'product invocation does not match this attempt')
     binding = report.get("binding", {})
     for key in ("candidate_digest", "checker_digest", "fixture_digest", "feature_index_digest", "environment_digest"):
         require(isinstance(binding.get(key), str) and DIGEST.fullmatch(binding[key]), "missing product binding: " + key)
@@ -121,7 +126,10 @@ def validate_product(path, expected_claims=None, expected_binding=None):
     require(evidence_ids and all(isinstance(i, str) and i for i in evidence_ids)
             and len(set(evidence_ids)) == len(evidence_ids), "missing or duplicate raw evidence")
     for item in evidence:
-        artifact(Path(path).parent, item)
+        require(isinstance(item.get('type'), str) and item['type'].strip(), 'missing evidence type')
+        require(artifact(Path(path).parent, item).stat().st_size > 0, 'empty raw evidence')
+    if evidence_types is not None:
+        require({e['type'] for e in evidence} == set(evidence_types), 'product evidence type coverage mismatch')
     claims = report.get("claims", [])
     ids = [c.get("id") for c in claims]
     require(ids and all(isinstance(i, str) and i for i in ids) and len(set(ids)) == len(ids), "missing or duplicate product claims")
@@ -153,13 +161,17 @@ def validate_calibration(path, expected_plan=None, expected_index=None):
             and set(required) <= set(ids) and report.get("required_faults") == required, "missing required faults")
     cases = report.get("cases", [])
     require([c.get("id") for c in cases] == ["baseline", *ids, "recovery"], "missing, duplicated or reordered calibration attempts")
+    invocations = [c.get('invocation_id') for c in cases]
+    require(all(isinstance(i, str) and INVOCATION.fullmatch(i) for i in invocations) and len(set(invocations)) == len(invocations), 'missing or reused calibration invocation')
     baseline = validate_product(artifact(root, cases[0].get("receipt")))
     binding = baseline["binding"]
     claims = [c["id"] for c in baseline["claims"]]
     require(binding["candidate_digest"] == report.get("source_digest") and binding["feature_id"] == plan.get("feature_id")
             and binding["entry_id"] == plan.get("entry_id"), "calibration subject mismatch")
+    evidence_types = None
     if expected_index is not None:
         entry = entry_from_index(expected_index, plan["feature_id"], plan["entry_id"])
+        evidence_types = entry['evidence_types']
         require(binding["feature_index_digest"] == digest(expected_index) and set(claims) == set(entry["claims"])
                 and binding["check_id"] == entry["check_id"], "feature index binding mismatch")
         protected = {entry["driver"], *entry["checker_files"], *entry["fixture_files"]}
@@ -169,7 +181,7 @@ def validate_calibration(path, expected_plan=None, expected_index=None):
     killed = 0
     for i, case in enumerate(cases):
         artifact(root, case.get("stdout")); artifact(root, case.get("stderr"))
-        result = validate_product(artifact(root, case.get("receipt")), claims, shared)
+        result = validate_product(artifact(root, case.get("receipt")), claims, shared, case['invocation_id'], evidence_types)
         if i in (0, len(cases) - 1):
             require(case.get("kind") == "positive" and case.get("status") == "PASS" and case.get("exit_code") == 0
                     and result["status"] == "PASS" and result["binding"]["candidate_digest"] == report["source_digest"], "positive control failed or changed")

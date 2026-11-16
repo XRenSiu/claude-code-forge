@@ -9,8 +9,9 @@ import { apply } from '../skills/bootstrap-project-harness/scripts/lib/apply.mjs
 import { validateFeatures } from '../skills/bootstrap-project-harness/scripts/lib/features.mjs'
 import { runProduct, validateProduct } from '../skills/bootstrap-project-harness/scripts/lib/product.mjs'
 import { calibrate } from '../skills/bootstrap-project-harness/scripts/lib/calibration.mjs'
-import { readJson } from '../skills/bootstrap-project-harness/scripts/lib/core.mjs'
+import { readJson, hash } from '../skills/bootstrap-project-harness/scripts/lib/core.mjs'
 import { verify } from '../skills/bootstrap-project-harness/scripts/lib/verify.mjs'
+import { doctor } from '../skills/bootstrap-project-harness/scripts/lib/doctor.mjs'
 
 const server = `import {createServer} from 'node:http';let allowed=true;
 const app=createServer((req,res)=>{if(req.method==='DELETE'){allowed = false;res.end('revoked')}else{res.statusCode=allowed?200:403;res.end(allowed?'private':'denied')}});
@@ -43,6 +44,22 @@ r=json.load(open(sys.argv[2]));m=json.load(open(sys.argv[3]));f=json.load(open(s
 issues=v.receipt_issues(r,m,sys.argv[5],f);print(json.dumps(issues));sys.exit(bool(issues))`
   const args = ['-B', '-c', check, consumer, JSON.parse(result.stdout).receipt, join(root, '.harness/project.json'), join(root, '.harness/features.json'), artifacts]
   assert.equal(spawnSync('python3', args).status, 0)
+  const folder = receipt.results[0].artifacts, productPath = join(folder, 'product.json')
+  const original = readJson(productPath), rawPath = join(folder, original.evidence[0].path), bytes = readFileSync(rawPath)
+  for (const variant of ['empty', 'unindexed-type']) {
+    const damaged = structuredClone(original)
+    if (variant === 'empty') {
+      writeFileSync(rawPath, '')
+      Object.assign(damaged.evidence[0], { size_bytes: 0, digest: 'sha256:' + hash('') })
+    } else damaged.evidence[0].type = 'unindexed-type'
+    writeFileSync(productPath, JSON.stringify(damaged))
+    const rejected = spawnSync('python3', args, { encoding: 'utf8' })
+    assert.equal(rejected.status, 1, rejected.stderr + rejected.stdout)
+    assert.match(rejected.stdout, variant === 'empty' ? /empty raw/ : /type coverage/)
+    assert.throws(() => validateProduct(damaged, folder, ['denied'], { evidenceTypes: ['http'] }), /integrity|type coverage/)
+    writeFileSync(rawPath, bytes)
+  }
+  writeFileSync(productPath, JSON.stringify(original))
   const again = bootstrap(root, { host: 'portable', authorizationRef: 'test', features: index })
   assert.equal(again.plan.operations.length, 0)
   const broken = structuredClone(index); broken.features[0].entries[0].claims.push('unbound')
@@ -73,6 +90,34 @@ test('native verification rejects a replayed product receipt from another candid
   assert.equal(result.receipt.checks_passed, false)
   assert.equal(result.receipt.results[0].status, 'ERROR')
   assert.match(result.receipt.results[0].reason, /binding/)
+})
+test('the same unchanged candidate cannot replay its previous product invocation', async t => {
+  const { root, artifacts } = setup(t), cache = join(artifacts, 'cached-product')
+  put(root, 'cache-run.mjs', `import {existsSync,cpSync} from 'node:fs';import {spawnSync} from 'node:child_process';const cache=${JSON.stringify(cache)};if(existsSync(cache))cpSync(cache,process.argv[2],{recursive:true});else{const p=spawnSync(process.execPath,['scripts/project-product.mjs','access','http',process.argv[2]],{stdio:'inherit'});if(p.status!==0)process.exit(p.status??2);cpSync(process.argv[2],cache,{recursive:true})}`)
+  const manifest = readJson(join(root, '.harness/project.json'))
+  manifest.checks[0].argv = ['cache-run.mjs', '{artifact_dir}']
+  put(root, '.harness/project.json', JSON.stringify(manifest))
+  const first = await verify(root, manifest, { outputDir: join(artifacts, 'first') })
+  const second = await verify(root, manifest, { outputDir: join(artifacts, 'second') })
+  assert.equal(first.receipt.checks_passed, true)
+  assert.equal(second.receipt.candidate.content_digest, first.receipt.candidate.content_digest)
+  assert.equal(second.receipt.checks_passed, false)
+  assert.match(second.receipt.results[0].reason, /invocation/i)
+})
+test('doctor reopens product observations and distinguishes unrun, current, stale and damaged evidence', async t => {
+  const { root, artifacts } = setup(t), manifest = readJson(join(root, '.harness/project.json'))
+  assert.equal(doctor(root, manifest).product_entries[0].status, 'NOT_RUN')
+  const result = await verify(root, manifest, { outputDir: artifacts })
+  const inspect = receipt => doctor(root, manifest, { receipt, receiptPath: result.path })
+  assert.equal(inspect(result.receipt).product_verified, true)
+  const missing = structuredClone(result.receipt); missing.results = []
+  assert.equal(inspect(missing).healthy, false)
+  const oldEnvironment = structuredClone(result.receipt); oldEnvironment.environment.node = '22.0.0'
+  assert.equal(inspect(oldEnvironment).product_entries[0].status, 'STALE')
+  writeFileSync(join(result.receipt.results[0].artifacts, 'evidence/readback.json'), '{}')
+  assert.equal(inspect(result.receipt).product_verified, false)
+  assert.equal(inspect(result.receipt).product_entries[0].status, 'ERROR')
+  assert.equal(inspect(result.receipt).healthy, false)
 })
 test('standalone product command bounds a hung module import and retains an error receipt', t => {
   const { root, artifacts, index } = setup(t)
@@ -107,13 +152,31 @@ test('calibration kills a business fault, rejects startup errors and remains ind
   assert.equal(current.status, 0, current.stderr)
   assert.deepEqual(JSON.parse(current.stdout), readJson(join(artifacts, 'calibration/baseline/product.json')).binding)
   assert.equal(readFileSync(new URL('../../ai-dlc/skills/calibrate/scripts/verification_evidence.py', import.meta.url), 'utf8'), readFileSync(new URL('../../trusted-acceptance/skills/accept-change/scripts/verification_evidence.py', import.meta.url), 'utf8'))
+  const calibration = readJson(result.receipt), baselinePath = join(artifacts, 'calibration/baseline/product.json')
+  const baselineBytes = readFileSync(baselinePath), wrongType = JSON.parse(baselineBytes)
+  wrongType.evidence[0].type = 'unindexed-type'
+  const changedBytes = Buffer.from(JSON.stringify(wrongType))
+  writeFileSync(baselinePath, changedBytes)
+  Object.assign(calibration.cases[0].receipt, { digest: 'sha256:' + hash(changedBytes), size_bytes: changedBytes.length })
+  const originalCalibration = readFileSync(result.receipt)
+  writeFileSync(result.receipt, JSON.stringify(calibration))
+  const badType = spawnSync('python3', ['-B', validator.pathname, 'validate-calibration', result.receipt, '--plan', planPath, '--features', join(root, '.harness/features.json')], { encoding: 'utf8' })
+  assert.notEqual(badType.status, 0)
+  assert.match(badType.stderr + badType.stdout, /type coverage/)
+  writeFileSync(baselinePath, baselineBytes); writeFileSync(result.receipt, originalCalibration)
   const forbidden = structuredClone(plan); forbidden.mutations[0].path = 'driver.mjs'
   writeFileSync(join(artifacts, 'forbidden.json'), JSON.stringify(forbidden))
   await assert.rejects(calibrate(root, join(artifacts, 'forbidden.json'), join(artifacts, 'forbidden')), /checker/)
   forbidden.mutations[0].path = './driver.mjs'
   writeFileSync(join(artifacts, 'alias.json'), JSON.stringify(forbidden))
   await assert.rejects(calibrate(root, join(artifacts, 'alias.json'), join(artifacts, 'alias')), /canonical/)
-  const raw = readJson(result.receipt); raw.killed = 99; writeFileSync(result.receipt, JSON.stringify(raw))
+  const original = readJson(result.receipt), reused = structuredClone(original)
+  reused.cases.at(-1).invocation_id = reused.cases[0].invocation_id
+  writeFileSync(result.receipt, JSON.stringify(reused))
+  const replay = spawnSync('python3', ['-B', validator.pathname, 'validate-calibration', result.receipt, '--plan', planPath, '--features', join(root, '.harness/features.json')], { encoding: 'utf8' })
+  assert.notEqual(replay.status, 0)
+  assert.match(replay.stderr + replay.stdout, /invocation/)
+  const raw = structuredClone(original); raw.killed = 99; writeFileSync(result.receipt, JSON.stringify(raw))
   assert.notEqual(spawnSync('python3', ['-B', validator.pathname, 'validate-calibration', result.receipt, '--plan', planPath, '--features', join(root, '.harness/features.json')]).status, 0)
   plan.mutations[0].after = 'not valid syntax @'; writeFileSync(planPath, JSON.stringify(plan))
   const failed = await calibrate(root, planPath, join(artifacts, 'invalid-mutant'))

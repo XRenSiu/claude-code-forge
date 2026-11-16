@@ -295,10 +295,13 @@ def receipt_issues(receipt, manifest, artifact_root=None, feature_index=None):
                 require(under(folder, artifact_root), 'product evidence is outside this attempt')
                 report_path = (folder / check['report_file']).resolve()
                 require(under(report_path, folder), 'product report escapes its check directory')
+                require(isinstance(result.get('invocation_id'), str), 'missing product invocation identity; rerun the entry')
+                binding = result.get('binding', {})
+                entry = entry_from_index(feature_index, binding['feature_id'], binding['entry_id'])
                 observed = validate_product(report_path, check['expected_claims'], {
                     'candidate_digest': 'sha256:' + receipt['candidate']['content_digest'],
-                    'feature_index_digest': digest(feature_index), 'check_id': check['id']})
-                entry = entry_from_index(feature_index, observed['binding']['feature_id'], observed['binding']['entry_id'])
+                    'feature_index_digest': digest(feature_index), 'check_id': check['id']}, result['invocation_id'], entry['evidence_types'])
+                require(observed['binding'] == binding, 'product binding differs from the saved check result')
                 require(entry['check_id'] == check['id'] and set(entry['claims']) == set(check['expected_claims']), 'product entry/check mismatch')
                 require(observed['status'] == result['status'], 'product result contradicts raw observations')
             except (OSError, ValueError, KeyError, TypeError) as error:

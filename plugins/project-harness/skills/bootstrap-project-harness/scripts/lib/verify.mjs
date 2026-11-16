@@ -39,7 +39,7 @@ export function runProcess(executable, args, { cwd, env, input = '', timeoutMs =
     })
   })
 }
-async function runCheck(root, check, runDir, signal, expectedBinding) {
+async function runCheck(root, check, runDir, signal, expectedBinding, evidenceTypes) {
   if (check.platforms && !check.platforms.includes(process.platform)) return { id: check.id, status: 'NOT_APPLICABLE', reason: `Declared platform scope: ${check.platforms.join(', ')}` }
   if (signal?.aborted) return { id: check.id, status: 'NOT_RUN', reason: 'Cancelled before start' }
   const dir = join(runDir, check.id)
@@ -48,16 +48,19 @@ async function runCheck(root, check, runDir, signal, expectedBinding) {
     const cwd = safePath(root, check.cwd, { allowRoot: true })
     const environment = describeEnvironment(cwd, check.env)
     const argv = check.argv.map(arg => arg.replaceAll('{artifact_dir}', dir))
-    const processResult = await runProcess(check.executable, argv, { cwd, env: check.env, input: check.stdin, timeoutMs: check.timeout_ms, signal })
+    const invocationId = check.reporter === 'product-json' ? randomUUID() : undefined
+    const env = invocationId ? { ...check.env, PROJECT_HARNESS_INVOCATION: invocationId } : check.env
+    const processResult = await runProcess(check.executable, argv, { cwd, env, input: check.stdin, timeoutMs: check.timeout_ms, signal })
     atomicWrite(join(dir, 'stdout.log'), processResult.stdout)
     atomicWrite(join(dir, 'stderr.log'), processResult.stderr)
     let parsed
     if (processResult.failure || processResult.signal) parsed = { status: 'ERROR', reason: processResult.failure || `Terminated by ${processResult.signal}` }
     else {
       const report = check.report_file ? readFileSync(safePath(dir, check.report_file), 'utf8') : processResult.stdout
-      parsed = parseReport(check, report, processResult.code, dir)
+      parsed = parseReport(check, report, processResult.code, dir, { evidenceTypes })
       if (check.reporter === 'product-json' && parsed.status !== 'ERROR') {
         if (!expectedBinding || Object.entries(expectedBinding).some(([key, value]) => parsed.binding?.[key] !== value)) parsed = { status: 'ERROR', reason: 'Product receipt binding does not match current candidate, index, checker, fixture or environment' }
+        else if (parsed.invocation_id !== invocationId) parsed = { status: 'ERROR', reason: 'Product invocation does not match this attempt' }
       }
     }
     return { id: check.id, ...parsed, executable: check.executable, argv, cwd: check.cwd, environment, exit_code: processResult.code, duration_ms: processResult.duration_ms, artifacts: dir }
@@ -73,10 +76,13 @@ export async function verify(rootPath, manifest, { outputDir, signal } = {}) {
   const runDir = join(physicalOutput, `run-${Date.now()}-${randomUUID().slice(0, 8)}`)
   mkdirSync(runDir, { recursive: true })
   const candidate = snapshot(root)
-  const bindings = new Map()
+  const bindings = new Map(), evidenceTypes = new Map()
   if (manifest.features) {
     const index = validateFeatures(root, JSON.parse(readFileSync(safePath(root, manifest.features), 'utf8')), manifest.checks)
-    for (const feature of index.features) for (const entry of feature.entries) bindings.set(entry.check_id, productBinding(root, index, feature.id, entry.id, candidate.content_digest))
+    for (const feature of index.features) for (const entry of feature.entries) {
+      bindings.set(entry.check_id, productBinding(root, index, feature.id, entry.id, candidate.content_digest))
+      evidenceTypes.set(entry.check_id, entry.evidence_types)
+    }
   }
   const results = []
   const pending = new Map(manifest.checks.map(check => [check.id, check]))
@@ -91,7 +97,7 @@ export async function verify(rootPath, manifest, { outputDir, signal } = {}) {
     if (!wave.length) throw new Error('Unresolvable check graph')
     const waveResults = await Promise.all(wave.map(async check => {
       if (check.depends_on.some(id => results.find(r => r.id === id).status !== 'PASS')) return { id: check.id, status: 'NOT_RUN', reason: 'Prerequisite did not pass' }
-      return runCheck(root, check, runDir, signal, bindings.get(check.id))
+      return runCheck(root, check, runDir, signal, bindings.get(check.id), evidenceTypes.get(check.id))
     }))
     for (const result of waveResults) { results.push(result); pending.delete(result.id) }
   }
@@ -117,5 +123,8 @@ export async function verify(rootPath, manifest, { outputDir, signal } = {}) {
 }
 export function isCurrentReceipt(root, manifest, receipt) {
   validate('receipt', receipt)
-  return receipt.manifest_digest === digest(manifest) && receipt.candidate_after.content_digest === snapshot(projectRoot(root)).content_digest
+  const current = snapshot(projectRoot(root))
+  return receipt.manifest_digest === digest(manifest) && current.complete && !current.unknowns.length &&
+    [receipt.candidate, receipt.candidate_after].every(c => c.complete === true && Array.isArray(c.unknowns) && !c.unknowns.length && c.content_digest === current.content_digest) &&
+    receipt.environment.node === process.versions.node && receipt.environment.platform === process.platform && receipt.environment.arch === process.arch
 }

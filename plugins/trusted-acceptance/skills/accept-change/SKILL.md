@@ -32,7 +32,7 @@ version: 0.2.0
 
 ## 产品验证与校准链
 
-涉及真实产品或检查器资格时，读取 [calibration-evidence.md](references/calibration-evidence.md)。从功能索引定位真实操作，核对原始观察以及正常、故障、恢复的执行证据；`validate-calibration` 可独立复核链条，输出仍是 local_advisory。冻结的检查包、独立采集者与隐藏 holdout 必须由控制区提供，不能用本地通过代替。
+涉及真实产品或检查器资格时，读取 [calibration-evidence.md](references/calibration-evidence.md)。从功能索引定位真实操作，核对非空原始观察、索引证据类型以及正常、故障、恢复的独立运行标识；`validate-calibration` 可独立复核链条，输出仍是 local_advisory。冻结的检查包、独立采集者与隐藏 holdout 必须由控制区提供，不能用本地通过代替。
 
 ## 调用脚本
 

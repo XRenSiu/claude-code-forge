@@ -190,7 +190,7 @@ final-state.json 中 `input_binding` 是开始评审时保存的完整 `current_
 
 ## Product entries and raw calibration
 
-If the Harness manifest declares `features`, `verification run` validates each `product-json` receipt against the current index, candidate digest, required claims and underlying raw artifacts. `advance` rechecks those artifacts; deleting or changing raw evidence makes self-check stale even if the top receipt is unchanged. Lifecycle and observed assertions remain separate from test-suite counts.
+If the Harness manifest declares `features`, `verification run` validates each `product-json` receipt against the current index, candidate digest, required claims and underlying raw artifacts. `advance` rechecks those artifacts; deleting or changing raw evidence makes self-check stale even if the top receipt is unchanged. The product invocation must match the saved check result; raw observations must be nonempty and cover exactly the indexed evidence types. Older reports without invocation identity require a fresh run of the upgraded runtime. Lifecycle and observed assertions remain separate from test-suite counts.
 
 `compile_acceptance.py` mappings may include `feature_index` (relative to done_when) and per-criterion `feature_entries: ["feature-id/entry-id"]`. Each referenced entry must exist and its check must be in `local_check_ids`. The proposal binds the index digest and reports unmapped feature entries as scope information, not as inferred obligations. Product promises still come from the approved ACs.
 

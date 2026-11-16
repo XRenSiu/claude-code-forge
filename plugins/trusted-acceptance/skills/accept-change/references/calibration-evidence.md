@@ -1,6 +1,6 @@
 # Product and calibration evidence
 
-The portable validator consumes Project Harness product/calibration receipts. It verifies the complete launch → doctor → drive → observe → cleanup lifecycle; every expected claim has raw observations; hashes and sizes agree; baseline and recovery bind the same source; each specified fault changes source while keeping index/checker/fixture/environment fixed; and the intended business assertion, rather than a startup error, catches the fault. It recomputes the counts and score.
+The portable validator consumes Project Harness product/calibration receipts. It verifies the complete launch → doctor → drive → observe → cleanup lifecycle; every expected claim has raw observations; hashes and sizes agree; baseline and recovery bind the same source; each specified fault changes source while keeping index/checker/fixture/environment fixed; and the intended business assertion, rather than a startup error, catches the fault. It recomputes the counts and score. Each baseline, fault and recovery attempt must have a unique invocation identity matching its product receipt. Raw product observations must be nonempty, and their types must match the reviewed feature entry. Process stdout/stderr may be empty. Older reports without invocation identities must be rerun after upgrading the complete generated Harness runtime; do not add IDs to historical reports. Invocation and hashes detect replay or inconsistency, not authenticated collection.
 
 ```sh
 python3 scripts/acceptance.py validate-calibration /outside/run/calibration.json \

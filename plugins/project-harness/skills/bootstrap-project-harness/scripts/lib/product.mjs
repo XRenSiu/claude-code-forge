@@ -3,6 +3,7 @@ import { join, relative, resolve } from 'node:path'
 import { tmpdir } from 'node:os'
 import { pathToFileURL } from 'node:url'
 import { spawn } from 'node:child_process'
+import { randomUUID } from 'node:crypto'
 import { digest, hash, inside, now, projectRoot, safePath, snapshot, writeJson } from './core.mjs'
 import { featureEntry, filesDigest } from './features.mjs'
 
@@ -21,20 +22,25 @@ export function evidenceFile(root, name) {
   require(lstatSync(path).isFile() && lstatSync(path).size <= 8 * 1024 * 1024, 'Evidence must be a bounded regular file')
   return path
 }
-export function validateProduct(report, root, expectedClaims) {
+export function validateProduct(report, root, expectedClaims, { invocationId, binding, evidenceTypes } = {}) {
   require(report?.schema_version === 1 && report.evidence_kind === 'product-observation' && report.authority === 'project-self-check', 'Unsupported product receipt')
+  require(typeof report.invocation_id === 'string' && /^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/.test(report.invocation_id), 'Missing product invocation identity; rerun this entry')
+  if (invocationId !== undefined) require(report.invocation_id === invocationId, 'Product invocation does not match this attempt')
   require(report.binding && ['candidate_digest', 'feature_index_digest', 'checker_digest', 'fixture_digest', 'environment_digest'].every(k => /^sha256:[a-f0-9]{64}$/.test(report.binding[k])), 'Missing product binding')
+  if (binding) require(Object.entries(binding).every(([key, value]) => report.binding[key] === value), 'Product binding does not match current candidate, index, checker, fixture or environment')
   require(Array.isArray(report.phases) && new Set(report.phases.map(p => p.name)).size === report.phases.length, 'Invalid lifecycle phases')
   require(Array.isArray(report.claims) && Array.isArray(report.evidence), 'Missing product observations')
   const ids = report.claims.map(c => c.id)
   require(new Set(ids).size === ids.length, 'Duplicate product claim')
   const evidenceIds = new Set()
   for (const item of report.evidence) {
-    require(typeof item.id === 'string' && !evidenceIds.has(item.id), 'Duplicate evidence ID'); evidenceIds.add(item.id)
+    require(typeof item.id === 'string' && item.id && !evidenceIds.has(item.id), 'Missing or duplicate evidence ID'); evidenceIds.add(item.id)
+    require(typeof item.type === 'string' && item.type.trim(), 'Missing evidence type')
     const data = readFileSync(evidenceFile(root, item.path))
     require(data.length > 0 && item.size_bytes === data.length && item.digest === 'sha256:' + hash(data), 'Product evidence integrity mismatch')
   }
   if (report.status === 'ERROR') return { status: 'ERROR', reason: report.error || 'Product lifecycle incomplete' }
+  if (evidenceTypes) require(evidenceTypes.every(type => report.evidence.some(e => e.type === type)) && report.evidence.every(e => evidenceTypes.includes(e.type)), 'Product evidence type coverage mismatch')
   require(report.phases.length === phases.length && phases.every((name, i) => report.phases[i].name === name && report.phases[i].status === 'PASS'), 'Product lifecycle incomplete')
   require(report.candidate_unchanged === true, 'Candidate changed during product verification')
   require(expectedClaims?.length && ids.length === expectedClaims.length && expectedClaims.every(id => ids.includes(id)), 'Product claim coverage mismatch')
@@ -44,11 +50,12 @@ export function validateProduct(report, root, expectedClaims) {
   }
   const status = report.claims.every(c => c.status === 'PASS') ? 'PASS' : 'FAIL'
   require(report.status === status, 'Product summary contradicts observations')
-  return { status, examined: ids.length, passed: report.claims.filter(c => c.status === 'PASS').length, failed: report.claims.filter(c => c.status === 'FAIL').length, binding: report.binding }
+  return { status, examined: ids.length, passed: report.claims.filter(c => c.status === 'PASS').length, failed: report.claims.filter(c => c.status === 'FAIL').length, binding: report.binding, invocation_id: report.invocation_id }
 }
 
-export async function runProduct(rootPath, index, featureId, entryId, outputDir, { signal } = {}) {
+export async function runProduct(rootPath, index, featureId, entryId, outputDir, { signal, invocationId = randomUUID() } = {}) {
   const root = projectRoot(rootPath), { entry } = featureEntry(root, index, featureId, entryId)
+  require(typeof invocationId === 'string' && /^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/.test(invocationId), 'Invalid product invocation identity')
   require(outputDir && !inside(root, resolve(outputDir)), 'Product evidence must be outside the project')
   mkdirSync(outputDir, { recursive: true }); const out = realpathSync(outputDir)
   require(!inside(root, out) && !existsSync(join(out, 'product.json')), 'Evidence output resolves inside project or already contains a receipt')
@@ -59,7 +66,7 @@ export async function runProduct(rootPath, index, featureId, entryId, outputDir,
   if (signal?.aborted) abort()
   const timer = setTimeout(abort, entry.timeout_ms)
   const before = snapshot(root)
-  const report = { schema_version: 1, evidence_kind: 'product-observation', authority: 'project-self-check', created_at: now(),
+  const report = { schema_version: 1, evidence_kind: 'product-observation', authority: 'project-self-check', created_at: now(), invocation_id: invocationId,
     binding: productBinding(root, index, featureId, entryId, before.content_digest),
     phases: [], claims: [], evidence: [], status: 'ERROR', candidate_unchanged: false, limitations: entry.unsupported }
   let instance, driver, closed = false
@@ -123,7 +130,7 @@ export async function runProduct(rootPath, index, featureId, entryId, outputDir,
   }
   const after = snapshot(root)
   report.candidate_unchanged = before.content_digest === after.content_digest && after.complete && !after.unknowns.length
-  try { validateProduct(report, out, entry.claims) } catch (error) { report.status = 'ERROR'; report.error = error.message }
+  try { validateProduct(report, out, entry.claims, { invocationId, evidenceTypes: entry.evidence_types }) } catch (error) { report.status = 'ERROR'; report.error = error.message }
   writeJson(join(out, 'product.json'), report)
   return report
 }

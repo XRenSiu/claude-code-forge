@@ -1,6 +1,7 @@
 import { chmodSync, existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readlinkSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
 import { dirname, join, resolve, relative } from 'node:path'
 import { tmpdir } from 'node:os'
+import { randomUUID } from 'node:crypto'
 import { digest, hash, inside, listFiles, readJson, safePath, snapshot, writeJson } from './core.mjs'
 import { featureEntry } from './features.mjs'
 import { validateProduct } from './product.mjs'
@@ -57,15 +58,16 @@ export async function calibrate(rootPath, planPath, outputDir) {
     limitations: ['Local execution does not establish protected provenance or a hidden holdout', 'Dependency directory links are reused read-only; installed dependency contents are outside the source digest'] }
   async function run(name, candidate, mutation) {
     const folder = join(out, name); mkdirSync(folder)
-    const result = await runProcess(process.execPath, [...entry.node_args, 'scripts/project-product.mjs', plan.feature_id, plan.entry_id, folder], { cwd: candidate, timeoutMs: entry.timeout_ms })
+    const invocationId = randomUUID()
+    const result = await runProcess(process.execPath, [...entry.node_args, 'scripts/project-product.mjs', plan.feature_id, plan.entry_id, folder], { cwd: candidate, timeoutMs: entry.timeout_ms, env: { PROJECT_HARNESS_INVOCATION: invocationId } })
     writeFileSync(join(folder, 'stdout.log'), result.stdout); writeFileSync(join(folder, 'stderr.log'), result.stderr)
-    const row = { id: name, kind: mutation ? 'mutant' : 'positive', exit_code: result.code, status: 'ERROR',
+    const row = { id: name, invocation_id: invocationId, kind: mutation ? 'mutant' : 'positive', exit_code: result.code, status: 'ERROR',
       stdout: descriptor(out, `${name}/stdout.log`), stderr: descriptor(out, `${name}/stderr.log`) }
     if (mutation) row.mutation = mutation
     try {
       require(!result.failure && !result.signal, result.failure || 'Run interrupted')
       const receipt = readJson(join(folder, 'product.json'))
-      validateProduct(receipt, folder, entry.claims)
+      validateProduct(receipt, folder, entry.claims, { invocationId, evidenceTypes: entry.evidence_types })
       const baselineBinding = report.cases[0]?.binding
       if (baselineBinding) require(Object.entries(baselineBinding).every(([key, value]) => key === 'candidate_digest' || receipt.binding[key] === value), 'Calibration checker, index, fixture or environment changed')
       require(receipt.binding.candidate_digest === 'sha256:' + snapshot(candidate).content_digest, 'Calibration receipt does not describe the executed candidate')

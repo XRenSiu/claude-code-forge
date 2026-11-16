@@ -255,6 +255,6 @@ shipped?) — until such a set exists this honestly sits at `static_only`.
 
 ## 可复核产品校准证据
 
-Project Harness 功能索引接入后，eval_case 校准报告必须提供 `execution_evidence: {receipt, plan, features}`（路径相对本报告）。运行 `scripts/verify_calibration.py <report> --require-execution-evidence`，验证原始产物、固定 checker/fixture/index、正常与恢复基线、每个故障及预期业务断言，再重算变异分数。启动或清理失败不是抓住业务故障。声明的 total/killed/score 与原始尝试不一致即拒绝。
+Project Harness 功能索引接入后，eval_case 校准报告必须提供 `execution_evidence: {receipt, plan, features}`（路径相对本报告）。运行 `scripts/verify_calibration.py <report> --require-execution-evidence`，验证非空原始产物、索引证据类型、逐次唯一运行标识、固定 checker/fixture/index、正常与恢复基线、每个故障及预期业务断言，再重算变异分数。启动或清理失败不是抓住业务故障。声明的 total/killed/score 与原始尝试不一致即拒绝。
 
 这些材料只证明本地执行链一致。缺隐藏 holdout 或独立评估者时继续报告元闸未通过；不得填写未经实际建立的 attestation。先修观察器、驱动或环境的结构性问题，再重跑完整校准，不凭手写报告提升证据等级。

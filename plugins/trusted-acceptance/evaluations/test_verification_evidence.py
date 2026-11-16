@@ -19,6 +19,7 @@ class ProductEvidenceTests(unittest.TestCase):
         (self.root / 'raw.json').write_bytes(raw)
         self.report = {
             'schema_version': 1, 'evidence_kind': 'product-observation', 'authority': 'project-self-check',
+            'invocation_id': '11111111-1111-4111-8111-111111111111',
             'binding': {**{k: 'sha256:' + 'a' * 64 for k in ('candidate_digest', 'checker_digest', 'fixture_digest', 'feature_index_digest', 'environment_digest')},
                         'feature_id': 'access', 'entry_id': 'http', 'check_id': 'access-product'},
             'candidate_unchanged': True, 'status': 'PASS',
@@ -34,6 +35,13 @@ class ProductEvidenceTests(unittest.TestCase):
     def test_positive_is_only_project_self_check(self):
         self.assertEqual(self.check()['authority'], 'project-self-check')
 
+    def test_missing_or_replayed_invocation_is_rejected(self):
+        with self.assertRaisesRegex(ValueError, 'invocation'):
+            self.check(expected_invocation='22222222-2222-4222-8222-222222222222')
+        self.report.pop('invocation_id')
+        with self.assertRaisesRegex(ValueError, 'invocation'):
+            self.check()
+
     def test_missing_failed_or_reordered_lifecycle_is_rejected(self):
         for phases in (self.report['phases'][:-1], list(reversed(self.report['phases'])),
                        [dict(p, status='ERROR') for p in self.report['phases']]):
@@ -48,6 +56,21 @@ class ProductEvidenceTests(unittest.TestCase):
         (self.root / 'raw.json').unlink()
         (self.root / 'raw.json').symlink_to('/etc/hosts')
         with self.assertRaisesRegex(ValueError, 'symlink'):
+            self.check()
+
+    def test_empty_raw_with_matching_descriptor_is_rejected(self):
+        (self.root / 'raw.json').write_bytes(b'')
+        self.report['evidence'][0].update(digest=sha(b''), size_bytes=0)
+        with self.assertRaisesRegex(ValueError, 'empty raw'):
+            self.check()
+
+    def test_missing_or_undeclared_evidence_types_are_rejected(self):
+        self.check(evidence_types=['http'])
+        for types in (['http', 'restart'], ['websocket']):
+            with self.assertRaisesRegex(ValueError, 'type coverage'):
+                self.check(evidence_types=types)
+        self.report['evidence'][0].pop('type')
+        with self.assertRaisesRegex(ValueError, 'missing evidence type'):
             self.check()
 
     def test_stale_index_and_missing_observation_cannot_pass(self):

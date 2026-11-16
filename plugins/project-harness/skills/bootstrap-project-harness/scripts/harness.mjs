@@ -43,7 +43,7 @@ try {
         process.exitCode = result.receipt.checks_passed ? 0 : result.receipt.execution_complete ? 1 : 2
       } finally { process.off('SIGINT', abort); process.off('SIGTERM', abort) }
     } else if (command === 'doctor') {
-      result = doctor(root, manifest(), { receipt: opts.receipt ? readJson(opts.receipt) : undefined })
+      result = doctor(root, manifest(), { receipt: opts.receipt ? readJson(opts.receipt) : undefined, receiptPath: opts.receipt ? resolve(opts.receipt) : undefined })
       process.exitCode = result.healthy ? 0 : 1
     } else throw new Error(`Unknown command: ${command}`)
     if (opts.out) { writeJson(opts.out, result); console.log(JSON.stringify({ output: resolve(opts.out), ...(result.digest ? { plan_digest: result.digest, operations: result.operations.length } : {}) })) }

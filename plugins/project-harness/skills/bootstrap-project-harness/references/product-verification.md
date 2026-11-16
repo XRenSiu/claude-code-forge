@@ -38,7 +38,7 @@ An ESM driver exports all five async functions. Each receives `(ctx, instance)`;
 
 `ctx.root`, `ctx.scratch`, `ctx.signal` and `ctx.entry` identify the candidate, system temporary directory, cancellation and entry. Use `ctx.spawn(executable, argv, options)` for owned subprocesses; environment inheritance is restricted, no shell is used. Honor the abort signal in long waits. Do not spawn detached children or access live accounts implicitly. Cleanup has a five-second grace period and remaining registered children are terminated.
 
-Use `ctx.capture(type, name, sanitizedJson)` to preserve bounded raw evidence outside the project **before cleanup**. It returns an evidence ID. Do not capture tokens, private keys, arbitrary headers or unsanitized logs. Return observations like:
+Use `ctx.capture(type, name, sanitizedJson)` immediately after each operation to preserve bounded raw evidence outside the project **before cleanup**. If a later operation fails, completed observations must remain available for diagnosis. It returns an evidence ID. Do not capture tokens, private keys, arbitrary headers or unsanitized logs. Return observations like:
 
 ```js
 return [{id: 'old-access-denied', status: response.status === 403 ? 'PASS' : 'FAIL',
@@ -46,7 +46,7 @@ return [{id: 'old-access-denied', status: response.status === 403 ? 'PASS' : 'FA
   actual: JSON.stringify(response), evidence_refs: [evidenceId]}]
 ```
 
-Startup, timeout, missing observations and cleanup errors are `ERROR`, not assertion `FAIL`. `product-json` checks are required entries in the existing check graph. Product receipts bind candidate content, index, driver/checker, fixture and selected Node environment; raw artifacts have hashes and sizes. Installed dependencies and broader machine state are not certified by these digests. A candidate-owned observer remains self-check code.
+Startup, timeout, missing observations and cleanup errors are `ERROR`, not assertion `FAIL`. `product-json` checks are required entries in the existing check graph. Product receipts bind candidate content, index, driver/checker, fixture and selected Node environment; raw artifacts have hashes, nonzero sizes and the indexed evidence types. Each invocation has a fresh `invocation_id`; the parent Harness or calibration runner supplies `PROJECT_HARNESS_INVOCATION` and checks the child report against it. Standalone runs create their own ID. Reusing an old report for a second run of unchanged source is rejected. Upgrade the generated runtime and wrappers together and rerun entries: older reports without invocation identity are historical evidence only. This identity detects accidental replay, not a hostile candidate capable of rewriting evidence. Installed dependencies and broader machine state are not certified by these digests. A candidate-owned observer remains self-check code.
 
 ## Calibrate against faults
 

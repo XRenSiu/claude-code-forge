@@ -29,7 +29,7 @@ description: 调查、搭建、验证和改进项目的 Coding Harness。适用�
 
 ## Verify / doctor
 
-读取 [verification.md](references/verification.md)。默认 manifest 是 `.harness/project.json`，先读其中的命令、范围和 effects，再检查对应原生配置。`doctor` 检查静态接线、资产漂移、临时环境和收据新鲜度，不执行项目检查。资产 hash 匹配且命令与任务范围相符时继续验证；出现漂移、错误或不明副作用时再深入 runtime/测试源码，避免每次重做完整实现审计。
+读取 [verification.md](references/verification.md)。默认 manifest 是 `.harness/project.json`，先读其中的命令、范围和 effects，再检查对应原生配置。`doctor` 检查静态接线、资产漂移、临时环境和收据新鲜度；给出收据路径时重读产品原始证据，逐入口报告 NOT_RUN、PASS、FAIL、STALE 或 ERROR，不执行项目检查。资产 hash 匹配且命令与任务范围相符时继续验证；出现漂移、错误或不明副作用时再深入 runtime/测试源码，避免每次重做完整实现审计。
 
 `verify` 执行已审阅的检查图。测试创建并清理临时 fixture 属于正常验证行为；若用户连临时写入也明确禁止，使用隔离副本。证据目录与测试临时目录是两件事：保留系统 TMPDIR，不默认把它改到 artifacts 下；另一仓库的 Git 根和 package.json 也会污染临时 fixture。桌面 E2E 等副作用遵守项目约束。
 
