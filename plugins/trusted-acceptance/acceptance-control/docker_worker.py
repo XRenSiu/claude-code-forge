@@ -58,9 +58,11 @@ def run_job(control, token, project, timeout=300):
             "privileged": observation["HostConfig"]["Privileged"], "cap_drop": observation["HostConfig"]["CapDrop"],
             "security_opt": observation["HostConfig"]["SecurityOpt"], "user": observation["Config"]["User"],
             "binds": observation["HostConfig"]["Binds"], "network_internal": json.loads(docker("network", "inspect", network))[0]["Internal"],
+            'port_bindings': observation['HostConfig']['PortBindings'],
             "mounts": [{k: m[k] for k in ("Type", "Destination", "RW")} for m in observation["Mounts"]]}
         require(isolation["readonly_rootfs"] and not isolation["privileged"] and not isolation["binds"] and isolation["network_internal"], "candidate isolation not established")
         require(all(m["Type"] != "bind" for m in isolation["mounts"]), "host bind mount forbidden")
+        require(not isolation['port_bindings'], 'candidate must not publish host ports')
         (directory / "isolation.json").write_text(json.dumps(isolation, indent=2))
         request = {**job, "product_url": "http://product:8080", "evidence_directory": '/evidence',
             "evidence_prefix": directory.name, "attempt_path": '/evidence/attempt.json', "isolation": isolation}
@@ -74,6 +76,15 @@ def run_job(control, token, project, timeout=300):
             '--mount', 'type=bind,src=' + str(directory) + ',dst=/evidence',
             '--env', 'ACCEPTANCE_COLLECTOR_REQUEST=/evidence/collector-request.json',
             '--entrypoint', Path(spec['collector_argv'][0]).name, spec['observer_image'], '/observer/' + observer_entry, *spec['collector_argv'][2:])
+        observed = json.loads(docker('inspect', observer))[0]
+        observer_record = {'image': observed['Image'], 'readonly_rootfs': observed['HostConfig']['ReadonlyRootfs'], 'user': observed['Config']['User'],
+            'port_bindings': observed['HostConfig']['PortBindings'], 'mounts': [{k: m[k] for k in ('Type', 'Destination', 'RW')} for m in observed['Mounts']]}
+        binds = [m for m in observer_record['mounts'] if m['Type'] == 'bind']
+        require(observer_record['image'] == spec['observer_image'] and observer_record['readonly_rootfs'] and not observer_record['port_bindings'], 'observer image, rootfs or network isolation mismatch')
+        require(sorted((m['Destination'], m['RW']) for m in binds) == [('/evidence', True), ('/observer', False)], 'observer must have only frozen bundle and per-attempt evidence mounts')
+        isolation['observer'] = observer_record
+        (directory / 'isolation.json').write_text(json.dumps(isolation, indent=2))
+        (directory / 'collector-request.json').write_text(json.dumps(request))
         # Control token and database path are not passed to the collector or candidate.
         with (directory / "collector.stdout").open("wb") as stdout, (directory / "collector.stderr").open("wb") as stderr:
             process = subprocess.Popen(['docker', 'start', '--attach', observer], cwd=control.root, env=env, stdin=subprocess.DEVNULL, stdout=stdout, stderr=stderr, start_new_session=True)
