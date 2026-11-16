@@ -11,7 +11,7 @@ description: >-
   改契约或世界（/retro 的提案去向）、改代码（/implement）、改 skill 正文（skill-evolve 邻居）、单次 bug 根因。
   前置：`specs/*/` ≥ 2 个归档（少于 2 个只记基线）。
 argument-hint: "<archive_root> [--pr-watch .aidlc/pr-watch] [--ratchet-logs DIR] [--out tune/harness-proposals-<date>.yaml] [--min-features 2]"
-version: 0.3.1
+version: 0.4.0
 user-invocable: true
 ---
 
