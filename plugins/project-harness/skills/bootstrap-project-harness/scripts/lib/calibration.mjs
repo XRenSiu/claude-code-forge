@@ -2,6 +2,7 @@ import { chmodSync, existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync,
 import { dirname, join, resolve, relative } from 'node:path'
 import { tmpdir } from 'node:os'
 import { randomUUID } from 'node:crypto'
+import { spawnSync } from 'node:child_process'
 import { digest, hash, inside, listFiles, readJson, safePath, snapshot, writeJson } from './core.mjs'
 import { featureEntry } from './features.mjs'
 import { validateProduct } from './product.mjs'
@@ -12,6 +13,7 @@ const descriptor = (root, path) => { const bytes = readFileSync(join(root, path)
 function copyCandidate(root, target, dependencies) {
   const listing = listFiles(root, 100000)
   require(listing.complete, 'Cannot calibrate a truncated candidate')
+  const copied = []
   for (const path of listing.files) {
     if (dependencies.some(d => path === d || path.startsWith(d + '/'))) continue
     const source = safePath(root, path), dest = safePath(target, path, { write: true })
@@ -20,6 +22,16 @@ function copyCandidate(root, target, dependencies) {
     mkdirSync(dirname(dest), { recursive: true })
     if (stat.isSymbolicLink()) { require(inside(root, realpathSync(source)), 'External source symlink'); symlinkSync(readlinkSync(source), dest) }
     else { require(stat.isFile(), 'Submodules need an explicit calibration adapter'); writeFileSync(dest, readFileSync(source)); chmodSync(dest, stat.mode & 0o777) }
+    copied.push(path)
+  }
+  if (listing.method === 'git-index-and-untracked') {
+    // Keep native ignore rules while retaining every copied source, including tracked ignored files.
+    // Otherwise a real build in the copy can turn ignored binaries into apparent source mutations.
+    const init = spawnSync('git', ['-C', target, 'init', '--quiet', '--template='], { encoding: 'utf8' })
+    require(init.status === 0, 'Cannot initialize isolated calibration index: ' + init.stderr)
+    const index = spawnSync('git', ['--literal-pathspecs', '-C', target, 'add', '--force', '--pathspec-from-file=-', '--pathspec-file-nul'],
+      { input: copied.join('\0') + '\0', encoding: 'utf8' })
+    require(index.status === 0, 'Cannot bind calibration source index: ' + index.stderr)
   }
   for (const path of dependencies) {
     const source = safePath(root, path), dest = safePath(target, path, { write: true })

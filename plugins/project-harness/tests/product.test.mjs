@@ -183,3 +183,23 @@ test('calibration kills a business fault, rejects startup errors and remains ind
   assert.notEqual(failed.status, 'PASS')
   assert.equal(readJson(failed.receipt).cases[1].status, 'ERROR')
 })
+test('calibration retains native build ignores without hiding tracked source changes', async t => {
+  const { root, artifacts } = setup(t)
+  put(root, '.gitignore', 'generated-bin/\n')
+  put(root, 'generated-bin/tracked.txt', 'original')
+  assert.equal(spawnSync('git', ['-C', root, 'add', '--force', 'generated-bin/tracked.txt']).status, 0)
+  const build = `import {mkdirSync,writeFileSync} from 'node:fs';import {join} from 'node:path';\n`
+  put(root, 'driver.mjs', build + driver.replace('export async function launch(ctx){',
+    `export async function launch(ctx){mkdirSync(join(ctx.root,'generated-bin'),{recursive:true});writeFileSync(join(ctx.root,'generated-bin/new-binary'),'built');`))
+  const plan = { schema_version: 1, feature_id: 'access', entry_id: 'http', dependency_paths: [], required_faults: ['ignored-revoke'], mutations: [{ id: 'ignored-revoke', path: 'server.mjs', before: 'allowed = false', after: 'allowed = true', claim_id: 'denied' }] }
+  const path = join(artifacts, 'plan.json'); writeFileSync(path, JSON.stringify(plan))
+  const result = await calibrate(root, path, join(artifacts, 'native-build'))
+  assert.equal(result.status, 'PASS', JSON.stringify(readJson(result.receipt)))
+  assert.equal(readJson(result.receipt).cases[1].status, 'KILLED')
+  // A file already tracked under an ignored build directory still belongs to the candidate.
+  put(root, 'driver.mjs', build + driver.replace('export async function launch(ctx){',
+    `export async function launch(ctx){if(ctx.root!==${JSON.stringify(root)})writeFileSync(join(ctx.root,'generated-bin/tracked.txt'),'changed');`))
+  const tampered = await calibrate(root, path, join(artifacts, 'tracked-change'))
+  assert.equal(readJson(tampered.receipt).cases[1].status, 'ERROR')
+  assert.equal(tampered.status, 'FAIL')
+})
