@@ -1,6 +1,6 @@
 # AI-DLC 架构
 
-当前版本支持 Project Harness 与 Trusted Acceptance 的可选接入：自检、评审、正式验收分开记录，候选变化使旧结果失效，交付阶段重新查询可信入口。配置与迁移见 [验证接线](../skills/ai-dlc/references/verification.md)。本地适配器不部署控制服务或授予发布权限。
+实现基线：2026-11-16，Forge `49e0cf4`（AI-DLC 1.24.0、Project Harness 0.6.0、Trusted Acceptance 0.4.1）。状态机、阶段执行、产品自检、独立控制与学习各有明确归属；下文 §2.1–2.4 补充实际执行结构。本地 Docker 控制服务已可部署，结果仍为 `local_advisory`，正式签发需受保护环境。
 
 > 一条产研自闭环的流水线：世界 → 本体 → 契约 → 标准 → 计划 → 实现 → 验收 → 交付 → 学习。
 > **每一步的产物要么能被脚本检，要么被一道只能人签的门挡住，没有第三种。**
@@ -83,6 +83,59 @@
 
 ---
 
+### 2.1 实际执行层与证据边界
+
+```mermaid
+flowchart TD
+    O[仓库外操作配置：适配器、预算、冻结文件、已授予权限] --> A[automation.py：持久执行与恢复]
+    A --> S[aidlc_state.py：原有十五阶段与 advance 门]
+    A --> I[实现 Agent：隔离候选 checkout]
+    A --> H[Project Harness：原生图与真实产品操作]
+    H --> E[固定候选收据、原始观察、复现反例]
+    A --> V[verification.py：绑定候选并查询验证状态]
+    V --> C[候选外控制：队列、独立观察、判定]
+    E --> L[project-learn：资格验证与外部回归库]
+    L --> N[下一次探索：学习轨迹加原随机预算]
+    A --> F[improvement.py：重读 journal 与证据]
+    F --> R[retro / tune / evolve：改进提案]
+```
+
+| 部件 | 拥有的状态与职责 | 边界 |
+|---|---|---|
+| `aidlc_state.py` | 阶段、任务版本、G1/G2/G3、卡、路由与交付前置 | 阶段通过读取真实文件与绑定证据；脚本成功不授予交付权限 |
+| `automation.py` | 每次调用的 request/response、journal、幂等键、累计预算、取消与恢复 | 运行仓库外固定适配器；适配器登记产物，只有控制器推进原状态机 |
+| Project Harness | 项目自有规则、功能索引、影响分析、原生完整检查、五阶段产品驱动 | 不改变原生规则或缩减最终回归；输出 `project-self-check` |
+| Trusted Acceptance | 客户端与候选外队列、观察器、证据和判定 | 正式合同、检查包及签发身份应在实现者不可修改的控制区 |
+| 学习库与反馈投影 | 合格反例、激活/回退事件、后续观察、跨任务改进提案 | 回归数据与既有规则日记分别管理；日志文本不能成为命令或授权 |
+
+### 2.2 十五阶段如何自动执行
+
+阶段适配器承接 §3 的每一阶段：intake/track 保存需求与路线，issue/branch 记录真实工作项与隔离候选，contract/g2 固定判据和实际裁决，cards/implement 拆卡与实现，acceptance 执行原反例、完整 Harness 和已配置送验，pr/review/g3 核对审阅及例外，merge/release 执行已授权交付，archive 留存结果与反馈。完整的逐阶段工作和原门映射见 [automation.md](../skills/ai-dlc/references/automation.md)。
+
+配置、适配器文件、实际可执行文件和控制器均按摘要绑定；命令使用 argv 数组。每次调用先落请求与尝试记录，再运行并重读产物证据。中断恢复沿用同一请求、幂等键与累计预算。外部结果未知先对账；动作已确认但推进失败时只重试推进。merge/release 还需绑定候选 SHA、任务、期限和真实授权的交付记录，配置字段本身不创造权限。
+
+`--mode cycle` 是另一种有界执行模式：discover → reproduce → repair → verify → feedback。它用于产品缺陷探索，**不推进十五阶段，也不代替正式验收**。只有复现的实现失败触发修复；环境重试单独计数；检查器、产品约定或未知问题等待对应处理。修复必须重放原反例并运行完整原生图。失败记录、重复指纹、超时、预算耗尽、取消及未知费用都进入 journal。
+
+### 2.3 产品验证与候选外控制
+
+功能索引把需求来源、产品入口、前提、断言、驱动、fixture、原始证据类型及未覆盖范围放在同一处。影响分析暴露未映射变更。真实驱动依次执行 launch / doctor / drive / observe / cleanup；截图和进程退出不能代替语义断言。序列探索使用固定种子，在新实例上复现并缩减失败；有限模型明确假设、实现映射与截断。检查器校准实际运行正常候选、故障候选和恢复候选，并核对原断言是否检出故障。
+
+Trusted Acceptance 已有 SQLite 持久队列、幂等提交、租约、撤销和角色令牌，以及候选与冻结观察器分容器的 Docker worker。观察器直接操作候选接口，不采信候选自报结论。部署说明见 [deployment.md](../../trusted-acceptance/acceptance-control/deployment.md)。本机实现者仍控制同一宿主，试点不满足受保护独立签发；API 将本地 `eligible` 映射成正式 `blocked`，交付权限为 `not_granted`。候选、配置或合同变更后重新绑定与查询。
+
+### 2.4 自我改进如何影响下一次执行
+
+1. **采集**：从真实失败、独立复现与缩减轨迹重读原始证据；按检查绑定、断言和序列去重。ERROR 与不稳定结果不能作为产品反例。
+2. **资格**：修复候选必须有当前完整原生收据；冻结判据，独立执行正常 PASS → 原故障 FAIL → 恢复 PASS，核对相同失败断言。
+3. **激活**：仓库与学习库外的限定策略允许追加回归。下一次 `project-explore.mjs` 显式配置 `corpus` 后先跑学习轨迹，再保留原随机预算；只保存 catalog 不会自动接入所有检查或 CI。
+4. **观察与回退**：`observe` 记录真实结果；产品 FAIL 不自动删掉用例。显式 rollback 保留原因和全部证据。缺失或漂移的资格、检查器、索引或环境会阻止加载。成功记录 FAIL 时退出码仍为 1。
+5. **跨任务改进**：完成、等待或停止时自动生成 `improvement-feedback.json`；`aidlc_state.py improve --root <运行根目录>` 聚合真实 journal。同一任务的重试与复制日志不增加独立样本；坏证据转待取证，缺失指标保持未知。`tune.py --automation-root` 可附带这些观察。
+
+自动激活只覆盖策略允许的追加动作回归。规则、工具、技能、预算和正式合同仍走既有审阅与校准路径；保持 §4 的规则晋升和 §12 的调参约束。操作与策略格式见 [learning.md](../../project-harness/skills/bootstrap-project-harness/references/learning.md)。
+
+PostHolder `5c7900c` 已实跑这个闭环：故障注入后将五步轨迹缩为单步 regrant，完成 PASS/FAIL/PASS 资格；相同随机预算下，原路径未覆盖已知故障，追加回归后检出，修复候选通过。回退和再次激活均留痕。另有独立 HTTP undo/redo 场景与两任务反馈复核。这些是局部真实产品操作和确定性修复的证据；不提升所有 skill 的 `static_only` 等级，也不证明模型自主修复率、生产逃逸率或正式验收。项目实现与复现实验入口见 [PostHolder 生命周期说明](https://github.com/Maitreya001-AI/PostHolder/blob/5c7900cf2d8e2927424936f28eb4a60f9a3c1a6f/docs/lifecycle-automation.md)。
+
+---
+
 ## 3. 主干：十五个阶段
 
 ```
@@ -141,7 +194,7 @@ G1/G2/G3 有裁决对象、有签字人、有 verdict、能被复盘统计；
 
 签字必须是人。代签只在有明确授权记录时成立，且授权本身要写下来。
 自治程度（每步都问 / 到门为止自动 / 到失败为止自动）整个流程只问一次，答案记进状态、跨会话有效——
-但**三档都不代签门，失败也永远中断**。
+但**三档都不代签门**。失败按路由和预算处理；缺少裁决、无法确定原因或预算耗尽时停止自动推进。
 
 ---
 
@@ -332,7 +385,7 @@ A 档里有两条特别的：**结构闸**在分析器跑不起来时退出"未�
 
 **晋升的规则下一轮才生效。** 写在盘上，下一次运行启动时编译进来。
 跑动中改规则会让前面已经批准过的门失去意义——你当时批准的是另一套前提。
-可复现优先于立刻变聪明。作用域只有项目一级，没有团队与组织通道：
+可复现优先于立刻变聪明。规则晋升作用域只有项目一级，没有团队与组织通道：
 跨仓库的提升是人做的事，不是脚本的权限。
 
 **非对称回滚。** 产物（代码、卡、PR、契约版本）可以回滚；
@@ -344,12 +397,12 @@ A 档里有两条特别的：**结构闸**在分析器跑不起来时退出"未�
 于是"这条 AC 为什么改"、"改它波及哪些卡与提交"、"逃逸缺陷的因果链有多深"
 从考古变成一条查询。不上图数据库——迹是证据，不是控制状态，损坏不影响预算与迁移。
 
-归档时状态、账本、日记、迹、契约与锁一起复制到 `specs/<slug>/`，那是复盘的唯一数据源。
+归档时状态、账本、日记、迹、契约与锁一起复制到 `specs/<slug>/`，传统复盘读取这份归档；§2.4 的执行改进另外重读仓库外 automation journal 与原始证据。
 运行时目录 `.aidlc/` 是状态不是交付物，**不入库**。
 
 ---
 
-## 11. 二十九个 skill、五个 agent
+## 11. 三十个 skill、五个 agent
 
 九环加一根脊柱。**脊柱不做任何一环的活**，只做五件事：持有状态、记账、路由失败、
 把三道门编译成"不跑就推进不了"、把图与环声明成数据。
@@ -358,13 +411,13 @@ A 档里有两条特别的：**结构闸**在分析器跑不起来时退出"未�
 |---|---|---|---|
 | **R0 世界** | 这个产品为什么这样运转 | `psl` `psl-derive` `grill` | `verify_psl.py`（`--afk`）`verify_derived.py` `grill_loop.py check`（四键停机）；**G1** |
 | **R1 本体** | 系统里有什么、叫什么、什么不可违反 | `dos-extract` `invariant-extract` | `verify_dos.py` `verify_card.py` `verify_agent_map.py --probe`（命令逐条实跑）`verify_vocabulary.py` |
-| **R2 契约** | 什么算做完 | `issue` `donewhen-extract` `acceptance-spec` | `verify_issue.py` `verify_done_when.py` `validate_done_when_v2.py`；**G2** |
+| **R2 契约** | 什么算做完 | `issue` `donewhen-extract` `acceptance-spec` `ratify` | `verify_issue.py` `verify_done_when.py` `validate_done_when_v2.py`；**G2** |
 | **R3 标准** | 判据怎么被机器执行 | `test-suite-generator` `spec-compile` `calibrate` | `derive_counts.py` `verify_compile.py` `verify_calibration.py`；二次锁 |
 | **R4 计划** | 怎么拆成无上下文可做的卡 | `plan-cards` | `lint_cards.py` `slice_agent_map.py` |
 | **R5 实现** | 按卡做、按卡提交 | `implement` `commit` `ratchet` | `verify_commit.py`（白名单 · 锁 · 密钥）· 指纹升级 |
 | **R6 验收** | 三档验收，谁一票否决 | `acceptance-fleet` + `code-reviewer` `qa-reviewer` `pm-reviewer` `spec-drift-detector` `spec-gaming-detector` + `meta-judge`；单 PR 手审 `pr-review` | `verify_structure.py` `verify_review_complete.py` `compute_score.py` `compute_confidence.py`；**G3** |
 | **R7 交付** | 合入与发布 | `pr` `review-loop` `release` | `verify_pr.py` `pr-poll.sh` `verify_release.py` |
-| **R8 学习** | 流程病在哪层；环的参数该不该调 | `retro` `tune` | `metrics.py` `tune.py` `apply_proposal.py`（只出 diff） |
+| **R8 学习** | 流程病在哪层；环的参数该不该调 | `retro` `tune` | `metrics.py` `improvement.py` `tune.py` `apply_proposal.py`（流程变更只出 diff）；合格回归由 Project Harness 按限定策略激活 |
 
 五个隔离子 agent，各自的输入被刻意限死：`card-implementer`（单卡实现）、
 `review-triager`（只读分诊）、`comment-fixer`（单线程 TDD 修复）、
@@ -419,7 +472,7 @@ A 档里有两条特别的：**结构闸**在分析器跑不起来时退出"未�
 15. **缺省不给豁免**。体量缺省是最严的一档；跳过只认推导来的档位；
     `never_skippable` 在最外层兜底；每次跳过写一条带理由的账本行。
     重定档只能改尚未开始的阶段。
-16. **学习下轮生效**。晋升的规则写在盘上，下一次启动才编译进来；
+16. **学习下轮生效**。晋升的规则写在盘上，下一次启动才编译进来；合格动作回归在下一次显式配置 corpus 的探索中生效，保留原随机预算；
     门禁前的日记逐字呈现不筛选；待答问题不晋升。
 17. **强制力必须如实标注**。一个部件是脚本强制、是下界、还是仅仅一句声明，文档必须写清楚，
     **不许把声明写成闸**。理由与规则 14 同源：一个没人验过的"通过"以证据的形状到达，比不报更坏。
@@ -503,6 +556,9 @@ trace.py why AC-003     # 这条判据为什么改、谁签的、上游是哪次
 .aidlc/learnings/  project.md                                          ← 晋升的规则，下轮编译
 .aidlc/pr-watch/   pr-<N>.*                                            ← 评审环的水位线与计数器
 specs/<slug>/      归档：状态 · 账本 · 日记 · 契约 · 锁 · 卡 · 验收 · 门记录
+仓库外运行根目录    <slug>/automation/journal.json · attempts/ · improvement-feedback.json
+仓库外学习库        cases/ · catalog.json；资格与完整原生证据一并保留
+仓库外控制区        操作策略 / 适配器；正式部署另隔离合同、观察器与签发身份
 仓库内             cards/ · .done_when.lock · tests/<feature>/ · ratchet-log/
                    PSL-<x>.md · derived/ · dos.yaml · agent-map.md
                    CHANGELOG.md · releases/ · escape-defects.md · retro/
@@ -522,6 +578,8 @@ specs/<slug>/      归档：状态 · 账本 · 日记 · 契约 · 锁 · 卡 �
 | 本体版本演进 | 候选命名空间、本体自身的版本迁移没有形态 |
 | Stop hook | 只有模板，不自动安装 |
 | 收敛阈值 | 指纹重复次数、震荡周期、平台期轮数是先验值，还没被真实运行校准过 |
+| 受保护正式验收 | 本机 Docker 控制试点可运行；独立身份、HTTPS、发布者与生产授权仍需部署方接入 |
+| 学习的泛化效果 | 已测具体故障的新增回归检出与回退；真实模型自主修复、长期逃逸率和新会话宿主加载未据此验证 |
 | 深度旋钮 | 只是声明，没有强制力（规则 17：如实标注，不假装） |
 
 **证据等级：全部 skill 为 `static_only`。** 含义是结构过审 + 脚本在 fixture 上冒烟
@@ -557,6 +615,9 @@ specs/<slug>/      归档：状态 · 账本 · 日记 · 契约 · 锁 · 卡 �
 
 | 文档 | 回答什么 |
 |---|---|
+| [automation.md](../skills/ai-dlc/references/automation.md) | 十五阶段适配、五步缺陷循环、恢复与预算、执行反馈 |
+| [verification.md](../skills/ai-dlc/references/verification.md) | 候选自检、审阅与独立控制接线 |
+| [learning.md](../../project-harness/skills/bootstrap-project-harness/references/learning.md) | 反例资格、限定激活、下次回归与可回退证据 |
 | `reference.md` | 手上这件事有没有现成脚本；它检什么、退出码什么意思 |
 | `evaluation.md` | 这套东西自己怎么被验：几层证据、现在能说什么、哪些话还不能说 |
 | `lifecycle.md` | 全景与空白清单：每个环节由谁承载 |
