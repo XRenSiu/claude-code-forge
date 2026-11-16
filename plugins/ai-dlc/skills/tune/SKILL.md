@@ -20,6 +20,8 @@ user-invocable: true
 产物：`tune/harness-proposals-<date>.yaml`（形状 `assets/harness_proposals_template.yaml`）与可选的 `tune/*.patch`。
 本文件写：这个环在流水线里是什么、什么算一条合格的 harness 提案、原语与出口、不可豁免的约束。哪条提案值得开 PR 是人的份额。
 
+有自动执行日志时，传 `--automation-root <仓库外 runtime>`，报告附带独立 task 去重、证据复核后的 `automation_feedback`。重复环境或检查器故障先改对应能力，不能据此增加代码重试预算。反例进入下次回归由项目 `project-learn.mjs` 的资格验证与限定授权负责；本技能的参数提案仍不自动修改目标。
+
 ## 缺口（Knowledge + Judgment + Control）
 
 deletion 测试：撤掉本 skill，引擎会在某次 review 跑到 exit 30 后说"MAX_ROUNDS 太小了，改成 20"——没有跨 PR 的数据、

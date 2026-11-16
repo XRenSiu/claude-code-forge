@@ -216,6 +216,9 @@ def run(repo, runtime, slug, config, mode="lifecycle", max_steps=100):
             journal["reason"] = reason
             journal["metrics"] = metrics(journal)
             write(path, journal)
+            if status in ('complete', 'waiting', 'needs_review', 'budget_exhausted', 'cancelled'):
+                from improvement import write_feedback
+                write_feedback(path)
 
         def advance(stage, record):
             import aidlc_state as lifecycle

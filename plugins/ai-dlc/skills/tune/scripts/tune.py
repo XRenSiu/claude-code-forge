@@ -98,6 +98,7 @@ def main():
     ap.add_argument("archive_root"); ap.add_argument("--pr-watch"); ap.add_argument("--ratchet-logs")
     ap.add_argument("--routing"); ap.add_argument("--loops"); ap.add_argument("--skills-root")
     ap.add_argument("--out"); ap.add_argument("--min-features", type=int, default=2); ap.add_argument("--json", action="store_true")
+    ap.add_argument('--automation-root', help='Outside AI-DLC automation runtime to inspect without changing parameters')
     a = ap.parse_args()
     here = os.path.dirname(os.path.abspath(__file__))
     assets = os.path.join(here, "..", "..", "ai-dlc", "assets")
@@ -334,6 +335,11 @@ def main():
            "stats": stats, "proposals": proposals, "notes": notes,
            "rules": ["proposals never auto-apply — apply_proposal.py emits a diff / patch, a human opens the PR",
                      "one proposal per target per run; a target proposed in opposite directions on two consecutive runs stops being proposed (hill_climb plateau)"]}
+    if a.automation_root:
+        from pathlib import Path
+        sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'ai-dlc/scripts'))
+        from improvement import summarize
+        out['automation_feedback'] = summarize(list(Path(a.automation_root).resolve().glob('*/automation/journal.json')))
     text = json.dumps(out, ensure_ascii=False, indent=2)
     if a.out:
         try:

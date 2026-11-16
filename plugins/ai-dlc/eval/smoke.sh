@@ -55,6 +55,7 @@ py() { python3 "$@"; }
 if [[ -z "$MUT_FILE" ]]; then
   expect "verification integration suite" 0 py "$ROOT/eval/test_verification.py"
   expect "durable automation execution suite" 0 py "$ROOT/eval/test_automation.py"
+  expect "evidence-based improvement feedback suite" 0 py "$ROOT/eval/test_improvement.py"
   expect "verification rejects incomplete local review" 0 py "$ROOT/eval/test_verification.py" VerificationTests.test_minimal_done_and_bad_completeness_are_rejected
   expect "verification binds PR review head" 0 py "$ROOT/eval/test_verification.py" VerificationTests.test_review_verdict_is_bound_to_current_head
   expect "verification force gate" 0 py "$ROOT/eval/test_verification.py" VerificationTests.test_sizing_and_force_cannot_waive_configured_gate

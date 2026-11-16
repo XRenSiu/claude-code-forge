@@ -45,6 +45,6 @@ description: 调查、搭建、验证和改进项目的 Coding Harness。适用�
 
 ## Evolve
 
-读取 [evolution.md](references/evolution.md)。从验证过的根因选择测试、原生规则或已有文档的最小改进，复用 survey → plan → apply → verify。不要为每次失败新增一份经验文件。
+读取 [evolution.md](references/evolution.md)。从验证过的根因选择测试、原生规则或已有文档的最小改进，复用 survey → plan → apply → verify。已有动作反例按 [learning.md](references/learning.md) 执行采集、正反对照、授权纳入回归、下次重放和效果观察；`project-learn.mjs` 保留去重与回退历史。规则、合同和预算继续走各自变更流程。不要为每次失败新增一份经验文件。
 
 运行 `node <skill>/scripts/harness.mjs help` 查看入口。脚本契约示例与退出码见 commands；来源与方法取舍见 [upstreams.md](references/upstreams.md)。用户要求真实 Codex 会话验证或遇到模型兼容问题时，按 [codex-host.md](references/codex-host.md) 检查实际二进制和模型目录。

@@ -39,6 +39,7 @@ flag 不等于 reject。预门过了但带 flag，意思是「机器判不了这
 |---|---|---|
 | `verification.py` | 状态机使用的适配模块：项目运行时、自检/评审绑定、HTTPS 客户端、阶段刷新、任务失效 | 模块，错误由 verification 子命令记录 |
 | `automation.py` | 持久化执行阶段适配器，复用原 `advance` 门；支持隔离 worktree、发现/复现/修复/验证/反馈 cycle、恢复、对账、取消和累计预算。见 [自动化合同](../skills/ai-dlc/references/automation.md) | 0 完成 · 1 等待/未完成/预算耗尽 · 2 配置或绑定错误 |
+| `improvement.py` | 重读 automation 原始证据，按独立任务去重，将失败分流到回归、工具或合同改进提案；不自动改预算与判据 | 0 汇总完成 · 1 来源拒绝 |
 | `compile_acceptance.py` | 显式映射 done_when AC/义务到可信合同提案 | 0 可送审批 · 1 有未决项 · 2 无效输入 |
 | `verification-config.example.json` | 项目外的集成配置模板，默认 trusted=null | 模板本身不启用正式门禁 |
 

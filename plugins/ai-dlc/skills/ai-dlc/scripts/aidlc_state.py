@@ -2669,6 +2669,8 @@ def main():
     # owns a separate execution lock; holding writer_lock here would deadlock it.
     if len(sys.argv) > 1 and sys.argv[1] == 'automation':
         raise SystemExit(subprocess.call([sys.executable, os.path.join(HERE, 'automation.py'), *sys.argv[2:]]))
+    if len(sys.argv) > 1 and sys.argv[1] == 'improve':
+        raise SystemExit(subprocess.call([sys.executable, os.path.join(HERE, 'improvement.py'), *sys.argv[2:]]))
     p = argparse.ArgumentParser(description=__doc__ + '\nDurable execution: aidlc_state.py automation --help', formatter_class=argparse.RawDescriptionHelpFormatter)
     # --root/--slug live on every subcommand (argparse subparser defaults would clobber top-level values)
     common = argparse.ArgumentParser(add_help=False)

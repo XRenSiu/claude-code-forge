@@ -2,6 +2,7 @@ import { existsSync, mkdirSync, readFileSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import { runProduct, productBinding } from './product.mjs'
 import { featureEntry } from './features.mjs'
+import { regressions } from './learning.mjs'
 import { digest, inside, projectRoot, snapshot, writeJson } from './core.mjs'
 
 const require = (condition, message) => { if (!condition) throw Error(message) }
@@ -65,13 +66,15 @@ export async function explore(rootPath, index, feature, entryId, output, options
   finally { clearTimeout(timer); options.signal?.removeEventListener('abort', abort) }
 }
 
-async function exploreBounded(rootPath, index, feature, entryId, output, { seed = 1, count = 4, length = 8, maxTrials = 12, replay, signal } = {}) {
+async function exploreBounded(rootPath, index, feature, entryId, output, { seed = 1, count = 4, length = 8, maxTrials = 12, replay, corpus, signal } = {}) {
   const root = projectRoot(rootPath), { entry } = featureEntry(root, index, feature, entryId)
   require(entry.exploration?.actions?.length, 'This entry has no reviewed exploration action alphabet')
   require(!inside(root, resolve(output)) && !existsSync(output), 'Exploration needs a new output directory outside candidate')
   require(Number.isInteger(maxTrials) && maxTrials >= 0 && maxTrials <= 100, 'Invalid reduction budget')
   const before = snapshot(root), binding = productBinding(root, index, feature, entryId, before.content_digest)
   let cases = sequences(entry.exploration.actions, seed, count, length)
+  require(!(replay && corpus), 'Choose exact replay or a learned corpus plus new exploration')
+  const learned = corpus ? regressions(root, index, feature, entryId, corpus) : null
   if (replay) {
     const input = JSON.parse(readFileSync(replay, 'utf8'))
     require(input.schema_version === 1 && ['feature_id', 'entry_id', 'checker_digest', 'fixture_digest'].every(k => input.binding?.[k] === binding[k]), 'Replay checker, fixture or feature binding changed')
@@ -79,19 +82,21 @@ async function exploreBounded(rootPath, index, feature, entryId, output, { seed 
     cases = [input.sequence]
   }
   mkdirSync(output, { recursive: true })
-  const report = { schema_version: 1, authority: 'project-self-check', method: 'seeded-operation-sequences', binding, seed, count: cases.length, length, attempts: [], counterexamples: [], status: 'PASS' }
-  async function run(sequence, purpose) {
+  const report = { schema_version: 1, authority: 'project-self-check', method: 'seeded-operation-sequences', binding, seed, count: cases.length, length, attempts: [], counterexamples: [], status: 'PASS', ...(learned ? { corpus: learned } : {}) }
+  async function run(sequence, purpose, caseId) {
     const directory = join(output, `attempt-${report.attempts.length + 1}`)
     const result = await runProduct(root, index, feature, entryId, directory, { scenario: { sequence }, signal })
     const observation = { sequence, purpose, receipt: join(directory, 'product.json'), digest: 'sha256:' + digest(result), status: result.status,
-      failed_claims: result.claims.filter(c => c.status === 'FAIL').map(c => c.id), error: result.error }
+      failed_claims: result.claims.filter(c => c.status === 'FAIL').map(c => c.id), error: result.error, ...(caseId ? { case_id: caseId } : {}) }
     report.attempts.push(observation)
     // Checkpoint each completed attempt before reducing or launching the next instance.
     writeJson(join(output, 'exploration.json'), { ...report, status: 'RUNNING' })
     return observation
   }
-  for (const sequence of cases) {
-    const result = await run(sequence, replay ? 'replay' : 'explore')
+  // Retain the original random budget; learned cases add coverage, never replace it.
+  for (const item of [...(learned?.cases ?? []), ...cases.map(sequence => ({ sequence }))]) {
+    const { sequence } = item
+    const result = await run(sequence, item.case_id ? 'learned-regression' : replay ? 'replay' : 'explore', item.case_id)
     if (result.status === 'ERROR') { report.status = 'ERROR'; break }
     if (result.status !== 'FAIL') continue
     report.status = 'FAIL'
