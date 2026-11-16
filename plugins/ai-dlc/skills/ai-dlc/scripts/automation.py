@@ -69,10 +69,18 @@ def configuration(path, repo, runtime):
             if not argv: continue
             executable = Path(shutil.which(argv[0]) or argv[0]).resolve()
             v.require(executable.is_file(), 'adapter executable missing: ' + name)
-            v.require(executable in pinned or len(argv) >= 2 and Path(argv[1]).is_absolute() and Path(argv[1]).resolve() in pinned,
+            interpreter = executable.name.lower().startswith('python') or executable.name.lower() in {'node', 'nodejs', 'bash', 'sh', 'zsh', 'dash', 'env', 'ruby', 'perl', 'deno', 'bun'}
+            cursor = 1
+            safe_flags = {'-B', '-u', '-I', '-E', '-s', '-S'} if executable.name.lower().startswith('python') else {'--no-warnings', '--enable-source-maps'} if executable.name.lower() in {'node', 'nodejs'} else set()
+            while cursor < len(argv) and argv[cursor] in safe_flags:
+                cursor += 1
+            script_pinned = cursor < len(argv) and Path(argv[cursor]).is_absolute() and Path(argv[cursor]).resolve() in pinned
+            v.require(script_pinned if interpreter else executable in pinned,
                       'adapter entry must be a pinned operator file, not inline shell/code or an unpinned candidate script: ' + name)
     identity = {"config": v.file_digest(path), "files": {str(Path(f).resolve()): v.file_digest(f) for a in cfg["adapters"].values() for f in a["files"]},
-        'executables': {str(Path(shutil.which(a[k][0]) or a[k][0]).resolve()): v.file_digest(shutil.which(a[k][0]) or a[k][0]) for a in cfg['adapters'].values() for k in ('argv', 'reconcile_argv') if a.get(k)}}
+        'executables': {str(Path(shutil.which(a[k][0]) or a[k][0]).resolve()): v.file_digest(shutil.which(a[k][0]) or a[k][0]) for a in cfg['adapters'].values() for k in ('argv', 'reconcile_argv') if a.get(k)},
+        'controller': {str(file.relative_to(Path(__file__).resolve().parents[2])): v.file_digest(file)
+            for file in sorted(Path(__file__).resolve().parents[2].rglob('*')) if file.is_file() and file.suffix in {'.py', '.json', '.yaml'}}}
     return cfg, v.digest(identity)
 
 

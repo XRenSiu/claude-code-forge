@@ -95,5 +95,18 @@ class AutomationTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'pinned operator file'):
             automation.run(self.repo, self.runtime, 'fixture-run', self.config, 'cycle')
 
+    def test_pinning_interpreter_does_not_authorize_candidate_code(self):
+        mutable = self.repo / 'mutable.py'; mutable.write_text(ADAPTER)
+        self.cfg['adapters']['discover'].update(argv=[sys.executable, str(mutable)], files=[sys.executable])
+        self.config.write_text(json.dumps(self.cfg))
+        with self.assertRaisesRegex(ValueError, 'pinned operator file'):
+            automation.run(self.repo, self.runtime, 'fixture-run', self.config, 'cycle')
+
+    def test_safe_python_flags_preserve_frozen_script_entry(self):
+        for value in self.cfg['adapters'].values(): value['argv'].insert(1, '-B')
+        self.config.write_text(json.dumps(self.cfg))
+        result = automation.run(self.repo, self.runtime, 'fixture-run', self.config, 'cycle')
+        self.assertEqual(result['status'], 'complete')
+
 
 if __name__ == '__main__': unittest.main()
