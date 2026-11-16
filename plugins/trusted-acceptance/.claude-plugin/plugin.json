@@ -1,7 +1,7 @@
 {
   "name": "trusted-acceptance",
   "description": "Independent acceptance entrypoint: frozen contracts, pinned candidates, protected-run submission, evidence analysis and failure routing. Includes a strict protocol client, advisory decision core and synthetic regression tests; production trust requires a separately protected control deployment.",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "author": {
     "name": "XRenSiu",
     "email": "xrensiu@gmail.com"
