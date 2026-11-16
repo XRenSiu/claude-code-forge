@@ -3,7 +3,7 @@ import { existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, readlinkSy
 import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path'
 import { spawnSync } from 'node:child_process'
 
-export const VERSION = '0.4.0'
+export const VERSION = '0.5.0'
 export const hash = value => createHash('sha256').update(value).digest('hex')
 export const canonical = value => JSON.stringify(value, (_, v) => v && !Array.isArray(v) && typeof v === 'object' ? Object.fromEntries(Object.entries(v).sort(([a], [b]) => a.localeCompare(b))) : v)
 export const digest = value => hash(canonical(value))
