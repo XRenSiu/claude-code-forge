@@ -1,4 +1,5 @@
 import { readFileSync, statSync } from 'node:fs'
+import { execFileSync } from 'node:child_process'
 import { safePath, digest } from './core.mjs'
 
 const id = /^[a-z0-9][a-z0-9-]*$/
@@ -12,6 +13,7 @@ export function validateFeatures(root, index, checks) {
     require(id.test(feature.id) && !features.has(feature.id), 'Invalid or duplicate feature ID'); features.add(feature.id)
     require(typeof feature.title === 'string' && feature.title.trim() && strings(feature.sources), `${feature.id}: title and sources required`)
     require(Array.isArray(feature.entries) && feature.entries.length > 0, `${feature.id}: entries required`)
+    if (feature.watch_paths !== undefined) require(strings(feature.watch_paths) && feature.watch_paths.every(p => !p.startsWith('/') && !p.includes('..') && !p.includes('*')), `${feature.id}: watch_paths uses literal repository paths or directory prefixes`)
     for (const path of feature.sources) require(statSync(safePath(root, path)).isFile(), `${path}: source must be a file`)
     for (const entry of feature.entries) {
       const key = `${feature.id}/${entry.id}`
@@ -25,6 +27,7 @@ export function validateFeatures(root, index, checks) {
       require(Number.isInteger(entry.timeout_ms) && entry.timeout_ms > 0 && entry.timeout_ms <= 3600000, `${key}: bounded timeout required`)
       for (const path of [entry.driver, ...entry.checker_files, ...entry.fixture_files]) require(statSync(safePath(root, path)).isFile(), `${key}: missing runtime file ${path}`)
       if (entry.calibration_plan !== undefined) require(typeof entry.calibration_plan === 'string' && statSync(safePath(root, entry.calibration_plan)).isFile(), `${key}: calibration_plan must name the reviewed plan`)
+      if (entry.exploration !== undefined) require(strings(entry.exploration.actions) && entry.exploration.actions.length <= 100, `${key}: exploration requires a bounded action alphabet`)
       if (checks) {
         const bound = checks.find(c => c.id === entry.check_id)
         require(bound?.required && bound.reporter === 'product-json' && digest(bound.expected_claims) === digest(entry.claims), `${key}: required product check and exact claims must be bound`)
@@ -32,6 +35,27 @@ export function validateFeatures(root, index, checks) {
     }
   }
   return index
+}
+
+export function impact(root, index, base) {
+  validateFeatures(root, index)
+  const git = args => execFileSync('git', ['-C', root, ...args], { encoding: 'utf8', maxBuffer: 8 * 1024 * 1024 }).split('\0').filter(Boolean)
+  let unborn = false
+  if (base === 'HEAD') {
+    try { execFileSync('git', ['-C', root, 'rev-parse', '--verify', 'HEAD'], { stdio: 'ignore' }) } catch { unborn = true }
+  }
+  const changed = [...new Set(unborn ? git(['ls-files', '--cached', '--others', '--exclude-standard', '-z']) : [...git(['diff', '--name-only', '--no-renames', '-z', base, '--']), ...git(['ls-files', '--others', '--exclude-standard', '-z'])])].sort()
+  const covered = new Set(), selected = [], maintenance = []
+  for (const feature of index.features) {
+    const runtime = feature.entries.flatMap(e => [e.driver, ...e.checker_files, ...e.fixture_files, ...(e.calibration_plan ? [e.calibration_plan] : [])])
+    const matched = changed.filter(p => [...feature.sources, ...runtime, ...(feature.watch_paths || [])].some(prefix => p === prefix || prefix.endsWith('/') && p.startsWith(prefix)))
+    if (!matched.length) continue
+    matched.forEach(p => covered.add(p))
+    selected.push(...feature.entries.map(e => ({ feature: feature.id, entry: e.id, check_id: e.check_id, reasons: matched })))
+    maintenance.push({ feature: feature.id, review: matched.some(p => runtime.includes(p)) ? 'driver_or_oracle_changed_recalibrate' : 'product_or_requirement_changed_review_index', paths: matched })
+  }
+  return { schema_version: 1, authority: 'selection_only', base, changed, selected, maintenance, unmapped: changed.filter(p => !covered.has(p)),
+    requires_full_verification: true, note: 'Impact selection is fast feedback. Unmapped changes require review; it never replaces the complete native verification graph.' }
 }
 
 export function featureEntry(root, index, featureId, entryId) {

@@ -8,6 +8,7 @@
 
 - `skills/accept-change/`：流程、合同/证据/分流/宿主/适配参考、JSON 提案模板，以及校验、送验、取结果客户端。
 - `acceptance-control/gate.py`：固定判定核心，核对必验集合、需求覆盖、证据文件、全部尝试、版本、环境、取消状态、授权到期及累计预算。
+- `acceptance-control/service.py` / `docker_worker.py`：持久控制队列与两个容器的隔离试点。候选无宿主挂载，冻结观察器单独运行；正常、故障、取消、过期工作者与预算均留证。见 [部署合同](acceptance-control/deployment.md)。本机试点仍无正式签发权。
 - `evaluations/`：协议与门禁回归、真实本地 HTTP 示例，以及待独立执行的 Skill 行为评测用例。
 
 Skill 负责提案、送验和解释；AI-DLC/Forge/项目 Harness 继续负责实现与自测。`acceptance-fleet` 的审查报告可作为输入，不自动成为正式通过。

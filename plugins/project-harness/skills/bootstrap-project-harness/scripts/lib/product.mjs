@@ -53,7 +53,7 @@ export function validateProduct(report, root, expectedClaims, { invocationId, bi
   return { status, examined: ids.length, passed: report.claims.filter(c => c.status === 'PASS').length, failed: report.claims.filter(c => c.status === 'FAIL').length, binding: report.binding, invocation_id: report.invocation_id }
 }
 
-export async function runProduct(rootPath, index, featureId, entryId, outputDir, { signal, invocationId = randomUUID() } = {}) {
+export async function runProduct(rootPath, index, featureId, entryId, outputDir, { signal, invocationId = randomUUID(), scenario } = {}) {
   const root = projectRoot(rootPath), { entry } = featureEntry(root, index, featureId, entryId)
   require(typeof invocationId === 'string' && /^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/.test(invocationId), 'Invalid product invocation identity')
   require(outputDir && !inside(root, resolve(outputDir)), 'Product evidence must be outside the project')
@@ -70,23 +70,26 @@ export async function runProduct(rootPath, index, featureId, entryId, outputDir,
     binding: productBinding(root, index, featureId, entryId, before.content_digest),
     phases: [], claims: [], evidence: [], status: 'ERROR', candidate_unchanged: false, limitations: entry.unsupported }
   let instance, driver, closed = false
-  const context = { root, scratch, signal: controller.signal, entry,
+  if (scenario !== undefined) report.scenario_digest = 'sha256:' + digest(scenario)
+  const context = { root, scratch, signal: controller.signal, entry, scenario,
     spawn(executable, argv, options = {}) {
       require(!closed && !controller.signal.aborted, 'Product lifecycle closed or cancelled')
       const environment = Object.fromEntries(['PATH', 'HOME', 'TMPDIR', 'TMP', 'TEMP', 'LANG', 'LC_ALL', 'TZ', 'SystemRoot'].filter(k => process.env[k] !== undefined).map(k => [k, process.env[k]]))
       const child = spawn(executable, argv, { cwd: root, stdio: ['ignore', 'pipe', 'pipe'], ...options, env: { ...environment, ...options.env }, shell: false, detached: false })
       children.add(child); return child
     },
-    capture(type, name, value) {
+    captureBytes(type, name, data, extension = 'bin') {
       require(!closed && !controller.signal.aborted, 'Product lifecycle closed or cancelled')
       require(entry.evidence_types.includes(type), `Undeclared evidence type ${type}`)
       require(/^[a-z0-9][a-z0-9.-]*$/.test(name), 'Invalid evidence name')
-      const path = `evidence/${name}.json`, data = Buffer.from(JSON.stringify(value, null, 2) + '\n')
-      require(data.length <= 8 * 1024 * 1024, 'Evidence exceeds size limit')
+      require(/^[a-z0-9]{1,8}$/.test(extension) && Buffer.isBuffer(data) && data.length > 0 && data.length <= 8 * 1024 * 1024, 'Evidence must be nonempty bounded bytes with a safe extension')
+      require(!report.evidence.some(e => e.id === name), 'Duplicate evidence ID')
+      const path = `evidence/${name}.${extension}`
       mkdirSync(join(out, 'evidence'), { recursive: true }); writeFileSync(join(out, path), data, { flag: 'wx', mode: 0o600 })
       const item = { id: name, type, path, digest: 'sha256:' + hash(data), size_bytes: data.length }
       report.evidence.push(item); return name
-    }
+    },
+    capture(type, name, value) { return context.captureBytes(type, name, Buffer.from(JSON.stringify(value, null, 2) + '\n'), 'json') }
   }
   async function phase(name, fn) {
     const record = { name, status: 'ERROR' }; report.phases.push(record)

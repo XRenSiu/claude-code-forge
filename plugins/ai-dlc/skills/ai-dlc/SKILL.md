@@ -17,6 +17,8 @@ disable-model-invocation: true
 
 # AI-DLC — 一条流水线，每一步能被机器检或被门挡住
 
+需要无人值守执行、恢复中断或自动探索修复时，先读 [automation.md](references/automation.md)。`aidlc_state.py automation run` 驱动已配置的阶段适配器，复用现有状态机和门；`--mode cycle` 执行发现、复现、修复、原判据验证和反馈。先固定仓库外配置、适配器、预算及合同/检查文件，缺少产品决策、可信身份或交付授权时保留 waiting，不能伪造阶段产物。真实外部动作结果未知先对账；完成动作后门未通过，恢复仅重试推进。
+
 ## 项目验证与正式验收
 
 接入 Project Harness 或可信验收时先读 [verification.md](references/verification.md)。`verification` 子命令分别管理项目自检、评审和可信入口结果；旧任务保持本地语义，正式入口缺失显示 `not_configured`。配置后，候选/合同/运行时/环境变化会使证据失效，交付前重新查询对应阶段结果，S 档与 `--force` 不豁免这项要求。

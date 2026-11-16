@@ -10,6 +10,8 @@ description: 调查、搭建、验证和改进项目的 Coding Harness。适用�
 
 先按用户意图选择 **audit / bootstrap / verify / evolve**。当前会话已授权的本地工作继续推进；计划摘要与 `authorization_ref` 仅记录审阅范围，不提供授权。对范围外动作或真实架构冲突才请求决策。
 
+功能索引接入后会生成双宿主 `verify-project` 技能、影响分析和序列探索入口。`project-impact.mjs <base>` 返回受影响入口、需维护项和未映射变更；它不缩减最终原生检查图。给适合状态序列的入口声明 `exploration.actions`，驱动读取 `ctx.scenario.sequence`；`project-explore.mjs` 按种子运行新实例、复现同一失败并有界缩减，生成可回放的反例提案。只有完成五阶段的 FAIL 才是反例，ERROR 或不稳定结果不能进入自动修复。`ctx.captureBytes` 可保存真实截图等非空二进制证据。有限模型使用 `checkModel` 时必须提供假设与实现映射，并报告截断；模型结论须由实际产品轨迹对应验证。
+
 ## Audit
 
 读取目标仓库适用指令，然后读 [discovery.md](references/discovery.md)。执行 `node <skill>/scripts/harness.mjs survey --root <repo> --out <任务目录>/inventory.json`。

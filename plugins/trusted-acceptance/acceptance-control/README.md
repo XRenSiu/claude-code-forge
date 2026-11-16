@@ -12,7 +12,7 @@ python3 plugins/trusted-acceptance/acceptance-control/gate.py \
 
 生产部署应将固定控制代码放入实现方不可写的受保护仓库/镜像。由可信运行身份分别加载批准的合同、政策、适配和检查版本；独立 runner/collector 负责实测、来源认证、实际产物绑定、历史/预算和不可变证据。核心不执行候选代码或证据内命令。
 
-部署方还必须实现持久化队列、幂等去重、租约与 fencing、任务状态事务、授权有效性、证据 ACL/保留期，以及唯一来源的 required-check 发布器。参见 [协议与发布器条件](../skills/accept-change/references/protocol.md)。不要部署一个接受任意 CASE 后把 `eligible` 原样转成正式通过的服务。
+`service.py` 与 `docker_worker.py` 已提供本机 Docker 试点所需的持久化队列、幂等去重、租约与 fencing、任务状态事务、累计预算及冻结外部观察器。详见 [部署包](deployment.md)。部署方仍需在受保护环境配置身份、证据 ACL/保留期和唯一来源的 required-check 发布器。参见 [协议与发布器条件](../skills/accept-change/references/protocol.md)。试点不会接受任意 CASE 并把 `eligible` 转成正式通过。
 
 v1 刻意采用保守规则：正式 required 清单必须精确相等；未支持项不豁免；同 binding 的前序未通过或阻断发现进入复核。没有自动解除 flaky 阻塞或人工例外接口。维护者复核后的新合同/检查包/环境形成新 binding，旧尝试继续留在账本中。
 
