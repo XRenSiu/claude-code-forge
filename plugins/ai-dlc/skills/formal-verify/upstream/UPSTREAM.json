@@ -1,0 +1,257 @@
+{
+  "schema_version": 1,
+  "kind": "fv-upstream",
+  "modified": false,
+  "projects": [
+    {
+      "id": "quint-llm-kit",
+      "repo": "https://github.com/quint-co/quint-llm-kit",
+      "commit": "cc75369f741af7d490936f82002c2d28e3b3d78d",
+      "license": "Apache-2.0",
+      "license_file": "quint-llm-kit/LICENSE",
+      "files": [
+        {
+          "upstream_path": "quint-llm-kit-plugin/skills/quint-modeling/SKILL.md",
+          "path": "quint-llm-kit/quint-llm-kit-plugin/skills/quint-modeling/SKILL.md",
+          "sha256": "sha256:fe595baac9353a4c8ca572ee91b0d516000a17a83697db6244597597ae69c591"
+        },
+        {
+          "upstream_path": "quint-llm-kit-plugin/skills/quint-modeling/guidelines/from-requirements.md",
+          "path": "quint-llm-kit/quint-llm-kit-plugin/skills/quint-modeling/guidelines/from-requirements.md",
+          "sha256": "sha256:8b2717b35d533b00667e6ac9fdfe85ff5b5bcb3a59c57cbc7c2d944fe204efcb"
+        },
+        {
+          "upstream_path": "quint-llm-kit-plugin/skills/quint-modeling/guidelines/from-code.md",
+          "path": "quint-llm-kit/quint-llm-kit-plugin/skills/quint-modeling/guidelines/from-code.md",
+          "sha256": "sha256:15358f1f8cf7782d8369548fe860a6ba8e4f253945ce4dea12498aea92171c39"
+        },
+        {
+          "upstream_path": "quint-llm-kit-plugin/skills/quint-modeling/guidelines/from-nothing.md",
+          "path": "quint-llm-kit/quint-llm-kit-plugin/skills/quint-modeling/guidelines/from-nothing.md",
+          "sha256": "sha256:81b443f481f03d8f3cfaffca19c0b6d58193dad96d851f09f2f576bb23042e94"
+        },
+        {
+          "upstream_path": "quint-llm-kit-plugin/skills/quint-modeling/guidelines/from-tlaplus.md",
+          "path": "quint-llm-kit/quint-llm-kit-plugin/skills/quint-modeling/guidelines/from-tlaplus.md",
+          "sha256": "sha256:0722ff375dc29dc96482802cb070ea0d40b8abdcead2eebb8aee7babc80eca9c"
+        },
+        {
+          "upstream_path": "quint-llm-kit-plugin/skills/quint-modeling/guidelines/review.md",
+          "path": "quint-llm-kit/quint-llm-kit-plugin/skills/quint-modeling/guidelines/review.md",
+          "sha256": "sha256:8b81f4a4bdc0bab7cd7c17ec036fd3d2108f5ad251dd4608145caf08e3ec9424"
+        }
+      ],
+      "license_sha256": "sha256:5cc84061e5937535827c4fd3446c7609ad87065b55733b1874b2ddc67df04bf0"
+    },
+    {
+      "id": "specula",
+      "repo": "https://github.com/specula-org/Specula",
+      "commit": "41e29d94dd8b254bde622d3a6de5ca251063fb08",
+      "license": "Apache-2.0",
+      "license_file": "specula/LICENSE",
+      "files": [
+        {
+          "upstream_path": "skills/workflow-overview.md",
+          "path": "specula/skills/workflow-overview.md",
+          "sha256": "sha256:89b8456dc0f923ac7a1d859674eef25eefad1760b59172ec6268b39444897e56"
+        },
+        {
+          "upstream_path": "skills/code_analysis/guide.md",
+          "path": "specula/skills/code_analysis/guide.md",
+          "sha256": "sha256:ee606adb07495abb6d721ac6bd4689e64baaf99685b3739f6e1b8035b8fea8be"
+        },
+        {
+          "upstream_path": "skills/code_analysis/references/modeling-brief-format.md",
+          "path": "specula/skills/code_analysis/references/modeling-brief-format.md",
+          "sha256": "sha256:3a19ae3cae5fc06479f72c8587cd0b8293c1796c964e91eaddbe055a48e2ad04"
+        },
+        {
+          "upstream_path": "skills/code_analysis/references/deep-analysis.md",
+          "path": "specula/skills/code_analysis/references/deep-analysis.md",
+          "sha256": "sha256:ccd54be3578ecaf629556f123bc63f704e8e3e107233cf7f07d8428ee0bc6dd5"
+        },
+        {
+          "upstream_path": "skills/code_analysis/references/concurrent-analysis.md",
+          "path": "specula/skills/code_analysis/references/concurrent-analysis.md",
+          "sha256": "sha256:f5d42c747fcb1e3516f87a2b75689be7e5dc9828becd2a4f152c740607573e61"
+        },
+        {
+          "upstream_path": "skills/code_analysis/references/distributed-analysis.md",
+          "path": "specula/skills/code_analysis/references/distributed-analysis.md",
+          "sha256": "sha256:88cce71706f413e996fed45aa806dad3b712b24945b5d7838c45b35513f05b2f"
+        },
+        {
+          "upstream_path": "skills/code_analysis/references/bug-archaeology.md",
+          "path": "specula/skills/code_analysis/references/bug-archaeology.md",
+          "sha256": "sha256:db010a0ed49098d407921103618bad48ea6b5a48919ad310d92be7acc134ec2e"
+        },
+        {
+          "upstream_path": "skills/spec_generation/guide.md",
+          "path": "specula/skills/spec_generation/guide.md",
+          "sha256": "sha256:02ffa6811a98e818771d58afd114d13972051933fb1d6778fe4c448be9ab3239"
+        },
+        {
+          "upstream_path": "skills/spec_generation/references/base-spec-methodology.md",
+          "path": "specula/skills/spec_generation/references/base-spec-methodology.md",
+          "sha256": "sha256:d104c2aad97b40c669fc2f041d2e49b63409d1c6c52849433e3c506bbdf71460"
+        },
+        {
+          "upstream_path": "skills/spec_generation/references/brief-coverage-checklist.md",
+          "path": "specula/skills/spec_generation/references/brief-coverage-checklist.md",
+          "sha256": "sha256:177a1a3e826555bf665c6445deae5c513e4f1455509e177b8a51a292f7097975"
+        },
+        {
+          "upstream_path": "skills/spec_generation/references/liveness-pattern.md",
+          "path": "specula/skills/spec_generation/references/liveness-pattern.md",
+          "sha256": "sha256:b790643de7b0bfd6ed2f3a53816f4b3880c9437d736575342cbe8f0df2f702aa"
+        },
+        {
+          "upstream_path": "skills/spec_generation/references/mc-spec-pattern.md",
+          "path": "specula/skills/spec_generation/references/mc-spec-pattern.md",
+          "sha256": "sha256:5b5984a0fe452e566cadb526983a2f38f01d27a728358209de5aecffa2fd8623"
+        },
+        {
+          "upstream_path": "skills/tla-checking-workflow/references/spec-fidelity-checklist.md",
+          "path": "specula/skills/tla-checking-workflow/references/spec-fidelity-checklist.md",
+          "sha256": "sha256:c8929947c1afb9e4807f3edd0665f35fa3b340dde49d70b69892072ea2db0ef4"
+        },
+        {
+          "upstream_path": "skills/bug-classification/guide.md",
+          "path": "specula/skills/bug-classification/guide.md",
+          "sha256": "sha256:c143b2d5c2fd9b5e5a3b6ebbf040fc1ef7ef24923fa110cc4a99a3979c926fa5"
+        }
+      ],
+      "license_sha256": "sha256:1b53c43a2772a1d7f3f894d15650d63667ff507a8a6b7032d08f0c9fab91c4e6"
+    },
+    {
+      "id": "tlaplus-agentskills",
+      "repo": "https://github.com/tlaplus/AgentSkills",
+      "commit": "f2adb5e4e2c6250661d1aff8bcc0b9f92d5442ec",
+      "license": "MIT",
+      "license_file": "tlaplus-agentskills/LICENSE",
+      "files": [
+        {
+          "upstream_path": "skills/tlaplus-from-source/SKILL.md",
+          "path": "tlaplus-agentskills/skills/tlaplus-from-source/SKILL.md",
+          "sha256": "sha256:b097f1016742909c24bd954d67bd8df1e2391357c3522ccf08a17c0b529e580d"
+        },
+        {
+          "upstream_path": "skills/tlaplus-split-action/SKILL.md",
+          "path": "tlaplus-agentskills/skills/tlaplus-split-action/SKILL.md",
+          "sha256": "sha256:2b2eebee8e75884162315f19f5ae3ebdc17fba68966b5272b845863378b47031"
+        },
+        {
+          "upstream_path": "skills/tlaplus-add-variable/SKILL.md",
+          "path": "tlaplus-agentskills/skills/tlaplus-add-variable/SKILL.md",
+          "sha256": "sha256:7c07a610d6f9a828bb3f93c2547f1e8453c0df7b1acb2ffbba164dafd077e7b1"
+        }
+      ],
+      "license_sha256": "sha256:574db076e6a0d9532522ab09b911a232f0ab31f983b8f04704ba15e7d4fcc093"
+    },
+    {
+      "id": "spec-kit",
+      "repo": "https://github.com/github/spec-kit",
+      "commit": "e210504aa09c9273a38bba665b12b8088468c96f",
+      "license": "MIT",
+      "license_file": "spec-kit/LICENSE",
+      "files": [
+        {
+          "upstream_path": "templates/commands/specify.md",
+          "path": "spec-kit/templates/commands/specify.md",
+          "sha256": "sha256:e3e7595ef13e1f05fd8dd72f794f1f46fe6074beb6abb0602c6ab036312c5a02"
+        },
+        {
+          "upstream_path": "templates/commands/clarify.md",
+          "path": "spec-kit/templates/commands/clarify.md",
+          "sha256": "sha256:5260d798c5671deb9ac7e59d6ffdb69b30c26fb28878d3cc25e30fb71cacc734"
+        },
+        {
+          "upstream_path": "templates/spec-template.md",
+          "path": "spec-kit/templates/spec-template.md",
+          "sha256": "sha256:3945437fc35cd30a5b2bf7beea680337c3516826d3efa5a6b92c4a7eca1ba28e"
+        }
+      ],
+      "license_sha256": "sha256:2510b446bc1f0cf9702453075d20cd88631e20e5642658edb7325d9c1eb534f7"
+    },
+    {
+      "id": "fvs",
+      "repo": "https://github.com/Beneficial-AI-Foundation/formal-verification-skills",
+      "commit": "91f72df080d82c3b93a7a01e0352406295e69440",
+      "license": "MIT",
+      "license_file": "fvs/LICENSE",
+      "files": [
+        {
+          "upstream_path": "commands/fvs/lean-spec-review.md",
+          "path": "fvs/commands/fvs/lean-spec-review.md",
+          "sha256": "sha256:4b33a736233e61fe4ebaca6976094a4919ea728ab021f51c12b0d9ff07f5a0ae"
+        },
+        {
+          "upstream_path": "commands/fvs/trust-audit.md",
+          "path": "fvs/commands/fvs/trust-audit.md",
+          "sha256": "sha256:8a0c7676f716062f60edd6b462fd476d8239aadd0326b00d1a74fd12ca8b2216"
+        },
+        {
+          "upstream_path": "fv-skills/references/fc-spec-review.md",
+          "path": "fvs/fv-skills/references/fc-spec-review.md",
+          "sha256": "sha256:38f7356082fdc5bbec367981e37e3f82475819a0b01a8b2a91a47ad33474818f"
+        },
+        {
+          "upstream_path": "fv-skills/references/review-policy.md",
+          "path": "fvs/fv-skills/references/review-policy.md",
+          "sha256": "sha256:cdb005a5d08ffed809cb8e6b13b70b9edca39db3b2f3b7ef53bbf0111e3e9592"
+        }
+      ],
+      "license_sha256": "sha256:edbb0521aa613201ebfb7ebfcd22933479748def930de9898cea5f87e8664aa8"
+    },
+    {
+      "id": "pstack",
+      "repo": "https://github.com/cursor/plugins",
+      "commit": "e1cc03121a0e71129a4fb730d7c5528a0a3e43c8",
+      "license": "MIT",
+      "license_file": "pstack/pstack/LICENSE",
+      "files": [
+        {
+          "upstream_path": "pstack/skills/create-formal-verification-skill/SKILL.md",
+          "path": "pstack/pstack/skills/create-formal-verification-skill/SKILL.md",
+          "sha256": "sha256:30ef0ac27612ecd16fdc081112113221d673053cef3f8603db11932193861211"
+        },
+        {
+          "upstream_path": "pstack/skills/maintain-formal-verification-skill/SKILL.md",
+          "path": "pstack/pstack/skills/maintain-formal-verification-skill/SKILL.md",
+          "sha256": "sha256:0c96f54293542d3818b68754562b338073958781a9684454611dca37592e2d2c"
+        }
+      ],
+      "license_sha256": "sha256:bc957ca6bee02792566a1a028d105e02e247c6e77cf057061674273da77b200e"
+    },
+    {
+      "id": "fizzbee",
+      "repo": "https://github.com/fizzbee-io/fizzbee",
+      "commit": "8d3e45d8413d116dc6faab51986338383d48a7d4",
+      "license": "Apache-2.0",
+      "license_file": "fizzbee/LICENSE",
+      "files": [
+        {
+          "upstream_path": ".claude/skills/fizz-spec/SKILL.md",
+          "path": "fizzbee/.claude/skills/fizz-spec/SKILL.md",
+          "sha256": "sha256:1038ef38ce0424e67237c9d0ce018e4f5ebd29a134c9638c939fac5fb23db9df"
+        },
+        {
+          "upstream_path": ".claude/skills/fizz-check/SKILL.md",
+          "path": "fizzbee/.claude/skills/fizz-check/SKILL.md",
+          "sha256": "sha256:e86899648a6bd45ad9ee1fc226eb12a23937e6aed9c9f321f4e239677fe254c2"
+        },
+        {
+          "upstream_path": ".claude/skills/fizz-mbt/SKILL.md",
+          "path": "fizzbee/.claude/skills/fizz-mbt/SKILL.md",
+          "sha256": "sha256:f7f01d586a623ae8ba0da37cd05c36f0b47a404d0e3e4a4d9bc17b7ae87f5d37"
+        },
+        {
+          "upstream_path": ".claude/skills/fizz-debug/SKILL.md",
+          "path": "fizzbee/.claude/skills/fizz-debug/SKILL.md",
+          "sha256": "sha256:c12806daae8fd69c794c88d03ad77c8f9939e23138f0f3b6b5cf0260e8b68e6d"
+        }
+      ],
+      "license_sha256": "sha256:c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+    }
+  ]
+}

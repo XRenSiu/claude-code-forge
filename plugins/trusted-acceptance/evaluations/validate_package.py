@@ -28,6 +28,8 @@ def main():
     assert re.search(r"^name: accept-change$", frontmatter, re.M)
     assert "description:" in frontmatter
     for markdown in PLUGIN.rglob("*.md"):
+        if "upstream" in markdown.relative_to(SKILL if SKILL in markdown.parents else PLUGIN).parts[:1]:
+            continue   # vendored upstream text keeps its own links; only its bytes are checked (below)
         for link in re.findall(r"\[[^\]]+\]\(([^)]+)\)", markdown.read_text()):
             if "://" in link or link.startswith("#"):
                 continue
@@ -47,7 +49,19 @@ def main():
         for name in mine:
             assert (SKILL / "scripts/fvkit" / name).read_bytes() == (twin / "fvkit" / name).read_bytes(), "fvkit copy drifted: " + name
         assert (SKILL / "scripts/fv.py").read_bytes() == (twin / "fv.py").read_bytes(), "fv.py copy drifted"
-    print("Plugin registration, version sync, local links, protocol/policy examples and fvkit copy: OK")
+    # Vendored upstream procedures (Specula fidelity checklist + bug classification): verbatim, licensed, and the
+    # same bytes as AI-DLC's copy, which is where the generation side executes them.
+    from fvkit.upstream import Upstream
+    mine = Upstream(SKILL / "upstream/UPSTREAM.json")
+    res = mine.verify()
+    assert res["verdict"] == "INTACT", res["issues"]
+    other = REPO / "plugins/ai-dlc/skills/formal-verify/upstream/UPSTREAM.json"
+    if other.is_file():
+        theirs = Upstream(other)
+        for key, f in mine.files.items():
+            assert key in theirs.files and theirs.files[key]["sha256"] == f["sha256"], "upstream copy differs from ai-dlc: %s:%s" % key
+            assert mine.projects[key[0]]["commit"] == theirs.projects[key[0]]["commit"], "upstream commit differs: " + key[0]
+    print("Plugin registration, version sync, local links, protocol/policy examples, fvkit copy and upstream copy: OK")
 
 
 if __name__ == "__main__":

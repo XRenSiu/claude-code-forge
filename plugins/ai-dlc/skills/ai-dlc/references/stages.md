@@ -78,7 +78,7 @@
 
 ### 形式化验证（条件触发）→ `/formal-verify`
 - 触发：状态性承诺（不超卖、最多执行一次、重试幂等、权限不可越过），或 `verification/policy.yaml` 按 diff 推出的模块。
-- 输入 → 输出：需求 / 不变量卡 → AI 抽出的 `requirements.yaml`（逐字引文）→ ≥2 份隔离 AI 规则候选 → 分歧裁决 + 全新上下文审阅 → `fv-contract`（与清单一起随 G2 锁；规则生成 READY 是 `cards` 的前置）→ ≥2 份隔离 AI 模型候选 → 分歧裁决（code-first 加校准）→ `fv-model` → qualify 回执（模型生成 READY 与 QUALIFIED 是 `implement` 的前置）→ 真实轨迹 → conform 回执（E3 模块 `pr` / `merge` 的前置）。
+- 输入 → 输出：需求 / 不变量卡 → AI 抽出的 `requirements.yaml`（Spec Kit specify；逐字引文）→ `rules-intake.yaml`（Spec Kit clarify + Quint；问题由人答）→ ≥2 份隔离 AI 规则候选 → 分歧裁决 + FVS 审阅契约下的审阅与作者处置 → `fv-contract`（与清单一起随 G2 锁；规则生成 READY 是 `cards` 的前置）→（code-first 先写 Specula modeling brief）≥2 份隔离 AI 模型候选（Quint / TLA+ / Specula，各带 Step 7 handoff）→ 分歧裁决 + Quint review / Specula 粒度审计（code-first 加 brief coverage 与校准）→ `fv-model` → qualify 回执（模型生成 READY 与 QUALIFIED 是 `implement` 的前置）→ 真实轨迹 → conform 回执（E3 模块 `pr` / `merge` 的前置）。
 - 完成判据：`aidlc_state.py formal check --stage <下一阶段>` 无未满足项；反例分诊写进 `decisions.md` 并以 `fail --signal fv_*` 路由（R17–R23）。
 - 缺口：建模质量本身没有行为层评测；外部引擎适配未在本仓库实际运行。
 

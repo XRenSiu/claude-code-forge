@@ -14,8 +14,8 @@ from . import VERSION
 from .values import FvError, require
 
 EXIT = {"PASS": 0, "QUALIFIED": 0, "CONFORMS": 0, "FRESH": 0, "NOT_WEAKENED": 0, "SATISFIED": 0, "APPROVED": 0,
-        "READY": 0, "TRACEABLE": 0, "AGREED": 0, "COMPLETE": 0, "REVIEWED": 0,
-        "NOT_READY": 1, "GAPS": 1, "DIVERGENT": 1, "NOT_REVIEWED": 1,
+        "READY": 0, "TRACEABLE": 0, "AGREED": 0, "COMPLETE": 0, "REVIEWED": 0, "INTACT": 0, "TRIAGED": 0,
+        "NOT_READY": 1, "GAPS": 1, "DIVERGENT": 1, "NOT_REVIEWED": 1, "TAMPERED": 1, "NOT_TRIAGED": 1,
         "FAIL": 1, "NOT_QUALIFIED": 1, "NONCONFORMANT": 1, "STALE": 1, "BROKEN": 1, "WEAKENED": 1, "UNSATISFIED": 1,
         "ERROR": 2, "BOUNDED_PASS": 3, "INCOMPLETE": 3, "UNKNOWN": 3, "NO_VIOLATION_SAMPLED": 3}
 
@@ -406,11 +406,60 @@ def cmd_resolve(args):
     return 0
 
 
+def _upstream(args):
+    from .upstream import load
+    return load(getattr(args, "upstream", None))
+
+
 def cmd_check_review(args):
-    from .generation import check_review, requirements_for
+    from .generation import requirements_for
+    from .methods import check_review
     from .spec import load_contract
     c = load_contract(args.contract)
-    r = check_review(args.review, c, requirements_for(c, args.requirements))
+    r = check_review(args.review, c, requirements_for(c, args.requirements), _upstream(args), args.triage)
+    emit(r)
+    return EXIT[r["verdict"]]
+
+
+def cmd_intake_check(args):
+    from .generation import Requirements, requirements_for
+    from .methods import check_intake
+    from .spec import load_contract
+    require(args.requirements or args.contract, "intake-check needs --requirements or --contract")
+    reqs = Requirements(args.requirements) if args.requirements else requirements_for(load_contract(args.contract))
+    r = check_intake(args.intake, reqs, _upstream(args))
+    emit(r)
+    return EXIT[r["verdict"]]
+
+
+def cmd_model_review_check(args):
+    from .methods import check_model_review
+    r = check_model_review(args.review, _model(args), _upstream(args), args.entrance)
+    emit(r)
+    return EXIT[r["verdict"]]
+
+
+def cmd_brief_check(args):
+    from .methods import check_brief
+    r = check_brief(args.brief, args.ledger, args.coverage, _model(args), _upstream(args))
+    emit(r)
+    return EXIT[r["verdict"]]
+
+
+def cmd_triage_check(args):
+    from .methods import check_cex_triage
+    r = check_cex_triage(args.triage, _model(args) if args.model else None, _upstream(args))
+    emit(r)
+    return EXIT[r["verdict"]]
+
+
+def cmd_upstream(args):
+    from .upstream import Upstream, refresh
+    if args.action == "verify":
+        r = Upstream(args.manifest).verify()
+    else:
+        require(args.project and args.clone and args.commit, "refresh needs --project, --clone and --commit")
+        r = refresh(args.manifest, args.project, args.clone, args.commit)
     emit(r)
     return EXIT[r["verdict"]]
 
@@ -420,18 +469,22 @@ def cmd_gen_evidence(args):
     from .receipt import make, now
     from .spec import load_contract, load_model
     started = now()
+    up = _upstream(args)
     if args.kind == "rules":
         require(args.contract and args.divergence and args.review, "rules evidence needs --contract, --divergence and --review")
         c = load_contract(args.contract)
         reqs = requirements_for(c, args.requirements)
-        res = rules_evidence(c, reqs, args.divergence, args.review)
+        res = rules_evidence(c, reqs, args.divergence, args.review, args.intake, args.review_triage, up)
         inputs = {"contract": dict(c.identity(), path=c.path), "requirements": {"path": str(reqs.path), "digest": reqs.digest()}}
     else:
         require(args.model and args.divergence, "model evidence needs --model and --divergence")
         m = load_model(args.model)
-        res = model_evidence(m, args.divergence, args.entrance, args.calibration)
+        brief = {"brief": args.brief, "ledger": args.ledger, "coverage": args.coverage} if args.brief else None
+        res = model_evidence(m, args.divergence, args.entrance, args.calibration, args.review, brief, up)
         inputs = _inputs(m)
     inputs["divergence"] = {"path": str(args.divergence), "digest": res["divergence"]["digest"]}
+    if up is not None:
+        inputs["upstream"] = {"path": str(up.path), "digest": res["upstream"]}
     receipt = make("generate", inputs, {"kind": args.kind, "entrance": args.entrance, "min_candidates": 2}, res, res["verdict"], "E0", started)
     path = _save(args, receipt)
     emit({"verdict": res["verdict"], "reasons": res["reasons"], "receipt": path, "evidence_level": "E0"})
@@ -558,14 +611,40 @@ def parser():
     s.add_argument("--by", required=True); s.add_argument("--signer-kind", choices=["human", "delegated_agent"], required=True)
     s.add_argument("--authorization")
     s.set_defaults(fn=cmd_resolve)
-    s = sub.add_parser("check-review", help="fresh-context rules review: complete, untruncated, blocking findings resolved")
+    up_help = "UPSTREAM.json of the vendored procedures; citations are then checked against those bytes"
+    s = sub.add_parser("upstream", help="vendored upstream procedures: verify the copy is intact, or refresh one project from a local clone")
+    s.add_argument("action", choices=["verify", "refresh"]); s.add_argument("manifest")
+    s.add_argument("--project"); s.add_argument("--clone"); s.add_argument("--commit")
+    s.set_defaults(fn=cmd_upstream)
+    s = sub.add_parser("intake-check", help="rules intake: Spec Kit clarify + Quint from-requirements carried out completely")
+    s.add_argument("intake"); s.add_argument("--requirements"); s.add_argument("--contract"); s.add_argument("--upstream", help=up_help)
+    s.set_defaults(fn=cmd_intake_check)
+    s = sub.add_parser("check-review", help="rules review under the Formal Verification Skills contract (+ the author's triage)")
     s.add_argument("review"); s.add_argument("--contract", required=True); s.add_argument("--requirements")
+    s.add_argument("--triage", help="fv-review-triage written by the author beside the immutable review")
+    s.add_argument("--upstream", help=up_help)
     s.set_defaults(fn=cmd_check_review)
+    s = sub.add_parser("model-review-check", help="model review: Quint review checks (runtime ones recomputed) + Specula granularity audit")
+    s.add_argument("review"); model_args(s); s.add_argument("--entrance", choices=["spec-first", "code-first"], default="spec-first")
+    s.add_argument("--upstream", help=up_help)
+    s.set_defaults(fn=cmd_model_review_check)
+    s = sub.add_parser("brief-check", help="code-first: Specula modeling brief, defect ledger and brief coverage")
+    s.add_argument("--brief", required=True); s.add_argument("--ledger", required=True); s.add_argument("--coverage", required=True)
+    model_args(s); s.add_argument("--upstream", help=up_help)
+    s.set_defaults(fn=cmd_brief_check)
+    s = sub.add_parser("triage-check", help="counterexample triage: Specula spec-fidelity checklist (Case B/C) + bug classification")
+    s.add_argument("triage"); s.add_argument("--model", help="the model the counterexample came from (enables replay)")
+    s.add_argument("--contract"); s.add_argument("--upstream", help=up_help)
+    s.set_defaults(fn=cmd_triage_check)
     s = sub.add_parser("gen-evidence", help="evidence that rules/model were AI-generated the checkable way (READY / NOT_READY)")
     s.add_argument("kind", choices=["rules", "model"])
     s.add_argument("--contract"); s.add_argument("--requirements"); s.add_argument("--model"); s.add_argument("--divergence")
-    s.add_argument("--review"); s.add_argument("--entrance", choices=["spec-first", "code-first"], default="spec-first")
+    s.add_argument("--review", help="rules: fv-rules-review; model: fv-model-review")
+    s.add_argument("--intake", help="rules: fv-rules-intake"); s.add_argument("--review-triage", help="rules: fv-review-triage")
+    s.add_argument("--entrance", choices=["spec-first", "code-first"], default="spec-first")
     s.add_argument("--calibration", help="code-first: conform receipt of the as-is model on traces of the current code")
+    s.add_argument("--brief"); s.add_argument("--ledger"); s.add_argument("--coverage")
+    s.add_argument("--upstream", help=up_help)
     s.add_argument("--out")
     s.set_defaults(fn=cmd_gen_evidence)
     s = sub.add_parser("init", help="scaffold project assets for entrance A (spec-first) or B (code-first)")

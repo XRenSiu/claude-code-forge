@@ -570,6 +570,7 @@ class Generation(unittest.TestCase):
     def test_adoption_needs_rulings_comparison_and_a_complete_review(self):
         from fvkit.generation import Requirements, resolve, rules_divergence, rules_evidence
         from fvkit.spec import load_contract
+        from test_upstream_methods import intake_doc, review_doc
         reqs = Requirements(self.d / "requirements.json")
         consts = load(ticket_model()).constants
         a_path, b_path = self.contract("a/c.json"), self.contract("b/c.json", r1="sold <= STOCK")
@@ -578,34 +579,48 @@ class Generation(unittest.TestCase):
             c["path"] = str(Path(c["path"]).resolve())
         rp = self.write("div.json", report)
         final = load_contract(self.contract("c.json"))
-        review = {"schema_version": 1, "kind": "fv-rules-review", "contract_digest": final.digest, "requirements_digest": reqs.digest(),
-                  "reviewer": {"name": "formal-reviewer", "context": "fresh"},
-                  "findings": [{"id": "F1", "category": "hidden_assumption", "blocking": True, "detail": "restock"}],
-                  "review_complete": {"status": "complete", "findings_count": 1}}
+        it = self.write("intake.json", intake_doc(reqs))
+        finding = {"id": "F-1", "severity": "MAJOR", "class": "CONTENT", "requirement": "R1", "property": "Safe",
+                   "claim": "Safe only holds without restock", "evidence": "prd.md: Assumption line", "suggested_change": "state it"}
+        review = review_doc(final, reqs, verdict="APPROVE-WITH-EDITS", findings=[finding])
         rv = self.write("review.json", review)
-        reasons = " ".join(rules_evidence(final, reqs, rp, rv)["reasons"])
+        reasons = " ".join(rules_evidence(final, reqs, rp, rv, it)["reasons"])
         self.assertIn("without a ruling", reasons)
-        self.assertIn("blocking finding F1 is unresolved", reasons)
+        self.assertIn("needs the author's separate triage", reasons)
+        self.assertIn("no rules intake", " ".join(rules_evidence(final, reqs, rp, rv)["reasons"]))
         with self.assertRaises(FvError):
             resolve(rp, "D1", "adopt A", "agent", "delegated_agent")     # an agent cannot rule without the human's words
         for item in report["items"]:
             resolve(rp, item["id"], "adopt A", "owner", "human")
-        review["findings"][0]["resolution"] = {"ruling": "stated as A-NR", "by": "owner", "signer_kind": "human"}
-        self.write("review.json", review)
-        self.assertEqual(rules_evidence(final, reqs, rp, rv)["verdict"], "READY")
+        import hashlib
+        triage = {"schema_version": 1, "kind": "fv-review-triage", "review_digest": "sha256:" + hashlib.sha256(rv.read_bytes()).hexdigest(),
+                  "procedure": [], "contract_before": final.digest, "contract_after": final.digest,
+                  "dispositions": [{"finding": "F-1", "disposition": "ASK-HUMAN", "detail": "is restock possible?"}]}
+        from test_upstream_methods import cite_all
+        triage["procedure"] = cite_all("fv-review-triage")
+        tr = self.write("triage.json", triage)
+        self.assertIn("waiting for a human", " ".join(rules_evidence(final, reqs, rp, rv, it, tr)["reasons"]))
+        triage["dispositions"][0].update(disposition="REJECT-FINDING", evidence="assumption A-NR already states no restock")
+        self.write("triage.json", triage)
+        self.assertEqual(rules_evidence(final, reqs, rp, rv, it, tr)["verdict"], "READY")
         review["review_complete"]["findings_count"] = 0                  # a truncated review
         self.write("review.json", review)
-        self.assertIn("truncated", " ".join(rules_evidence(final, reqs, rp, rv)["reasons"]))
+        self.assertIn("truncated", " ".join(rules_evidence(final, reqs, rp, rv, it, tr)["reasons"]))
         review["review_complete"]["findings_count"] = 1
         self.write("review.json", review)
         other = load_contract(self.contract("other.json", r1="sold <= STOCK + 1"))
-        self.assertIn("not among the compared candidates", " ".join(rules_evidence(other, reqs, rp, rv)["reasons"]))
+        self.assertIn("not among the compared candidates", " ".join(rules_evidence(other, reqs, rp, rv, it, tr)["reasons"]))
         b_path.write_text(b_path.read_text().replace("sold <= STOCK", "sold < STOCK"))
-        self.assertIn("changed after the divergence", " ".join(rules_evidence(final, reqs, rp, rv)["reasons"]))
+        self.assertIn("changed after the divergence", " ".join(rules_evidence(final, reqs, rp, rv, it, tr)["reasons"]))
         single = json.loads(rp.read_text())
         single["candidates"] = single["candidates"][:1]                   # one generator compared with itself
         sp = self.write("single.json", single)
-        self.assertIn("fewer than 2", " ".join(rules_evidence(final, reqs, sp, rv)["reasons"]))
+        self.assertIn("fewer than 2", " ".join(rules_evidence(final, reqs, sp, rv, it, tr)["reasons"]))
+        doc = json.loads((self.d / "c.json").read_text())                # a High-impact property requirement left as a disposition
+        doc["properties"] = doc["properties"][2:]
+        doc["dispositions"] = [{"requirement": "R1", "status": "covered_by_tests", "reason": "E2E"}]
+        skipped = load_contract(self.write("skipped.json", doc))
+        self.assertIn("High-impact requirement R1", " ".join(rules_evidence(skipped, reqs, rp, rv, it, tr)["reasons"]))
 
     def test_model_divergence_compares_what_an_observer_sees(self):
         from fvkit.generation import model_divergence

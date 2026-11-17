@@ -821,7 +821,7 @@
     },
     "formal": {
       "type": "object",
-      "description": "fvkit formal verification (formal_gate.py / ../formal-verify). Written only by `formal configure|qualify|conform|waive`; the advance guard re-validates every receipt against the current model, contract, lock and source map.",
+      "description": "fvkit formal verification (formal_gate.py / ../formal-verify). Written only by `formal configure|generation|calibrate|qualify|conform|triage|waive`; the advance guard re-validates every receipt and generation artifact against the current model, contract, lock, source map and the plugin's vendored upstream procedures.",
       "properties": {
         "status": {
           "enum": [
@@ -854,6 +854,18 @@
         "waivers": {
           "type": "array",
           "description": "human-signed level reductions; each forces G3"
+        },
+        "generation": {
+          "type": "object",
+          "description": "per module: {rules|model: {receipt, digest, verdict, divergence, review, intake, triage, brief, ledger, coverage, at}} — paths are re-checked on every advance"
+        },
+        "calibration": {
+          "type": "object",
+          "description": "code-first, per module: {receipt, digest, verdict, ...}: the as-is model conforms to traces of the current code"
+        },
+        "triage": {
+          "type": "object",
+          "description": "per module: [{file, digest, verdict, case B|C, route, at}] from `formal triage` (Specula spec-fidelity checklist + bug classification)"
         }
       }
     }

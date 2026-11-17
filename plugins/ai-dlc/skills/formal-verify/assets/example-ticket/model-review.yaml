@@ -1,0 +1,38 @@
+# fv-model-review：formal-reviewer（模型审阅模式）在全新上下文里写出，只读 model.yaml / contract.yaml / 源码映射。
+#   Quint quint-modeling guidelines/review.md：6 项结构检查（pass / warn / fail）。
+#   运行时检查（C-init / C-step / C-step-complete / R1 / R2）不由审阅者填写：`fv model-review-check` 用检查器重算。
+#   Specula base-spec-methodology 的粒度审计：每个动作一行，回答“要不要拆”的六个问题。
+# warn 由人决定“处理 / 保持原样”（Quint review：After the report）。
+schema_version: 1
+kind: fv-model-review
+model_digest: "sha256:b1734040fb1b7e4fb4676528c802825a78ce8245ca015e12a9c521d21c65754a"
+contract_digest: "sha256:c9d5267076462d1b6892aaade52a130d8691a56ce5c71c6fbdf083fa71d3c7ac"
+procedure:
+  - {upstream: quint-llm-kit, path: quint-llm-kit-plugin/skills/quint-modeling/guidelines/review.md, sha256: "sha256:8b81f4a4bdc0bab7cd7c17ec036fd3d2108f5ad251dd4608145caf08e3ec9424"}
+  - {upstream: specula, path: skills/spec_generation/references/base-spec-methodology.md, sha256: "sha256:d104c2aad97b40c669fc2f041d2e49b63409d1c6c52849433e3c506bbdf71460"}
+reviewer: {name: formal-reviewer, context: fresh}
+structural:
+  guarded_actions: {result: pass, note: "四个动作都只有守卫和赋值；售罄是 reject 的守卫，不是 buy 里的 no-op 回退"}
+  enums_over_strings:
+    result: warn
+    note: "phase / result 用字符串字面量（'idle' 'read' 'done' 'success'）。fvkit 表达式没有枚举类型；outcome 的取值由合同词表固定"
+    decision: {text: "保持原样：字符串集合在 observables 里有界，检查器能发现拼错（死动作 / 不可达见证）", by: example-owner, signer_kind: human}
+  record_grouping: {result: pass, note: "库存（remaining, sold）与每个用户的状态（phase, seen, result）分成两组"}
+  witnesses_per_action: {result: pass, note: "SomeoneCanBuy 见证 buy；每个动作都至少改变一次状态（由 C-step-complete 重算）"}
+  right_abstraction: {result: pass, note: "没有消息、序列化或重试细节；用户 id 不做字符串处理"}
+  non_trivial_invariants: {result: pass, note: "NoOversell、Conservation 是协议级性质，不只是类型或范围检查"}
+granularity:
+  - {action: request, source: "impl/tickets.py:39-40", note: "一条 INSERT",
+     observable_between_atomic_ops: false, releases_lock_or_yields: false, spans_await: false, load_conditional_store: false,
+     single_atomic_op: true, single_lock_whole_action: false}
+  - {action: read, source: "impl/tickets.py:42-45", note: "SELECT 与写 seen 是两条语句，但 seen 只被同一用户之后的动作读到，其他用户观察不到中间状态",
+     observable_between_atomic_ops: false, releases_lock_or_yields: false, spans_await: false, load_conditional_store: false,
+     single_atomic_op: false, single_lock_whole_action: false}
+  - {action: buy, source: "impl/tickets.py:50-58", note: "BEGIN IMMEDIATE 持写锁覆盖条件 UPDATE、INSERT 与状态更新，直到 COMMIT",
+     observable_between_atomic_ops: false, releases_lock_or_yields: false, spans_await: false, load_conditional_store: true,
+     single_atomic_op: false, single_lock_whole_action: true}
+  - {action: reject, source: "impl/tickets.py:50-58", note: "同一事务里条件 UPDATE 返回 0 行",
+     observable_between_atomic_ops: false, releases_lock_or_yields: false, spans_await: false, load_conditional_store: true,
+     single_atomic_op: false, single_lock_whole_action: true}
+findings: []
+review_complete: {status: complete, findings_count: 0}

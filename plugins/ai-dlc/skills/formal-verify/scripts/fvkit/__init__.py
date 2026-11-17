@@ -5,4 +5,4 @@ AI-DLC ships a byte-identical copy (plugins/ai-dlc/skills/formal-verify/scripts/
 each installed plugin closes its own loop. Results are local_advisory evidence; they never
 grant acceptance, merge or release authority by themselves.
 """
-VERSION = "1.0.0"
+VERSION = "1.1.0"

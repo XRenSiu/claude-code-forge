@@ -1,0 +1,13 @@
+{
+  "defects": [
+    {"id": "D-1", "location": ["impl/tickets.py:66-67"], "trigger": "两个用户在任一方购买前都读到 remaining=1",
+     "wrong_behavior": "两人都扣减：remaining=-1，两笔成功订单", "evidence": "tickets.py:65-67 只看 seen，没有事务",
+     "category": "concurrency", "verification": "MC", "scenario": "Scenario 1", "known": null},
+    {"id": "D-2", "location": ["impl/tickets.py:40"], "trigger": "同一用户第二次提交请求",
+     "wrong_behavior": "requests.user 是主键，INSERT 抛出 IntegrityError，用户得不到答复", "evidence": "tickets.py:14 主键定义；tickets.py:40 没有 OR IGNORE 或捕获",
+     "category": "low-level", "verification": "CR", "scenario": null, "known": null},
+    {"id": "D-3", "location": ["impl/tickets.py:67-69"], "trigger": "进程在扣减与写订单之间停止",
+     "wrong_behavior": "库存已扣、订单未写，守恒被破坏", "evidence": "check-then-act 路径的三条语句不在事务里",
+     "category": "low-level", "verification": "CR", "scenario": null, "known": null}
+  ]
+}

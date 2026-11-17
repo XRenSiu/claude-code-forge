@@ -17,6 +17,7 @@ STATE = PLUGIN / "skills/ai-dlc/scripts/aidlc_state.py"
 LOCK = PLUGIN / "skills/ai-dlc/scripts/lock_done_when.py"
 FV = PLUGIN / "skills/formal-verify/scripts/fv.py"
 EXAMPLE = PLUGIN / "skills/formal-verify/assets/example-ticket"
+UPSTREAM = PLUGIN / "skills/formal-verify/upstream/UPSTREAM.json"
 F = "specs/ticket/formal"
 
 
@@ -76,10 +77,15 @@ class FormalLifecycle(unittest.TestCase):
     def lock_rules(self):
         self.sign("done_when.yaml", F + "/contract.yaml", F + "/requirements.yaml")
 
-    def generated(self, kind):
+    def generated(self, kind, brief=False):
         args = ["formal", "generation", "--slug", "t", "--kind", kind, "--divergence", F + "/%s-divergence.json" % kind]
         if kind == "rules":
-            args += ["--review", F + "/rules-review.yaml"]
+            args += ["--review", F + "/rules-review.yaml", "--intake", F + "/rules-intake.yaml", "--review-triage", F + "/rules-triage.yaml"]
+        else:
+            args += ["--review", F + "/model-review.yaml"]
+        if brief:
+            args += ["--brief", F + "/code-first/modeling-brief.md", "--ledger", F + "/code-first/defect-ledger.json",
+                     "--coverage", F + "/code-first/brief-coverage.yaml"]
         return self.state(*args)
 
     def design_ready(self):
@@ -155,6 +161,9 @@ class FormalLifecycle(unittest.TestCase):
                                "--traces", *self.traces())
         self.assertEqual((code, out["verdict"]), (0, "CONFORMS"), out)
         code, out = self.generated("model")
+        self.assertEqual(code, 1)                                         # calibrated, but built from no checked code analysis
+        self.assertIn("Specula modeling brief", " ".join(out["reasons"]))
+        code, out = self.generated("model", brief=True)
         self.assertEqual((code, out["verdict"]), (0, "READY"), out)
 
     def test_reclassifying_a_module_as_code_first_reopens_calibration(self):
@@ -226,11 +235,12 @@ class FormalLifecycle(unittest.TestCase):
         root = self.repo / "verification"
         root.mkdir()
         (root / "policy.yaml").write_text("\n".join([
-            "schema_version: 1", "kind: fv-policy", "modules:", "  - id: ticket-ordering", "    risk: concurrency",
+            "schema_version: 1", "kind: fv-policy", "upstream: %s" % UPSTREAM, "modules:", "  - id: ticket-ordering", "    risk: concurrency",
             '    paths: ["%s/impl/**"]' % F, "    contract: %s/contract.yaml" % F, "    model: %s/model.yaml" % F,
             "    source_map: %s/source-map.yaml" % F, "    vectors: %s/vectors.json" % F,
             "    rules_divergence: %s/rules-divergence.json" % F, "    rules_review: %s/rules-review.yaml" % F,
-            "    model_divergence: %s/model-divergence.json" % F,
+            "    rules_intake: %s/rules-intake.yaml" % F, "    rules_review_triage: %s/rules-triage.yaml" % F,
+            "    model_divergence: %s/model-divergence.json" % F, "    model_review: %s/model-review.yaml" % F,
             '    trace_command: ["python3", "%s/impl/harness.py", "--vectors", "%s/vectors.json", "--out", "{out}"]' % (F, F), ""]))
         self.commit("policy")
         code, out = self.state("formal", "configure", "--slug", "p", "--policy", "verification/policy.yaml")
@@ -248,6 +258,52 @@ class FormalLifecycle(unittest.TestCase):
         ci = subprocess.run([sys.executable, str(FV), "ci", "--policy", "verification/policy.yaml", "--all",
                              "--out", str(Path(self.tmp.name) / "ci2")], cwd=self.repo, capture_output=True, text=True)
         self.assertEqual(ci.returncode, 0, ci.stdout)                       # twin: reviewed code, conforming traces
+
+    def test_generation_follows_the_vendored_upstream_procedures(self):
+        self.configure()
+        self.lock_rules()
+        code, out = self.state("formal", "generation", "--slug", "t", "--kind", "rules", "--divergence", F + "/rules-divergence.json",
+                               "--review", F + "/rules-review.yaml")
+        self.assertEqual(code, 2)                                         # no intake: the requirements were never read the upstream way
+        self.assertIn("--intake", out.get("error", out.get("raw", "")))
+        intake = self.repo / F / "rules-intake.yaml"
+        original = intake.read_text()
+        intake.write_text(original.replace('sha256: "sha256:5260d798', 'sha256: "sha256:0000d798'))   # cites other clarify bytes
+        code, out = self.generated("rules")
+        self.assertEqual((code, out["verdict"]), (1, "NOT_READY"))
+        self.assertIn("cites other bytes than the vendored copy", " ".join(out["reasons"]))
+        intake.write_text(original)
+        review = self.repo / F / "rules-review.yaml"
+        review.write_text(review.read_text().replace("verdict: PASS", "verdict: REVISE"))
+        code, out = self.generated("rules")
+        self.assertIn("another review round", " ".join(out["reasons"]))
+        shutil.copy(EXAMPLE / "rules-review.yaml", review)
+        self.assertEqual(self.generated("rules")[0], 0)
+        mr = self.repo / F / "model-review.yaml"
+        mr.write_text(mr.read_text().replace("guarded_actions: {result: pass", "guarded_actions: {result: fail"))
+        code, out = self.generated("model")
+        self.assertIn("fix fails before adoption", " ".join(out["reasons"]))
+        shutil.copy(EXAMPLE / "model-review.yaml", mr)
+        (self.repo / F / "candidates/model-b/notes.md").unlink()          # a candidate without its Step 7 handoff
+        self.assertIn("Step 7 handoff", " ".join(self.generated("model")[1]["reasons"]))
+        shutil.copy(EXAMPLE / "candidates/model-b/notes.md", self.repo / F / "candidates/model-b/notes.md")
+        self.assertEqual(self.generated("model")[0], 0)
+        code, out = self.state("formal", "status", "--slug", "t")
+        self.assertEqual(out["upstream"]["verdict"], "INTACT")
+
+    def test_counterexample_triage_is_recorded_with_its_route(self):
+        self.configure()
+        code, out = self.state("formal", "triage", "--slug", "t", "--file", F + "/triage/check-then-act.yaml",
+                               "--model", F + "/model-check-then-act.yaml")
+        self.assertEqual((code, out["verdict"], out["route"]), (0, "TRIAGED", "fv_design_defect"), out)
+        tri = self.repo / F / "triage/check-then-act.yaml"
+        tri.write_text(tri.read_text().replace("modeled: none}\n  - {precondition: \"购买判定", "modeled: missing, guard: \"impl/tickets.py:50\"}\n  - {precondition: \"购买判定"))
+        code, out = self.state("formal", "triage", "--slug", "t", "--file", F + "/triage/check-then-act.yaml",
+                               "--model", F + "/model-check-then-act.yaml")
+        self.assertEqual(code, 1, out)                                    # an under-modelled guard makes it Case B, not a bug
+        self.assertIn("Case B until the model is fixed", " ".join(out["issues"]))
+        code, out = self.state("formal", "status", "--slug", "t")
+        self.assertEqual([t["verdict"] for t in out["required"]["ticket"]["triage"]], ["TRIAGED", "NOT_TRIAGED"])
 
     def test_triage_signals_route_to_their_layers(self):
         self.state("init", "--slug", "t", "--title", "ticket")

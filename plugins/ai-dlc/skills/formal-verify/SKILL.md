@@ -1,16 +1,18 @@
 ---
 name: formal-verify
 description: >-
-  给状态性需求做形式化验证，规则与模型由 AI 生成，生成过程本身可检。先从需求原文抽出逐字引用的
-  需求清单；再由至少两个互不可见的 AI 生成者各写一份规则合同和一份模型，脚本逐条比较它们的语义
-  与可观测行为，分歧交人裁决，另有全新上下文的审阅者对照需求审规则。之后进入统一的验证主干：
+  给状态性需求做形式化验证，规则与模型由 AI 生成，生成过程本身可检。生成不用自写提示词，而是执行
+  原样收录的开源流程（Spec Kit specify/clarify、Quint LLM Kit quint-modeling、TLA+ AgentSkills、
+  Specula code analysis / spec generation / fidelity triage、Formal Verification Skills 审阅契约），
+  每段流程的产出都落成脚本能检查的文件。至少两个互不可见的 AI 生成者各写一份规则合同和一份模型，
+  脚本逐条比较它们的语义与可观测行为，分歧交人裁决，全新上下文的审阅者按上游审阅契约审规则和模型。之后进入统一的验证主干：
   模型检查、变异资格、真实代码轨迹一致性、源码映射漂移、契约弱化检测和风险分级 CI。新需求先建模
   再写代码；已有代码先用当前代码的真实轨迹校准 AI 建的现状模型，再找反例。
   用于“形式化验证”“模型检查”“不变量”“并发 / 一致性 / 幂等 / 超卖 / 重复执行”“TLA+ / Quint”
   “这个设计会不会出错”。纯函数用性质测试，UI 用 E2E，不走这里。
   前置：Python 3.9+（自带 fvkit，仅标准库）；YAML 资产需要 PyYAML；能派发隔离子 agent 的宿主。
 argument-hint: "<需求或模块> [--entrance spec-first|code-first] [--slug <aidlc slug>] [--n 2]"
-version: 1.1.0
+version: 1.2.0
 user-invocable: true
 ---
 
@@ -30,18 +32,19 @@ user-invocable: true
 
 ## AI 生成阶段（必经，两个入口都要走）
 
-详细协议见 [references/generation.md](references/generation.md)。三个 agent 的提示词就是 `agents/rule-formalizer.md`、`agents/model-builder.md`、`agents/formal-reviewer.md`。
+详细协议见 [references/generation.md](references/generation.md)。**方法来自上游，不自创。**三个 agent（`agents/rule-formalizer.md`、`agents/model-builder.md`、`agents/formal-reviewer.md`）只做适配：读 `upstream/` 里原样收录的开源流程，执行其中的步骤，把产出翻译成 fvkit 文件。每一步对应哪段上游原文、产出什么、脚本怎么检查、哪里做了适配，见 [references/upstream-methods.md](references/upstream-methods.md)。`fv upstream verify upstream/UPSTREAM.json` 确认收录的原文没有被改动；每份生成产物在 `procedure:` 里按 sha256 引用它所执行的原文。
 
-| 步 | 谁 | 产物 | 脚本怎么检 |
+| 步 | 谁 · 执行的上游流程 | 产物 | 脚本怎么检 |
 |---|---|---|---|
-| G-1 需求清单 | `rule-formalizer`（第一个） | `requirements.yaml`：每条 R / A 逐字引用原文；没答案的问题写进 `open_questions` | `fv requirements-check`：引文必须逐字存在；原文里每一句“必须 / 不得 / 不会 / 最终 / 恰好 / must / never”都要落到需求、假设或带引文的 out_of_scope |
-| G-2 规则候选 ×N（N≥2） | N 个互不可见的 `rule-formalizer`，只读需求 | `candidates/rules-<k>/contract.yaml` | `fv trace-rules`：每条需求被形式化或有处置（dispositions），每条性质引用真实存在的需求并写明 `text`，每条假设有来源 |
-| G-3 规则分歧 | 脚本 | `rules-divergence.json` | `fv rules-divergence`：按需求逐条比较；有有限域的在全域上精确比较并给出见证值，否则按文本比较并标为待人判断；词表和假设的差别也列出 |
-| G-4 裁决与采纳 | **人**（委托签须附授权原话） | `fv resolve` 写进报告的 rulings；`contract.yaml` | 采纳的合同必须是被比较过的候选之一（合并出新版本就把它也加进去，重新比较） |
-| G-5 全新上下文审阅 | `formal-reviewer`，只读 | `rules-review.yaml` | `fv check-review`：摘要钉住被审的那一版；完成标记的条数等于实际条数（防截断）；阻断发现必须有人裁 |
-| G-6 模型候选 ×N（N≥2） | N 个互不可见的 `model-builder`，只读已签合同和设计（入口 A）或代码（入口 B） | `candidates/model-<k>/model.yaml`（入口 B 另带 source-map） | `fv lint` / `fv check` |
-| G-7 模型分歧 | 脚本 | `model-divergence.json` | `fv model-divergence`：比较观察者能看到的状态、步骤和规则判定，每处差别附见证路径；内部步数不同而观察不到的，不算分歧 |
-| G-8 裁决与采纳 | **人** | rulings；`model.yaml` | 采纳的模型必须在被比较之列；入口 B 另需 `formal calibrate`：现状模型在当前代码轨迹上 CONFORMS |
+| G-1 需求清单 | `rule-formalizer`（intake）· Spec Kit `specify` 第 6 步 | `requirements.yaml`：每条 R / A 逐字引用原文 | `fv requirements-check`：引文必须逐字存在；每一句“必须 / 不得 / 不会 / 最终 / 恰好 / must / never”都要落到需求、假设或带引文的 out_of_scope |
+| G-2 intake | `rule-formalizer`（intake）+ **人**答问题 · Spec Kit `clarify`；Quint quint-modeling Step 1；from-requirements | `rules-intake.yaml` | `fv intake-check`：10 类歧义逐类有状态；问题 ≤5、以问号结尾、由人回答；系统模型 4 项有出处；每条需求有抽取行与影响分；每个操作有粒度决定 |
+| G-3 规则候选 ×N（N≥2） | N 个互不可见的 `rule-formalizer`（candidate），只读需求 · from-requirements 第 4 项；Quint Step 5 | `candidates/rules-<k>/contract.yaml` | `fv trace-rules`：每条需求被形式化或有处置，每条性质引用真实需求并写明 `text`；High 影响的性质类需求必须被形式化 |
+| G-4 规则分歧与裁决 | 脚本 + **人**（委托签须附授权原话） | `rules-divergence.json` 的 rulings；`contract.yaml` | `fv rules-divergence`：按需求逐条比较，有限域上精确比较并给出见证值；采纳的合同必须是被比较过的候选之一 |
+| G-5 规则审阅 | `formal-reviewer`（rules，全新上下文）· FVS `fc-spec-review` + `review-policy` | `rules-review.yaml`（不可改）+ 作者的 `rules-triage.yaml` | `fv check-review --triage`：7 个审阅面；发现格式；PASS / APPROVE-WITH-EDITS / REVISE / BLOCKED 规则；延后要人裁决；≤3 轮 |
+| B1 代码分析（入口 B） | `model-builder`（analysis）· Specula `code_analysis` | `modeling-brief.md` + `defect-ledger.json` | `fv brief-check`：第 1–7 节、Category A/B、Scenario 字段；6.2 表与 JSON 一致 |
+| G-6 模型候选 ×N（N≥2） | N 个互不可见的 `model-builder`（candidate）· Quint Step 1–7；入口 B 加 from-code、tlaplus-from-source、Specula spec_generation | `candidates/model-<k>/model.yaml` + `notes.md`（Step 7 handoff）；入口 B 加 source-map | `fv lint` / `fv check`；每个候选的 handoff 三节非空 |
+| G-7 模型分歧与裁决 | 脚本 + **人** | `model-divergence.json` 的 rulings；`model.yaml` | `fv model-divergence`：比较观察者看得到的状态、步骤与判定；采纳的模型必须在被比较之列；入口 B 另需 `formal calibrate` 与 `brief-coverage.yaml`（Specula brief coverage） |
+| G-8 模型审阅 | `formal-reviewer`（model，全新上下文）· Quint `review.md` + Specula 粒度审计 | `model-review.yaml` | `fv model-review-check`：运行时检查由检查器重算；结构检查不能是 fail，warn 由人决定；该拆的动作必须拆 |
 
 `fv gen-evidence rules|model` 把上面的结论收成一份回执：READY 或 NOT_READY，并列出理由。
 分歧不是失败，是给人的议程；没有裁决的分歧才是失败。
@@ -52,8 +55,8 @@ user-invocable: true
 
 | 步 | 做什么 | 过关条件 |
 |---|---|---|
-| A1–A2 | G-1 到 G-5：清单、≥2 份规则候选、分歧裁决、审阅 | **FV-G0 = AI-DLC 的 G2**：合同和清单一起签进锁 |
-| A3 | G-6 到 G-8：≥2 份模型候选、分歧裁决；很小的范围（两个人、一张票） | 模型生成 READY |
+| A1–A2 | G-1 到 G-5：清单、intake、≥2 份规则候选、分歧裁决、审阅 | **FV-G0 = AI-DLC 的 G2**：合同和清单一起签进锁 |
+| A3 | G-6 到 G-8：≥2 份模型候选（Quint 主线）、分歧裁决、模型审阅；很小的范围（两个人、一张票） | 模型生成 READY |
 | A4 | `fv check`；有反例就分诊（见下），绝不改弱规则；把被推翻的设计作为 mutant 留在模型里，修正后的模型重新进入 G-7 比较 | **FV-G1**：`fv qualify` 判 QUALIFIED，即完整探索、见证可达、无死动作、必需 mutant 被预期性质杀死 |
 
 ## 入口 B · 已有代码：还原现实再找问题
@@ -61,7 +64,7 @@ user-invocable: true
 | 步 | 做什么 | 过关条件 |
 |---|---|---|
 | B1 | G-1 到 G-5，规则生成者**只读需求、不读代码**；清单可以引用事故报告和 `/invariant-extract` 的卡 | 有一组独立于实现的规则 |
-| B2–B3 | G-6 到 G-8，`model-builder` 读代码，找出事务和锁的边界，写现状模型和 source-map 候选；`fv source-map verify` 不能有 BROKEN | 关键动作都映射到真实代码 |
+| B2–B3 | 先由一个 `model-builder`（analysis）按 Specula code_analysis 写 modeling brief；再走 G-6 到 G-8，候选按 from-code / tlaplus-from-source / Specula spec_generation 读代码，找出事务和锁的边界，写现状模型和 source-map 候选；`fv source-map verify` 不能有 BROKEN | 关键动作都映射到真实代码；brief coverage 完整 |
 | B3′ 校准 | 用 harness 在**当前代码**上跑出轨迹，`formal calibrate --model <现状模型>`：轨迹必须 CONFORMS | 不一致说明 AI 建的模型不像这份代码，先修模型，不分诊反例 |
 | B4 | `fv check` 找反例 → `fv gen-tests --strategy counterexamples` → harness 在真实代码里重放 | 能在真实代码里重放的才是缺陷 |
 
@@ -78,7 +81,7 @@ $FV ci --policy verification/policy.yaml --base origin/main --out ci-out/   # C5
 ```
 
 - **C1 模型检查**：广度优先的完整探索，给出最短反例；活性在弱 / 强公平下检查，反例是套索。截断就报 `BOUNDED_PASS`，并给出 `exhaustive_depth`。
-- **C2 分诊与资格**：分诊只有五类（下表）。改设计由 Agent 起草，改规则必须有授权的人同意，并且重新走一遍 G-2 到 G-5。
+- **C2 分诊与资格**：每个反例由 `formal-reviewer`（triage）按 Specula spec-fidelity checklist 与 bug-classification 写成 `fv-cex-triage`，`fv triage-check` / `formal triage` 核对并给出路由；结论只有五类（下表）。改设计由 Agent 起草，改规则必须有授权的人同意，并且重新走一遍 G-1 到 G-5。
 - **C3 实现或修复**：实现以已签的合同为准。只重跑模型证明不了改过的代码正确。
 - **C4 真实代码独立验收**：真实轨迹必须逐步符合同一个模型，被拒绝的步骤要在轨迹里体现为拒绝；观测完整的事件同时按合同做运行时监控。
 - **C5 持续维护**：受保护文件变了，源码映射就 STALE；契约变了就做弱化检测；生成证据（分歧报告、审阅）跟着摘要失效。`fv ci` 只要有一项没跑、失败或失效，就判 UNSATISFIED。
@@ -104,9 +107,12 @@ $FV ci --policy verification/policy.yaml --base origin/main --out ci-out/   # C5
 S="python3 $AI_DLC/scripts/aidlc_state.py"
 $S formal configure  --slug X --module m --contract …/contract.yaml --model …/model.yaml \
      --source-map …/source-map.yaml --min-level E3 --entrance spec-first|code-first   # 或 --policy verification/policy.yaml
-$S formal generation --slug X --kind rules --divergence …/rules-divergence.json --review …/rules-review.yaml
+$S formal generation --slug X --kind rules --divergence …/rules-divergence.json --intake …/rules-intake.yaml \
+     --review …/rules-review.yaml --review-triage …/rules-triage.yaml
 $S formal calibrate  --slug X --model …/candidates/model-a/model.yaml --traces traces/*.jsonl   # 仅 code-first
-$S formal generation --slug X --kind model --divergence …/model-divergence.json
+$S formal generation --slug X --kind model --divergence …/model-divergence.json --review …/model-review.yaml \
+     [--brief …/modeling-brief.md --ledger …/defect-ledger.json --coverage …/brief-coverage.yaml]   # code-first 必填
+$S formal triage     --slug X --file …/triage/<name>.yaml [--model <产生反例的模型>]
 $S formal qualify    --slug X
 $S formal conform    --slug X --traces traces/*.jsonl
 $S formal status     --slug X
@@ -115,11 +121,11 @@ $S formal status     --slug X
 | 前置（`--force` 越不过） | 从哪个阶段起 |
 |---|---|
 | fv 合同和需求清单都在当前 G2/L5 锁里，字节未变 | `cards` |
-| 规则生成 READY（每次推进都对当前文件重算） | `cards` |
-| 模型生成 READY（code-first 要校准）+ QUALIFIED | `implement` |
+| `upstream/UPSTREAM.json` INTACT；规则生成 READY（每次推进都对当前文件重算） | `cards` |
+| 模型生成 READY（模型审阅、handoff；code-first 要 brief 与校准）+ QUALIFIED | `implement` |
 | E3 模块：当前的 CONFORMS，映射代码与取证时一致，源码映射此刻 FRESH | `pr` / `merge` |
 
-确实要降级，只能由人签 `formal waive`，并强制走 G3。配了策略时，需要哪些模块由 diff 推出；策略里 E2 以上的模块必须声明 `rules_divergence`、`rules_review`、`model_divergence`（code-first 还要声明 `calibration`）。
+确实要降级，只能由人签 `formal waive`，并强制走 G3。配了策略时，需要哪些模块由 diff 推出；策略里 E2 以上的模块必须声明 `rules_intake`、`rules_divergence`、`rules_review`、`model_divergence`、`model_review`（code-first 还要声明 `calibration`、`modeling_brief`、`defect_ledger`、`brief_coverage`）；策略的 `upstream:` 指向收录的上游清单时，引用按字节核对。
 
 ## 产物结构
 
@@ -127,22 +133,28 @@ $S formal status     --slug X
 specs/<feature>/formal/
   requirements.md            原文（或指向 PRD / issue / done_when）
   requirements.yaml          AI 抽出的清单（逐字引文）
+  rules-intake.yaml          Spec Kit clarify + Quint from-requirements 的 intake
   candidates/rules-*/        规则候选（保留，是记录的一部分）
   rules-divergence.json      分歧 + 裁决
-  rules-review.yaml          全新上下文审阅
+  rules-review.yaml · rules-triage.yaml   FVS 审阅（不可改）+ 作者处置
   contract.yaml              采纳的规则（随 G2 锁）
-  candidates/model-*/        模型候选
+  modeling-brief.md · defect-ledger.json · brief-coverage.yaml   入口 B：Specula 分析与覆盖自检
+  candidates/model-*/        模型候选（model.yaml + notes.md handoff）
   model-divergence.json      分歧 + 裁决
+  model-review.yaml          Quint review + Specula 粒度审计
+  triage/*.yaml              反例分诊（Specula fidelity checklist + bug classification）
   model.yaml · model-scope.md · source-map.yaml · source-map.lock.json · vectors.json · decisions.md
 verification/policy.yaml     模块 → 风险 → 证据等级 → CI 层 → 生成证据路径
 ```
 
 `fv init --dir specs/<feature>/formal --name <feature> --entrance spec-first|code-first` 生成一套骨架（清单、合同、模型都能直接通过检查，`candidates/` 留给生成者）。
-完整示例在 `assets/example-ticket/`：清单、两份规则候选（B 漏了“剩余不为负”，并把“答复”读成了“成功”）、两份模型候选（B 允许售罄后重试）、分歧报告与裁决、审阅、初版设计的反例、修正、真实 SQLite 实现与 harness、并发测试、策略、向量。
+完整示例在 `assets/example-ticket/`：清单、intake（3 个澄清问题）、两份规则候选（B 漏了“剩余不为负”，并把“答复”读成了“成功”）、两份模型候选（B 允许售罄后重试）、分歧报告与裁决、FVS 审阅与分诊、模型审阅、入口 B 的 Specula brief（`code-first/`）、初版设计反例的分诊（`triage/`）、修正、真实 SQLite 实现与 harness、并发测试、策略、向量。
 
 ## 参考
 
 - [references/generation.md](references/generation.md)：AI 生成协议：派发、隔离、清单、比较、裁决、审阅、采纳、校准
+- [references/upstream-methods.md](references/upstream-methods.md)：每一步执行哪段上游原文、构造对照（Quint / TLA+ / FizzBee → fvkit）、适配与理由、直接使用上游工具
+- [upstream/README.md](upstream/README.md)：收录的上游项目、许可证、不改原文的规则与更新方法
 - [references/modeling-language.md](references/modeling-language.md)：清单、合同、模型、表达式、语义；轨迹、向量、源码映射、分歧报告、审阅、策略的格式
 - [references/evidence-levels.md](references/evidence-levels.md)：E0–E4 各自能声称和不能声称什么；回执字段
 - [references/triage-and-maintenance.md](references/triage-and-maintenance.md)：分诊、变异资格、CI 分层、持续校准循环、外部引擎
@@ -152,6 +164,8 @@ verification/policy.yaml     模块 → 风险 → 证据等级 → CI 层 → �
 
 - 分歧检查衡量的是**生成者之间是否一致**，不是是否正确：两个生成者可能犯同一个错。全新上下文审阅和人的裁决是另外两道防线，不是可以省掉的步骤。
 - 语义比较只在声明了有限 domain 的观测量上是精确的；映射、序列这类没有 domain 的观测量只能按文本比较，结论交人判断。
-- 示例里的候选是为演示而撰写的，不是真实隔离 agent 的运行记录。
+- 示例里的候选、intake、审阅、brief 与分诊都是为演示而撰写的，不是真实隔离 agent 的运行记录。
+- 脚本检查的是“上游流程的每一步都做了、记下了”，不是“做得对”：澄清问题问得好不好、brief 的分析深不深，仍要靠人的裁决与审阅。
+- 上游流程有些步骤在隔离生成中做不到（中途找用户确认、并行子 agent、TLC 跑 hunt cfg），适配方式见 upstream-methods.md 第三节。
 - 内置检查器是显式状态枚举，不产生 E4。外部引擎适配只对固定格式的样例输出测过，本仓库没有实际运行 TLC / Apalache / Quint / FizzBee。
 - 本 Skill 的行为层效果（AI 生成的规则与模型质量）尚未评测，证据等级为 `static_only`。

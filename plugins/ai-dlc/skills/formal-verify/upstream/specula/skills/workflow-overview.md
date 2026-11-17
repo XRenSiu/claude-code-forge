@@ -1,0 +1,237 @@
+# Specula Workflow: Finding Bugs in System Implementations
+
+## What This Is
+
+Specula is a workflow for finding bugs in distributed system and concurrent data structure implementations using TLA+ formal verification. It combines code analysis, TLA+ modeling, trace validation, and bug reproduction into a systematic pipeline.
+
+The core idea: the most critical bugs — protocol safety violations, data loss, deadlocks — have extremely tricky trigger paths. Manual code review can suspect they exist, but cannot prove it. TLA+ model checking can explore the full state space and either confirm the bug with a concrete counterexample or provide confidence that it doesn't exist.
+
+## The Five Phases
+
+```
+Phase 1           Phase 2              Phase 2.5            Phase 3                    Phase 4
+Code Analysis ──> Spec Generation ──> Harness Generation ──> Validation & Hunting ──> Bug Confirmation
+      │                │                    │                      │                       │
+ modeling-brief   base.tla, MC.tla     traces/*.ndjson        bug-report.md         confirmed-bugs.md
+ (handoff)        Trace.tla            harness/run.sh         spec/output/          repro/test_bug*
+```
+
+Each phase has a dedicated skill. The pipeline can be run automatically via `scripts/launch/launch_pipeline.sh` or phase-by-phase interactively.
+
+## System Categories
+
+Specula handles two categories of systems with different trace strategies:
+
+| | Category A: Distributed Systems | Category B: Concurrent/Lock-Free |
+|---|---|---|
+| Examples | CometBFT, braft, MongoDB, hashicorp-raft | DPDK rte_ring, arc-swap, libomp, papaya |
+| Operation timescale | ms (network I/O, disk) | ns (CAS, atomic ops, spin) |
+| Trace approach | Single NDJSON file, mutex writer | Per-thread files, rdtsc timebox intervals |
+| TLC search | Linear (cursor `l`) | Partial order (`ViablePIDs`) |
+
+This category should be decided in **Phase 1** and written into `modeling-brief.md`, then reused by every later phase. Do not wait until harness generation to discover that a target is Category B.
+
+See `harness-generation` skill's `guide.md` Step 0 for classification details.
+
+---
+
+## Phase 1: Code Analysis
+
+**Skill**: `skills/code_analysis/`
+
+**Goal**: Find bug-prone areas and produce a Modeling Brief that guides spec generation.
+
+### What Happens
+
+1. **Reconnaissance** — Map the codebase: core modules, concurrency model, atomicity boundaries.
+   Also classify the target as Category A or B and identify the semantic boundaries that matter (crash windows vs linearization / reclamation windows).
+2. **Bug Archaeology** — Mine git history and issue tracker for historical bugs. Group into **Scenarios** by shared mechanism.
+3. **Deep Analysis** — Systematic code reading guided by Scenarios. Look for: code path inconsistencies, non-atomic persistence with crash windows, missing guards, deviations from the reference algorithm.
+4. **Modeling Brief** — Describe the requested baseline behavior, contracts, interfaces, abstractions, and findings in enough detail for spec generation. For large scopes, add linked companion documents named `modeling-brief-<topic>.md` beside the brief. For each Scenario: mechanism, evidence, modeling approach, invariants.
+
+### Key Principle
+
+Group findings into Scenarios by mechanism ("non-atomic persistence with crash window", "missing migrationId filter"). Model the requested behavior and component interactions even where no bug hypothesis exists. Document length and Scenario count follow the scope.
+
+### Output
+
+- `modeling-brief.md` — Handoff to Phase 2
+- `analysis-report.md` — Full audit trail
+
+---
+
+## Phase 2: Spec Generation
+
+**Skill**: `skills/spec_generation/`
+
+**Goal**: Translate the Modeling Brief into a TLA+ specification suite.
+
+### What Happens
+
+1. **Base Spec** (`base.tla` and supporting modules as needed) — Core TLA+ specification. Scope follows the requested behavior, contracts, and Scenarios; logic is faithful to implementation code. Every logic block is annotated with `file:line`.
+2. **MC Spec** (`MC.tla` + `MC.cfg` + `MC_hunt_*.cfg`) — Counter-bounded fault injection for model checking. Hunting configs target specific scenarios.
+3. **Trace Spec** (`Trace.tla` + `Trace.cfg`) — Drives TLC through recorded traces to verify spec-implementation consistency.
+4. **Instrumentation Spec** (`instrumentation-spec.md`) — Maps spec actions to code locations for harness generation.
+
+### Key Principles
+
+- **Scope-driven modeling**: Every extension traces to requested behavior, a system contract, or a Scenario
+- **Code-faithful logic**: Model the implementation, not the paper
+- **Source line annotations**: Every condition cites `file:line`
+- **Split actions where code paths diverge**
+
+---
+
+## Phase 2.5: Harness Generation
+
+**Skill**: `skills/harness-generation/`
+
+**Goal**: Instrument the real system to emit NDJSON traces, write test scenarios, collect traces.
+
+### Output
+
+| File | Purpose |
+|------|---------|
+| `harness/src/` | Trace module + test scenarios |
+| `harness/run.sh` | One-command: build, run tests, collect traces |
+| `traces/*.ndjson` | Recorded execution traces |
+| `harness/INSTRUMENTATION.md` | Guide for adjusting instrumentation |
+
+For MongoDB targets: log parsing approach (no C++ recompilation needed). See the [Specula case-studies repository](https://github.com/specula-org/specula-case-studies) for a MongoDB shared harness example.
+
+---
+
+## Phase 3: Validation & Bug Hunting
+
+**Skill**: `skills/validation-workflow/` (orchestration), `skills/tla-trace-workflow/` (trace), `skills/tla-checking-workflow/` (MC)
+
+### 3A: Trace Validation
+
+Verify spec reproduces every state transition in real traces. Catches spec-implementation inconsistencies before hunting.
+
+### 3B: Model Checking — Convergence
+
+Run `MC.cfg` (0 faults) to verify structural invariants hold. Fix fidelity issues (Case A: invariant mismatch, Case B: spec modeling issue).
+
+### 3C: Bug Hunting
+
+Run `MC_hunt_*.cfg` with fault injection. BFS + Simulation strategy:
+1. BFS first (30 min)
+2. If BFS did not exhaust the state space, follow up with simulation (30 min) at a depth that reaches the target interactions
+3. Violation = **Case C** (real bug) — analyze counterexample, cross-reference with code
+
+### Output
+
+- `spec/bug-report.md` — All findings with counterexamples
+- `spec/changelog.md` — Spec modifications during validation
+- `spec/output/` — TLC output files
+
+---
+
+## Phase 4: Bug Confirmation
+
+**Skill**: `skills/bug-confirmation/`
+
+**Goal**: Confirm MC-found bugs are real and reproduce them.
+
+### Sub-Phases (see `skills/bug-confirmation/phases/` for each)
+
+1. **Investigation** — Five steps, cheap-first: triage filters (path ≠ bug, name observable harm) → code audit → developer intent investigation → prerequisite verification (code-level + protocol-semantic) → precedent re-check. Bias toward continuing investigation when uncertain rather than rejecting at triage.
+2. **Counterfactual Fix Check (system-property findings, advisory)** — For findings whose violated property is system-wide (availability, exhaustion, eventual consistency), re-run TLC with a one-line fix in spec; if property still violates, reframe before proceeding.
+3. **Reproduction (MANDATORY for new bugs)** — Write and execute reproduction test.
+
+After all applicable phases have run, assign a Report Tier (A/B/C) based on the accumulated evidence; see `skills/bug-confirmation/guide.md`.
+
+### Key Rules
+
+- **New bugs MUST have reproduction tests** in `repro/test_bug<N>_*.py`
+- Known/historical bugs (matching existing JIRA) don't require reproduction
+- "Code audit only" is NOT acceptable for new bugs
+- Tests must be actually executed, results recorded
+- Tier C findings are recorded in `confirmed-bugs.md` but excluded from the maintainer-facing submission by default
+
+### Output
+
+- `confirmed-bugs.md` — Final confirmation report with reproduction results and dispositions
+- `bug-severity.md` — Severity classification for the confirmation report
+- `summary.md` — Concise per-target results, validation limits, run details, and resource usage
+- `repro/test_bug*` — Executable reproduction tests
+
+---
+
+## Pipeline Automation
+
+### Full Pipeline
+
+```bash
+bash scripts/launch/launch_pipeline.sh "system-name|github/repo|Lang|Reference description"
+```
+
+Options: `--skip-analysis`, `--skip-specgen`, `--skip-harness`, `--skip-validate`, `--max-parallel=N`, `--policy-retries=N`
+
+### Scheduler (with quota monitoring)
+
+```bash
+bash scripts/exp/scheduler.sh --workers 3 --threshold 80 --queue tasks.queue
+```
+
+Pauses when API usage exceeds threshold, waits for reset, resumes automatically.
+
+---
+
+## Directory Structure (per case study)
+
+```
+.specula-output/
+├── analysis-report.md           # Phase 1
+├── modeling-brief.md            # Phase 1 → Phase 2 handoff
+├── confirmed-bugs.md            # Phase 4 final confirmation report
+├── bug-severity.md              # Phase 4b severity classification
+├── summary.md                   # Final per-target summary
+├── spec/
+│   ├── base.tla + base.cfg     # Phase 2
+│   ├── MC.tla + MC.cfg         # Phase 2
+│   ├── MC_hunt_*.cfg           # Phase 2 (per Scenario)
+│   ├── Trace.tla + Trace.cfg   # Phase 2
+│   ├── instrumentation-spec.md # Phase 2
+│   ├── bug-report.md           # Phase 3
+│   ├── changelog.md            # Phase 3
+│   └── output/                 # TLC output files
+├── harness/
+│   ├── src/                    # Trace module + test scenarios
+│   ├── run.sh                  # Build + run + collect traces
+│   └── INSTRUMENTATION.md      # Adjustment guide
+├── traces/                     # NDJSON trace files
+│   └── *.ndjson
+└── repro/                      # Bug reproduction tests
+    └── test_bug*.py
+```
+
+---
+
+## Available Skills
+
+| Skill | Phase | Location |
+|-------|-------|----------|
+| `byom` | 2–4 | `skills/byom/` |
+| `code_analysis` | 1 | `skills/code_analysis/` |
+| `spec_generation` | 2 | `skills/spec_generation/` |
+| `harness-generation` | 2.5 | `skills/harness-generation/` |
+| `validation-workflow` | 3 (orchestration) | `skills/validation-workflow/` |
+| `tla-trace-workflow` | 3A | `skills/tla-trace-workflow/` |
+| `tla-checking-workflow` | 3B | `skills/tla-checking-workflow/` |
+| `bug-confirmation` | 4 | `skills/bug-confirmation/` |
+
+## MCP Tools
+
+| Tool | Purpose |
+|------|---------|
+| `run_trace_validation` | Quick trace-spec consistency check |
+| `run_trace_debugging` | Breakpoint-based debugging with hit statistics |
+| `run_trace_validation_parallel` | Batch validation of multiple traces |
+| `validate_spec_syntax` | Quick TLA+ syntax check |
+| `get_tlc_summary` | TLC model checking result overview |
+| `get_tlc_state` | Inspect specific states in error trace |
+| `compare_tlc_states` | Diff states or track variable changes |
+| `run_trace_replay` | Replay trace with custom ALIAS |
+| `run_vav_analysis` | Variable assignment validation |

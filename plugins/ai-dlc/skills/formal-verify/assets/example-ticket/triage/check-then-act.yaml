@@ -1,0 +1,21 @@
+# fv-cex-triage：对 model-check-then-act.yaml 的反例做分诊（A4 / C2）。
+#   Specula spec-fidelity-checklist：写下违反状态需要的前提（Step 1），逐条问“真实系统里什么挡住了它”，
+#   给出实现里的守卫位置（Step 2），对照模型有没有同样的守卫（Step 3）。有守卫被模型漏掉或放宽 → Case B（修模型）；
+#   没有 → Case C（真实缺陷）。
+#   Specula bug-classification：Case C 的状态与严重度要相互一致。
+# 结论与 decisions.md 第一行一致：design_defect，修设计，不改规则。
+schema_version: 1
+kind: fv-cex-triage
+procedure:
+  - {upstream: specula, path: skills/tla-checking-workflow/references/spec-fidelity-checklist.md, sha256: "sha256:c8929947c1afb9e4807f3edd0665f35fa3b340dde49d70b69892072ea2db0ef4"}
+  - {upstream: specula, path: skills/bug-classification/guide.md, sha256: "sha256:c143b2d5c2fd9b5e5a3b6ebbf040fc1ef7ef24923fa110cc4a99a3979c926fa5"}
+receipt: check-then-act.receipt.json
+property: NoOversell
+preconditions:
+  - {precondition: "alice 与 bob 在任一方购买之前都读到 remaining=1", modeled: none}
+  - {precondition: "购买判定只看自己读到的 seen，不看提交时的库存", guard: "impl/tickets.py:66", modeled: same}
+  - {precondition: "判定与扣减之间没有事务，另一个用户的扣减可以插进来", modeled: none}
+case: C
+status: REPRODUCED
+severity: Critical
+reasoning: "两个用户都收到“成功”、库存变成 -1：超卖对外可见，且没有自动恢复；从公开的购买接口并发提交即可触发（impl/test_concurrency.py 与 check-then-act 变体的轨迹都复现了它）"

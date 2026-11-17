@@ -1,0 +1,49 @@
+# fv-rules-intake：rule-formalizer 写规则候选之前，按上游流程对需求做的“结构化阅读”（G-2）。
+#   Spec Kit clarify：十类歧义扫描（Clear / Partial / Missing），最多 5 个澄清问题，问题以问号结尾，答案由人给
+#   Quint quint-modeling Step 1：系统模型清单（actors / communication / failures / time），每项都要有出处
+#   Quint from-requirements：抽取表（实体 / 操作 / 性质 / 假设 + High/Medium/Low），每个操作的粒度决定
+# `fv intake-check` 核对以上各项；High 影响的性质类需求在 gen-evidence 时必须被某条 property 形式化。
+schema_version: 1
+kind: fv-rules-intake
+requirements_digest: "sha256:b6656d4c8cc999a4b75ee8ed11e791b7c432e2d81e6d83008ce0a8e483eedce2"
+procedure:
+  - {upstream: spec-kit, path: templates/commands/clarify.md, sha256: "sha256:5260d798c5671deb9ac7e59d6ffdb69b30c26fb28878d3cc25e30fb71cacc734"}
+  - {upstream: quint-llm-kit, path: quint-llm-kit-plugin/skills/quint-modeling/guidelines/from-requirements.md, sha256: "sha256:8b2717b35d533b00667e6ac9fdfe85ff5b5bcb3a59c57cbc7c2d944fe204efcb"}
+  - {upstream: quint-llm-kit, path: quint-llm-kit-plugin/skills/quint-modeling/SKILL.md, sha256: "sha256:fe595baac9353a4c8ca572ee91b0d516000a17a83697db6244597597ae69c591"}
+system_model:
+  actors: {answer: "多个用户（USERS）各自提交购买；一个票务服务持有库存", source: R1}
+  communication: {answer: "用户与库存之间只通过共享数据库状态交互，没有消息队列", source: Q3}
+  failures: {answer: "不建模崩溃（崩溃恢复不在范围内）；只在服务正常时要求答复", source: A2}
+  time: {answer: "异步；不建模超时与时限，活性只依赖弱公平", source: A2}
+ambiguity_scan:
+  functional_scope_and_behavior: {status: Clear, note: "R1–R3 加上明确的不在范围清单"}
+  domain_and_data_model: {status: Partial, note: "“成功”是否包含支付没有写明"}
+  interaction_and_ux_flow: {status: Partial, note: "用户看到“剩 1 张”之后提交是否保证成功"}
+  non_functional_quality_attributes: {status: Missing, note: "R3 没有答复时限"}
+  integration_and_external_dependencies: {status: Partial, note: "请求与库存靠什么交互没有写明"}
+  edge_cases_and_failure_handling: {status: Clear, note: "补货 / 退票由 A1 排除；崩溃在不在范围清单里"}
+  constraints_and_tradeoffs: {status: Clear, note: "数据库条件 UPDATE 的原子性写成了实现层假设 A3"}
+  terminology_and_consistency: {status: Clear, note: "库存、成功订单、售罄三个词前后一致"}
+  completion_signals: {status: Clear, note: "每条承诺都可以写成可检查的性质"}
+  misc_and_placeholders: {status: Clear, note: "没有 TODO 或含糊形容词"}
+clarifications:
+  - {id: Q1, category: domain_and_data_model, requirement: R2, question: "“成功”是否包含支付完成？",
+     answer: "不包含：成功指订单写入且库存预占成功，支付不在本例范围内", by: example-owner, signer_kind: human}
+  - {id: Q2, category: interaction_and_ux_flow, requirement: R1, question: "用户看到“剩 1 张”之后再提交，是否保证购买成功？",
+     answer: "不保证，提交时的库存才是准的", by: example-owner, signer_kind: human}
+  - {id: Q3, category: integration_and_external_dependencies, question: "用户的请求和库存之间通过什么交互？",
+     answer: "共享数据库状态，没有消息队列", by: example-owner, signer_kind: human}
+deferred:
+  - {category: non_functional_quality_attributes, status: Outstanding,
+     rationale: "R3 只承诺“最终”答复，答复时限不是本次承诺；需要时另立需求与性质"}
+extraction:
+  - {requirement: R1, element: entity, text: "场次剩余库存 remaining；成功订单数 sold", impact: High}
+  - {requirement: R1, element: operation, text: "用户提交购买：读库存 → 购买判定", impact: High}
+  - {requirement: R1, element: property, text: "不变量：sold <= STOCK，remaining >= 0", impact: High, rationale: "直接验证本次需求的核心保证"}
+  - {requirement: R2, element: property, text: "不变量：sold + remaining == STOCK；迁移：sold 不减少", impact: High, rationale: "成功订单与库存的守恒"}
+  - {requirement: R3, element: property, text: "leads_to：pending 的请求最终得到成功或售罄", impact: Medium, rationale: "支撑路径：答复的活性"}
+  - {requirement: A1, element: assumption, text: "检查期间库存只因购买而减少", impact: Medium}
+  - {requirement: A2, element: assumption, text: "弱公平：已提交的请求最终会被处理", impact: Medium}
+  - {requirement: A3, element: assumption, text: "条件 UPDATE 原子（实现层声明，模型不证明）", impact: Low}
+granularity:
+  - {requirement: R1, grain: split, reason: "读到剩余数量与提交购买之间允许其他用户插入——R1 要检查的正是这类交错，所以读和购买是两个动作"}

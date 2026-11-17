@@ -1,0 +1,150 @@
+# TLA+ Spec Generation
+
+Model the requested system behavior and contracts, using the Modeling Brief and its Scenarios to guide verification. Baseline behavior and component interactions do not require a prior bug hypothesis. The spec logic within each action MUST faithfully follow the implementation's control flow, with every logic block annotated to its source code location.
+
+## Input / Output
+
+**Input**: `modeling-brief.md`, its companion `modeling-brief-*.md` documents, target-specific scope guidance when provided, and source code access
+
+**Output** (written to files):
+
+| Phase | Output | Description |
+|-------|--------|-------------|
+| 1 | `base.tla` + `base.cfg` | Base spec with all extensions |
+| 2 | `MC.tla` + `MC.cfg` + `MC_hunt_*.cfg` | Model checking spec + hunting configs per Scenario |
+| 2.5 | `brief-coverage.md` | **Mandatory** self-audit mapping scope, baseline behavior, Scenarios, and properties to spec/MC artifacts (see Phase 2.5 below) |
+| 3 | `Trace.tla` + `Trace.cfg` | Trace validation spec |
+| 4 | `instrumentation-spec.md` | Action-to-code mapping for harness generation |
+
+This `brief-coverage.md` self-audit is part of spec generation. It is separate from the pipeline's harness-generation phase, which is also sometimes called Phase 2.5.
+
+Subagents may be used for independent source analysis, module construction, or review; integrate their results into one consistent suite. Each phase writes output to files; if context is compressed mid-session, re-read your own output files to recover. There is no fixed spec size or number of modules; keep the entry-point files above and add supporting modules when useful.
+
+---
+
+## Step 0: Determine System Category
+
+Before writing any spec files, read `modeling-brief.md` and determine whether the target is:
+
+- **Category A (Distributed / Message-Passing)**
+- **Category B (Concurrent / Lock-Free / Runtime)**
+
+This should already be recorded in the brief. If it is missing, infer it from the source code and write the answer down before proceeding.
+
+For **Category B** systems, do **not** force a message-passing template onto the code. The spec should usually center on:
+
+- per-thread / per-task program counters
+- cached snapshots vs current shared state
+- linearization points
+- memory-visibility bridges across variables
+- retire / reclaim state
+- ownership transfer and wakeup paths
+
+---
+
+## Phase 1: Base Spec
+
+**Goal**: Write the TLA+ specification for the requested scope, including baseline behavior, component interactions, and Scenario-driven extensions.
+
+1. **Read the modeling handoff and scope guidance** — read its companion `modeling-brief-*.md` documents too; identify baseline contracts, component interactions, and each Scenario's mechanism, suggested variables/actions, and priority
+2. **Read source code as needed** — start with the cited functions, then follow callers, callees, shared state, configuration, and failure paths needed to establish in-scope behavior. Brief references are starting points, not a file allowlist
+3. **Design variables** — standard protocol variables (Category A) or concurrency variables (Category B: thread-local snapshots, reclamation state, handoff flags, cached views) + state needed for the requested behavior, contracts, and Scenarios
+4. **Write actions** — name after implementation functions, follow code's control flow faithfully, annotate every logic block with `file:line`
+5. **Write invariants** — standard safety properties + extension invariants targeting Scenarios + structural invariants
+6. **Write Init and Next**
+
+**Read `references/base-spec-methodology.md`** for patterns, annotation style, and action design.
+
+---
+
+## Phase 2: MC Spec
+
+**Goal**: Wrap the base spec with counter-bounded actions for exhaustive model checking.
+
+Counter-bound fault-injection actions (timeout, crash, message loss, etc.). Do NOT bound deterministic/reactive actions. Add symmetry reduction, message buffer constraints, structural invariants, and temporal properties.
+
+**Generate these configs**:
+- **`MC.cfg`** — standard safety + structural invariants. Used during spec validation (convergence). Extension invariants (scenario-specific) should be listed but **commented out**.
+- **`MC_hunt_<scenario>.cfg`** — configurations targeting Scenarios and relevant cross-component interactions. Bound unrelated actions only when the target behavior remains reachable. Enable the target properties together with the other safety and structural invariants; do not narrow a hunt cfg to the target invariant alone. Used during bug hunting after spec converges.
+- **`MC_hunt_<scenario>_live.cfg`** — one per Liveness property in brief §5, checked against a `LiveSpec` with justified fairness. **Read `references/liveness-pattern.md`** before writing one.
+
+**Read `references/mc-spec-pattern.md`** for the full template and hunting config pattern.
+
+---
+
+## Phase 2.5: Brief Coverage Self-Audit
+
+**Goal**: Catch the easy-to-miss failure mode — invariants *defined* but never *enabled* in any hunt cfg, scenarios with no targeting hunt cfg, or findings no hunt cfg can reach.
+
+This is a self-check, not a grading rubric. Glance over the requested scope and brief §2 / §5 / §6.1 while finalizing Phase 2, identify any obvious gaps, and either close them or note honestly why something is out of scope. The audit is scope-driven, not taxonomy-driven; omission from the brief does not remove a user-requested behavior from scope. Fill the audit by reading actual spec and cfg files, not from memory of what you intended.
+
+When target-specific guidance is provided, preserve its intent while translating the Modeling Brief into the spec. Make it clear in `brief-coverage.md` how the user's priorities are represented or why another verification route is more appropriate, using whatever form and level of detail fit the target. Do not distort implementation evidence or modeling decisions merely to echo the guidance.
+
+See `references/brief-coverage-checklist.md` for table sketches and a worked failure example.
+
+---
+
+## Phase 3: Trace Spec
+
+**Goal**: Replay implementation traces against the base spec to verify consistency.
+
+Key concepts: cursor variable `l` walks through trace events; action wrappers match events, call base actions, validate post-state, advance cursor; silent actions handle impl state changes without trace events (must be tightly constrained).
+
+**ValidatePostState must be implemented, not a stub.** For each action wrapper, write field checks based on what `instrumentation-spec.md` defines as captured fields. The base spec tells you which variables each action modifies; the instrumentation spec tells you which fields will be in the trace. Match them. Do not leave `ValidatePostState == TRUE` — Phase 2.5 and Phase 3 will reject it.
+
+**Trace file location**: Trace files (`.ndjson`) are stored in `traces/` (sibling to `spec/`). The `JsonFile` operator in `Trace.tla` must default to `../traces/<name>.ndjson`, with an `IOEnv.JSON` override for per-run selection:
+```tla
+JsonFile ==
+    IF "JSON" \in DOMAIN IOEnv THEN IOEnv.JSON
+    ELSE "../traces/trace.ndjson"
+```
+
+**Read `references/trace-spec-pattern.md`** for the full template and silent action patterns.
+
+---
+
+## Phase 4: Instrumentation Spec
+
+**Goal**: Produce a mapping document (`instrumentation-spec.md`) describing how to instrument the source code to produce traces compatible with the trace spec.
+
+For each spec action, specify: spec action name, code location (`file:line`), trigger point (before/after which operation), and event fields to capture.
+
+**Read `references/instrumentation-spec-format.md`** for the full format.
+
+---
+
+## Critical Rules
+
+1. **Every extension has a source-grounded purpose.** Trace it to the requested scope, a system contract, or a Scenario.
+2. **Model the implementation, not the paper.** Deviations from the reference algorithm are where bugs live.
+3. **Follow the code's control flow faithfully.** Do not simplify, reorder, or merge logic that the code keeps separate.
+4. **Annotate every logic block with source lines.** Every condition, branch, and state update must cite `file:line`. Not optional.
+5. **Write to files early and often.** Insurance against context loss.
+6. **Split actions where code paths diverge.** Merging hides bugs.
+7. **Name actions after implementation functions.** Enables cross-referencing with code.
+8. **Silent actions must be tightly constrained.** Unconstrained silent actions cause state space explosion.
+9. **MC spec bounds fault-injection, not normal operations.**
+10. **For Category B, split operations at real semantic boundaries.** If code has separate read/confirm, reserve/publish, retire/reclaim, or signal/complete windows, do not collapse them into one action just because the public API looks atomic.
+11. **`brief-coverage.md` is a mandatory phase output.** Every Safety invariant in brief §5 must end up enabled in ≥1 hunt cfg, every Liveness property in its own `_live` cfg, every brief §2 scenario must have a targeting hunt cfg (or an explicit, written-out merger), every §6.1 finding must have a hunt cfg whose fault setup makes it reachable. Use the checklist as a self-check before writing the final audit doc — see Phase 2.5 and `references/brief-coverage-checklist.md`.
+
+---
+
+## Reference Files
+
+- **`references/base-spec-methodology.md`** — Variable design, action design, annotation style, invariants, helpers
+- **`references/mc-spec-pattern.md`** — MC spec template with counter-bounded actions
+- **`references/liveness-pattern.md`** — Fairness, bounds, and cfg shape for Liveness properties
+- **`references/brief-coverage-checklist.md`** — Self-audit mapping brief §2/§5/§6.1 → spec/MC artifacts (Phase 2.5)
+- **`references/trace-spec-pattern.md`** — Trace spec template with event matching and silent actions
+- **`references/instrumentation-spec-format.md`** — Format for the action-to-code mapping document
+- **`examples/hashicorp-raft-spec-generation.md`** — Complete worked example
+
+## Related Skills
+
+- **code_analysis** — Previous phase: produces the Modeling Brief
+- **harness-generation** — Next phase (2.5): instruments the system and collects traces using `instrumentation-spec.md`
+- **validation-workflow** — Phase 3: validates the spec using traces and model checking
+
+## Additional References
+
+For additional examples beyond the built-in ones, see the [Specula case-studies repository](https://github.com/specula-org/specula-case-studies) which contains 60+ completed case studies across distributed systems, consensus protocols, and concurrent data structures.

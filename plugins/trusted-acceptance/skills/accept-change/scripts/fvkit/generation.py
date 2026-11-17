@@ -1,24 +1,30 @@
 """AI generation of rules and models, made checkable.
 
-An agent writes the requirement inventory, the rules (fv-contract) and the model (fv-model).
-Nothing here trusts that writing. Each step leaves an artifact a script can check:
+An agent writes the requirement inventory, the rules (fv-contract) and the model (fv-model) by
+executing vendored open-source procedures (upstream.py lists them; methods.py checks their
+outputs). Nothing here trusts that writing. Each step leaves an artifact a script can check:
 
 1. Inventory (fv-requirements). Every requirement quotes its source verbatim; quotes are
    checked against the files, so an invented requirement has nothing to quote. Every
    normative sentence in the sources must land somewhere: a requirement, an assumption or an
    explicit out-of-scope entry. Silent omission is how rules get lost.
-2. Rules. At least two candidate contracts are written by isolated generators from the same
+2. Intake (Spec Kit clarify + Quint from-requirements): ambiguity scan, human-answered
+   questions, system-model checklist, extraction table with impact, granularity decisions.
+3. Rules. At least two candidate contracts are written by isolated generators from the same
    inventory. `trace_rules` checks that each one covers every requirement (property or
    disposition) and cites only real requirement ids. `rules_divergence` compares the
    candidates per requirement on a finite universe and turns every difference into an
-   agenda item with a witness.
-3. Review. A fresh-context reviewer writes an fv-rules-review with a completion marker; a
-   truncated review (finding count mismatch) or an unresolved blocking finding is not done.
-4. Models. At least two candidate models are compared by what an observer could see:
-   reachable observable valuations, observable transitions and property verdicts.
-   Code-first modules also need a calibration: traces of the CURRENT code conform to the
-   as-is model before any counterexample from it is believed.
-5. Adoption. The adopted contract/model must itself be one of the compared candidates, and
+   agenda item with a witness. High-impact property requirements must be formalized.
+4. Review (Formal Verification Skills review contract): a fresh reviewer's immutable review,
+   the author's separate triage, human rulings for deferrals.
+5. Models. At least two candidate models (Quint quint-modeling / TLA+ from-source / Specula
+   spec generation) are compared by what an observer could see: reachable observable
+   valuations, observable transitions and property verdicts. Each carries the Quint Step 7
+   handoff; a fresh model review runs the Quint review checks and the Specula granularity
+   audit. Code-first modules also need the Specula modeling brief with its coverage audit and
+   a calibration: traces of the CURRENT code conform to the as-is model before any
+   counterexample from it is believed.
+6. Adoption. The adopted contract/model must itself be one of the compared candidates, and
    every divergence item needs a ruling (human, or delegated with the human's words).
 """
 import itertools
@@ -34,7 +40,6 @@ MIN_CANDIDATES = 2
 MAX_UNIVERSE = 200000
 MAX_ITEMS = 200
 NORMATIVE = re.compile(r"必须|不得|不能|不会|不允许|禁止|应当|应该|只能|最终|永远|恰好|\bmust\b|\bshall\b|\bnever\b|\balways\b", re.I)
-REVIEW_CATEGORIES = ("misread", "vacuous", "over_restrictive", "under_specified", "hidden_assumption", "missing", "other")
 
 
 def _norm(text):
@@ -400,37 +405,6 @@ def unresolved(report):
     return [i["id"] for i in report["items"] if i["id"] not in ruled]
 
 
-def check_review(path, contract, reqs):
-    doc = load_document(path)
-    _keys(doc, ["schema_version", "kind", "contract_digest", "requirements_digest", "reviewer", "findings", "review_complete"],
-          ["notes"], "rules review")
-    require(doc["schema_version"] == 1 and doc["kind"] == "fv-rules-review", "unsupported rules review")
-    issues = []
-    if doc["contract_digest"] != contract.digest:
-        issues.append("review was written for another contract version")
-    if doc["requirements_digest"] != reqs.digest():
-        issues.append("review was written against another requirement inventory")
-    if (doc["reviewer"] or {}).get("context") != "fresh":
-        issues.append("the reviewer must work in a fresh context (reviewer.context: fresh)")
-    done = doc["review_complete"] or {}
-    if done.get("status") != "complete" or done.get("findings_count") != len(doc["findings"]):
-        issues.append("review is incomplete or truncated (completion marker missing, or finding count does not match)")
-    ids = set()
-    for i, f in enumerate(doc["findings"]):
-        _keys(f, ["id", "category", "blocking", "detail"], ["requirement", "property", "resolution"], "finding[%d]" % i)
-        if f["id"] in ids:
-            issues.append("duplicate finding id %s" % f["id"])
-        ids.add(f["id"])
-        if f["category"] not in REVIEW_CATEGORIES:
-            issues.append("finding %s: category must be one of %s" % (f["id"], REVIEW_CATEGORIES))
-        res = f.get("resolution") or {}
-        if f["blocking"] is True and not (res.get("ruling") and res.get("by") and
-                                          (res.get("signer_kind") == "human" or (res.get("signer_kind") == "delegated_agent" and res.get("authorization")))):
-            issues.append("blocking finding %s is unresolved" % f["id"])
-    return {"verdict": "REVIEWED" if not issues else "NOT_REVIEWED", "issues": issues, "findings": len(doc["findings"]),
-            "digest": sha_bytes(Path(path).read_bytes())}
-
-
 def candidate_path(report_path, candidate):
     p = Path(candidate.get("path") or "")
     return p if p.is_absolute() else Path(report_path).resolve().parent / p
@@ -448,11 +422,24 @@ def _candidates_current(report_path, report, load):
     return issues
 
 
-def rules_evidence(contract, reqs, divergence_path, review_path):
+def rules_evidence(contract, reqs, divergence_path, review_path, intake_path=None, triage_path=None, upstream=None):
+    from .methods import check_intake, check_review
     from .spec import load_contract
     reasons = []
+    if upstream is not None:
+        up = upstream.verify()
+        reasons += ["upstream: " + i for i in up["issues"]]
     trace = trace_rules(contract, reqs)
     reasons += ["traceability: " + i for i in trace["issues"]]
+    intake = None
+    if not intake_path:
+        reasons.append("no rules intake (Spec Kit clarify + Quint from-requirements): the generators had no checked reading of the requirements")
+    else:
+        intake = check_intake(intake_path, reqs, upstream)
+        reasons += ["intake: " + i for i in intake["issues"]]
+        for rid in intake["high_impact_properties"]:
+            if rid not in trace["coverage"]:
+                reasons.append("High-impact requirement %s (from-requirements scoring) is not formalized by any property" % rid)
     report = load_report(divergence_path, "fv-rules-divergence")
     distinct = {c["digest"] for c in report["candidates"]}
     if len(distinct) < MIN_CANDIDATES:
@@ -465,18 +452,22 @@ def rules_evidence(contract, reqs, divergence_path, review_path):
     open_items = unresolved(report)
     if open_items:
         reasons.append("divergence items without a ruling: %s" % open_items)
-    review = check_review(review_path, contract, reqs)
+    review = check_review(review_path, contract, reqs, upstream, triage_path)
     reasons += ["review: " + i for i in review["issues"]]
-    return {"verdict": "READY" if not reasons else "NOT_READY", "reasons": reasons, "trace": trace,
+    return {"verdict": "READY" if not reasons else "NOT_READY", "reasons": reasons, "trace": trace, "intake": intake,
             "divergence": {"digest": sha_bytes(Path(divergence_path).read_bytes()), "verdict": report["verdict"],
                            "items": len(report["items"]), "candidates": len(distinct), "unresolved": open_items},
-            "review": review, "kind": "rules"}
+            "review": review, "kind": "rules", "upstream": upstream.verify()["digest"] if upstream is not None else None}
 
 
-def model_evidence(model, divergence_path, entrance="spec-first", calibration=None):
+def model_evidence(model, divergence_path, entrance="spec-first", calibration=None, review_path=None, brief=None, upstream=None):
+    """brief: {"brief": modeling-brief.md, "ledger": defect-ledger.json, "coverage": brief-coverage.yaml} (code-first)."""
+    from .methods import check_brief, check_handoff, check_model_review
     from .receipt import load as load_receipt, validate
     from .spec import load_model
     reasons = []
+    if upstream is not None:
+        reasons += ["upstream: " + i for i in upstream.verify()["issues"]]
     report = load_report(divergence_path, "fv-model-divergence")
     distinct = {c["digest"] for c in report["candidates"]}
     if len(distinct) < MIN_CANDIDATES:
@@ -505,7 +496,24 @@ def model_evidence(model, divergence_path, entrance="spec-first", calibration=No
                 reasons.append("calibration receipt rejected: %s" % error)
     elif entrance != "spec-first":
         raise FvError("entrance must be spec-first|code-first")
+    for c in report["candidates"]:
+        reasons += ["handoff: " + i for i in check_handoff(candidate_path(divergence_path, c).parent / "notes.md")]
+    review = None
+    if not review_path:
+        reasons.append("no model review (Quint review checks + Specula granularity audit by a fresh reviewer)")
+    else:
+        review = check_model_review(review_path, model, upstream, entrance)
+        reasons += ["model review: " + i for i in review["issues"]]
+    analysis = None
+    if entrance == "code-first":
+        if not (brief and brief.get("brief") and brief.get("ledger") and brief.get("coverage")):
+            reasons.append("code-first: the Specula modeling brief, defect-ledger.json and brief coverage are required "
+                           "(the model is built from a checked code analysis, not from a skim)")
+        else:
+            analysis = check_brief(brief["brief"], brief["ledger"], brief["coverage"], model, upstream)
+            reasons += ["modeling brief: " + i for i in analysis["issues"]]
     return {"verdict": "READY" if not reasons else "NOT_READY", "reasons": reasons, "kind": "model", "entrance": entrance,
             "divergence": {"digest": sha_bytes(Path(divergence_path).read_bytes()), "verdict": report["verdict"],
                            "items": len(report["items"]), "candidates": len(distinct), "unresolved": open_items},
-            "calibration": cal}
+            "calibration": cal, "review": review, "analysis": analysis,
+            "upstream": upstream.verify()["digest"] if upstream is not None else None}

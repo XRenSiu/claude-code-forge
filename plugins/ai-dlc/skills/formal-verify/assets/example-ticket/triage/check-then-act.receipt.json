@@ -1,0 +1,810 @@
+{
+  "authority": "local_advisory",
+  "claims": {
+    "may_claim": null,
+    "may_not_claim": "the production implementation is free of defects"
+  },
+  "command": "check",
+  "engine": {
+    "digest": "sha256:c75a46a9e202e1cc0eeaa874dea1e991b143352b61bf1c1f1724916a59aa8eb1",
+    "name": "fvkit",
+    "version": "1.0.0"
+  },
+  "evidence_level": "E2",
+  "finished_at": "2026-11-17T14:32:00+00:00",
+  "inputs": {
+    "contract": {
+      "digest": "sha256:c9d5267076462d1b6892aaade52a130d8691a56ce5c71c6fbdf083fa71d3c7ac",
+      "id": "ticket-ordering",
+      "path": "plugins/ai-dlc/skills/formal-verify/assets/example-ticket/contract.yaml",
+      "properties_digest": "sha256:67ba7a82ed8a0d604528d1a9025f5e116de637b7c79aa49b191749b8c4c63ea6",
+      "property_ids": [
+        "NoOversell",
+        "StockNonNegative",
+        "Conservation",
+        "SoldNeverDecreases",
+        "SomeoneCanBuy",
+        "EveryRequestAnswered"
+      ],
+      "version": 1
+    },
+    "model": {
+      "digest": "sha256:45dbb7009d1fdf07ab02d0f611316c7a9ad042d0ac27846312437be4f5f3b62a",
+      "id": "ticket-check-then-act",
+      "path": "plugins/ai-dlc/skills/formal-verify/assets/example-ticket/model-check-then-act.yaml"
+    }
+  },
+  "invocation_id": "e8052c6f-ab9c-48fe-95f8-15db006e5681",
+  "kind": "fv-receipt",
+  "result": {
+    "complete": true,
+    "constants": {
+      "STOCK": "1",
+      "USERS": "[\"alice\", \"bob\"]"
+    },
+    "coverage": {
+      "actions": {
+        "buy": {
+          "enabled": 8,
+          "fired": 8,
+          "state_changing": 8
+        },
+        "read": {
+          "enabled": 8,
+          "fired": 8,
+          "state_changing": 8
+        },
+        "reject": {
+          "enabled": 2,
+          "fired": 2,
+          "state_changing": 2
+        },
+        "request": {
+          "enabled": 8,
+          "fired": 8,
+          "state_changing": 8
+        }
+      },
+      "dead_actions": []
+    },
+    "deadlock": {
+      "checked": true,
+      "counterexample": null,
+      "status": "PASS"
+    },
+    "error": null,
+    "exhaustive_depth": 6,
+    "fairness": [
+      {
+        "action": "read",
+        "kind": "weak",
+        "per_params": true
+      },
+      {
+        "action": "buy",
+        "kind": "weak",
+        "per_params": true
+      },
+      {
+        "action": "reject",
+        "kind": "weak",
+        "per_params": true
+      }
+    ],
+    "notes": [],
+    "properties": [
+      {
+        "counterexample": {
+          "kind": "state",
+          "steps": [
+            {
+              "action": null,
+              "observed": {
+                "outcome": {
+                  "alice": "none",
+                  "bob": "none"
+                },
+                "remaining": 1,
+                "sold": 0
+              },
+              "state": {
+                "phase": {
+                  "alice": "idle",
+                  "bob": "idle"
+                },
+                "remaining": 1,
+                "result": {
+                  "alice": "none",
+                  "bob": "none"
+                },
+                "seen": {
+                  "alice": 0,
+                  "bob": 0
+                },
+                "sold": 0
+              },
+              "step": 0
+            },
+            {
+              "action": {
+                "name": "request",
+                "params": {
+                  "u": "alice"
+                }
+              },
+              "observed": {
+                "outcome": {
+                  "alice": "pending",
+                  "bob": "none"
+                },
+                "remaining": 1,
+                "sold": 0
+              },
+              "state": {
+                "phase": {
+                  "alice": "requested",
+                  "bob": "idle"
+                },
+                "remaining": 1,
+                "result": {
+                  "alice": "none",
+                  "bob": "none"
+                },
+                "seen": {
+                  "alice": 0,
+                  "bob": 0
+                },
+                "sold": 0
+              },
+              "step": 1
+            },
+            {
+              "action": {
+                "name": "read",
+                "params": {
+                  "u": "alice"
+                }
+              },
+              "observed": {
+                "outcome": {
+                  "alice": "pending",
+                  "bob": "none"
+                },
+                "remaining": 1,
+                "sold": 0
+              },
+              "state": {
+                "phase": {
+                  "alice": "read",
+                  "bob": "idle"
+                },
+                "remaining": 1,
+                "result": {
+                  "alice": "none",
+                  "bob": "none"
+                },
+                "seen": {
+                  "alice": 1,
+                  "bob": 0
+                },
+                "sold": 0
+              },
+              "step": 2
+            },
+            {
+              "action": {
+                "name": "request",
+                "params": {
+                  "u": "bob"
+                }
+              },
+              "observed": {
+                "outcome": {
+                  "alice": "pending",
+                  "bob": "pending"
+                },
+                "remaining": 1,
+                "sold": 0
+              },
+              "state": {
+                "phase": {
+                  "alice": "read",
+                  "bob": "requested"
+                },
+                "remaining": 1,
+                "result": {
+                  "alice": "none",
+                  "bob": "none"
+                },
+                "seen": {
+                  "alice": 1,
+                  "bob": 0
+                },
+                "sold": 0
+              },
+              "step": 3
+            },
+            {
+              "action": {
+                "name": "read",
+                "params": {
+                  "u": "bob"
+                }
+              },
+              "observed": {
+                "outcome": {
+                  "alice": "pending",
+                  "bob": "pending"
+                },
+                "remaining": 1,
+                "sold": 0
+              },
+              "state": {
+                "phase": {
+                  "alice": "read",
+                  "bob": "read"
+                },
+                "remaining": 1,
+                "result": {
+                  "alice": "none",
+                  "bob": "none"
+                },
+                "seen": {
+                  "alice": 1,
+                  "bob": 1
+                },
+                "sold": 0
+              },
+              "step": 4
+            },
+            {
+              "action": {
+                "name": "buy",
+                "params": {
+                  "u": "alice"
+                }
+              },
+              "observed": {
+                "outcome": {
+                  "alice": "success",
+                  "bob": "pending"
+                },
+                "remaining": 0,
+                "sold": 1
+              },
+              "state": {
+                "phase": {
+                  "alice": "done",
+                  "bob": "read"
+                },
+                "remaining": 0,
+                "result": {
+                  "alice": "success",
+                  "bob": "none"
+                },
+                "seen": {
+                  "alice": 1,
+                  "bob": 1
+                },
+                "sold": 1
+              },
+              "step": 5
+            },
+            {
+              "action": {
+                "name": "buy",
+                "params": {
+                  "u": "bob"
+                }
+              },
+              "observed": {
+                "outcome": {
+                  "alice": "success",
+                  "bob": "success"
+                },
+                "remaining": -1,
+                "sold": 2
+              },
+              "state": {
+                "phase": {
+                  "alice": "done",
+                  "bob": "done"
+                },
+                "remaining": -1,
+                "result": {
+                  "alice": "success",
+                  "bob": "success"
+                },
+                "seen": {
+                  "alice": 1,
+                  "bob": 1
+                },
+                "sold": 2
+              },
+              "step": 6
+            }
+          ]
+        },
+        "id": "NoOversell",
+        "kind": "invariant",
+        "origin": "contract",
+        "property": "NoOversell",
+        "status": "FAIL"
+      },
+      {
+        "counterexample": {
+          "kind": "state",
+          "steps": [
+            {
+              "action": null,
+              "observed": {
+                "outcome": {
+                  "alice": "none",
+                  "bob": "none"
+                },
+                "remaining": 1,
+                "sold": 0
+              },
+              "state": {
+                "phase": {
+                  "alice": "idle",
+                  "bob": "idle"
+                },
+                "remaining": 1,
+                "result": {
+                  "alice": "none",
+                  "bob": "none"
+                },
+                "seen": {
+                  "alice": 0,
+                  "bob": 0
+                },
+                "sold": 0
+              },
+              "step": 0
+            },
+            {
+              "action": {
+                "name": "request",
+                "params": {
+                  "u": "alice"
+                }
+              },
+              "observed": {
+                "outcome": {
+                  "alice": "pending",
+                  "bob": "none"
+                },
+                "remaining": 1,
+                "sold": 0
+              },
+              "state": {
+                "phase": {
+                  "alice": "requested",
+                  "bob": "idle"
+                },
+                "remaining": 1,
+                "result": {
+                  "alice": "none",
+                  "bob": "none"
+                },
+                "seen": {
+                  "alice": 0,
+                  "bob": 0
+                },
+                "sold": 0
+              },
+              "step": 1
+            },
+            {
+              "action": {
+                "name": "read",
+                "params": {
+                  "u": "alice"
+                }
+              },
+              "observed": {
+                "outcome": {
+                  "alice": "pending",
+                  "bob": "none"
+                },
+                "remaining": 1,
+                "sold": 0
+              },
+              "state": {
+                "phase": {
+                  "alice": "read",
+                  "bob": "idle"
+                },
+                "remaining": 1,
+                "result": {
+                  "alice": "none",
+                  "bob": "none"
+                },
+                "seen": {
+                  "alice": 1,
+                  "bob": 0
+                },
+                "sold": 0
+              },
+              "step": 2
+            },
+            {
+              "action": {
+                "name": "request",
+                "params": {
+                  "u": "bob"
+                }
+              },
+              "observed": {
+                "outcome": {
+                  "alice": "pending",
+                  "bob": "pending"
+                },
+                "remaining": 1,
+                "sold": 0
+              },
+              "state": {
+                "phase": {
+                  "alice": "read",
+                  "bob": "requested"
+                },
+                "remaining": 1,
+                "result": {
+                  "alice": "none",
+                  "bob": "none"
+                },
+                "seen": {
+                  "alice": 1,
+                  "bob": 0
+                },
+                "sold": 0
+              },
+              "step": 3
+            },
+            {
+              "action": {
+                "name": "read",
+                "params": {
+                  "u": "bob"
+                }
+              },
+              "observed": {
+                "outcome": {
+                  "alice": "pending",
+                  "bob": "pending"
+                },
+                "remaining": 1,
+                "sold": 0
+              },
+              "state": {
+                "phase": {
+                  "alice": "read",
+                  "bob": "read"
+                },
+                "remaining": 1,
+                "result": {
+                  "alice": "none",
+                  "bob": "none"
+                },
+                "seen": {
+                  "alice": 1,
+                  "bob": 1
+                },
+                "sold": 0
+              },
+              "step": 4
+            },
+            {
+              "action": {
+                "name": "buy",
+                "params": {
+                  "u": "alice"
+                }
+              },
+              "observed": {
+                "outcome": {
+                  "alice": "success",
+                  "bob": "pending"
+                },
+                "remaining": 0,
+                "sold": 1
+              },
+              "state": {
+                "phase": {
+                  "alice": "done",
+                  "bob": "read"
+                },
+                "remaining": 0,
+                "result": {
+                  "alice": "success",
+                  "bob": "none"
+                },
+                "seen": {
+                  "alice": 1,
+                  "bob": 1
+                },
+                "sold": 1
+              },
+              "step": 5
+            },
+            {
+              "action": {
+                "name": "buy",
+                "params": {
+                  "u": "bob"
+                }
+              },
+              "observed": {
+                "outcome": {
+                  "alice": "success",
+                  "bob": "success"
+                },
+                "remaining": -1,
+                "sold": 2
+              },
+              "state": {
+                "phase": {
+                  "alice": "done",
+                  "bob": "done"
+                },
+                "remaining": -1,
+                "result": {
+                  "alice": "success",
+                  "bob": "success"
+                },
+                "seen": {
+                  "alice": 1,
+                  "bob": 1
+                },
+                "sold": 2
+              },
+              "step": 6
+            }
+          ]
+        },
+        "id": "StockNonNegative",
+        "kind": "invariant",
+        "origin": "contract",
+        "property": "StockNonNegative",
+        "status": "FAIL"
+      },
+      {
+        "counterexample": null,
+        "id": "Conservation",
+        "kind": "invariant",
+        "origin": "contract",
+        "property": "Conservation",
+        "status": "PASS"
+      },
+      {
+        "counterexample": null,
+        "id": "SoldNeverDecreases",
+        "kind": "transition",
+        "origin": "contract",
+        "property": "SoldNeverDecreases",
+        "status": "PASS"
+      },
+      {
+        "counterexample": null,
+        "id": "SomeoneCanBuy",
+        "kind": "reachable",
+        "origin": "contract",
+        "property": "SomeoneCanBuy",
+        "status": "PASS",
+        "witness": {
+          "kind": "state",
+          "steps": [
+            {
+              "action": null,
+              "observed": {
+                "outcome": {
+                  "alice": "none",
+                  "bob": "none"
+                },
+                "remaining": 1,
+                "sold": 0
+              },
+              "state": {
+                "phase": {
+                  "alice": "idle",
+                  "bob": "idle"
+                },
+                "remaining": 1,
+                "result": {
+                  "alice": "none",
+                  "bob": "none"
+                },
+                "seen": {
+                  "alice": 0,
+                  "bob": 0
+                },
+                "sold": 0
+              },
+              "step": 0
+            },
+            {
+              "action": {
+                "name": "request",
+                "params": {
+                  "u": "alice"
+                }
+              },
+              "observed": {
+                "outcome": {
+                  "alice": "pending",
+                  "bob": "none"
+                },
+                "remaining": 1,
+                "sold": 0
+              },
+              "state": {
+                "phase": {
+                  "alice": "requested",
+                  "bob": "idle"
+                },
+                "remaining": 1,
+                "result": {
+                  "alice": "none",
+                  "bob": "none"
+                },
+                "seen": {
+                  "alice": 0,
+                  "bob": 0
+                },
+                "sold": 0
+              },
+              "step": 1
+            },
+            {
+              "action": {
+                "name": "read",
+                "params": {
+                  "u": "alice"
+                }
+              },
+              "observed": {
+                "outcome": {
+                  "alice": "pending",
+                  "bob": "none"
+                },
+                "remaining": 1,
+                "sold": 0
+              },
+              "state": {
+                "phase": {
+                  "alice": "read",
+                  "bob": "idle"
+                },
+                "remaining": 1,
+                "result": {
+                  "alice": "none",
+                  "bob": "none"
+                },
+                "seen": {
+                  "alice": 1,
+                  "bob": 0
+                },
+                "sold": 0
+              },
+              "step": 2
+            },
+            {
+              "action": {
+                "name": "buy",
+                "params": {
+                  "u": "alice"
+                }
+              },
+              "observed": {
+                "outcome": {
+                  "alice": "success",
+                  "bob": "none"
+                },
+                "remaining": 0,
+                "sold": 1
+              },
+              "state": {
+                "phase": {
+                  "alice": "done",
+                  "bob": "idle"
+                },
+                "remaining": 0,
+                "result": {
+                  "alice": "success",
+                  "bob": "none"
+                },
+                "seen": {
+                  "alice": 1,
+                  "bob": 0
+                },
+                "sold": 1
+              },
+              "step": 3
+            }
+          ]
+        }
+      },
+      {
+        "counterexample": null,
+        "fairness_used": [
+          {
+            "action": "read",
+            "kind": "weak",
+            "per_params": true
+          },
+          {
+            "action": "buy",
+            "kind": "weak",
+            "per_params": true
+          },
+          {
+            "action": "reject",
+            "kind": "weak",
+            "per_params": true
+          }
+        ],
+        "id": "EveryRequestAnswered[u=\"alice\"]",
+        "kind": "leads_to",
+        "origin": "contract",
+        "property": "EveryRequestAnswered",
+        "status": "PASS",
+        "vacuous": false
+      },
+      {
+        "counterexample": null,
+        "fairness_used": [
+          {
+            "action": "read",
+            "kind": "weak",
+            "per_params": true
+          },
+          {
+            "action": "buy",
+            "kind": "weak",
+            "per_params": true
+          },
+          {
+            "action": "reject",
+            "kind": "weak",
+            "per_params": true
+          }
+        ],
+        "id": "EveryRequestAnswered[u=\"bob\"]",
+        "kind": "leads_to",
+        "origin": "contract",
+        "property": "EveryRequestAnswered",
+        "status": "PASS",
+        "vacuous": false
+      }
+    ],
+    "settings": {
+      "max_depth": null,
+      "max_states": 200000,
+      "only": null,
+      "stop_on_first": false,
+      "symmetry": false,
+      "time_seconds": null
+    },
+    "stats": {
+      "depth": 6,
+      "initial_states": 1,
+      "millis": 4,
+      "states": 20,
+      "transitions": 26
+    },
+    "truncation": [],
+    "verdict": "FAIL"
+  },
+  "schema_version": 1,
+  "settings": {
+    "max_depth": null,
+    "max_states": 200000,
+    "only": null,
+    "stop_on_first": false,
+    "symmetry": false,
+    "time_seconds": null
+  },
+  "started_at": "2026-11-17T14:32:00+00:00",
+  "verdict": "FAIL"
+}

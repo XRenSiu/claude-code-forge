@@ -123,10 +123,17 @@ protected_paths: ["src/tickets/**"]
 `sync`（审阅后执行）写入 `source-map.lock.json`：文件摘要、模型摘要、审阅时的提交、审阅人和理由；同时追加一行到 `source-map.sync-log.jsonl`。
 `verify` 的结论：FRESH；STALE（受保护路径变了、模型变了、映射被改了、从未同步）；BROKEN（锚点丢失、动作未映射、路径越界）。
 
-## 分歧报告与审阅
+## 分歧报告、intake、审阅、brief 与分诊
+
+以下产物都带 `procedure: [{upstream, path, sha256}]`，引用它所执行的上游原文（`upstream/UPSTREAM.json`）。每类产物必须引用哪些原文，由 `fvkit/upstream.py` 的 `REQUIRED` 固定。字段完整的样例都在 `assets/example-ticket/`。
 
 - `fv-rules-divergence` / `fv-model-divergence`（JSON，由 `fv rules-divergence` / `fv model-divergence` 写）：`candidates`（标签、摘要、相对报告的路径）、`items`（D* / M*，含类型、见证）、`rulings`（只由 `fv resolve` 追加：item、ruling、by、signer_kind、authorization、at）。
-- `fv-rules-review`（YAML，由 `formal-reviewer` 写）：`contract_digest`、`requirements_digest`、`reviewer: {name, context: fresh}`、`findings`（id、category ∈ misread / vacuous / over_restrictive / under_specified / hidden_assumption / missing / other、blocking、detail、requirement / property、`resolution: {ruling, by, signer_kind[, authorization]}`）、`review_complete: {status: complete, findings_count}`。
+- `fv-rules-intake`（YAML，Spec Kit clarify + Quint）：`requirements_digest`、`system_model`（actors / communication / failures / time，各有 `answer` 与 `source`）、`ambiguity_scan`（10 类 → Clear / Partial / Missing）、`clarifications`（≤5：id、category、question、answer、by、signer_kind[, authorization]）、`deferred`（category、Deferred / Outstanding、rationale）、`extraction`（requirement、element ∈ entity / operation / property / assumption、text、impact ∈ High / Medium / Low）、`granularity`（requirement、atomic / split、reason）。
+- `fv-rules-review`（YAML，schema 2，FVS 审阅契约，写完不再修改）：`contract_digest`、`requirements_digest`、`reviewer: {name, context: fresh}`、`round`（1–3；大于 1 时要有 `prior`）、`surfaces`（7 个审阅面 → `{status: checked, checked, uncertain}` 或 `{status: not_applicable, reason}`）、`findings`（`F-<n>`、severity ∈ BLOCKER / MAJOR / MINOR、class ∈ CONTENT / PROCESS、claim、evidence、suggested_change[, requirement, property]）、`content_coverage`、`verdict` ∈ PASS / APPROVE-WITH-EDITS / REVISE / BLOCKED、`review_complete: {status: complete, findings_count}`。schema 1 不再接受。
+- `fv-review-triage`（YAML，作者写在审阅旁边）：`review_digest`（审阅文件字节的 sha256）、`contract_before` / `contract_after`、`reviewed_contract`（合同被改过时，保留被审的那一版）、`dispositions`（finding、FIX / DESCOPE / DEFER-WITH-RULING / REJECT-FINDING / ASK-HUMAN、detail[, evidence, ruling: {text, by, signer_kind[, authorization]}]）。
+- `fv-model-review`（YAML，Quint review + Specula 粒度审计）：`model_digest`、`contract_digest`、`reviewer`、`structural`（6 项 → `{result: pass|warn|fail, note[, decision]}`，warn 的 decision 由人签）、`granularity`（每个动作一行：action、source、note，加 6 个布尔值）、`findings`（格式同上）、`review_complete`。运行时检查不由审阅者填写。
+- 入口 B：`modeling-brief.md`（Specula 格式第 1–7 节）、`defect-ledger.json`（`{"defects": [{id, location, trigger, wrong_behavior, evidence, category, verification, scenario, known}]}`，与 brief 的 6.2 表一致），以及 `fv-brief-coverage`（YAML：`brief_digest`、`contract_digest`、`scenarios`（scenario、properties、hunt，或 merged_into + reason）、`invariants`（invariant、property，或 out_of_scope）、`findings`（finding、property、hunt））。
+- `fv-cex-triage`（YAML，Specula fidelity checklist + bug classification）：`receipt`（带反例的回执，相对路径）、`property`、`preconditions`（precondition、modeled ∈ same / weaker / missing / none，非 none 的要带 `guard: file:line`）、`case` ∈ B / C、`spec_change`（B）、`status` 与 `severity`（C）、`reasoning`。
 
 ## 策略（fv-policy）
 
@@ -139,7 +146,9 @@ tiers: {core: {max_states: 500000, time_seconds: 900, mutants: true}}   # fast /
 modules:
   - {id: ticket-ordering, risk: concurrency, paths: ["src/tickets/**"], contract: …, model: …, source_map: …,
      vectors: …, trace_command: ["python3", "tests/harness.py", "--out", "{out}"], approvals: approvals.jsonl,
-     entrance: spec-first, rules_divergence: …, rules_review: …, model_divergence: …}   # code-first 另需 calibration
+     entrance: spec-first, rules_intake: …, rules_divergence: …, rules_review: …, rules_review_triage: …,
+     model_divergence: …, model_review: …}   # code-first 另需 calibration、modeling_brief、defect_ledger、brief_coverage
+upstream: upstream/UPSTREAM.json   # 可选：收录的上游清单（相对仓库根）；给出时，引用按字节核对
 ```
 
-E2 以上的模块必须声明 AI 生成证据（`rules_divergence`、`rules_review`、`model_divergence`，code-first 还要 `calibration`），`fv ci` 每次重算。`trace_command` 是 argv 数组，不经过 shell；`{out}` 会被替换成 CI 输出下的新目录。`approvals` 是 `fv approve` 追加写入的 JSONL，只有它能把对新合同摘要的 WEAKENED 变成 APPROVED。
+E2 以上的模块必须声明 AI 生成证据（`rules_intake`、`rules_divergence`、`rules_review`、`model_divergence`、`model_review`；code-first 还要 `calibration`、`modeling_brief`、`defect_ledger`、`brief_coverage`），`fv ci` 每次重算。`trace_command` 是 argv 数组，不经过 shell；`{out}` 会被替换成 CI 输出下的新目录。`approvals` 是 `fv approve` 追加写入的 JSONL，只有它能把对新合同摘要的 WEAKENED 变成 APPROVED。

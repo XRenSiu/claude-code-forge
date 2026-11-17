@@ -3,7 +3,10 @@
 Layout written by init (names are a convention, not a requirement):
   <dir>/requirements.md    A1/B1: what is promised, questions, what is NOT promised
   <dir>/requirements.yaml  G-1: AI-extracted inventory, every item quoted verbatim
-  <dir>/candidates/        G-2/G-6: >=2 isolated rule and model candidates (kept for the record)
+  <dir>/candidates/        G-3/G-6: >=2 isolated rule and model candidates (kept for the record)
+  (written by the agents, following the vendored upstream procedures: rules-intake.yaml,
+   rules-review.yaml + rules-triage.yaml, model-review.yaml, code-first modeling-brief.md +
+   defect-ledger.json + brief-coverage.yaml, triage/*.yaml — see methods.py)
   <dir>/contract.yaml      A2/B1: authoritative rules (observables, assumptions, properties)
   <dir>/model.yaml         A3/B3: executable state machine + refinement mapping + mutants
   <dir>/model-scope.md     scope, bounds, exclusions (what this model does not cover)
@@ -196,7 +199,9 @@ def init(directory, name, entrance):
     (d / "candidates").mkdir(exist_ok=True)
     (d / "candidates" / "README.md").write_text(
         "AI generation (mandatory): >=2 isolated rule-formalizer candidates in rules-<k>/, >=2 isolated model-builder\n"
-        "candidates in model-<k>/. Keep every candidate: they are part of the record that fv gen-evidence checks.\n", encoding="utf-8")
+        "candidates in model-<k>/ (each with notes.md: What it covers / What it does NOT cover / When to update).\n"
+        "Keep every candidate: they are part of the record that fv gen-evidence checks. The agents follow the vendored\n"
+        "upstream procedures (Spec Kit, Quint LLM Kit, TLA+ AgentSkills, Specula, Formal Verification Skills).\n", encoding="utf-8")
     return sorted(str(d / f) for f in files)
 
 
@@ -209,5 +214,13 @@ def vendor(target):
         shutil.copy2(p, t / "fvkit" / p.name)
     shutil.copy2(here.parent / "fv.py", t / "fv.py")
     from .receipt import engine_identity
-    (t / "VENDORED.json").write_text(json.dumps({"engine": engine_identity(), "source": str(here)}, indent=2) + "\n")
+    from .upstream import REQUIRED, Upstream
+    info = {"engine": engine_identity(), "source": str(here), "upstream": None}
+    manifest = here.parent.parent / "upstream" / "UPSTREAM.json"
+    if manifest.is_file():
+        up = Upstream(manifest)
+        if all(k in up.files for need in REQUIRED.values() for k in need) and up.verify()["verdict"] == "INTACT":
+            shutil.copytree(manifest.parent, t / "upstream")   # policy `upstream: <this dir>/upstream/UPSTREAM.json`
+            info["upstream"] = {"manifest": "upstream/UPSTREAM.json", "digest": up.verify()["digest"]}
+    (t / "VENDORED.json").write_text(json.dumps(info, indent=2) + "\n")
     return str(t)

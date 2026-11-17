@@ -255,23 +255,23 @@ nodes:
   - id: agent.rule-formalizer
     kind: agent
     role: generator
-    reads: [需求原文, requirements.yaml]
+    reads: [需求原文, requirements.yaml, rules-intake.yaml, upstream/spec-kit/**, upstream/quint-llm-kit/**]   # 执行收录的上游流程
     must_not_read: [src/**, model*.yaml, candidates/rules-<other>/**, rules-divergence.json]
-    writes: [candidates/rules-<label>/**]
+    writes: [requirements.yaml, rules-intake.yaml, candidates/rules-<label>/**]
     authority: {commit: false}
   - id: agent.model-builder
     kind: agent
     role: generator
-    reads: [contract.yaml, 设计说明, src/**]
+    reads: [contract.yaml, 设计说明, src/**, modeling-brief.md, upstream/quint-llm-kit/**, upstream/specula/**, upstream/tlaplus-agentskills/**]
     must_not_read: [candidates/model-<other>/**, model-divergence.json]
-    writes: [candidates/model-<label>/**]
+    writes: [modeling-brief.md, defect-ledger.json, candidates/model-<label>/**, brief-coverage.yaml]
     authority: {commit: false}
   - id: agent.formal-reviewer
     kind: agent
     role: evaluator
-    reads: [需求原文, requirements.yaml, contract.yaml]
-    must_not_read: [candidates/**, rules-divergence.json, generator_session]
-    writes: [rules-review.yaml]
+    reads: [需求原文, requirements.yaml, contract.yaml, model.yaml, upstream/fvs/**, upstream/quint-llm-kit/**, upstream/specula/**]
+    must_not_read: [candidates/**, rules-divergence.json, model-divergence.json, generator_session]
+    writes: [rules-review.yaml, model-review.yaml, triage/*.yaml]
     authority: {commit: false}
   - id: agent.pr-reviewer
     kind: agent

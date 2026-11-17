@@ -33,10 +33,12 @@ python3 "$SKILL_DIR/scripts/acceptance.py" validate-formal conform.json \
 
 ## 规则与模型是怎么来的（生成证据）
 
-规则合同和模型由 AI 生成（AI-DLC `/formal-verify` 的必经阶段）。生成过程本身留有可检证据：逐字引文的需求清单
-（`fv requirements-check`），规则追溯（`fv trace-rules`），至少两份隔离生成候选的语义比较与人的裁决
-（`fv rules-divergence` / `fv model-divergence` / `fv resolve`），全新上下文审阅（`fv check-review`），最后收成
-`fv gen-evidence` 回执（command `generate`，E0）。`validate-formal` 会核对这类回执的自洽。
+规则合同和模型由 AI 生成（AI-DLC `/formal-verify` 的必经阶段）。生成执行的是原样收录的开源流程（Spec Kit、Quint LLM Kit、
+TLA+ AgentSkills、Specula、Formal Verification Skills），每段流程的产出都可检：逐字引文的需求清单（`fv requirements-check`）、
+Spec Kit / Quint intake（`fv intake-check`）、规则追溯（`fv trace-rules`）、至少两份隔离生成候选的语义比较与人的裁决
+（`fv rules-divergence` / `fv model-divergence` / `fv resolve`）、FVS 审阅契约下的规则审阅与作者处置（`fv check-review --triage`）、
+Quint review + Specula 粒度审计的模型审阅（`fv model-review-check`）、入口 B 的 Specula brief（`fv brief-check`），最后收成
+`fv gen-evidence` 回执（command `generate`，E0）。产物按 sha256 引用上游原文；回执带上游清单的摘要。`validate-formal` 会核对这类回执的自洽。
 
 生成证据证明的是“规则和模型经过了多份独立生成、比较、裁决与审阅”，**不证明规则正确**。验收时的权威仍是维护者批准、
 写进政策的模型与合同摘要；起草合同时，没有生成证据的规则不应提交审批。
@@ -66,10 +68,19 @@ gate 不读候选仓库、也不运行候选代码。源码映射是否新鲜、
 
 ## 分流
 
+“模型失真还是实现缺陷”不凭感觉判断，按 Specula 的 spec-fidelity checklist 走（原文收录在本 Skill 的 `upstream/specula/`，
+`fv upstream verify upstream/UPSTREAM.json` 确认未被改动）：
+
+1. 写下违反状态需要的前提；
+2. 对每个前提，在实现里找挡住它的守卫（`file:line`）；
+3. 对照模型：模型漏掉或放宽了某个守卫，就是 Case B（模型失真）；都没有，就是 Case C（真实缺陷），再按 Specula bug-classification 写状态和严重度。
+
+结果是一份 `fv-cex-triage`，用 `fv triage-check <文件> --model <产生反例的模型> --upstream upstream/UPSTREAM.json` 核对，输出给出路由。验收方只核对分诊，不替维护者修模型。
+
 | 现象 | 去向 |
 |---|---|
 | 模型反例且已在真实代码中重放 | 实现缺陷：`needs_repair`，交 Harness，附反例和重放轨迹 |
-| 反例只在模型里出现、真实代码不可能发生 | 模型失真：检查器维护，`checker_blocked`；修模型后由维护者重新批准摘要 |
+| 反例只在模型里出现、真实代码不可能发生（Case B：fidelity checklist 指出了被漏掉或放宽的守卫） | 模型失真：检查器维护，`checker_blocked`；修模型后由维护者重新批准摘要 |
 | 规则本身有漏项或要改动 | 产品裁决：新合同版本 + 新审批；绝不在验收里改规则 |
 | 源码映射 STALE / BROKEN | 模型过期：重审映射后 `fv source-map sync`，再重跑一致性 |
 | 引擎缺失、超时、输出无法识别 | 环境问题：`infrastructure_blocked`，不当作通过，也不让实现返工 |

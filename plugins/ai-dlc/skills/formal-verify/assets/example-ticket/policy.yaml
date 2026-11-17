@@ -2,6 +2,8 @@
 schema_version: 1
 kind: fv-policy
 unclassified: review
+# 生成流程所依据的上游开源方法（原样收录，见本 Skill 的 upstream/README.md）；给出后，产物里的 procedure 引用按这些字节核对
+upstream: upstream/UPSTREAM.json       # 相对仓库根：独立仓库里把本 Skill 的 upstream/ 复制到根目录
 modules:
   - id: ticket-ordering
     risk: concurrency                    # concurrency/consistency/permission/retry → 默认 E3、core 层
@@ -13,6 +15,10 @@ modules:
     trace_command: ["python3", "impl/harness.py", "--vectors", "vectors.json", "--out", "{out}"]
     approvals: approvals.jsonl           # 契约被削弱时，这里要有对新摘要的显式批准
     entrance: spec-first                 # code-first 还要 calibration：as-is 模型在当前代码轨迹上的一致性回执
+    rules_intake: rules-intake.yaml           # Spec Kit clarify + Quint from-requirements：歧义扫描、澄清、抽取表、粒度
     rules_divergence: rules-divergence.json   # AI 生成规则的证据：≥2 个隔离候选的分歧与裁决
-    rules_review: rules-review.yaml           # 全新上下文审阅者的发现与裁决
+    rules_review: rules-review.yaml           # FVS 审阅契约：全新上下文的对抗式审阅（不可改）
+    rules_review_triage: rules-triage.yaml    # 作者对审阅发现的处置；延后要有人的裁决
     model_divergence: model-divergence.json   # AI 生成模型的证据：≥2 个隔离候选在观察者眼里的分歧与裁决
+    model_review: model-review.yaml           # Quint review 结构检查 + Specula 粒度审计（运行时检查由 fvkit 重算）
+    # entrance: code-first 时还要：modeling_brief / defect_ledger / brief_coverage（Specula，见 code-first/）与 calibration

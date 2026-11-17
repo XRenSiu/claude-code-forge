@@ -1,22 +1,33 @@
-# fv-rules-review：formal-reviewer 在全新上下文里只读 requirements.md / requirements.yaml / contract.yaml 写出。
-# 它不改任何文件；阻断性发现必须有人裁决（resolution）。摘要钉住被审的那一版合同与清单——改了就要重审。
-schema_version: 1
+# fv-rules-review（schema 2）：formal-reviewer 按 Formal Verification Skills 的审阅契约
+# （fv-skills/references/fc-spec-review.md + review-policy.md）在全新上下文里写出。
+# 审阅者只读 requirements.md / requirements.yaml / contract.yaml 与 trace-rules 输出，不改任何文件；
+# 这份文件写好后不再改动——作者的处置写在旁边的 rules-triage.yaml。
+schema_version: 2
 kind: fv-rules-review
 contract_digest: "sha256:c9d5267076462d1b6892aaade52a130d8691a56ce5c71c6fbdf083fa71d3c7ac"
 requirements_digest: "sha256:b6656d4c8cc999a4b75ee8ed11e791b7c432e2d81e6d83008ce0a8e483eedce2"
+procedure:
+  - {upstream: fvs, path: fv-skills/references/fc-spec-review.md, sha256: "sha256:38f7356082fdc5bbec367981e37e3f82475819a0b01a8b2a91a47ad33474818f"}
+  - {upstream: fvs, path: fv-skills/references/review-policy.md, sha256: "sha256:cdb005a5d08ffed809cb8e6b13b70b9edca39db3b2f3b7ef53bbf0111e3e9592"}
 reviewer: {name: formal-reviewer, context: fresh}
+round: 1
+surfaces:
+  source_fidelity: {status: checked, checked: "NoOversell / StockNonNegative 对 R1 原文两半句；Conservation / SoldNeverDecreases 对 R2；EveryRequestAnswered 对 R3 的“成功或售罄”两种答复", uncertain: "无"}
+  preconditions: {status: checked, checked: "合同 assumptions A-NO-RESTOCK / A-FAIR 对应清单 A1 / A2；A3 是实现层原子性，不进合同是对的（模型不证明它）", uncertain: "无"}
+  postconditions: {status: checked, checked: "不变量与迁移性质的方向；leads_to 的 to 同时包含 success 与 sold_out，没有把“售罄”判成违反", uncertain: "无"}
+  interpretation_and_quantifiers: {status: checked, checked: "forall u in USERS 的作用域只在 EveryRequestAnswered；remaining 的有限域 range(-2, 3) 能表达负库存这类违反", uncertain: "域的上界 3 只对 STOCK <= 2 足够"}
+  vacuity: {status: checked, checked: "SomeoneCanBuy 是非空洞见证；leads_to 的 from（pending）可达", uncertain: "可达性以 fv qualify 的结果为准，本审阅没有运行检查器"}
+  dependencies_and_evidence: {status: checked, checked: "fv trace-rules 为 TRACEABLE；每条 property 只引用清单里的 R 编号", uncertain: "无"}
+  helper_reuse_and_scope: {status: not_applicable, reason: "合同不定义辅助函数或引理；observables 词表直接取自需求里的名词"}
 findings:
-  - id: F1
-    category: under_specified
+  - id: F-1
+    severity: MINOR
+    class: CONTENT
     requirement: R3
     property: EveryRequestAnswered
-    blocking: false
-    detail: R3 只说“最终”答复，没有时限；leads_to 只能证明最终会答复，不能证明多快。时限若是承诺，需另立需求与性质。
-  - id: F2
-    category: hidden_assumption
-    requirement: R1
-    property: NoOversell
-    blocking: true
-    detail: NoOversell 只在“检查期间没有补货、退票”时成立，这一假设必须显式写进合同，否则规则看起来比实际更强。
-    resolution: {ruling: "已作为 A-NO-RESTOCK 写入合同 assumptions，来源清单 A1", by: example-owner, signer_kind: human}
-review_complete: {status: complete, findings_count: 2}
+    claim: "R3 只说“最终”答复；leads_to 只能证明最终会答复，不能证明多快。若答复时限也是承诺，需要另立需求与性质。"
+    evidence: "requirements.md R3：“用户最终得到“成功”或“售罄”的明确答复”；contract.yaml EveryRequestAnswered 为 leads_to，没有时限参数"
+    suggested_change: "无需改合同；在 intake 的 deferred 中记录“时限不是本次承诺”，并由产品方确认"
+content_coverage: "逐条对照 R1–R3 与六条 property 的语义、假设来源、量词作用域和非空洞性；结论：规则忠于原文。未覆盖：答复时限（原文没有承诺）"
+verdict: PASS
+review_complete: {status: complete, findings_count: 1}

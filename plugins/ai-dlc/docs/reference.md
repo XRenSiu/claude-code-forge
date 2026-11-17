@@ -131,6 +131,8 @@ flag 不等于 reject。预门过了但带 flag，意思是「机器判不了这
 
 `fv.py` + `fvkit/` 与 trusted-acceptance 的副本逐字一致（smoke 盯着）。只用标准库；YAML 资产需要 PyYAML。合同 / 模型 / 轨迹 / 源码映射 / 策略的格式见 [modeling-language.md](../skills/formal-verify/references/modeling-language.md)，证据等级见 [evidence-levels.md](../skills/formal-verify/references/evidence-levels.md)。
 
+**生成方法来自上游、原样收录**：`skills/formal-verify/upstream/`（Spec Kit、Quint LLM Kit、Specula、TLA+ AgentSkills、Formal Verification Skills、pstack、FizzBee，许可证随附），`UPSTREAM.json` 钉住仓库、提交与每个文件的 sha256。三个 agent 只做适配，`fvkit/upstream.py` 检查原文完整性与引用，`fvkit/methods.py` 把每段流程的产出变成检查。对应关系见 [upstream-methods.md](../skills/formal-verify/references/upstream-methods.md)。
+
 | 命令 | 干什么 | 退出码 |
 |---|---|---|
 | `fv.py requirements-check` | **AI 抽出的需求清单**：引文必须逐字在来源里；来源里每句规范性语句（必须 / 不得 / 不会 / 最终 / must / never …，表头除外）都落到需求、假设或带引文的 out_of_scope；done_when 的每条 AC 都有去处 | 0 COMPLETE · 1 GAPS |
@@ -138,8 +140,13 @@ flag 不等于 reject。预门过了但带 flag，意思是「机器判不了这
 | `fv.py rules-divergence` | ≥2 份隔离生成的规则候选逐需求比较：覆盖 / 种类 / 有限域语义（带见证值）/ 文本（无 domain 时交人）/ 词表 / 假设 | 0 AGREED · 1 DIVERGENT（议程） |
 | `fv.py model-divergence` | ≥2 份隔离生成的模型候选在观察者层面比较：规则判定、可达观测值、可观测迁移（带见证路径）；观察不到的内部步数差别不算 | 0 AGREED · 1 DIVERGENT |
 | `fv.py resolve` | 给分歧项追加裁决（人；Agent 代签须附授权原话）；只增不删 | 0 · 2 |
-| `fv.py check-review` | 全新上下文审阅：摘要钉住被审版本、完成标记条数一致（防截断）、阻断发现已裁 | 0 REVIEWED · 1 NOT_REVIEWED |
-| `fv.py gen-evidence rules\|model` | AI 生成的收口：采纳物在被比较之列、候选仍在且未改、分歧全裁、审阅完整；code-first 另需现状模型的校准回执（E0 回执） | 0 READY · 1 NOT_READY |
+| `fv.py upstream verify` / `refresh` | 收录的上游原文逐字节等于 `UPSTREAM.json`、许可证在、没有清单外文件；`refresh` 只从本地克隆复制已列出的文件并重钉哈希 | 0 INTACT · 1 TAMPERED |
+| `fv.py intake-check` | Spec Kit clarify + Quint Step 1 / from-requirements：10 类歧义都有状态、Partial/Missing 已问或带理由延后、≤5 个以问号结尾且由人回答的问题、系统模型 4 项有出处、每条需求有抽取行、每个操作有粒度决定 | 0 COMPLETE · 1 GAPS |
+| `fv.py check-review` | FVS 审阅契约（schema 2）：7 个审阅面、F-n 发现格式、PASS / APPROVE-WITH-EDITS / REVISE / BLOCKED 规则、完成标记防截断；`--triage` 核对作者处置（延后要人裁、作者不能自裁、合同改动前后摘要与保留的被审版本）；≤3 轮 | 0 REVIEWED · 1 NOT_REVIEWED |
+| `fv.py model-review-check` | Quint review 6 项结构检查（fail 拒、warn 由人决定）+ 运行时检查由检查器重算（C-init / C-step / C-step-complete / R1 / R2，审阅者说 pass 而检查器发现死动作或空洞性质即拒）+ Specula 粒度审计（每个动作一行，该拆不拆即拒） | 0 REVIEWED · 1 NOT_REVIEWED |
+| `fv.py brief-check` | 入口 B 的 Specula modeling brief（第 1–7 节、Category A/B、Scenario 字段）、defect-ledger.json 与 6.2 表一致、brief coverage（每个 Scenario / 不变量 / 6.1 发现都有落点，活性要公平） | 0 COMPLETE · 1 GAPS |
+| `fv.py triage-check` | Specula spec-fidelity checklist（前提 → 实现守卫 `file:line` → 模型对照，Case B / C）+ bug-classification（状态与严重度一致）；输出路由 | 0 TRIAGED · 1 NOT_TRIAGED |
+| `fv.py gen-evidence rules\|model` | AI 生成的收口：上游原文 INTACT；规则要 intake、FVS 审阅（+ 处置），High 影响的性质类需求被形式化；模型要每个候选的 Step 7 handoff 与模型审阅；采纳物在被比较之列、候选仍在且未改、分歧全裁；code-first 另需 Specula brief 与现状模型的校准回执（E0 回执） | 0 READY · 1 NOT_READY |
 | `fv.py lint` | 合同 / 模型静态检：词表封闭（性质只能用 observables）、表达式白名单、名字冲突、对称集不得出现字面量 | 0 · 2 |
 | `fv.py check` | 显式状态模型检查（BFS 最短反例；迁移性质；可达见证；死锁；弱 / 强公平下的活性 → 套索反例；对称约简） | 0 PASS · 1 FAIL · **3 BOUNDED_PASS / INCOMPLETE**（不是通过） |
 | `fv.py simulate` | 种子随机模拟，E1 | 1 FAIL · **3 NO_VIOLATION_SAMPLED**（永不 PASS） |
@@ -152,7 +159,7 @@ flag 不等于 reject。预门过了但带 flag，意思是「机器判不了这
 | `fv.py external` | TLC / Apalache / Quint verify / Quint run / FizzBee 适配，原始输出留存可重解析；`quint run` 只有 E1 | 同 check；缺引擎 = 2 |
 | `fv.py validate` / `report` | 重推 verdict、重放反例与见证；`--rerun` 重新执行并逐项比对；`report` 输出可声称 / 不可声称表 | 0 · 2 |
 | `fv.py init` / `vendor` | 入口 A / B 的项目骨架（能直接 qualify）；把检查器复制进项目供 CI 自包含 | 0 |
-| `formal_gate.py`（`skills/ai-dlc/scripts/`） | 状态机前置：fv 合同**与需求清单**在 G2/L5 锁里；`cards` 起要规则生成 READY；`implement` 起要模型生成 READY（code-first 要校准）与 QUALIFIED；E3 模块 `pr` 起要当前的 CONFORMS + FRESH 映射；策略模式按 diff 推模块；签字的 `formal waive` 降级并强制 G3 | 由 `aidlc_state.py formal` / `advance` 报告；**不可 `--force`** |
+| `formal_gate.py`（`skills/ai-dlc/scripts/`） | 状态机前置：fv 合同**与需求清单**在 G2/L5 锁里；插件自带的 `upstream/UPSTREAM.json` INTACT（项目换不掉方法）；`cards` 起要规则生成 READY（intake + FVS 审阅）；`implement` 起要模型生成 READY（handoff + 模型审阅；code-first 要 brief 与校准）与 QUALIFIED；`formal triage` 记录反例分诊与路由；E3 模块 `pr` 起要当前的 CONFORMS + FRESH 映射；策略模式按 diff 推模块；签字的 `formal waive` 降级并强制 G3 | 由 `aidlc_state.py formal` / `advance` 报告；**不可 `--force`** |
 
 ### 验收（R6）
 

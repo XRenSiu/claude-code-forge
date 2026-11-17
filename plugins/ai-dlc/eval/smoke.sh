@@ -2438,16 +2438,47 @@ expect "formal/gen: an equivalent rewrite does not diverge (twin)" 0 \
   bash -c "python3 '$FVS' rules-divergence --requirements '$FX/requirements.yaml' --candidate A='$FX/candidates/rules-a/contract.yaml' --candidate A2='$FX/contract.yaml' --model '$FX/model.yaml' --out '$FT/rd2.json' >/dev/null"
 expect "formal/gen: two isolated model candidates diverge on retry-after-sold-out" 1 \
   py "$FVS" model-divergence --candidate A="$FX/candidates/model-a/model.yaml" --candidate B="$FX/candidates/model-b/model.yaml" --out "$FT/md.json"
-expect "formal/gen: rules evidence is READY with the committed rulings and review" 0 \
-  py "$FVS" gen-evidence rules --contract "$FX/contract.yaml" --divergence "$FX/rules-divergence.json" --review "$FX/rules-review.yaml"
+UPM="$S/formal-verify/upstream/UPSTREAM.json"
+GENR="--intake $FX/rules-intake.yaml --review-triage $FX/rules-triage.yaml --upstream $UPM"
+expect "formal/gen: rules evidence is READY with the committed intake, rulings, FVS review and triage" 0 \
+  py "$FVS" gen-evidence rules --contract "$FX/contract.yaml" --divergence "$FX/rules-divergence.json" --review "$FX/rules-review.yaml" $GENR
+expect "formal/gen: without the Spec Kit / Quint intake the rules are NOT_READY (twin)" 1 \
+  py "$FVS" gen-evidence rules --contract "$FX/contract.yaml" --divergence "$FX/rules-divergence.json" --review "$FX/rules-review.yaml" --review-triage "$FX/rules-triage.yaml"
 expect "formal/gen: unruled divergence is NOT_READY (twin)" 1 \
-  bash -c "python3 -c \"import json; d=json.load(open('$FX/rules-divergence.json')); d['rulings']=[]; json.dump(d, open('$FX/rules-divergence.unruled.json','w'))\" && python3 '$FVS' gen-evidence rules --contract '$FX/contract.yaml' --divergence '$FX/rules-divergence.unruled.json' --review '$FX/rules-review.yaml' >/dev/null; rc=\$?; rm -f '$FX/rules-divergence.unruled.json'; exit \$rc"
+  bash -c "python3 -c \"import json; d=json.load(open('$FX/rules-divergence.json')); d['rulings']=[]; json.dump(d, open('$FX/rules-divergence.unruled.json','w'))\" && python3 '$FVS' gen-evidence rules --contract '$FX/contract.yaml' --divergence '$FX/rules-divergence.unruled.json' --review '$FX/rules-review.yaml' $GENR >/dev/null; rc=\$?; rm -f '$FX/rules-divergence.unruled.json'; exit \$rc"
 expect "formal/gen: model evidence is READY; an uncompared model is NOT_READY (twin)" 0 \
-  bash -c "python3 '$FVS' gen-evidence model --model '$FX/model.yaml' --divergence '$FX/model-divergence.json' >/dev/null && ! python3 '$FVS' gen-evidence model --model '$FX/model-check-then-act.yaml' --divergence '$FX/model-divergence.json' >/dev/null"
+  bash -c "python3 '$FVS' gen-evidence model --model '$FX/model.yaml' --divergence '$FX/model-divergence.json' --review '$FX/model-review.yaml' --upstream '$UPM' >/dev/null && ! python3 '$FVS' gen-evidence model --model '$FX/model-check-then-act.yaml' --divergence '$FX/model-divergence.json' --review '$FX/model-review.yaml' >/dev/null"
+expect "formal/gen: without the fresh model review the model is NOT_READY (twin)" 1 \
+  py "$FVS" gen-evidence model --model "$FX/model.yaml" --divergence "$FX/model-divergence.json"
 expect "formal/gen: code-first model evidence needs a calibration (twin)" 1 \
-  py "$FVS" gen-evidence model --model "$FX/model.yaml" --divergence "$FX/model-divergence.json" --entrance code-first
+  py "$FVS" gen-evidence model --model "$FX/model.yaml" --divergence "$FX/model-divergence.json" --review "$FX/model-review.yaml" --entrance code-first
 expect "formal/gen: the three isolated agents exist (two generators, one fresh reviewer)" 0 \
   bash -c "for a in rule-formalizer model-builder formal-reviewer; do grep -q \"^name: \$a\$\" '$ROOT/agents/'\$a.md || exit 1; done"
+expect "formal/upstream: the vendored procedures are intact (bytes, licenses, nothing added)" 0 py "$FVS" upstream verify "$UPM"
+expect "formal/upstream: an edited upstream file is TAMPERED (twin)" 1 \
+  bash -c "rm -rf '$FT/up' && cp -R '$S/formal-verify/upstream' '$FT/up' && echo 'our own step' >> '$FT/up/specula/skills/bug-classification/guide.md' && python3 '$FVS' upstream verify '$FT/up/UPSTREAM.json' >/dev/null"
+expect "formal/upstream: every agent executes vendored upstream files, not its own method" 0 \
+  bash -c "for a in rule-formalizer model-builder formal-reviewer; do grep -q 'UP/' '$ROOT/agents/'\$a.md && grep -q 'upstream-methods.md' '$ROOT/agents/'\$a.md || exit 1; done"
+expect "formal/upstream: the intake follows Spec Kit clarify + Quint from-requirements" 0 \
+  py "$FVS" intake-check "$FX/rules-intake.yaml" --requirements "$FX/requirements.yaml" --upstream "$UPM"
+expect "formal/upstream: a clarification that is a label, not a question, is GAPS (twin)" 1 \
+  bash -c "sed 's/question: \"“成功”是否包含支付完成？\"/question: \"支付范围（R2）\"/' '$FX/rules-intake.yaml' > '$FT/intake.yaml' && python3 '$FVS' intake-check '$FT/intake.yaml' --requirements '$FX/requirements.yaml' >/dev/null"
+expect "formal/upstream: the rules review follows the FVS review contract, with the author's triage" 0 \
+  py "$FVS" check-review "$FX/rules-review.yaml" --contract "$FX/contract.yaml" --triage "$FX/rules-triage.yaml" --upstream "$UPM"
+expect "formal/upstream: a REVISE verdict is NOT_REVIEWED (twin)" 1 \
+  bash -c "sed 's/^verdict: PASS/verdict: REVISE/' '$FX/rules-review.yaml' > '$FT/review.yaml' && python3 '$FVS' check-review '$FT/review.yaml' --contract '$FX/contract.yaml' >/dev/null"
+expect "formal/upstream: the model review passes Quint review (runtime recomputed) and the Specula granularity audit" 0 \
+  py "$FVS" model-review-check "$FX/model-review.yaml" --model "$FX/model.yaml" --upstream "$UPM"
+expect "formal/upstream: an unsplit load-check-store action is refused (twin)" 1 \
+  bash -c "sed '/action: buy/,/single_lock_whole_action/ s/single_lock_whole_action: true/single_lock_whole_action: false/' '$FX/model-review.yaml' > '$FT/mr.yaml' && python3 '$FVS' model-review-check '$FT/mr.yaml' --model '$FX/model.yaml' >/dev/null"
+expect "formal/upstream: the code-first Specula brief, ledger and coverage are COMPLETE (Category B)" 0 \
+  py "$FVS" brief-check --brief "$FX/code-first/modeling-brief.md" --ledger "$FX/code-first/defect-ledger.json" --coverage "$FX/code-first/brief-coverage.yaml" --model "$FX/model.yaml" --upstream "$UPM"
+expect "formal/upstream: a defect dropped from the ledger JSON is GAPS (twin)" 1 \
+  bash -c "python3 -c \"import json; d=json.load(open('$FX/code-first/defect-ledger.json')); d['defects'].pop(); json.dump(d, open('$FT/ledger.json','w'))\" && python3 '$FVS' brief-check --brief '$FX/code-first/modeling-brief.md' --ledger '$FT/ledger.json' --coverage '$FX/code-first/brief-coverage.yaml' --model '$FX/model.yaml' >/dev/null"
+expect "formal/upstream: the counterexample triage is Case C, routed to fv_design_defect" 0 \
+  bash -c "python3 '$FVS' triage-check '$FX/triage/check-then-act.yaml' --model '$FX/model-check-then-act.yaml' --upstream '$UPM' | grep -q '\"route\": \"fv_design_defect\"'"
+expect "formal/upstream: Case B without an under-modelled guard is NOT_TRIAGED (twin)" 1 \
+  bash -c "mkdir -p '$FT/tri' && cp '$FX/triage/check-then-act.receipt.json' '$FT/tri/' && sed 's/^case: C/case: B/' '$FX/triage/check-then-act.yaml' > '$FT/tri/t.yaml' && python3 '$FVS' triage-check '$FT/tri/t.yaml' >/dev/null"
 expect "formal: lifecycle wiring (lock, qualification, conformance, waiver, policy, routing)" 0 py "$ROOT/eval/test_formal.py"
 expect "formal: routing v3 carries the seven triage rules R17–R23" 0 \
   bash -c "python3 -c \"import yaml; r=yaml.safe_load(open('$S/ai-dlc/assets/routing.yaml')); s={x['signal'] for x in r['rules']}; assert {'fv_requirement_gap','fv_model_infidelity','fv_design_defect','fv_implementation_defect','fv_contract_weakened','fv_model_stale','fv_checker_defect'} <= s\""

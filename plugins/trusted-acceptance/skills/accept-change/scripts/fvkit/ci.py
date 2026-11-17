@@ -56,10 +56,16 @@ def run_ci(policy_path, base, out, tier="auto", all_modules=False, root=None):
             contract = load_contract(root / m["contract"])
             model = load_model(root / m["model"], contract=contract)
             from .generation import model_evidence, requirements_for, rules_evidence
-            gen = rules_evidence(contract, requirements_for(contract), root / m["rules_divergence"], root / m["rules_review"])
+            from .upstream import load as load_upstream
+            up = load_upstream(root / pol["upstream"]) if pol.get("upstream") else None
+            opt = lambda k: root / m[k] if m.get(k) else None  # noqa: E731
+            gen = rules_evidence(contract, requirements_for(contract), root / m["rules_divergence"], root / m["rules_review"],
+                                 opt("rules_intake"), opt("rules_review_triage"), up)
             rec["reasons"] += ["rules generation: " + r for r in gen["reasons"]]
-            mgen = model_evidence(model, root / m["model_divergence"], m.get("entrance", "spec-first"),
-                                  root / m["calibration"] if m.get("calibration") else None)
+            brief = ({"brief": opt("modeling_brief"), "ledger": opt("defect_ledger"), "coverage": opt("brief_coverage")}
+                     if m.get("modeling_brief") else None)
+            mgen = model_evidence(model, root / m["model_divergence"], m.get("entrance", "spec-first"), opt("calibration"),
+                                  opt("model_review"), brief, up)
             rec["reasons"] += ["model generation: " + r for r in mgen["reasons"]]
             if base and (hit.get(m["id"]) or {}).get("contract_changed"):
                 shown = git(root, "show", "%s:%s" % (base, m["contract"]), check=False)

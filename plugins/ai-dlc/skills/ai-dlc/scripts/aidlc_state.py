@@ -2652,10 +2652,17 @@ def cmd_formal(a):
             result = fg.configure(st, module=a.module, contract=a.contract, model=a.model, source_map=a.source_map,
                                   min_level=a.min_level, policy=a.policy, settings=settings or None, entrance=a.entrance)
         elif a.action == "generation":
-            if not (a.kind and a.divergence):
-                die("formal generation needs --kind rules|model and --divergence (plus --review for rules)", 2)
-            result = fg.record_generation(st, a.root, a.slug, a.kind, a.divergence, a.review, a.module)
+            if not (a.kind and a.divergence and a.review):
+                die("formal generation needs --kind rules|model, --divergence and --review (rules also --intake; "
+                    "code-first models also --brief/--ledger/--coverage)", 2)
+            result = fg.record_generation(st, a.root, a.slug, a.kind, a.divergence, a.review, a.module, a.intake, a.review_triage,
+                                          a.brief, a.ledger, a.coverage)
             code = 0 if result["verdict"] == "READY" else 1
+        elif a.action == "triage":
+            if not a.file:
+                die("formal triage needs --file <fv-cex-triage> (and --model when the counterexample came from another model)", 2)
+            result = fg.triage_counterexample(st, a.file, a.model, a.module)
+            code = 0 if result["verdict"] == "TRIAGED" else 1
         elif a.action == "calibrate":
             if not a.model:
                 die("formal calibrate needs --model <the as-is model> and --traces from the current code", 2)
@@ -2685,7 +2692,7 @@ def cmd_formal(a):
         save(a.root, a.slug, st)
         refs = [{"type": "references", "target": result["receipt"]}] if isinstance(result, dict) and result.get("receipt") else []
         ledger_append(a.root, a.slug, "formal_" + a.action,
-                      json.dumps({k: result.get(k) for k in ("module", "kind", "verdict", "reasons", "level", "reason")
+                      json.dumps({k: result.get(k) for k in ("module", "kind", "verdict", "reasons", "level", "reason", "case", "route")
                                   if isinstance(result, dict) and result.get(k) is not None}, ensure_ascii=False)[:600],
                       stage=st["stage"], decision=str(result.get("verdict", "")) if isinstance(result, dict) else "",
                       by=(a.by or "engine"), refs=refs)
@@ -2823,9 +2830,13 @@ def main():
     s.add_argument("--task-status", choices=["active", "cancelled", "superseded"])
     s.add_argument("--revision", type=int); s.add_argument("--reason")
     s = P("formal")
-    s.add_argument("action", choices=["configure", "status", "generation", "calibrate", "qualify", "conform", "check", "waive"])
+    s.add_argument("action", choices=["configure", "status", "generation", "calibrate", "qualify", "conform", "check", "waive", "triage"])
     s.add_argument("--entrance", choices=["spec-first", "code-first"], default="spec-first")
     s.add_argument("--kind", choices=["rules", "model"]); s.add_argument("--divergence"); s.add_argument("--review")
+    s.add_argument("--intake", help="rules: fv-rules-intake (Spec Kit clarify + Quint from-requirements)")
+    s.add_argument("--review-triage", dest="review_triage", help="rules: the author's fv-review-triage beside the FVS review")
+    s.add_argument("--brief"); s.add_argument("--ledger"); s.add_argument("--coverage")
+    s.add_argument("--file", help="triage: an fv-cex-triage file (Specula spec-fidelity checklist + bug classification)")
     s.add_argument("--policy", help="verification/policy.yaml (fv-policy): required modules come from the diff vs branch.base")
     s.add_argument("--module"); s.add_argument("--contract"); s.add_argument("--model"); s.add_argument("--source-map", dest="source_map")
     s.add_argument("--min-level", dest="min_level", default="E3", choices=["E2", "E3"])

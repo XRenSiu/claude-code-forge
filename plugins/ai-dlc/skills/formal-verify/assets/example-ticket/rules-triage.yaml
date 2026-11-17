@@ -1,0 +1,15 @@
+# fv-review-triage：作者（编排者 / 规则作者）对审阅发现的处置，写在审阅旁边，审阅原文不动。
+# 依据 FVS review-policy：FIX / DESCOPE / DEFER-WITH-RULING / REJECT-FINDING / ASK-HUMAN；
+# 延后必须有人的裁决——作者不能给自己裁决。
+schema_version: 1
+kind: fv-review-triage
+review_digest: "sha256:c0d1a435d9bd75794395b14c54aa6cdb3426f7d85e98bddd449de71cd618b439"
+procedure:
+  - {upstream: fvs, path: fv-skills/references/review-policy.md, sha256: "sha256:cdb005a5d08ffed809cb8e6b13b70b9edca39db3b2f3b7ef53bbf0111e3e9592"}
+contract_before: "sha256:c9d5267076462d1b6892aaade52a130d8691a56ce5c71c6fbdf083fa71d3c7ac"
+contract_after: "sha256:c9d5267076462d1b6892aaade52a130d8691a56ce5c71c6fbdf083fa71d3c7ac"
+dispositions:
+  - finding: F-1
+    disposition: DEFER-WITH-RULING
+    detail: "答复时限不是本次需求的承诺；已记录在 rules-intake.yaml 的 deferred"
+    ruling: {text: "本次只承诺最终答复；时限需要时另立需求", by: example-owner, signer_kind: human}

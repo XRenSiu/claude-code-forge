@@ -28,12 +28,13 @@ DEFAULT_TIERS = {
 }
 MODULE_KEYS = ["id", "risk", "paths"]
 MODULE_OPTIONAL = ["contract", "model", "source_map", "traces", "trace_command", "vectors", "approvals", "min_depth", "notes", "owners",
-                   "entrance", "rules_divergence", "rules_review", "model_divergence", "calibration"]
+                   "entrance", "rules_divergence", "rules_review", "model_divergence", "calibration",
+                   "rules_intake", "rules_review_triage", "model_review", "modeling_brief", "defect_ledger", "brief_coverage"]
 
 
 def load_policy(path):
     doc = load_document(path)
-    _keys(doc, ["schema_version", "kind", "modules"], ["risk_classes", "tiers", "unclassified", "notes"], "policy")
+    _keys(doc, ["schema_version", "kind", "modules"], ["risk_classes", "tiers", "unclassified", "notes", "upstream"], "policy")
     require(doc["schema_version"] == 1 and doc["kind"] == "fv-policy", "unsupported policy (schema_version 1, kind fv-policy)")
     risks = dict(DEFAULT_RISKS)
     risks.update(doc.get("risk_classes") or {})
@@ -56,15 +57,19 @@ def load_policy(path):
         level = risks[m["risk"]]["min_level"]
         if LEVELS.index(level) >= 2:
             require(m.get("contract") and m.get("model"), "module %s (%s) needs a contract and a model" % (m["id"], level))
-            require(m.get("rules_divergence") and m.get("rules_review") and m.get("model_divergence"),
-                    "module %s (%s): AI-generated rules and model need their evidence (rules_divergence, rules_review, model_divergence)" % (m["id"], level))
+            need = ["rules_intake", "rules_divergence", "rules_review", "model_divergence", "model_review"]
+            require(all(m.get(k) for k in need),
+                    "module %s (%s): AI-generated rules and model need their evidence (%s)" % (m["id"], level, ", ".join(need)))
             if m.get("entrance") == "code-first":
                 require(m.get("calibration"), "module %s: code-first needs the as-is model's calibration receipt" % m["id"])
+                require(m.get("modeling_brief") and m.get("defect_ledger") and m.get("brief_coverage"),
+                        "module %s: code-first needs the Specula modeling brief, defect ledger and brief coverage" % m["id"])
         if LEVELS.index(level) >= 3:
             require(m.get("source_map") and (m.get("traces") or m.get("trace_command")),
                     "module %s (%s) needs a source map and implementation traces" % (m["id"], level))
     require(doc.get("unclassified", "review") in ("review", "ignore"), "unclassified must be review|ignore")
-    return {"doc": doc, "risks": risks, "tiers": tiers, "modules": doc["modules"], "unclassified": doc.get("unclassified", "review")}
+    return {"doc": doc, "risks": risks, "tiers": tiers, "modules": doc["modules"], "unclassified": doc.get("unclassified", "review"),
+            "upstream": doc.get("upstream")}
 
 
 def module_files(m):

@@ -1,0 +1,20 @@
+# fv-brief-coverage：Specula spec_generation 的 Phase 2.5 自检（brief-coverage-checklist.md），落成可检查的文件。
+# 每个 Scenario 有一个能触发它的模型（hunt），每条第 5 节的不变量都在合同里定义（fvkit 会检查合同里的全部性质），
+# 每条 6.1 的可模型检查发现都有一个能到达触发条件的模型。6.2 里 CR 的条目由代码审阅确认，不在这里。
+schema_version: 1
+kind: fv-brief-coverage
+brief_digest: "sha256:4e827794d4045b56276f287a5f79ddce82a95275b65abda633cc48ebdd8f4ed7"
+contract_digest: "sha256:c9d5267076462d1b6892aaade52a130d8691a56ce5c71c6fbdf083fa71d3c7ac"
+procedure:
+  - {upstream: specula, path: skills/code_analysis/references/modeling-brief-format.md, sha256: "sha256:3a19ae3cae5fc06479f72c8587cd0b8293c1796c964e91eaddbe055a48e2ad04"}
+  - {upstream: specula, path: skills/spec_generation/references/brief-coverage-checklist.md, sha256: "sha256:177a1a3e826555bf665c6445deae5c513e4f1455509e177b8a51a292f7097975"}
+scenarios:
+  - {scenario: 1, properties: [NoOversell, StockNonNegative], hunt: ../model-check-then-act.yaml}
+  - {scenario: 2, properties: [NoOversell, Conservation, EveryRequestAnswered], hunt: ../model.yaml}
+invariants:
+  - {invariant: NoOversell, property: NoOversell}
+  - {invariant: StockNonNegative, property: StockNonNegative}
+  - {invariant: Conservation, property: Conservation}
+  - {invariant: EveryRequestAnswered, property: EveryRequestAnswered}
+findings:
+  - {finding: MC-1, property: NoOversell, hunt: ../model-check-then-act.yaml, note: "as-is 模型就是 check-then-act 路径"}

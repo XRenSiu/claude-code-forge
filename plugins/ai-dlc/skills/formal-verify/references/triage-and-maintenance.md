@@ -9,6 +9,8 @@
 3. **规则没覆盖的情况**（超时、取消、重复请求这类需求本身没说的），是 `requirement_gap`，交还需求负责人。在 AI-DLC 里走 G2 变更提案。
 4. **引擎、harness 或环境坏了**，是 `checker_defect`，不让产品返工。
 
+判断“模型失真还是真实缺陷”按 Specula 的 spec-fidelity checklist 来，不凭感觉。`formal-reviewer`（triage 模式）先写下违反状态需要的前提，再为每个前提在实现里找守卫（`file:line`），然后对照模型：模型漏掉或放宽了某个守卫，就是 Case B（`model_infidelity`），写明模型改法后重跑；没有，就是 Case C。Case C 再按 Specula bug-classification 写状态（REPRODUCED / ENV_LIMITED / MASKED 或某种处置）和严重度。结果写进 `triage/<name>.yaml`（fv-cex-triage），用 `fv triage-check` 核对，或在 AI-DLC 里用 `formal triage --file …` 记录。核对结果给出路由：`fv_model_infidelity`；`fv_design_defect`（反例来自模型检查）；`fv_implementation_defect`（反例来自真实代码的轨迹）。
+
 每次分诊在 `decisions.md` 追加一行（时间、反例或改动、分类、决定、签字人），然后
 `aidlc_state.py fail --signal fv_<分类> --evidence <回执摘要或反例>`，路由表把它送到对应的层。
 **任何分类下都不许改弱合同让检查变绿**；必须改规则时，`fv diff-contract` 会给出 WEAKENED，需要新的 G2 签字或 `fv approve` 记录。

@@ -2,12 +2,16 @@
 
 What is enforced, and where (never waivable with `advance --force`):
   cards / implement / later   the fv-contract and its requirement inventory are frozen by the current
-                              G2/L5 lock (same bytes); the rules were AI-generated the checkable way:
-                              inventory quotes verbatim, >=2 isolated candidates compared, every
-                              divergence ruled, the adopted contract among the compared, a complete
-                              fresh-context review with blocking findings resolved
-  implement / later           the model was AI-generated the same way (>=2 isolated candidates, observable
-                              divergence ruled, adopted model among them; code-first: the as-is model
+                              G2/L5 lock (same bytes); the rules were AI-generated the checkable way by
+                              the vendored upstream procedures (upstream/UPSTREAM.json must be INTACT):
+                              inventory quotes verbatim; Spec Kit clarify + Quint from-requirements
+                              intake; >=2 isolated candidates compared, every divergence ruled, the
+                              adopted contract among the compared; a fresh review under the Formal
+                              Verification Skills review contract, with the author's triage
+  implement / later           the model was AI-generated the same way (>=2 isolated candidates with the
+                              Quint Step 7 handoff, observable divergence ruled, adopted model among
+                              them, a fresh Quint-review + Specula granularity model review; code-first:
+                              the Specula modeling brief with its coverage audit, and the as-is model
                               calibrated on traces of the current code), and a QUALIFIED receipt for
                               exactly the current model and contract (digests, verdict, replay)
   pr / merge / release (E3)   a CONFORMS receipt whose mapped source files are still the ones on disk,
@@ -25,8 +29,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 FV_SCRIPTS = Path(__file__).resolve().parents[2] / "formal-verify" / "scripts"
+UPSTREAM = FV_SCRIPTS.parent / "upstream" / "UPSTREAM.json"   # the plugin's own copy; a project cannot swap the method
 sys.path.insert(0, str(FV_SCRIPTS))
 from fvkit.generation import model_evidence, requirements_for, rules_evidence  # noqa: E402
+from fvkit.upstream import Upstream  # noqa: E402
 from fvkit.policy import impact, load_policy  # noqa: E402
 from fvkit.receipt import LEVELS, level_at_least, load as load_receipt, make, validate, write  # noqa: E402
 from fvkit.sourcemap import verify as verify_map  # noqa: E402
@@ -157,32 +163,42 @@ def _lock_issues(st, mid, spec, root):
     return out
 
 
+def _opt(root, rec, key):
+    return root / rec[key] if rec.get(key) else None
+
+
 def _rules_generation_issues(st, mid, spec, contract, root):
     rec = (st["formal"].get("generation") or {}).get(mid, {}).get("rules")
     if not rec:
-        return ["%s: the rules have no AI-generation evidence — >=2 isolated rule-formalizer candidates, `fv rules-divergence`, "
-                "rulings, a formal-reviewer review, then `formal generation --module %s --kind rules`" % (mid, mid)]
+        return ["%s: the rules have no AI-generation evidence — Spec Kit / Quint intake, >=2 isolated rule-formalizer candidates, "
+                "`fv rules-divergence`, rulings, an FVS-contract review (+ triage), then `formal generation --module %s --kind rules`" % (mid, mid)]
     try:
         if _file_digest(rec["receipt"]) != rec["digest"]:
             return ["%s: rules generation receipt changed after it was recorded" % mid]
-        res = rules_evidence(contract, requirements_for(contract), root / rec["divergence"], root / rec["review"])
+        res = rules_evidence(contract, requirements_for(contract), root / rec["divergence"], root / rec["review"],
+                             _opt(root, rec, "intake"), _opt(root, rec, "triage"), Upstream(UPSTREAM))
     except (FvError, OSError, KeyError, ValueError) as error:
         return ["%s: rules generation evidence is not current: %s" % (mid, error)]
     return ["%s: rules generation: %s" % (mid, r) for r in res["reasons"]]
 
 
+def _brief(root, rec):
+    return {k: _opt(root, rec, k) for k in ("brief", "ledger", "coverage")} if rec.get("brief") else None
+
+
 def _model_generation_issues(st, mid, spec, model, root):
     rec = (st["formal"].get("generation") or {}).get(mid, {}).get("model")
     if not rec:
-        return ["%s: the model has no AI-generation evidence — >=2 isolated model-builder candidates, `fv model-divergence`, "
-                "rulings, then `formal generation --module %s --kind model`" % (mid, mid)]
+        return ["%s: the model has no AI-generation evidence — >=2 isolated model-builder candidates with handoffs, `fv model-divergence`, "
+                "rulings, a model review (code-first: the Specula brief), then `formal generation --module %s --kind model`" % (mid, mid)]
     cal = (st["formal"].get("calibration") or {}).get(mid)
     try:
         if _file_digest(rec["receipt"]) != rec["digest"]:
             return ["%s: model generation receipt changed after it was recorded" % mid]
         if cal and _file_digest(cal["receipt"]) != cal["digest"]:
             return ["%s: calibration receipt changed after it was recorded" % mid]
-        res = model_evidence(model, root / rec["divergence"], spec.get("entrance", "spec-first"), cal and cal["receipt"])
+        res = model_evidence(model, root / rec["divergence"], spec.get("entrance", "spec-first"), cal and cal["receipt"],
+                             _opt(root, rec, "review"), _brief(root, rec), Upstream(UPSTREAM))
     except (FvError, OSError, KeyError, ValueError) as error:
         return ["%s: model generation evidence is not current: %s" % (mid, error)]
     return ["%s: model generation: %s" % (mid, r) for r in res["reasons"]]
@@ -305,31 +321,52 @@ def conform_module(st, aidlc_root, slug, traces, mid=None, hidden_steps=0):
     return {"module": mid, "verdict": c["verdict"], "reasons": c["reasons"], "receipt": path}
 
 
-def record_generation(st, aidlc_root, slug, kind, divergence, review=None, mid=None):
+def record_generation(st, aidlc_root, slug, kind, divergence, review=None, mid=None, intake=None, triage=None,
+                      brief=None, ledger=None, coverage=None):
     """Record that the rules/model were AI-generated the checkable way; the guard recomputes it every time."""
     mid, spec = _module(st, mid)
     root, contract, model = _load(spec)
     started = now()
+    up = Upstream(UPSTREAM)
+    paths = {"divergence": divergence, "review": review, "intake": intake, "triage": triage,
+             "brief": brief, "ledger": ledger, "coverage": coverage}
     if kind == "rules":
-        if not review:
-            raise FvError("rules generation needs --review (the formal-reviewer's fv-rules-review)")
-        res = rules_evidence(contract, requirements_for(contract), divergence, review)
+        if not (review and intake):
+            raise FvError("rules generation needs --intake (Spec Kit / Quint intake) and --review (the FVS-contract review)")
+        res = rules_evidence(contract, requirements_for(contract), divergence, review, intake, triage, up)
         inputs = {"contract": dict(contract.identity(), path=spec["contract"])}
     elif kind == "model":
+        if not review:
+            raise FvError("model generation needs --review (the fresh model review: Quint review + Specula granularity audit)")
         cal = (st["formal"].get("calibration") or {}).get(mid)
-        res = model_evidence(model, divergence, spec.get("entrance", "spec-first"), cal and cal["receipt"])
+        trio = {"brief": brief, "ledger": ledger, "coverage": coverage} if brief else None
+        res = model_evidence(model, divergence, spec.get("entrance", "spec-first"), cal and cal["receipt"], review, trio, up)
         inputs = {"model": dict(model.identity(), path=spec["model"]), "contract": dict(contract.identity(), path=spec["contract"])}
     else:
         raise FvError("--kind must be rules or model")
     inputs["divergence"] = {"path": _rel(divergence, root), "digest": res["divergence"]["digest"]}
+    inputs["upstream"] = {"path": str(UPSTREAM), "digest": res["upstream"]}
     receipt = make("generate", inputs, {"kind": kind, "entrance": spec.get("entrance", "spec-first"), "min_candidates": 2},
                    res, res["verdict"], "E0", started)
     path = write(_out_dir(aidlc_root, slug, "generate-%s-%s" % (kind, mid)), receipt)
-    entry = {"receipt": str(Path(path).resolve()), "digest": _file_digest(path), "verdict": res["verdict"],
-             "divergence": _rel(divergence, root), "review": _rel(review, root) if review else None, "at": started}
+    entry = {"receipt": str(Path(path).resolve()), "digest": _file_digest(path), "verdict": res["verdict"], "at": started}
+    entry.update({k: _rel(v, root) if v else None for k, v in paths.items()})
     ensure(st)["generation"].setdefault(mid, {})[kind] = entry
     st.setdefault("artifacts", {})["formal.generate.%s.%s" % (kind, mid)] = entry["receipt"]
     return {"module": mid, "kind": kind, "verdict": res["verdict"], "reasons": res["reasons"], "receipt": path}
+
+
+def triage_counterexample(st, triage_file, model_path=None, mid=None):
+    """Specula spec-fidelity checklist + bug classification for one counterexample; records the route."""
+    from fvkit.methods import check_cex_triage
+    mid, spec = _module(st, mid)
+    root, contract, model = _load(spec)
+    cex_model = load_model(model_path, contract=contract) if model_path else model
+    res = check_cex_triage(triage_file, cex_model, Upstream(UPSTREAM))
+    entry = {"file": _rel(triage_file, root), "digest": res["digest"], "verdict": res["verdict"], "case": res["case"],
+             "route": res["route"], "at": now()}
+    ensure(st).setdefault("triage", {}).setdefault(mid, []).append(entry)
+    return dict(res, module=mid)
 
 
 def calibrate_module(st, aidlc_root, slug, as_is_model, traces, mid=None, hidden_steps=0):
@@ -384,6 +421,11 @@ def status(st):
         out["required"][mid] = dict(spec, generation=(f.get("generation") or {}).get(mid),
                                     calibration=(f.get("calibration") or {}).get(mid),
                                     qualification=(f.get("qualification") or {}).get(mid),
-                                    conformance=(f.get("conformance") or {}).get(mid))
+                                    conformance=(f.get("conformance") or {}).get(mid),
+                                    triage=(f.get("triage") or {}).get(mid))
     out["unmet_for"] = {t: guard(st, t) for t in ("cards", "implement", "pr")}
+    try:
+        out["upstream"] = {k: v for k, v in Upstream(UPSTREAM).verify().items() if k in ("verdict", "issues", "digest")}
+    except (FvError, OSError) as error:
+        out["upstream"] = {"verdict": "TAMPERED", "issues": [str(error)]}
     return out
