@@ -1,8 +1,8 @@
 {
   "contract": {
-    "digest": "sha256:82f8718c5aaa93c53a98218225eff90f7e9589ff16018135e9f491d4938e0a04",
+    "digest": "sha256:c9d5267076462d1b6892aaade52a130d8691a56ce5c71c6fbdf083fa71d3c7ac",
     "id": "ticket-ordering",
-    "properties_digest": "sha256:044494c08911dd473376569dbc8caaeaea1ab307f8cf699a61b5409d5a14c9f2",
+    "properties_digest": "sha256:67ba7a82ed8a0d604528d1a9025f5e116de637b7c79aa49b191749b8c4c63ea6",
     "property_ids": [
       "NoOversell",
       "StockNonNegative",
@@ -15,7 +15,7 @@
   },
   "kind": "fv-test-vectors",
   "model": {
-    "digest": "sha256:a583c0f392c111f0d0c84181262b63cff23f0fcccd14e88ec0391b02d9f0f889",
+    "digest": "sha256:b1734040fb1b7e4fb4676528c802825a78ce8245ca015e12a9c521d21c65754a",
     "id": "ticket-atomic-reserve"
   },
   "notes": [],

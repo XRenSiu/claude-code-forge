@@ -27,7 +27,8 @@ DEFAULT_TIERS = {
     "deep": {"max_states": 5000000, "time_seconds": 3600, "mutants": True, "auto_mutants": True, "allow_bounded": False},
 }
 MODULE_KEYS = ["id", "risk", "paths"]
-MODULE_OPTIONAL = ["contract", "model", "source_map", "traces", "trace_command", "vectors", "approvals", "min_depth", "notes", "owners"]
+MODULE_OPTIONAL = ["contract", "model", "source_map", "traces", "trace_command", "vectors", "approvals", "min_depth", "notes", "owners",
+                   "entrance", "rules_divergence", "rules_review", "model_divergence", "calibration"]
 
 
 def load_policy(path):
@@ -50,10 +51,15 @@ def load_policy(path):
         require(m["id"] not in ids, "duplicate module %s" % m["id"])
         ids.add(m["id"])
         require(m["risk"] in risks, "module %s: unknown risk class %s" % (m["id"], m["risk"]))
+        require(m.get("entrance", "spec-first") in ("spec-first", "code-first"), "module %s: entrance must be spec-first|code-first" % m["id"])
         require(isinstance(m["paths"], list) and m["paths"], "module %s: paths must be a nonempty list" % m["id"])
         level = risks[m["risk"]]["min_level"]
         if LEVELS.index(level) >= 2:
             require(m.get("contract") and m.get("model"), "module %s (%s) needs a contract and a model" % (m["id"], level))
+            require(m.get("rules_divergence") and m.get("rules_review") and m.get("model_divergence"),
+                    "module %s (%s): AI-generated rules and model need their evidence (rules_divergence, rules_review, model_divergence)" % (m["id"], level))
+            if m.get("entrance") == "code-first":
+                require(m.get("calibration"), "module %s: code-first needs the as-is model's calibration receipt" % m["id"])
         if LEVELS.index(level) >= 3:
             require(m.get("source_map") and (m.get("traces") or m.get("trace_command")),
                     "module %s (%s) needs a source map and implementation traces" % (m["id"], level))

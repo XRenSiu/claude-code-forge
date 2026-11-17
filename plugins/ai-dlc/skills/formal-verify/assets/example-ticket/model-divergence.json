@@ -1,0 +1,96 @@
+{
+  "candidates": [
+    {
+      "digest": "sha256:b1734040fb1b7e4fb4676528c802825a78ce8245ca015e12a9c521d21c65754a",
+      "label": "A",
+      "model_id": "ticket-atomic-reserve",
+      "path": "candidates/model-a/model.yaml",
+      "states": 21,
+      "verdict": "PASS"
+    },
+    {
+      "digest": "sha256:767d3cf7aa04ee8fff686a1da2e47f107dd4f861658be21597890ee2dc7757fe",
+      "label": "B",
+      "model_id": "ticket-reserve-b",
+      "path": "candidates/model-b/model.yaml",
+      "states": 10,
+      "verdict": "PASS"
+    }
+  ],
+  "contract_digest": "sha256:c9d5267076462d1b6892aaade52a130d8691a56ce5c71c6fbdf083fa71d3c7ac",
+  "items": [
+    {
+      "detail": "an observer could see this step in some candidates only",
+      "id": "M1",
+      "in_candidates": [
+        "B"
+      ],
+      "missing_in": [
+        "A"
+      ],
+      "observed": {
+        "outcome": {
+          "alice": "pending",
+          "bob": "success"
+        },
+        "remaining": 0,
+        "sold": 1
+      },
+      "type": "transition",
+      "witness": [
+        "submit",
+        "submit",
+        "reserve",
+        "refuse",
+        "submit"
+      ]
+    },
+    {
+      "detail": "an observer could see this step in some candidates only",
+      "id": "M2",
+      "in_candidates": [
+        "B"
+      ],
+      "missing_in": [
+        "A"
+      ],
+      "observed": {
+        "outcome": {
+          "alice": "success",
+          "bob": "pending"
+        },
+        "remaining": 0,
+        "sold": 1
+      },
+      "type": "transition",
+      "witness": [
+        "submit",
+        "reserve",
+        "submit",
+        "refuse",
+        "submit"
+      ]
+    }
+  ],
+  "kind": "fv-model-divergence",
+  "rulings": [
+    {
+      "at": "2026-11-17T10:40:56+00:00",
+      "authorization": null,
+      "by": "example-owner",
+      "item": "M1",
+      "ruling": "需求没有规定售罄后可以再次提交（R3 只要求得到答复）。采用 A；“售罄后重试”作为新需求另立，不在本次范围",
+      "signer_kind": "human"
+    },
+    {
+      "at": "2026-11-17T10:40:56+00:00",
+      "authorization": null,
+      "by": "example-owner",
+      "item": "M2",
+      "ruling": "需求没有规定售罄后可以再次提交（R3 只要求得到答复）。采用 A；“售罄后重试”作为新需求另立，不在本次范围",
+      "signer_kind": "human"
+    }
+  ],
+  "schema_version": 1,
+  "verdict": "DIVERGENT"
+}

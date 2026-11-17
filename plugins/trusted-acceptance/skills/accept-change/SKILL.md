@@ -42,6 +42,7 @@ version: 0.5.0
 
 - 用 `acceptance.py validate-formal` 核验 fvkit 回执：校验摘要和自洽性，重放反例；`--rerun` 时重新执行。不同证据等级（E0–E4）分开报告，`BOUNDED_PASS`、模拟和 `quint run` 都不是证明。
 - 规则（fv-contract）与模型的摘要由批准的政策固定。候选提交的新模型、被弱化的不变量、给别的候选做的实现证据，一律不支持 pass。
+- 规则与模型由 AI 生成，生成过程留有证据（逐字引文的需求清单、至少两份隔离候选的分歧与人的裁决、全新上下文审阅）。`validate-formal` 能核对 `generate` 回执，但它只证明过程，不证明规则正确；起草合同时，没有这份证据的规则不提交审批。
 - 本 Skill 不建模、不改规则。建模与修复由 AI-DLC `formal-verify` 或项目 Harness 负责，`scripts/fv.py` 与其副本逐字一致。
 
 ## 调用脚本

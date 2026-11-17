@@ -10,6 +10,7 @@
 - `acceptance-control/gate.py`：固定判定核心，核对必验集合、需求覆盖、证据文件、全部尝试、版本、环境、取消状态、授权到期及累计预算。
 - `acceptance-control/service.py` / `docker_worker.py`：持久控制队列与两个容器的隔离试点。候选无宿主挂载，冻结观察器单独运行；正常、故障、取消、过期工作者与预算均留证。见 [部署合同](acceptance-control/deployment.md)。本机试点仍无正式签发权。
 - `skills/accept-change/scripts/fv.py` + `fvkit/`：自闭环的形式化验证工具（仅标准库，YAML 输入需要 PyYAML）。安全表达式语言写的规则合同（fv-contract）与状态机模型（fv-model）；显式状态模型检查，覆盖不变量、迁移性质、可达见证、死锁，以及弱/强公平下的活性，给出最短反例或套索反例，支持对称约简；变异资格判定（证明规则抓得到故意注入的设计缺陷）；真实代码轨迹一致性与运行时监控；模型驱动测试向量；源码映射漂移检测；契约弱化检测；风险分级的 CI；TLC / Apalache / Quint / FizzBee 适配。证据按 E0–E4 分级，回执可重放、可重算。见 [formal-evidence.md](skills/accept-change/references/formal-evidence.md)。
+- 规则与模型由 AI 生成，生成过程可检：逐字引文的需求清单、≥2 份隔离生成候选的语义比较（有限域上给出见证值）与人的裁决、全新上下文审阅，收口为 `fv gen-evidence` 回执。
 - `acceptance-control/gate.py` 支持 policy schema 2：维护者固定模型/规则摘要和最低证据等级，gate 重新校验每份 `fv-receipt`，`rerun` 时用原件重算资格判定与轨迹一致性。
 - `evaluations/`：协议与门禁回归、真实本地 HTTP 示例、fvkit 与形式化门禁回归，以及待独立执行的 Skill 行为评测用例。
 

@@ -34,7 +34,8 @@ CLAIMS = {
 }
 UUID = re.compile(r"[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\Z")
 COMMANDS = ("lint", "check", "simulate", "mutate", "qualify", "trace", "conform", "source-map", "diff-contract",
-            "external", "ci", "gen-tests")
+            "external", "ci", "gen-tests", "generate")
+POSITIVE = ("PASS", "BOUNDED_PASS", "QUALIFIED", "CONFORMS", "FRESH", "NOT_WEAKENED", "SATISFIED", "READY")
 
 
 def engine_identity():
@@ -58,7 +59,7 @@ def make(command, inputs, settings, result, verdict, level, started):
     return {"schema_version": 1, "kind": "fv-receipt", "command": command, "invocation_id": str(uuid.uuid4()),
             "authority": "local_advisory", "engine": engine_identity(), "inputs": inputs, "settings": settings,
             "result": result, "verdict": verdict, "evidence_level": level,
-            "claims": {"may_claim": may if verdict in ("PASS", "BOUNDED_PASS", "QUALIFIED", "CONFORMS", "FRESH", "NOT_WEAKENED", "SATISFIED") else None,
+            "claims": {"may_claim": may if verdict in POSITIVE else None,
                        "may_not_claim": may_not},
             "started_at": started, "finished_at": now()}
 
@@ -217,6 +218,12 @@ def validate(r, model=None, contract=None, rerun=False, min_level=None, expect_v
     elif cmd == "external":
         from .external import reparse
         reparse(r, base_dir)
+    elif cmd == "generate":
+        res = r["result"]
+        require(r["evidence_level"] == "E0", "generation evidence is review-level (E0); it proves process, not correctness")
+        require(r["verdict"] == ("READY" if not res["reasons"] else "NOT_READY"), "generation verdict contradicts its reasons")
+        require(res["kind"] in ("rules", "model") and res["divergence"]["candidates"] >= 2 or r["verdict"] == "NOT_READY",
+                "generation evidence needs at least two independently generated candidates")
     if rerun:
         require(model is not None, "--rerun needs the model and contract")
         require(r["engine"]["digest"] == engine_identity()["digest"],

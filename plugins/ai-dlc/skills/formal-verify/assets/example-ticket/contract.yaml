@@ -5,6 +5,7 @@ kind: fv-contract
 id: ticket-ordering
 version: 1
 title: 只剩一张票：从需求到 PR 不超卖
+requirements: requirements.yaml   # 规则可追溯到的需求清单（fv trace-rules 核对覆盖与引用）
 sources:
   - {id: R1, ref: "requirements.md#R1"}
   - {id: R2, ref: "requirements.md#R2"}
@@ -15,8 +16,8 @@ observables:
   remaining: {type: int, domain: "range(-2, 3)", description: "tickets.remaining"}
   outcome: {type: map, description: "每个用户的请求结果：none / pending / success / sold_out"}
 assumptions:
-  - {id: A-NO-RESTOCK, text: "检查期间没有补货、退票", source: R1}
-  - {id: A-FAIR, text: "服务正常时，已提交的请求最终会被处理（弱公平），只用于 R3 的活性", source: R3}
+  - {id: A-NO-RESTOCK, text: "检查期间没有补货、退票", source: A1}
+  - {id: A-FAIR, text: "服务正常时，已提交的请求最终会被处理（弱公平），只用于 R3 的活性", source: A2}
 properties:
   - {id: NoOversell, kind: invariant, expr: "sold <= STOCK", source: R1, text: "成功售出数量不超过可售库存"}
   - {id: StockNonNegative, kind: invariant, expr: "remaining >= 0", source: R1, text: "剩余可售数量不为负"}

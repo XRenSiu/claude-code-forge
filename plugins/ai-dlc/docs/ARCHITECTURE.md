@@ -139,14 +139,20 @@ PostHolder `5c7900c` 已实跑这个闭环：故障注入后将五步轨迹缩�
 状态性需求（并发、一致性、权限、重试与幂等）在 `/formal-verify` 里多走一条线，用的是自带的检查器 fvkit，与 trusted-acceptance 逐字同一份：
 
 ```
-入口 A 新需求：需求 → fv-contract（规则，随 G2 锁）→ fv-model（原子动作）→ fv check → 反例分诊 → fv qualify
-入口 B 已有代码：独立规则 → source-map.yaml（动作 ↔ 代码锚点）→ 实现模型 → 反例 → 重放向量 → 真实轨迹
+AI 生成规则（必经）：需求原文 → requirements.yaml（逐字引文，规范句一句不漏）→ ≥2 个隔离 rule-formalizer 候选
+                    → fv rules-divergence（逐需求语义比较，分歧带见证）→ 人裁决 → formal-reviewer 全新上下文审 → G2 锁
+AI 建模（必经）    ：≥2 个隔离 model-builder 候选 → fv model-divergence（观察者眼里的差别）→ 人裁决
+                    （入口 B 另要：as-is 模型在当前代码轨迹上的校准）
+入口 A 新需求：规则 → 模型 → fv check → 反例分诊 → fv qualify → 写代码
+入口 B 已有代码：独立规则 → source-map.yaml → 实现模型（校准）→ 反例 → 重放向量 → 真实轨迹
 主干：qualify（E2）→ 实现 → gen-tests → harness 记录真实轨迹 → conform（E3）→ fv ci 持续重验
 ```
 
 | 前置 | 何时 | 检什么（`formal_gate.py`，`--force` 越不过） |
 |---|---|---|
-| 规则冻结 | `cards` 起 | fv-contract 在当前 G2/L5 锁里，字节未变；改弱规则 = 变更提案 + G2 |
+| 规则冻结 | `cards` 起 | fv-contract 与需求清单在当前 G2/L5 锁里，字节未变；改弱规则 = 变更提案 + G2 |
+| 规则是按可检方式 AI 生成的 | `cards` 起 | 清单引文逐字、规范句全有去处；每条需求被形式化或有处置；≥2 个隔离候选比较过、分歧全有裁决、采纳的合同在被比较之列；全新上下文审阅完整、阻断发现已裁 |
+| 模型是按可检方式 AI 生成的 | `implement` 起 | ≥2 个隔离模型候选在可观测层面比较过、分歧全有裁决、采纳的模型在其中；入口 B 的 as-is 模型在当前代码轨迹上校准过 |
 | 设计审定 | `implement` 起 | QUALIFIED 回执对当前模型与合同重验通过：完整探索、见证可达、无死动作、必需 mutant 被预期性质杀死 |
 | 实现一致 | E3 模块，`pr` 起 | CONFORMS 回执，且映射的代码与取证时一致，源码映射此刻 FRESH |
 
@@ -188,7 +194,7 @@ intake → track → issue → branch → contract → g2 → cards → implemen
 G2 跑契约 v2 校验，implement 跑卡 lint，pr 读 final-state.json 与达标比对报告，archive 读发布记录里的 post-deploy 行，
 并在 implement / acceptance / pr / merge 重跑锁校验——`/commit` 与 `/pr` 的预门能被裸 git 绕开，状态机绕不开。
 
-执行图 `graph.yaml`（55 节点 · 75 边）把同一件事声明成数据：节点带边界身份
+执行图 `graph.yaml`（58 节点 · 81 边）把同一件事声明成数据：节点带边界身份
 （读什么 / 不许读什么 / 写什么 / 有什么权限），边带类型与守卫，回边标明属于哪个环。
 `graph check` 让它与状态机的阶段列表**互相断言**——图和代码互为对方的测试。
 `verify_graph.py` 另外检五条性质：写范围有界、去掉回边后是 DAG 且每个圈归属一个环、
@@ -420,7 +426,7 @@ A 档里有两条特别的：**结构闸**在分析器跑不起来时退出"未�
 
 ---
 
-## 11. 三十一个 skill、五个 agent
+## 11. 三十一个 skill、八个 agent
 
 九环加一根脊柱。**脊柱不做任何一环的活**，只做五件事：持有状态、记账、路由失败、
 把三道门编译成"不跑就推进不了"、把图与环声明成数据。
@@ -437,9 +443,12 @@ A 档里有两条特别的：**结构闸**在分析器跑不起来时退出"未�
 | **R7 交付** | 合入与发布 | `pr` `review-loop` `release` | `verify_pr.py` `pr-poll.sh` `verify_release.py` |
 | **R8 学习** | 流程病在哪层；环的参数该不该调 | `retro` `tune` | `metrics.py` `improvement.py` `tune.py` `apply_proposal.py`（流程变更只出 diff）；合格回归由 Project Harness 按限定策略激活 |
 
-五个隔离子 agent，各自的输入被刻意限死：`card-implementer`（单卡实现）、
+八个隔离子 agent，各自的输入被刻意限死：`card-implementer`（单卡实现）、
 `review-triager`（只读分诊）、`comment-fixer`（单线程 TDD 修复）、
-`pr-reviewer`（只读审查，永不批准）、`fix-verifier`（全新上下文验证）。
+`pr-reviewer`（只读审查，永不批准）、`fix-verifier`（全新上下文验证）；
+形式化验证的三个：`rule-formalizer`（只读需求，写一份规则候选，看不到代码与别的候选）、
+`model-builder`（只读已签合同与设计 / 代码，写一份模型候选，不能改规则）、
+`formal-reviewer`（全新上下文只读，对照需求审最终合同）。
 
 每个脚本检什么、退出码什么意思，索引在 `reference.md`，**由一条冒烟期望盯着不许漏**。
 

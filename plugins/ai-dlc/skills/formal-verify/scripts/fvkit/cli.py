@@ -14,6 +14,8 @@ from . import VERSION
 from .values import FvError, require
 
 EXIT = {"PASS": 0, "QUALIFIED": 0, "CONFORMS": 0, "FRESH": 0, "NOT_WEAKENED": 0, "SATISFIED": 0, "APPROVED": 0,
+        "READY": 0, "TRACEABLE": 0, "AGREED": 0, "COMPLETE": 0, "REVIEWED": 0,
+        "NOT_READY": 1, "GAPS": 1, "DIVERGENT": 1, "NOT_REVIEWED": 1,
         "FAIL": 1, "NOT_QUALIFIED": 1, "NONCONFORMANT": 1, "STALE": 1, "BROKEN": 1, "WEAKENED": 1, "UNSATISFIED": 1,
         "ERROR": 2, "BOUNDED_PASS": 3, "INCOMPLETE": 3, "UNKNOWN": 3, "NO_VIOLATION_SAMPLED": 3}
 
@@ -319,6 +321,123 @@ def cmd_report(args):
     return 0
 
 
+def _labelled(pairs):
+    out = []
+    for item in pairs or []:
+        require("=" in item, "candidates are given as label=path, got %r" % item)
+        label, path = item.split("=", 1)
+        require(label and path, "candidates are given as label=path")
+        out.append((label, path))
+    return out
+
+
+def _consts(args):
+    if getattr(args, "constants", None):
+        from .values import freeze
+        data = json.loads(Path(args.constants).read_text(encoding="utf-8")) if Path(args.constants).is_file() else json.loads(args.constants)
+        return {k: freeze(v) for k, v in data.items()}
+    if getattr(args, "model", None):
+        from .spec import load_model
+        return load_model(args.model).constants
+    return {}
+
+
+def _write_report(out, report):
+    import os
+    out = Path(out)
+    require(not out.exists(), "report exists; divergence reports are recomputed into a new file: %s" % out)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    for c in report["candidates"]:
+        c["path"] = os.path.relpath(Path(c["path"]).resolve(), out.resolve().parent)
+    out.write_text(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    return str(out)
+
+
+def cmd_requirements(args):
+    from .generation import Requirements
+    r = Requirements(args.requirements).check()
+    emit(r)
+    return EXIT[r["verdict"]]
+
+
+def cmd_trace_rules(args):
+    from .generation import requirements_for, trace_rules
+    from .spec import load_contract
+    c = load_contract(args.contract)
+    r = trace_rules(c, requirements_for(c, args.requirements))
+    emit({k: r[k] for k in ("verdict", "issues", "coverage", "dispositions", "requirements_digest")})
+    return EXIT[r["verdict"]]
+
+
+def cmd_rules_divergence(args):
+    from .generation import Requirements, rules_divergence
+    from .spec import load_contract
+    reqs = Requirements(args.requirements)
+    candidates = []
+    for label, path in _labelled(args.candidate):
+        c = load_contract(path)
+        require(c.requirements_ref, "candidate %s has no requirements link" % label)
+        linked = Path(path).resolve().parent / c.requirements_ref
+        require(linked.resolve() == reqs.path or Requirements(linked).digest() == reqs.digest(),
+                "candidate %s was written against another inventory" % label)
+        candidates.append((label, c))
+    report = rules_divergence(reqs, candidates, _consts(args))
+    path = _write_report(args.out, report)
+    emit({"verdict": report["verdict"], "items": report["items"], "report": path,
+          "next": "rule on every item: fv resolve %s --item <id> --ruling … --by <name> --signer-kind human" % path if report["items"] else None})
+    return EXIT[report["verdict"]]
+
+
+def cmd_model_divergence(args):
+    from .generation import model_divergence
+    from .spec import load_contract, load_model
+    contract = load_contract(args.contract) if args.contract else None
+    candidates = [(label, load_model(path, contract=contract)) for label, path in _labelled(args.candidate)]
+    report = model_divergence(candidates, max_states=args.max_states or 200000)
+    path = _write_report(args.out, report)
+    emit({"verdict": report["verdict"], "items": report["items"], "report": path})
+    return EXIT[report["verdict"]]
+
+
+def cmd_resolve(args):
+    from .generation import resolve, unresolved
+    doc = resolve(args.report, args.item, args.ruling, args.by, args.signer_kind, args.authorization)
+    emit({"ok": True, "unresolved": unresolved(doc)})
+    return 0
+
+
+def cmd_check_review(args):
+    from .generation import check_review, requirements_for
+    from .spec import load_contract
+    c = load_contract(args.contract)
+    r = check_review(args.review, c, requirements_for(c, args.requirements))
+    emit(r)
+    return EXIT[r["verdict"]]
+
+
+def cmd_gen_evidence(args):
+    from .generation import model_evidence, requirements_for, rules_evidence
+    from .receipt import make, now
+    from .spec import load_contract, load_model
+    started = now()
+    if args.kind == "rules":
+        require(args.contract and args.divergence and args.review, "rules evidence needs --contract, --divergence and --review")
+        c = load_contract(args.contract)
+        reqs = requirements_for(c, args.requirements)
+        res = rules_evidence(c, reqs, args.divergence, args.review)
+        inputs = {"contract": dict(c.identity(), path=c.path), "requirements": {"path": str(reqs.path), "digest": reqs.digest()}}
+    else:
+        require(args.model and args.divergence, "model evidence needs --model and --divergence")
+        m = load_model(args.model)
+        res = model_evidence(m, args.divergence, args.entrance, args.calibration)
+        inputs = _inputs(m)
+    inputs["divergence"] = {"path": str(args.divergence), "digest": res["divergence"]["digest"]}
+    receipt = make("generate", inputs, {"kind": args.kind, "entrance": args.entrance, "min_candidates": 2}, res, res["verdict"], "E0", started)
+    path = _save(args, receipt)
+    emit({"verdict": res["verdict"], "reasons": res["reasons"], "receipt": path, "evidence_level": "E0"})
+    return EXIT[res["verdict"]]
+
+
 def cmd_init(args):
     from .scaffold import init
     emit({"ok": True, "written": init(args.dir, args.name, args.entrance)})
@@ -418,6 +537,37 @@ def parser():
     s = sub.add_parser("report", help="markdown summary with what each receipt may and may not claim")
     s.add_argument("receipts", nargs="+")
     s.set_defaults(fn=cmd_report)
+    s = sub.add_parser("requirements-check", help="AI-written requirement inventory: verbatim quotes, every normative sentence accounted for")
+    s.add_argument("--requirements", required=True)
+    s.set_defaults(fn=cmd_requirements)
+    s = sub.add_parser("trace-rules", help="every requirement formalized or dispositioned; every property cites a real requirement")
+    s.add_argument("--contract", required=True); s.add_argument("--requirements")
+    s.set_defaults(fn=cmd_trace_rules)
+    s = sub.add_parser("rules-divergence", help="compare >=2 independently generated contracts per requirement (agenda for the human)")
+    s.add_argument("--requirements", required=True); s.add_argument("--candidate", action="append", required=True, help="label=path")
+    s.add_argument("--model", help="a model supplying the parameter values for semantic comparison")
+    s.add_argument("--constants", help="JSON object (or file) with parameter values")
+    s.add_argument("--out", required=True)
+    s.set_defaults(fn=cmd_rules_divergence)
+    s = sub.add_parser("model-divergence", help="compare >=2 independently generated models by what an observer could see")
+    s.add_argument("--candidate", action="append", required=True, help="label=path")
+    s.add_argument("--contract"); s.add_argument("--max-states", type=int); s.add_argument("--out", required=True)
+    s.set_defaults(fn=cmd_model_divergence)
+    s = sub.add_parser("resolve", help="record a ruling on one divergence item (append-only)")
+    s.add_argument("report"); s.add_argument("--item", required=True); s.add_argument("--ruling", required=True)
+    s.add_argument("--by", required=True); s.add_argument("--signer-kind", choices=["human", "delegated_agent"], required=True)
+    s.add_argument("--authorization")
+    s.set_defaults(fn=cmd_resolve)
+    s = sub.add_parser("check-review", help="fresh-context rules review: complete, untruncated, blocking findings resolved")
+    s.add_argument("review"); s.add_argument("--contract", required=True); s.add_argument("--requirements")
+    s.set_defaults(fn=cmd_check_review)
+    s = sub.add_parser("gen-evidence", help="evidence that rules/model were AI-generated the checkable way (READY / NOT_READY)")
+    s.add_argument("kind", choices=["rules", "model"])
+    s.add_argument("--contract"); s.add_argument("--requirements"); s.add_argument("--model"); s.add_argument("--divergence")
+    s.add_argument("--review"); s.add_argument("--entrance", choices=["spec-first", "code-first"], default="spec-first")
+    s.add_argument("--calibration", help="code-first: conform receipt of the as-is model on traces of the current code")
+    s.add_argument("--out")
+    s.set_defaults(fn=cmd_gen_evidence)
     s = sub.add_parser("init", help="scaffold project assets for entrance A (spec-first) or B (code-first)")
     s.add_argument("--dir", required=True); s.add_argument("--name", required=True)
     s.add_argument("--entrance", choices=["spec-first", "code-first"], required=True)

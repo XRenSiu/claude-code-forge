@@ -12,3 +12,7 @@ modules:
     vectors: vectors.json                # fv gen-tests 的产物，入库；模型变了必须重新生成
     trace_command: ["python3", "impl/harness.py", "--vectors", "vectors.json", "--out", "{out}"]
     approvals: approvals.jsonl           # 契约被削弱时，这里要有对新摘要的显式批准
+    entrance: spec-first                 # code-first 还要 calibration：as-is 模型在当前代码轨迹上的一致性回执
+    rules_divergence: rules-divergence.json   # AI 生成规则的证据：≥2 个隔离候选的分歧与裁决
+    rules_review: rules-review.yaml           # 全新上下文审阅者的发现与裁决
+    model_divergence: model-divergence.json   # AI 生成模型的证据：≥2 个隔离候选在观察者眼里的分歧与裁决

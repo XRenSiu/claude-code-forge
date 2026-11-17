@@ -4,7 +4,7 @@
 
 | 级别 | 产生方式 | 最多能声称 | 不能声称 |
 |---|---|---|---|
-| E0 静态审阅 | `fv lint`、人工阅读需求和模型 | 完成了静态审查 | 已验证正确 |
+| E0 静态审阅 | `fv lint`、`fv trace-rules`、`fv gen-evidence`（AI 生成过程的证据）、人工阅读 | 完成了静态审查；规则与模型经过多份隔离生成、比较、裁决与审阅 | 已验证正确；规则一定忠于需求 |
 | E1 模拟 | `fv simulate`、`quint run` | 这些抽样路径没有发现问题 | 所有可能路径都没问题 |
 | E2 模型检查 | `fv check` / `qualify`、TLC、Apalache、`quint verify` | 这个模型、这个范围、这些假设下，没有违反性质的路径 | 生产代码没有缺陷 |
 | E3 实现验收 | `fv conform`、`fv trace-check`、真实并发测试 | 真实实现通过了这些具体的、留存的检查 | 所有输入和所有真实执行都已证明 |
@@ -21,6 +21,11 @@
 | source-map verify | FRESH | STALE · BROKEN | — |
 | diff-contract | NOT_WEAKENED · APPROVED | WEAKENED | UNKNOWN |
 | ci | SATISFIED | UNSATISFIED | — |
+| requirements-check | COMPLETE | GAPS | — |
+| trace-rules | TRACEABLE | GAPS | — |
+| rules-divergence / model-divergence | AGREED | DIVERGENT（议程，需裁决） | — |
+| check-review | REVIEWED | NOT_REVIEWED | — |
+| gen-evidence | READY | NOT_READY | — |
 | external（quint-run） | — | FAIL | NO_VIOLATION_SAMPLED |
 | external（quint-verify / apalache） | BOUNDED_PASS | FAIL | ERROR |
 

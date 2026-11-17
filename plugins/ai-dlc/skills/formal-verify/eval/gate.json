@@ -28,10 +28,14 @@
       "harness + trace-check (atomic)": "10 vectors, all CONFORMS",
       "harness + trace-check (check-then-act)": "NONCONFORMANT; runtime monitoring reports NoOversell / StockNonNegative",
       "impl/test_concurrency.py": "atomic never oversells; check-then-act oversells under the counterexample schedule",
-      "eval/test_formal.py": "6 lifecycle tests over a real git repo (lock, qualification, conformance, waiver, policy-derived modules, routing)",
+      "eval/test_formal.py": "8 lifecycle tests over a real git repo (inventory + contract lock, rules/model generation gates, calibration, qualification, conformance, waiver, policy-derived modules, routing)",
       "smoke --mutate (5 mutants on formal_gate.py / aidlc_state.py)": "all killed",
-      "trusted-acceptance evaluations (test_formal.py 29 + test_gate_formal.py 9)": "pass on Python 3.11 / 3.12 / 3.13; 12 manual mutants on fvkit and gate.py all killed"
+      "trusted-acceptance evaluations (test_formal.py 29 + test_gate_formal.py 9)": "pass on Python 3.11 / 3.12 / 3.13; 12 manual mutants on fvkit and gate.py all killed",
+      "fv.py requirements-check (example)": "COMPLETE: every requirement/assumption quote verbatim; no uninventoried normative sentence; an invented quote is rejected",
+      "fv.py rules-divergence (example A vs B)": "DIVERGENT: semantic item on R1 with witness remaining=-2 (A false, B true); text item on R3; assumptions item; an equivalent rewrite does not diverge",
+      "fv.py model-divergence (example A vs B)": "DIVERGENT: observable transition sold_out -> pending only in B; B's missing read step is not flagged",
+      "fv.py gen-evidence rules/model": "READY with the committed rulings and review; NOT_READY when unruled, single-candidate, uncompared adopted artifact, deleted candidate, or code-first without calibration"
     },
-    "tier2_status": "NOT RUN — no with/without-skill comparison of the models an agent writes (fidelity to real atomic boundaries is the main risk the skill names). External engines (TLC / Apalache / Quint / FizzBee) were not executed in this repository; their adapters are tested against fixed sample outputs only."
+    "tier2_status": "NOT RUN — no with/without-skill comparison of the models an agent writes (fidelity to real atomic boundaries is the main risk the skill names). External engines (TLC / Apalache / Quint / FizzBee) were not executed in this repository; their adapters are tested against fixed sample outputs only. The example's rule/model candidates were authored for illustration, not produced by real isolated agent runs; divergence measures agreement between generators, not correctness."
   }
 }

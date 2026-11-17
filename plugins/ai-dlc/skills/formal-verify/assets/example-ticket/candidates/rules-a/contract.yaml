@@ -1,0 +1,33 @@
+# 规则候选 A：rule-formalizer 在隔离上下文里只读 requirements.yaml 写出。
+# 被采纳为 ../../contract.yaml（摘要相同；requirements 路径不计入摘要）。
+schema_version: 1
+kind: fv-contract
+id: ticket-ordering
+version: 1
+title: 只剩一张票：从需求到 PR 不超卖
+requirements: ../../requirements.yaml   # 生成者 A（隔离上下文）的候选；被采纳为 ../../contract.yaml
+sources:
+  - {id: R1, ref: "requirements.md#R1"}
+  - {id: R2, ref: "requirements.md#R2"}
+  - {id: R3, ref: "requirements.md#R3"}
+parameters: [STOCK, USERS]
+observables:
+  sold: {type: int, domain: "range(0, 4)", description: "成功订单数（orders.status = success）"}
+  remaining: {type: int, domain: "range(-2, 3)", description: "tickets.remaining"}
+  outcome: {type: map, description: "每个用户的请求结果：none / pending / success / sold_out"}
+assumptions:
+  - {id: A-NO-RESTOCK, text: "检查期间没有补货、退票", source: A1}
+  - {id: A-FAIR, text: "服务正常时，已提交的请求最终会被处理（弱公平），只用于 R3 的活性", source: A2}
+properties:
+  - {id: NoOversell, kind: invariant, expr: "sold <= STOCK", source: R1, text: "成功售出数量不超过可售库存"}
+  - {id: StockNonNegative, kind: invariant, expr: "remaining >= 0", source: R1, text: "剩余可售数量不为负"}
+  - {id: Conservation, kind: invariant, expr: "sold + remaining == STOCK", source: R2, text: "一笔成功订单恰好占用一份库存"}
+  - {id: SoldNeverDecreases, kind: transition, expr: "post.sold >= pre.sold", source: R2, text: "成功订单不会凭空消失"}
+  - {id: SomeoneCanBuy, kind: reachable, expr: "sold == STOCK", source: R1, text: "非空洞：确实能卖出"}
+  - id: EveryRequestAnswered
+    kind: leads_to
+    forall: {u: USERS}
+    from: "outcome[u] == 'pending'"
+    to: "outcome[u] in ('success', 'sold_out')"
+    source: R3
+    text: "已提交的请求最终得到成功或售罄的答复"

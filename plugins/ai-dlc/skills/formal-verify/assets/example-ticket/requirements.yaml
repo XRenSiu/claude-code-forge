@@ -1,0 +1,34 @@
+# fv-requirements：AI 从原始需求抽出的需求清单（入口 A 的 A1 / 入口 B 的 B1）。
+# 每一条都必须逐字引用来源（fv requirements-check 核对引文）；来源里每一句规范性语句
+# （必须 / 不得 / 不会 / 最终 / 恰好 …）都要落到 requirements、assumptions 或 out_of_scope，
+# 一句都不能悄悄漏掉。规则候选（candidates/rules-*）都从这同一份清单出发写。
+schema_version: 1
+kind: fv-requirements
+id: ticket-ordering
+sources:
+  - {id: prd, path: requirements.md}
+requirements:
+  - id: R1
+    text: 只剩 STOCK 张票时，任意并发购买都不得超卖，剩余可售数量不得为负
+    source: {doc: prd, quote: "成功订单数不得超过 STOCK；剩余可售数量不得为负"}
+  - id: R2
+    text: 一笔成功购买恰好占用一份库存，成功订单不会凭空消失
+    source: {doc: prd, quote: "恰好占用一份库存；成功订单不会凭空消失"}
+  - id: R3
+    text: 服务正常时，已提交的请求最终得到成功或售罄的答复
+    source: {doc: prd, quote: "用户最终得到“成功”或“售罄”的明确答复"}
+assumptions:
+  - id: A1
+    text: 检查期间没有补货、退票
+    source: {doc: prd, quote: "检查期间没有补货、退票"}
+  - id: A2
+    text: 服务正常时已提交的请求最终会被处理（只支撑 R3 的活性）
+    source: {doc: prd, quote: "服务正常时，已提交的请求最终会被处理"}
+  - id: A3
+    text: 数据库单条条件 UPDATE 在事务里是原子的（实现层声明，由并发测试另行检验）
+    source: {doc: prd, quote: "数据库的单条条件 UPDATE 在事务里是原子的"}
+out_of_scope:
+  - text: 支付、退款、订单超时释放、崩溃恢复、多场次
+    reason: 各自需要单独的性质与模型
+    source: {doc: prd, quote: "支付、退款、订单超时释放、崩溃恢复、多场次"}
+open_questions: []

@@ -1,9 +1,15 @@
 """Formal-verification preconditions of the AI-DLC lifecycle (fvkit receipts; see /formal-verify).
 
 What is enforced, and where (never waivable with `advance --force`):
-  cards / implement / later   the fv-contract is frozen by the current G2/L5 lock (same bytes)
-  implement / later           a QUALIFIED qualification receipt for exactly the current model and
-                              contract (re-validated: digests, verdict, counterexample replay)
+  cards / implement / later   the fv-contract and its requirement inventory are frozen by the current
+                              G2/L5 lock (same bytes); the rules were AI-generated the checkable way:
+                              inventory quotes verbatim, >=2 isolated candidates compared, every
+                              divergence ruled, the adopted contract among the compared, a complete
+                              fresh-context review with blocking findings resolved
+  implement / later           the model was AI-generated the same way (>=2 isolated candidates, observable
+                              divergence ruled, adopted model among them; code-first: the as-is model
+                              calibrated on traces of the current code), and a QUALIFIED receipt for
+                              exactly the current model and contract (digests, verdict, replay)
   pr / merge / release (E3)   a CONFORMS receipt whose mapped source files are still the ones on disk,
                               and a source map that is FRESH right now
 Which modules are required is explicit (`formal configure --module`) or derived from git: with a
@@ -20,6 +26,7 @@ from pathlib import Path
 
 FV_SCRIPTS = Path(__file__).resolve().parents[2] / "formal-verify" / "scripts"
 sys.path.insert(0, str(FV_SCRIPTS))
+from fvkit.generation import model_evidence, requirements_for, rules_evidence  # noqa: E402
 from fvkit.policy import impact, load_policy  # noqa: E402
 from fvkit.receipt import LEVELS, level_at_least, load as load_receipt, make, validate, write  # noqa: E402
 from fvkit.sourcemap import verify as verify_map  # noqa: E402
@@ -54,10 +61,13 @@ def _file_digest(path):
 def ensure(st):
     st.setdefault("formal", {"status": "not_configured", "modules": {}, "policy": None,
                              "qualification": {}, "conformance": {}, "waivers": []})
+    st["formal"].setdefault("generation", {})
+    st["formal"].setdefault("calibration", {})
     return st["formal"]
 
 
-def configure(st, module=None, contract=None, model=None, source_map=None, min_level="E3", policy=None, settings=None):
+def configure(st, module=None, contract=None, model=None, source_map=None, min_level="E3", policy=None, settings=None,
+              entrance="spec-first"):
     f = ensure(st)
     root = _repo()
     if policy:
@@ -70,10 +80,14 @@ def configure(st, module=None, contract=None, model=None, source_map=None, min_l
             raise FvError("--min-level must be E2 or E3 (use `formal waive` to go lower, with a signature)")
         if min_level == "E3" and not source_map:
             raise FvError("E3 needs --source-map: implementation evidence must be tied to code")
-        m = load_model(model, contract=load_contract(contract))  # lint now, not at the gate
+        if entrance not in ("spec-first", "code-first"):
+            raise FvError("--entrance must be spec-first or code-first")
+        c = load_contract(contract)
+        requirements_for(c)   # rules must trace to an AI-extracted, quote-checked inventory
+        m = load_model(model, contract=c)  # lint now, not at the gate
         f["modules"][module] = {"contract": _rel(contract, root), "model": _rel(model, root),
                                 "source_map": _rel(source_map, root) if source_map else None,
-                                "min_level": min_level, "origin": "explicit", "model_id": m.id}
+                                "min_level": min_level, "origin": "explicit", "model_id": m.id, "entrance": entrance}
     if settings:
         f["settings"] = settings
     if not f["modules"] and not f["policy"]:
@@ -103,7 +117,8 @@ def required(st):
             if not level_at_least(level, "E2"):
                 continue
             out[m["id"]] = {"contract": m["contract"], "model": m["model"], "source_map": m.get("source_map"),
-                            "min_level": level, "origin": "policy" if base else "policy (no branch.base: all modules)"}
+                            "min_level": level, "entrance": m.get("entrance", "spec-first"),
+                            "origin": "policy" if base else "policy (no branch.base: all modules)"}
     for w in f.get("waivers", []):
         if w["module"] in out:
             out[w["module"]]["min_level"] = w["level"]
@@ -126,13 +141,51 @@ def _lock_issues(st, mid, spec, root):
     except ValueError:
         return ["%s: lock file unreadable" % mid]
     target = (root / spec["contract"]).resolve()
-    entries = [e for e in lock.get("files", []) if Path(e["path"]).resolve() == target]
-    if not entries:
-        return ["%s: fv-contract %s is not in the %s lock — re-sign with it (`lock_done_when.py sign … %s`)"
-                % (mid, spec["contract"], lock.get("stage", "?"), spec["contract"])]
-    if entries[0].get("sha256") != _file_digest(target)[7:]:
-        return ["%s: fv-contract changed after it was locked (a weakened rule is a change proposal + G2, never a fix)" % mid]
-    return []
+    out = []
+    try:
+        inventory = requirements_for(load_contract(target)).path
+    except (FvError, OSError) as error:
+        return ["%s: %s" % (mid, error)]
+    for label, path in (("fv-contract", target), ("requirement inventory", inventory)):
+        entries = [e for e in lock.get("files", []) if Path(e["path"]).resolve() == path]
+        rel = os.path.relpath(path, root)
+        if not entries:
+            out.append("%s: %s %s is not in the %s lock — re-sign with it (`lock_done_when.py sign … %s`)"
+                       % (mid, label, rel, lock.get("stage", "?"), rel))
+        elif entries[0].get("sha256") != _file_digest(path)[7:]:
+            out.append("%s: %s changed after it was locked (a weakened rule is a change proposal + G2, never a fix)" % (mid, label))
+    return out
+
+
+def _rules_generation_issues(st, mid, spec, contract, root):
+    rec = (st["formal"].get("generation") or {}).get(mid, {}).get("rules")
+    if not rec:
+        return ["%s: the rules have no AI-generation evidence — >=2 isolated rule-formalizer candidates, `fv rules-divergence`, "
+                "rulings, a formal-reviewer review, then `formal generation --module %s --kind rules`" % (mid, mid)]
+    try:
+        if _file_digest(rec["receipt"]) != rec["digest"]:
+            return ["%s: rules generation receipt changed after it was recorded" % mid]
+        res = rules_evidence(contract, requirements_for(contract), root / rec["divergence"], root / rec["review"])
+    except (FvError, OSError, KeyError, ValueError) as error:
+        return ["%s: rules generation evidence is not current: %s" % (mid, error)]
+    return ["%s: rules generation: %s" % (mid, r) for r in res["reasons"]]
+
+
+def _model_generation_issues(st, mid, spec, model, root):
+    rec = (st["formal"].get("generation") or {}).get(mid, {}).get("model")
+    if not rec:
+        return ["%s: the model has no AI-generation evidence — >=2 isolated model-builder candidates, `fv model-divergence`, "
+                "rulings, then `formal generation --module %s --kind model`" % (mid, mid)]
+    cal = (st["formal"].get("calibration") or {}).get(mid)
+    try:
+        if _file_digest(rec["receipt"]) != rec["digest"]:
+            return ["%s: model generation receipt changed after it was recorded" % mid]
+        if cal and _file_digest(cal["receipt"]) != cal["digest"]:
+            return ["%s: calibration receipt changed after it was recorded" % mid]
+        res = model_evidence(model, root / rec["divergence"], spec.get("entrance", "spec-first"), cal and cal["receipt"])
+    except (FvError, OSError, KeyError, ValueError) as error:
+        return ["%s: model generation evidence is not current: %s" % (mid, error)]
+    return ["%s: model generation: %s" % (mid, r) for r in res["reasons"]]
 
 
 def _qualification_issues(st, mid, contract, model):
@@ -187,7 +240,9 @@ def guard(st, target):
             issues.append("%s: contract/model do not load: %s" % (mid, error))
             continue
         issues += _lock_issues(st, mid, spec, root)
+        issues += _rules_generation_issues(st, mid, spec, contract, root)
         if target != "cards":
+            issues += _model_generation_issues(st, mid, spec, model, root)
             issues += _qualification_issues(st, mid, contract, model)
         if level_at_least(level, "E3") and STAGE_ORDER.index(target) >= STAGE_ORDER.index("pr"):
             issues += _conformance_issues(st, mid, spec, contract, model, root)
@@ -250,6 +305,58 @@ def conform_module(st, aidlc_root, slug, traces, mid=None, hidden_steps=0):
     return {"module": mid, "verdict": c["verdict"], "reasons": c["reasons"], "receipt": path}
 
 
+def record_generation(st, aidlc_root, slug, kind, divergence, review=None, mid=None):
+    """Record that the rules/model were AI-generated the checkable way; the guard recomputes it every time."""
+    mid, spec = _module(st, mid)
+    root, contract, model = _load(spec)
+    started = now()
+    if kind == "rules":
+        if not review:
+            raise FvError("rules generation needs --review (the formal-reviewer's fv-rules-review)")
+        res = rules_evidence(contract, requirements_for(contract), divergence, review)
+        inputs = {"contract": dict(contract.identity(), path=spec["contract"])}
+    elif kind == "model":
+        cal = (st["formal"].get("calibration") or {}).get(mid)
+        res = model_evidence(model, divergence, spec.get("entrance", "spec-first"), cal and cal["receipt"])
+        inputs = {"model": dict(model.identity(), path=spec["model"]), "contract": dict(contract.identity(), path=spec["contract"])}
+    else:
+        raise FvError("--kind must be rules or model")
+    inputs["divergence"] = {"path": _rel(divergence, root), "digest": res["divergence"]["digest"]}
+    receipt = make("generate", inputs, {"kind": kind, "entrance": spec.get("entrance", "spec-first"), "min_candidates": 2},
+                   res, res["verdict"], "E0", started)
+    path = write(_out_dir(aidlc_root, slug, "generate-%s-%s" % (kind, mid)), receipt)
+    entry = {"receipt": str(Path(path).resolve()), "digest": _file_digest(path), "verdict": res["verdict"],
+             "divergence": _rel(divergence, root), "review": _rel(review, root) if review else None, "at": started}
+    ensure(st)["generation"].setdefault(mid, {})[kind] = entry
+    st.setdefault("artifacts", {})["formal.generate.%s.%s" % (kind, mid)] = entry["receipt"]
+    return {"module": mid, "kind": kind, "verdict": res["verdict"], "reasons": res["reasons"], "receipt": path}
+
+
+def calibrate_module(st, aidlc_root, slug, as_is_model, traces, mid=None, hidden_steps=0):
+    """Code-first: the AI-built as-is model must explain traces of the CURRENT code before it is believed."""
+    from fvkit.qualify import conform
+    from fvkit.trace import check_files
+    mid, spec = _module(st, mid)
+    if not spec.get("source_map"):
+        raise FvError("module %s has no source map; calibration ties the as-is model to code" % mid)
+    root, contract, _ = _load(spec)
+    model = load_model(as_is_model, contract=contract)
+    started = now()
+    sm = verify_map(root / spec["source_map"], model)
+    tr = check_files(model, traces, hidden_steps=hidden_steps) if traces else {"verdict": "INCOMPLETE", "traces": []}
+    c = conform(model, sm, tr)
+    head = subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip() or None
+    result = {"source_map": {k: sm[k] for k in ("status", "issues", "drifted_files", "stale", "files", "map_digest")},
+              "traces": tr, "reasons": c["reasons"], "source": {"head": head, "files": sm["files"]}, "replays": []}
+    receipt = make("conform", {"model": dict(model.identity(), path=_rel(as_is_model, root)),
+                               "contract": dict(contract.identity(), path=spec["contract"])},
+                   {"hidden_steps": hidden_steps, "purpose": "calibration"}, result, c["verdict"], "E3", started)
+    path = write(_out_dir(aidlc_root, slug, "calibrate-" + mid), receipt)
+    ensure(st)["calibration"][mid] = {"receipt": str(Path(path).resolve()), "digest": _file_digest(path), "verdict": c["verdict"],
+                                      "model_digest": model.digest, "head": head, "at": started}
+    return {"module": mid, "verdict": c["verdict"], "reasons": c["reasons"], "receipt": path}
+
+
 def waive(st, mid, level, reason, by, signer_kind, authorization=None):
     if level not in LEVELS[:3]:
         raise FvError("a waiver lowers the requirement to E0, E1 or E2")
@@ -274,7 +381,9 @@ def status(st):
     except (FvError, OSError) as error:
         return {"status": "error", "error": str(error)}
     for mid, spec in mods.items():
-        out["required"][mid] = dict(spec, qualification=(f.get("qualification") or {}).get(mid),
+        out["required"][mid] = dict(spec, generation=(f.get("generation") or {}).get(mid),
+                                    calibration=(f.get("calibration") or {}).get(mid),
+                                    qualification=(f.get("qualification") or {}).get(mid),
                                     conformance=(f.get("conformance") or {}).get(mid))
-    out["unmet_for"] = {t: guard(st, t) for t in ("implement", "pr")}
+    out["unmet_for"] = {t: guard(st, t) for t in ("cards", "implement", "pr")}
     return out

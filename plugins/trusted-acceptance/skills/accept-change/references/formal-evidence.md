@@ -31,6 +31,16 @@ python3 "$SKILL_DIR/scripts/acceptance.py" validate-formal conform.json \
 - **重算（`--rerun`）**：用当前检查器重跑模型检查、资格判定（含变异）或轨迹一致性，确定性字段必须逐项相同。不同构建的 fvkit 产生的回执不做重算比较，直接拒绝，要求用当前构建重跑。
 - **外部引擎**：重新解析留存的原始输出。`quint run` 永远不能是 PASS；`quint verify` / Apalache 最多是 `BOUNDED_PASS`。
 
+## 规则与模型是怎么来的（生成证据）
+
+规则合同和模型由 AI 生成（AI-DLC `/formal-verify` 的必经阶段）。生成过程本身留有可检证据：逐字引文的需求清单
+（`fv requirements-check`），规则追溯（`fv trace-rules`），至少两份隔离生成候选的语义比较与人的裁决
+（`fv rules-divergence` / `fv model-divergence` / `fv resolve`），全新上下文审阅（`fv check-review`），最后收成
+`fv gen-evidence` 回执（command `generate`，E0）。`validate-formal` 会核对这类回执的自洽。
+
+生成证据证明的是“规则和模型经过了多份独立生成、比较、裁决与审阅”，**不证明规则正确**。验收时的权威仍是维护者批准、
+写进政策的模型与合同摘要；起草合同时，没有生成证据的规则不应提交审批。
+
 ## 受保护 gate 的形式化要求（policy schema 2）
 
 `acceptance-control/gate.py` 接受 `schema_version: 2` 的政策：v1 全部字段，加上 `formal` 数组。每一条由维护者在批准时固定：

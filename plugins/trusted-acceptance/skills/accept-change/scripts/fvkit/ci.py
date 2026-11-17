@@ -55,6 +55,12 @@ def run_ci(policy_path, base, out, tier="auto", all_modules=False, root=None):
         try:
             contract = load_contract(root / m["contract"])
             model = load_model(root / m["model"], contract=contract)
+            from .generation import model_evidence, requirements_for, rules_evidence
+            gen = rules_evidence(contract, requirements_for(contract), root / m["rules_divergence"], root / m["rules_review"])
+            rec["reasons"] += ["rules generation: " + r for r in gen["reasons"]]
+            mgen = model_evidence(model, root / m["model_divergence"], m.get("entrance", "spec-first"),
+                                  root / m["calibration"] if m.get("calibration") else None)
+            rec["reasons"] += ["model generation: " + r for r in mgen["reasons"]]
             if base and (hit.get(m["id"]) or {}).get("contract_changed"):
                 shown = git(root, "show", "%s:%s" % (base, m["contract"]), check=False)
                 if shown.returncode == 0:

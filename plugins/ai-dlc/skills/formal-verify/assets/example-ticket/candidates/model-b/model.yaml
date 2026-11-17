@@ -1,0 +1,33 @@
+# 模型候选 B：另一个 model-builder 在隔离上下文里独立写出，没见过候选 A。
+# 它没有“读库存”这一步（对观察者不可见，不构成分歧），但允许售罄后再次提交——
+# 这在可观测层面多出一种迁移，见 ../../model-divergence.json。
+schema_version: 1
+kind: fv-model
+id: ticket-reserve-b
+contract: ../../contract.yaml
+constants: {STOCK: 1, USERS: ["alice", "bob"]}
+variables:
+  stock: {init: "STOCK"}
+  orders: {init: "set()"}
+  status: {init: "{u: 'none' for u in USERS}"}
+actions:
+  submit:
+    params: {u: USERS}
+    guard: "status[u] in ('none', 'sold_out')"
+    update: {status: "update(status, u, 'pending')"}
+  reserve:
+    params: {u: USERS}
+    guard: "status[u] == 'pending' and stock > 0"
+    update: {stock: "stock - 1", orders: "orders | {u}", status: "update(status, u, 'success')"}
+  refuse:
+    params: {u: USERS}
+    guard: "status[u] == 'pending' and stock <= 0"
+    update: {status: "update(status, u, 'sold_out')"}
+fairness:
+  - {action: reserve, kind: weak, per_params: true}
+  - {action: refuse, kind: weak, per_params: true}
+terminal: "all(status[u] != 'pending' for u in USERS)"
+observables:
+  sold: "len(orders)"
+  remaining: "stock"
+  outcome: "status"

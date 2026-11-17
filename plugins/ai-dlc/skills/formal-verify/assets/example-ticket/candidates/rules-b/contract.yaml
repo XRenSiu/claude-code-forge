@@ -1,0 +1,27 @@
+# 规则候选 B：另一个 rule-formalizer 在隔离上下文里只读 requirements.yaml 写出，没见过候选 A。
+# 与 A 的分歧见 ../../rules-divergence.json（R1 少了“剩余不为负”；R3 的“答复”读成了“成功”；少一条公平假设）。
+schema_version: 1
+kind: fv-contract
+id: ticket-ordering
+version: 1
+title: 不超卖（候选 B）
+requirements: ../../requirements.yaml
+parameters: [STOCK, USERS]
+observables:
+  sold: {type: int, domain: "range(0, 4)"}
+  remaining: {type: int, domain: "range(-2, 3)"}
+  outcome: {type: map}
+assumptions:
+  - {id: NO-RESTOCK, text: "检查期间没有补货、退票", source: A1}
+properties:
+  - {id: AtMostStock, kind: invariant, expr: "sold <= STOCK", source: R1, text: "成功订单数不超过 STOCK"}
+  - {id: OneUnitPerOrder, kind: invariant, expr: "sold + remaining == STOCK", source: R2, text: "每笔成功订单恰好扣一份库存"}
+  - {id: OrdersPersist, kind: transition, expr: "post.sold >= pre.sold", source: R2, text: "成功订单不会消失"}
+  - {id: CanSell, kind: reachable, expr: "sold == STOCK", source: R1, text: "库存能被卖完"}
+  - id: Answered
+    kind: leads_to
+    forall: {user: USERS}
+    from: "outcome[user] == 'pending'"
+    to: "outcome[user] == 'success'"
+    source: R3
+    text: 提交的请求最终得到答复

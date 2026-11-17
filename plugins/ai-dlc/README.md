@@ -81,7 +81,7 @@
 
 | skill | 一句话 | 机械预门 |
 |---|---|---|
-| `/formal-verify` | 状态性需求的两个入口（新需求先建模 / 已有代码先还原行为）汇入一条主干：fv-contract（规则，随 G2 锁）→ fv-model → 模型检查（最短反例、公平下的活性、对称约简）→ 反例分诊（R17–R23）→ 变异资格 → 模型驱动向量 → 真实代码轨迹一致性（E3）→ 源码映射漂移与契约弱化检测 → 风险分级 CI | `fv.py qualify` `fv.py conform` `fv.py diff-contract` `formal_gate.py`（`advance implement/pr/merge` 的前置，`--force` 越不过） |
+| `/formal-verify` | **AI 生成规则与模型（必经）**：逐字引文的需求清单 → ≥2 个隔离 `rule-formalizer` 候选 → 有限域语义比较 → 人裁决 → `formal-reviewer` 全新上下文审 → G2；≥2 个隔离 `model-builder` 候选 → 可观测行为比较 → 人裁决（code-first 再用当前代码轨迹校准）。状态性需求的两个入口（新需求先建模 / 已有代码先还原行为）汇入一条主干：fv-contract（规则，随 G2 锁）→ fv-model → 模型检查（最短反例、公平下的活性、对称约简）→ 反例分诊（R17–R23）→ 变异资格 → 模型驱动向量 → 真实代码轨迹一致性（E3）→ 源码映射漂移与契约弱化检测 → 风险分级 CI | `fv.py gen-evidence` `fv.py qualify` `fv.py conform` `fv.py diff-contract` `formal_gate.py`（`advance cards/implement/pr/merge` 的前置，`--force` 越不过） |
 
 完整示例 `skills/formal-verify/assets/example-ticket/`：初版“先读后扣”设计找到两人都买成功的反例，修正为提交时原子预占；真实 SQLite 实现的 atomic 变体全部轨迹一致，保留的 check-then-act 变体被一致性检查和运行时监控同时抓到。
 
@@ -100,8 +100,8 @@
 | `/acceptance-fleet` | 并行派发六审查 skill → meta-judge → 四态棘轮 DONE / FIX / SPEC_DRIFT / GAMING_RISK | — |
 | `/ratchet` | 跑到达标为止：master 只评估、worker 只执行、卡住换人；用于需要迭代收敛的卡 | — |
 
-五个隔离子 agent：`card-implementer`（单卡实现）、`review-triager`（只读分诊）、`comment-fixer`（单线程 TDD 修复）、`pr-reviewer`
-（只读审查）、`fix-verifier`（全新上下文验证）。
+八个隔离子 agent：`card-implementer`（单卡实现）、`review-triager`（只读分诊）、`comment-fixer`（单线程 TDD 修复）、`pr-reviewer`
+（只读审查）、`fix-verifier`（全新上下文验证）；形式化验证的 `rule-formalizer` / `model-builder`（各至少两份隔离生成，互不可见）与 `formal-reviewer`（全新上下文只读审规则）。
 
 > 与 `looper` / `done-when-pipeline` / `ratchet` 同时启用时 `/psl` 等同名，用命名空间 `/ai-dlc:<name>` 区分；源插件仍是上游，AI-DLC 内的副本带接线段。
 

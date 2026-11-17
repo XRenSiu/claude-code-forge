@@ -46,7 +46,7 @@ Usage:
   aidlc_state.py verification configure|status|run|prepare|submit|poll|check|task [--slug S]
                         # project self-check, local review and remote acceptance remain separate;
                         # see references/verification.md for the operator-owned config and protocol
-  aidlc_state.py formal configure|status|qualify|conform|check|waive [--slug S]
+  aidlc_state.py formal configure|status|generation|calibrate|qualify|conform|check|waive [--slug S]
                         # fvkit formal verification (see ../formal-verify/SKILL.md): the fv-contract rides in the
                         # G2 lock, implement needs a QUALIFIED design, pr/merge need current E3 conformance;
                         # none of it is waivable with advance --force — only `formal waive` signed by a human
@@ -2650,7 +2650,17 @@ def cmd_formal(a):
             settings = {k: v for k, v in (("max_states", a.max_states), ("allow_bounded", a.allow_bounded or None),
                                           ("min_depth", a.min_depth)) if v is not None}
             result = fg.configure(st, module=a.module, contract=a.contract, model=a.model, source_map=a.source_map,
-                                  min_level=a.min_level, policy=a.policy, settings=settings or None)
+                                  min_level=a.min_level, policy=a.policy, settings=settings or None, entrance=a.entrance)
+        elif a.action == "generation":
+            if not (a.kind and a.divergence):
+                die("formal generation needs --kind rules|model and --divergence (plus --review for rules)", 2)
+            result = fg.record_generation(st, a.root, a.slug, a.kind, a.divergence, a.review, a.module)
+            code = 0 if result["verdict"] == "READY" else 1
+        elif a.action == "calibrate":
+            if not a.model:
+                die("formal calibrate needs --model <the as-is model> and --traces from the current code", 2)
+            result = fg.calibrate_module(st, a.root, a.slug, a.model, a.traces or [], a.module, a.hidden_steps)
+            code = 0 if result["verdict"] == "CONFORMS" else 1
         elif a.action == "qualify":
             result = fg.qualify_module(st, a.root, a.slug, a.module)
             code = 0 if result["verdict"] == "QUALIFIED" else 1
@@ -2675,7 +2685,7 @@ def cmd_formal(a):
         save(a.root, a.slug, st)
         refs = [{"type": "references", "target": result["receipt"]}] if isinstance(result, dict) and result.get("receipt") else []
         ledger_append(a.root, a.slug, "formal_" + a.action,
-                      json.dumps({k: result.get(k) for k in ("module", "verdict", "reasons", "level", "reason")
+                      json.dumps({k: result.get(k) for k in ("module", "kind", "verdict", "reasons", "level", "reason")
                                   if isinstance(result, dict) and result.get(k) is not None}, ensure_ascii=False)[:600],
                       stage=st["stage"], decision=str(result.get("verdict", "")) if isinstance(result, dict) else "",
                       by=(a.by or "engine"), refs=refs)
@@ -2813,7 +2823,9 @@ def main():
     s.add_argument("--task-status", choices=["active", "cancelled", "superseded"])
     s.add_argument("--revision", type=int); s.add_argument("--reason")
     s = P("formal")
-    s.add_argument("action", choices=["configure", "status", "qualify", "conform", "check", "waive"])
+    s.add_argument("action", choices=["configure", "status", "generation", "calibrate", "qualify", "conform", "check", "waive"])
+    s.add_argument("--entrance", choices=["spec-first", "code-first"], default="spec-first")
+    s.add_argument("--kind", choices=["rules", "model"]); s.add_argument("--divergence"); s.add_argument("--review")
     s.add_argument("--policy", help="verification/policy.yaml (fv-policy): required modules come from the diff vs branch.base")
     s.add_argument("--module"); s.add_argument("--contract"); s.add_argument("--model"); s.add_argument("--source-map", dest="source_map")
     s.add_argument("--min-level", dest="min_level", default="E3", choices=["E2", "E3"])

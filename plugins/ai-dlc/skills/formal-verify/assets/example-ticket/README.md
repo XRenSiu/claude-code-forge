@@ -1,11 +1,25 @@
 # 示例：只剩一张票，从需求一路走到可合并的证据
 
 在仓库根目录运行（需要 PyYAML）。`FV` 指向本 Skill 的 `scripts/fv.py`；所有回执写到仓库外的临时目录。
+`candidates/` 里的规则与模型候选是为演示而撰写的，代表两个互不可见的 AI 生成者（见 `../../references/generation.md`）；`rules-divergence.json` / `model-divergence.json` 里的裁决人是示例。
 
 ```bash
 FV="python3 plugins/ai-dlc/skills/formal-verify/scripts/fv.py"
 EX=plugins/ai-dlc/skills/formal-verify/assets/example-ticket
 OUT=$(mktemp -d)
+
+# G-1 到 G-5：AI 生成规则（必经）。清单的引文逐字存在、规范句一句不漏；两份隔离候选逐需求比较
+$FV requirements-check --requirements $EX/requirements.yaml                          # COMPLETE
+$FV rules-divergence --requirements $EX/requirements.yaml \
+    --candidate A=$EX/candidates/rules-a/contract.yaml --candidate B=$EX/candidates/rules-b/contract.yaml \
+    --model $EX/model.yaml --out $OUT/rules-divergence.json                          # DIVERGENT：R1 有见证值 remaining=-2
+$FV check-review $EX/rules-review.yaml --contract $EX/contract.yaml                  # REVIEWED
+$FV gen-evidence rules --contract $EX/contract.yaml --divergence $EX/rules-divergence.json --review $EX/rules-review.yaml   # READY（裁决已在入库的报告里）
+
+# G-6 到 G-8：AI 建模（必经）。两份隔离模型候选在观察者层面比较
+$FV model-divergence --candidate A=$EX/candidates/model-a/model.yaml --candidate B=$EX/candidates/model-b/model.yaml \
+    --out $OUT/model-divergence.json                                                 # DIVERGENT：B 允许售罄后再次提交
+$FV gen-evidence model --model $EX/model.yaml --divergence $EX/model-divergence.json # READY
 
 # A3/A4：初版设计（先读后扣）→ 最短反例，两人都买成功，sold=2
 $FV check --model $EX/model-check-then-act.yaml --out $OUT/check-then-act.json     # 退出 1

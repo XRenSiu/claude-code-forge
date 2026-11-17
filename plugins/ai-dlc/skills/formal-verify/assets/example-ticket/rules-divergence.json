@@ -1,0 +1,97 @@
+{
+  "candidates": [
+    {
+      "contract_id": "ticket-ordering",
+      "digest": "sha256:c9d5267076462d1b6892aaade52a130d8691a56ce5c71c6fbdf083fa71d3c7ac",
+      "label": "A",
+      "path": "candidates/rules-a/contract.yaml"
+    },
+    {
+      "contract_id": "ticket-ordering",
+      "digest": "sha256:24fd21761d154b526812e6848316b39a9148a31c3e84bb931aa14dc2390ca302",
+      "label": "B",
+      "path": "candidates/rules-b/contract.yaml"
+    }
+  ],
+  "constants": {
+    "STOCK": "1",
+    "USERS": "[\"alice\", \"bob\"]"
+  },
+  "items": [
+    {
+      "by_candidate": {
+        "A": false,
+        "B": true
+      },
+      "detail": "candidates disagree on this observable valuation",
+      "id": "D1",
+      "kind": "invariant",
+      "part": "expr",
+      "requirement": "R1",
+      "type": "semantic",
+      "witness": {
+        "remaining": "-2",
+        "sold": "0"
+      }
+    },
+    {
+      "by_candidate": {
+        "A": [
+          "outcome[u] == 'pending' ~> outcome[u] in ('success', 'sold_out')"
+        ],
+        "B": [
+          "outcome[user] == 'pending' ~> outcome[user] == 'success'"
+        ]
+      },
+      "detail": "no finite domain for ['outcome']; compared by text only",
+      "id": "D2",
+      "kind": "leads_to",
+      "requirement": "R3",
+      "type": "unverified_equivalence"
+    },
+    {
+      "by_candidate": {
+        "A": [
+          "服务正常时，已提交的请求最终会被处理（弱公平），只用于 R3 的活性",
+          "检查期间没有补货、退票"
+        ],
+        "B": [
+          "检查期间没有补货、退票"
+        ]
+      },
+      "detail": "stated assumptions differ; each one narrows the guarantee",
+      "id": "D3",
+      "type": "assumptions"
+    }
+  ],
+  "kind": "fv-rules-divergence",
+  "requirements_digest": "sha256:b6656d4c8cc999a4b75ee8ed11e791b7c432e2d81e6d83008ce0a8e483eedce2",
+  "rulings": [
+    {
+      "at": "2026-11-17T10:40:38+00:00",
+      "authorization": null,
+      "by": "example-owner",
+      "item": "D1",
+      "ruling": "采用 A：R1 原文同时要求“剩余可售数量不得为负”，B 漏了这半句",
+      "signer_kind": "human"
+    },
+    {
+      "at": "2026-11-17T10:40:38+00:00",
+      "authorization": null,
+      "by": "example-owner",
+      "item": "D2",
+      "ruling": "采用 A：R3 原文是“成功或售罄”的答复；B 把答复读成必须成功，会把正确的售罄判为违反",
+      "signer_kind": "human"
+    },
+    {
+      "at": "2026-11-17T10:40:38+00:00",
+      "authorization": null,
+      "by": "example-owner",
+      "item": "D3",
+      "ruling": "采用 A：A-FAIR 是 R3 活性所需的环境假设（清单 A2），B 未声明",
+      "signer_kind": "human"
+    }
+  ],
+  "schema_version": 1,
+  "verdict": "DIVERGENT"
+}

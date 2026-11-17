@@ -23,13 +23,14 @@ schema_version: 1
 kind: fv-contract
 id: ticket-ordering
 version: 1                      # 每次改规则递增；摘要另算
+requirements: requirements.yaml # 必填：规则追溯到的 fv-requirements 清单（路径不计入摘要）
 parameters: [STOCK, USERS]      # 模型必须定义的常量
 observables:                    # 规则只能用这些词
   sold: {type: int, domain: "range(0, 4)"}   # domain 可选：有了它，弱化检测可以精确枚举
   outcome: {type: map}
 assumptions: [{id: A1, text: "条件 UPDATE 在数据库里是原子的"}]
-properties:
-  - {id: NoOversell, kind: invariant, expr: "sold <= STOCK"}
+properties:                      # 每条都写 source（R 编号或列表）与 text（一句自然语言）
+  - {id: NoOversell, kind: invariant, expr: "sold <= STOCK", source: R1, text: "成功订单不超过库存"}
   - {id: SoldNeverDecreases, kind: transition, expr: "post.sold >= pre.sold"}
   - {id: SomeoneCanBuy, kind: reachable, expr: "sold == STOCK"}     # 防空洞：必须能到达
   - {id: Answered, kind: leads_to, forall: {u: USERS}, from: "outcome[u] == 'pending'", to: "outcome[u] != 'pending'"}
@@ -37,6 +38,13 @@ properties:
 ```
 
 `observables` 的类型（`int bool str set seq map any`）决定轨迹里 JSON 的解读方式。`forall` 的域只能用 parameters。
+假设的 `source` 指向清单里的 A / R 编号，或写 `environment` / `design`。不形式化的需求写进
+`dispositions: [{requirement: R5, status: not_formalizable|out_of_scope|covered_by_tests|covered_by_other_module, reason: …}]`。
+
+## fv-requirements（AI 抽出的需求清单）
+
+见 [generation.md](generation.md#1-需求清单g-1)：`sources`、`requirements` / `assumptions`（每条 `source: {doc, quote}` 或 `{doc, ac}`）、`out_of_scope`、`open_questions`。
+摘要覆盖清单本身和每个来源文件的字节：原文一改，清单就要重新确认。
 
 ## fv-model（可执行设计）
 
@@ -115,6 +123,11 @@ protected_paths: ["src/tickets/**"]
 `sync`（审阅后执行）写入 `source-map.lock.json`：文件摘要、模型摘要、审阅时的提交、审阅人和理由；同时追加一行到 `source-map.sync-log.jsonl`。
 `verify` 的结论：FRESH；STALE（受保护路径变了、模型变了、映射被改了、从未同步）；BROKEN（锚点丢失、动作未映射、路径越界）。
 
+## 分歧报告与审阅
+
+- `fv-rules-divergence` / `fv-model-divergence`（JSON，由 `fv rules-divergence` / `fv model-divergence` 写）：`candidates`（标签、摘要、相对报告的路径）、`items`（D* / M*，含类型、见证）、`rulings`（只由 `fv resolve` 追加：item、ruling、by、signer_kind、authorization、at）。
+- `fv-rules-review`（YAML，由 `formal-reviewer` 写）：`contract_digest`、`requirements_digest`、`reviewer: {name, context: fresh}`、`findings`（id、category ∈ misread / vacuous / over_restrictive / under_specified / hidden_assumption / missing / other、blocking、detail、requirement / property、`resolution: {ruling, by, signer_kind[, authorization]}`）、`review_complete: {status: complete, findings_count}`。
+
 ## 策略（fv-policy）
 
 ```yaml
@@ -125,7 +138,8 @@ risk_classes: {concurrency: {min_level: E3, tier: core}}   # 内置默认还有 
 tiers: {core: {max_states: 500000, time_seconds: 900, mutants: true}}   # fast / core / deep 内置默认
 modules:
   - {id: ticket-ordering, risk: concurrency, paths: ["src/tickets/**"], contract: …, model: …, source_map: …,
-     vectors: …, trace_command: ["python3", "tests/harness.py", "--out", "{out}"], approvals: approvals.jsonl}
+     vectors: …, trace_command: ["python3", "tests/harness.py", "--out", "{out}"], approvals: approvals.jsonl,
+     entrance: spec-first, rules_divergence: …, rules_review: …, model_divergence: …}   # code-first 另需 calibration
 ```
 
-`trace_command` 是 argv 数组，不经过 shell；`{out}` 会被替换成 CI 输出下的新目录。`approvals` 是 `fv approve` 追加写入的 JSONL，只有它能把对新合同摘要的 WEAKENED 变成 APPROVED。
+E2 以上的模块必须声明 AI 生成证据（`rules_divergence`、`rules_review`、`model_divergence`，code-first 还要 `calibration`），`fv ci` 每次重算。`trace_command` 是 argv 数组，不经过 shell；`{out}` 会被替换成 CI 输出下的新目录。`approvals` 是 `fv approve` 追加写入的 JSONL，只有它能把对新合同摘要的 WEAKENED 变成 APPROVED。

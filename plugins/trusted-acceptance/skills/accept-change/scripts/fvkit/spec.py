@@ -16,6 +16,7 @@ MAX_DOC_BYTES = 2 * 1024 * 1024
 PROPERTY_KINDS = ("invariant", "transition", "reachable", "leads_to", "eventually", "infinitely_often")
 LIVENESS_KINDS = ("leads_to", "eventually", "infinitely_often")
 OBS_TYPES = ("int", "bool", "str", "set", "seq", "map", "any")
+DISPOSITIONS = ("not_formalizable", "out_of_scope", "covered_by_tests", "covered_by_other_module")
 MUTATION_OPS = ("set_guard", "set_update", "drop_update", "drop_action", "add_action", "set_init",
                 "drop_fairness", "set_observable", "set_constant")
 
@@ -101,7 +102,7 @@ def _text(v, where):
 
 
 class Property:
-    __slots__ = ("id", "kind", "expr", "from_", "to", "forall", "source", "text")
+    __slots__ = ("id", "kind", "expr", "from_", "to", "forall", "source", "sources", "text")
 
     def __init__(self, raw, where):
         _keys(raw, ["id", "kind"], ["expr", "from", "to", "forall", "source", "text"], where)
@@ -110,7 +111,11 @@ class Property:
         self.id = raw["id"]
         self.kind = raw["kind"]
         require(self.kind in PROPERTY_KINDS, "%s: kind must be one of %s" % (where, PROPERTY_KINDS))
-        self.source = raw.get("source")
+        src = raw.get("source")
+        require(src is None or isinstance(src, str) or (isinstance(src, list) and src and all(isinstance(x, str) for x in src)),
+                where + ": source must be a requirement id or a list of ids")
+        self.source = src
+        self.sources = [] if src is None else [src] if isinstance(src, str) else list(src)
         self.text = raw.get("text")
         if self.kind == "leads_to":
             require("from" in raw and "to" in raw and "expr" not in raw, where + ": leads_to needs from/to (no expr)")
@@ -132,7 +137,7 @@ class Property:
 class Contract:
     def __init__(self, doc, path=None):
         _keys(doc, ["schema_version", "kind", "id", "version", "observables", "properties"],
-              ["title", "sources", "parameters", "assumptions", "description"], "contract")
+              ["title", "sources", "parameters", "assumptions", "description", "requirements", "dispositions"], "contract")
         require(doc["schema_version"] == 1 and doc["kind"] == "fv-contract", "unsupported contract (need schema_version 1, kind fv-contract)")
         require(type(doc["version"]) is int and doc["version"] >= 1, "contract version must be a positive integer")
         self.doc, self.path, self.id, self.version = doc, path, _text(doc["id"], "contract.id"), doc["version"]
@@ -154,6 +159,14 @@ class Contract:
         self.assumptions = list(doc.get("assumptions") or [])
         for i, a in enumerate(self.assumptions):
             _keys(a, ["id", "text"], ["kind", "source"], "assumption[%d]" % i)
+        self.requirements_ref = doc.get("requirements")
+        require(self.requirements_ref is None or (isinstance(self.requirements_ref, str) and self.requirements_ref.strip()),
+                "contract.requirements must be a path to an fv-requirements document")
+        self.dispositions = list(doc.get("dispositions") or [])
+        for i, d in enumerate(self.dispositions):
+            _keys(d, ["requirement", "status", "reason"], [], "disposition[%d]" % i)
+            require(d["status"] in DISPOSITIONS, "disposition[%d].status must be one of %s" % (i, DISPOSITIONS))
+            _text(d["reason"], "disposition[%d].reason" % i)
         props = doc["properties"]
         require(isinstance(props, list) and props, "contract.properties must be a nonempty list")
         self.properties = [Property(p, "property[%d]" % i) for i, p in enumerate(props)]
@@ -173,7 +186,9 @@ class Contract:
                     for node in ast.walk(e.tree):
                         if isinstance(node, ast.Attribute):
                             require(node.attr in self.observables, "property %s: pre/post.%s is not an observable" % (p.id, node.attr))
-        self.digest = digest(doc)
+        # A location-only reference (where the requirements file sits) is not part of the rules' identity:
+        # a candidate under candidates/ and the adopted copy next to the model must share one digest.
+        self.digest = digest({k: v for k, v in doc.items() if k != "requirements"})
         self.properties_digest = digest({"observables": doc["observables"], "properties": doc["properties"],
                                          "assumptions": doc.get("assumptions") or [], "parameters": self.parameters})
 
@@ -224,7 +239,7 @@ class Model:
                "assumptions"], "model")
         require(doc["schema_version"] == 1 and doc["kind"] == "fv-model", "unsupported model (need schema_version 1, kind fv-model)")
         self.doc, self.path, self.id = doc, path, _text(doc["id"], "model.id")
-        self.digest = digest(doc)
+        self.digest = digest({k: v for k, v in doc.items() if k != "contract"})   # location-only reference excluded
         self.contract_ref = doc.get("contract")
         consts = doc.get("constants") or {}
         require(isinstance(consts, dict), "constants must be an object")

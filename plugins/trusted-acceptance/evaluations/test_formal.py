@@ -473,6 +473,152 @@ class Cli(unittest.TestCase):
                                          "--by", "rev", "--reason", "x").returncode, 2)
 
 
+class Generation(unittest.TestCase):
+    """AI-written inventory, rules and models are checked, compared and adopted only with rulings."""
+
+    PRD = "# Ticket\n\n| id | must |\n|---|---|\n| R1 | sold must never exceed STOCK and remaining must stay non-negative |\n" \
+          "| R2 | every pending request must eventually be answered |\n\nAssumption: there is no restock during the sale.\n"
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.d = Path(self.tmp.name)
+        (self.d / "prd.md").write_text(self.PRD)
+        self.inventory = {"schema_version": 1, "kind": "fv-requirements", "id": "t", "sources": [{"id": "prd", "path": "prd.md"}],
+                          "requirements": [
+                              {"id": "R1", "text": "no oversell", "source": {"doc": "prd", "quote": "sold must never exceed STOCK and remaining must stay non-negative"}},
+                              {"id": "R2", "text": "answered", "source": {"doc": "prd", "quote": "every pending request must eventually be answered"}}],
+                          "assumptions": [{"id": "A1", "text": "no restock", "source": {"doc": "prd", "quote": "there is no restock during the sale"}}]}
+        self.write("requirements.json", self.inventory)
+
+    def write(self, name, doc):
+        p = self.d / name
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text(json.dumps(doc))
+        return p
+
+    def contract(self, name, r1="sold <= STOCK and remaining >= 0", r2_to="outcome[u] in ('success', 'sold_out')", extra_assumption=True):
+        c = copy.deepcopy(CONTRACT)
+        c["requirements"] = "../requirements.json" if "/" in name else "requirements.json"
+        c["assumptions"] = [{"id": "A-NR", "text": "no restock", "source": "A1"}] + (
+            [{"id": "A-FAIR", "text": "fair scheduling", "source": "environment"}] if extra_assumption else [])
+        c["properties"] = [
+            {"id": "Safe", "kind": "invariant", "expr": r1, "source": "R1", "text": "no oversell"},
+            {"id": "Witness", "kind": "reachable", "expr": "sold == STOCK", "source": "R1", "text": "can sell"},
+            {"id": "Answered", "kind": "leads_to", "forall": {"u": "USERS"}, "from": "outcome[u] == 'pending'", "to": r2_to,
+             "source": "R2", "text": "answered"}]
+        return self.write(name, c)
+
+    def test_inventory_rejects_invented_quotes_and_silent_omissions(self):
+        from fvkit.generation import Requirements
+        self.assertEqual(Requirements(self.d / "requirements.json").check()["verdict"], "COMPLETE")
+        bad = copy.deepcopy(self.inventory)
+        bad["requirements"][0]["source"]["quote"] = "sold must never exceed twice the STOCK"   # nobody wrote this
+        self.write("bad.json", bad)
+        self.assertIn("not verbatim", " ".join(Requirements(self.d / "bad.json").check()["issues"]))
+        dropped = copy.deepcopy(self.inventory)
+        dropped["requirements"] = dropped["requirements"][:1]                                   # R2 silently lost
+        self.write("dropped.json", dropped)
+        self.assertIn("not inventoried", " ".join(Requirements(self.d / "dropped.json").check()["issues"]))
+        dropped["out_of_scope"] = [{"text": "liveness later", "reason": "phase 2", "source": {"doc": "prd", "quote": "every pending request must eventually be answered"}}]
+        self.write("scoped.json", dropped)
+        self.assertEqual(Requirements(self.d / "scoped.json").check()["verdict"], "COMPLETE")   # twin: stated, not dropped
+
+    def test_traceability(self):
+        from fvkit.generation import requirements_for, trace_rules
+        from fvkit.spec import load_contract
+        c = load_contract(self.contract("c.json"))
+        self.assertEqual(trace_rules(c, requirements_for(c))["verdict"], "TRACEABLE")
+        doc = json.loads((self.d / "c.json").read_text())
+        doc["properties"] = doc["properties"][:2]                        # R2 never formalized
+        doc["properties"][0]["source"] = "R9"                            # cites a requirement nobody stated
+        self.write("c2.json", doc)
+        c2 = load_contract(self.d / "c2.json")
+        issues = " ".join(trace_rules(c2, requirements_for(c2))["issues"])
+        self.assertIn("R2 is neither formalized nor dispositioned", issues)
+        self.assertIn("unknown requirement R9", issues)
+        doc["properties"][0]["source"] = "R1"
+        doc["dispositions"] = [{"requirement": "R2", "status": "covered_by_tests", "reason": "E2E covers answering"}]
+        self.write("c3.json", doc)
+        c3 = load_contract(self.d / "c3.json")
+        self.assertEqual(trace_rules(c3, requirements_for(c3))["verdict"], "TRACEABLE")
+
+    def test_rules_divergence_finds_semantic_differences_with_a_witness(self):
+        from fvkit.generation import Requirements, rules_divergence
+        from fvkit.spec import load_contract
+        reqs = Requirements(self.d / "requirements.json")
+        consts = load(ticket_model()).constants
+        a, same = load_contract(self.contract("a/c.json")), load_contract(self.contract("s/c.json", r1="not (sold > STOCK or remaining < 0)"))
+        agreed = rules_divergence(reqs, [("A", a), ("S", same)], consts)
+        self.assertEqual(agreed["verdict"], "AGREED", agreed["items"])   # an equivalent rewrite is not a disagreement
+        weak = load_contract(self.contract("b/c.json", r1="sold <= STOCK", r2_to="outcome[u] == 'success'", extra_assumption=False))
+        report = rules_divergence(reqs, [("A", a), ("B", weak)], consts)
+        types = {i["type"] for i in report["items"]}
+        self.assertEqual(types, {"semantic", "unverified_equivalence", "assumptions"})
+        semantic = next(i for i in report["items"] if i["type"] == "semantic")
+        self.assertEqual(semantic["by_candidate"], {"A": False, "B": True})
+        with self.assertRaises(FvError):
+            rules_divergence(reqs, [("A", a)], consts)                    # one generator is not a comparison
+        doc = json.loads((self.d / "a/c.json").read_text())
+        doc["properties"] = doc["properties"][:2]
+        doc["dispositions"] = [{"requirement": "R2", "status": "covered_by_tests", "reason": "left to E2E"}]
+        skipped = load_contract(self.write("d/c.json", doc))
+        cov = rules_divergence(reqs, [("A", a), ("D", skipped)], consts)
+        item = next(i for i in cov["items"] if i["type"] == "coverage")
+        self.assertEqual((item["requirement"], item["not_formalized_by"]), ("R2", {"D": "covered_by_tests"}))
+
+    def test_adoption_needs_rulings_comparison_and_a_complete_review(self):
+        from fvkit.generation import Requirements, resolve, rules_divergence, rules_evidence
+        from fvkit.spec import load_contract
+        reqs = Requirements(self.d / "requirements.json")
+        consts = load(ticket_model()).constants
+        a_path, b_path = self.contract("a/c.json"), self.contract("b/c.json", r1="sold <= STOCK")
+        report = rules_divergence(reqs, [("A", load_contract(a_path)), ("B", load_contract(b_path))], consts)
+        for c in report["candidates"]:
+            c["path"] = str(Path(c["path"]).resolve())
+        rp = self.write("div.json", report)
+        final = load_contract(self.contract("c.json"))
+        review = {"schema_version": 1, "kind": "fv-rules-review", "contract_digest": final.digest, "requirements_digest": reqs.digest(),
+                  "reviewer": {"name": "formal-reviewer", "context": "fresh"},
+                  "findings": [{"id": "F1", "category": "hidden_assumption", "blocking": True, "detail": "restock"}],
+                  "review_complete": {"status": "complete", "findings_count": 1}}
+        rv = self.write("review.json", review)
+        reasons = " ".join(rules_evidence(final, reqs, rp, rv)["reasons"])
+        self.assertIn("without a ruling", reasons)
+        self.assertIn("blocking finding F1 is unresolved", reasons)
+        with self.assertRaises(FvError):
+            resolve(rp, "D1", "adopt A", "agent", "delegated_agent")     # an agent cannot rule without the human's words
+        for item in report["items"]:
+            resolve(rp, item["id"], "adopt A", "owner", "human")
+        review["findings"][0]["resolution"] = {"ruling": "stated as A-NR", "by": "owner", "signer_kind": "human"}
+        self.write("review.json", review)
+        self.assertEqual(rules_evidence(final, reqs, rp, rv)["verdict"], "READY")
+        review["review_complete"]["findings_count"] = 0                  # a truncated review
+        self.write("review.json", review)
+        self.assertIn("truncated", " ".join(rules_evidence(final, reqs, rp, rv)["reasons"]))
+        review["review_complete"]["findings_count"] = 1
+        self.write("review.json", review)
+        other = load_contract(self.contract("other.json", r1="sold <= STOCK + 1"))
+        self.assertIn("not among the compared candidates", " ".join(rules_evidence(other, reqs, rp, rv)["reasons"]))
+        b_path.write_text(b_path.read_text().replace("sold <= STOCK", "sold < STOCK"))
+        self.assertIn("changed after the divergence", " ".join(rules_evidence(final, reqs, rp, rv)["reasons"]))
+        single = json.loads(rp.read_text())
+        single["candidates"] = single["candidates"][:1]                   # one generator compared with itself
+        sp = self.write("single.json", single)
+        self.assertIn("fewer than 2", " ".join(rules_evidence(final, reqs, sp, rv)["reasons"]))
+
+    def test_model_divergence_compares_what_an_observer_sees(self):
+        from fvkit.generation import model_divergence
+        same = model_divergence([("A", load(ticket_model())), ("A2", load(ticket_model(mutants=False)))])
+        self.assertEqual(same["verdict"], "AGREED")
+        bad = model_divergence([("A", load(ticket_model())), ("B", load(ticket_model(**BUGGY)))])
+        self.assertEqual(bad["verdict"], "DIVERGENT")
+        verdicts = [i for i in bad["items"] if i["type"] == "verdict"]
+        self.assertIn("NoOversell", {i["property"] for i in verdicts})
+        reach = [i for i in bad["items"] if i["type"] == "reachable"]
+        self.assertTrue(any(i["observed"]["sold"] == 2 and i["in_candidates"] == ["B"] for i in reach))
+
+
 class VectorsDeterminism(unittest.TestCase):
     def test_same_seed_same_vectors(self):
         m = load(ticket_model())

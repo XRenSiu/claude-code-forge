@@ -62,7 +62,7 @@ deletion 测试：撤掉本 skill，让引擎"把这个需求做完提 PR"。它
 | G2 | `.done_when.lock`（stage g2） | **人**签，`lock_done_when.py sign --stage g2`；`advance g2` 先跑 `validate_done_when_v2.py --repo <仓库>`（forbidden_paths 要盖住这个仓库真实的测试文件；测试不在 `tests/` 下的仓库声明 `constraints.test_globs`） | 签完就锁：冻结的是判据不是测试名（C1）；L5 测试写完再签一次（stage l5，C6）——用 `--gate verify_*.py` 把**执行契约的闸脚本**一并冻上，否则契约冻了、量它的那把尺没冻（INV-001，I-30）；之后改锁内文件必须附变更提案，改 role=gate 的文件另记一条 deviation 事件并单独提交 |
 | cards | `cards/CARD-xx.yaml` | /plan-cards（`lint_cards.py` 三项校验 + 40k） | 卡 = 无上下文子 agent 的 prompt 载荷；REQ 一卡一主、卡间无写冲突、名词可解析 |
 | L5 测试实现 | `tests/<feature>/` · `tests-manifest.yaml` · `compile_manifest.yaml` · `calibration_report.yaml` | /test-suite-generator（按卡分批的五层金字塔）+ /spec-compile（可判性阶梯）→ /calibrate，都在本插件 | 非实现者写、写完锁；未校准的标准不承重 |
-| 形式化验证（条件触发：并发 / 一致性 / 权限 / 重试模块） | `specs/<f>/formal/`（fv-contract · model · source-map）+ qualify / conform 回执 | /formal-verify（本插件，fvkit）；`aidlc_state.py formal configure|qualify|conform` | fv-contract 与 done_when 一起签 G2 锁；`advance implement` 要 QUALIFIED（设计先于代码被检查）；E3 模块 `advance pr/merge` 要当前的 CONFORMS——这些前置与 verification 一样不能 `--force`；策略模式下要哪些模块由 diff 推出，不由执行者声明 |
+| 形式化验证（条件触发：并发 / 一致性 / 权限 / 重试模块） | `specs/<f>/formal/`（需求清单 · 规则 / 模型候选与分歧裁决 · 审阅 · fv-contract · model · source-map）+ generate / qualify / conform 回执 | /formal-verify（本插件，fvkit）+ 隔离 agent `rule-formalizer` ×≥2、`formal-reviewer`、`model-builder` ×≥2；`aidlc_state.py formal configure|generation|calibrate|qualify|conform` | **规则和模型由 AI 生成，生成本身可检**：引文逐字、≥2 份隔离候选比较、分歧由人裁、全新上下文审阅，`advance cards` 要规则生成 READY、`advance implement` 要模型生成 READY；fv-contract 与需求清单和 done_when 一起签 G2 锁；`advance implement` 要 QUALIFIED（设计先于代码被检查）；E3 模块 `advance pr/merge` 要当前的 CONFORMS——这些前置与 verification 一样不能 `--force`；策略模式下要哪些模块由 diff 推出，不由执行者声明 |
 | implement | 按卡的 diff + commit | /implement（隔离实现者：`card-implementer` / self / /ratchet / forge-teams）+ /commit | 实现者只见卡 + AC 子集 + 红基线；白名单执行器在 diff 落地前拦；单卡预算 3，同指纹立即升级 |
 | acceptance | `ratchet-log/iteration-NNN/final-state.json` | /acceptance-fleet 并行派发 /code-reviewer × 焦点 · /qa-reviewer · /pm-reviewer · /spec-drift-detector · /spec-gaming-detector → /meta-judge（都在本插件）；四态棘轮 DONE / FIX / SPEC_DRIFT / GAMING_RISK | 卡级验收 ≠ 需求级验收：所有卡完成后整体跑一次；实现者看不到评审提示 |
 | pr | PR（范围声明 + AC→证据映射） | /pr | 范围声明是 review-loop 判"越界"的基准 |
@@ -280,7 +280,7 @@ S 档 optional（三行修复上一次全仓库本体提取，成本高到没人
   把每一档的剩余路径走一遍：自己写第二份迟早与真的那份分叉，而分叉出来的那份会说"网格没问题"（同 `graph check`）。
 - `scripts/lock_done_when.py` — `sign --stage g2|l5` / A 档 `verify`（exit 0 / 1 reject / 2 changed_with_proposal）。
 - `scripts/verify_graph.py` / `scripts/verify_loop.py` / `scripts/trace.py why|impact|render|lint` — 图 / 环 / 迹的 lint 与查询。
-- `assets/graph.yaml`（55 节点 · 75 边）· `assets/loops.yaml`（七个环）· `assets/triggers.yaml`（每个环绑到 `/goal` `/loop`
+- `assets/graph.yaml`（58 节点 · 81 边）· `assets/loops.yaml`（七个环）· `assets/triggers.yaml`（每个环绑到 `/goal` `/loop`
   Stop hook `/schedule`）· `assets/routing.yaml` v2（R14–R16）。
 - `../plan-cards/scripts/lint_cards.py`（L4）、`../retro/scripts/metrics.py`（X3）、`../donewhen-extract/scripts/validate_done_when_v2.py`（契约 v2 校验，`advance g2` 自动调用）、`convert_v1_to_v2.py`（acceptance-spec v1 → v2 骨架）、`../release/scripts/verify_release.py`（L8）。
 - 子 skill 的原语各自在其目录：`issue/scripts/verify_issue.py`、`commit/scripts/verify_commit.py`、

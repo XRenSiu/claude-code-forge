@@ -2,6 +2,8 @@
 
 Layout written by init (names are a convention, not a requirement):
   <dir>/requirements.md    A1/B1: what is promised, questions, what is NOT promised
+  <dir>/requirements.yaml  G-1: AI-extracted inventory, every item quoted verbatim
+  <dir>/candidates/        G-2/G-6: >=2 isolated rule and model candidates (kept for the record)
   <dir>/contract.yaml      A2/B1: authoritative rules (observables, assumptions, properties)
   <dir>/model.yaml         A3/B3: executable state machine + refinement mapping + mutants
   <dir>/model-scope.md     scope, bounds, exclusions (what this model does not cover)
@@ -17,26 +19,46 @@ from .values import require
 
 REQUIREMENTS = """# {name}: requirements
 
-> Entrance {entrance_label}. Rules come from the requirement, never from what the code happens to do.
+> Entrance {entrance_label}. Rules come from the requirement, not from what the code happens to do.
+> Replace the example promises with the real ones and keep each one quotable: requirements.yaml cites them verbatim.
 
-## Promises (each must become a property in contract.yaml)
+## Promises
 
-| id | given | when | must / must not | source |
-|----|-------|------|-----------------|--------|
-| R1 | | | | |
+| id | given | when | promise | source |
+|----|-------|------|---------|--------|
+| R1 | LIMIT grants are available | clients request concurrently | grants must never exceed LIMIT | (example) |
+| R2 | a client is waiting | time passes | every waiting client must eventually be granted or refused | (example) |
 
-## Environment assumptions (become `assumptions` — never hide them in the model)
+## Environment assumptions (each one narrows what is guaranteed)
 
-- e.g. "the conditional UPDATE is atomic in the database"
+- the conditional grant update is atomic in the database
+- waiting requests are processed while the service is up
 
-## Open questions (block G0 / G2 until answered)
+## Open questions
 
-- What exactly counts as success? timeout? retry? cancellation? duplicate request?
+None in the example. Unanswered questions go to requirements.yaml open_questions and block the G2 signature.
 
 ## Out of scope (stated, not silently dropped)
 
--
+- fairness between clients, priorities
 {code_first}"""
+
+REQUIREMENTS_YAML = """# fv-requirements: the AI-extracted inventory (fv requirements-check verifies every quote).
+schema_version: 1
+kind: fv-requirements
+id: {name}
+sources:
+  - {{id: req, path: requirements.md}}
+requirements:
+  - {{id: R1, text: "grants never exceed LIMIT", source: {{doc: req, quote: "grants must never exceed LIMIT"}}}}
+  - {{id: R2, text: "every waiting client is answered", source: {{doc: req, quote: "every waiting client must eventually be granted or refused"}}}}
+assumptions:
+  - {{id: A1, text: "the conditional grant update is atomic", source: {{doc: req, quote: "the conditional grant update is atomic in the database"}}}}
+  - {{id: A2, text: "waiting requests are processed", source: {{doc: req, quote: "waiting requests are processed while the service is up"}}}}
+out_of_scope:
+  - {{text: "fairness between clients, priorities", reason: "not promised", source: {{doc: req, quote: "fairness between clients, priorities"}}}}
+open_questions: []
+"""
 
 CODE_FIRST = """
 ## Code-first: facts vs. requirements (B1/B2)
@@ -56,21 +78,25 @@ kind: fv-contract
 id: {name}
 version: 1
 title: "{name}"
+requirements: requirements.yaml       # every property cites a requirement id from this inventory
 parameters: [LIMIT, CLIENTS]          # constants every model must define
 observables:                           # the vocabulary the rules are written in
   granted: {{type: int, domain: "range(0, 4)", description: "how many grants exist"}}
   status: {{type: map, description: "per-client status: idle / waiting / granted / refused"}}
 assumptions:
-  - {{id: A1, text: "replace: e.g. the database update is atomic"}}
+  - {{id: A-ATOMIC, text: "the conditional grant update is atomic", source: A1}}
+  - {{id: A-FAIR, text: "waiting requests are processed (weak fairness)", source: A2}}
 properties:
   - {{id: WithinLimit, kind: invariant, expr: "granted <= LIMIT", source: R1, text: "never grant more than LIMIT"}}
-  - {{id: GrantedNeverDecreases, kind: transition, expr: "post.granted >= pre.granted"}}
-  - {{id: LimitReachable, kind: reachable, expr: "granted == LIMIT"}}
+  - {{id: GrantedNeverDecreases, kind: transition, expr: "post.granted >= pre.granted", source: R1, text: "a grant is never taken back"}}
+  - {{id: LimitReachable, kind: reachable, expr: "granted == LIMIT", source: R1, text: "non-vacuity: the limit can be reached"}}
   - id: EveryRequestAnswered
     kind: leads_to
     forall: {{c: CLIENTS}}
     from: "status[c] == 'waiting'"
     to: "status[c] in ('granted', 'refused')"
+    source: R2
+    text: "every waiting client is eventually granted or refused"
 """
 
 MODEL = """# fv-model: a small, exact state machine. Actions are the atomic steps the REAL code takes
@@ -157,6 +183,7 @@ def init(directory, name, entrance):
         "B (code first: rules from requirements, behaviour map from code -> model -> counterexample -> replay)"
     files = {
         "requirements.md": REQUIREMENTS.format(name=name, entrance_label=label, code_first=CODE_FIRST if entrance == "code-first" else ""),
+        "requirements.yaml": REQUIREMENTS_YAML.format(name=name),
         "contract.yaml": CONTRACT.format(name=name),
         "model.yaml": MODEL.format(name=name),
         "model-scope.md": SCOPE.format(name=name),
@@ -166,6 +193,10 @@ def init(directory, name, entrance):
     for fname, text in files.items():
         (d / fname).write_text(text, encoding="utf-8")
     (d / "counterexamples" / ".keep").write_text("", encoding="utf-8")
+    (d / "candidates").mkdir(exist_ok=True)
+    (d / "candidates" / "README.md").write_text(
+        "AI generation (mandatory): >=2 isolated rule-formalizer candidates in rules-<k>/, >=2 isolated model-builder\n"
+        "candidates in model-<k>/. Keep every candidate: they are part of the record that fv gen-evidence checks.\n", encoding="utf-8")
     return sorted(str(d / f) for f in files)
 
 

@@ -2428,6 +2428,26 @@ expect "formal: the check-then-act implementation is NONCONFORMANT (twin)" 1 \
 expect "formal: real concurrent purchases (atomic never oversells; check-then-act does)" 0 py "$FX/impl/test_concurrency.py"
 expect "formal: the init skeleton qualifies out of the box" 0 \
   bash -c "python3 '$FVS' init --dir '$FT/init' --name x --entrance code-first >/dev/null && python3 '$FVS' qualify --model '$FT/init/model.yaml' >/dev/null"
+expect "formal/gen: the AI-extracted inventory quotes its sources verbatim and misses no normative sentence" 0 py "$FVS" requirements-check --requirements "$FX/requirements.yaml"
+expect "formal/gen: an invented quote is rejected (twin)" 1 \
+  bash -c "mkdir -p '$FT/fake' && cp '$FX/requirements.md' '$FT/fake/' && sed 's/成功订单数不得超过 STOCK；剩余可售数量不得为负/成功订单数不得超过两倍 STOCK/' '$FX/requirements.yaml' > '$FT/fake/requirements.yaml' && python3 '$FVS' requirements-check --requirements '$FT/fake/requirements.yaml' >/dev/null"
+expect "formal/gen: the adopted rules trace to every requirement" 0 py "$FVS" trace-rules --contract "$FX/contract.yaml"
+expect "formal/gen: two isolated rule candidates diverge on R1 with a witness (remaining = -2)" 1 \
+  bash -c "python3 '$FVS' rules-divergence --requirements '$FX/requirements.yaml' --candidate A='$FX/candidates/rules-a/contract.yaml' --candidate B='$FX/candidates/rules-b/contract.yaml' --model '$FX/model.yaml' --out '$FT/rd.json' | python3 -c \"import json,sys; d=json.load(sys.stdin); s=[i for i in d['items'] if i['type']=='semantic']; assert s and s[0]['requirement']=='R1' and s[0]['witness']['remaining']=='-2', d\" && python3 -c \"import json; d=json.load(open('$FT/rd.json')); raise SystemExit(1 if d['verdict']=='DIVERGENT' else 0)\""
+expect "formal/gen: an equivalent rewrite does not diverge (twin)" 0 \
+  bash -c "python3 '$FVS' rules-divergence --requirements '$FX/requirements.yaml' --candidate A='$FX/candidates/rules-a/contract.yaml' --candidate A2='$FX/contract.yaml' --model '$FX/model.yaml' --out '$FT/rd2.json' >/dev/null"
+expect "formal/gen: two isolated model candidates diverge on retry-after-sold-out" 1 \
+  py "$FVS" model-divergence --candidate A="$FX/candidates/model-a/model.yaml" --candidate B="$FX/candidates/model-b/model.yaml" --out "$FT/md.json"
+expect "formal/gen: rules evidence is READY with the committed rulings and review" 0 \
+  py "$FVS" gen-evidence rules --contract "$FX/contract.yaml" --divergence "$FX/rules-divergence.json" --review "$FX/rules-review.yaml"
+expect "formal/gen: unruled divergence is NOT_READY (twin)" 1 \
+  bash -c "python3 -c \"import json; d=json.load(open('$FX/rules-divergence.json')); d['rulings']=[]; json.dump(d, open('$FX/rules-divergence.unruled.json','w'))\" && python3 '$FVS' gen-evidence rules --contract '$FX/contract.yaml' --divergence '$FX/rules-divergence.unruled.json' --review '$FX/rules-review.yaml' >/dev/null; rc=\$?; rm -f '$FX/rules-divergence.unruled.json'; exit \$rc"
+expect "formal/gen: model evidence is READY; an uncompared model is NOT_READY (twin)" 0 \
+  bash -c "python3 '$FVS' gen-evidence model --model '$FX/model.yaml' --divergence '$FX/model-divergence.json' >/dev/null && ! python3 '$FVS' gen-evidence model --model '$FX/model-check-then-act.yaml' --divergence '$FX/model-divergence.json' >/dev/null"
+expect "formal/gen: code-first model evidence needs a calibration (twin)" 1 \
+  py "$FVS" gen-evidence model --model "$FX/model.yaml" --divergence "$FX/model-divergence.json" --entrance code-first
+expect "formal/gen: the three isolated agents exist (two generators, one fresh reviewer)" 0 \
+  bash -c "for a in rule-formalizer model-builder formal-reviewer; do grep -q \"^name: \$a\$\" '$ROOT/agents/'\$a.md || exit 1; done"
 expect "formal: lifecycle wiring (lock, qualification, conformance, waiver, policy, routing)" 0 py "$ROOT/eval/test_formal.py"
 expect "formal: routing v3 carries the seven triage rules R17–R23" 0 \
   bash -c "python3 -c \"import yaml; r=yaml.safe_load(open('$S/ai-dlc/assets/routing.yaml')); s={x['signal'] for x in r['rules']}; assert {'fv_requirement_gap','fv_model_infidelity','fv_design_defect','fv_implementation_defect','fv_contract_weakened','fv_model_stale','fv_checker_defect'} <= s\""
@@ -2442,7 +2462,7 @@ expect "docs: a script missing from the index turns it red (twin)" 1 \
 expect "docs: node / edge counts in living docs equal verify_graph.py (no hand-copied numbers)" 0 \
   py "$ROOT/eval/fixtures/doc_graph_counts.py" "$ROOT"
 expect "docs: a drifted count turns it red (twin)" 1 \
-  bash -c "t=\"$TMP/dgc\"; rm -rf \"\$t\"; mkdir -p \"\$t/docs\" \"\$t/skills/ai-dlc\"; cp -R '$ROOT/skills/ai-dlc/scripts' '$ROOT/skills/ai-dlc/assets' \"\$t/skills/ai-dlc/\"; sed 's/55 节点 · 75 边/52 节点 · 67 边/' '$ROOT/docs/ARCHITECTURE.md' > \"\$t/docs/ARCHITECTURE.md\"; python3 '$ROOT/eval/fixtures/doc_graph_counts.py' \"\$t\""
+  bash -c "t=\"$TMP/dgc\"; rm -rf \"\$t\"; mkdir -p \"\$t/docs\" \"\$t/skills/ai-dlc\"; cp -R '$ROOT/skills/ai-dlc/scripts' '$ROOT/skills/ai-dlc/assets' \"\$t/skills/ai-dlc/\"; sed 's/58 节点 · 81 边/52 节点 · 67 边/' '$ROOT/docs/ARCHITECTURE.md' > \"\$t/docs/ARCHITECTURE.md\"; python3 '$ROOT/eval/fixtures/doc_graph_counts.py' \"\$t\""
 expect "docs: the evaluation doc still states the plugin is not L2-verified" 0 \
   bash -c "grep -q 'static_only' '$ROOT/docs/evaluation.md' && grep -q '出题人与被测者同源' '$ROOT/docs/evaluation.md'"
 

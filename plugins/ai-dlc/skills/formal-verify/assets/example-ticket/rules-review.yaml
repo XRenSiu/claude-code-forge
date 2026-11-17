@@ -1,0 +1,22 @@
+# fv-rules-review：formal-reviewer 在全新上下文里只读 requirements.md / requirements.yaml / contract.yaml 写出。
+# 它不改任何文件；阻断性发现必须有人裁决（resolution）。摘要钉住被审的那一版合同与清单——改了就要重审。
+schema_version: 1
+kind: fv-rules-review
+contract_digest: "sha256:c9d5267076462d1b6892aaade52a130d8691a56ce5c71c6fbdf083fa71d3c7ac"
+requirements_digest: "sha256:b6656d4c8cc999a4b75ee8ed11e791b7c432e2d81e6d83008ce0a8e483eedce2"
+reviewer: {name: formal-reviewer, context: fresh}
+findings:
+  - id: F1
+    category: under_specified
+    requirement: R3
+    property: EveryRequestAnswered
+    blocking: false
+    detail: R3 只说“最终”答复，没有时限；leads_to 只能证明最终会答复，不能证明多快。时限若是承诺，需另立需求与性质。
+  - id: F2
+    category: hidden_assumption
+    requirement: R1
+    property: NoOversell
+    blocking: true
+    detail: NoOversell 只在“检查期间没有补货、退票”时成立，这一假设必须显式写进合同，否则规则看起来比实际更强。
+    resolution: {ruling: "已作为 A-NO-RESTOCK 写入合同 assumptions，来源清单 A1", by: example-owner, signer_kind: human}
+review_complete: {status: complete, findings_count: 2}
