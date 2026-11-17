@@ -696,6 +696,24 @@ def lock_history_unmet(st):
     return out
 
 
+def formal_impl_contracts(st):
+    """Implementation contracts of the formal modules this change must satisfy (paths for lint_cards)."""
+    if (st.get("formal") or {}).get("status") != "configured":
+        return []
+    fg = _formal()
+    try:
+        mods = fg.required(st)
+        root = fg._repo()
+    except (fg.FvError, OSError):
+        return []
+    out = []
+    for mid, spec in sorted(mods.items()):
+        rel = fg._impl_contract_path(st, mid, spec)
+        if rel and (root / rel).is_file():
+            out.append(str(root / rel))
+    return out
+
+
 def cards_lint_unmet(st, cards_dir):
     """`cards.lint_passed` 曾是一个引擎自己 set 的布尔——那是执行者的说法，不是状态。
     现在 advance implement 自己跑 lint_cards.py（同 advance g2 跑 validate_done_when_v2.py）。"""
@@ -709,6 +727,8 @@ def cards_lint_unmet(st, cards_dir):
     dos = get_path(st, "world.dos")
     if dos and os.path.isfile(dos):
         cmd += ["--dos", dos]
+    for ic in formal_impl_contracts(st):
+        cmd += ["--impl-contract", ic]   # step 05 → 06: every contracted operation is owned by exactly one card
     r = subprocess.run(cmd, capture_output=True, text=True)
     if r.returncode == 0:
         return []
@@ -2658,6 +2678,14 @@ def cmd_formal(a):
             result = fg.record_generation(st, a.root, a.slug, a.kind, a.divergence, a.review, a.module, a.intake, a.review_triage,
                                           a.brief, a.ledger, a.coverage)
             code = 0 if result["verdict"] == "READY" else 1
+        elif a.action == "impl-contract":
+            if not a.file:
+                die("formal impl-contract needs --file <fv-impl-contract> (draft it with `fv impl-contract draft`)", 2)
+            result = fg.record_impl_contract(st, a.file, a.module)
+            code = 0 if result["verdict"] == "READY" else 1
+        elif a.action == "impl-verify":
+            result = fg.verify_module_implementation(st, a.root, a.slug, a.module, a.review, a.traces or None)
+            code = 0 if result["verdict"] == "IMPLEMENTS" else 1
         elif a.action == "triage":
             if not a.file:
                 die("formal triage needs --file <fv-cex-triage> (and --model when the counterexample came from another model)", 2)
@@ -2830,13 +2858,14 @@ def main():
     s.add_argument("--task-status", choices=["active", "cancelled", "superseded"])
     s.add_argument("--revision", type=int); s.add_argument("--reason")
     s = P("formal")
-    s.add_argument("action", choices=["configure", "status", "generation", "calibrate", "qualify", "conform", "check", "waive", "triage"])
+    s.add_argument("action", choices=["configure", "status", "generation", "calibrate", "qualify", "conform", "check", "waive", "triage",
+                                      "impl-contract", "impl-verify"])
     s.add_argument("--entrance", choices=["spec-first", "code-first"], default="spec-first")
     s.add_argument("--kind", choices=["rules", "model"]); s.add_argument("--divergence"); s.add_argument("--review")
     s.add_argument("--intake", help="rules: fv-rules-intake (Spec Kit clarify + Quint from-requirements)")
     s.add_argument("--review-triage", dest="review_triage", help="rules: the author's fv-review-triage beside the FVS review")
     s.add_argument("--brief"); s.add_argument("--ledger"); s.add_argument("--coverage")
-    s.add_argument("--file", help="triage: an fv-cex-triage file (Specula spec-fidelity checklist + bug classification)")
+    s.add_argument("--file", help="triage: an fv-cex-triage file; impl-contract: the fv-impl-contract (step 05)")
     s.add_argument("--policy", help="verification/policy.yaml (fv-policy): required modules come from the diff vs branch.base")
     s.add_argument("--module"); s.add_argument("--contract"); s.add_argument("--model"); s.add_argument("--source-map", dest="source_map")
     s.add_argument("--min-level", dest="min_level", default="E3", choices=["E2", "E3"])

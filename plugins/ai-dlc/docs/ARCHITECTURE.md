@@ -149,6 +149,10 @@ AI 建模（必经）    ：（入口 B 先由 model-builder 按 Specula code_an
                     → formal-reviewer 按 Quint review + Specula 粒度审计审模型（运行时检查由检查器重算）
                     （入口 B 另要：brief coverage 自检；as-is 模型在当前代码轨迹上的校准）
 反例分诊          ：formal-reviewer 按 Specula spec-fidelity checklist + bug-classification 写 fv-cex-triage → formal triage → 路由
+05 实现契约       ：QUALIFIED 模型 → fv impl-contract draft（derived 由 fvkit 推导：读写集、必须原子的动作、并发冲突、验收义务）
+                    → model-builder 按 Quint quint-execute-spec / Specula instrumentation spec / Spec Kit plan、tasks 填写 → READY
+06 编码            ：任务卡经 formal_ops 绑定契约操作（lint_cards 第 7 项），card-implementer 按契约实现、契约只读
+07 实现一致性     ：fv impl-verify：约束的代码证据、测试与负对照、真实轨迹对模型、操作覆盖、反例重放、全新上下文的实现审阅 → IMPLEMENTS（E3）
 入口 A 新需求：规则 → 模型 → fv check → 反例分诊 → fv qualify → 写代码
 入口 B 已有代码：独立规则 → source-map.yaml → 实现模型（校准）→ 反例 → 重放向量 → 真实轨迹
 主干：qualify（E2）→ 实现 → gen-tests → harness 记录真实轨迹 → conform（E3）→ fv ci 持续重验
@@ -160,6 +164,8 @@ AI 建模（必经）    ：（入口 B 先由 model-builder 按 Specula code_an
 | 规则是按可检方式 AI 生成的 | `cards` 起 | 上游原文 INTACT、产物按字节引用；清单引文逐字、规范句全有去处；intake 完整（歧义扫描、人答的问题、系统模型、抽取与粒度）；每条需求被形式化或有处置，High 影响的性质类需求必须形式化；≥2 个隔离候选比较过、分歧全有裁决、采纳的合同在被比较之列；FVS 审阅契约下的审阅完整、处置合规 |
 | 模型是按可检方式 AI 生成的 | `implement` 起 | ≥2 个隔离模型候选在可观测层面比较过、各带 Step 7 handoff、分歧全有裁决、采纳的模型在其中；模型审阅通过（结构检查、重算的运行时检查、粒度审计）；入口 B 的 Specula brief 与 coverage 完整，as-is 模型在当前代码轨迹上校准过 |
 | 设计审定 | `implement` 起 | QUALIFIED 回执对当前模型与合同重验通过：完整探索、见证可达、无死动作、必需 mutant 被预期性质杀死 |
+| 实现契约 | `implement` 起 | 实现契约对当前模型 READY：derived 未被改写，每个变量、动作、性质、mutant、假设都有落点，必须原子的动作有机制与代码证据，故障只落在模型允许的状态，至少一个负对照 |
+| 实现落实契约 | E3 模块，`acceptance` 起 | 当前代码对当前实现契约 IMPLEMENTS：契约或被映射的代码文件在验证后变了就失效 |
 | 实现一致 | E3 模块，`pr` 起 | CONFORMS 回执，且映射的代码与取证时一致，源码映射此刻 FRESH |
 
 需要哪些模块，由显式登记加上策略对 `branch.base` 的 diff 共同决定；没有 base 时要求全部模块。降级只能是人签的 `formal waive`，会强制 G3。反例分诊只有五类，每类对应一条路由（R17–R23），不允许以改弱规则收场。trusted-acceptance 的政策 schema 2 固定同一份模型与合同的摘要，在受保护环境重算。这条线也只到 E3：有界探索、模拟、外部引擎的抽样都单独标记，不混称“已证明”。
@@ -200,7 +206,7 @@ intake → track → issue → branch → contract → g2 → cards → implemen
 G2 跑契约 v2 校验，implement 跑卡 lint，pr 读 final-state.json 与达标比对报告，archive 读发布记录里的 post-deploy 行，
 并在 implement / acceptance / pr / merge 重跑锁校验——`/commit` 与 `/pr` 的预门能被裸 git 绕开，状态机绕不开。
 
-执行图 `graph.yaml`（58 节点 · 81 边）把同一件事声明成数据：节点带边界身份
+执行图 `graph.yaml`（58 节点 · 83 边）把同一件事声明成数据：节点带边界身份
 （读什么 / 不许读什么 / 写什么 / 有什么权限），边带类型与守卫，回边标明属于哪个环。
 `graph check` 让它与状态机的阶段列表**互相断言**——图和代码互为对方的测试。
 `verify_graph.py` 另外检五条性质：写范围有界、去掉回边后是 DAG 且每个圈归属一个环、

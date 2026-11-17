@@ -35,7 +35,8 @@
       "fv.py rules-divergence (example A vs B)": "DIVERGENT: semantic item on R1 with witness remaining=-2 (A false, B true); text item on R3; assumptions item; an equivalent rewrite does not diverge",
       "fv.py model-divergence (example A vs B)": "DIVERGENT: observable transition sold_out -> pending only in B; B's missing read step is not flagged",
       "fv.py gen-evidence rules/model": "READY with the committed rulings and review; NOT_READY when unruled, single-candidate, uncompared adopted artifact, deleted candidate, or code-first without calibration",
-      "fv.py upstream verify / intake-check / check-review --triage / model-review-check / brief-check / triage-check": "example artifacts pass against the vendored upstream (7 projects, 36 files); each has a rejected twin in smoke and the trusted-acceptance suite"
+      "fv.py upstream verify / intake-check / check-review --triage / model-review-check / brief-check / triage-check": "example artifacts pass against the vendored upstream (7 projects, 36 files); each has a rejected twin in smoke and the trusted-acceptance suite",
+      "fv.py impl-contract check / impl-verify (steps 05 / 07)": "example contract READY; impl-verify IMPLEMENTS with 4 test groups, 3 negative controls failing as required, all 4 operations exercised in conforming traces, counterexample replay refused; twins rejected in smoke and test_impl_contract.py"
     },
     "tier2_status": "NOT RUN — no with/without-skill comparison of the models an agent writes (fidelity to real atomic boundaries is the main risk the skill names). External engines (TLC / Apalache / Quint / FizzBee) were not executed in this repository; their adapters are tested against fixed sample outputs only. The example's rule/model candidates were authored for illustration, not produced by real isolated agent runs; divergence measures agreement between generators, not correctness."
   }

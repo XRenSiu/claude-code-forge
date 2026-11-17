@@ -15,6 +15,16 @@
 `aidlc_state.py fail --signal fv_<分类> --evidence <回执摘要或反例>`，路由表把它送到对应的层。
 **任何分类下都不许改弱合同让检查变绿**；必须改规则时，`fv diff-contract` 会给出 WEAKENED，需要新的 G2 签字或 `fv approve` 记录。
 
+## 实现一致性失败（07）怎么分流
+
+| 现象 | 去向 |
+|---|---|
+| 约束的 evidence 不在代码里、测试失败、真实轨迹出现模型不允许的步、某个操作从没被执行过 | 实现缺陷：`fv_implementation_defect` → card，按契约修代码 |
+| 负对照通过了（坏变体没被抓住） | 测试看不见它要防的缺陷：修测试，归到同一张卡 |
+| 审阅发现代码有而模型没有的行为，处置为 `model_it` | 模型失真：`fv_model_infidelity` → plan，补模型后重走 04–05 |
+| 审阅判定某条假设 `violated` | 规则依赖的前提不成立：`fv_requirement_gap` → task |
+| 实现者回报 `CONTRACT_CHANGE_NEEDED`（契约做不到） | 回到 05：修改实现契约，必要时回到设计（04）；不在代码里另做设计 |
+
 ## 资格判定（FV-G1 的机器部分）
 
 `fv qualify` 同时要求以下几条：

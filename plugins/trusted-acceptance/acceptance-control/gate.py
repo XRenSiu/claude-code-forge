@@ -46,7 +46,9 @@ CASE = obj(contract=CONTRACT, policy=POLICY, current=CURRENT, run=RUN)
 FORMAL_REQUIREMENT = obj(
     check_id=ID, min_level=enum("E2", "E3", "E4"), model_digest=DIGEST, contract_digest=DIGEST,
     properties_digest=DIGEST,
-    pass_verdicts=array(enum("PASS", "QUALIFIED", "CONFORMS", "SATISFIED"), 1, True),
+    # step 05: the implementation contract(s) the maintainer approved; an `implement` receipt must be for one of them
+    impl_contract_digests=array(DIGEST, 0, True),
+    pass_verdicts=array(enum("PASS", "QUALIFIED", "CONFORMS", "SATISFIED", "IMPLEMENTS"), 1, True),
     rerun=BOOL,
 )
 POLICY_V2 = obj(**dict(POLICY["properties"], schema_version=enum(2), formal=array(FORMAL_REQUIREMENT, 1)))
@@ -138,6 +140,8 @@ def check_formal(policy, attempt, binding, evidence_root):
     from fvkit.values import FvError, sha_bytes
     checks = {c["id"]: c for c in attempt["checks"]}
     for requirement in policy["formal"]:
+        require("IMPLEMENTS" not in requirement["pass_verdicts"] or requirement["impl_contract_digests"],
+                "formal requirement %s accepts IMPLEMENTS but pins no implementation contract" % requirement["check_id"])
         check = checks[requirement["check_id"]]
         if check["status"] not in ("pass", "fail"):
             continue  # skip/unknown/error is already blocking; formal evidence cannot change that
@@ -166,13 +170,16 @@ def check_formal(policy, attempt, binding, evidence_root):
                         and (inputs.get("contract") or {}).get("properties_digest") == requirement["properties_digest"],
                         "fv-receipt %s was produced for a model/contract the policy did not approve" % rec["id"])
                 validate_receipt(receipt, model=model, contract=contract, rerun=requirement["rerun"], traces=traces, allow_paths=False)
-                if receipt["command"] == "conform":
+                if receipt["command"] in ("conform", "implement"):
                     require(receipt["result"]["source"].get("head") == binding["candidate_sha"],
                             "implementation evidence %s belongs to another candidate" % rec["id"])
+                if receipt["command"] == "implement" and "IMPLEMENTS" in requirement["pass_verdicts"]:
+                    require((inputs.get("impl_contract") or {}).get("digest") in requirement["impl_contract_digests"],
+                            "fv-receipt %s verifies an implementation contract the policy did not approve" % rec["id"])
                 positive = receipt["verdict"] in requirement["pass_verdicts"]
                 if check["status"] == "fail":
                     continue
-                require(positive or receipt["verdict"] in ("PASS", "QUALIFIED", "CONFORMS", "SATISFIED"),
+                require(positive or receipt["verdict"] in ("PASS", "QUALIFIED", "CONFORMS", "SATISFIED", "IMPLEMENTS"),
                         "formal evidence %s says %s; it cannot support a pass" % (rec["id"], receipt["verdict"]))
                 satisfied = satisfied or (positive and level_at_least(receipt["evidence_level"], requirement["min_level"]))
             if check["status"] == "pass":

@@ -121,6 +121,15 @@ def run_ci(policy_path, base, out, tier="auto", all_modules=False, root=None):
                                {"hidden_steps": 0, "tier": tname}, res, c["verdict"], "E3", started)
                 rec["receipts"]["conform"] = write(mdir / "conform.json", receipt)
                 rec["reasons"] += c["reasons"]
+                # step 07 again on every change: the code still honours the implementation contract
+                from .implcontract import verify_implementation
+                v = verify_implementation(root / m["impl_contract"], model, review=root / m["impl_review"], source_map=root / m["source_map"],
+                                          run=True, upstream=up, out_dir=mdir / "impl", timeout=settings["time_seconds"])
+                receipt = make("implement", {"model": dict(model.identity(), path=m["model"]), "contract": dict(contract.identity(), path=m["contract"]),
+                                             "impl_contract": dict(v["impl_contract"], path=m["impl_contract"])},
+                               {"run_tests": True, "tier": tname}, v["result"], v["verdict"], "E3", started)
+                rec["receipts"]["implement"] = write(mdir / "implement.json", receipt)
+                rec["reasons"] += ["implementation: " + r for r in v["result"]["reasons"]]
         except (FvError, OSError, subprocess.TimeoutExpired, json.JSONDecodeError) as error:
             rec["reasons"].append("verification step failed: %s" % error)
         rec["status"] = "SATISFIED" if not rec["reasons"] else "UNSATISFIED"

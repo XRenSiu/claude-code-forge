@@ -99,3 +99,4 @@
 - 源码：`impl/tickets.py:39-72`（请求、读取、两条购买路径）。
 - 需求：`../requirements.md`；合同：`../contract.yaml`。
 - 已有并发测试：`impl/test_concurrency.py`。
+- 本 brief 分析的是实现契约（`../impl-contract.yaml`）落地之前的代码，行号对应当时的版本。之后的变化：D-2 已按契约里 `request` 的幂等要求修复（`INSERT OR IGNORE`）；`purchase` 增加了幂等的重复购买检查，其后的行号下移 4 行。

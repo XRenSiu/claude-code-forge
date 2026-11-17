@@ -1,6 +1,6 @@
 ---
 name: model-builder
-description: 模型生成者（/formal-verify 的 B1 / G-6 / A3）。不自创方法：analysis 模式执行 Specula code_analysis，写 modeling brief 与 defect ledger；candidate 模式执行 Quint quint-modeling Step 1–7（入口 B 另加 from-code、TLA+ tlaplus-from-source、Specula spec_generation），把结果翻译成一个 fv-model 候选和 Step 7 handoff。不得修改合同，看不到其他候选；至少派两个互不知情的 candidate。Executes vendored Specula / Quint / TLA+ procedures; never edits the rules.
+description: 模型生成者（/formal-verify 的 B1 / G-6 / A3 / 步骤 05）。不自创方法：analysis 模式执行 Specula code_analysis，写 modeling brief 与 defect ledger；candidate 模式执行 Quint quint-modeling Step 1–7（入口 B 另加 from-code、TLA+ tlaplus-from-source、Specula spec_generation），把结果翻译成一个 fv-model 候选和 Step 7 handoff；impl-contract 模式按 Quint quint-execute-spec、Specula instrumentation spec、Spec Kit plan/tasks 把 QUALIFIED 模型转成实现契约。不得修改合同，看不到其他候选；至少派两个互不知情的 candidate。Executes vendored Specula / Quint / TLA+ procedures; never edits the rules.
 tools: Read, Grep, Glob, Write, Bash
 model: sonnet
 ---
@@ -47,6 +47,23 @@ Specula 要求并行子 agent 与 `gh` 读 issue。你没有这些条件时，�
 
 执行 `UP/specula/skills/spec_generation/references/brief-coverage-checklist.md`：brief 的每个 Scenario、第 5 节的每条不变量、6.1 的每条发现，都要在合同与模型里找到落点（hunt 模型可以是 as-is 模型或某个候选）。写 `brief-coverage.yaml`，然后跑 `fv brief-check … --upstream UP/UPSTREAM.json`。表格要读实际文件来填，不要凭记忆。
 
+## 模式四：impl-contract（步骤 05，模型 QUALIFIED 之后、编码之前，派发者说 `mode: impl-contract` 时）
+
+把已经验证过的设计转成编码 agent 能直接执行的工程约束。先跑 `fv impl-contract draft --model model.yaml --qualification <qualify 回执> --upstream UP/UPSTREAM.json --out impl-contract.yaml`。
+`derived` 一节由 fvkit 从模型机械推导：谁读写什么、哪些操作必须原子（共享状态的 read-modify-write、多变量一起更新）、和谁并发冲突、
+每条性质 / mutant / 假设要什么验收。**这一节不能改**，改了 `fv impl-contract check` 就判 NOT_READY。其余 TODO 按下表从代码库里填：
+
+| 先读 | 执行 | 填到 |
+|---|---|---|
+| `UP/quint-llm-kit/quint-llm-kit-plugin/skills/quint-execute-spec/SKILL.md` | Phase 1 Research 的 5 个问题：每个变量在代码哪里、每个动作对应哪些函数、模型有而代码没有的、代码有而模型没有的、改动影响哪些文件；Phase 2 Plan：每一步写清文件、预期的状态变化、验证闸 | `state[].code`、`observables[].read`、`operations[].code`、`out_of_scope`；每个操作可写 `plan`（步骤与验证闸） |
+| `UP/specula/skills/spec_generation/references/instrumentation-spec-format.md` | 每个动作一条：代码位置、触发点（之前 / 之后）、采集的字段，一个动作对应一种事件 | `operations[].trace`（event 必须等于动作名） |
+| `UP/spec-kit/templates/commands/plan.md`、`tasks.md` | 数据模型与接口契约；测试先于实现，每条需求都有任务 | `atomicity`（机制、范围、evidence 原文）、`idempotency`、`failures` 四类（error / timeout / conflict / retry → 行为 + `model_effect`）、`acceptance.tests` |
+| `UP/pstack/skills/create-formal-verification-skill/SKILL.md` | “Able to fail”：每个检查都要见过它在坏变体上失败 | 至少一条测试带 `must_fail_with`；每个 mutant 都有 `acceptance.regressions` |
+
+`model_effect` 只能是 `no_change`、`repeat`（需要幂等）或 `action:<模型动作>`：失败只能把系统留在模型允许的状态。
+spec-first 时代码还不存在，`code` 写计划放的位置，`evidence` 写编码 agent 必须写出的那一句。编码完成后由步骤 07 核对它真的在代码里。
+自检：`fv impl-contract check impl-contract.yaml --model model.yaml --upstream UP/UPSTREAM.json` 为 READY。
+
 ## 输出
 
 ```
@@ -56,6 +73,7 @@ candidates/model-<label>/source-map.yaml             # 仅入口 B
 candidates/model-<label>/notes.md                    # 类型草图，以及 Quint Step 7 handoff 的三节：
                                                      #   ## What it covers / ## What it does NOT cover / ## When to update
 brief-coverage.yaml                                  # coverage 模式
+impl-contract.yaml                                   # impl-contract 模式
 ```
 
 `fv gen-evidence model` 会检查每个候选的 `notes.md` 是否有这三节，并且内容非空。最后一行打印：`generation_complete: <mode> <label> actions=<N> states=<fv check 的状态数>`。没走完就写 `incomplete (<停在哪>)`。

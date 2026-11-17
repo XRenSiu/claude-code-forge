@@ -82,13 +82,32 @@ class FormalGateTests(unittest.TestCase):
                                     "digest": "sha256:" + hashlib.sha256(data).hexdigest(), "size_bytes": len(data)})
         next(c for c in attempt["checks"] if c["id"] == check_id)["evidence_refs"].append(rec_id)
 
-    def policy_v2(self, levels=(("E2", "QUALIFIED"), ("E3", "CONFORMS")), rerun=True, model=None):
+    def policy_v2(self, levels=(("E2", "QUALIFIED"), ("E3", "CONFORMS")), rerun=True, model=None, impl_contracts=()):
         model = model or self.model
         p = self.case["policy"]
         p["schema_version"] = 2
         p["formal"] = [{"check_id": "revoke-new-read", "min_level": lvl, "model_digest": model.digest,
                         "contract_digest": model.contract.digest, "properties_digest": model.contract.properties_digest,
+                        "impl_contract_digests": list(impl_contracts) if verdict == "IMPLEMENTS" else [],
                         "pass_verdicts": [verdict], "rerun": rerun} for lvl, verdict in levels]
+
+    IMPL = "sha256:" + "a" * 64
+
+    def implementation(self, trace_bytes, head=None, impl_digest=None):
+        """An `implement` receipt (step 07) whose verdict follows from its recorded parts."""
+        from fvkit.implcontract import decide
+        path = self.root / ("impl-%s.jsonl" % hashlib.sha256(trace_bytes).hexdigest()[:8])
+        path.write_bytes(trace_bytes)
+        res = {"contract": {"verdict": "READY", "issues": [], "digest": impl_digest or self.IMPL},
+               "code": [{"action": a.name, "file": "svc.py", "symbol": a.name, "missing": []} for a in self.model.actions],
+               "tests": [{"id": "T", "kind": "property", "role": "positive", "exit": 0, "timed_out": False, "argv": ["t"], "millis": 1, "output_tail": ""},
+                         {"id": "T", "kind": "property", "role": "negative", "exit": 1, "timed_out": False, "argv": ["t", "--bad"], "millis": 1, "output_tail": ""}],
+               "traces": check_files(self.model, [path]), "coverage": {"exercised": ["buy", "read", "reject", "request"], "unexercised": []},
+               "replays": [], "source_map": None, "review": {"verdict": "REVIEWED", "issues": [], "digest": "sha256:" + "b" * 64},
+               "source": {"head": head or self.binding["candidate_sha"], "files": {}}}
+        res["reasons"] = decide(res)
+        inputs = dict(self.inputs(self.model), impl_contract={"path": "impl-contract.yaml", "digest": impl_digest or self.IMPL})
+        return make("implement", inputs, {"run_tests": True}, res, "IMPLEMENTS" if not res["reasons"] else "NOT_IMPLEMENTED", "E3", "t0")
 
     def full_evidence(self, trace=None, head=None, qualification=None):
         trace = trace or jsonl(GOOD_TRACE)
@@ -131,6 +150,33 @@ class FormalGateTests(unittest.TestCase):
         self.add("fv-qualify", "fv-receipt", "qualify.json", self.qualification())
         r = self.decide("blocked")       # E2 qualification alone cannot satisfy the E3 requirement
         self.assertIn("E3", " ".join(r["reasons"]))
+
+    def test_implementation_verification_is_pinned_and_bound(self):
+        levels = (("E2", "QUALIFIED"), ("E3", "IMPLEMENTS"))
+        self.policy_v2(levels=levels, impl_contracts=[self.IMPL])
+        self.full_evidence()
+        self.add("fv-implement", "fv-receipt", "implement.json", self.implementation(jsonl(GOOD_TRACE)))
+        self.decide("eligible")
+
+    def test_implementation_of_an_unapproved_contract_or_candidate_is_blocked(self):
+        levels = (("E2", "QUALIFIED"), ("E3", "IMPLEMENTS"))
+        self.policy_v2(levels=levels, impl_contracts=[self.IMPL])
+        self.full_evidence()
+        self.add("fv-implement", "fv-receipt", "implement.json", self.implementation(jsonl(GOOD_TRACE), impl_digest="sha256:" + "c" * 64))
+        r = self.decide("blocked")
+        self.assertIn("implementation contract the policy did not approve", " ".join(r["reasons"]))
+
+    def test_implementation_for_another_candidate_or_unpinned_policy_is_blocked(self):
+        levels = (("E2", "QUALIFIED"), ("E3", "IMPLEMENTS"))
+        self.policy_v2(levels=levels, impl_contracts=[self.IMPL])
+        self.full_evidence()
+        self.add("fv-implement", "fv-receipt", "implement.json", self.implementation(jsonl(GOOD_TRACE), head="e" * 40))
+        self.assertIn("another candidate", " ".join(self.decide("blocked")["reasons"]))
+        self.setUp()
+        self.policy_v2(levels=levels)                                           # IMPLEMENTS accepted, nothing pinned
+        self.full_evidence()
+        self.add("fv-implement", "fv-receipt", "implement.json", self.implementation(jsonl(GOOD_TRACE)))
+        self.assertIn("pins no implementation contract", " ".join(self.decide("blocked")["reasons"]))
 
     def test_conformance_for_another_candidate_is_blocked(self):
         self.policy_v2()

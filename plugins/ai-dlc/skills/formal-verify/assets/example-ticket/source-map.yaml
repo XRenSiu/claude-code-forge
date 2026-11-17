@@ -8,7 +8,7 @@ root: "."                       # 下面的路径相对本文件所在目录（�
 actions:
   request:
     locations:
-      - {path: impl/tickets.py, symbol: TicketService.request, anchor: "INSERT INTO requests (user, status, seen) VALUES (?, 'pending', NULL)"}
+      - {path: impl/tickets.py, symbol: TicketService.request, anchor: "INSERT OR IGNORE INTO requests (user, status, seen) VALUES (?, 'pending', NULL)"}
   read:
     atomicity: "单条 SELECT + 单条 UPDATE；展示值不参与购买判定"
     locations:

@@ -33,6 +33,7 @@
       "model_digest": "sha256:0dc20314fe8487777f094bba96b2fe54936f52009b4794f6a1c955143b689825",
       "contract_digest": "sha256:84fc4176df71a5e8aedc87586fffa1d0a2250d09296802e82bc10eb1f269546b",
       "properties_digest": "sha256:3bf0bc97b9871ef819ed8198932cd7be1e8ec768e74aec6cc9014c80bef78bc2",
+      "impl_contract_digests": [],
       "pass_verdicts": [
         "QUALIFIED"
       ],
@@ -44,8 +45,23 @@
       "model_digest": "sha256:0dc20314fe8487777f094bba96b2fe54936f52009b4794f6a1c955143b689825",
       "contract_digest": "sha256:84fc4176df71a5e8aedc87586fffa1d0a2250d09296802e82bc10eb1f269546b",
       "properties_digest": "sha256:3bf0bc97b9871ef819ed8198932cd7be1e8ec768e74aec6cc9014c80bef78bc2",
+      "impl_contract_digests": [],
       "pass_verdicts": [
         "CONFORMS"
+      ],
+      "rerun": true
+    },
+    {
+      "check_id": "ticket-oversell",
+      "min_level": "E3",
+      "model_digest": "sha256:0dc20314fe8487777f094bba96b2fe54936f52009b4794f6a1c955143b689825",
+      "contract_digest": "sha256:84fc4176df71a5e8aedc87586fffa1d0a2250d09296802e82bc10eb1f269546b",
+      "properties_digest": "sha256:3bf0bc97b9871ef819ed8198932cd7be1e8ec768e74aec6cc9014c80bef78bc2",
+      "impl_contract_digests": [
+        "sha256:6622e2aca75dd0e5cafe886061dccdfbcb88e73c5a023396e56c037a95337b10"
+      ],
+      "pass_verdicts": [
+        "IMPLEMENTS"
       ],
       "rerun": true
     }

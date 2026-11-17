@@ -135,6 +135,11 @@ protected_paths: ["src/tickets/**"]
 - 入口 B：`modeling-brief.md`（Specula 格式第 1–7 节）、`defect-ledger.json`（`{"defects": [{id, location, trigger, wrong_behavior, evidence, category, verification, scenario, known}]}`，与 brief 的 6.2 表一致），以及 `fv-brief-coverage`（YAML：`brief_digest`、`contract_digest`、`scenarios`（scenario、properties、hunt，或 merged_into + reason）、`invariants`（invariant、property，或 out_of_scope）、`findings`（finding、property、hunt））。
 - `fv-cex-triage`（YAML，Specula fidelity checklist + bug classification）：`receipt`（带反例的回执，相对路径）、`property`、`preconditions`（precondition、modeled ∈ same / weaker / missing / none，非 none 的要带 `guard: file:line`）、`case` ∈ B / C、`spec_change`（B）、`status` 与 `severity`（C）、`reasoning`。
 
+## 实现契约与实现审阅（05 / 07）
+
+- `fv-impl-contract`（YAML，`fv impl-contract draft` 起草）：`model_digest`、`contract_digest`、`root`、`qualification: {receipt, digest}`、`procedure`、`derived`（fvkit 推导，不可改）、`state[]: {variable, code}`、`observables[]: {observable, read}`、`operations[]: {action, code: {file, symbol}, atomicity: {mechanism, scope, evidence}, idempotency: {required, key, evidence | reason}, failures: {error, timeout, conflict, retry → {behavior, model_effect}}, trace: {event, trigger, fields}[, plan]}`、`acceptance: {tests[]: {id, kind, argv, covers[, must_fail_with, timeout_seconds, receipt]}, regressions[]: {mutant, detected_by: {test | vector}}, assumptions[]: {assumption, evidence: test:<id> | review}}`、`out_of_scope[]: {behavior, reason}`。argv 不经过 shell，`{traces}` 会被替换成 07 的轨迹目录。
+- `fv-impl-review`（YAML，formal-reviewer impl 模式）：`impl_contract_digest`、`source: {files: {path: sha256}}`、`procedure`、`reviewer`、`coverage[]: {operation, implemented, location}`、`unmodeled_behaviors[]: {behavior, location, disposition: out_of_scope | model_it | defect, reason}`、`assumptions[]: {assumption, status: holds | violated | unverified, evidence[, ruling]}`、`findings[]: {id, category, severity: CRITICAL | HIGH | MEDIUM | LOW, location, summary, recommendation[, resolution]}`、`review_complete`。
+
 ## 策略（fv-policy）
 
 ```yaml
@@ -147,8 +152,8 @@ modules:
   - {id: ticket-ordering, risk: concurrency, paths: ["src/tickets/**"], contract: …, model: …, source_map: …,
      vectors: …, trace_command: ["python3", "tests/harness.py", "--out", "{out}"], approvals: approvals.jsonl,
      entrance: spec-first, rules_intake: …, rules_divergence: …, rules_review: …, rules_review_triage: …,
-     model_divergence: …, model_review: …}   # code-first 另需 calibration、modeling_brief、defect_ledger、brief_coverage
+     model_divergence: …, model_review: …, impl_contract: …, impl_review: …}   # code-first 另需 calibration、modeling_brief、defect_ledger、brief_coverage
 upstream: upstream/UPSTREAM.json   # 可选：收录的上游清单（相对仓库根）；给出时，引用按字节核对
 ```
 
-E2 以上的模块必须声明 AI 生成证据（`rules_intake`、`rules_divergence`、`rules_review`、`model_divergence`、`model_review`；code-first 还要 `calibration`、`modeling_brief`、`defect_ledger`、`brief_coverage`），`fv ci` 每次重算。`trace_command` 是 argv 数组，不经过 shell；`{out}` 会被替换成 CI 输出下的新目录。`approvals` 是 `fv approve` 追加写入的 JSONL，只有它能把对新合同摘要的 WEAKENED 变成 APPROVED。
+E2 以上的模块必须声明 AI 生成证据（`rules_intake`、`rules_divergence`、`rules_review`、`model_divergence`、`model_review`；code-first 还要 `calibration`、`modeling_brief`、`defect_ledger`、`brief_coverage`；E3 还要 `impl_contract`、`impl_review`），`fv ci` 每次重算，E3 模块每次都重跑实现一致性验证。`trace_command` 是 argv 数组，不经过 shell；`{out}` 会被替换成 CI 输出下的新目录。`approvals` 是 `fv approve` 追加写入的 JSONL，只有它能把对新合同摘要的 WEAKENED 变成 APPROVED。

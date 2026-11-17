@@ -39,6 +39,11 @@
           "upstream_path": "quint-llm-kit-plugin/skills/quint-modeling/guidelines/review.md",
           "path": "quint-llm-kit/quint-llm-kit-plugin/skills/quint-modeling/guidelines/review.md",
           "sha256": "sha256:8b81f4a4bdc0bab7cd7c17ec036fd3d2108f5ad251dd4608145caf08e3ec9424"
+        },
+        {
+          "upstream_path": "quint-llm-kit-plugin/skills/quint-execute-spec/SKILL.md",
+          "path": "quint-llm-kit/quint-llm-kit-plugin/skills/quint-execute-spec/SKILL.md",
+          "sha256": "sha256:7bd1dbfddcded796c41bd0019b02f4b47a42e13ffd2d87010448ed86e0f38ab5"
         }
       ],
       "license_sha256": "sha256:5cc84061e5937535827c4fd3446c7609ad87065b55733b1874b2ddc67df04bf0"
@@ -119,6 +124,26 @@
           "upstream_path": "skills/bug-classification/guide.md",
           "path": "specula/skills/bug-classification/guide.md",
           "sha256": "sha256:c143b2d5c2fd9b5e5a3b6ebbf040fc1ef7ef24923fa110cc4a99a3979c926fa5"
+        },
+        {
+          "upstream_path": "skills/spec_generation/references/instrumentation-spec-format.md",
+          "path": "specula/skills/spec_generation/references/instrumentation-spec-format.md",
+          "sha256": "sha256:91bf907caf99b7ecb96f6d8ee3fa34cd3647310208b3863e94553a8d01695df8"
+        },
+        {
+          "upstream_path": "skills/harness-generation/guide.md",
+          "path": "specula/skills/harness-generation/guide.md",
+          "sha256": "sha256:a5ad8f179e3c752908bdbaf82d890dc31cc5cec1fbdef13039e7cf127815c6b8"
+        },
+        {
+          "upstream_path": "skills/bug-confirmation/guide.md",
+          "path": "specula/skills/bug-confirmation/guide.md",
+          "sha256": "sha256:d728ebf2fb8bc11e1d870d5f9bd9028df34fff4535957d3cb7a6c65662da41ea"
+        },
+        {
+          "upstream_path": "skills/bug-confirmation/phases/02-reproduction.md",
+          "path": "specula/skills/bug-confirmation/phases/02-reproduction.md",
+          "sha256": "sha256:a2ee02a50291c3c11ad1eaf122f57825a538e73bb9b9b60628501333bfd17a29"
         }
       ],
       "license_sha256": "sha256:1b53c43a2772a1d7f3f894d15650d63667ff507a8a6b7032d08f0c9fab91c4e6"
@@ -169,6 +194,26 @@
           "upstream_path": "templates/spec-template.md",
           "path": "spec-kit/templates/spec-template.md",
           "sha256": "sha256:3945437fc35cd30a5b2bf7beea680337c3516826d3efa5a6b92c4a7eca1ba28e"
+        },
+        {
+          "upstream_path": "templates/commands/plan.md",
+          "path": "spec-kit/templates/commands/plan.md",
+          "sha256": "sha256:206a0386d20b3eed4c087a4d9de247a3e7b2b59348bf3c801fc74f63ca2726a5"
+        },
+        {
+          "upstream_path": "templates/commands/tasks.md",
+          "path": "spec-kit/templates/commands/tasks.md",
+          "sha256": "sha256:2f9176c6e7c23d2a83d2bd018ffa1e67aee977389a57f2a3fe35fe987b425944"
+        },
+        {
+          "upstream_path": "templates/commands/analyze.md",
+          "path": "spec-kit/templates/commands/analyze.md",
+          "sha256": "sha256:ffe0640ebe778795737937f2d4ec6f0149d7d55b72692e25369a668f985d1dfe"
+        },
+        {
+          "upstream_path": "templates/commands/implement.md",
+          "path": "spec-kit/templates/commands/implement.md",
+          "sha256": "sha256:feab334232940cfd4ecbcdae41cf63ccb7d581a60380230837385f296f7b49bd"
         }
       ],
       "license_sha256": "sha256:2510b446bc1f0cf9702453075d20cd88631e20e5642658edb7325d9c1eb534f7"

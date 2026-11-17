@@ -1,0 +1,52 @@
+# fv-impl-review（步骤 07 的审阅部分）：formal-reviewer（impl 模式）在全新上下文里写出，
+# 只读 impl-contract.yaml、model.yaml、contract.yaml 与被映射的代码，不读实现者的会话。
+#   Spec Kit analyze：每个操作的覆盖行、问题分级 CRITICAL / HIGH / MEDIUM / LOW；
+#   Quint quint-execute-spec Phase 1 第 3、4 问：模型有而代码没有的行为、代码有而模型没有的行为；
+#   Specula harness / reproduction：只认真实代码路径，不认手写的轨迹或绕过公开接口的触发；
+#   pstack maintain：代码变了，审阅就失效（source.files 钉住被审的字节）。
+# 机器部分（代码证据锚点、测试与负对照、轨迹一致性、反例重放）由 `fv impl-verify` 自己跑，不由审阅者填写。
+schema_version: 1
+kind: fv-impl-review
+impl_contract_digest: "sha256:6622e2aca75dd0e5cafe886061dccdfbcb88e73c5a023396e56c037a95337b10"
+source:
+  files: {impl/tickets.py: "sha256:420435cd282eb77a84daf578e3f40b64f995713751fc3b78024813d3a638732f"}
+procedure:
+  - {upstream: spec-kit, path: templates/commands/analyze.md, sha256: "sha256:ffe0640ebe778795737937f2d4ec6f0149d7d55b72692e25369a668f985d1dfe"}
+  - {upstream: quint-llm-kit, path: quint-llm-kit-plugin/skills/quint-execute-spec/SKILL.md, sha256: "sha256:7bd1dbfddcded796c41bd0019b02f4b47a42e13ffd2d87010448ed86e0f38ab5"}
+  - {upstream: specula, path: skills/harness-generation/guide.md, sha256: "sha256:a5ad8f179e3c752908bdbaf82d890dc31cc5cec1fbdef13039e7cf127815c6b8"}
+  - {upstream: specula, path: skills/bug-confirmation/phases/02-reproduction.md, sha256: "sha256:a2ee02a50291c3c11ad1eaf122f57825a538e73bb9b9b60628501333bfd17a29"}
+  - {upstream: pstack, path: pstack/skills/maintain-formal-verification-skill/SKILL.md, sha256: "sha256:0c96f54293542d3818b68754562b338073958781a9684454611dca37592e2d2c"}
+reviewer: {name: formal-reviewer, context: fresh}
+coverage:
+  - {operation: request, implemented: true, location: "impl/tickets.py:39-40", notes: "INSERT OR IGNORE：重复提交是空操作"}
+  - {operation: read, implemented: true, location: "impl/tickets.py:42-45", notes: "SELECT 后单条 UPDATE 写 seen"}
+  - {operation: buy, implemented: true, location: "impl/tickets.py:50-66", notes: "事务内先查请求状态（幂等），再做条件扣减"}
+  - {operation: reject, implemented: true, location: "impl/tickets.py:50-66", notes: "同一事务，条件 UPDATE 返回 0 行"}
+unmodeled_behaviors:
+  - behavior: "请求已答复后调用 read() 仍会更新 seen"
+    location: "impl/tickets.py:42-45"
+    disposition: out_of_scope
+    reason: "seen 不是观测量，答复后也不再参与任何判定；模型里此时 read 被禁用，但可观测结果相同"
+  - behavior: "没有提交请求的用户调用 purchase() 返回 no_request"
+    location: "impl/tickets.py:52-55"
+    disposition: out_of_scope
+    reason: "模型里这样的用户不能购买（buy / reject 都被禁用）；代码同样拒绝，且不改变任何观测量"
+  - behavior: "TicketService(variant='check-then-act') 走旧的先读后扣路径"
+    location: "impl/tickets.py:68-76"
+    disposition: out_of_scope
+    reason: "旧设计只作负对照（实现契约 out_of_scope 第 2 条）；生产调用方不传 variant"
+assumptions:
+  - assumption: A-NO-RESTOCK
+    status: holds
+    evidence: "tickets.remaining 只在 purchase 的条件 UPDATE 里减少；impl/tickets.py 里没有补货或退票路径"
+  - assumption: A-FAIR
+    status: holds
+    evidence: "purchase 出错时 ROLLBACK，请求仍是 pending，不会被丢弃；T-liveness 检查每个请求在有限次 read + purchase 后得到答复"
+findings:
+  - id: U1
+    category: underspecification
+    severity: LOW
+    location: "impl/tickets.py:21"
+    summary: "等锁超时固定为 30 秒，高并发下会以异常结束；契约要求调用方重试，但没有给出重试次数上限"
+    recommendation: "在调用方（不在本模块）规定重试次数与退避；本模块的幂等已保证重试安全"
+review_complete: {status: complete, findings_count: 1}

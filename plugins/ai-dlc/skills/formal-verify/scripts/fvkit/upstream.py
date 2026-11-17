@@ -39,6 +39,18 @@ REQUIRED = {
     # Specula counterexample fidelity checklist + bug classification
     "fv-cex-triage": [("specula", "skills/tla-checking-workflow/references/spec-fidelity-checklist.md"),
                       ("specula", "skills/bug-classification/guide.md")],
+    # step 05: Quint execute-spec (map, plan with gates) + Specula action-to-code mapping + Spec Kit plan/tasks + pstack
+    "fv-impl-contract": [("quint-llm-kit", "quint-llm-kit-plugin/skills/quint-execute-spec/SKILL.md"),
+                         ("specula", "skills/spec_generation/references/instrumentation-spec-format.md"),
+                         ("spec-kit", "templates/commands/plan.md"),
+                         ("spec-kit", "templates/commands/tasks.md"),
+                         ("pstack", "pstack/skills/create-formal-verification-skill/SKILL.md")],
+    # step 07: Spec Kit analyze + Quint execute-spec verify + Specula harness / reproduction + pstack maintain
+    "fv-impl-review": [("spec-kit", "templates/commands/analyze.md"),
+                       ("quint-llm-kit", "quint-llm-kit-plugin/skills/quint-execute-spec/SKILL.md"),
+                       ("specula", "skills/harness-generation/guide.md"),
+                       ("specula", "skills/bug-confirmation/phases/02-reproduction.md"),
+                       ("pstack", "pstack/skills/maintain-formal-verification-skill/SKILL.md")],
 }
 
 

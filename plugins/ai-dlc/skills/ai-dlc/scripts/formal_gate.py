@@ -12,8 +12,13 @@ What is enforced, and where (never waivable with `advance --force`):
                               Quint Step 7 handoff, observable divergence ruled, adopted model among
                               them, a fresh Quint-review + Specula granularity model review; code-first:
                               the Specula modeling brief with its coverage audit, and the as-is model
-                              calibrated on traces of the current code), and a QUALIFIED receipt for
-                              exactly the current model and contract (digests, verdict, replay)
+                              calibrated on traces of the current code), a QUALIFIED receipt for
+                              exactly the current model and contract (digests, verdict, replay), and
+                              the implementation contract (step 05) READY for that model: what the code
+                              must map, make atomic / idempotent, do on error / timeout / conflict / retry,
+                              and which tests (with negative controls) must pass
+  acceptance / later (E3)     the code was verified against the implementation contract (step 07):
+                              IMPLEMENTS for the current contract and the current bytes of the mapped code
   pr / merge / release (E3)   a CONFORMS receipt whose mapped source files are still the ones on disk,
                               and a source map that is FRESH right now
 Which modules are required is explicit (`formal configure --module`) or derived from git: with a
@@ -123,6 +128,7 @@ def required(st):
             if not level_at_least(level, "E2"):
                 continue
             out[m["id"]] = {"contract": m["contract"], "model": m["model"], "source_map": m.get("source_map"),
+                            "impl_contract": m.get("impl_contract"), "impl_review": m.get("impl_review"),
                             "min_level": level, "entrance": m.get("entrance", "spec-first"),
                             "origin": "policy" if base else "policy (no branch.base: all modules)"}
     for w in f.get("waivers", []):
@@ -236,6 +242,54 @@ def _conformance_issues(st, mid, spec, contract, model, root):
     return []
 
 
+def _impl_contract_path(st, mid, spec):
+    rec = (st["formal"].get("impl_contract") or {}).get(mid)
+    return rec["file"] if rec else spec.get("impl_contract")
+
+
+def _impl_contract_issues(st, mid, spec, model, root):
+    from fvkit.implcontract import check_impl_contract
+    rel = _impl_contract_path(st, mid, spec)
+    if not rel:
+        return ["%s: no implementation contract (step 05) — `fv impl-contract draft`, filled from the codebase by model-builder "
+                "(impl-contract mode), then `formal impl-contract --module %s --file …`" % (mid, mid)]
+    try:
+        res = check_impl_contract(root / rel, model, Upstream(UPSTREAM))
+    except (FvError, OSError, KeyError, ValueError, TypeError) as error:
+        return ["%s: implementation contract unreadable: %s" % (mid, error)]
+    return ["%s: implementation contract: %s" % (mid, i) for i in res["issues"]]
+
+
+def _code_files(root, rel):
+    from fvkit.implcontract import _root
+    from fvkit.spec import load_document
+    path = root / rel
+    base = _root(path, load_document(path))
+    return path, base
+
+
+def _implementation_issues(st, mid, spec, contract, model, root):
+    rec = (st["formal"].get("implementation") or {}).get(mid)
+    if not rec:
+        return ["%s: the code was never verified against its implementation contract (step 07) — "
+                "`formal impl-verify --module %s --review <fv-impl-review>`" % (mid, mid)]
+    try:
+        if _file_digest(rec["receipt"]) != rec["digest"]:
+            return ["%s: implementation receipt changed after it was recorded" % mid]
+        validate(load_receipt(rec["receipt"]), model=model, contract=contract, expect_verdicts=["IMPLEMENTS"], min_level="E3")
+        rel = _impl_contract_path(st, mid, spec)
+        path, base = _code_files(root, rel)
+        out = []
+        if rel != rec["impl_contract"] or _file_digest(path) != rec["impl_contract_digest"]:
+            out.append("%s: the implementation contract changed after the code was verified against it" % mid)
+        for f, dg in sorted(rec["files"].items()):
+            if not (base / f).is_file() or _file_digest(base / f) != dg:
+                out.append("%s: %s changed after the implementation was verified — run `formal impl-verify` again" % (mid, f))
+        return out
+    except (FvError, OSError, KeyError, ValueError) as error:
+        return ["%s: implementation verification is not current: %s" % (mid, error)]
+
+
 def guard(st, target):
     """Unmet formal preconditions for advancing to `target` (empty = nothing required or all met)."""
     f = st.get("formal") or {}
@@ -260,6 +314,9 @@ def guard(st, target):
         if target != "cards":
             issues += _model_generation_issues(st, mid, spec, model, root)
             issues += _qualification_issues(st, mid, contract, model)
+            issues += _impl_contract_issues(st, mid, spec, model, root)
+        if level_at_least(level, "E3") and STAGE_ORDER.index(target) >= STAGE_ORDER.index("acceptance"):
+            issues += _implementation_issues(st, mid, spec, contract, model, root)
         if level_at_least(level, "E3") and STAGE_ORDER.index(target) >= STAGE_ORDER.index("pr"):
             issues += _conformance_issues(st, mid, spec, contract, model, root)
     return issues
@@ -369,6 +426,44 @@ def triage_counterexample(st, triage_file, model_path=None, mid=None):
     return dict(res, module=mid)
 
 
+def record_impl_contract(st, file, mid=None):
+    """Step 05: the implementation contract for the QUALIFIED model; the guard re-checks it every time."""
+    from fvkit.implcontract import check_impl_contract
+    mid, spec = _module(st, mid)
+    root, contract, model = _load(spec)
+    res = check_impl_contract(file, model, Upstream(UPSTREAM))
+    entry = {"file": _rel(file, root), "digest": res["digest"], "verdict": res["verdict"], "at": now()}
+    ensure(st).setdefault("impl_contract", {})[mid] = entry
+    return {"module": mid, "verdict": res["verdict"], "reasons": res["issues"], "file": entry["file"]}
+
+
+def verify_module_implementation(st, aidlc_root, slug, mid=None, review=None, traces=None):
+    """Step 07: run `fv impl-verify` for the module and record its E3 receipt."""
+    from fvkit.implcontract import verify_implementation
+    mid, spec = _module(st, mid)
+    root, contract, model = _load(spec)
+    rel = _impl_contract_path(st, mid, spec)
+    if not rel:
+        raise FvError("module %s has no implementation contract; record it with `formal impl-contract` first" % mid)
+    review = review or (str(root / spec["impl_review"]) if spec.get("impl_review") else None)
+    started = now()
+    work = _out_dir(aidlc_root, slug, "implement-work-" + mid).with_suffix("")
+    v = verify_implementation(root / rel, model, traces=traces, review=review,
+                              source_map=root / spec["source_map"] if spec.get("source_map") else None,
+                              run=True, upstream=Upstream(UPSTREAM), out_dir=work)
+    receipt = make("implement", {"model": dict(model.identity(), path=spec["model"]), "contract": dict(contract.identity(), path=spec["contract"]),
+                                 "impl_contract": dict(v["impl_contract"], path=rel)},
+                   {"run_tests": True}, v["result"], v["verdict"], "E3", started)
+    path = write(_out_dir(aidlc_root, slug, "implement-" + mid), receipt)
+    ensure(st).setdefault("implementation", {})[mid] = {
+        "receipt": str(Path(path).resolve()), "digest": _file_digest(path), "verdict": v["verdict"], "impl_contract": rel,
+        "impl_contract_digest": v["impl_contract"]["digest"], "files": v["result"]["source"]["files"],
+        "head": v["result"]["source"]["head"], "at": started}
+    st.setdefault("artifacts", {})["formal.implement." + mid] = str(Path(path).resolve())
+    return {"module": mid, "verdict": v["verdict"], "reasons": v["result"]["reasons"], "receipt": path,
+            "coverage": v["result"]["coverage"]}
+
+
 def calibrate_module(st, aidlc_root, slug, as_is_model, traces, mid=None, hidden_steps=0):
     """Code-first: the AI-built as-is model must explain traces of the CURRENT code before it is believed."""
     from fvkit.qualify import conform
@@ -422,8 +517,10 @@ def status(st):
                                     calibration=(f.get("calibration") or {}).get(mid),
                                     qualification=(f.get("qualification") or {}).get(mid),
                                     conformance=(f.get("conformance") or {}).get(mid),
-                                    triage=(f.get("triage") or {}).get(mid))
-    out["unmet_for"] = {t: guard(st, t) for t in ("cards", "implement", "pr")}
+                                    triage=(f.get("triage") or {}).get(mid),
+                                    impl_contract=(f.get("impl_contract") or {}).get(mid),
+                                    implementation=(f.get("implementation") or {}).get(mid))
+    out["unmet_for"] = {t: guard(st, t) for t in ("cards", "implement", "acceptance", "pr")}
     try:
         out["upstream"] = {k: v for k, v in Upstream(UPSTREAM).verify().items() if k in ("verdict", "issues", "digest")}
     except (FvError, OSError) as error:

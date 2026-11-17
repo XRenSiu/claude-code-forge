@@ -40,6 +40,9 @@ implement` 对 `cards.dir` **自己跑** `lint_cards.py`；`cards.lint_passed` �
 - **投影与其数据源同卡**：渲染 / 报告脚本与它读的数据在一张卡里，否则没人能原子地同时改数据的形状与它的
   标签。跨卡是例外，例外要 `reads_from` + `depends_on` + `notes` 里的接缝风险三样齐全（lint 项 6）。
 - **上下文预估**：卡 + 相关源码 + AC 子集 + 测试 > 40k → 必拆（lint，不是备注）。
+- **形式化模块**：有实现契约（/formal-verify 的步骤 05）时，契约里的每个操作写进恰好一张卡的 `formal_ops`，
+  那张卡的 `allowed_files` 要覆盖契约给该操作定的 `code.file`，任何卡都不得写实现契约本身（lint 项 7，
+  `advance implement` 自动带上 `--impl-contract`）。编码 agent 拿到的是“按已验证设计实现”的卡，不是重新设计的空间。
 - **这条 40k 会反压契约**：一个 REQ 的实现读集若超 40k，"REQ 一卡一主"与"≤ 40k"同时成立就无解。
   **G2 冻结前**就要按分区把这类 REQ 拆开；G2 之后再拆要走变更提案 + 重新签锁。
 - **关于用户的 Σ**："拆细一点"= 上下文预算更小，不是更多卡；"一张卡做完"= 合法，但仍要过 lint。
@@ -51,7 +54,7 @@ implement` 对 `cards.dir` **自己跑** `lint_cards.py`；`cards.lint_passed` �
 
 ## 原语（Π）
 
-- `scripts/lint_cards.py <cards_dir> [--spec spec.md] [--done-when done_when.yaml] [--dos dos.yaml] [--require-dos] [--max-context N] [--repo-root DIR] [--projection-pattern RE]`
+- `scripts/lint_cards.py <cards_dir> [--spec spec.md] [--done-when done_when.yaml] [--dos dos.yaml] [--require-dos] [--max-context N] [--repo-root DIR] [--projection-pattern RE] [--impl-contract impl-contract.yaml ...]`
   —— `--require-dos` 把"`dos_slice` 闭包未检"从一条 info 升成 reject，并在没给 `--dos` 时自动发现
   项目里的 `dos.yaml`（`../ai-dlc/scripts/repo_assets.py`）。M / L 档带上它：卡里出现一个本体
   解析不了的名词是整条流水线上代价最高的一次漂移，而"没算过"和"算过且通过"在旧输出里长得一样。

@@ -34,8 +34,8 @@ CLAIMS = {
 }
 UUID = re.compile(r"[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\Z")
 COMMANDS = ("lint", "check", "simulate", "mutate", "qualify", "trace", "conform", "source-map", "diff-contract",
-            "external", "ci", "gen-tests", "generate")
-POSITIVE = ("PASS", "BOUNDED_PASS", "QUALIFIED", "CONFORMS", "FRESH", "NOT_WEAKENED", "SATISFIED", "READY")
+            "external", "ci", "gen-tests", "generate", "implement")
+POSITIVE = ("PASS", "BOUNDED_PASS", "QUALIFIED", "CONFORMS", "FRESH", "NOT_WEAKENED", "SATISFIED", "READY", "IMPLEMENTS")
 
 
 def engine_identity():
@@ -212,6 +212,16 @@ def validate(r, model=None, contract=None, rerun=False, min_level=None, expect_v
         require(again["verdict"] == r["verdict"] and again["reasons"] == res["reasons"],
                 "conformance verdict contradicts its source map / trace results")
         require(isinstance(res.get("source"), dict) and "head" in res["source"], "conformance receipt lacks its source binding")
+    elif cmd == "implement":
+        from .implcontract import decide
+        res = r["result"]
+        require(r["evidence_level"] == "E3", "implementation verification is E3 evidence")
+        require(res["reasons"] == decide(res), "implementation verdict contradicts its recorded parts")
+        require(r["verdict"] == ("IMPLEMENTS" if not res["reasons"] else "NOT_IMPLEMENTED"), "implementation verdict contradicts its reasons")
+        require(isinstance(res.get("source"), dict) and "head" in res["source"], "implementation receipt lacks its source binding")
+        if r["verdict"] == "IMPLEMENTS":
+            require(res["traces"] and res["traces"]["verdict"] == "CONFORMS", "an implementation cannot be accepted without conforming traces")
+            require(any(t["role"] == "negative" for t in res["tests"]), "an implementation verdict needs a check that was seen failing")
     elif cmd == "trace":
         require(r["evidence_level"] == "E3", "trace conformance is E3 evidence")
         require(r["verdict"] == r["result"]["verdict"], "trace verdict contradicts its results")
@@ -244,9 +254,9 @@ def validate(r, model=None, contract=None, rerun=False, min_level=None, expect_v
             mutant_view = lambda res: [(m["id"], m["status"], m.get("killed_by")) for m in res["declared"]]  # noqa: E731
             require(mutant_view(r["result"]["mutants"]) == mutant_view(again["result"]["mutants"]),
                     "re-execution of the mutants differs from the receipt")
-        elif cmd in ("conform", "trace"):
+        elif cmd in ("conform", "trace", "implement"):
             from .trace import check_trace, parse_trace
-            listed = r["result"]["traces"]["traces"] if cmd == "conform" else r["result"]["traces"]
+            listed = (r["result"]["traces"] or {}).get("traces") if cmd in ("conform", "implement") else r["result"]["traces"]
             require(listed, "receipt lists no traces to re-check")
             for t in listed:
                 data = (traces or {}).get(t["trace"]["digest"])

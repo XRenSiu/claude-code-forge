@@ -5,7 +5,9 @@ description: >-
   原样收录的开源流程（Spec Kit specify/clarify、Quint LLM Kit quint-modeling、TLA+ AgentSkills、
   Specula code analysis / spec generation / fidelity triage、Formal Verification Skills 审阅契约），
   每段流程的产出都落成脚本能检查的文件。至少两个互不可见的 AI 生成者各写一份规则合同和一份模型，
-  脚本逐条比较它们的语义与可观测行为，分歧交人裁决，全新上下文的审阅者按上游审阅契约审规则和模型。之后进入统一的验证主干：
+  脚本逐条比较它们的语义与可观测行为，分歧交人裁决，全新上下文的审阅者按上游审阅契约审规则和模型。
+  模型检查通过后，再把已验证的设计转成实现契约（状态映射、原子 / 幂等 / 事务、故障处理、验收测试与负对照），
+  编码 agent 按契约实现；实现之后验证代码确实落实了契约与模型，然后才进独立验收。之后进入统一的验证主干：
   模型检查、变异资格、真实代码轨迹一致性、源码映射漂移、契约弱化检测和风险分级 CI。新需求先建模
   再写代码；已有代码先用当前代码的真实轨迹校准 AI 建的现状模型，再找反例。
   用于“形式化验证”“模型检查”“不变量”“并发 / 一致性 / 幂等 / 超卖 / 重复执行”“TLA+ / Quint”
@@ -23,6 +25,22 @@ user-invocable: true
 
 检查器 `scripts/fv.py`（fvkit）与 trusted-acceptance 的副本逐字一致，不依赖任何外部引擎就能把
 **需求 → 清单 → 规则 → 模型 → 检查 → 实现 → 轨迹一致性 → CI** 跑成闭环。
+
+## 完整流程（01–09）
+
+| # | 环节 | 产物 | 检查 |
+|---|---|---|---|
+| 01 | 需求入口：新需求（入口 A）/ 已有代码（入口 B） | `requirements.md`；入口 B 加 Specula modeling brief | — |
+| 02 | 定义规则与不变量（AI 生成，必经） | 清单、intake、≥2 份规则候选、审阅 → `contract.yaml` | `requirements-check` / `intake-check` / `rules-divergence` / `check-review`，G2 锁 |
+| 03 | 建立行为模型（AI 生成，必经） | ≥2 份模型候选、模型审阅 → `model.yaml` | `model-divergence` / `model-review-check`；入口 B 加校准 |
+| 04 | 形式化模型检查 | 反例 → 分诊 → 迭代设计 | `check` / `triage-check` / `qualify`（QUALIFIED） |
+| **05** | **生成实现契约**：把模型转成具体的工程约束 | `impl-contract.yaml` | `impl-contract check`（READY）：模型定下的部分由 fvkit 推导、不可改写 |
+| 06 | Coding Agent 按契约实现 | 代码；卡经 `formal_ops` 绑定契约操作 | `lint_cards.py` 第 7 项；卡的输入带契约约束 |
+| **07** | **验证实现一致性**：真实代码落实了模型与契约 | `impl-review.yaml`、`implement` 回执（E3） | `impl-verify`（IMPLEMENTS）：代码证据、测试与负对照、轨迹一致、操作覆盖、反例重放、全新上下文审阅 |
+| 08 | 独立自动验收 | trusted-acceptance 政策固定模型、合同、实现契约摘要 | gate 重新校验每份回执，并把 `conform` / `implement` 回执绑定到候选提交 |
+| 09 | 持续验证闭环 | — | `fv ci` 每次改动都重跑 02–07 的证据：生成证据、资格、一致性、实现验证 |
+
+**模型检查通过，不代表真实代码正确。**05 让编码 agent 按已验证的设计实现，而不是重新猜一遍设计；07 专门弥合“模型对、代码错”的差距。细节见 [references/implementation-contract.md](references/implementation-contract.md)。
 
 ## 三条不能让步的原则
 
@@ -114,6 +132,8 @@ $S formal generation --slug X --kind model --divergence …/model-divergence.jso
      [--brief …/modeling-brief.md --ledger …/defect-ledger.json --coverage …/brief-coverage.yaml]   # code-first 必填
 $S formal triage     --slug X --file …/triage/<name>.yaml [--model <产生反例的模型>]
 $S formal qualify    --slug X
+$S formal impl-contract --slug X --file …/impl-contract.yaml          # 05：fv impl-contract draft 起草、填写后登记
+$S formal impl-verify   --slug X --review …/impl-review.yaml          # 07：跑契约的测试与负对照、轨迹、反例重放、审阅
 $S formal conform    --slug X --traces traces/*.jsonl
 $S formal status     --slug X
 ```
@@ -122,10 +142,11 @@ $S formal status     --slug X
 |---|---|
 | fv 合同和需求清单都在当前 G2/L5 锁里，字节未变 | `cards` |
 | `upstream/UPSTREAM.json` INTACT；规则生成 READY（每次推进都对当前文件重算） | `cards` |
-| 模型生成 READY（模型审阅、handoff；code-first 要 brief 与校准）+ QUALIFIED | `implement` |
+| 模型生成 READY（模型审阅、handoff；code-first 要 brief 与校准）+ QUALIFIED + 实现契约 READY | `implement` |
+| E3 模块：当前代码对当前实现契约 IMPLEMENTS（契约或被映射的文件变了就失效） | `acceptance` |
 | E3 模块：当前的 CONFORMS，映射代码与取证时一致，源码映射此刻 FRESH | `pr` / `merge` |
 
-确实要降级，只能由人签 `formal waive`，并强制走 G3。配了策略时，需要哪些模块由 diff 推出；策略里 E2 以上的模块必须声明 `rules_intake`、`rules_divergence`、`rules_review`、`model_divergence`、`model_review`（code-first 还要声明 `calibration`、`modeling_brief`、`defect_ledger`、`brief_coverage`）；策略的 `upstream:` 指向收录的上游清单时，引用按字节核对。
+确实要降级，只能由人签 `formal waive`，并强制走 G3。配了策略时，需要哪些模块由 diff 推出；策略里 E2 以上的模块必须声明 `rules_intake`、`rules_divergence`、`rules_review`、`model_divergence`、`model_review`（code-first 还要声明 `calibration`、`modeling_brief`、`defect_ledger`、`brief_coverage`；E3 还要 `impl_contract`、`impl_review`）；策略的 `upstream:` 指向收录的上游清单时，引用按字节核对。
 
 ## 产物结构
 
@@ -143,6 +164,9 @@ specs/<feature>/formal/
   model-divergence.json      分歧 + 裁决
   model-review.yaml          Quint review + Specula 粒度审计
   triage/*.yaml              反例分诊（Specula fidelity checklist + bug classification）
+  receipts/qualify.json      实现契约所依据的 QUALIFIED 回执
+  impl-contract.yaml         05 实现契约（derived 由 fvkit 推导；其余由 model-builder 按上游流程填写）
+  impl-review.yaml           07 实现审阅（Spec Kit analyze + Quint 差距问题；钉住被审代码的字节）
   model.yaml · model-scope.md · source-map.yaml · source-map.lock.json · vectors.json · decisions.md
 verification/policy.yaml     模块 → 风险 → 证据等级 → CI 层 → 生成证据路径
 ```
@@ -153,6 +177,7 @@ verification/policy.yaml     模块 → 风险 → 证据等级 → CI 层 → �
 ## 参考
 
 - [references/generation.md](references/generation.md)：AI 生成协议：派发、隔离、清单、比较、裁决、审阅、采纳、校准
+- [references/implementation-contract.md](references/implementation-contract.md)：05 实现契约（推导什么、填什么）、06 卡怎么绑定、07 实现一致性的五类检查、能声称什么
 - [references/upstream-methods.md](references/upstream-methods.md)：每一步执行哪段上游原文、构造对照（Quint / TLA+ / FizzBee → fvkit）、适配与理由、直接使用上游工具
 - [upstream/README.md](upstream/README.md)：收录的上游项目、许可证、不改原文的规则与更新方法
 - [references/modeling-language.md](references/modeling-language.md)：清单、合同、模型、表达式、语义；轨迹、向量、源码映射、分歧报告、审阅、策略的格式
@@ -164,7 +189,8 @@ verification/policy.yaml     模块 → 风险 → 证据等级 → CI 层 → �
 
 - 分歧检查衡量的是**生成者之间是否一致**，不是是否正确：两个生成者可能犯同一个错。全新上下文审阅和人的裁决是另外两道防线，不是可以省掉的步骤。
 - 语义比较只在声明了有限 domain 的观测量上是精确的；映射、序列这类没有 domain 的观测量只能按文本比较，结论交人判断。
-- 示例里的候选、intake、审阅、brief 与分诊都是为演示而撰写的，不是真实隔离 agent 的运行记录。
+- 示例里的候选、intake、审阅、brief、分诊、实现契约与实现审阅都是为演示而撰写的，不是真实隔离 agent 的运行记录。
+- 实现一致性（07）是 E3：它证明代码里有契约要求的机制、测试与负对照按预期、真实轨迹符合模型，不证明所有输入与交错下都正确。验收方不重跑候选的测试，只重新推导回执、重查轨迹，并把回执绑定到候选提交。
 - 脚本检查的是“上游流程的每一步都做了、记下了”，不是“做得对”：澄清问题问得好不好、brief 的分析深不深，仍要靠人的裁决与审阅。
 - 上游流程有些步骤在隔离生成中做不到（中途找用户确认、并行子 agent、TLC 跑 hunt cfg），适配方式见 upstream-methods.md 第三节。
 - 内置检查器是显式状态枚举，不产生 E4。外部引擎适配只对固定格式的样例输出测过，本仓库没有实际运行 TLC / Apalache / Quint / FizzBee。

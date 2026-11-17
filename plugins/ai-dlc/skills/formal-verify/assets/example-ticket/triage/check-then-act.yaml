@@ -13,7 +13,7 @@ receipt: check-then-act.receipt.json
 property: NoOversell
 preconditions:
   - {precondition: "alice 与 bob 在任一方购买之前都读到 remaining=1", modeled: none}
-  - {precondition: "购买判定只看自己读到的 seen，不看提交时的库存", guard: "impl/tickets.py:66", modeled: same}
+  - {precondition: "购买判定只看自己读到的 seen，不看提交时的库存", guard: "impl/tickets.py:70", modeled: same}
   - {precondition: "判定与扣减之间没有事务，另一个用户的扣减可以插进来", modeled: none}
 case: C
 status: REPRODUCED

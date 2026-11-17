@@ -26,6 +26,10 @@ Mechanical guarantees (REJECT on breach — the non-waivable half):
      and every declared source that ANOTHER card owns needs `depends_on` on that card plus a seam note in
      `notes`. With --repo-root the script is also read: a path literal in its source that another card owns
      but the card did not declare is an undeclared seam. Rationale in references/splitting.md.
+  7. (with --impl-contract, repeatable) formal step 05 → 06: every operation of each fvkit implementation
+     contract is owned by exactly one card (`formal_ops: [<contract id>:<action>]`, or `<action>` with a single
+     contract), the owning card's allowed_files cover the operation's code.file, and no card may write the
+     implementation contract itself — the coding agent implements the verified design, it does not redraw it
 Semantic half (FLAGGED as needs_semantic_review): is the card self-contained? are allowed_files the
 minimal set? is context_estimate honest? — a judge / human reads the card for those.
 """
@@ -36,6 +40,7 @@ import json
 import os
 import pathlib
 import re
+import subprocess
 import sys
 
 try:
@@ -159,6 +164,8 @@ def main():
                          "卡里出现一个本体解析不了的名词是整条流水线上代价最高的一次漂移")
     ap.add_argument("--dos-scope", dest="dos_scope", help="monorepo：先在这个目录里找 dos.yaml（如 plugins/ai-dlc），找不到再回落到仓库根")
     ap.add_argument("--max-context", type=int, default=40000)
+    ap.add_argument("--impl-contract", dest="impl_contracts", action="append", default=[],
+                    help="fvkit implementation contract (step 05); every operation must be owned by exactly one card")
     ap.add_argument("--repo-root", help="resolve allowed_files against this root to read projection scripts")
     ap.add_argument("--projection-pattern", default=PROJECTION_DEFAULT,
                     help="basename regex that marks a script as a projection (default: %(default)s)")
@@ -345,6 +352,47 @@ def main():
                                        f"`{lit}` is not in {cid}.reads_from — undeclared seam")
     flags.append("needs_semantic_review: self-containment / minimal allowed_files / honest context estimate (judge)")
 
+    # 7. formal implementation contracts: every verified operation is somebody's card, inside its whitelist
+    if a.impl_contracts:
+        repo = a.repo_root or (subprocess.run(["git", "rev-parse", "--show-toplevel"], capture_output=True, text=True).stdout.strip()
+                               or os.getcwd())
+        owners = {}
+        for cid, c in cards.items():
+            for ref in c.get("formal_ops") or []:
+                owners.setdefault(str(ref), []).append(cid)
+        known = set()
+        single = len(a.impl_contracts) == 1
+        for icp in a.impl_contracts:
+            try:
+                ic = load_yaml(icp)
+            except Exception as e:
+                rejects.append(f"implementation contract {icp} unreadable: {e}")
+                continue
+            base = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(icp)), ic.get("root") or "."))
+            ic_rel = os.path.relpath(os.path.abspath(icp), repo)
+            for cid, c in cards.items():
+                for pat in c.get("allowed_files") or []:
+                    if path_glob_match(ic_rel, pat):
+                        rejects.append(f"{cid} may write the implementation contract `{ic_rel}` (`{pat}`) — "
+                                       "the coding agent implements the verified design, it does not redraw it")
+            for op in ic.get("operations") or []:
+                name = op.get("action")
+                refs = [f"{ic.get('id')}:{name}"] + ([name] if single else [])
+                known.update(refs)
+                who = sorted({o for r in refs for o in owners.get(r, [])})
+                if not who:
+                    rejects.append(f"operation `{ic.get('id')}:{name}` of {ic_rel} is owned by no card (formal_ops)")
+                    continue
+                if len(who) > 1:
+                    rejects.append(f"operation `{ic.get('id')}:{name}` is owned by several cards {who}")
+                    continue
+                code_file = (op.get("code") or {}).get("file") or ""
+                rel = os.path.relpath(os.path.normpath(os.path.join(base, code_file)), repo)
+                if not any(path_glob_match(rel, pat) for pat in cards[who[0]].get("allowed_files") or []):
+                    rejects.append(f"{who[0]} owns `{name}` but its allowed_files do not cover {rel}, where the contract puts it")
+        for ref, who in sorted(owners.items()):
+            if ref not in known:
+                rejects.append(f"{who} formal_ops `{ref}` is not an operation of any given implementation contract")
     out = {"cards": len(cards), "req_universe": sorted(universe), "source": source,
            "rejects": rejects, "flags": flags, "info": info, "verdict": "REJECT" if rejects else "PASS"}
     print(json.dumps(out, ensure_ascii=False, indent=2))

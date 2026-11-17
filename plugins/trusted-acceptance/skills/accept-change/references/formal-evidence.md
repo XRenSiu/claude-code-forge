@@ -11,7 +11,7 @@
 | E0 静态审阅 | `fv lint`、人工阅读 | 完成了静态审查 | 已验证正确 |
 | E1 模拟 | `fv simulate`、`quint run` | 抽样路径没有发现问题 | 所有路径都没问题 |
 | E2 模型检查 | `fv check` / `fv qualify`、TLC、Apalache、`quint verify` | 这个模型、这个范围、这些假设下没有违反性质的路径 | 生产代码没有缺陷 |
-| E3 实现验收 | `fv conform`（真实代码轨迹对模型的一致性 + 源码映射新鲜度） | 真实实现通过了这些具体的、留存的检查 | 所有输入和所有执行都已证明 |
+| E3 实现验收 | `fv conform`（真实代码轨迹对模型的一致性 + 源码映射新鲜度）；`fv impl-verify`（代码落实实现契约：约束的代码证据、测试与负对照、轨迹、反例重放、实现审阅） | 真实实现通过了这些具体的、留存的检查 | 所有输入和所有执行都已证明 |
 | E4 代码级证明 | 外部工具（Lean / Kani / Aeneas 等） | 声明假设下，被覆盖代码满足指定性质 | 未建模的外部服务和整个系统可靠 |
 
 `BOUNDED_PASS`（有界探索）、`NO_VIOLATION_SAMPLED`（模拟）、`INCOMPLETE`、`UNKNOWN` 都不是 PASS。fvkit 回执一律是 `local_advisory`：它证明“字节一致、逻辑自洽、可重放”，不证明采集者是谁。
@@ -29,6 +29,7 @@ python3 "$SKILL_DIR/scripts/acceptance.py" validate-formal conform.json \
 - **自洽**：verdict 由结果重新推出（有一条 FAIL 就不能是 PASS；不完整的探索不能是 PASS；源码映射不新鲜或有一条轨迹不符就不能是 CONFORMS）。
 - **反例重放**：每个反例、每个可达见证都在模型里逐步重放，最后一步必须真的违反（或满足）对应性质；活性反例必须是闭合的套索。
 - **重算（`--rerun`）**：用当前检查器重跑模型检查、资格判定（含变异）或轨迹一致性，确定性字段必须逐项相同。不同构建的 fvkit 产生的回执不做重算比较，直接拒绝，要求用当前构建重跑。
+- **实现一致性（`implement`）**：理由必须能由记录的各部分重新推出（契约检查、代码证据、测试与负对照的退出码、轨迹结论、操作覆盖、反例重放、审阅）；IMPLEMENTS 必须有一致的轨迹和至少一个确实失败的负对照。验收方不重跑候选的测试，`--rerun` 只重查原始轨迹。
 - **外部引擎**：重新解析留存的原始输出。`quint run` 永远不能是 PASS；`quint verify` / Apalache 最多是 `BOUNDED_PASS`。
 
 ## 规则与模型是怎么来的（生成证据）
@@ -49,18 +50,20 @@ Quint review + Specula 粒度审计的模型审阅（`fv model-review-check`）�
 
 ```json
 {"check_id": "ticket-oversell", "min_level": "E3", "model_digest": "sha256:…", "contract_digest": "sha256:…",
- "properties_digest": "sha256:…", "pass_verdicts": ["CONFORMS"], "rerun": true}
+ "properties_digest": "sha256:…", "impl_contract_digests": [], "pass_verdicts": ["CONFORMS"], "rerun": true}
 ```
+
+`impl_contract_digests` 固定维护者批准的实现契约（AI-DLC `/formal-verify` 的步骤 05）。要求接受 `IMPLEMENTS` 时它不能为空，而且每份 `implement` 回执验证的必须是其中一份契约。
 
 完整例子见 [formal-policy.example.json](../assets/formal-policy.example.json)。对每条要求，gate 按以下顺序判定，任何一步失败都是 `blocked`：
 
 1. 该检查的证据里至少有一份 `fv-receipt`；每一份都按上一节校验，且摘要等于政策固定的摘要。
 2. `rerun: true` 时，必须恰有一份 `fv-model` 和一份 `fv-contract` 证据，解析后的摘要等于政策；gate 用它们重跑资格判定，用 `fv-trace` 证据重算轨迹一致性。
-3. `conform` 回执的 `source.head` 必须等于本次 binding 的 `candidate_sha`：给别的候选做的实现证据不能拿来用。
+3. `conform` 与 `implement` 回执的 `source.head` 必须等于本次 binding 的 `candidate_sha`：给别的候选做的实现证据不能拿来用；`implement` 回执验证的实现契约必须在政策固定的 `impl_contract_digests` 里。
 4. 检查状态为 pass 时，至少一份回执的等级 ≥ `min_level` 且 verdict 属于 `pass_verdicts`；任何一份负面回执都不能和 pass 并存。
 5. 检查状态为 fail 时，形式化证据不能全是正面的；全是正面就说明检查失败和证据自相矛盾。可复现的实现缺陷照常进入 `needs_repair`。
 
-同一检查可以有多条要求，例如一条 E2 `QUALIFIED`（设计已审定），一条 E3 `CONFORMS`（实现与设计一致）。v1 政策的行为不变。
+同一检查可以有多条要求，例如一条 E2 `QUALIFIED`（设计已审定），一条 E3 `CONFORMS`（轨迹与设计一致），一条 E3 `IMPLEMENTS`（代码落实了批准的实现契约）。示例政策里的摘要只用于演示。v1 政策的行为不变。
 
 ## 采集侧的责任（gate 做不到的部分）
 

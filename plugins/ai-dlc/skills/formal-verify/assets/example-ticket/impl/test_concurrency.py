@@ -4,6 +4,12 @@
 Two threads read "1 left", wait for each other, then purchase. The atomic reservation must
 never oversell; the check-then-act variant is expected to oversell under the same schedule,
 which shows the test can actually see the defect the model found.
+
+    python3 test_concurrency.py                          # the shipped (atomic) implementation
+    python3 test_concurrency.py --variant check-then-act # negative control: must FAIL (exit 1)
+
+The second form is the implementation contract's `must_fail_with` for this test: a check that
+was never seen failing proves nothing.
 """
 import sys
 import tempfile
@@ -15,6 +21,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from tickets import TicketService, setup  # noqa: E402
 
 USERS = ("alice", "bob")
+VARIANT = "atomic"
 
 
 def race(variant, rounds=20):
@@ -53,12 +60,16 @@ def race(variant, rounds=20):
 
 
 class ConcurrencyTest(unittest.TestCase):
-    def test_atomic_reservation_never_oversells(self):
-        self.assertEqual(race("atomic"), 1)
+    def test_reservation_never_oversells(self):
+        self.assertEqual(race(VARIANT), 1)
 
     def test_check_then_act_oversells_under_the_counterexample_schedule(self):
         self.assertEqual(race("check-then-act", rounds=3), 2)
 
 
 if __name__ == "__main__":
+    if "--variant" in sys.argv:
+        i = sys.argv.index("--variant")
+        VARIANT = sys.argv[i + 1]
+        del sys.argv[i:i + 2]
     unittest.main()

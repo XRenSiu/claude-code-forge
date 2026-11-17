@@ -3,7 +3,7 @@
 # 每条 6.1 的可模型检查发现都有一个能到达触发条件的模型。6.2 里 CR 的条目由代码审阅确认，不在这里。
 schema_version: 1
 kind: fv-brief-coverage
-brief_digest: "sha256:4e827794d4045b56276f287a5f79ddce82a95275b65abda633cc48ebdd8f4ed7"
+brief_digest: "sha256:80ec80c4e5f9350ca19d5aee9836d3b6b43276280aa61e025f0c619a356b871a"
 contract_digest: "sha256:c9d5267076462d1b6892aaade52a130d8691a56ce5c71c6fbdf083fa71d3c7ac"
 procedure:
   - {upstream: specula, path: skills/code_analysis/references/modeling-brief-format.md, sha256: "sha256:3a19ae3cae5fc06479f72c8587cd0b8293c1796c964e91eaddbe055a48e2ad04"}

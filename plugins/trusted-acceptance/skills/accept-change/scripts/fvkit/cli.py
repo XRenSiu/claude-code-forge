@@ -14,8 +14,8 @@ from . import VERSION
 from .values import FvError, require
 
 EXIT = {"PASS": 0, "QUALIFIED": 0, "CONFORMS": 0, "FRESH": 0, "NOT_WEAKENED": 0, "SATISFIED": 0, "APPROVED": 0,
-        "READY": 0, "TRACEABLE": 0, "AGREED": 0, "COMPLETE": 0, "REVIEWED": 0, "INTACT": 0, "TRIAGED": 0,
-        "NOT_READY": 1, "GAPS": 1, "DIVERGENT": 1, "NOT_REVIEWED": 1, "TAMPERED": 1, "NOT_TRIAGED": 1,
+        "READY": 0, "TRACEABLE": 0, "AGREED": 0, "COMPLETE": 0, "REVIEWED": 0, "INTACT": 0, "TRIAGED": 0, "IMPLEMENTS": 0,
+        "NOT_READY": 1, "GAPS": 1, "DIVERGENT": 1, "NOT_REVIEWED": 1, "TAMPERED": 1, "NOT_TRIAGED": 1, "NOT_IMPLEMENTED": 1,
         "FAIL": 1, "NOT_QUALIFIED": 1, "NONCONFORMANT": 1, "STALE": 1, "BROKEN": 1, "WEAKENED": 1, "UNSATISFIED": 1,
         "ERROR": 2, "BOUNDED_PASS": 3, "INCOMPLETE": 3, "UNKNOWN": 3, "NO_VIOLATION_SAMPLED": 3}
 
@@ -453,6 +453,36 @@ def cmd_triage_check(args):
     return EXIT[r["verdict"]]
 
 
+def cmd_impl_contract(args):
+    from .implcontract import check_impl_contract, draft, dump
+    m = _model(args)
+    if args.action == "draft":
+        require(args.out, "draft needs --out")
+        path = dump(draft(m, args.qualification, _upstream(args)), args.out)
+        emit({"ok": True, "written": path, "next": "fill every TODO from the codebase, then `fv impl-contract check`"})
+        return 0
+    require(args.file, "check needs the implementation contract file")
+    r = check_impl_contract(args.file, m, _upstream(args))
+    emit({k: v for k, v in r.items() if k != "derived"})
+    return EXIT[r["verdict"]]
+
+
+def cmd_impl_verify(args):
+    from .implcontract import verify_implementation
+    from .receipt import make, now
+    started = now()
+    m = _model(args)
+    v = verify_implementation(args.file, m, traces=args.traces, review=args.review, source_map=args.map,
+                              run=not args.no_run, upstream=_upstream(args), out_dir=args.work, timeout=args.timeout)
+    inputs = _inputs(m, {"impl_contract": v["impl_contract"]})
+    receipt = make("implement", inputs, {"run_tests": not args.no_run, "hidden_steps": 0}, v["result"], v["verdict"], "E3", started)
+    path = _save(args, receipt)
+    emit({"verdict": v["verdict"], "reasons": v["result"]["reasons"], "receipt": path, "evidence_level": "E3",
+          "tests": [{k: t[k] for k in ("id", "role", "exit", "timed_out")} for t in v["result"]["tests"]],
+          "coverage": v["result"]["coverage"]})
+    return EXIT[v["verdict"]]
+
+
 def cmd_upstream(args):
     from .upstream import Upstream, refresh
     if args.action == "verify":
@@ -636,6 +666,19 @@ def parser():
     s.add_argument("triage"); s.add_argument("--model", help="the model the counterexample came from (enables replay)")
     s.add_argument("--contract"); s.add_argument("--upstream", help=up_help)
     s.set_defaults(fn=cmd_triage_check)
+    s = sub.add_parser("impl-contract", help="step 05: turn the QUALIFIED model into an implementation contract (draft) or check one")
+    s.add_argument("action", choices=["draft", "check"]); s.add_argument("file", nargs="?")
+    model_args(s); s.add_argument("--qualification", help="draft: the QUALIFIED receipt it builds on")
+    s.add_argument("--out"); s.add_argument("--upstream", help=up_help)
+    s.set_defaults(fn=cmd_impl_contract)
+    s = sub.add_parser("impl-verify", help="step 07: does the code honour the implementation contract? (E3, IMPLEMENTS / NOT_IMPLEMENTED)")
+    s.add_argument("file", help="the implementation contract"); model_args(s)
+    s.add_argument("--review", help="fv-impl-review by a fresh reviewer"); s.add_argument("--map", help="source-map.yaml")
+    s.add_argument("--traces", nargs="*", help="extra implementation traces (tests with {traces} add their own)")
+    s.add_argument("--no-run", action="store_true", help="do not run the acceptance tests (the verdict will say so)")
+    s.add_argument("--work", help="directory for test traces"); s.add_argument("--timeout", type=int, default=600)
+    s.add_argument("--upstream", help=up_help); s.add_argument("--out", help="new receipt path (never overwritten)")
+    s.set_defaults(fn=cmd_impl_verify)
     s = sub.add_parser("gen-evidence", help="evidence that rules/model were AI-generated the checkable way (READY / NOT_READY)")
     s.add_argument("kind", choices=["rules", "model"])
     s.add_argument("--contract"); s.add_argument("--requirements"); s.add_argument("--model"); s.add_argument("--divergence")

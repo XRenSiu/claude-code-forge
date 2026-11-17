@@ -1,12 +1,12 @@
 # upstream/：生成规则与模型所依据的开源流程（原样收录）
 
-本目录里的文件是下列开源项目的**原文**，逐字节复制，没有任何修改。生成规则、建模、审阅和反例分诊时，agent 执行的就是这些流程。本仓库自己写的部分只有两样：把流程的产出落成 fvkit 能检查的文件（`scripts/fvkit/methods.py`），以及把上游语言（TLA+ / Quint / FizzBee）的构造映射到 fvkit 模型（见 `../references/upstream-methods.md`）。
+本目录里的文件是下列开源项目的**原文**，逐字节复制，没有任何修改。生成规则、建模、审阅和反例分诊时，agent 执行的就是这些流程。本仓库自己写的部分只有两样：把流程的产出落成 fvkit 能检查的文件（`scripts/fvkit/methods.py`、`scripts/fvkit/implcontract.py`），以及把上游语言（TLA+ / Quint / FizzBee）的构造映射到 fvkit 模型（见 `../references/upstream-methods.md`）。
 
 | 目录 | 项目 | 许可证 | 收录了什么，在哪一步用 |
 |---|---|---|---|
-| `spec-kit/` | [github/spec-kit](https://github.com/github/spec-kit) | MIT | `specify` / `clarify` 命令模板与 spec 模板：G-1 需求清单与 intake 的歧义扫描、≤5 个澄清问题 |
-| `quint-llm-kit/` | [quint-co/quint-llm-kit](https://github.com/quint-co/quint-llm-kit) | Apache-2.0 | `quint-modeling` 技能（Step 1–7）与 from-requirements / from-code / from-nothing / from-tlaplus / review 指南：G-2 抽取表与粒度、G-6 建模主线、Step 7 handoff、模型审阅 |
-| `specula/` | [specula-org/Specula](https://github.com/specula-org/Specula) | Apache-2.0 | code_analysis（modeling brief、defect ledger、bug archaeology）、spec_generation（基础规格方法、粒度审计、brief coverage、活性模式）、spec-fidelity 清单、bug-classification：入口 B 的分析与建模、反例分诊 |
+| `spec-kit/` | [github/spec-kit](https://github.com/github/spec-kit) | MIT | `specify` / `clarify` 命令模板与 spec 模板：G-1 需求清单与 intake 的歧义扫描、≤5 个澄清问题；`plan` / `tasks`：05 实现契约；`analyze` / `implement`：06–07 |
+| `quint-llm-kit/` | [quint-co/quint-llm-kit](https://github.com/quint-co/quint-llm-kit) | Apache-2.0 | `quint-modeling` 技能（Step 1–7）与 from-requirements / from-code / from-nothing / from-tlaplus / review 指南：G-2 抽取表与粒度、G-6 建模主线、Step 7 handoff、模型审阅；`quint-execute-spec`：05–07 按已验证规格实现与验证 |
+| `specula/` | [specula-org/Specula](https://github.com/specula-org/Specula) | Apache-2.0 | code_analysis（modeling brief、defect ledger、bug archaeology）、spec_generation（基础规格方法、粒度审计、brief coverage、活性模式、instrumentation spec）、harness-generation、bug-confirmation（复现规则）、spec-fidelity 清单、bug-classification：入口 B 的分析与建模、05 的动作-代码映射、07 的轨迹与复现、反例分诊 |
 | `tlaplus-agentskills/` | [tlaplus/AgentSkills](https://github.com/tlaplus/AgentSkills) | MIT | tlaplus-from-source / split-action / add-variable：入口 B 从源码建模、拆分原子动作 |
 | `fvs/` | [Beneficial-AI-Foundation/formal-verification-skills](https://github.com/Beneficial-AI-Foundation/formal-verification-skills) | MIT | lean-spec-review 命令、fc-spec-review 审阅契约、review-policy、trust-audit：G-5 全新上下文的对抗式规则审阅与作者分诊 |
 | `pstack/` | [cursor/plugins](https://github.com/cursor/plugins)（pstack） | MIT | create / maintain-formal-verification-skill：“能失败”“发现就是发现”“与代码同步”的验收准则 |

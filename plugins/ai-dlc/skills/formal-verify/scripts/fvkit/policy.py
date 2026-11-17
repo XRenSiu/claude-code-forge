@@ -29,7 +29,8 @@ DEFAULT_TIERS = {
 MODULE_KEYS = ["id", "risk", "paths"]
 MODULE_OPTIONAL = ["contract", "model", "source_map", "traces", "trace_command", "vectors", "approvals", "min_depth", "notes", "owners",
                    "entrance", "rules_divergence", "rules_review", "model_divergence", "calibration",
-                   "rules_intake", "rules_review_triage", "model_review", "modeling_brief", "defect_ledger", "brief_coverage"]
+                   "rules_intake", "rules_review_triage", "model_review", "modeling_brief", "defect_ledger", "brief_coverage",
+                   "impl_contract", "impl_review"]
 
 
 def load_policy(path):
@@ -67,6 +68,8 @@ def load_policy(path):
         if LEVELS.index(level) >= 3:
             require(m.get("source_map") and (m.get("traces") or m.get("trace_command")),
                     "module %s (%s) needs a source map and implementation traces" % (m["id"], level))
+            require(m.get("impl_contract") and m.get("impl_review"),
+                    "module %s (%s) needs the implementation contract (step 05) and its implementation review (step 07)" % (m["id"], level))
     require(doc.get("unclassified", "review") in ("review", "ignore"), "unclassified must be review|ignore")
     return {"doc": doc, "risks": risks, "tiers": tiers, "modules": doc["modules"], "unclassified": doc.get("unclassified", "review"),
             "upstream": doc.get("upstream")}

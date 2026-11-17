@@ -821,7 +821,7 @@
     },
     "formal": {
       "type": "object",
-      "description": "fvkit formal verification (formal_gate.py / ../formal-verify). Written only by `formal configure|generation|calibrate|qualify|conform|triage|waive`; the advance guard re-validates every receipt and generation artifact against the current model, contract, lock, source map and the plugin's vendored upstream procedures.",
+      "description": "fvkit formal verification (formal_gate.py / ../formal-verify). Written only by `formal configure|generation|calibrate|qualify|impl-contract|impl-verify|conform|triage|waive`; the advance guard re-validates every receipt and generation artifact against the current model, contract, lock, source map and the plugin's vendored upstream procedures.",
       "properties": {
         "status": {
           "enum": [
@@ -866,6 +866,14 @@
         "triage": {
           "type": "object",
           "description": "per module: [{file, digest, verdict, case B|C, route, at}] from `formal triage` (Specula spec-fidelity checklist + bug classification)"
+        },
+        "impl_contract": {
+          "type": "object",
+          "description": "per module: {file, digest, verdict, at} — step 05, the implementation contract derived from the QUALIFIED model; re-checked on every advance from `implement`"
+        },
+        "implementation": {
+          "type": "object",
+          "description": "per module: {receipt, digest, verdict, impl_contract, impl_contract_digest, files, head, at} — step 07, `fv impl-verify` (E3); required from `acceptance` for E3 modules, void when the contract or a mapped file changes"
         }
       }
     }

@@ -46,6 +46,9 @@ deletion 测试：撤掉本 skill，引擎会把整个对话历史、评审 skil
 
 - 卡的 `ac_ids` 对应测试全绿（`/qa-reviewer` 或直接跑测试入口）；全套件无回归；lint / 类型 / 构建绿（存在则跑）。
 - 每个 commit `verify_commit.py --card <卡> --lock .done_when.lock` exit 0。
+- **形式化模块（卡有 `formal_ops`）**：卡的输入里带上实现契约中这些操作的约束（`assets/card_context.md` 的“形式化实现契约”一节）。
+  实现者按 Quint quint-execute-spec 的 Phase 2–4（先计划、每步过验证闸、最后全量验证）按契约实现，不重新设计；契约只读。
+  所有卡完成后由 `aidlc_state.py formal impl-verify` 做步骤 07 的实现一致性验证，它是 `advance acceptance` 的前置。
 - diff 内没有卡 `forbidden_files` 的文件；没有新增依赖（有则记 `notes` 并进 A 档检查）。
 - 残差：实现是否走捷径满足测试（`/spec-gaming-detector` 在整体验收时看）；本 skill 不自评。
 

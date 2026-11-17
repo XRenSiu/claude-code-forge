@@ -37,7 +37,7 @@ class TicketService:
         self.db, self.users, self.variant = connect(path), tuple(users), variant
 
     def request(self, user):
-        self.db.execute("INSERT INTO requests (user, status, seen) VALUES (?, 'pending', NULL)", (user,))
+        self.db.execute("INSERT OR IGNORE INTO requests (user, status, seen) VALUES (?, 'pending', NULL)", (user,))
 
     def read(self, user):
         (remaining,) = self.db.execute("SELECT remaining FROM tickets WHERE event_id = ?", (EVENT,)).fetchone()
@@ -49,6 +49,10 @@ class TicketService:
             return self._purchase_check_then_act(user)
         self.db.execute("BEGIN IMMEDIATE")
         try:
+            row = self.db.execute("SELECT status FROM requests WHERE user = ?", (user,)).fetchone()
+            if row is None or row[0] != "pending":   # idempotent retry: a repeated purchase returns the first answer
+                self.db.execute("COMMIT")
+                return row[0] if row else "no_request"
             reserved = self.db.execute(
                 "UPDATE tickets SET remaining = remaining - 1 WHERE event_id = ? AND remaining > 0", (EVENT,)).rowcount
             status = "success" if reserved == 1 else "sold_out"

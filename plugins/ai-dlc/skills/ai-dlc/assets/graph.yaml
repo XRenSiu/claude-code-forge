@@ -269,7 +269,7 @@ nodes:
   - id: agent.formal-reviewer
     kind: agent
     role: evaluator
-    reads: [需求原文, requirements.yaml, contract.yaml, model.yaml, upstream/fvs/**, upstream/quint-llm-kit/**, upstream/specula/**]
+    reads: [需求原文, requirements.yaml, contract.yaml, model.yaml, impl-contract.yaml, src/**, upstream/fvs/**, upstream/quint-llm-kit/**, upstream/specula/**, upstream/spec-kit/**, upstream/pstack/**]
     must_not_read: [candidates/**, rules-divergence.json, model-divergence.json, generator_session]
     writes: [rules-review.yaml, model-review.yaml, triage/*.yaml]
     authority: {commit: false}
@@ -365,7 +365,9 @@ edges:
   - {from: human.g2,           to: agent.model-builder,  type: handoff, carries: [contract.yaml]}                # 规则签了才建模
   - {from: agent.model-builder, to: plan-cards,          type: handoff, carries: [candidates/model-*, model-divergence.json]}
   - {from: formal-verify,      to: plan-cards,           type: handoff, carries: [model.yaml, qualify-receipt]}   # FV-G1：设计审定后才拆卡
-  - {from: formal-verify,      to: acceptance-fleet,     type: handoff, carries: [conform-receipt]}       # E3：真实轨迹对模型的一致性
+  - {from: agent.model-builder, to: implement,           type: handoff, carries: [impl-contract.yaml]}      # 步骤 05：卡经 formal_ops 绑定契约操作，编码 agent 按约束实现
+  - {from: agent.formal-reviewer, to: acceptance-fleet,  type: handoff, carries: [impl-review.yaml]}       # 步骤 07：全新上下文审代码是否落实契约，结论进验收
+  - {from: formal-verify,      to: acceptance-fleet,     type: handoff, carries: [conform-receipt, implement-receipt]}   # E3：轨迹一致性 + 实现一致性（impl-verify）
   - {from: test-suite-generator, to: calibrate,          type: handoff, carries: [tests/<f>/**]}
 
   # ---------- 契约 → 人签 → 锁 ----------

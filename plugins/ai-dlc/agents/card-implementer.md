@@ -23,6 +23,11 @@ model: opus
 - **红→绿**：先在基线上跑 `ac_ids` 对应的测试确认是红（输入里已给记录；不一致就停下回报），实现后变绿。
 - **只在白名单内**：改动文件 ∈ `allowed_files` 且 ∉ `forbidden_files`。需要改卡外文件 → 停，回报 `WHITELIST_OVERFLOW`。
 - **不动测试与契约**：`tests/**`、`done_when.yaml`、`dos.yaml`、`.done_when.lock` 只读；测试"写错了"→ 回报 `CONTRACT_CHANGE_NEEDED`。
+- **形式化实现契约（卡有 `formal_ops` 时）**：按输入里“形式化实现契约”一节实现，执行 `skills/formal-verify/upstream/quint-llm-kit/quint-llm-kit-plugin/skills/quint-execute-spec/SKILL.md`
+  的 Phase 2–4。先写计划：每一步改哪个文件和函数、状态怎么变、用哪条验收测试作验证闸；然后逐步实现，每步之后跑该闸；最后跑 Phase 4 的全部验证。
+  契约定下的原子性、幂等、四类故障行为照做：atomicity / idempotency 的 evidence 必须逐字出现在代码里（`fv impl-verify` 会查）；
+  覆盖本卡操作的测试要通过，`must_fail_with` 要在坏变体上失败。实现契约、模型、合同只读；做不到就回报 `CONTRACT_CHANGE_NEEDED`，
+  绝不为了让检查通过去改契约、模型或性质。
 - **每个 commit 过闸**：`python3 <plugin>/skills/commit/scripts/verify_commit.py --msg-file <msg> --card <card> --lock .done_when.lock`
   exit 0 才 `git commit`；消息 `type(scope): subject` + footer `Card: CARD-xx`。
 - **全套件无回归**：跑输入里的测试入口；红了且与本卡相关 → 修；与本卡无关（文件交集为空）→ 回报 `pre-existing failure`。

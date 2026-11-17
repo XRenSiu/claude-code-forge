@@ -12,7 +12,8 @@
 - `skills/accept-change/scripts/fv.py` + `fvkit/`：自闭环的形式化验证工具（仅标准库，YAML 输入需要 PyYAML）。安全表达式语言写的规则合同（fv-contract）与状态机模型（fv-model）；显式状态模型检查，覆盖不变量、迁移性质、可达见证、死锁，以及弱/强公平下的活性，给出最短反例或套索反例，支持对称约简；变异资格判定（证明规则抓得到故意注入的设计缺陷）；真实代码轨迹一致性与运行时监控；模型驱动测试向量；源码映射漂移检测；契约弱化检测；风险分级的 CI；TLC / Apalache / Quint / FizzBee 适配。证据按 E0–E4 分级，回执可重放、可重算。见 [formal-evidence.md](skills/accept-change/references/formal-evidence.md)。
 - 规则与模型由 AI 按原样收录的开源流程生成（Spec Kit、Quint LLM Kit、TLA+ AgentSkills、Specula、Formal Verification Skills；全集在 AI-DLC 的 `formal-verify/upstream/`），生成过程可检：逐字引文的需求清单、Spec Kit / Quint intake、≥2 份隔离生成候选的语义比较（有限域上给出见证值）与人的裁决、FVS 审阅契约下的审阅、Quint / Specula 模型审阅，收口为 `fv gen-evidence` 回执。`fv upstream verify` 确认收录原文未被改动，产物按 sha256 引用原文。
 - `skills/accept-change/upstream/`：原样收录的 Specula spec-fidelity checklist 与 bug-classification（Apache-2.0，带许可证），用于判断反例是模型失真还是实现缺陷；`fv triage-check` 核对分诊文件。
-- `acceptance-control/gate.py` 支持 policy schema 2：维护者固定模型/规则摘要和最低证据等级，gate 重新校验每份 `fv-receipt`，`rerun` 时用原件重算资格判定与轨迹一致性。
+- `acceptance-control/gate.py` 支持 policy schema 2：维护者固定模型/规则摘要、批准的实现契约（`impl_contract_digests`）和最低证据等级，gate 重新校验每份 `fv-receipt`，`rerun` 时用原件重算资格判定与轨迹一致性；`conform` / `implement` 回执必须属于被验收的候选。
+- `fv impl-contract` / `fv impl-verify`：模型检查通过后把设计转成实现契约（模型推导的原子、并发、验收义务 + 代码映射、幂等、故障处理），实现后验证代码落实了契约（E3 `implement` 回执）。
 - `evaluations/`：协议与门禁回归、真实本地 HTTP 示例、fvkit 与形式化门禁回归，以及待独立执行的 Skill 行为评测用例。
 
 Skill 负责提案、送验和解释；AI-DLC/Forge/项目 Harness 继续负责实现与自测。`acceptance-fleet` 的审查报告可作为输入，不自动成为正式通过。

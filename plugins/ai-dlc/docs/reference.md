@@ -109,7 +109,7 @@ flag 不等于 reject。预门过了但带 flag，意思是「机器判不了这
 
 | 脚本 | 所属 skill | 干什么 | 关键退出码 |
 |---|---|---|---|
-| `lint_cards.py` | plan-cards | 卡的三项校验（REQ 全覆盖且一卡一主 / 卡间无写冲突 / **`dos_slice` 结构化字段**的名词可解析）+ 上下文 ≤ 40k。卡的**散文**（title / notes）归 `verify_vocabulary.py`，两者不重叠 | 0 · 1 拒 · 2 IO |
+| `lint_cards.py` | plan-cards | 卡的三项校验（REQ 全覆盖且一卡一主 / 卡间无写冲突 / **`dos_slice` 结构化字段**的名词可解析）+ 上下文 ≤ 40k；`--impl-contract`（形式化模块，`advance implement` 自动带上）：实现契约的每个操作恰好归一张卡的 `formal_ops`，卡的白名单覆盖操作的 `code.file`，任何卡都不能写实现契约。卡的**散文**（title / notes）归 `verify_vocabulary.py`，两者不重叠 | 0 · 1 拒 · 2 IO |
 | `slice_agent_map.py` | plan-cards | **按卡切仓库地图**：命令全给，目录 / 禁区 / 陷阱只给与 `allowed_files` 相交的行 | 0 · 1 缺节 · 2 IO |
 | `verify_commit.py` | commit | 落地前三道闸：卡白名单溢出、G2 锁哈希、secrets 与调试代码 | 0 · 1 拒 · 2 git/IO |
 | `commit.sh` | commit | 过闸后提交的薄封装 | — |
@@ -146,6 +146,8 @@ flag 不等于 reject。预门过了但带 flag，意思是「机器判不了这
 | `fv.py model-review-check` | Quint review 6 项结构检查（fail 拒、warn 由人决定）+ 运行时检查由检查器重算（C-init / C-step / C-step-complete / R1 / R2，审阅者说 pass 而检查器发现死动作或空洞性质即拒）+ Specula 粒度审计（每个动作一行，该拆不拆即拒） | 0 REVIEWED · 1 NOT_REVIEWED |
 | `fv.py brief-check` | 入口 B 的 Specula modeling brief（第 1–7 节、Category A/B、Scenario 字段）、defect-ledger.json 与 6.2 表一致、brief coverage（每个 Scenario / 不变量 / 6.1 发现都有落点，活性要公平） | 0 COMPLETE · 1 GAPS |
 | `fv.py triage-check` | Specula spec-fidelity checklist（前提 → 实现守卫 `file:line` → 模型对照，Case B / C）+ bug-classification（状态与严重度一致）；输出路由 | 0 TRIAGED · 1 NOT_TRIAGED |
+| `fv.py impl-contract draft\|check` | 05 实现契约：`draft` 从 QUALIFIED 模型推导 derived（读写集、共享 / 按 key 的读改写、必须原子的动作、并发冲突、公平、每条性质 / mutant / 假设的验收义务），其余留 TODO；`check` 重新推导并核对：没被改写、引用了 QUALIFIED 回执、状态 / 观测量 / 动作全有代码对应、原子机制与证据、幂等决定、四类故障只落在模型允许的状态、验收覆盖、至少一个负对照 | 0 READY · 1 NOT_READY |
+| `fv.py impl-verify` | 07 实现一致性（E3）：约束的 evidence 逐字在代码里；跑验收测试（退出 0）与负对照（必须失败）；MBT 轨迹逐步对照模型且每个操作出现过；反例重放向量有一致轨迹；全新上下文的 fv-impl-review（覆盖、模型外行为的处置、假设、分级问题、钉住被审代码字节）；回执理由由记录的各部分重新推出 | 0 IMPLEMENTS · 1 NOT_IMPLEMENTED |
 | `fv.py gen-evidence rules\|model` | AI 生成的收口：上游原文 INTACT；规则要 intake、FVS 审阅（+ 处置），High 影响的性质类需求被形式化；模型要每个候选的 Step 7 handoff 与模型审阅；采纳物在被比较之列、候选仍在且未改、分歧全裁；code-first 另需 Specula brief 与现状模型的校准回执（E0 回执） | 0 READY · 1 NOT_READY |
 | `fv.py lint` | 合同 / 模型静态检：词表封闭（性质只能用 observables）、表达式白名单、名字冲突、对称集不得出现字面量 | 0 · 2 |
 | `fv.py check` | 显式状态模型检查（BFS 最短反例；迁移性质；可达见证；死锁；弱 / 强公平下的活性 → 套索反例；对称约简） | 0 PASS · 1 FAIL · **3 BOUNDED_PASS / INCOMPLETE**（不是通过） |
@@ -159,7 +161,7 @@ flag 不等于 reject。预门过了但带 flag，意思是「机器判不了这
 | `fv.py external` | TLC / Apalache / Quint verify / Quint run / FizzBee 适配，原始输出留存可重解析；`quint run` 只有 E1 | 同 check；缺引擎 = 2 |
 | `fv.py validate` / `report` | 重推 verdict、重放反例与见证；`--rerun` 重新执行并逐项比对；`report` 输出可声称 / 不可声称表 | 0 · 2 |
 | `fv.py init` / `vendor` | 入口 A / B 的项目骨架（能直接 qualify）；把检查器复制进项目供 CI 自包含 | 0 |
-| `formal_gate.py`（`skills/ai-dlc/scripts/`） | 状态机前置：fv 合同**与需求清单**在 G2/L5 锁里；插件自带的 `upstream/UPSTREAM.json` INTACT（项目换不掉方法）；`cards` 起要规则生成 READY（intake + FVS 审阅）；`implement` 起要模型生成 READY（handoff + 模型审阅；code-first 要 brief 与校准）与 QUALIFIED；`formal triage` 记录反例分诊与路由；E3 模块 `pr` 起要当前的 CONFORMS + FRESH 映射；策略模式按 diff 推模块；签字的 `formal waive` 降级并强制 G3 | 由 `aidlc_state.py formal` / `advance` 报告；**不可 `--force`** |
+| `formal_gate.py`（`skills/ai-dlc/scripts/`） | 状态机前置：fv 合同**与需求清单**在 G2/L5 锁里；插件自带的 `upstream/UPSTREAM.json` INTACT（项目换不掉方法）；`cards` 起要规则生成 READY（intake + FVS 审阅）；`implement` 起要模型生成 READY（handoff + 模型审阅；code-first 要 brief 与校准）、QUALIFIED 与实现契约 READY（`formal impl-contract`）；E3 模块 `acceptance` 起要当前代码对当前契约 IMPLEMENTS（`formal impl-verify`）；`formal triage` 记录反例分诊与路由；E3 模块 `pr` 起要当前的 CONFORMS + FRESH 映射；策略模式按 diff 推模块；签字的 `formal waive` 降级并强制 G3 | 由 `aidlc_state.py formal` / `advance` 报告；**不可 `--force`** |
 
 ### 验收（R6）
 
@@ -209,7 +211,7 @@ flag 不等于 reject。预门过了但带 flag，意思是「机器判不了这
 | `formal-verify/assets/formal-verification.yml` | GitHub Actions | 每个 PR 的 `fv ci`（vendored 检查器、按策略分层、回执作为 artifact） |
 | `formal-verify/assets/example-ticket/` | `eval/test_formal.py`、smoke | 抢票示例：需求清单、两份规则候选与分歧裁决、审阅、两份模型候选与分歧裁决、合同、初版设计（反例）、修正设计（3 个 mutant）、源码映射、策略、向量、真实 SQLite 实现 + harness + 并发测试 |
 | `ai-dlc/assets/sizing.yaml` | `aidlc_state.py size|plan|advance`、`verify_sizing.py` | v2：六条推导规则（带 `needs`）+ **`stages:` 广度网格** + `never_skippable`（三道门在里面）+ 每档的 `depth` / `test_strategy` + `recompose` 约束 + 预算覆盖 |
-| `ai-dlc/assets/graph.yaml` | `verify_graph.py`、`aidlc_state.py graph` | 58 节点 / 81 边；节点带 `reads` / `must_not_read` / `writes` / `authority` |
+| `ai-dlc/assets/graph.yaml` | `verify_graph.py`、`aidlc_state.py graph` | 58 节点 / 83 边；节点带 `reads` / `must_not_read` / `writes` / `authority` |
 | `ai-dlc/assets/loops.yaml` | `verify_loop.py`、`aidlc_state.py loops` | 七个环的契约：level / timescale / generator ≠ verifier / stop 四键（grill 环 v1.8.0 加入） |
 | `ai-dlc/assets/triggers.yaml` | 人 | 每个环绑到哪个原生触发（`/goal` `/loop` Stop hook `/schedule`） |
 | `acceptance-fleet/assets/evaluators.yaml` | `pick_evaluators.py` | 供应商声明与探测命令；每个槽的同源盲区排名 |

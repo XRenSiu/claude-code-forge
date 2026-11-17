@@ -21,4 +21,6 @@ modules:
     rules_review_triage: rules-triage.yaml    # 作者对审阅发现的处置；延后要有人的裁决
     model_divergence: model-divergence.json   # AI 生成模型的证据：≥2 个隔离候选在观察者眼里的分歧与裁决
     model_review: model-review.yaml           # Quint review 结构检查 + Specula 粒度审计（运行时检查由 fvkit 重算）
+    impl_contract: impl-contract.yaml         # 步骤 05：通过模型检查的设计 → 编码 agent 要执行的工程约束（E3 必填）
+    impl_review: impl-review.yaml             # 步骤 07：全新上下文的实现审阅；fv ci 每次都重跑实现一致性验证
     # entrance: code-first 时还要：modeling_brief / defect_ledger / brief_coverage（Specula，见 code-first/）与 calibration

@@ -28,10 +28,10 @@ granularity:
   - {action: read, source: "impl/tickets.py:42-45", note: "SELECT 与写 seen 是两条语句，但 seen 只被同一用户之后的动作读到，其他用户观察不到中间状态",
      observable_between_atomic_ops: false, releases_lock_or_yields: false, spans_await: false, load_conditional_store: false,
      single_atomic_op: false, single_lock_whole_action: false}
-  - {action: buy, source: "impl/tickets.py:50-58", note: "BEGIN IMMEDIATE 持写锁覆盖条件 UPDATE、INSERT 与状态更新，直到 COMMIT",
+  - {action: buy, source: "impl/tickets.py:50-62", note: "BEGIN IMMEDIATE 持写锁覆盖条件 UPDATE、INSERT 与状态更新，直到 COMMIT",
      observable_between_atomic_ops: false, releases_lock_or_yields: false, spans_await: false, load_conditional_store: true,
      single_atomic_op: false, single_lock_whole_action: true}
-  - {action: reject, source: "impl/tickets.py:50-58", note: "同一事务里条件 UPDATE 返回 0 行",
+  - {action: reject, source: "impl/tickets.py:50-62", note: "同一事务里条件 UPDATE 返回 0 行",
      observable_between_atomic_ops: false, releases_lock_or_yields: false, spans_await: false, load_conditional_store: true,
      single_atomic_op: false, single_lock_whole_action: true}
 findings: []

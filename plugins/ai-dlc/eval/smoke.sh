@@ -2479,6 +2479,18 @@ expect "formal/upstream: the counterexample triage is Case C, routed to fv_desig
   bash -c "python3 '$FVS' triage-check '$FX/triage/check-then-act.yaml' --model '$FX/model-check-then-act.yaml' --upstream '$UPM' | grep -q '\"route\": \"fv_design_defect\"'"
 expect "formal/upstream: Case B without an under-modelled guard is NOT_TRIAGED (twin)" 1 \
   bash -c "mkdir -p '$FT/tri' && cp '$FX/triage/check-then-act.receipt.json' '$FT/tri/' && sed 's/^case: C/case: B/' '$FX/triage/check-then-act.yaml' > '$FT/tri/t.yaml' && python3 '$FVS' triage-check '$FT/tri/t.yaml' >/dev/null"
+expect "formal/impl: the implementation contract derived from the QUALIFIED model is READY (step 05)" 0 \
+  py "$FVS" impl-contract check "$FX/impl-contract.yaml" --model "$FX/model.yaml" --upstream "$UPM"
+expect "formal/impl: a contract that drops buy's transaction is NOT_READY (twin)" 1 \
+  bash -c "rm -rf '$FT/ic' && cp -R '$FX' '$FT/ic' && sed -i '0,/mechanism: transaction/s//mechanism: none/' '$FT/ic/impl-contract.yaml' && python3 '$FVS' impl-contract check '$FT/ic/impl-contract.yaml' --model '$FT/ic/model.yaml' >/dev/null"
+expect "formal/impl: the real code implements its contract (tests pass, negative controls fail, traces conform, replay refused)" 0 \
+  py "$FVS" impl-verify "$FX/impl-contract.yaml" --model "$FX/model.yaml" --review "$FX/impl-review.yaml" --upstream "$UPM" --work "$FT/iv" --out "$FT/implement.json"
+expect "formal/impl: code without the idempotent retry check is NOT_IMPLEMENTED (twin)" 1 \
+  bash -c "rm -rf '$FT/iv2' && cp -R '$FX' '$FT/iv2' && sed -i 's/if row is None or row\[0\] != \"pending\":/if row is None:/' '$FT/iv2/impl/tickets.py' && python3 '$FVS' impl-verify '$FT/iv2/impl-contract.yaml' --model '$FT/iv2/model.yaml' --review '$FT/iv2/impl-review.yaml' --work '$FT/iv2w' >/dev/null"
+expect "formal/impl: the implement receipt re-decides with --rerun; a forged negative control is refused (twin)" 0 \
+  bash -c "python3 '$FVS' validate '$FT/implement.json' --model '$FX/model.yaml' --rerun --expect IMPLEMENTS >/dev/null && python3 -c \"import json; r=json.load(open('$FT/implement.json')); next(t for t in r['result']['tests'] if t['role']=='negative')['exit']=0; json.dump(r, open('$FT/forged.json','w'))\" && ! python3 '$FVS' validate '$FT/forged.json' --model '$FX/model.yaml' >/dev/null 2>&1"
+expect "formal/impl: model-builder writes the contract, formal-reviewer reviews the code, card-implementer follows it" 0 \
+  bash -c "grep -q 'impl-contract 模式' '$ROOT/agents/model-builder.md' && grep -q '模式四：impl' '$ROOT/agents/formal-reviewer.md' && grep -q 'formal_ops' '$ROOT/agents/card-implementer.md' && grep -q 'formal_ops' '$S/plan-cards/assets/card_template.yaml'"
 expect "formal: lifecycle wiring (lock, qualification, conformance, waiver, policy, routing)" 0 py "$ROOT/eval/test_formal.py"
 expect "formal: routing v3 carries the seven triage rules R17–R23" 0 \
   bash -c "python3 -c \"import yaml; r=yaml.safe_load(open('$S/ai-dlc/assets/routing.yaml')); s={x['signal'] for x in r['rules']}; assert {'fv_requirement_gap','fv_model_infidelity','fv_design_defect','fv_implementation_defect','fv_contract_weakened','fv_model_stale','fv_checker_defect'} <= s\""
@@ -2493,7 +2505,7 @@ expect "docs: a script missing from the index turns it red (twin)" 1 \
 expect "docs: node / edge counts in living docs equal verify_graph.py (no hand-copied numbers)" 0 \
   py "$ROOT/eval/fixtures/doc_graph_counts.py" "$ROOT"
 expect "docs: a drifted count turns it red (twin)" 1 \
-  bash -c "t=\"$TMP/dgc\"; rm -rf \"\$t\"; mkdir -p \"\$t/docs\" \"\$t/skills/ai-dlc\"; cp -R '$ROOT/skills/ai-dlc/scripts' '$ROOT/skills/ai-dlc/assets' \"\$t/skills/ai-dlc/\"; sed 's/58 节点 · 81 边/52 节点 · 67 边/' '$ROOT/docs/ARCHITECTURE.md' > \"\$t/docs/ARCHITECTURE.md\"; python3 '$ROOT/eval/fixtures/doc_graph_counts.py' \"\$t\""
+  bash -c "t=\"$TMP/dgc\"; rm -rf \"\$t\"; mkdir -p \"\$t/docs\" \"\$t/skills/ai-dlc\"; cp -R '$ROOT/skills/ai-dlc/scripts' '$ROOT/skills/ai-dlc/assets' \"\$t/skills/ai-dlc/\"; sed 's/58 节点 · 83 边/52 节点 · 67 边/' '$ROOT/docs/ARCHITECTURE.md' > \"\$t/docs/ARCHITECTURE.md\"; python3 '$ROOT/eval/fixtures/doc_graph_counts.py' \"\$t\""
 expect "docs: the evaluation doc still states the plugin is not L2-verified" 0 \
   bash -c "grep -q 'static_only' '$ROOT/docs/evaluation.md' && grep -q '出题人与被测者同源' '$ROOT/docs/evaluation.md'"
 

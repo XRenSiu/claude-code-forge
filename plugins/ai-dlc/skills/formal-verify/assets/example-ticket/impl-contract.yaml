@@ -1,0 +1,447 @@
+# fv-impl-contract（步骤 05）：把通过模型检查的设计转成编码 agent 能直接执行的工程约束。
+# 生成方式：`fv impl-contract draft --model model.yaml --qualification receipts/qualify.json` 写出骨架，
+#   derived 一节由 fvkit 从 QUALIFIED 模型机械推导（谁读写什么、哪里必须原子、哪些操作并发冲突、
+#   每条性质 / mutant / 假设要什么验收），不能手改；其余由 model-builder（impl-contract 模式）按上游流程填：
+#   Quint quint-execute-spec Phase 1–2（状态与动作 → 代码，计划与验证闸）、Specula instrumentation-spec-format
+#   （每个动作一条：代码位置、触发点、采集字段）、Spec Kit plan / tasks（数据模型、契约、测试先行）、
+#   pstack（每个检查都要见过它失败：must_fail_with）。
+# `fv impl-contract check` 判 READY；编码 agent 拿到的任务卡通过 formal_ops 绑定到这里的操作。
+schema_version: 1
+kind: fv-impl-contract
+id: ticket-atomic-reserve
+model_digest: sha256:b1734040fb1b7e4fb4676528c802825a78ce8245ca015e12a9c521d21c65754a
+contract_digest: sha256:c9d5267076462d1b6892aaade52a130d8691a56ce5c71c6fbdf083fa71d3c7ac
+root: .
+qualification:
+  receipt: receipts/qualify.json
+  digest: sha256:acc4e8c8b1882e9a81867344b777492a77ca0497054c2e16efbb08e13740f9ae
+procedure:
+- upstream: quint-llm-kit
+  path: quint-llm-kit-plugin/skills/quint-execute-spec/SKILL.md
+  sha256: sha256:7bd1dbfddcded796c41bd0019b02f4b47a42e13ffd2d87010448ed86e0f38ab5
+- upstream: specula
+  path: skills/spec_generation/references/instrumentation-spec-format.md
+  sha256: sha256:91bf907caf99b7ecb96f6d8ee3fa34cd3647310208b3863e94553a8d01695df8
+- upstream: spec-kit
+  path: templates/commands/plan.md
+  sha256: sha256:206a0386d20b3eed4c087a4d9de247a3e7b2b59348bf3c801fc74f63ca2726a5
+- upstream: spec-kit
+  path: templates/commands/tasks.md
+  sha256: sha256:2f9176c6e7c23d2a83d2bd018ffa1e67aee977389a57f2a3fe35fe987b425944
+- upstream: pstack
+  path: pstack/skills/create-formal-verification-skill/SKILL.md
+  sha256: sha256:30ef0ac27612ecd16fdc081112113221d673053cef3f8603db11932193861211
+derived:
+  model: ticket-atomic-reserve
+  model_digest: sha256:b1734040fb1b7e4fb4676528c802825a78ce8245ca015e12a9c521d21c65754a
+  contract_digest: sha256:c9d5267076462d1b6892aaade52a130d8691a56ce5c71c6fbdf083fa71d3c7ac
+  variables:
+  - name: phase
+    observed_by:
+    - outcome
+  - name: remaining
+    observed_by:
+    - remaining
+  - name: result
+    observed_by:
+    - outcome
+  - name: seen
+    observed_by: []
+  - name: sold
+    observed_by:
+    - sold
+  observables:
+  - outcome
+  - remaining
+  - sold
+  operations:
+  - action: buy
+    params:
+    - u
+    guard: phase[u] == 'read' and remaining > 0
+    reads:
+      phase:
+      - u
+      remaining:
+      - '*'
+      sold:
+      - '*'
+    writes:
+      phase: u
+      remaining: '*'
+      result: u
+      sold: '*'
+    read_modify_write:
+      shared:
+      - remaining
+      - sold
+      per_key:
+      - phase
+    atomic_required: true
+    reasons:
+    - 'reads and writes shared state [''remaining'', ''sold''] in one step (check-then-act): the read and the write must not be separable'
+    - 'reads and writes [''phase''] for the same [''u''] in one step: concurrent calls for the same key must not interleave'
+    - 'updates [''phase'', ''remaining'', ''result'', ''sold''] together: all of them or none must become visible'
+    contended_by:
+    - buy
+    same_key_contended_by:
+    - read
+    - reject
+    - request
+    fairness: weak
+  - action: read
+    params:
+    - u
+    guard: phase[u] == 'requested'
+    reads:
+      phase:
+      - u
+      remaining:
+      - '*'
+    writes:
+      phase: u
+      seen: u
+    read_modify_write:
+      shared: []
+      per_key:
+      - phase
+    atomic_required: true
+    reasons:
+    - 'reads and writes [''phase''] for the same [''u''] in one step: concurrent calls for the same key must not interleave'
+    - 'updates [''phase'', ''seen''] together: all of them or none must become visible'
+    contended_by:
+    - buy
+    same_key_contended_by:
+    - read
+    - reject
+    - request
+    fairness: weak
+  - action: reject
+    params:
+    - u
+    guard: phase[u] == 'read' and remaining <= 0
+    reads:
+      phase:
+      - u
+      remaining:
+      - '*'
+    writes:
+      phase: u
+      result: u
+    read_modify_write:
+      shared: []
+      per_key:
+      - phase
+    atomic_required: true
+    reasons:
+    - 'reads and writes [''phase''] for the same [''u''] in one step: concurrent calls for the same key must not interleave'
+    - 'updates [''phase'', ''result''] together: all of them or none must become visible'
+    contended_by:
+    - buy
+    same_key_contended_by:
+    - read
+    - reject
+    - request
+    fairness: weak
+  - action: request
+    params:
+    - u
+    guard: phase[u] == 'idle'
+    reads:
+      phase:
+      - u
+    writes:
+      phase: u
+    read_modify_write:
+      shared: []
+      per_key:
+      - phase
+    atomic_required: true
+    reasons:
+    - 'reads and writes [''phase''] for the same [''u''] in one step: concurrent calls for the same key must not interleave'
+    contended_by: []
+    same_key_contended_by:
+    - buy
+    - read
+    - reject
+    - request
+    fairness: null
+  obligations:
+    properties:
+    - id: NoOversell
+      kind: invariant
+      covered_by_kinds:
+      - property
+      - mbt
+      - proof
+    - id: StockNonNegative
+      kind: invariant
+      covered_by_kinds:
+      - property
+      - mbt
+      - proof
+    - id: Conservation
+      kind: invariant
+      covered_by_kinds:
+      - property
+      - mbt
+      - proof
+    - id: SoldNeverDecreases
+      kind: transition
+      covered_by_kinds:
+      - property
+      - mbt
+      - proof
+    - id: SomeoneCanBuy
+      kind: reachable
+      covered_by_kinds:
+      - property
+      - mbt
+    - id: EveryRequestAnswered
+      kind: leads_to
+      covered_by_kinds:
+      - liveness
+      - mbt
+      - proof
+    mutants:
+    - id: check-then-act
+      expect_killed_by:
+      - NoOversell
+      - StockNonNegative
+    - id: lost-decrement
+      expect_killed_by:
+      - Conservation
+    - id: never-answer-sold-out
+      expect_killed_by:
+      - EveryRequestAnswered
+    assumptions:
+    - A-NO-RESTOCK
+    - A-FAIR
+state:
+- variable: phase
+  code: requests 行：没有行 = idle；status = 'pending' 且 seen 为 NULL = requested；status = 'pending' 且 seen 非空 = read；status 为 success / sold_out = done
+- variable: remaining
+  code: tickets.remaining（event_id = EVENT 的那一行）
+- variable: result
+  code: requests.status（success / sold_out）
+- variable: seen
+  code: requests.seen：页面展示过的剩余数量，不参与购买判定
+- variable: sold
+  code: orders 表里 status = 'success' 的行数
+observables:
+- observable: outcome
+  read: TicketService.observe()：SELECT user, status FROM requests（没有行 = none；pending = pending）
+- observable: remaining
+  read: TicketService.observe()：SELECT remaining FROM tickets WHERE event_id = ?
+- observable: sold
+  read: TicketService.observe()：SELECT COUNT(*) FROM orders WHERE status = 'success'
+operations:
+- action: buy
+  code:
+    file: impl/tickets.py
+    symbol: TicketService.purchase
+  atomicity:
+    mechanism: transaction
+    scope: BEGIN IMMEDIATE 到 COMMIT：请求状态检查、条件扣减、订单写入、请求状态更新
+    evidence: self.db.execute("BEGIN IMMEDIATE")
+  idempotency:
+    required: true
+    key: requests.user + requests.status = 'pending'
+    evidence: 'if row is None or row[0] != "pending":'
+  failures: &id001
+    error:
+      behavior: ROLLBACK：库存、订单、请求状态都不变，请求仍是 pending
+      model_effect: no_change
+    timeout:
+      behavior: BEGIN IMMEDIATE 等写锁超过 30 秒抛错，事务没有开始
+      model_effect: no_change
+    conflict:
+      behavior: 写锁让并发购买依次执行；后到者在事务里看到更新后的库存
+      model_effect: no_change
+    retry:
+      behavior: 重复购买返回第一次的答复，不再扣库存
+      model_effect: no_change
+  trace:
+    event: buy
+    trigger: COMMIT 之后
+    fields:
+    - outcome
+    - remaining
+    - sold
+- action: read
+  code:
+    file: impl/tickets.py
+    symbol: TicketService.read
+  atomicity:
+    mechanism: single statement
+    scope: seen 由一条 UPDATE 写入；读到的库存只用于展示，与购买并发时可能是旧值（模型允许）
+    evidence: UPDATE requests SET seen = ? WHERE user = ?
+  idempotency:
+    required: false
+    reason: 重复读取只覆盖展示值 seen，不改变任何观测量
+  failures:
+    error:
+      behavior: 抛错，seen 不变
+      model_effect: no_change
+    timeout:
+      behavior: 等锁超时抛错，seen 不变
+      model_effect: no_change
+    conflict:
+      behavior: 与购买并发时读到旧库存：只影响展示
+      model_effect: no_change
+    retry:
+      behavior: 可以随时重读
+      model_effect: no_change
+  trace:
+    event: read
+    trigger: UPDATE seen 之后
+    fields:
+    - outcome
+    - remaining
+- action: reject
+  code:
+    file: impl/tickets.py
+    symbol: TicketService.purchase
+  atomicity:
+    mechanism: transaction
+    scope: 同一事务里条件 UPDATE 返回 0 行，请求记为 sold_out
+    evidence: self.db.execute("BEGIN IMMEDIATE")
+  idempotency:
+    required: true
+    key: requests.user + requests.status = 'pending'
+    evidence: 'if row is None or row[0] != "pending":'
+  failures: *id001
+  trace:
+    event: reject
+    trigger: COMMIT 之后
+    fields:
+    - outcome
+    - remaining
+    - sold
+- action: request
+  code:
+    file: impl/tickets.py
+    symbol: TicketService.request
+  atomicity:
+    mechanism: single statement
+    scope: 一条 INSERT OR IGNORE；同一用户的并发提交由主键 requests.user 串行化
+    evidence: INSERT OR IGNORE INTO requests (user, status, seen) VALUES (?, 'pending', NULL)
+  idempotency:
+    required: true
+    key: requests.user（主键）
+    evidence: INSERT OR IGNORE INTO requests
+  failures:
+    error:
+      behavior: 抛出数据库异常，没有写入；调用方可以重试
+      model_effect: no_change
+    timeout:
+      behavior: 等锁超过 30 秒抛错，没有写入
+      model_effect: no_change
+    conflict:
+      behavior: 同一用户已经提交过：OR IGNORE 不做任何事
+      model_effect: no_change
+    retry:
+      behavior: 重复提交是空操作
+      model_effect: no_change
+  trace:
+    event: request
+    trigger: INSERT 之后
+    fields:
+    - outcome
+acceptance:
+  tests:
+  - id: T-safety
+    kind: property
+    argv:
+    - python3
+    - impl/test_properties.py
+    - --check
+    - safety
+    covers:
+    - NoOversell
+    - StockNonNegative
+    - Conservation
+    - SoldNeverDecreases
+    - SomeoneCanBuy
+    must_fail_with:
+    - python3
+    - impl/test_properties.py
+    - --check
+    - safety
+    - --variant
+    - check-then-act
+  - id: T-liveness
+    kind: liveness
+    argv:
+    - python3
+    - impl/test_properties.py
+    - --check
+    - liveness
+    covers:
+    - EveryRequestAnswered
+    - A-FAIR
+  - id: T-concurrency
+    kind: concurrency
+    argv:
+    - python3
+    - impl/test_concurrency.py
+    covers:
+    - request
+    - read
+    - buy
+    - reject
+    - NoOversell
+    - Conservation
+    must_fail_with:
+    - python3
+    - impl/test_concurrency.py
+    - --variant
+    - check-then-act
+  - id: T-mbt
+    kind: mbt
+    argv:
+    - python3
+    - impl/harness.py
+    - --vectors
+    - vectors.json
+    - --out
+    - '{traces}'
+    covers:
+    - request
+    - read
+    - buy
+    - reject
+    - NoOversell
+    - StockNonNegative
+    - Conservation
+    - SoldNeverDecreases
+    - SomeoneCanBuy
+    must_fail_with:
+    - python3
+    - impl/harness.py
+    - --vectors
+    - vectors.json
+    - --out
+    - '{traces}'
+    - --variant
+    - check-then-act
+  regressions:
+  - mutant: check-then-act
+    detected_by:
+      vector: replay:check-then-act:NoOversell
+  - mutant: lost-decrement
+    detected_by:
+      test: T-safety
+  - mutant: never-answer-sold-out
+    detected_by:
+      test: T-liveness
+  assumptions:
+  - assumption: A-NO-RESTOCK
+    evidence: review
+  - assumption: A-FAIR
+    evidence: test:T-liveness
+out_of_scope:
+- behavior: 支付、退款、订单超时释放、崩溃恢复、多场次
+  reason: 需求的不在范围清单（requirements.yaml out_of_scope）
+- behavior: TicketService(variant='check-then-act') 与 _purchase_check_then_act
+  reason: 保留的旧设计，只作负对照；生产调用方不传 variant

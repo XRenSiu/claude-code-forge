@@ -5,6 +5,7 @@ harness). Each refusal is paired with the same step succeeding once the evidence
 so a guard that always says "no" cannot pass.
 """
 import json
+import re
 import shutil
 import subprocess
 import sys
@@ -93,6 +94,19 @@ class FormalLifecycle(unittest.TestCase):
         self.assertEqual(self.generated("rules")[0], 0)
         self.assertEqual(self.generated("model")[0], 0)
         self.state("formal", "qualify", "--slug", "t")
+        code, out = self.state("formal", "impl-contract", "--slug", "t", "--file", F + "/impl-contract.yaml")
+        self.assertEqual((code, out["verdict"]), (0, "READY"), out)
+
+    def rereview(self):
+        """A fresh implementation review of the current code (step 07): pin the bytes it read."""
+        import hashlib
+        review = self.repo / F / "impl-review.yaml"
+        text = review.read_text()
+        sha = "sha256:" + hashlib.sha256((self.repo / F / "impl/tickets.py").read_bytes()).hexdigest()
+        review.write_text(re.sub(r'impl/tickets.py: "sha256:[0-9a-f]+"', 'impl/tickets.py: "%s"' % sha, text))
+
+    def impl_verify(self):
+        return self.state("formal", "impl-verify", "--slug", "t", "--review", F + "/impl-review.yaml")
 
     def traces(self, variant="atomic"):
         out = Path(tempfile.mkdtemp(prefix="traces-" + variant + "-", dir=self.tmp.name))
@@ -123,6 +137,9 @@ class FormalLifecycle(unittest.TestCase):
         self.assertEqual((code, out["verdict"]), (0, "READY"), out)
         code, out = self.state("formal", "qualify", "--slug", "t")
         self.assertEqual((code, out["verdict"]), (0, "QUALIFIED"), out)
+        self.assertIn("no implementation contract (step 05)", self.unmet("implement"))   # a verified model is not yet a coding brief
+        code, out = self.state("formal", "impl-contract", "--slug", "t", "--file", F + "/impl-contract.yaml")
+        self.assertEqual((code, out["verdict"]), (0, "READY"), out)
         self.assertEqual(self.unmet("implement"), "")
         code, out = self.state("advance", "--slug", "t", "implement", "--force", "--reason", "other prerequisites are out of scope here")
         self.assertEqual(code, 0, out)   # twin: the formal guard itself is now satisfied
@@ -197,6 +214,8 @@ class FormalLifecycle(unittest.TestCase):
     def test_implementation_gate_needs_current_conformance(self):
         self.configure()
         self.design_ready()
+        code, out = self.impl_verify()
+        self.assertEqual((code, out["verdict"]), (0, "IMPLEMENTS"), out)
         self.assertIn("E3 needs implementation evidence", self.unmet("pr"))
         code, out = self.state("formal", "conform", "--slug", "t", "--traces", *self.traces("check-then-act"))
         self.assertEqual((code, out["verdict"]), (1, "NONCONFORMANT"))
@@ -213,8 +232,15 @@ class FormalLifecycle(unittest.TestCase):
         self.sh(FV, "source-map", "sync", "--map", F + "/source-map.yaml", "--model", F + "/model.yaml",
                 "--by", "reviewer", "--reason", "comment only")
         self.commit("re-reviewed mapping")
-        self.assertIn("mapped code changed since the conformance traces", self.unmet("pr"))
+        text = self.unmet("pr")
+        self.assertIn("mapped code changed since the conformance traces", text)
+        self.assertIn("impl/tickets.py changed after the implementation was verified", text)
         code, out = self.state("formal", "conform", "--slug", "t", "--traces", *self.traces())
+        code, out = self.impl_verify()
+        self.assertEqual(code, 1)                                         # the review read other bytes
+        self.assertIn("reviewed code changed since the review", " ".join(out["reasons"]))
+        self.rereview()
+        self.assertEqual(self.impl_verify()[0], 0)
         self.assertEqual(self.unmet("pr"), "")
 
     def test_signed_waiver_lowers_a_module_and_forces_g3(self):
@@ -241,6 +267,7 @@ class FormalLifecycle(unittest.TestCase):
             "    rules_divergence: %s/rules-divergence.json" % F, "    rules_review: %s/rules-review.yaml" % F,
             "    rules_intake: %s/rules-intake.yaml" % F, "    rules_review_triage: %s/rules-triage.yaml" % F,
             "    model_divergence: %s/model-divergence.json" % F, "    model_review: %s/model-review.yaml" % F,
+            "    impl_contract: %s/impl-contract.yaml" % F, "    impl_review: %s/impl-review.yaml" % F,
             '    trace_command: ["python3", "%s/impl/harness.py", "--vectors", "%s/vectors.json", "--out", "{out}"]' % (F, F), ""]))
         self.commit("policy")
         code, out = self.state("formal", "configure", "--slug", "p", "--policy", "verification/policy.yaml")
@@ -304,6 +331,78 @@ class FormalLifecycle(unittest.TestCase):
         self.assertIn("Case B until the model is fixed", " ".join(out["issues"]))
         code, out = self.state("formal", "status", "--slug", "t")
         self.assertEqual([t["verdict"] for t in out["required"]["ticket"]["triage"]], ["TRIAGED", "NOT_TRIAGED"])
+
+    def test_implementation_contract_comes_before_code_and_is_verified_after(self):
+        self.configure()
+        self.design_ready()
+        ic = self.repo / F / "impl-contract.yaml"
+        original = ic.read_text()
+        ic.write_text(original.replace("mechanism: transaction", "mechanism: none", 1))   # "the transaction is not needed"
+        code, out = self.state("formal", "impl-contract", "--slug", "t", "--file", F + "/impl-contract.yaml")
+        self.assertEqual((code, out["verdict"]), (1, "NOT_READY"))
+        self.assertIn("operation buy must be atomic", " ".join(out["reasons"]))
+        self.assertIn("operation buy must be atomic", self.unmet("implement"))
+        ic.write_text(original)
+        self.assertEqual(self.unmet("implement"), "")
+        probe = ("import json, sys; sys.path.insert(0, %r); import aidlc_state as a; "
+                 "print(json.dumps(a.formal_impl_contracts(a.load('.aidlc', 't'))))" % str(STATE.parent))
+        got = subprocess.run([sys.executable, "-c", probe], cwd=self.repo, capture_output=True, text=True)
+        self.assertEqual(json.loads(got.stdout), [str(ic.resolve())], got.stderr)   # advance implement lints the cards against it
+        cards = self.repo / "cards-unbound"
+        cards.mkdir()
+        (cards / "CARD-01.yaml").write_text(json.dumps({
+            "id": "CARD-01", "title": "x", "req_ids": ["REQ-001"], "ac_ids": [], "dos_slice": {"objects": [], "invariants": []},
+            "allowed_files": [F + "/impl/tickets.py"], "forbidden_files": ["tests/**"], "context_estimate_tokens": 1000,
+            "budget": {"retries": 3}, "reads_from": [], "depends_on": [], "formal_ops": ["request"]}))
+        probe = ("import json, sys; sys.path.insert(0, %r); import aidlc_state as a; "
+                 "print(json.dumps(a.cards_lint_unmet(a.load('.aidlc', 't'), 'cards-unbound')))" % str(STATE.parent))
+        got = subprocess.run([sys.executable, "-c", probe], cwd=self.repo, capture_output=True, text=True)
+        self.assertIn("owned by no card", got.stdout, got.stderr)                 # buy / read / reject belong to no card
+        self.assertIn("never verified against its implementation contract (step 07)", self.unmet("acceptance"))
+        code_file = self.repo / F / "impl/tickets.py"
+        good = code_file.read_text()
+        code_file.write_text(good.replace('if row is None or row[0] != "pending":', 'if row is None:'))   # retries sell twice again
+        self.rereview()
+        code, out = self.impl_verify()
+        self.assertEqual((code, out["verdict"]), (1, "NOT_IMPLEMENTED"))
+        self.assertIn("idempotency evidence", " ".join(out["reasons"]))
+        self.assertIn("implementation verification is not current", self.unmet("acceptance"))
+        code_file.write_text(good)
+        self.rereview()
+        code, out = self.impl_verify()
+        self.assertEqual((code, out["verdict"]), (0, "IMPLEMENTS"), out)
+        self.assertEqual(self.unmet("acceptance"), "")
+        ic.write_text(original + "\n# reworded later\n")
+        self.assertIn("contract changed after the code was verified", self.unmet("acceptance"))
+
+    def test_cards_are_bound_to_the_contracted_operations(self):
+        lint = PLUGIN / "skills/plan-cards/scripts/lint_cards.py"
+        cards = self.repo / "cards"
+        cards.mkdir()
+
+        def card(cid, ops, allowed):
+            (cards / ("%s.yaml" % cid)).write_text(json.dumps({
+                "id": cid, "title": cid, "req_ids": ["REQ-001"] if cid == "CARD-01" else ["REQ-002"], "ac_ids": [],
+                "dos_slice": {"objects": [], "invariants": []}, "allowed_files": allowed, "forbidden_files": ["tests/**"],
+                "context_estimate_tokens": 1000, "budget": {"retries": 3}, "reads_from": [], "depends_on": [], "formal_ops": ops}))
+
+        def run():
+            r = subprocess.run([sys.executable, str(lint), str(cards), "--impl-contract", str(self.repo / F / "impl-contract.yaml"),
+                                "--repo-root", str(self.repo)], capture_output=True, text=True)
+            return r.returncode, " ".join(json.loads(r.stdout)["rejects"]) if r.stdout.strip().startswith("{") else r.stderr
+        card("CARD-01", ["request", "read"], [F + "/impl/tickets.py"])
+        card("CARD-02", ["buy"], ["src/other.py"])
+        code, rejects = run()
+        self.assertEqual(code, 1)
+        self.assertIn("operation `ticket-atomic-reserve:reject` of", rejects)       # reject is nobody's card
+        self.assertIn("CARD-02 owns `buy` but its allowed_files do not cover", rejects)
+        card("CARD-01", ["request", "read", "buy", "reject"], [F + "/impl/tickets.py", F + "/impl-contract.yaml"])
+        card("CARD-02", [], ["src/other.py"])
+        code, rejects = run()
+        self.assertIn("may write the implementation contract", rejects)   # the coder may not redraw the design
+        card("CARD-01", ["request", "read", "buy", "reject"], [F + "/impl/tickets.py"])
+        code, rejects = run()
+        self.assertEqual(code, 0, rejects)
 
     def test_triage_signals_route_to_their_layers(self):
         self.state("init", "--slug", "t", "--title", "ticket")

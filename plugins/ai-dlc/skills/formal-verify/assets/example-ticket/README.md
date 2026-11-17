@@ -38,6 +38,12 @@ $FV triage-check $EX/triage/check-then-act.yaml --model $EX/model-check-then-act
 $FV qualify --model $EX/model.yaml --out $OUT/qualify.json                          # 退出 0，QUALIFIED
 $FV validate $OUT/qualify.json --model $EX/model.yaml --rerun --min-level E2
 
+# 05 实现契约：把 QUALIFIED 模型转成编码 agent 要执行的约束。derived 一节由 fvkit 推导（buy 对共享库存
+#    read-modify-write → 必须原子；read / reject 被 buy 并发改写 → 要并发测试；每条性质、mutant、假设都要验收项），
+#    其余（代码位置、事务机制、幂等键、出错 / 超时 / 冲突 / 重试的行为、测试命令与负对照）按上游流程填写
+$FV impl-contract draft --model $EX/model.yaml --qualification $EX/receipts/qualify.json --out $OUT/impl-draft.yaml   # 骨架，TODO 待填
+$FV impl-contract check $EX/impl-contract.yaml --model $EX/model.yaml --upstream $UP # READY
+
 # C3/C4：模型驱动的向量（覆盖每个迁移 + 重放旧反例）→ 真实 SQLite 实现 → 轨迹 → 一致性
 $FV gen-tests --model $EX/model.yaml --strategy transitions,counterexamples \
     --counterexample $OUT/check-then-act.json --out $OUT/vectors.json
@@ -46,6 +52,13 @@ $FV trace-check --model $EX/model.yaml $OUT/traces/*.jsonl                      
 python3 $EX/impl/harness.py --vectors $OUT/vectors.json --out $OUT/bad --variant check-then-act   # 退出 1
 $FV trace-check --model $EX/model.yaml $OUT/bad/*.jsonl                             # NONCONFORMANT + NoOversell 监控
 python3 $EX/impl/test_concurrency.py                                                # 真实线程竞争
+
+# 07 实现一致性：契约里的约束在代码里（锚点逐字存在）、性质 / 并发 / MBT 测试通过且负对照（check-then-act）
+#    确实失败、真实轨迹每一步都是模型允许的迁移且四个操作都出现过、旧反例在真实代码里重放为被拒、
+#    全新上下文的实现审阅（Spec Kit analyze + Quint 差距问题）没有未处置的问题
+$FV impl-verify $EX/impl-contract.yaml --model $EX/model.yaml --review $EX/impl-review.yaml --upstream $UP \
+    --out $OUT/implement.json                                                        # IMPLEMENTS（E3）
+$FV validate $OUT/implement.json --model $EX/model.yaml --rerun --expect IMPLEMENTS  # 由记录的各部分重新判定 + 重查轨迹
 
 # 规则不能被悄悄改弱
 sed 's/expr: "sold <= STOCK"/expr: "sold <= STOCK + 1"/' $EX/contract.yaml > $OUT/weak.yaml
@@ -63,3 +76,5 @@ $FV ci --policy policy.yaml --base HEAD~1 --all --out /tmp/ticket-ci            
 ```
 
 `vectors.json` 是 `gen-tests` 的产物，已经入库。模型或合同一变，`fv ci` 就会要求重新生成。
+
+实现契约带来过一次真实的代码改动：契约要求“出错 / 超时后重试”必须安全，而最初的 `purchase` 被重复调用会再扣一次库存，`request` 重复提交会抛主键异常（code-first brief 里的 D-2）。现在的代码在事务里先检查请求状态，并改用 `INSERT OR IGNORE`；契约的 `idempotency.evidence` 指向这两处代码。删掉其中一处，`impl-verify` 就判 NOT_IMPLEMENTED。

@@ -1,0 +1,447 @@
+{
+  "authority": "local_advisory",
+  "claims": {
+    "may_claim": "for this model, these constants/bounds and these assumptions no behaviour violates the checked properties",
+    "may_not_claim": "the production implementation is free of defects"
+  },
+  "command": "qualify",
+  "engine": {
+    "digest": "sha256:b61876f8ad52e39b3d8312f3ea1b192c208106a70d3f5b0c7e163ebcebf4e487",
+    "name": "fvkit",
+    "version": "1.1.0"
+  },
+  "evidence_level": "E2",
+  "finished_at": "2026-11-17T15:09:49+00:00",
+  "inputs": {
+    "contract": {
+      "digest": "sha256:c9d5267076462d1b6892aaade52a130d8691a56ce5c71c6fbdf083fa71d3c7ac",
+      "id": "ticket-ordering",
+      "path": "contract.yaml",
+      "properties_digest": "sha256:67ba7a82ed8a0d604528d1a9025f5e116de637b7c79aa49b191749b8c4c63ea6",
+      "property_ids": [
+        "NoOversell",
+        "StockNonNegative",
+        "Conservation",
+        "SoldNeverDecreases",
+        "SomeoneCanBuy",
+        "EveryRequestAnswered"
+      ],
+      "version": 1
+    },
+    "model": {
+      "digest": "sha256:b1734040fb1b7e4fb4676528c802825a78ce8245ca015e12a9c521d21c65754a",
+      "id": "ticket-atomic-reserve",
+      "path": "model.yaml"
+    }
+  },
+  "invocation_id": "fcaaf856-01ca-4a66-b42b-7e525773190c",
+  "kind": "fv-receipt",
+  "result": {
+    "check": {
+      "complete": true,
+      "constants": {
+        "STOCK": "1",
+        "USERS": "[\"alice\", \"bob\"]"
+      },
+      "coverage": {
+        "actions": {
+          "buy": {
+            "enabled": 6,
+            "fired": 6,
+            "state_changing": 6
+          },
+          "read": {
+            "enabled": 8,
+            "fired": 8,
+            "state_changing": 8
+          },
+          "reject": {
+            "enabled": 4,
+            "fired": 4,
+            "state_changing": 4
+          },
+          "request": {
+            "enabled": 8,
+            "fired": 8,
+            "state_changing": 8
+          }
+        },
+        "dead_actions": []
+      },
+      "deadlock": {
+        "checked": true,
+        "counterexample": null,
+        "status": "PASS"
+      },
+      "error": null,
+      "exhaustive_depth": 6,
+      "fairness": [
+        {
+          "action": "read",
+          "kind": "weak",
+          "per_params": true
+        },
+        {
+          "action": "buy",
+          "kind": "weak",
+          "per_params": true
+        },
+        {
+          "action": "reject",
+          "kind": "weak",
+          "per_params": true
+        }
+      ],
+      "notes": [],
+      "properties": [
+        {
+          "counterexample": null,
+          "id": "NoOversell",
+          "kind": "invariant",
+          "origin": "contract",
+          "property": "NoOversell",
+          "status": "PASS"
+        },
+        {
+          "counterexample": null,
+          "id": "StockNonNegative",
+          "kind": "invariant",
+          "origin": "contract",
+          "property": "StockNonNegative",
+          "status": "PASS"
+        },
+        {
+          "counterexample": null,
+          "id": "Conservation",
+          "kind": "invariant",
+          "origin": "contract",
+          "property": "Conservation",
+          "status": "PASS"
+        },
+        {
+          "counterexample": null,
+          "id": "SoldNeverDecreases",
+          "kind": "transition",
+          "origin": "contract",
+          "property": "SoldNeverDecreases",
+          "status": "PASS"
+        },
+        {
+          "counterexample": null,
+          "id": "SomeoneCanBuy",
+          "kind": "reachable",
+          "origin": "contract",
+          "property": "SomeoneCanBuy",
+          "status": "PASS",
+          "witness": {
+            "kind": "state",
+            "steps": [
+              {
+                "action": null,
+                "observed": {
+                  "outcome": {
+                    "alice": "none",
+                    "bob": "none"
+                  },
+                  "remaining": 1,
+                  "sold": 0
+                },
+                "state": {
+                  "phase": {
+                    "alice": "idle",
+                    "bob": "idle"
+                  },
+                  "remaining": 1,
+                  "result": {
+                    "alice": "none",
+                    "bob": "none"
+                  },
+                  "seen": {
+                    "alice": 0,
+                    "bob": 0
+                  },
+                  "sold": 0
+                },
+                "step": 0
+              },
+              {
+                "action": {
+                  "name": "request",
+                  "params": {
+                    "u": "alice"
+                  }
+                },
+                "observed": {
+                  "outcome": {
+                    "alice": "pending",
+                    "bob": "none"
+                  },
+                  "remaining": 1,
+                  "sold": 0
+                },
+                "state": {
+                  "phase": {
+                    "alice": "requested",
+                    "bob": "idle"
+                  },
+                  "remaining": 1,
+                  "result": {
+                    "alice": "none",
+                    "bob": "none"
+                  },
+                  "seen": {
+                    "alice": 0,
+                    "bob": 0
+                  },
+                  "sold": 0
+                },
+                "step": 1
+              },
+              {
+                "action": {
+                  "name": "read",
+                  "params": {
+                    "u": "alice"
+                  }
+                },
+                "observed": {
+                  "outcome": {
+                    "alice": "pending",
+                    "bob": "none"
+                  },
+                  "remaining": 1,
+                  "sold": 0
+                },
+                "state": {
+                  "phase": {
+                    "alice": "read",
+                    "bob": "idle"
+                  },
+                  "remaining": 1,
+                  "result": {
+                    "alice": "none",
+                    "bob": "none"
+                  },
+                  "seen": {
+                    "alice": 1,
+                    "bob": 0
+                  },
+                  "sold": 0
+                },
+                "step": 2
+              },
+              {
+                "action": {
+                  "name": "buy",
+                  "params": {
+                    "u": "alice"
+                  }
+                },
+                "observed": {
+                  "outcome": {
+                    "alice": "success",
+                    "bob": "none"
+                  },
+                  "remaining": 0,
+                  "sold": 1
+                },
+                "state": {
+                  "phase": {
+                    "alice": "done",
+                    "bob": "idle"
+                  },
+                  "remaining": 0,
+                  "result": {
+                    "alice": "success",
+                    "bob": "none"
+                  },
+                  "seen": {
+                    "alice": 1,
+                    "bob": 0
+                  },
+                  "sold": 1
+                },
+                "step": 3
+              }
+            ]
+          }
+        },
+        {
+          "counterexample": null,
+          "fairness_used": [
+            {
+              "action": "read",
+              "kind": "weak",
+              "per_params": true
+            },
+            {
+              "action": "buy",
+              "kind": "weak",
+              "per_params": true
+            },
+            {
+              "action": "reject",
+              "kind": "weak",
+              "per_params": true
+            }
+          ],
+          "id": "EveryRequestAnswered[u=\"alice\"]",
+          "kind": "leads_to",
+          "origin": "contract",
+          "property": "EveryRequestAnswered",
+          "status": "PASS",
+          "vacuous": false
+        },
+        {
+          "counterexample": null,
+          "fairness_used": [
+            {
+              "action": "read",
+              "kind": "weak",
+              "per_params": true
+            },
+            {
+              "action": "buy",
+              "kind": "weak",
+              "per_params": true
+            },
+            {
+              "action": "reject",
+              "kind": "weak",
+              "per_params": true
+            }
+          ],
+          "id": "EveryRequestAnswered[u=\"bob\"]",
+          "kind": "leads_to",
+          "origin": "contract",
+          "property": "EveryRequestAnswered",
+          "status": "PASS",
+          "vacuous": false
+        },
+        {
+          "counterexample": null,
+          "id": "SeenNonNegative",
+          "kind": "invariant",
+          "origin": "model",
+          "property": "SeenNonNegative",
+          "status": "PASS"
+        }
+      ],
+      "settings": {
+        "max_depth": null,
+        "max_states": 200000,
+        "only": null,
+        "stop_on_first": false,
+        "symmetry": false,
+        "time_seconds": null
+      },
+      "stats": {
+        "depth": 6,
+        "initial_states": 1,
+        "millis": 8,
+        "states": 21,
+        "transitions": 26
+      },
+      "truncation": [],
+      "verdict": "PASS"
+    },
+    "mutants": {
+      "declared": [
+        {
+          "deadlock": "UNKNOWN",
+          "description": "把旧设计放回来：按读到的值扣减",
+          "edits": [
+            {
+              "action": "buy",
+              "expr": "phase[u] == 'read' and seen[u] > 0",
+              "op": "set_guard"
+            },
+            {
+              "action": "reject",
+              "expr": "phase[u] == 'read' and seen[u] <= 0",
+              "op": "set_guard"
+            }
+          ],
+          "expect_killed_by": [
+            "NoOversell",
+            "StockNonNegative"
+          ],
+          "failed_properties": [
+            "NoOversell",
+            "StockNonNegative"
+          ],
+          "id": "check-then-act",
+          "killed_by": [
+            "NoOversell",
+            "StockNonNegative"
+          ],
+          "mutant_verdict": "FAIL",
+          "required": true,
+          "status": "KILLED"
+        },
+        {
+          "deadlock": "UNKNOWN",
+          "description": "订单成功但没扣库存",
+          "edits": [
+            {
+              "action": "buy",
+              "op": "drop_update",
+              "var": "remaining"
+            }
+          ],
+          "expect_killed_by": [
+            "Conservation"
+          ],
+          "failed_properties": [
+            "Conservation"
+          ],
+          "id": "lost-decrement",
+          "killed_by": [
+            "Conservation"
+          ],
+          "mutant_verdict": "FAIL",
+          "required": true,
+          "status": "KILLED"
+        },
+        {
+          "deadlock": "FAIL",
+          "description": "售罄分支丢失：请求永远挂起",
+          "edits": [
+            {
+              "action": "reject",
+              "op": "drop_action"
+            }
+          ],
+          "expect_killed_by": [
+            "EveryRequestAnswered"
+          ],
+          "failed_properties": [
+            "EveryRequestAnswered"
+          ],
+          "id": "never-answer-sold-out",
+          "killed_by": [
+            "EveryRequestAnswered"
+          ],
+          "mutant_verdict": "FAIL",
+          "required": true,
+          "status": "KILLED"
+        }
+      ],
+      "declared_summary": {
+        "killed": 3,
+        "required_survivors": [],
+        "total": 3
+      }
+    },
+    "reasons": []
+  },
+  "schema_version": 1,
+  "settings": {
+    "allow_bounded": false,
+    "auto_mutants": false,
+    "min_depth": null,
+    "symmetry": true
+  },
+  "started_at": "2026-11-17T15:09:49+00:00",
+  "verdict": "QUALIFIED"
+}
