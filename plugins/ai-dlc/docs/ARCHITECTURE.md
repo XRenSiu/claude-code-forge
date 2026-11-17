@@ -1,6 +1,6 @@
 # AI-DLC 架构
 
-实现基线：2026-11-16，Forge `49e0cf4`（AI-DLC 1.24.0、Project Harness 0.6.0、Trusted Acceptance 0.4.1）。状态机、阶段执行、产品自检、独立控制与学习各有明确归属；下文 §2.1–2.4 补充实际执行结构。本地 Docker 控制服务已可部署，结果仍为 `local_advisory`，正式签发需受保护环境。
+实现基线：2026-11-17（AI-DLC 1.25.0、Project Harness 0.6.0、Trusted Acceptance 0.5.0）。状态机、阶段执行、产品自检、形式化验证、独立控制与学习各有明确归属；下文 §2.1–2.5 补充实际执行结构。本地 Docker 控制服务已可部署，结果仍为 `local_advisory`，正式签发需受保护环境。
 
 > 一条产研自闭环的流水线：世界 → 本体 → 契约 → 标准 → 计划 → 实现 → 验收 → 交付 → 学习。
 > **每一步的产物要么能被脚本检，要么被一道只能人签的门挡住，没有第三种。**
@@ -134,6 +134,24 @@ Trusted Acceptance 已有 SQLite 持久队列、幂等提交、租约、撤销�
 
 PostHolder `5c7900c` 已实跑这个闭环：故障注入后将五步轨迹缩为单步 regrant，完成 PASS/FAIL/PASS 资格；相同随机预算下，原路径未覆盖已知故障，追加回归后检出，修复候选通过。回退和再次激活均留痕。另有独立 HTTP undo/redo 场景与两任务反馈复核。这些是局部真实产品操作和确定性修复的证据；不提升所有 skill 的 `static_only` 等级，也不证明模型自主修复率、生产逃逸率或正式验收。项目实现与复现实验入口见 [PostHolder 生命周期说明](https://github.com/Maitreya001-AI/PostHolder/blob/5c7900cf2d8e2927424936f28eb4a60f9a3c1a6f/docs/lifecycle-automation.md)。
 
+### 2.5 形式化验证：两个入口，一条主干
+
+状态性需求（并发、一致性、权限、重试与幂等）在 `/formal-verify` 里多走一条线，用的是自带的检查器 fvkit，与 trusted-acceptance 逐字同一份：
+
+```
+入口 A 新需求：需求 → fv-contract（规则，随 G2 锁）→ fv-model（原子动作）→ fv check → 反例分诊 → fv qualify
+入口 B 已有代码：独立规则 → source-map.yaml（动作 ↔ 代码锚点）→ 实现模型 → 反例 → 重放向量 → 真实轨迹
+主干：qualify（E2）→ 实现 → gen-tests → harness 记录真实轨迹 → conform（E3）→ fv ci 持续重验
+```
+
+| 前置 | 何时 | 检什么（`formal_gate.py`，`--force` 越不过） |
+|---|---|---|
+| 规则冻结 | `cards` 起 | fv-contract 在当前 G2/L5 锁里，字节未变；改弱规则 = 变更提案 + G2 |
+| 设计审定 | `implement` 起 | QUALIFIED 回执对当前模型与合同重验通过：完整探索、见证可达、无死动作、必需 mutant 被预期性质杀死 |
+| 实现一致 | E3 模块，`pr` 起 | CONFORMS 回执，且映射的代码与取证时一致，源码映射此刻 FRESH |
+
+需要哪些模块，由显式登记加上策略对 `branch.base` 的 diff 共同决定；没有 base 时要求全部模块。降级只能是人签的 `formal waive`，会强制 G3。反例分诊只有五类，每类对应一条路由（R17–R23），不允许以改弱规则收场。trusted-acceptance 的政策 schema 2 固定同一份模型与合同的摘要，在受保护环境重算。这条线也只到 E3：有界探索、模拟、外部引擎的抽样都单独标记，不混称“已证明”。
+
 ---
 
 ## 3. 主干：十五个阶段
@@ -170,7 +188,7 @@ intake → track → issue → branch → contract → g2 → cards → implemen
 G2 跑契约 v2 校验，implement 跑卡 lint，pr 读 final-state.json 与达标比对报告，archive 读发布记录里的 post-deploy 行，
 并在 implement / acceptance / pr / merge 重跑锁校验——`/commit` 与 `/pr` 的预门能被裸 git 绕开，状态机绕不开。
 
-执行图 `graph.yaml`（54 节点 · 72 边）把同一件事声明成数据：节点带边界身份
+执行图 `graph.yaml`（55 节点 · 75 边）把同一件事声明成数据：节点带边界身份
 （读什么 / 不许读什么 / 写什么 / 有什么权限），边带类型与守卫，回边标明属于哪个环。
 `graph check` 让它与状态机的阶段列表**互相断言**——图和代码互为对方的测试。
 `verify_graph.py` 另外检五条性质：写范围有界、去掉回边后是 DAG 且每个圈归属一个环、
@@ -291,7 +309,7 @@ issue 不合格就拒绝取数）；文件数要等有 diff。缺一个量的规
 
 五个层，由内向外：**卡 ⊂ 方案 ⊂ 任务 ⊂ 本体 ⊂ 世界**。
 
-`fail --signal <信号>` 读路由表（16 条规则），给出候选层、处理者、动作、该层计数与预算余量、
+`fail --signal <信号>` 读路由表（23 条规则，R17–R23 是形式化反例的分诊），给出候选层、处理者、动作、该层计数与预算余量、
 指纹重复次数、是否升级。原则只有一条：**失败先归层，再决定谁处理**——
 不在实现层重试世界层的错，因为那样只会烧完预算再回到同一个问题。
 
@@ -402,7 +420,7 @@ A 档里有两条特别的：**结构闸**在分析器跑不起来时退出"未�
 
 ---
 
-## 11. 三十个 skill、五个 agent
+## 11. 三十一个 skill、五个 agent
 
 九环加一根脊柱。**脊柱不做任何一环的活**，只做五件事：持有状态、记账、路由失败、
 把三道门编译成"不跑就推进不了"、把图与环声明成数据。
@@ -412,7 +430,7 @@ A 档里有两条特别的：**结构闸**在分析器跑不起来时退出"未�
 | **R0 世界** | 这个产品为什么这样运转 | `psl` `psl-derive` `grill` | `verify_psl.py`（`--afk`）`verify_derived.py` `grill_loop.py check`（四键停机）；**G1** |
 | **R1 本体** | 系统里有什么、叫什么、什么不可违反 | `dos-extract` `invariant-extract` | `verify_dos.py` `verify_card.py` `verify_agent_map.py --probe`（命令逐条实跑）`verify_vocabulary.py` |
 | **R2 契约** | 什么算做完 | `issue` `donewhen-extract` `acceptance-spec` `ratify` | `verify_issue.py` `verify_done_when.py` `validate_done_when_v2.py`；**G2** |
-| **R3 标准** | 判据怎么被机器执行 | `test-suite-generator` `spec-compile` `calibrate` | `derive_counts.py` `verify_compile.py` `verify_calibration.py`；二次锁 |
+| **R3 标准** | 判据怎么被机器执行 | `test-suite-generator` `spec-compile` `calibrate` `formal-verify` | `derive_counts.py` `verify_compile.py` `verify_calibration.py` `fv.py qualify`；二次锁（fv 合同随 G2 / L5 锁冻结） |
 | **R4 计划** | 怎么拆成无上下文可做的卡 | `plan-cards` | `lint_cards.py` `slice_agent_map.py` |
 | **R5 实现** | 按卡做、按卡提交 | `implement` `commit` `ratchet` | `verify_commit.py`（白名单 · 锁 · 密钥）· 指纹升级 |
 | **R6 验收** | 三档验收，谁一票否决 | `acceptance-fleet` + `code-reviewer` `qa-reviewer` `pm-reviewer` `spec-drift-detector` `spec-gaming-detector` + `meta-judge`；单 PR 手审 `pr-review` | `verify_structure.py` `verify_review_complete.py` `compute_score.py` `compute_confidence.py`；**G3** |
@@ -561,6 +579,8 @@ specs/<slug>/      归档：状态 · 账本 · 日记 · 契约 · 锁 · 卡 �
 仓库外控制区        操作策略 / 适配器；正式部署另隔离合同、观察器与签发身份
 仓库内             cards/ · .done_when.lock · tests/<feature>/ · ratchet-log/
                    PSL-<x>.md · derived/ · dos.yaml · agent-map.md
+                   specs/<f>/formal/（合同 · 模型 · 源码映射与锁 · 向量 · 决定）· verification/policy.yaml
+.aidlc/<slug>/formal/  qualify / conform 回执（只新建不覆盖，归档时随 artifacts 带走）
                    CHANGELOG.md · releases/ · escape-defects.md · retro/
 ```
 
@@ -578,6 +598,7 @@ specs/<slug>/      归档：状态 · 账本 · 日记 · 契约 · 锁 · 卡 �
 | 本体版本演进 | 候选命名空间、本体自身的版本迁移没有形态 |
 | Stop hook | 只有模板，不自动安装 |
 | 收敛阈值 | 指纹重复次数、震荡周期、平台期轮数是先验值，还没被真实运行校准过 |
+| 形式化验证的范围 | 内置检查器是显式状态枚举：小范围精确，大范围靠对称约简或有界并如实标注；不产生 E4。外部引擎适配只对固定格式输出测过解析，本仓库没有实际运行 TLC / Apalache / Quint / FizzBee。建模质量（Agent 写出的模型是否贴近现实）没有行为层评测 |
 | 受保护正式验收 | 本机 Docker 控制试点可运行；独立身份、HTTPS、发布者与生产授权仍需部署方接入 |
 | 学习的泛化效果 | 已测具体故障的新增回归检出与回退；真实模型自主修复、长期逃逸率和新会话宿主加载未据此验证 |
 | 深度旋钮 | 只是声明，没有强制力（规则 17：如实标注，不假装） |

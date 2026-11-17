@@ -46,6 +46,10 @@ Usage:
   aidlc_state.py verification configure|status|run|prepare|submit|poll|check|task [--slug S]
                         # project self-check, local review and remote acceptance remain separate;
                         # see references/verification.md for the operator-owned config and protocol
+  aidlc_state.py formal configure|status|qualify|conform|check|waive [--slug S]
+                        # fvkit formal verification (see ../formal-verify/SKILL.md): the fv-contract rides in the
+                        # G2 lock, implement needs a QUALIFIED design, pr/merge need current E3 conformance;
+                        # none of it is waivable with advance --force — only `formal waive` signed by a human
   aidlc_state.py waive   [--slug S] --signal SIG --reason R --by WHO
                         [--signer-kind human|delegated_agent] [--authorization TEXT]
                         [--fingerprint FP] [--card CARD-xx] [--layer L] [--stage S] [--scope TEXT] [--ref type:target ...]
@@ -109,6 +113,12 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import repo_assets  # noqa: E402  —— X1 仓库级制品的发现与 git 核对（同目录）
 import verification  # noqa: E402  —— self-check / review / trusted acceptance are distinct
+
+
+def _formal():
+    """fvkit lives in the sibling formal-verify skill; imported only when a run uses it."""
+    import formal_gate  # noqa: E402
+    return formal_gate
 
 ROOT_DEFAULT = ".aidlc"
 LEGACY_ROOT = ".sdlc"   # 改名前的运行时目录；见 resolve_root
@@ -1083,6 +1093,13 @@ def cmd_advance(a):
                       extra={"failure_domain": failure_route["domain"]})
         print(json.dumps({"ok": False, "stage": st["stage"], "target": a.stage,
                           "unmet": integration_unmet, "route": failure_route, "force_allowed": False}, ensure_ascii=False, indent=2))
+        sys.exit(1)
+    formal_unmet = _formal().guard(st, a.stage) if (st.get("formal") or {}).get("status") == "configured" else []
+    if formal_unmet:
+        ledger_append(a.root, a.slug, "formal_blocked", "; ".join(formal_unmet), stage=st["stage"],
+                      extra={"failure_domain": "formal"})
+        print(json.dumps({"ok": False, "stage": st["stage"], "target": a.stage, "unmet": formal_unmet,
+                          "force_allowed": False, "see": "aidlc_state.py formal status"}, ensure_ascii=False, indent=2))
         sys.exit(1)
     skips = effective_skips(st)
     jumped = jumped_stages(st, a.stage, skips)
@@ -2623,6 +2640,49 @@ def cmd_verification(a):
     sys.exit(code)
 
 
+def cmd_formal(a):
+    """fvkit receipts recorded against this run; the advance guard re-validates them every time."""
+    fg = _formal()
+    st = load(a.root, a.slug)
+    code, result = 0, {}
+    try:
+        if a.action == "configure":
+            settings = {k: v for k, v in (("max_states", a.max_states), ("allow_bounded", a.allow_bounded or None),
+                                          ("min_depth", a.min_depth)) if v is not None}
+            result = fg.configure(st, module=a.module, contract=a.contract, model=a.model, source_map=a.source_map,
+                                  min_level=a.min_level, policy=a.policy, settings=settings or None)
+        elif a.action == "qualify":
+            result = fg.qualify_module(st, a.root, a.slug, a.module)
+            code = 0 if result["verdict"] == "QUALIFIED" else 1
+        elif a.action == "conform":
+            result = fg.conform_module(st, a.root, a.slug, a.traces or [], a.module, a.hidden_steps)
+            code = 0 if result["verdict"] == "CONFORMS" else 1
+        elif a.action == "check":
+            if not a.stage:
+                die("formal check needs --stage <target stage>", 2)
+            result = {"stage": a.stage, "unmet": fg.guard(st, a.stage), "authority": "local_precondition"}
+            code = 1 if result["unmet"] else 0
+        elif a.action == "waive":
+            if not (a.module and a.level and a.signer_kind):
+                die("formal waive needs --module, --level, --reason, --by and --signer-kind", 2)
+            result = fg.waive(st, a.module, a.level, a.reason, a.by, a.signer_kind, a.authorization)
+        else:
+            result = fg.status(st)
+    except (fg.FvError, OSError, ValueError, KeyError) as e:
+        print(json.dumps({"ok": False, "error": str(e)}, ensure_ascii=False, indent=2))
+        sys.exit(2)
+    if a.action not in ("status", "check"):
+        save(a.root, a.slug, st)
+        refs = [{"type": "references", "target": result["receipt"]}] if isinstance(result, dict) and result.get("receipt") else []
+        ledger_append(a.root, a.slug, "formal_" + a.action,
+                      json.dumps({k: result.get(k) for k in ("module", "verdict", "reasons", "level", "reason")
+                                  if isinstance(result, dict) and result.get(k) is not None}, ensure_ascii=False)[:600],
+                      stage=st["stage"], decision=str(result.get("verdict", "")) if isinstance(result, dict) else "",
+                      by=(a.by or "engine"), refs=refs)
+    print(json.dumps({"ok": code == 0, **(result if isinstance(result, dict) else {"result": result})}, ensure_ascii=False, indent=2))
+    sys.exit(code)
+
+
 def cmd_ledger(a):
     st = load(a.root, a.slug)
     extra = {"card": a.card} if a.card else None
@@ -2752,6 +2812,17 @@ def main():
     s.add_argument("--stage", choices=["pr", "acceptance", "merge", "release"])
     s.add_argument("--task-status", choices=["active", "cancelled", "superseded"])
     s.add_argument("--revision", type=int); s.add_argument("--reason")
+    s = P("formal")
+    s.add_argument("action", choices=["configure", "status", "qualify", "conform", "check", "waive"])
+    s.add_argument("--policy", help="verification/policy.yaml (fv-policy): required modules come from the diff vs branch.base")
+    s.add_argument("--module"); s.add_argument("--contract"); s.add_argument("--model"); s.add_argument("--source-map", dest="source_map")
+    s.add_argument("--min-level", dest="min_level", default="E3", choices=["E2", "E3"])
+    s.add_argument("--max-states", dest="max_states", type=int); s.add_argument("--allow-bounded", dest="allow_bounded", action="store_true")
+    s.add_argument("--min-depth", dest="min_depth", type=int)
+    s.add_argument("--traces", nargs="*"); s.add_argument("--hidden-steps", dest="hidden_steps", type=int, default=0)
+    s.add_argument("--stage", choices=ORDER)
+    s.add_argument("--level", choices=["E0", "E1", "E2"]); s.add_argument("--reason"); s.add_argument("--by")
+    s.add_argument("--signer-kind", dest="signer_kind", choices=["human", "delegated_agent"]); s.add_argument("--authorization")
     s = P("report"); s.add_argument("--path", required=True); s.add_argument("--by")
     s = P("check-clean"); s.add_argument("--as-hook", action="store_true")
     s = P("graph"); s.add_argument("action", choices=["check", "next", "render"]); s.add_argument("--graph"); s.add_argument("--full", action="store_true")
@@ -2762,7 +2833,7 @@ def main():
 
     a = p.parse_args()
     readonly = {"show", "doctor", "repo", "graph", "loops", "notes", "check-clean", "sync-install"}
-    if a.cmd in readonly or (a.cmd == "verification" and a.action == "status"):
+    if a.cmd in readonly or (a.cmd == "verification" and a.action == "status") or (a.cmd == "formal" and a.action in ("status", "check")):
         return dispatch(a)
     lock_root = a.root if a.cmd == "init" else resolve_root(a.root)[0]
     with verification.writer_lock(lock_root):
@@ -2797,7 +2868,7 @@ def dispatch(a):
             "size": cmd_size, "plan": cmd_plan, "doctor": cmd_doctor, "repo": cmd_repo,
             "note": cmd_note, "notes": cmd_notes, "autonomy": cmd_autonomy,
             "fail": cmd_fail, "waive": cmd_waive, "report": cmd_report, "check-clean": cmd_check_clean,
-            "escape": cmd_escape, "acceptance": cmd_acceptance, "verification": cmd_verification,
+            "escape": cmd_escape, "acceptance": cmd_acceptance, "verification": cmd_verification, "formal": cmd_formal,
             "graph": cmd_graph, "ledger": cmd_ledger, "archive": cmd_archive,
             "sync-install": cmd_sync_install}[a.cmd](a)
 

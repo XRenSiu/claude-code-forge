@@ -1,0 +1,37 @@
+{
+  "skill": "plugins/ai-dlc/skills/formal-verify",
+  "tier": "production",
+  "evaluated_layers": [],
+  "gate_pass": "static_only",
+  "structural": {
+    "findings": [],
+    "failure_taxonomy": {
+      "underfill": 0,
+      "overfill": 0,
+      "wrong-layer": 0,
+      "wrong-route": 0,
+      "no-exit": 0,
+      "seam-misplacement": 0
+    },
+    "waived_count": 0
+  },
+  "effect": null,
+  "discrimination": null,
+  "fix_list": [],
+  "provenance": {
+    "date": "2026-11-17",
+    "evaluator": "AUTHOR SELF-CHECK ONLY — no independent structural judge has reviewed this skill yet. evaluated_layers is empty on purpose: a review by the author is not an evaluation.",
+    "scripts_run": {
+      "fv.py check model-check-then-act.yaml": "exit 1, shortest counterexample (7 states: double read, double buy, sold=2)",
+      "fv.py qualify model.yaml": "exit 0 QUALIFIED; 21 states; 3 declared mutants killed by their expected properties",
+      "fv.py validate --rerun": "exit 0; re-execution identical",
+      "harness + trace-check (atomic)": "10 vectors, all CONFORMS",
+      "harness + trace-check (check-then-act)": "NONCONFORMANT; runtime monitoring reports NoOversell / StockNonNegative",
+      "impl/test_concurrency.py": "atomic never oversells; check-then-act oversells under the counterexample schedule",
+      "eval/test_formal.py": "6 lifecycle tests over a real git repo (lock, qualification, conformance, waiver, policy-derived modules, routing)",
+      "smoke --mutate (5 mutants on formal_gate.py / aidlc_state.py)": "all killed",
+      "trusted-acceptance evaluations (test_formal.py 29 + test_gate_formal.py 9)": "pass on Python 3.11 / 3.12 / 3.13; 12 manual mutants on fvkit and gate.py all killed"
+    },
+    "tier2_status": "NOT RUN — no with/without-skill comparison of the models an agent writes (fidelity to real atomic boundaries is the main risk the skill names). External engines (TLC / Apalache / Quint / FizzBee) were not executed in this repository; their adapters are tested against fixed sample outputs only."
+  }
+}

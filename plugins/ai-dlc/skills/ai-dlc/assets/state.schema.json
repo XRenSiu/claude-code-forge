@@ -818,6 +818,44 @@
           }
         }
       }
+    },
+    "formal": {
+      "type": "object",
+      "description": "fvkit formal verification (formal_gate.py / ../formal-verify). Written only by `formal configure|qualify|conform|waive`; the advance guard re-validates every receipt against the current model, contract, lock and source map.",
+      "properties": {
+        "status": {
+          "enum": [
+            "not_configured",
+            "configured"
+          ]
+        },
+        "policy": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "description": "{path, digest, modules}: required modules derive from the diff vs branch.base"
+        },
+        "modules": {
+          "type": "object",
+          "description": "explicitly enrolled modules: {contract, model, source_map, min_level E2|E3, origin}"
+        },
+        "settings": {
+          "type": "object"
+        },
+        "qualification": {
+          "type": "object",
+          "description": "per module: {receipt, digest, verdict, model_digest, contract_digest, at}"
+        },
+        "conformance": {
+          "type": "object",
+          "description": "per module: {receipt, digest, verdict, head, at}"
+        },
+        "waivers": {
+          "type": "array",
+          "description": "human-signed level reductions; each forces G3"
+        }
+      }
     }
   },
   "$defs": {

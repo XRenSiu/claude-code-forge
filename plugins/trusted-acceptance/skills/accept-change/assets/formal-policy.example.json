@@ -1,0 +1,53 @@
+{
+  "schema_version": 2,
+  "policy_id": "synthetic-ticket-policy@1",
+  "project_id": "synthetic-ticketing",
+  "contract_digest": "sha256:d31fba0c95b4ebcc707cae0e58d14eeb3a7c93d20547376e6225504659fa3f75",
+  "approval_ref": "synthetic-policy-decision-7",
+  "check_bundle_digest": "sha256:aaa3aa91425b05d926af11da3563ba8c554e33627e9852c3f6275549e6924de2",
+  "adapter_digest": "sha256:1c94381c3359991b8855a03705afd3c7ccb70c23835e9f8570488658b07878a2",
+  "stage": "merge",
+  "baseline_check_ids": [
+    "build-and-types"
+  ],
+  "catalog": [
+    {
+      "id": "build-and-types",
+      "source_ref": "synthetic-project-policy@1",
+      "evidence_types": [
+        "log"
+      ]
+    },
+    {
+      "id": "ticket-oversell",
+      "source_ref": "synthetic-ticket-rules@1#R1",
+      "evidence_types": [
+        "fv-receipt"
+      ]
+    }
+  ],
+  "formal": [
+    {
+      "check_id": "ticket-oversell",
+      "min_level": "E2",
+      "model_digest": "sha256:0dc20314fe8487777f094bba96b2fe54936f52009b4794f6a1c955143b689825",
+      "contract_digest": "sha256:84fc4176df71a5e8aedc87586fffa1d0a2250d09296802e82bc10eb1f269546b",
+      "properties_digest": "sha256:3bf0bc97b9871ef819ed8198932cd7be1e8ec768e74aec6cc9014c80bef78bc2",
+      "pass_verdicts": [
+        "QUALIFIED"
+      ],
+      "rerun": true
+    },
+    {
+      "check_id": "ticket-oversell",
+      "min_level": "E3",
+      "model_digest": "sha256:0dc20314fe8487777f094bba96b2fe54936f52009b4794f6a1c955143b689825",
+      "contract_digest": "sha256:84fc4176df71a5e8aedc87586fffa1d0a2250d09296802e82bc10eb1f269546b",
+      "properties_digest": "sha256:3bf0bc97b9871ef819ed8198932cd7be1e8ec768e74aec6cc9014c80bef78bc2",
+      "pass_verdicts": [
+        "CONFORMS"
+      ],
+      "rerun": true
+    }
+  ]
+}

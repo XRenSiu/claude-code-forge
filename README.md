@@ -538,6 +538,7 @@ live here; PSL/DOS world-building and contract/test generation are optional neig
 | `/ratchet` | Master-evaluates / worker-executes loop for cards that must run to green (from ratchet) | — |
 | `/plan-cards` · `/implement` | L4 self-contained task cards (three lints + 40k cap); L6 isolated per-card implementation with whitelist executor | `lint_cards.py` · `verify_commit.py` |
 | `/release` · `/retro` | L8 delivery (SemVer from commits, changelog ↔ tag ↔ notes, rollback, verified-green); X3 learning (baseline → reflow distribution → proposals routed to layers) | `verify_release.py` · `metrics.py` |
+| `/formal-verify` | Formal verification for stateful requirements (concurrency, consistency, permissions, retries). Two entrances (spec-first: rules → model → check before coding; code-first: independent rules + source map → implementation model → counterexample replayed in real code) join one backbone: model check with shortest counterexamples and fairness-aware liveness, mutant qualification, model-based test vectors, real-code trace conformance, source-map drift and contract-weakening detection, risk-tiered CI. The fv-contract rides in the G2 lock; `advance implement` needs a QUALIFIED design and E3 modules need current conformance before `pr`/`merge` (not waivable with `--force`). Ships a self-contained checker (fvkit, standard library) byte-identical to Trusted Acceptance's | `fv.py qualify` · `fv.py conform` · `formal_gate.py` |
 
 ```bash
 /issue "users can search memories by relative time"      # shows the body, then creates
@@ -567,6 +568,8 @@ live here; PSL/DOS world-building and contract/test generation are optional neig
 ```
 
 The plugin includes a Python standard-library client, an advisory decision core and real local HTTP regression examples. A protected control service, project adapters and a formal publishing identity must still be deployed before claiming independent formal acceptance. See [the plugin README](plugins/trusted-acceptance/README.md).
+
+**Formal verification evidence.** `scripts/fv.py` (fvkit) is a self-contained explicit-state model checker and evidence toolkit. It covers invariants, transition properties, reachability witnesses, deadlock, and liveness under weak/strong fairness with lasso counterexamples. It also provides symmetry reduction, mutant qualification, trace conformance of real implementations, source-map drift, contract-weakening detection, and adapters for TLC / Apalache / Quint / FizzBee. Evidence is graded E0–E4; bounded runs, simulation and `quint run` are never reported as PASS. Gate policy schema 2 pins the approved model and contract digests and a minimum evidence level. The gate then re-validates every `fv-receipt` and, with `rerun`, re-executes qualification and trace conformance from the raw files. See [formal-evidence.md](plugins/trusted-acceptance/skills/accept-change/references/formal-evidence.md); the end-to-end example lives in [AI-DLC's formal-verify skill](plugins/ai-dlc/skills/formal-verify/).
 
 ## Project Harness
 

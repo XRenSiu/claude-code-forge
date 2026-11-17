@@ -1,0 +1,29 @@
+# 模型动作 ↔ 真实代码。anchor 必须逐字出现在文件里；改了被保护的文件就要重新审 + sync。
+#   fv source-map verify --map source-map.yaml --model model.yaml
+#   fv source-map sync   --map source-map.yaml --model model.yaml --by <审阅人> --reason <为什么仍一致>
+schema_version: 1
+kind: fv-source-map
+model: model.yaml
+root: "."                       # 下面的路径相对本文件所在目录（真实项目里通常省略 = git 仓库根）
+actions:
+  request:
+    locations:
+      - {path: impl/tickets.py, symbol: TicketService.request, anchor: "INSERT INTO requests (user, status, seen) VALUES (?, 'pending', NULL)"}
+  read:
+    atomicity: "单条 SELECT + 单条 UPDATE；展示值不参与购买判定"
+    locations:
+      - {path: impl/tickets.py, symbol: TicketService.read, anchor: "UPDATE requests SET seen = ? WHERE user = ?"}
+  buy:
+    atomicity: "BEGIN IMMEDIATE 事务内一条条件 UPDATE：检查与扣减不可被并发打断"
+    locations:
+      - {path: impl/tickets.py, symbol: TicketService.purchase, anchor: "UPDATE tickets SET remaining = remaining - 1 WHERE event_id = ? AND remaining > 0"}
+      - {path: impl/tickets.py, symbol: TicketService.purchase, anchor: "INSERT INTO orders (user, status) VALUES (?, 'success')"}
+  reject:
+    atomicity: "同一事务里 UPDATE 返回 0 行"
+    locations:
+      - {path: impl/tickets.py, symbol: TicketService.purchase, anchor: "status = \"success\" if reserved == 1 else \"sold_out\""}
+observables:
+  sold: {locations: [{path: impl/tickets.py, symbol: TicketService.observe, anchor: "SELECT COUNT(*) FROM orders WHERE status = 'success'"}]}
+  remaining: {locations: [{path: impl/tickets.py, symbol: TicketService.observe, anchor: "SELECT remaining FROM tickets WHERE event_id = ?"}]}
+  outcome: {locations: [{path: impl/tickets.py, symbol: TicketService.observe, anchor: "SELECT user, status FROM requests"}]}
+protected_paths: ["impl/tickets.py"]

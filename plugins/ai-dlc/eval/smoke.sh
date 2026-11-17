@@ -2403,6 +2403,35 @@ expect "grill: graph.yaml has the grill loop_back edge and no unowned cycle" 0 \
 expect "grill: a self-verifying grill loop would be rejected (twin)" 1 \
   bash -c "sed 's/verifier: psl-derive          # N 次隔离推导/verifier: psl          # N 次隔离推导/' '$S/ai-dlc/assets/loops.yaml' > '$GT/loops_self.yaml' && python3 '$S/ai-dlc/scripts/verify_loop.py' '$GT/loops_self.yaml' --routing '$S/ai-dlc/assets/routing.yaml' >/dev/null"
 
+echo "== formal-verify / fvkit"
+# 形式化验证（v1.25.0）：同一份检查器在两个插件里各带一份，逐字相同；示例走完 反例 → 资格 → 真实代码轨迹 → 弱化检测。
+FVS="$S/formal-verify/scripts/fv.py"; FX="$S/formal-verify/assets/example-ticket"; FT="$TMP/fv"; mkdir -p "$FT"
+expect "formal: fvkit is byte-identical to trusted-acceptance's canonical copy" 0 \
+  bash -c "diff -r -x __pycache__ '$AIDLC_TEST_ACCEPTANCE_SOURCE/fvkit' '$S/formal-verify/scripts/fvkit' && cmp '$AIDLC_TEST_ACCEPTANCE_SOURCE/fv.py' '$FVS'"
+expect "formal: the check-then-act design has a counterexample (exit 1)" 1 py "$FVS" check --model "$FX/model-check-then-act.yaml" --out "$FT/old.json"
+expect "formal: the counterexample is the 6-step double read then double buy" 0 \
+  bash -c "python3 -c \"import json; r=json.load(open('$FT/old.json')); ce=[p for p in r['result']['properties'] if p['id']=='NoOversell'][0]['counterexample']['steps']; assert len(ce)==7 and ce[-1]['observed']['sold']==2, ce\""
+expect "formal: the atomic design qualifies (complete, witnesses, 3 mutants killed by the expected rules)" 0 py "$FVS" qualify --model "$FX/model.yaml" --out "$FT/q.json"
+expect "formal: the qualification re-executes identically (--rerun)" 0 py "$FVS" validate "$FT/q.json" --model "$FX/model.yaml" --rerun --min-level E2 --expect QUALIFIED
+expect "formal: a receipt for one model is refused for another (twin)" 2 py "$FVS" validate "$FT/q.json" --model "$FX/model-check-then-act.yaml"
+expect "formal: a bounded run is never PASS (exit 3)" 3 py "$FVS" check --model "$FX/model.yaml" --max-states 5
+expect "formal: weakening NoOversell to sold <= STOCK + 1 is WEAKENED" 1 \
+  bash -c "sed 's/expr: \"sold <= STOCK\"/expr: \"sold <= STOCK + 1\"/' '$FX/contract.yaml' > '$FT/weak.yaml' && python3 '$FVS' diff-contract '$FX/contract.yaml' '$FT/weak.yaml' --model '$FX/model.yaml' >/dev/null"
+expect "formal: an equivalent rewrite is NOT_WEAKENED (twin)" 0 \
+  bash -c "sed 's/expr: \"sold <= STOCK\"/expr: \"sold < STOCK + 1\"/' '$FX/contract.yaml' > '$FT/same.yaml' && python3 '$FVS' diff-contract '$FX/contract.yaml' '$FT/same.yaml' --model '$FX/model.yaml' >/dev/null"
+expect "formal: committed vectors.json was generated from the current model and contract" 0 \
+  bash -c "python3 -c \"import json,sys; sys.path.insert(0,'$S/formal-verify/scripts'); from fvkit.spec import load_model; m=load_model('$FX/model.yaml'); v=json.load(open('$FX/vectors.json')); assert v['model']['digest']==m.digest and v['contract']['digest']==m.contract.digest\""
+expect "formal: the real atomic implementation conforms on every vector" 0 \
+  bash -c "python3 '$FX/impl/harness.py' --vectors '$FX/vectors.json' --out '$FT/good' >/dev/null && python3 '$FVS' trace-check --model '$FX/model.yaml' '$FT'/good/*.jsonl >/dev/null"
+expect "formal: the check-then-act implementation is NONCONFORMANT (twin)" 1 \
+  bash -c "python3 '$FX/impl/harness.py' --vectors '$FX/vectors.json' --out '$FT/bad' --variant check-then-act >/dev/null; python3 '$FVS' trace-check --model '$FX/model.yaml' '$FT'/bad/*.jsonl >/dev/null"
+expect "formal: real concurrent purchases (atomic never oversells; check-then-act does)" 0 py "$FX/impl/test_concurrency.py"
+expect "formal: the init skeleton qualifies out of the box" 0 \
+  bash -c "python3 '$FVS' init --dir '$FT/init' --name x --entrance code-first >/dev/null && python3 '$FVS' qualify --model '$FT/init/model.yaml' >/dev/null"
+expect "formal: lifecycle wiring (lock, qualification, conformance, waiver, policy, routing)" 0 py "$ROOT/eval/test_formal.py"
+expect "formal: routing v3 carries the seven triage rules R17–R23" 0 \
+  bash -c "python3 -c \"import yaml; r=yaml.safe_load(open('$S/ai-dlc/assets/routing.yaml')); s={x['signal'] for x in r['rules']}; assert {'fv_requirement_gap','fv_model_infidelity','fv_design_defect','fv_implementation_defect','fv_contract_weakened','fv_model_stale','fv_checker_defect'} <= s\""
+
 # 文档漂移是可以被机器发现的（2026-09-06：8 个脚本、26 个资产曾在六份文档里一次都没出现过）。
 expect "docs: every script and asset appears in docs/reference.md" 0 \
   py "$ROOT/eval/fixtures/doc_coverage.py" "$ROOT"
@@ -2413,7 +2442,7 @@ expect "docs: a script missing from the index turns it red (twin)" 1 \
 expect "docs: node / edge counts in living docs equal verify_graph.py (no hand-copied numbers)" 0 \
   py "$ROOT/eval/fixtures/doc_graph_counts.py" "$ROOT"
 expect "docs: a drifted count turns it red (twin)" 1 \
-  bash -c "t=\"$TMP/dgc\"; rm -rf \"\$t\"; mkdir -p \"\$t/docs\" \"\$t/skills/ai-dlc\"; cp -R '$ROOT/skills/ai-dlc/scripts' '$ROOT/skills/ai-dlc/assets' \"\$t/skills/ai-dlc/\"; sed 's/54 节点 · 72 边/52 节点 · 67 边/' '$ROOT/docs/ARCHITECTURE.md' > \"\$t/docs/ARCHITECTURE.md\"; python3 '$ROOT/eval/fixtures/doc_graph_counts.py' \"\$t\""
+  bash -c "t=\"$TMP/dgc\"; rm -rf \"\$t\"; mkdir -p \"\$t/docs\" \"\$t/skills/ai-dlc\"; cp -R '$ROOT/skills/ai-dlc/scripts' '$ROOT/skills/ai-dlc/assets' \"\$t/skills/ai-dlc/\"; sed 's/55 节点 · 75 边/52 节点 · 67 边/' '$ROOT/docs/ARCHITECTURE.md' > \"\$t/docs/ARCHITECTURE.md\"; python3 '$ROOT/eval/fixtures/doc_graph_counts.py' \"\$t\""
 expect "docs: the evaluation doc still states the plugin is not L2-verified" 0 \
   bash -c "grep -q 'static_only' '$ROOT/docs/evaluation.md' && grep -q '出题人与被测者同源' '$ROOT/docs/evaluation.md'"
 

@@ -9,7 +9,9 @@
 - `skills/accept-change/`：流程、合同/证据/分流/宿主/适配参考、JSON 提案模板，以及校验、送验、取结果客户端。
 - `acceptance-control/gate.py`：固定判定核心，核对必验集合、需求覆盖、证据文件、全部尝试、版本、环境、取消状态、授权到期及累计预算。
 - `acceptance-control/service.py` / `docker_worker.py`：持久控制队列与两个容器的隔离试点。候选无宿主挂载，冻结观察器单独运行；正常、故障、取消、过期工作者与预算均留证。见 [部署合同](acceptance-control/deployment.md)。本机试点仍无正式签发权。
-- `evaluations/`：协议与门禁回归、真实本地 HTTP 示例，以及待独立执行的 Skill 行为评测用例。
+- `skills/accept-change/scripts/fv.py` + `fvkit/`：自闭环的形式化验证工具（仅标准库，YAML 输入需要 PyYAML）。安全表达式语言写的规则合同（fv-contract）与状态机模型（fv-model）；显式状态模型检查，覆盖不变量、迁移性质、可达见证、死锁，以及弱/强公平下的活性，给出最短反例或套索反例，支持对称约简；变异资格判定（证明规则抓得到故意注入的设计缺陷）；真实代码轨迹一致性与运行时监控；模型驱动测试向量；源码映射漂移检测；契约弱化检测；风险分级的 CI；TLC / Apalache / Quint / FizzBee 适配。证据按 E0–E4 分级，回执可重放、可重算。见 [formal-evidence.md](skills/accept-change/references/formal-evidence.md)。
+- `acceptance-control/gate.py` 支持 policy schema 2：维护者固定模型/规则摘要和最低证据等级，gate 重新校验每份 `fv-receipt`，`rerun` 时用原件重算资格判定与轨迹一致性。
+- `evaluations/`：协议与门禁回归、真实本地 HTTP 示例、fvkit 与形式化门禁回归，以及待独立执行的 Skill 行为评测用例。
 
 Skill 负责提案、送验和解释；AI-DLC/Forge/项目 Harness 继续负责实现与自测。`acceptance-fleet` 的审查报告可作为输入，不自动成为正式通过。
 
@@ -84,5 +86,20 @@ python3 plugins/trusted-acceptance/evaluations/demo.py --variant ui-only --out /
 正式接入需独立保护合同/政策/检查包、候选运行区、观察器/证据库和签发凭据，持久化任务/预算/全部尝试，实现幂等、租约和原子状态复核，再接 required check 与交付授权。具体条件见 [控制区说明](acceptance-control/README.md)。哈希、额外进程、另一个模型或额外 CI job 本身不证明这些边界成立。
 
 本地测试证明协议和列出的程序规则可运行，并在合成 HTTP 任务上识别对应缺陷。尚未做真实项目接入、Skill 有/无对照、独立保留集评测或生产误放行/误拦截测量；行为评测方案见 [evaluations/behavioral.md](evaluations/behavioral.md)。
+
+## 形式化验证
+
+需求定义“应该怎样”，代码描述“实际上怎样”。fvkit 用同一份规则合同检查两边：模型检查回答“这个设计有没有违反规则的交错”，轨迹一致性回答“真实代码跑出来的行为是不是这个设计允许的”。两者都通过，也只能声称到 E3。
+
+```bash
+FV=plugins/trusted-acceptance/skills/accept-change/scripts/fv.py
+python3 $FV check   --model model.yaml --out check.json            # E2：完整探索，FAIL 时给最短反例
+python3 $FV qualify --model model.yaml --out qualify.json          # 设计门槛：完整 + 见证 + 无死动作 + 变异被杀
+python3 $FV conform --model model.yaml --map source-map.yaml --traces traces/*.jsonl --out conform.json   # E3
+python3 plugins/trusted-acceptance/skills/accept-change/scripts/acceptance.py validate-formal conform.json \
+  --model model.yaml --rerun --min-level E3 --expect CONFORMS
+```
+
+完整示例（只剩一张票：反例、修复、真实 SQLite 实现、轨迹、CI）在 AI-DLC 的 `formal-verify/assets/example-ticket/`。外部引擎适配只用固定格式的样例输出测过，本仓库没有实际运行 TLC、Apalache、Quint 或 FizzBee。
 
 Product operation and checker calibration chains can now be independently checked with `validate-calibration`; see [the evidence contract](skills/accept-change/references/calibration-evidence.md). This checks local artifact integrity and does not deploy protected acceptance.

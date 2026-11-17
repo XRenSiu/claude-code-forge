@@ -650,8 +650,8 @@ vocabulary:
   RoutingRule:
     kind: "policy"
     of: "Routing"
-    definition: "路由表的十六条规则 R01–R16（信号 → 候选层 / 处理者 / 动作 / 预算）；数字是文献先验，可由 tune 提案调整"
-    synonyms: ["路由表", "路由规则", "R01–R16", "routing rule"]
+    definition: "路由表的二十三条规则 R01–R23（信号 → 候选层 / 处理者 / 动作 / 预算；R17–R23 为形式化反例分诊）；数字是文献先验，可由 tune 提案调整"
+    synonyms: ["路由表", "路由规则", "R01–R23", "routing rule"]
     scope_note: "「路由存在」是宪法（R011）；表的内容是 policy——所以是 vocabulary 不是 rules"
   Escalation:
     kind: "process"

@@ -38,6 +38,7 @@ flag 不等于 reject。预门过了但带 flag，意思是「机器判不了这
 | 新接口 | 职责 | 退出语义 |
 |---|---|---|
 | `verification.py` | 状态机使用的适配模块：项目运行时、自检/评审绑定、HTTPS 客户端、阶段刷新、任务失效 | 模块，错误由 verification 子命令记录 |
+| `aidlc_state.py formal` | configure / status / qualify / conform / check / waive：形式化证据登记在运行状态里，`advance` 每次重新校验（见下文「形式化验证」） | 0 · 1 未满足 / 负面结论 · 2 用法或证据错误 |
 | `automation.py` | 持久化执行阶段适配器，复用原 `advance` 门；支持隔离 worktree、发现/复现/修复/验证/反馈 cycle、恢复、对账、取消和累计预算。见 [自动化合同](../skills/ai-dlc/references/automation.md) | 0 完成 · 1 等待/未完成/预算耗尽 · 2 配置或绑定错误 |
 | `improvement.py` | 重读 automation 原始证据，按独立任务去重，将失败分流到回归、工具或合同改进提案；不自动改预算与判据 | 0 汇总完成 · 1 来源拒绝 |
 | `compile_acceptance.py` | 显式映射 done_when AC/义务到可信合同提案 | 0 可送审批 · 1 有未决项 · 2 无效输入 |
@@ -126,6 +127,26 @@ flag 不等于 reject。预门过了但带 flag，意思是「机器判不了这
 | `verification_evidence.py` | calibrate / ai-dlc | 原始产品与校准证据链、当前候选/index/checker/fixture/env 绑定；与 trusted-acceptance 副本逐字一致 | 模块；拒绝缺失、篡改或过期证据 |
 | `verify_calibration.py` | calibrate | **标准的标准**：mutation score / Krippendorff α ≥ 0.80 / holdout / 隔离，四不可破 | 0 元闸过 · 1 拒 |
 
+### 形式化验证（R3 标准 · R6 验收，`skills/formal-verify/scripts/`）
+
+`fv.py` + `fvkit/` 与 trusted-acceptance 的副本逐字一致（smoke 盯着）。只用标准库；YAML 资产需要 PyYAML。合同 / 模型 / 轨迹 / 源码映射 / 策略的格式见 [modeling-language.md](../skills/formal-verify/references/modeling-language.md)，证据等级见 [evidence-levels.md](../skills/formal-verify/references/evidence-levels.md)。
+
+| 命令 | 干什么 | 退出码 |
+|---|---|---|
+| `fv.py lint` | 合同 / 模型静态检：词表封闭（性质只能用 observables）、表达式白名单、名字冲突、对称集不得出现字面量 | 0 · 2 |
+| `fv.py check` | 显式状态模型检查（BFS 最短反例；迁移性质；可达见证；死锁；弱 / 强公平下的活性 → 套索反例；对称约简） | 0 PASS · 1 FAIL · **3 BOUNDED_PASS / INCOMPLETE**（不是通过） |
+| `fv.py simulate` | 种子随机模拟，E1 | 1 FAIL · **3 NO_VIOLATION_SAMPLED**（永不 PASS） |
+| `fv.py mutate` / `qualify` | 声明 mutant 必须被**预期**性质杀死；`qualify` = 完整 + 见证 + 无死动作 + 必需 mutant 全杀（FV-G1 的机器部分） | 0 QUALIFIED · 1 NOT_QUALIFIED |
+| `fv.py diff-contract` | 契约弱化检测：有限域精确，否则在模型 + 自动变异上抽样（标明 sampled）；删性质 / 加假设 / 缩小 forall 都算弱化 | 0 NOT_WEAKENED · APPROVED · 1 WEAKENED · 3 UNKNOWN |
+| `fv.py trace-check` / `conform` | 真实代码轨迹对模型的一致性（部分观测、隐藏步、被拒步）+ 运行时监控；`conform` 再要求源码映射 FRESH（E3） | 0 CONFORMS · 1 NONCONFORMANT · 3 INCOMPLETE |
+| `fv.py source-map verify` / `sync` | 动作 ↔ 代码的逐字锚点；受保护路径自审阅提交以来变了就 STALE；`sync` 必须有审阅人与理由 | 0 FRESH · 1 STALE / BROKEN |
+| `fv.py gen-tests` | 模型驱动测试向量：迁移覆盖 / 旧反例重放（被拒步写成 `enabled: false`）/ 种子随机游走 | 0 |
+| `fv.py impact` / `ci` | 由 git diff 推出受影响模块；按风险分层跑完整证据，任何一步没跑都是 UNSATISFIED | 0 SATISFIED · 1 UNSATISFIED |
+| `fv.py external` | TLC / Apalache / Quint verify / Quint run / FizzBee 适配，原始输出留存可重解析；`quint run` 只有 E1 | 同 check；缺引擎 = 2 |
+| `fv.py validate` / `report` | 重推 verdict、重放反例与见证；`--rerun` 重新执行并逐项比对；`report` 输出可声称 / 不可声称表 | 0 · 2 |
+| `fv.py init` / `vendor` | 入口 A / B 的项目骨架（能直接 qualify）；把检查器复制进项目供 CI 自包含 | 0 |
+| `formal_gate.py`（`skills/ai-dlc/scripts/`） | 状态机前置：fv 合同在 G2/L5 锁里；`implement` 起要 QUALIFIED；E3 模块 `pr` 起要当前的 CONFORMS + FRESH 映射；策略模式按 diff 推模块；签字的 `formal waive` 降级并强制 G3 | 由 `aidlc_state.py formal` / `advance` 报告；**不可 `--force`** |
+
 ### 验收（R6）
 
 | 脚本 | 所属 skill | 干什么 | 关键退出码 |
@@ -160,6 +181,7 @@ flag 不等于 reject。预门过了但带 flag，意思是「机器判不了这
 | `eval/effect/score.py` | 汇总；样本 < 5 或差距在噪声带内**拒绝下结论**；两个维度分开判 |
 | `eval/fixtures/anchor_crosscheck.py` | 证据锚点的独立交叉核对（不共用被测实现；锁路径随 audit.yaml 走，不依赖 cwd） |
 | `eval/fixtures/doc_graph_counts.py` | 活文档里手抄的「N 节点 · M 边」必须等于 `verify_graph.py` 数出来的数 |
+| `eval/test_formal.py` | 形式化验证在状态机里的接线：真实 git 仓库里的抢票示例，锁 / 资格 / 一致性 / 豁免 / 策略推模块 / 路由，每条拒绝配一条放行的孪生 |
 
 ---
 
@@ -169,9 +191,11 @@ flag 不等于 reject。预门过了但带 flag，意思是「机器判不了这
 
 | 资产 | 谁读 | 是什么 |
 |---|---|---|
-| `ai-dlc/assets/routing.yaml` | `aidlc_state.py fail` | 回流路由表：信号 → 层 → 处理者 → 动作；分层预算；收敛检测阈值 |
+| `ai-dlc/assets/routing.yaml` | `aidlc_state.py fail` | 回流路由表：信号 → 层 → 处理者 → 动作；分层预算；收敛检测阈值；v3 加形式化反例分诊 R17–R23 |
+| `formal-verify/assets/formal-verification.yml` | GitHub Actions | 每个 PR 的 `fv ci`（vendored 检查器、按策略分层、回执作为 artifact） |
+| `formal-verify/assets/example-ticket/` | `eval/test_formal.py`、smoke | 抢票示例：合同、初版设计（反例）、修正设计（3 个 mutant）、源码映射、策略、向量、真实 SQLite 实现 + harness + 并发测试 |
 | `ai-dlc/assets/sizing.yaml` | `aidlc_state.py size|plan|advance`、`verify_sizing.py` | v2：六条推导规则（带 `needs`）+ **`stages:` 广度网格** + `never_skippable`（三道门在里面）+ 每档的 `depth` / `test_strategy` + `recompose` 约束 + 预算覆盖 |
-| `ai-dlc/assets/graph.yaml` | `verify_graph.py`、`aidlc_state.py graph` | 54 节点 / 72 边；节点带 `reads` / `must_not_read` / `writes` / `authority` |
+| `ai-dlc/assets/graph.yaml` | `verify_graph.py`、`aidlc_state.py graph` | 55 节点 / 75 边；节点带 `reads` / `must_not_read` / `writes` / `authority` |
 | `ai-dlc/assets/loops.yaml` | `verify_loop.py`、`aidlc_state.py loops` | 七个环的契约：level / timescale / generator ≠ verifier / stop 四键（grill 环 v1.8.0 加入） |
 | `ai-dlc/assets/triggers.yaml` | 人 | 每个环绑到哪个原生触发（`/goal` `/loop` Stop hook `/schedule`） |
 | `acceptance-fleet/assets/evaluators.yaml` | `pick_evaluators.py` | 供应商声明与探测命令；每个槽的同源盲区排名 |

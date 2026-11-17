@@ -16,8 +16,8 @@ import time
 from pathlib import Path, PurePosixPath
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "skills/accept-change/scripts"))
-from protocol import (ATTEMPT, BINDING, CONTRACT, DIGEST, ID, NATURAL, POSITIVE, TEXT,
-                      ProtocolError, array, digest, enum, load, obj, require,
+from protocol import (ATTEMPT, BINDING, BOOL, CONTRACT, DIGEST, ID, NATURAL, POSITIVE, TEXT,
+                      ProtocolError, array, decode, digest, enum, load, obj, require,
                       unique_records, validate, validate_contract)
 
 POLICY = obj(
@@ -40,15 +40,29 @@ CURRENT = obj(
 RUN = obj(schema_version=enum(1), run_id=ID, collector_id=ID,
           request_digest=DIGEST, attempts=array(ATTEMPT, 1))
 CASE = obj(contract=CONTRACT, policy=POLICY, current=CURRENT, run=RUN)
+# Policy v2 = v1 + pinned formal-verification requirements. The approved policy, not the
+# candidate, names the model/contract digests and the minimum evidence level; the gate then
+# re-validates every fv-receipt (and, with rerun, re-executes it from the raw files).
+FORMAL_REQUIREMENT = obj(
+    check_id=ID, min_level=enum("E2", "E3", "E4"), model_digest=DIGEST, contract_digest=DIGEST,
+    properties_digest=DIGEST,
+    pass_verdicts=array(enum("PASS", "QUALIFIED", "CONFORMS", "SATISFIED"), 1, True),
+    rerun=BOOL,
+)
+POLICY_V2 = obj(**dict(POLICY["properties"], schema_version=enum(2), formal=array(FORMAL_REQUIREMENT, 1)))
+CASE_V2 = obj(contract=CONTRACT, policy=POLICY_V2, current=CURRENT, run=RUN)
+FORMAL_TYPES = ("fv-receipt", "fv-model", "fv-contract", "fv-trace")
+MAX_FORMAL_DOCUMENT = 8 * 1024 * 1024
 MAX_EVIDENCE_BYTES = 64 * 1024 * 1024
 MAX_TOTAL_EVIDENCE_BYTES = 256 * 1024 * 1024
 
 
-def file_digest(root, relative, expected_size):
+def file_digest(root, relative, expected_size, keep=False):
     """Read only regular files beneath a protected evidence root, without symlinks.
 
     openat/O_NOFOLLOW also prevents path-swap escapes while opening components.
     The protected collector owns the files; hash agreement is not provenance.
+    With keep=True the verified bytes are returned too (formal documents only, size-capped).
     """
     path = PurePosixPath(relative)
     require(not path.is_absolute() and bool(path.parts) and ".." not in path.parts,
@@ -70,6 +84,8 @@ def file_digest(root, relative, expected_size):
             require(info.st_size == expected_size, "evidence size mismatch")
             hasher = hashlib.sha256()
             total = 0
+            kept = []
+            require(not keep or expected_size <= MAX_FORMAL_DOCUMENT, "formal evidence document too large")
             while True:
                 chunk = stream.read(min(1024 * 1024, expected_size + 1 - total))
                 if not chunk:
@@ -77,7 +93,11 @@ def file_digest(root, relative, expected_size):
                 total += len(chunk)
                 require(total <= expected_size, "evidence changed during read")
                 hasher.update(chunk)
+                if keep:
+                    kept.append(chunk)
             require(total == expected_size, "evidence changed during read")
+            if keep:
+                return "sha256:" + hasher.hexdigest(), b"".join(kept)
             return "sha256:" + hasher.hexdigest()
     finally:
         os.close(directory)
@@ -101,8 +121,72 @@ def evaluate(case, evidence_root, now=None):
         return outcome("blocked", str(error))
 
 
+def formal_documents(evidence_root, records):
+    """Verified bytes of formal evidence records, keyed by record id."""
+    out = {}
+    for record in records:
+        found, data = file_digest(evidence_root, record["path"], record["size_bytes"], keep=True)
+        require(found == record["digest"], "evidence content digest mismatch")
+        out[record["id"]] = data
+    return out
+
+
+def check_formal(policy, attempt, binding, evidence_root):
+    """Fail closed unless every pinned formal requirement is supported by valid fv evidence."""
+    from fvkit.receipt import level_at_least, validate as validate_receipt
+    from fvkit.spec import Contract, Model, parse_document
+    from fvkit.values import FvError, sha_bytes
+    checks = {c["id"]: c for c in attempt["checks"]}
+    for requirement in policy["formal"]:
+        check = checks[requirement["check_id"]]
+        if check["status"] not in ("pass", "fail"):
+            continue  # skip/unknown/error is already blocking; formal evidence cannot change that
+        records = [e for e in attempt["evidence"] if e["check_id"] == check["id"] and e["id"] in check["evidence_refs"]]
+        docs = formal_documents(evidence_root, [e for e in records if e["type"] in FORMAL_TYPES])
+        by_type = {t: [e for e in records if e["type"] == t] for t in FORMAL_TYPES}
+        require(by_type["fv-receipt"], "formal check %s carries no fv-receipt evidence" % check["id"])
+        model = contract = None
+        try:
+            if requirement["rerun"]:
+                require(len(by_type["fv-model"]) == 1 and len(by_type["fv-contract"]) == 1,
+                        "re-execution needs exactly one fv-model and one fv-contract record for " + check["id"])
+                c_rec, m_rec = by_type["fv-contract"][0], by_type["fv-model"][0]
+                contract = Contract(parse_document(docs[c_rec["id"]], PurePosixPath(c_rec["path"]).suffix, c_rec["path"]))
+                model = Model(parse_document(docs[m_rec["id"]], PurePosixPath(m_rec["path"]).suffix, m_rec["path"]), None, contract)
+                require(model.digest == requirement["model_digest"] and contract.digest == requirement["contract_digest"]
+                        and contract.properties_digest == requirement["properties_digest"],
+                        "formal model/contract evidence differs from the approved policy")
+            traces = {sha_bytes(docs[e["id"]]): docs[e["id"]] for e in by_type["fv-trace"]}
+            satisfied = False
+            for rec in by_type["fv-receipt"]:
+                receipt = decode(docs[rec["id"]])
+                inputs = receipt.get("inputs") or {}
+                require((inputs.get("model") or {}).get("digest") == requirement["model_digest"]
+                        and (inputs.get("contract") or {}).get("digest") == requirement["contract_digest"]
+                        and (inputs.get("contract") or {}).get("properties_digest") == requirement["properties_digest"],
+                        "fv-receipt %s was produced for a model/contract the policy did not approve" % rec["id"])
+                validate_receipt(receipt, model=model, contract=contract, rerun=requirement["rerun"], traces=traces, allow_paths=False)
+                if receipt["command"] == "conform":
+                    require(receipt["result"]["source"].get("head") == binding["candidate_sha"],
+                            "implementation evidence %s belongs to another candidate" % rec["id"])
+                positive = receipt["verdict"] in requirement["pass_verdicts"]
+                if check["status"] == "fail":
+                    continue
+                require(positive or receipt["verdict"] in ("PASS", "QUALIFIED", "CONFORMS", "SATISFIED"),
+                        "formal evidence %s says %s; it cannot support a pass" % (rec["id"], receipt["verdict"]))
+                satisfied = satisfied or (positive and level_at_least(receipt["evidence_level"], requirement["min_level"]))
+            if check["status"] == "pass":
+                require(satisfied, "no fv-receipt at %s or above with an approved verdict supports %s" % (requirement["min_level"], check["id"]))
+            else:
+                require(not all(decode(docs[r["id"]])["verdict"] in requirement["pass_verdicts"] for r in by_type["fv-receipt"]),
+                        "formal evidence for %s is all positive, yet the check failed" % check["id"])
+        except FvError as error:
+            raise ProtocolError("formal evidence for %s: %s" % (check["id"], error)) from None
+
+
 def _evaluate(case, evidence_root, now):
-    validate(case, CASE)
+    formal = isinstance(case, dict) and isinstance(case.get("policy"), dict) and case["policy"].get("schema_version") == 2
+    validate(case, CASE_V2 if formal else CASE)
     contract, policy, current, run = (case[key] for key in ("contract", "policy", "current", "run"))
     validate_contract(contract)
     binding = current["binding"]
@@ -195,6 +279,9 @@ def _evaluate(case, evidence_root, now):
 
     latest = current_attempts[-1]
     checks = latest["checks"]
+    if formal:
+        require({f["check_id"] for f in policy["formal"]} <= expected, "formal requirement names a check outside the required set")
+        check_formal(policy, latest, binding, evidence_root)
     if any(c["failure_type"] == "environment" for c in checks):
         return outcome("infrastructure_blocked", "environment or fixture failure; do not request code repair")
     if any(c["failure_type"] == "checker" for c in checks):

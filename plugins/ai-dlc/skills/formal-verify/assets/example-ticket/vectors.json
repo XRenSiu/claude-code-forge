@@ -1,0 +1,782 @@
+{
+  "contract": {
+    "digest": "sha256:82f8718c5aaa93c53a98218225eff90f7e9589ff16018135e9f491d4938e0a04",
+    "id": "ticket-ordering",
+    "properties_digest": "sha256:044494c08911dd473376569dbc8caaeaea1ab307f8cf699a61b5409d5a14c9f2",
+    "property_ids": [
+      "NoOversell",
+      "StockNonNegative",
+      "Conservation",
+      "SoldNeverDecreases",
+      "SomeoneCanBuy",
+      "EveryRequestAnswered"
+    ],
+    "version": 1
+  },
+  "kind": "fv-test-vectors",
+  "model": {
+    "digest": "sha256:a583c0f392c111f0d0c84181262b63cff23f0fcccd14e88ec0391b02d9f0f889",
+    "id": "ticket-atomic-reserve"
+  },
+  "notes": [],
+  "schema_version": 1,
+  "seed": null,
+  "strategies": [
+    "transitions",
+    "counterexamples"
+  ],
+  "vectors": [
+    {
+      "id": "cover:buy(u=alice)",
+      "initial": {
+        "outcome": {
+          "alice": "none",
+          "bob": "none"
+        },
+        "remaining": 1,
+        "sold": 0
+      },
+      "origin": "transition_coverage",
+      "steps": [
+        {
+          "action": {
+            "name": "request",
+            "params": {
+              "u": "alice"
+            }
+          },
+          "enabled": true,
+          "expect": {
+            "outcome": {
+              "alice": "pending",
+              "bob": "none"
+            },
+            "remaining": 1,
+            "sold": 0
+          }
+        },
+        {
+          "action": {
+            "name": "read",
+            "params": {
+              "u": "alice"
+            }
+          },
+          "enabled": true,
+          "expect": {
+            "outcome": {
+              "alice": "pending",
+              "bob": "none"
+            },
+            "remaining": 1,
+            "sold": 0
+          }
+        },
+        {
+          "action": {
+            "name": "buy",
+            "params": {
+              "u": "alice"
+            }
+          },
+          "enabled": true,
+          "expect": {
+            "outcome": {
+              "alice": "success",
+              "bob": "none"
+            },
+            "remaining": 0,
+            "sold": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "cover:buy(u=bob)",
+      "initial": {
+        "outcome": {
+          "alice": "none",
+          "bob": "none"
+        },
+        "remaining": 1,
+        "sold": 0
+      },
+      "origin": "transition_coverage",
+      "steps": [
+        {
+          "action": {
+            "name": "request",
+            "params": {
+              "u": "bob"
+            }
+          },
+          "enabled": true,
+          "expect": {
+            "outcome": {
+              "alice": "none",
+              "bob": "pending"
+            },
+            "remaining": 1,
+            "sold": 0
+          }
+        },
+        {
+          "action": {
+            "name": "read",
+            "params": {
+              "u": "bob"
+            }
+          },
+          "enabled": true,
+          "expect": {
+            "outcome": {
+              "alice": "none",
+              "bob": "pending"
+            },
+            "remaining": 1,
+            "sold": 0
+          }
+        },
+        {
+          "action": {
+            "name": "buy",
+            "params": {
+              "u": "bob"
+            }
+          },
+          "enabled": true,
+          "expect": {
+            "outcome": {
+              "alice": "none",
+              "bob": "success"
+            },
+            "remaining": 0,
+            "sold": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "cover:read(u=alice)",
+      "initial": {
+        "outcome": {
+          "alice": "none",
+          "bob": "none"
+        },
+        "remaining": 1,
+        "sold": 0
+      },
+      "origin": "transition_coverage",
+      "steps": [
+        {
+          "action": {
+            "name": "request",
+            "params": {
+              "u": "alice"
+            }
+          },
+          "enabled": true,
+          "expect": {
+            "outcome": {
+              "alice": "pending",
+              "bob": "none"
+            },
+            "remaining": 1,
+            "sold": 0
+          }
+        },
+        {
+          "action": {
+            "name": "read",
+            "params": {
+              "u": "alice"
+            }
+          },
+          "enabled": true,
+          "expect": {
+            "outcome": {
+              "alice": "pending",
+              "bob": "none"
+            },
+            "remaining": 1,
+            "sold": 0
+          }
+        }
+      ]
+    },
+    {
+      "id": "cover:read(u=bob)",
+      "initial": {
+        "outcome": {
+          "alice": "none",
+          "bob": "none"
+        },
+        "remaining": 1,
+        "sold": 0
+      },
+      "origin": "transition_coverage",
+      "steps": [
+        {
+          "action": {
+            "name": "request",
+            "params": {
+              "u": "bob"
+            }
+          },
+          "enabled": true,
+          "expect": {
+            "outcome": {
+              "alice": "none",
+              "bob": "pending"
+            },
+            "remaining": 1,
+            "sold": 0
+          }
+        },
+        {
+          "action": {
+            "name": "read",
+            "params": {
+              "u": "bob"
+            }
+          },
+          "enabled": true,
+          "expect": {
+            "outcome": {
+              "alice": "none",
+              "bob": "pending"
+            },
+            "remaining": 1,
+            "sold": 0
+          }
+        }
+      ]
+    },
+    {
+      "id": "cover:reject(u=alice)",
+      "initial": {
+        "outcome": {
+          "alice": "none",
+          "bob": "none"
+        },
+        "remaining": 1,
+        "sold": 0
+      },
+      "origin": "transition_coverage",
+      "steps": [
+        {
+          "action": {
+            "name": "request",
+            "params": {
+              "u": "alice"
+            }
+          },
+          "enabled": true,
+          "expect": {
+            "outcome": {
+              "alice": "pending",
+              "bob": "none"
+            },
+            "remaining": 1,
+            "sold": 0
+          }
+        },
+        {
+          "action": {
+            "name": "read",
+            "params": {
+              "u": "alice"
+            }
+          },
+          "enabled": true,
+          "expect": {
+            "outcome": {
+              "alice": "pending",
+              "bob": "none"
+            },
+            "remaining": 1,
+            "sold": 0
+          }
+        },
+        {
+          "action": {
+            "name": "request",
+            "params": {
+              "u": "bob"
+            }
+          },
+          "enabled": true,
+          "expect": {
+            "outcome": {
+              "alice": "pending",
+              "bob": "pending"
+            },
+            "remaining": 1,
+            "sold": 0
+          }
+        },
+        {
+          "action": {
+            "name": "read",
+            "params": {
+              "u": "bob"
+            }
+          },
+          "enabled": true,
+          "expect": {
+            "outcome": {
+              "alice": "pending",
+              "bob": "pending"
+            },
+            "remaining": 1,
+            "sold": 0
+          }
+        },
+        {
+          "action": {
+            "name": "buy",
+            "params": {
+              "u": "bob"
+            }
+          },
+          "enabled": true,
+          "expect": {
+            "outcome": {
+              "alice": "pending",
+              "bob": "success"
+            },
+            "remaining": 0,
+            "sold": 1
+          }
+        },
+        {
+          "action": {
+            "name": "reject",
+            "params": {
+              "u": "alice"
+            }
+          },
+          "enabled": true,
+          "expect": {
+            "outcome": {
+              "alice": "sold_out",
+              "bob": "success"
+            },
+            "remaining": 0,
+            "sold": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "cover:reject(u=bob)",
+      "initial": {
+        "outcome": {
+          "alice": "none",
+          "bob": "none"
+        },
+        "remaining": 1,
+        "sold": 0
+      },
+      "origin": "transition_coverage",
+      "steps": [
+        {
+          "action": {
+            "name": "request",
+            "params": {
+              "u": "alice"
+            }
+          },
+          "enabled": true,
+          "expect": {
+            "outcome": {
+              "alice": "pending",
+              "bob": "none"
+            },
+            "remaining": 1,
+            "sold": 0
+          }
+        },
+        {
+          "action": {
+            "name": "read",
+            "params": {
+              "u": "alice"
+            }
+          },
+          "enabled": true,
+          "expect": {
+            "outcome": {
+              "alice": "pending",
+              "bob": "none"
+            },
+            "remaining": 1,
+            "sold": 0
+          }
+        },
+        {
+          "action": {
+            "name": "buy",
+            "params": {
+              "u": "alice"
+            }
+          },
+          "enabled": true,
+          "expect": {
+            "outcome": {
+              "alice": "success",
+              "bob": "none"
+            },
+            "remaining": 0,
+            "sold": 1
+          }
+        },
+        {
+          "action": {
+            "name": "request",
+            "params": {
+              "u": "bob"
+            }
+          },
+          "enabled": true,
+          "expect": {
+            "outcome": {
+              "alice": "success",
+              "bob": "pending"
+            },
+            "remaining": 0,
+            "sold": 1
+          }
+        },
+        {
+          "action": {
+            "name": "read",
+            "params": {
+              "u": "bob"
+            }
+          },
+          "enabled": true,
+          "expect": {
+            "outcome": {
+              "alice": "success",
+              "bob": "pending"
+            },
+            "remaining": 0,
+            "sold": 1
+          }
+        },
+        {
+          "action": {
+            "name": "reject",
+            "params": {
+              "u": "bob"
+            }
+          },
+          "enabled": true,
+          "expect": {
+            "outcome": {
+              "alice": "success",
+              "bob": "sold_out"
+            },
+            "remaining": 0,
+            "sold": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "cover:request(u=alice)",
+      "initial": {
+        "outcome": {
+          "alice": "none",
+          "bob": "none"
+        },
+        "remaining": 1,
+        "sold": 0
+      },
+      "origin": "transition_coverage",
+      "steps": [
+        {
+          "action": {
+            "name": "request",
+            "params": {
+              "u": "alice"
+            }
+          },
+          "enabled": true,
+          "expect": {
+            "outcome": {
+              "alice": "pending",
+              "bob": "none"
+            },
+            "remaining": 1,
+            "sold": 0
+          }
+        }
+      ]
+    },
+    {
+      "id": "cover:request(u=bob)",
+      "initial": {
+        "outcome": {
+          "alice": "none",
+          "bob": "none"
+        },
+        "remaining": 1,
+        "sold": 0
+      },
+      "origin": "transition_coverage",
+      "steps": [
+        {
+          "action": {
+            "name": "request",
+            "params": {
+              "u": "bob"
+            }
+          },
+          "enabled": true,
+          "expect": {
+            "outcome": {
+              "alice": "none",
+              "bob": "pending"
+            },
+            "remaining": 1,
+            "sold": 0
+          }
+        }
+      ]
+    },
+    {
+      "id": "replay:check-then-act:NoOversell",
+      "initial": {
+        "outcome": {
+          "alice": "none",
+          "bob": "none"
+        },
+        "remaining": 1,
+        "sold": 0
+      },
+      "origin": "counterexample_replay",
+      "steps": [
+        {
+          "action": {
+            "name": "request",
+            "params": {
+              "u": "alice"
+            }
+          },
+          "enabled": true,
+          "expect": {
+            "outcome": {
+              "alice": "pending",
+              "bob": "none"
+            },
+            "remaining": 1,
+            "sold": 0
+          }
+        },
+        {
+          "action": {
+            "name": "read",
+            "params": {
+              "u": "alice"
+            }
+          },
+          "enabled": true,
+          "expect": {
+            "outcome": {
+              "alice": "pending",
+              "bob": "none"
+            },
+            "remaining": 1,
+            "sold": 0
+          }
+        },
+        {
+          "action": {
+            "name": "request",
+            "params": {
+              "u": "bob"
+            }
+          },
+          "enabled": true,
+          "expect": {
+            "outcome": {
+              "alice": "pending",
+              "bob": "pending"
+            },
+            "remaining": 1,
+            "sold": 0
+          }
+        },
+        {
+          "action": {
+            "name": "read",
+            "params": {
+              "u": "bob"
+            }
+          },
+          "enabled": true,
+          "expect": {
+            "outcome": {
+              "alice": "pending",
+              "bob": "pending"
+            },
+            "remaining": 1,
+            "sold": 0
+          }
+        },
+        {
+          "action": {
+            "name": "buy",
+            "params": {
+              "u": "alice"
+            }
+          },
+          "enabled": true,
+          "expect": {
+            "outcome": {
+              "alice": "success",
+              "bob": "pending"
+            },
+            "remaining": 0,
+            "sold": 1
+          }
+        },
+        {
+          "action": {
+            "name": "buy",
+            "params": {
+              "u": "bob"
+            }
+          },
+          "enabled": false,
+          "expect": {
+            "outcome": {
+              "alice": "success",
+              "bob": "pending"
+            },
+            "remaining": 0,
+            "sold": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "replay:check-then-act:StockNonNegative",
+      "initial": {
+        "outcome": {
+          "alice": "none",
+          "bob": "none"
+        },
+        "remaining": 1,
+        "sold": 0
+      },
+      "origin": "counterexample_replay",
+      "steps": [
+        {
+          "action": {
+            "name": "request",
+            "params": {
+              "u": "alice"
+            }
+          },
+          "enabled": true,
+          "expect": {
+            "outcome": {
+              "alice": "pending",
+              "bob": "none"
+            },
+            "remaining": 1,
+            "sold": 0
+          }
+        },
+        {
+          "action": {
+            "name": "read",
+            "params": {
+              "u": "alice"
+            }
+          },
+          "enabled": true,
+          "expect": {
+            "outcome": {
+              "alice": "pending",
+              "bob": "none"
+            },
+            "remaining": 1,
+            "sold": 0
+          }
+        },
+        {
+          "action": {
+            "name": "request",
+            "params": {
+              "u": "bob"
+            }
+          },
+          "enabled": true,
+          "expect": {
+            "outcome": {
+              "alice": "pending",
+              "bob": "pending"
+            },
+            "remaining": 1,
+            "sold": 0
+          }
+        },
+        {
+          "action": {
+            "name": "read",
+            "params": {
+              "u": "bob"
+            }
+          },
+          "enabled": true,
+          "expect": {
+            "outcome": {
+              "alice": "pending",
+              "bob": "pending"
+            },
+            "remaining": 1,
+            "sold": 0
+          }
+        },
+        {
+          "action": {
+            "name": "buy",
+            "params": {
+              "u": "alice"
+            }
+          },
+          "enabled": true,
+          "expect": {
+            "outcome": {
+              "alice": "success",
+              "bob": "pending"
+            },
+            "remaining": 0,
+            "sold": 1
+          }
+        },
+        {
+          "action": {
+            "name": "buy",
+            "params": {
+              "u": "bob"
+            }
+          },
+          "enabled": false,
+          "expect": {
+            "outcome": {
+              "alice": "success",
+              "bob": "pending"
+            },
+            "remaining": 0,
+            "sold": 1
+          }
+        }
+      ]
+    }
+  ]
+}

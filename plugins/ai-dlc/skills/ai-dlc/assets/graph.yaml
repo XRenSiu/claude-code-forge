@@ -135,6 +135,14 @@ nodes:
     must_not_read: [implementer_session]
     authority: {commit: false}
 
+  - id: formal-verify
+    kind: skill
+    role: standard
+    reads: [需求原文, done_when.yaml, invariants/*.yaml, src/**, traces/*.jsonl]
+    writes: [specs/<f>/formal/**, .aidlc/<slug>/formal/*.json]
+    must_not_read: [implementer_session]
+    authority: {commit: false}
+
   # ---------- R4 计划 ----------
   - id: plan-cards
     kind: skill
@@ -328,6 +336,9 @@ edges:
   - {from: invariant-extract,  to: spec-compile,         type: handoff, carries: [invariants/*.yaml]}
   - {from: spec-compile,       to: calibrate,            type: handoff, carries: [compile_manifest.yaml]}
   - {from: calibrate,          to: acceptance-fleet,     type: handoff, carries: [calibration_report.yaml]}  # 未校准的标准不当证据
+  - {from: invariant-extract,  to: formal-verify,        type: handoff, carries: [invariants/*.yaml]}      # B1：规则来自需求与不变量，不来自代码
+  - {from: formal-verify,      to: plan-cards,           type: handoff, carries: [model.yaml, qualify-receipt]}   # FV-G1：设计审定后才拆卡
+  - {from: formal-verify,      to: acceptance-fleet,     type: handoff, carries: [conform-receipt]}       # E3：真实轨迹对模型的一致性
   - {from: test-suite-generator, to: calibrate,          type: handoff, carries: [tests/<f>/**]}
 
   # ---------- 契约 → 人签 → 锁 ----------

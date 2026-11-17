@@ -73,6 +73,14 @@ def main(argv=None):
     evidence.add_argument("file")
     evidence.add_argument("--plan", required=True, help="reviewed calibration plan")
     evidence.add_argument("--features", required=True, help="reviewed feature index")
+    formal = sub.add_parser("validate-formal", help="re-verify an fvkit receipt (model check / qualification / conformance); never issue formal acceptance")
+    formal.add_argument("file")
+    formal.add_argument("--model", help="the approved fv-model; required for counterexample replay and --rerun")
+    formal.add_argument("--contract", help="the approved fv-contract (defaults to the model's reference)")
+    formal.add_argument("--rerun", action="store_true", help="re-execute the check/qualification/trace check and compare")
+    formal.add_argument("--min-level", choices=["E0", "E1", "E2", "E3", "E4"])
+    formal.add_argument("--expect", action="append", help="acceptable verdicts, e.g. QUALIFIED or CONFORMS")
+    formal.add_argument("--trace", action="append", default=[], help="raw implementation trace for re-checking a conformance receipt")
     for name in ("validate-request", "validate-contract"):
         cmd = sub.add_parser(name)
         cmd.add_argument("file")
@@ -85,6 +93,21 @@ def main(argv=None):
             cmd.add_argument("--run-id", required=True)
     args = parser.parse_args(argv)
     try:
+        if args.command == "validate-formal":
+            from fvkit.receipt import load as load_receipt, validate as validate_receipt
+            from fvkit.spec import load_contract, load_model
+            from fvkit.values import FvError, sha_bytes
+            try:
+                contract = load_contract(args.contract) if args.contract else None
+                model = load_model(args.model, contract=contract) if args.model else None
+                traces = {sha_bytes(Path(t).read_bytes()): Path(t).read_bytes() for t in args.trace}
+                result = validate_receipt(load_receipt(args.file), model=model, contract=contract or (model and model.contract),
+                                          rerun=args.rerun, min_level=args.min_level, expect_verdicts=args.expect,
+                                          base_dir=str(Path(args.file).resolve().parent), traces=traces)
+            except FvError as error:
+                raise ProtocolError("formal evidence rejected: " + str(error)) from None
+            print(json.dumps(result, ensure_ascii=False))
+            return 0
         if args.command == "validate-calibration":
             from verification_evidence import validate_calibration
             print(json.dumps(validate_calibration(args.file, load(args.plan), load(args.features)), ensure_ascii=False))

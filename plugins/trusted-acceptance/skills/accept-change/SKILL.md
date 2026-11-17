@@ -2,7 +2,7 @@
 name: accept-change
 description: >
   验收固定版本的项目改动：依据原始需求和已批准规则形成检查提案，调用受保护验收入口，读取逐项证据并分流失败。
-  用于独立交付验收、可信验收和验收失败分析；不代替实现、自测或发布授权。
+  用于独立交付验收、可信验收、形式化证据（模型检查 / 实现一致性）核验和验收失败分析；不代替实现、自测或发布授权。
 version: 0.4.1
 ---
 
@@ -36,6 +36,14 @@ version: 0.4.1
 
 涉及真实产品或检查器资格时，读取 [calibration-evidence.md](references/calibration-evidence.md)。从功能索引定位真实操作，核对非空原始观察、索引证据类型以及正常、故障、恢复的独立运行标识；`validate-calibration` 可独立复核链条，输出仍是 local_advisory。冻结的检查包、独立采集者与隐藏 holdout 必须由控制区提供，不能用本地通过代替。
 
+## 形式化证据
+
+合同里有并发、一致性、权限或重试类承诺，或者政策带有 `formal` 要求时，读 [formal-evidence.md](references/formal-evidence.md)。
+
+- 用 `acceptance.py validate-formal` 核验 fvkit 回执：校验摘要和自洽性，重放反例；`--rerun` 时重新执行。不同证据等级（E0–E4）分开报告，`BOUNDED_PASS`、模拟和 `quint run` 都不是证明。
+- 规则（fv-contract）与模型的摘要由批准的政策固定。候选提交的新模型、被弱化的不变量、给别的候选做的实现证据，一律不支持 pass。
+- 本 Skill 不建模、不改规则。建模与修复由 AI-DLC `formal-verify` 或项目 Harness 负责，`scripts/fv.py` 与其副本逐字一致。
+
 ## 调用脚本
 
 以下 `SKILL_DIR` 是本文件所在目录，`CONTROL_CONFIG` 是维护者提供且位于候选写权限之外的配置路径。先确定实际路径，不照抄示例变量。Python 3.9+，仅用标准库。
@@ -43,6 +51,9 @@ version: 0.4.1
 ```bash
 python3 "$SKILL_DIR/scripts/acceptance.py" validate-contract contract.json
 python3 "$SKILL_DIR/scripts/acceptance.py" validate-request request.json
+python3 "$SKILL_DIR/scripts/acceptance.py" validate-formal conform.json --model /approved/model.yaml \
+  --rerun --min-level E3 --expect CONFORMS --trace trace-1.jsonl
+python3 "$SKILL_DIR/scripts/fv.py" --help   # 检查器本体：check / qualify / trace-check / conform / diff-contract …
 python3 "$SKILL_DIR/scripts/acceptance.py" submit \
   --request request.json --config "$CONTROL_CONFIG" --output receipt-001.json
 python3 "$SKILL_DIR/scripts/acceptance.py" get-result \

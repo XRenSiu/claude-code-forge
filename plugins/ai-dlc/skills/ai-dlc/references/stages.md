@@ -75,3 +75,10 @@
   同卡同指纹 → 方案层。人只确认或改判。
 - **X3 度量**：`/retro`（`metrics.py`）从归档导出 lead time、PR 返工轮次、回流分布、G1 拦截率、human AC 占比、
   逃逸缺陷、豁免数；先记基线，提案落到层。
+
+### 形式化验证（条件触发）→ `/formal-verify`
+- 触发：状态性承诺（不超卖、最多执行一次、重试幂等、权限不可越过），或 `verification/policy.yaml` 按 diff 推出的模块。
+- 输入 → 输出：需求 / 不变量卡 → `fv-contract`（随 G2 锁）→ `fv-model` → qualify 回执（`implement` 的前置）→ 真实轨迹 → conform 回执（E3 模块 `pr` / `merge` 的前置）。
+- 完成判据：`aidlc_state.py formal check --stage <下一阶段>` 无未满足项；反例分诊写进 `decisions.md` 并以 `fail --signal fv_*` 路由（R17–R23）。
+- 缺口：建模质量本身没有行为层评测；外部引擎适配未在本仓库实际运行。
+

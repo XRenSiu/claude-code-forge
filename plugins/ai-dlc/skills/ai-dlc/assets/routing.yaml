@@ -11,7 +11,7 @@
 # v2（2026-09-05）：收敛检测从"同指纹 ×2"扩到 oscillation / plateau / impossible（arXiv 2607.01641 的三种检测
 #       全部编译；Claude Code /goal 的 Impossible 判决有了对应物），加 R14–R16。
 
-version: 2
+version: 3
 
 # 回流的坐标。从内到外：卡 → 方案 → 任务 → 本体 → 世界。越外层越贵、越该交人。
 layers: [card, plan, task, ontology, world]
@@ -168,3 +168,55 @@ rules:
     handler: human
     action: change_proposal_required
     note: 只接受 impossible_reporters 里的 --by；实现者报此信号被拒；去向是变更提案 + G2 重签，不是继续实现
+
+  # ---- v3（2026-11-17）：形式化验证的反例分诊（/formal-verify）----
+  # 模型报出反例只说明"模型允许坏结果"；分诊结论决定回到哪一层。任何一行都不允许以改弱 fv-contract 收场。
+  - id: R17
+    signal: fv_requirement_gap
+    description: 形式化反例落在需求没有规定的情况（超时 / 取消 / 重复请求……），规则本身有漏项
+    layer: task
+    handler: human
+    action: change_proposal_required
+    note: 新合同版本 + G2 重签；fv diff-contract 的结论附在变更提案里
+  - id: R18
+    signal: fv_model_infidelity
+    description: 反例在真实代码中不可能发生（原子边界拆错、漏了数据库约束）——模型失真
+    layer: plan
+    handler: engine_then_human
+    action: fix_model_and_source_map_then_requalify
+    note: 修模型与 source-map.yaml 的 atomicity，重跑 fv qualify；不消耗卡预算
+  - id: R19
+    signal: fv_design_defect
+    description: 模型如实反映设计，而设计允许坏结果
+    layer: plan
+    handler: engine
+    action: redesign_keep_old_design_as_mutant
+    note: 改设计后 fv qualify；被推翻的设计作为必需 mutant 留在模型里
+  - id: R20
+    signal: fv_implementation_defect
+    description: 反例或不一致轨迹在真实代码中重放成功
+    layer: card
+    handler: engine
+    action: repair_with_counterexample_regression
+    note: 修代码；重放向量留作回归，fv conform 通过才算修好
+  - id: R21
+    signal: fv_contract_weakened
+    description: fv diff-contract 判定合同被削弱（删性质 / 放宽表达式 / 新增假设）且没有批准
+    layer: task
+    handler: human
+    action: reject_unless_g2_resign
+    note: 一条靠改弱规则变绿的检查不是通过
+  - id: R22
+    signal: fv_model_stale
+    description: 源码映射 STALE / BROKEN 或映射代码在一致性证据之后变了
+    layer: plan
+    handler: engine_then_human
+    action: review_mapping_sync_and_rerun_conformance
+    note: 人审映射后 fv source-map sync；重新生成轨迹并 formal conform
+  - id: R23
+    signal: fv_checker_defect
+    description: 检查器 / 外部引擎 / harness / 环境故障，结论无法得出
+    layer: exception
+    handler: human
+    action: repair_checker_or_environment
+    note: 不让产品返工；不确定不是通过

@@ -1,0 +1,14 @@
+# fv-policy：哪些代码改动需要哪一级证据。模块由 git diff 推出（fv impact），不由作者声明。
+schema_version: 1
+kind: fv-policy
+unclassified: review
+modules:
+  - id: ticket-ordering
+    risk: concurrency                    # concurrency/consistency/permission/retry → 默认 E3、core 层
+    paths: ["impl/**"]
+    contract: contract.yaml
+    model: model.yaml
+    source_map: source-map.yaml
+    vectors: vectors.json                # fv gen-tests 的产物，入库；模型变了必须重新生成
+    trace_command: ["python3", "impl/harness.py", "--vectors", "vectors.json", "--out", "{out}"]
+    approvals: approvals.jsonl           # 契约被削弱时，这里要有对新摘要的显式批准

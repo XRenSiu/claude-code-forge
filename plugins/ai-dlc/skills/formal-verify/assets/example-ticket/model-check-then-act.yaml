@@ -1,0 +1,39 @@
+# 初版设计（入口 A 的 A3）：先读库存，再按读到的值扣减。fv check 会找到两人都成功的反例。
+# 反例分诊结论见 decisions.md：design_defect —— 修设计，不改规则。
+schema_version: 1
+kind: fv-model
+id: ticket-check-then-act
+contract: contract.yaml
+constants: {STOCK: 1, USERS: ["alice", "bob"]}
+variables:
+  remaining: {init: "STOCK"}
+  sold: {init: "0"}
+  phase: {init: "{u: 'idle' for u in USERS}"}
+  seen: {init: "{u: 0 for u in USERS}"}
+  result: {init: "{u: 'none' for u in USERS}"}
+actions:
+  request:
+    params: {u: USERS}
+    guard: "phase[u] == 'idle'"
+    update: {phase: "update(phase, u, 'requested')"}
+  read:
+    params: {u: USERS}
+    guard: "phase[u] == 'requested'"
+    update: {seen: "update(seen, u, remaining)", phase: "update(phase, u, 'read')"}
+  buy:
+    params: {u: USERS}
+    guard: "phase[u] == 'read' and seen[u] > 0"
+    update: {remaining: "remaining - 1", sold: "sold + 1", phase: "update(phase, u, 'done')", result: "update(result, u, 'success')"}
+  reject:
+    params: {u: USERS}
+    guard: "phase[u] == 'read' and seen[u] <= 0"
+    update: {phase: "update(phase, u, 'done')", result: "update(result, u, 'sold_out')"}
+fairness:
+  - {action: read, kind: weak, per_params: true}
+  - {action: buy, kind: weak, per_params: true}
+  - {action: reject, kind: weak, per_params: true}
+terminal: "all(phase[u] in ('idle', 'done') for u in USERS)"
+observables:
+  sold: "sold"
+  remaining: "remaining"
+  outcome: "{u: ('pending' if phase[u] in ('requested', 'read') else result[u]) for u in USERS}"

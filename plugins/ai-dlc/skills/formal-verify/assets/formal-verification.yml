@@ -1,0 +1,32 @@
+# .github/workflows/formal-verification.yml — 每个 PR 按策略重验受影响的形式化模块。
+# 先把检查器固定进仓库：python3 <skill>/scripts/fv.py vendor --to tools/fvkit （并提交）
+# 结果：UNSATISFIED / 任何一步没跑都让 job 失败；回执作为 artifact 留存。
+name: formal-verification
+on:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  fv:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python3 -m pip install PyYAML
+      - name: formal verification (impacted modules, policy tiers)
+        run: |
+          python3 tools/fvkit/fv.py ci \
+            --policy verification/policy.yaml \
+            --base "origin/${{ github.base_ref }}" \
+            --out "$RUNNER_TEMP/fv"
+      - name: keep receipts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fv-receipts
+          path: ${{ runner.temp }}/fv

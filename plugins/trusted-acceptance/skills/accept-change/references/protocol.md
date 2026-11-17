@@ -55,6 +55,8 @@
 - `run`：分配身份和全部 attempts。每个 attempt 含 attempt_id、连续 sequence、binding、checks/evidence/findings/unverified。current 的 manifest 为每次尝试的 ID + canonical digest，检测删改、重排和漏交。
 - `budget`：max_code_repairs/code_repairs、max_environment_retries/environment_retries、max_cost_microunits/cost_microunits、deadline_at。等于已分配次数上限的最后一轮结果仍可判定；调度下一轮必须先检查是否有余量。结果时消耗超过上限或过截止时间即阻塞。
 
+- `policy` schema 2 = v1 字段 + `formal` 数组（check_id、min_level、model/contract/properties 摘要、pass_verdicts、rerun）。gate 对这些检查重新校验 `fv-receipt` 证据，`rerun` 时用 `fv-model` / `fv-contract` / `fv-trace` 原件重算。v1 政策行为不变。见 [formal-evidence.md](formal-evidence.md)。
+
 即使所有输入都自洽，本地只能得出 `authority: local_advisory` 与 `eligible`，永远不签发 accepted。完整例子由 `evaluations/demo.py` 用真实本地 HTTP 观察生成，包含精确摘要和实际证据字节。
 
 ## 正式发布器不可省略的步骤

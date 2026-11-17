@@ -1,0 +1,61 @@
+# 修正后的设计：购买动作在提交时检查库存 —— 一条原子条件 UPDATE（source-map.yaml 的 atomicity）。
+# mutants 是 G1 的负例敏感性证据：把旧设计放回来，规则必须抓到它。
+schema_version: 1
+kind: fv-model
+id: ticket-atomic-reserve
+contract: contract.yaml
+constants: {STOCK: 1, USERS: ["alice", "bob"]}
+variables:
+  remaining: {init: "STOCK"}
+  sold: {init: "0"}
+  phase: {init: "{u: 'idle' for u in USERS}"}
+  seen: {init: "{u: 0 for u in USERS}"}
+  result: {init: "{u: 'none' for u in USERS}"}
+actions:
+  request:
+    params: {u: USERS}
+    guard: "phase[u] == 'idle'"
+    update: {phase: "update(phase, u, 'requested')"}
+  read:
+    description: "页面展示剩余数量；不作为购买依据"
+    params: {u: USERS}
+    guard: "phase[u] == 'requested'"
+    update: {seen: "update(seen, u, remaining)", phase: "update(phase, u, 'read')"}
+  buy:
+    description: "UPDATE tickets SET remaining = remaining - 1 WHERE event_id = ? AND remaining > 0 返回 1 行"
+    params: {u: USERS}
+    guard: "phase[u] == 'read' and remaining > 0"
+    update: {remaining: "remaining - 1", sold: "sold + 1", phase: "update(phase, u, 'done')", result: "update(result, u, 'success')"}
+  reject:
+    description: "同一条 UPDATE 返回 0 行：售罄"
+    params: {u: USERS}
+    guard: "phase[u] == 'read' and remaining <= 0"
+    update: {phase: "update(phase, u, 'done')", result: "update(result, u, 'sold_out')"}
+fairness:
+  - {action: read, kind: weak, per_params: true}
+  - {action: buy, kind: weak, per_params: true}
+  - {action: reject, kind: weak, per_params: true}
+terminal: "all(phase[u] in ('idle', 'done') for u in USERS)"
+observables:
+  sold: "sold"
+  remaining: "remaining"
+  outcome: "{u: ('pending' if phase[u] in ('requested', 'read') else result[u]) for u in USERS}"
+model_invariants:
+  - {id: SeenNonNegative, expr: "all(seen[u] >= 0 for u in USERS)", text: "页面展示值不为负（设计层不变量，不属于契约）"}
+mutants:
+  - id: check-then-act
+    description: "把旧设计放回来：按读到的值扣减"
+    edits:
+      - {op: set_guard, action: buy, expr: "phase[u] == 'read' and seen[u] > 0"}
+      - {op: set_guard, action: reject, expr: "phase[u] == 'read' and seen[u] <= 0"}
+    expect_killed_by: [NoOversell, StockNonNegative]
+  - id: lost-decrement
+    description: "订单成功但没扣库存"
+    edits:
+      - {op: drop_update, action: buy, var: remaining}
+    expect_killed_by: [Conservation]
+  - id: never-answer-sold-out
+    description: "售罄分支丢失：请求永远挂起"
+    edits:
+      - {op: drop_action, action: reject}
+    expect_killed_by: [EveryRequestAnswered]
