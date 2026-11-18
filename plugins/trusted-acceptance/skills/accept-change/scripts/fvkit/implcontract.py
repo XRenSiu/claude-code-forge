@@ -51,6 +51,7 @@ REVIEW_CATEGORY = ("coverage_gap", "inconsistency", "underspecification", "unmod
 UNMODELED_DISPOSITION = ("out_of_scope", "model_it", "defect")
 ASSUMPTION_STATUS = ("holds", "violated", "unverified")
 OUTPUT_TAIL = 2000
+DROP = re.compile(r"\b(drop|discard|ignore|give up|abandon)\b|丢弃|放弃|忽略|不再处理", re.I)   # heuristic, see check_impl_contract
 
 
 def _nonempty(v):
@@ -164,6 +165,7 @@ def derive(model):
                     contended.add(b)
                 else:
                     same_key.add(b)
+        affects = sorted({o for v in writes for var in variables if var["name"] == v for o in var["observed_by"]})
         ops.append({"action": a.name, "params": [p for p, _ in a.params],
                     "guard": a.guard.source if a.guard is not None else None,
                     "reads": {v: sorted("*" if k is None else k for k in keys) for v, keys in sorted(reads.items())},
@@ -171,13 +173,26 @@ def derive(model):
                     "read_modify_write": {"shared": shared_rmw, "per_key": keyed_rmw},
                     "atomic_required": bool(reasons), "reasons": reasons,
                     "contended_by": sorted(contended), "same_key_contended_by": sorted(same_key - contended),
-                    "fairness": fair.get(a.name)})
+                    "affects_observables": affects, "fairness": fair.get(a.name)})
     props = [{"id": p.id, "kind": p.kind, "covered_by_kinds": list(COVERING_KINDS[p.kind])} for p in contract.properties]
     mutants = [{"id": m["id"], "expect_killed_by": list(m.get("expect_killed_by") or [])} for m in model.mutants]
     return {"model": model.id, "model_digest": model.digest, "contract_digest": contract.digest,
             "variables": variables, "observables": sorted(contract.observables), "operations": ops,
             "obligations": {"properties": props, "mutants": mutants,
                             "assumptions": [a["id"] for a in contract.assumptions]}}
+
+
+def coenabled(model):
+    """{(a, b)}: actions a and b are both enabled in some reachable state (None if exploration was incomplete)."""
+    from .checker import check
+    result, g, _ = check(model, keep_graph=True)
+    if not result["complete"]:
+        return None
+    pairs = set()
+    for labels in g.enabled:
+        names = {lbl[0] for lbl in labels}
+        pairs |= {(a, b) for a in names for b in names}
+    return pairs
 
 
 def draft(model, qualification=None, upstream=None):
@@ -264,6 +279,7 @@ def check_impl_contract(path, model, upstream=None):
     for a in sorted(set(ops) - set(derived_ops)):
         issues.append("operation %s is not a model action" % a)
     actions = set(derived_ops)
+    together = coenabled(model)
     events = {}
     for name, op in sorted(ops.items()):
         if name not in derived_ops:
@@ -301,11 +317,14 @@ def check_impl_contract(path, model, upstream=None):
                 if not idem.get("required"):
                     issues.append("%s: a retry that repeats the operation requires idempotency" % where)
             elif isinstance(eff, str) and eff.startswith("action:") and eff[7:] in actions:
+                if together is not None and (name, eff[7:]) not in together:
+                    issues.append("%s: failures.%s.model_effect %s — in no reachable state are %s and %s possible together, so this "
+                                  "failure would leave the system in a state the model does not allow" % (where, k, eff, name, eff[7:]))
                 continue
             elif eff != "repeat":
                 issues.append("%s: failures.%s.model_effect must be no_change, repeat or action:<model action> — "
                               "a failure may only leave the system in a state the model allows" % (where, k))
-        if der["fairness"] and any((fails.get(k) or {}).get("behavior", "").strip().lower().startswith("drop") for k in FAILURE_CLASSES):
+        if der["fairness"] and any(DROP.search((fails.get(k) or {}).get("behavior", "")) for k in FAILURE_CLASSES):
             issues.append("%s is fair in the model (%s): a failure must not silently drop it" % (where, der["fairness"]))
         tr = op["trace"] or {}
         if tr.get("event") != name:
@@ -315,6 +334,10 @@ def check_impl_contract(path, model, upstream=None):
         bad = [f for f in tr.get("fields") or [] if f not in model.contract.observables]
         if bad or not tr.get("fields"):
             issues.append("%s: trace.fields must be contract observables %s" % (where, bad or ""))
+        unseen = [o for o in der["affects_observables"] if o not in (tr.get("fields") or [])]
+        if unseen:
+            issues.append("%s: trace.fields omit %s, which this action changes — the trace could not show it going wrong "
+                          "(Specula: capture the fields the action modifies)" % (where, unseen))
         events[name] = tr.get("event")
     acc = doc["acceptance"] or {}
     _keys(acc, ["tests", "regressions", "assumptions"], [], "acceptance")
@@ -334,6 +357,10 @@ def check_impl_contract(path, model, upstream=None):
         if t.get("must_fail_with") is not None:
             if not (isinstance(t["must_fail_with"], list) and t["must_fail_with"] and all(isinstance(x, str) for x in t["must_fail_with"])):
                 issues.append("test %s: must_fail_with is an argv list" % t["id"])
+            elif not (isinstance(t.get("argv"), list) and len(t["must_fail_with"]) > len(t["argv"])
+                      and t["must_fail_with"][:len(t["argv"])] == t["argv"]):
+                issues.append("test %s: must_fail_with must be the test's own argv plus the arguments that select the broken "
+                              "variant — an unrelated failing command shows nothing about this test" % t["id"])
             else:
                 negative += 1
         known = set(derived_ops) | {p.id for p in model.contract.properties} | {a["id"] for a in model.contract.assumptions}
@@ -394,7 +421,41 @@ def _run(argv, cwd, timeout, env_extra=None):
         return {"argv": argv, "exit": None, "timed_out": False, "millis": 0, "output_tail": "cannot start: %s" % error}
 
 
+def _python_symbol(path, symbol):
+    """Source of `Class.method` / `function` with comments and its docstring blanked; None if not found."""
+    import io
+    import tokenize
+    src = path.read_text(encoding="utf-8", errors="replace")
+    try:
+        node = ast.parse(src)
+    except SyntaxError:
+        return None
+    for part in str(symbol).split("."):
+        node = next((c for c in ast.iter_child_nodes(node)
+                     if isinstance(c, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)) and c.name == part), None)
+        if node is None:
+            return None
+    lines = src.splitlines(keepends=True)
+    first, last = node.lineno - 1, node.end_lineno
+    seg = [list(x) for x in lines[first:last]]
+    body = getattr(node, "body", [])
+    if body and isinstance(body[0], ast.Expr) and isinstance(getattr(body[0], "value", None), ast.Constant) \
+            and isinstance(body[0].value.value, str):
+        for n in range(body[0].lineno - 1, body[0].end_lineno):
+            seg[n - first] = list("\n")
+    try:
+        for tok in tokenize.generate_tokens(io.StringIO("".join(lines[first:last])).readline):
+            if tok.type == tokenize.COMMENT:
+                row, (c0, c1) = tok.start[0] - 1, (tok.start[1], tok.end[1])
+                seg[row][c0:c1] = [" "] * (c1 - c0)
+    except (tokenize.TokenError, IndentationError):
+        pass
+    return "".join("".join(x) for x in seg)
+
+
 def _code_evidence(doc, root):
+    """Each operation's evidence must sit in its own symbol. Python is parsed (comments and docstrings do not count);
+    other languages fall back to the whole file, and the record says so (`scope: file`)."""
     out = []
     for op in doc["operations"]:
         rec = {"action": op["action"], "file": (op["code"] or {}).get("file"), "symbol": (op["code"] or {}).get("symbol"), "missing": []}
@@ -403,19 +464,46 @@ def _code_evidence(doc, root):
             rec["missing"].append("file %s" % rec["file"])
             out.append(rec)
             continue
-        text = _norm(f.read_text(encoding="utf-8", errors="replace"))
         rec["file_digest"] = sha_bytes(f.read_bytes())
-        last = str(rec["symbol"] or "").split(".")[-1]
-        if not last or last not in text:
-            rec["missing"].append("symbol %s" % rec["symbol"])
+        if f.suffix == ".py":
+            scoped = _python_symbol(f, rec["symbol"])
+            rec["scope"] = "symbol"
+            if scoped is None:
+                rec["missing"].append("symbol %s" % rec["symbol"])
+                out.append(rec)
+                continue
+            text = _norm(scoped)
+        else:
+            text = _norm(f.read_text(encoding="utf-8", errors="replace"))
+            rec["scope"] = "file"
+            last = str(rec["symbol"] or "").split(".")[-1]
+            if not last or last not in text:
+                rec["missing"].append("symbol %s" % rec["symbol"])
         at = op["atomicity"] or {}
         if at.get("mechanism") not in (None, "none") and _nonempty(at.get("evidence")) and _norm(at["evidence"]) not in text:
-            rec["missing"].append("atomicity evidence %r" % at["evidence"][:80])
+            rec["missing"].append("atomicity evidence %r in %s" % (at["evidence"][:80], rec["symbol"]))
         idem = op["idempotency"] or {}
         if idem.get("required") and _nonempty(idem.get("evidence")) and _norm(idem["evidence"]) not in text:
-            rec["missing"].append("idempotency evidence %r" % idem["evidence"][:80])
+            rec["missing"].append("idempotency evidence %r in %s" % (idem["evidence"][:80], rec["symbol"]))
         out.append(rec)
     return out
+
+
+LOCATION = re.compile(r"^([^\s:]+):([0-9]+)(?:-([0-9]+))?$")
+
+
+def _location_issue(root, loc):
+    m = LOCATION.match(str(loc or ""))
+    if not m:
+        return "location %r is not file:line[-line]" % loc
+    f = (root / m.group(1)).resolve()
+    if not ((f == root or root in f.parents) and f.is_file()):
+        return "location %s names no file under the contract root" % loc
+    a, b = int(m.group(2)), int(m.group(3) or m.group(2))
+    n = len(f.read_text(encoding="utf-8", errors="replace").splitlines())
+    if not 1 <= a <= b <= n:
+        return "location %s is outside %s (%d lines)" % (loc, m.group(1), n)
+    return None
 
 
 def check_impl_review(path, contract_path, doc, root, upstream=None):
@@ -446,8 +534,12 @@ def check_impl_review(path, contract_path, doc, root, upstream=None):
             issues.append("coverage: operation %s was not reviewed (Spec Kit analyze coverage summary)" % op["action"])
         elif c.get("implemented") is not True or not _nonempty(c.get("location")):
             issues.append("coverage: operation %s is not implemented as contracted (%s)" % (op["action"], c.get("notes") or "no location"))
+        elif _location_issue(root, c["location"]):
+            issues.append("coverage: operation %s: %s" % (op["action"], _location_issue(root, c["location"])))
     for i, u in enumerate(rev["unmodeled_behaviors"] or []):
         _keys(u, ["behavior", "location", "disposition", "reason"], [], "unmodeled_behaviors[%d]" % i)
+        if _location_issue(root, u["location"]):
+            issues.append("unmodeled behaviour %r: %s" % (u["behavior"][:60], _location_issue(root, u["location"])))
         if u["disposition"] not in UNMODELED_DISPOSITION or not _nonempty(u["reason"]):
             issues.append("unmodeled behaviour %r: disposition out_of_scope|model_it|defect with a reason" % u["behavior"][:60])
         elif u["disposition"] == "model_it":
@@ -479,6 +571,25 @@ def check_impl_review(path, contract_path, doc, root, upstream=None):
     return {"verdict": "REVIEWED" if not issues else "NOT_REVIEWED", "issues": issues, "digest": sha_bytes(Path(path).read_bytes())}
 
 
+def _dirty(root, files):
+    """Pinned files whose working-tree bytes are not the committed ones (modified, staged or untracked)."""
+    if not files:
+        return []
+    changed = subprocess.run(["git", "-C", str(root), "status", "--porcelain", "--untracked-files=all", "--"] + files,
+                             capture_output=True, text=True)
+    if changed.returncode != 0:
+        return []
+    top = subprocess.run(["git", "-C", str(root), "rev-parse", "--show-toplevel"], capture_output=True, text=True).stdout.strip()
+    out = set()
+    for line in changed.stdout.splitlines():
+        path = line[3:].split(" -> ")[-1].strip('"')
+        full = (Path(top) / path).resolve() if top else None
+        for f in files:
+            if full is not None and full == (root / f).resolve():
+                out.add(f)
+    return sorted(out)
+
+
 def decide(res):
     """Reasons follow from the recorded parts alone, so a receipt can be re-decided."""
     reasons = ["contract: " + i for i in res["contract"]["issues"]]
@@ -494,9 +605,16 @@ def decide(res):
             reasons.append("test %s failed (%s)" % (t["id"], "timeout" if t["timed_out"] else "exit %s" % t["exit"]))
         if t["role"] == "negative" and t["exit"] == 0:
             reasons.append("test %s still passes on its broken variant: it cannot see the defect it guards against" % t["id"])
+        elif t["role"] == "negative" and not isinstance(t["exit"], int):
+            reasons.append("test %s's negative control never ran to a verdict (%s): a crash or hang shows nothing"
+                           % (t["id"], "timeout" if t["timed_out"] else "could not start"))
     tr = res["traces"]
+    produced = (res.get("trace_origin") or {}).get("tests")
     if tr is None or not tr["traces"]:
         reasons.append("no implementation traces: real operations were never checked against the model's transitions")
+    elif produced is not None and not produced:
+        reasons.append("no trace was produced by the contract's own tests: supplied traces are checked but cannot stand in "
+                       "for running the real code (Specula: never hand-write trace data)")
     elif tr["verdict"] != "CONFORMS":
         for t in tr["traces"]:
             if t["verdict"] != "CONFORMS":
@@ -508,6 +626,8 @@ def decide(res):
     for r in res["replays"]:
         if not r["conforming_trace"]:
             reasons.append("counterexample replay %s (mutant %s) has no conforming trace: not shown fixed in real code" % (r["vector"], r["mutant"]))
+    for f in (res.get("source") or {}).get("dirty") or []:
+        reasons.append("%s was verified with uncommitted changes: the receipt's commit does not describe the bytes that were tested" % f)
     if res["source_map"] is not None and res["source_map"]["status"] != "FRESH":
         reasons.append("source map is %s" % res["source_map"]["status"])
     if res["review"] is None:
@@ -536,9 +656,15 @@ def verify_implementation(contract_path, model, traces=None, review=None, source
             res["source"]["files"][c["file"]] = c["file_digest"]
     head = subprocess.run(["git", "-C", str(root), "rev-parse", "HEAD"], capture_output=True, text=True)
     res["source"]["head"] = head.stdout.strip() if head.returncode == 0 else None
-    trace_paths = [str(p) for p in traces or []]
+    supplied = [str(p) for p in traces or []]
+    produced = []
     work = Path(out_dir or tempfile.mkdtemp(prefix="fv-impl-")).resolve()   # tests run with cwd = the contract root
     acc = doc.get("acceptance") or {}
+    for t in acc.get("tests") or []:   # the tests are part of what was verified: pin the scripts they run
+        for a in (t.get("argv") or []) + (t.get("must_fail_with") or []):
+            f = (root / a).resolve() if "{" not in a else None
+            if f is not None and (root in f.parents) and f.is_file():
+                res["source"]["files"][str(f.relative_to(root))] = sha_bytes(f.read_bytes())
     if run:
         for t in acc.get("tests") or []:
             if t.get("kind") == "proof" or not t.get("argv"):
@@ -551,7 +677,7 @@ def verify_implementation(contract_path, model, traces=None, review=None, source
             r = _run(argv, root, t.get("timeout_seconds") or timeout)
             res["tests"].append(dict(r, id=t["id"], kind=t["kind"], role="positive", argv=t["argv"]))
             if uses_traces and r["exit"] == 0:
-                trace_paths += sorted(str(p) for p in tdir.glob("*.jsonl"))
+                produced += sorted(str(p) for p in tdir.glob("*.jsonl"))
             if t.get("must_fail_with"):
                 ndir = work / ("negative-" + re.sub(r"[^A-Za-z0-9_.-]+", "_", t["id"]))
                 if any("{traces}" in a for a in t["must_fail_with"]):
@@ -559,20 +685,22 @@ def verify_implementation(contract_path, model, traces=None, review=None, source
                 nargv = [a.replace("{traces}", str(ndir)) for a in t["must_fail_with"]]
                 n = _run(nargv, root, t.get("timeout_seconds") or timeout)
                 res["tests"].append(dict(n, id=t["id"], kind=t["kind"], role="negative", argv=t["must_fail_with"]))
-    if trace_paths:
-        tr = check_files(model, trace_paths)
+    res["trace_origin"] = {"tests": produced, "supplied": supplied}
+    if produced or supplied:
+        tr = check_files(model, produced + supplied)
         res["traces"] = tr
         seen = set()
         for t in tr["traces"]:
-            if t["verdict"] != "CONFORMS":
-                continue
+            if t["verdict"] != "CONFORMS" or t["trace"]["path"] not in produced:
+                continue   # coverage and replays count only real runs of the contract's own tests
             _, events = load_trace(t["trace"]["path"])
             seen |= {e["action"] for e in events if e.get("action") and not e.get("rejected")}
         res["coverage"] = {"exercised": sorted(seen), "unexercised": sorted({a.name for a in model.actions} - seen)}
         for r in acc.get("regressions") or []:
             vec = (r.get("detected_by") or {}).get("vector")
             if vec:
-                ok = any((t["trace"].get("header") or {}).get("vector") == vec and t["verdict"] == "CONFORMS" for t in tr["traces"])
+                ok = any((t["trace"].get("header") or {}).get("vector") == vec and t["verdict"] == "CONFORMS"
+                         and t["trace"]["path"] in produced for t in tr["traces"])
                 res["replays"].append({"mutant": r["mutant"], "vector": vec, "conforming_trace": ok})
     else:
         for r in acc.get("regressions") or []:
@@ -585,6 +713,7 @@ def verify_implementation(contract_path, model, traces=None, review=None, source
         res["source_map"] = {k: sm[k] for k in ("status", "issues", "stale", "drifted_files", "map_digest")}
     if review:
         res["review"] = check_impl_review(review, contract_path, doc, root, upstream)
+    res["source"]["dirty"] = _dirty(root, sorted(res["source"]["files"])) if res["source"]["head"] else []
     reasons = decide(res)
     res["reasons"] = reasons
     return {"verdict": "IMPLEMENTS" if not reasons else "NOT_IMPLEMENTED", "result": res,
@@ -599,7 +728,10 @@ def dump(doc, path):
             import yaml
         except ImportError:
             raise FvError("PyYAML is needed to write YAML; use a .json path") from None
-        text = yaml.safe_dump(doc, allow_unicode=True, sort_keys=False, width=120)
+        class NoAlias(yaml.SafeDumper):   # a contract is read by people and agents: no &anchors / *aliases
+            def ignore_aliases(self, data):
+                return True
+        text = yaml.dump(doc, Dumper=NoAlias, allow_unicode=True, sort_keys=False, width=120)
     else:
         text = json.dumps(doc, ensure_ascii=False, indent=2) + "\n"
     p.parent.mkdir(parents=True, exist_ok=True)

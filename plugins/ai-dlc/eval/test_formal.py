@@ -372,6 +372,11 @@ class FormalLifecycle(unittest.TestCase):
         code, out = self.impl_verify()
         self.assertEqual((code, out["verdict"]), (0, "IMPLEMENTS"), out)
         self.assertEqual(self.unmet("acceptance"), "")
+        tp = self.repo / F / "impl/test_properties.py"
+        tp.write_text(tp.read_text().replace("return 1", "return 0"))      # a property test that can no longer fail
+        self.assertIn("impl/test_properties.py changed after the implementation was verified", self.unmet("acceptance"))
+        self.git("checkout", "--", F + "/impl/test_properties.py")
+        self.assertEqual(self.unmet("acceptance"), "")
         ic.write_text(original + "\n# reworded later\n")
         self.assertIn("contract changed after the code was verified", self.unmet("acceptance"))
 

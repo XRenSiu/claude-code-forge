@@ -150,6 +150,111 @@ class Contract(unittest.TestCase):
         self.assertIn("written for another model", " ".join(res["issues"]))
 
 
+@unittest.skipUnless(yaml is not None and EXAMPLE.is_dir(), "needs PyYAML and the AI-DLC example")
+class Loopholes(unittest.TestCase):
+    """Ways to make step 05 / 07 look satisfied without the code being right (self-audit, 2026-11-18)."""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.ex = Path(self.tmp.name) / "ex"
+        shutil.copytree(EXAMPLE, self.ex)
+        self.model = load_model(self.ex / "model.yaml")
+
+    def edit_contract(self, mutate):
+        import re
+        p = self.ex / "impl-contract.yaml"
+        doc = yaml.safe_load(p.read_text())
+        mutate(doc)
+        p.write_text(yaml.safe_dump(doc, allow_unicode=True, sort_keys=False))
+        r = self.ex / "impl-review.yaml"   # keep the review on this contract: only the probed change may matter
+        r.write_text(re.sub(r'impl_contract_digest: "sha256:[0-9a-f]+"', 'impl_contract_digest: "%s"' % sha(p), r.read_text()))
+        return check_impl_contract(p, self.model, _upstream())
+
+    def op(self, doc, action):
+        return next(o for o in doc["operations"] if o["action"] == action)
+
+    def test_evidence_must_be_live_code_inside_the_operation(self):
+        code = self.ex / "impl/tickets.py"
+        text = code.read_text().replace('self.db.execute("BEGIN IMMEDIATE")', 'self.db.execute("BEGIN")')
+        code.write_text(text.replace("    def observe(self):", '    # legacy: self.db.execute("BEGIN IMMEDIATE")\n    def observe(self):'))
+        reasons = " ".join(verify_implementation(self.ex / "impl-contract.yaml", self.model, run=False)["result"]["reasons"])
+        self.assertIn("operation buy: atomicity evidence", reasons)           # a comment in another function is not a lock
+        code.write_text(text.replace('self.db.execute("BEGIN")', '# self.db.execute("BEGIN IMMEDIATE")\n        self.db.execute("BEGIN")'))
+        reasons = " ".join(verify_implementation(self.ex / "impl-contract.yaml", self.model, run=False)["result"]["reasons"])
+        self.assertIn("operation buy: atomicity evidence", reasons)           # nor is a comment inside the right one
+        code.write_text(text.replace('self.db.execute("BEGIN")', 'self.db.execute("BEGIN IMMEDIATE")'))
+        res = verify_implementation(self.ex / "impl-contract.yaml", self.model, run=False)["result"]
+        self.assertEqual([c["missing"] for c in res["code"]], [[], [], [], []])   # twin: the live statement counts
+        self.assertEqual({c["scope"] for c in res["code"]}, {"symbol"})
+
+    def test_a_negative_control_must_be_the_same_test_on_the_broken_variant(self):
+        res = self.edit_contract(lambda d: [t.update(must_fail_with=["python3", "-c", "raise SystemExit(1)"])
+                                            for t in d["acceptance"]["tests"] if t.get("must_fail_with")])
+        self.assertIn("must_fail_with must be the test's own argv", " ".join(res["issues"]))
+        from fvkit.implcontract import decide
+        parts = {"contract": {"issues": []}, "code": [], "tests": [
+            {"id": "T", "role": "positive", "exit": 0, "timed_out": False},
+            {"id": "T", "role": "negative", "exit": None, "timed_out": True}],
+            "traces": {"verdict": "CONFORMS", "traces": [{"verdict": "CONFORMS", "trace": {"path": "t"}, "property_violations": []}]},
+            "trace_origin": {"tests": ["t"], "supplied": []}, "coverage": {"unexercised": []}, "replays": [],
+            "source_map": None, "review": {"issues": []}, "source": {"head": None, "files": {}, "dirty": []}}
+        self.assertIn("never ran to a verdict (timeout)", " ".join(decide(parts)))   # a hang is not a detection
+        parts["tests"][1].update(exit=1, timed_out=False)
+        self.assertEqual(decide(parts), [])
+
+    def test_a_failure_may_only_land_where_the_model_allows(self):
+        res = self.edit_contract(lambda d: self.op(d, "buy")["failures"]["error"].update(model_effect="action:reject"))
+        self.assertIn("in no reachable state are buy and reject possible together", " ".join(res["issues"]))
+        res = self.edit_contract(lambda d: self.op(d, "buy")["failures"]["error"].update(model_effect="action:read"))
+        self.assertEqual(res["verdict"], "READY", res["issues"])            # twin: another user's read can follow a failed buy
+
+    def test_trace_fields_must_show_what_the_action_changes(self):
+        res = self.edit_contract(lambda d: self.op(d, "buy")["trace"].update(fields=["outcome"]))
+        self.assertIn("trace.fields omit ['remaining', 'sold']", " ".join(res["issues"]))
+
+    def test_supplied_traces_do_not_replace_running_the_contracts_tests(self):
+        import subprocess
+        out = Path(self.tmp.name) / "supplied"
+        subprocess.run([sys.executable, str(self.ex / "impl/harness.py"), "--vectors", str(self.ex / "vectors.json"), "--out", str(out)],
+                       capture_output=True)
+        self.edit_contract(lambda d: d["acceptance"].update(tests=[t for t in d["acceptance"]["tests"] if t["kind"] != "mbt"]))
+        v = verify_implementation(self.ex / "impl-contract.yaml", self.model, review=self.ex / "impl-review.yaml",
+                                  traces=sorted(out.glob("*.jsonl")), upstream=_upstream())
+        reasons = " ".join(v["result"]["reasons"])
+        self.assertEqual(v["result"]["traces"]["verdict"], "CONFORMS")         # still checked
+        self.assertIn("no trace was produced by the contract's own tests", reasons)
+        self.assertIn("operation buy never happened in a conforming trace", reasons)
+
+    def test_review_locations_must_exist(self):
+        doc = yaml.safe_load((self.ex / "impl-contract.yaml").read_text())
+        rp = self.ex / "impl-review.yaml"
+        rev = yaml.safe_load(rp.read_text())
+        rev["coverage"][2]["location"] = "impl/tickets.py:900-950"
+        rev["unmodeled_behaviors"][0]["location"] = "impl/nowhere.py:3"
+        rp.write_text(yaml.safe_dump(rev, allow_unicode=True, sort_keys=False))
+        issues = " ".join(check_impl_review(rp, self.ex / "impl-contract.yaml", doc, self.ex, _upstream())["issues"])
+        self.assertIn("impl/tickets.py:900-950 is outside", issues)
+        self.assertIn("names no file", issues)
+
+    def test_verified_bytes_must_be_committed_and_tests_are_pinned(self):
+        import subprocess
+        git = lambda *a: subprocess.run(["git", "-C", str(self.ex), "-c", "user.email=t@t", "-c", "user.name=t", *a],  # noqa: E731
+                                        check=True, capture_output=True)
+        git("init", "-q")
+        git("add", "-A")
+        git("commit", "-qm", "init")
+        res = verify_implementation(self.ex / "impl-contract.yaml", self.model, run=False)["result"]
+        self.assertIn("impl/test_properties.py", res["source"]["files"])     # weakening a test later voids the verification
+        self.assertIn("vectors.json", res["source"]["files"])
+        self.assertEqual(res["source"]["dirty"], [])
+        code = self.ex / "impl/tickets.py"
+        code.write_text(code.read_text() + "\n# not committed\n")
+        res = verify_implementation(self.ex / "impl-contract.yaml", self.model, run=False)["result"]
+        self.assertEqual(res["source"]["dirty"], ["impl/tickets.py"])
+        self.assertIn("impl/tickets.py was verified with uncommitted changes", " ".join(res["reasons"]))
+
+
 def _upstream():
     from fvkit.upstream import Upstream
     return Upstream(UPSTREAM) if UPSTREAM.is_file() else None
@@ -201,16 +306,19 @@ class Verification(unittest.TestCase):
         self.assertIn("operation reject: atomicity evidence", reasons)
 
     def test_an_operation_never_seen_in_a_conforming_trace_is_not_verified(self):
-        trace = self.ex / "partial.jsonl"
-        trace.write_text("\n".join(json.dumps(e) for e in [
-            {"init": True, "observed": {"sold": 0, "remaining": 1, "outcome": {"alice": "none", "bob": "none"}}},
-            {"action": "request", "params": {"u": "alice"}, "observed": {"outcome": {"alice": "pending", "bob": "none"}}},
-            {"action": "read", "params": {"u": "alice"}, "observed": {"remaining": 1}}]) + "\n")
-        v = verify_implementation(self.ex / "impl-contract.yaml", self.model, traces=[trace], run=False, upstream=_upstream())
+        vec = json.loads((self.ex / "vectors.json").read_text())
+        vec["vectors"] = [v for v in vec["vectors"] if all(s["action"]["name"] in ("request", "read") for s in v["steps"])]
+        (self.ex / "vectors-partial.json").write_text(json.dumps(vec))      # the MBT test never drives a purchase
+        p = self.ex / "impl-contract.yaml"
+        doc = yaml.safe_load(p.read_text())
+        mbt = next(t for t in doc["acceptance"]["tests"] if t["kind"] == "mbt")
+        mbt["argv"] = [a.replace("vectors.json", "vectors-partial.json") for a in mbt["argv"]]
+        mbt["must_fail_with"] = mbt["argv"] + ["--variant", "check-then-act"]
+        p.write_text(yaml.safe_dump(doc, allow_unicode=True, sort_keys=False))
+        v = verify_implementation(p, self.model, upstream=_upstream(), out_dir=Path(self.tmp.name) / "w")
         self.assertEqual(v["result"]["traces"]["verdict"], "CONFORMS")
         self.assertEqual(v["result"]["coverage"]["unexercised"], ["buy", "reject"])
-        reasons = " ".join(v["result"]["reasons"])
-        self.assertIn("operation buy never happened in a conforming trace", reasons)
+        self.assertIn("operation buy never happened in a conforming trace", " ".join(v["result"]["reasons"]))
 
     def test_a_negative_control_that_passes_proves_nothing(self):
         p = self.ex / "impl-contract.yaml"

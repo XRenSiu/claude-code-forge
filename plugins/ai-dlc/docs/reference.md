@@ -140,14 +140,14 @@ flag 不等于 reject。预门过了但带 flag，意思是「机器判不了这
 | `fv.py rules-divergence` | ≥2 份隔离生成的规则候选逐需求比较：覆盖 / 种类 / 有限域语义（带见证值）/ 文本（无 domain 时交人）/ 词表 / 假设 | 0 AGREED · 1 DIVERGENT（议程） |
 | `fv.py model-divergence` | ≥2 份隔离生成的模型候选在观察者层面比较：规则判定、可达观测值、可观测迁移（带见证路径）；观察不到的内部步数差别不算 | 0 AGREED · 1 DIVERGENT |
 | `fv.py resolve` | 给分歧项追加裁决（人；Agent 代签须附授权原话）；只增不删 | 0 · 2 |
-| `fv.py upstream verify` / `refresh` | 收录的上游原文逐字节等于 `UPSTREAM.json`、许可证在、没有清单外文件；`refresh` 只从本地克隆复制已列出的文件并重钉哈希 | 0 INTACT · 1 TAMPERED |
+| `fv.py upstream verify` / `refresh` | 收录的上游原文逐字节等于 `UPSTREAM.json`、许可证在、没有清单外文件；`--remote` 再从固定提交拉取上游逐个比对（连同哈希一起改过的文件也会被抓到；网络不通判 INCOMPLETE）；`refresh` 只从本地克隆复制已列出的文件并重钉哈希 | 0 INTACT · 1 TAMPERED |
 | `fv.py intake-check` | Spec Kit clarify + Quint Step 1 / from-requirements：10 类歧义都有状态、Partial/Missing 已问或带理由延后、≤5 个以问号结尾且由人回答的问题、系统模型 4 项有出处、每条需求有抽取行、每个操作有粒度决定 | 0 COMPLETE · 1 GAPS |
 | `fv.py check-review` | FVS 审阅契约（schema 2）：7 个审阅面、F-n 发现格式、PASS / APPROVE-WITH-EDITS / REVISE / BLOCKED 规则、完成标记防截断；`--triage` 核对作者处置（延后要人裁、作者不能自裁、合同改动前后摘要与保留的被审版本）；≤3 轮 | 0 REVIEWED · 1 NOT_REVIEWED |
 | `fv.py model-review-check` | Quint review 6 项结构检查（fail 拒、warn 由人决定）+ 运行时检查由检查器重算（C-init / C-step / C-step-complete / R1 / R2，审阅者说 pass 而检查器发现死动作或空洞性质即拒）+ Specula 粒度审计（每个动作一行，该拆不拆即拒） | 0 REVIEWED · 1 NOT_REVIEWED |
 | `fv.py brief-check` | 入口 B 的 Specula modeling brief（第 1–7 节、Category A/B、Scenario 字段）、defect-ledger.json 与 6.2 表一致、brief coverage（每个 Scenario / 不变量 / 6.1 发现都有落点，活性要公平） | 0 COMPLETE · 1 GAPS |
 | `fv.py triage-check` | Specula spec-fidelity checklist（前提 → 实现守卫 `file:line` → 模型对照，Case B / C）+ bug-classification（状态与严重度一致）；输出路由 | 0 TRIAGED · 1 NOT_TRIAGED |
 | `fv.py impl-contract draft\|check` | 05 实现契约：`draft` 从 QUALIFIED 模型推导 derived（读写集、共享 / 按 key 的读改写、必须原子的动作、并发冲突、公平、每条性质 / mutant / 假设的验收义务），其余留 TODO；`check` 重新推导并核对：没被改写、引用了 QUALIFIED 回执、状态 / 观测量 / 动作全有代码对应、原子机制与证据、幂等决定、四类故障只落在模型允许的状态、验收覆盖、至少一个负对照 | 0 READY · 1 NOT_READY |
-| `fv.py impl-verify` | 07 实现一致性（E3）：约束的 evidence 逐字在代码里；跑验收测试（退出 0）与负对照（必须失败）；MBT 轨迹逐步对照模型且每个操作出现过；反例重放向量有一致轨迹；全新上下文的 fv-impl-review（覆盖、模型外行为的处置、假设、分级问题、钉住被审代码字节）；回执理由由记录的各部分重新推出 | 0 IMPLEMENTS · 1 NOT_IMPLEMENTED |
+| `fv.py impl-verify` | 07 实现一致性（E3）：约束的 evidence 逐字在操作自己的代码里（Python 按 AST 定位，注释与 docstring 不算）；被测代码与测试脚本已提交且被钉住；跑验收测试（退出 0）与负对照（必须失败）；MBT 轨迹逐步对照模型且每个操作出现过；反例重放向量有一致轨迹；全新上下文的 fv-impl-review（覆盖、模型外行为的处置、假设、分级问题、钉住被审代码字节）；回执理由由记录的各部分重新推出 | 0 IMPLEMENTS · 1 NOT_IMPLEMENTED |
 | `fv.py gen-evidence rules\|model` | AI 生成的收口：上游原文 INTACT；规则要 intake、FVS 审阅（+ 处置），High 影响的性质类需求被形式化；模型要每个候选的 Step 7 handoff 与模型审阅；采纳物在被比较之列、候选仍在且未改、分歧全裁；code-first 另需 Specula brief 与现状模型的校准回执（E0 回执） | 0 READY · 1 NOT_READY |
 | `fv.py lint` | 合同 / 模型静态检：词表封闭（性质只能用 observables）、表达式白名单、名字冲突、对称集不得出现字面量 | 0 · 2 |
 | `fv.py check` | 显式状态模型检查（BFS 最短反例；迁移性质；可达见证；死锁；弱 / 强公平下的活性 → 套索反例；对称约简） | 0 PASS · 1 FAIL · **3 BOUNDED_PASS / INCOMPLETE**（不是通过） |

@@ -170,6 +170,37 @@ class VendoredCopy(unittest.TestCase):
         self.assertIn("names no upstream procedure", " ".join(citations([], "fv-cex-triage", up)))
         self.assertEqual(citations(wrong, "fv-cex-triage", None), [])           # without a manifest only the names are checked
 
+    def test_remote_check_catches_a_file_edited_together_with_its_hash(self):
+        up = Upstream(self.manifest)
+        originals = {}
+        for pid, proj in up.projects.items():
+            repo = proj["repo"].replace("https://example.invalid/", "o/")
+            originals[(repo, proj["license_file"].split("/", 1)[1])] = (self.root / proj["license_file"]).read_bytes()
+            for f in proj["files"]:
+                originals[(repo, f["upstream_path"])] = (self.root / f["path"]).read_bytes()
+        doc = json.loads(self.manifest.read_text())
+        for proj in doc["projects"]:
+            proj["repo"] = proj["repo"].replace("https://example.invalid/", "https://github.com/o/")
+        self.manifest.write_text(json.dumps(doc))
+        fetch = lambda repo, commit, path: originals[(repo, path)]  # noqa: E731  (what upstream really serves)
+        self.assertEqual(Upstream(self.manifest).verify_remote(fetch)["verdict"], "INTACT")
+        target = self.root / "fvs/fv-skills/references/review-policy.md"
+        target.write_text("a friendlier policy\n")                              # edit the file AND re-pin its hash
+        for proj in doc["projects"]:
+            for f in proj["files"]:
+                if f["path"] == "fvs/fv-skills/references/review-policy.md":
+                    f["sha256"] = "sha256:" + hashlib.sha256(target.read_bytes()).hexdigest()
+        self.manifest.write_text(json.dumps(doc))
+        forged = Upstream(self.manifest)
+        self.assertEqual(forged.verify()["verdict"], "INTACT")                    # the local check cannot see it
+        res = forged.verify_remote(fetch)
+        self.assertEqual(res["verdict"], "TAMPERED")
+        self.assertIn("review-policy.md", " ".join(res["issues"]))
+
+        def offline(repo, commit, path):
+            raise OSError("network unreachable")
+        self.assertEqual(Upstream(self.manifest).verify_remote(offline)["verdict"], "INCOMPLETE")   # unknown, never intact
+
     def test_refresh_copies_listed_files_from_a_local_clone(self):
         clone = Path(self.tmp.name) / "clone"
         for f in Upstream(self.manifest).projects["fvs"]["files"]:

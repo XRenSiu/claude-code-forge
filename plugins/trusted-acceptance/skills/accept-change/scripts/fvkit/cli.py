@@ -486,7 +486,10 @@ def cmd_impl_verify(args):
 def cmd_upstream(args):
     from .upstream import Upstream, refresh
     if args.action == "verify":
-        r = Upstream(args.manifest).verify()
+        up = Upstream(args.manifest)
+        r = up.verify()
+        if args.remote and r["verdict"] == "INTACT":   # the copy matches its manifest; now: does the manifest match upstream?
+            r = up.verify_remote()
     else:
         require(args.project and args.clone and args.commit, "refresh needs --project, --clone and --commit")
         r = refresh(args.manifest, args.project, args.clone, args.commit)
@@ -645,6 +648,7 @@ def parser():
     s = sub.add_parser("upstream", help="vendored upstream procedures: verify the copy is intact, or refresh one project from a local clone")
     s.add_argument("action", choices=["verify", "refresh"]); s.add_argument("manifest")
     s.add_argument("--project"); s.add_argument("--clone"); s.add_argument("--commit")
+    s.add_argument("--remote", action="store_true", help="verify: also fetch every file at its pinned commit and compare (network)")
     s.set_defaults(fn=cmd_upstream)
     s = sub.add_parser("intake-check", help="rules intake: Spec Kit clarify + Quint from-requirements carried out completely")
     s.add_argument("intake"); s.add_argument("--requirements"); s.add_argument("--contract"); s.add_argument("--upstream", help=up_help)

@@ -2,7 +2,7 @@
 
 本 Skill 和开源项目的关系分三种：
 
-- **原样收录并执行**：生成规则、建模、审阅、分诊的方法是上游原文，收录在 `upstream/`。agent 读原文、执行其步骤；`fv upstream verify` 确认原文没有被改动。
+- **原样收录并执行**：生成规则、建模、审阅、分诊的方法是上游原文，收录在 `upstream/`。agent 读原文、执行其步骤；`fv upstream verify` 确认原文没有被改动，`--remote` 再从固定提交拉取上游比对，证明收录的就是上游原文。
 - **借鉴实现**：fvkit 自己实现了检查器（零依赖、能自闭环），语义上借鉴 TLC / Quint。
 - **通过适配器直接调用**：用户装了 TLC / Apalache / Quint / FizzBee，可以用 `fv external` 调用它们，原始输出会保留下来。
 

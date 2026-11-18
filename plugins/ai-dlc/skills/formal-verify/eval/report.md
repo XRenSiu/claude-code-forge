@@ -7,8 +7,9 @@
 ## 已跑过的（脚本证据，不是效果证据）
 
 - AI 生成阶段（示例）：清单引文逐字存在、规范句无遗漏（编造的引文被拒）；两份规则候选在 R1 上有语义分歧并给出见证值 remaining=-2；两份模型候选在“售罄后再次提交”上有可观测分歧；裁决与审阅齐备时生成证据 READY；未裁决、只有一份候选、采纳物未被比较、候选被删、code-first 未校准时 NOT_READY。
-- 上游流程（2026-11-17 起）：收录的 7 个项目 36 个文件 `fv upstream verify` 为 INTACT（改一个字节即 TAMPERED）；示例的 intake、FVS 审阅与处置、模型审阅、入口 B 的 Specula brief 与 coverage、反例分诊都按上游规则检查通过，每项都有被拒的孪生（问题写成标签、REVISE 判定、该拆未拆的动作、ledger 少一条、Case B 没有被漏的守卫……）。
+- 上游流程（2026-11-17 起）：收录的 7 个项目 45 个文件 `fv upstream verify` 为 INTACT（改一个字节即 TAMPERED）；`fv upstream verify --remote` 在 2026-11-18 逐个从固定提交拉取上游原文比对：ai-dlc 52 份（含许可证）、trusted-acceptance 3 份，全部一致；示例的 intake、FVS 审阅与处置、模型审阅、入口 B 的 Specula brief 与 coverage、反例分诊都按上游规则检查通过，每项都有被拒的孪生（问题写成标签、REVISE 判定、该拆未拆的动作、ledger 少一条、Case B 没有被漏的守卫……）。
 - 实现契约与实现一致性（05 / 07）：示例的实现契约由 `fv impl-contract draft` 从 QUALIFIED 模型推导后填写，READY；契约要求的幂等重试让示例代码改了一次（`purchase` 先查请求状态、`request` 用 `INSERT OR IGNORE`）。`fv impl-verify` 跑性质、活性、并发、MBT 四组测试，三组负对照（check-then-act 变体）都确实失败，真实轨迹逐步符合模型且四个操作都出现过，旧反例重放被拒，实现审阅通过 → IMPLEMENTS。孪生：删掉幂等检查 → NOT_IMPLEMENTED；契约把事务写成 none → NOT_READY；负对照改成通过 → 拒绝；伪造的回执 → 校验拒绝。
+- 自审（2026-11-18）：对 05 / 07 做了 9 个“看起来通过、其实没落实”的对抗探针，当时全部漏过，现已全部拦住并写成回归测试。它们是：证据只在别的函数的注释里、负对照是不相干的失败命令、负对照根本没跑起来、故障落到模型里不可能同时发生的状态、轨迹字段漏掉动作改变的观测量、用外部提供的轨迹充当覆盖、审阅引用不存在的行、验证后改弱测试、验证的是未提交的代码。修补处的 11 个变异全部被杀死。
 - 示例的完整闭环：初版设计 → 最短反例（exit 1）→ 修正设计 QUALIFIED（3 个 mutant 都被预期性质杀死）→ `validate --rerun` 结果相同 → 模型驱动向量 → 真实 SQLite 实现的轨迹：atomic 全部一致，check-then-act 不一致且触发运行时监控 → 真实线程并发测试。
 - `eval/test_formal.py`：在真实 git 仓库里检查状态机接线——锁、资格、一致性、签字豁免、策略按 diff 推出模块、R17–R23 路由。每条拒绝都有一条放行的孪生。
 - 变异证明：`formal_gate.py` / `aidlc_state.py` 上 5 个 fail-open 变异全部被冒烟杀死；fvkit 与 trusted-acceptance gate 上 12 个手工变异全部被它们的测试杀死。

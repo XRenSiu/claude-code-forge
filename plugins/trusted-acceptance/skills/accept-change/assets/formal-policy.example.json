@@ -58,7 +58,7 @@
       "contract_digest": "sha256:84fc4176df71a5e8aedc87586fffa1d0a2250d09296802e82bc10eb1f269546b",
       "properties_digest": "sha256:3bf0bc97b9871ef819ed8198932cd7be1e8ec768e74aec6cc9014c80bef78bc2",
       "impl_contract_digests": [
-        "sha256:6622e2aca75dd0e5cafe886061dccdfbcb88e73c5a023396e56c037a95337b10"
+        "sha256:fbb5f94bc7192ab0de20c551bef850b0dd292112a6dddb411f6e5affd05d7aae"
       ],
       "pass_verdicts": [
         "IMPLEMENTS"

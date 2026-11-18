@@ -7,7 +7,7 @@
 # 机器部分（代码证据锚点、测试与负对照、轨迹一致性、反例重放）由 `fv impl-verify` 自己跑，不由审阅者填写。
 schema_version: 1
 kind: fv-impl-review
-impl_contract_digest: "sha256:6622e2aca75dd0e5cafe886061dccdfbcb88e73c5a023396e56c037a95337b10"
+impl_contract_digest: "sha256:fbb5f94bc7192ab0de20c551bef850b0dd292112a6dddb411f6e5affd05d7aae"
 source:
   files: {impl/tickets.py: "sha256:420435cd282eb77a84daf578e3f40b64f995713751fc3b78024813d3a638732f"}
 procedure:

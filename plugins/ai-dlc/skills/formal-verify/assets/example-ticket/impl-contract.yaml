@@ -88,6 +88,10 @@ derived:
     - read
     - reject
     - request
+    affects_observables:
+    - outcome
+    - remaining
+    - sold
     fairness: weak
   - action: read
     params:
@@ -115,6 +119,8 @@ derived:
     - read
     - reject
     - request
+    affects_observables:
+    - outcome
     fairness: weak
   - action: reject
     params:
@@ -142,6 +148,8 @@ derived:
     - read
     - reject
     - request
+    affects_observables:
+    - outcome
     fairness: weak
   - action: request
     params:
@@ -165,6 +173,8 @@ derived:
     - read
     - reject
     - request
+    affects_observables:
+    - outcome
     fairness: null
   obligations:
     properties:
@@ -248,7 +258,7 @@ operations:
     required: true
     key: requests.user + requests.status = 'pending'
     evidence: 'if row is None or row[0] != "pending":'
-  failures: &id001
+  failures:
     error:
       behavior: ROLLBACK：库存、订单、请求状态都不变，请求仍是 pending
       model_effect: no_change
@@ -310,7 +320,19 @@ operations:
     required: true
     key: requests.user + requests.status = 'pending'
     evidence: 'if row is None or row[0] != "pending":'
-  failures: *id001
+  failures:
+    error:
+      behavior: ROLLBACK：库存、订单、请求状态都不变，请求仍是 pending
+      model_effect: no_change
+    timeout:
+      behavior: BEGIN IMMEDIATE 等写锁超过 30 秒抛错，事务没有开始
+      model_effect: no_change
+    conflict:
+      behavior: 写锁让并发购买依次执行；后到者在事务里看到更新后的库存
+      model_effect: no_change
+    retry:
+      behavior: 重复购买返回第一次的答复，不再扣库存
+      model_effect: no_change
   trace:
     event: reject
     trigger: COMMIT 之后

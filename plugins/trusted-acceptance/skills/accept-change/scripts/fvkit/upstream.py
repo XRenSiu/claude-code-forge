@@ -7,9 +7,11 @@ adversarial review), pstack and FizzBee. The AI-DLC `formal-verify` skill keeps 
 verbatim under `upstream/`, with an UPSTREAM.json manifest that pins repository, commit,
 license and the sha256 of every file.
 
-Two checks keep that honest:
+Three checks keep that honest:
 - `verify` — every listed file is present with the recorded bytes, every project keeps its
   license, and nothing unlisted was added. An edited "upstream" file is not upstream any more.
+- `verify_remote` — the recorded bytes are the upstream's: each file is fetched from the pinned
+  commit and compared. Without it, editing a file and its hash together would pass `verify`.
 - `citations` — a generation artifact names the upstream files it followed (project, path,
   sha256). The names must be the ones its kind requires, and with a manifest the hashes must be
   the vendored bytes: a procedure that was changed or never vendored cannot be cited.
@@ -107,6 +109,30 @@ class Upstream:
                              for pid, p in sorted(self.projects.items())},
                 "digest": sha_bytes(self.path.read_bytes())}
 
+    def verify_remote(self, fetch=None):
+        """Fetch every listed file (and license) at the pinned commit and compare it with the recorded hash."""
+        import re
+        fetch = fetch or fetch_github
+        mismatch, unreachable, checked = [], [], 0
+        for pid, p in sorted(self.projects.items()):
+            m = re.match(r"^https://github\.com/([A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+?)/?$", p["repo"])
+            if not m:
+                unreachable.append("%s: only github.com repositories can be fetched (%s)" % (pid, p["repo"]))
+                continue
+            pairs = [(p["license_file"].split("/", 1)[1], p["license_sha256"])] + [(f["upstream_path"], f["sha256"]) for f in p["files"]]
+            for path, recorded in pairs:
+                try:
+                    data = fetch(m.group(1), p["commit"], path)
+                except Exception as error:   # network, HTTP, TLS: unknown, never "intact"
+                    unreachable.append("%s:%s could not be fetched: %s" % (pid, path, error))
+                    continue
+                checked += 1
+                if sha_bytes(data) != recorded:
+                    mismatch.append("%s:%s at %s is not the vendored bytes" % (pid, path, p["commit"][:12]))
+        verdict = "TAMPERED" if mismatch else ("INCOMPLETE" if unreachable or not checked else "INTACT")
+        return {"verdict": verdict, "issues": mismatch + unreachable, "checked": checked, "remote": True,
+                "digest": sha_bytes(self.path.read_bytes())}
+
     def cite(self, project, upstream_path):
         f = self.files.get((project, upstream_path))
         require(f is not None, "%s:%s is not vendored" % (project, upstream_path))
@@ -134,6 +160,21 @@ def citations(procedure, kind, upstream=None):
         if need not in cited:
             issues.append("%s must follow upstream %s:%s (cite it in procedure)" % (kind, need[0], need[1]))
     return issues
+
+
+def fetch_github(repo, commit, path, timeout=30, limit=8 * 1024 * 1024):
+    """Raw bytes of `path` at `commit` (HTTPS; honours SSL_CERT_FILE and the usual proxy variables)."""
+    import os
+    import ssl
+    import urllib.parse
+    import urllib.request
+    cafile = os.environ.get("SSL_CERT_FILE") or os.environ.get("REQUESTS_CA_BUNDLE")
+    ctx = ssl.create_default_context(cafile=cafile if cafile and os.path.isfile(cafile) else None)
+    url = "https://raw.githubusercontent.com/%s/%s/%s" % (repo, commit, urllib.parse.quote(path))
+    with urllib.request.urlopen(url, context=ctx, timeout=timeout) as r:
+        data = r.read(limit + 1)
+    require(len(data) <= limit, "%s is larger than %d bytes" % (path, limit))
+    return data
 
 
 def load(manifest):

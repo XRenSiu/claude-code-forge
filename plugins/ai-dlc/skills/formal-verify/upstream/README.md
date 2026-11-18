@@ -17,6 +17,7 @@
 ## 规则
 
 - **不改上游文件。** `UPSTREAM.json` 记录了每个文件的仓库、提交、路径和 sha256。`fv upstream verify upstream/UPSTREAM.json` 会检查文件是否缺失、被改动，或混进了清单外的文件；AI-DLC 的 formal 闸门每次判定前也会检查。改了一个字，它就不再是上游原文。
+- **证明是上游原文。**`verify` 只能证明文件与清单一致。`fv upstream verify upstream/UPSTREAM.json --remote` 会从清单固定的提交逐个拉取上游原文比对，这样连同哈希一起改过的文件也会被判 TAMPERED；网络不通时判 INCOMPLETE，不判 INTACT。
 - **引用要带字节。** 生成产物（intake、审阅、模型审阅、brief coverage、反例分诊）在 `procedure:` 里列出所执行的上游文件，格式为 `{upstream, path, sha256}`。fvkit 会核对每类产物必须引用的流程，以及 sha256 是否等于这里收录的字节。
 - **更新走正常评审。** 把上游克隆到本地新提交后，运行
   `fv upstream refresh upstream/UPSTREAM.json --project <id> --clone <本地克隆> --commit <完整 sha>`。它只从本地复制已列出的文件并重新钉住哈希，不联网。然后像审其他改动一样审 diff，并检查 `methods.py` 的规则是否仍与新文本一致。
