@@ -1,7 +1,7 @@
 {
   "name": "trusted-acceptance",
   "description": "Independent acceptance entrypoint: frozen contracts, pinned candidates, protected-run submission, evidence analysis and failure routing — now with self-contained formal verification evidence (fvkit: AI-generated rules and models made checkable — verbatim-quoted requirement inventories, ≥2 isolated candidates compared semantically with witnesses, human rulings, fresh-context review; explicit-state model checking with fairness-aware liveness, mutant qualification, trace conformance of real code, source-map drift, contract-weakening detection, E0–E4 evidence levels) that the gate re-validates and re-executes against policy-pinned model/contract digests. Includes a strict protocol client, advisory decision core and synthetic regression tests; production trust requires a separately protected control deployment.",
-  "version": "0.9.0",
+  "version": "0.10.0",
   "author": {
     "name": "XRenSiu",
     "email": "xrensiu@gmail.com"
