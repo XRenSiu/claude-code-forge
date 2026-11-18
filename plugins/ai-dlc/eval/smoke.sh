@@ -2509,7 +2509,7 @@ expect "docs: a script missing from the index turns it red (twin)" 1 \
 expect "docs: node / edge counts in living docs equal verify_graph.py (no hand-copied numbers)" 0 \
   py "$ROOT/eval/fixtures/doc_graph_counts.py" "$ROOT"
 expect "docs: a drifted count turns it red (twin)" 1 \
-  bash -c "t=\"$TMP/dgc\"; rm -rf \"\$t\"; mkdir -p \"\$t/docs\" \"\$t/skills/ai-dlc\"; cp -R '$ROOT/skills/ai-dlc/scripts' '$ROOT/skills/ai-dlc/assets' \"\$t/skills/ai-dlc/\"; sed 's/58 节点 · 83 边/52 节点 · 67 边/' '$ROOT/docs/ARCHITECTURE.md' > \"\$t/docs/ARCHITECTURE.md\"; python3 '$ROOT/eval/fixtures/doc_graph_counts.py' \"\$t\""
+  bash -c "t=\"$TMP/dgc\"; rm -rf \"\$t\"; mkdir -p \"\$t/docs\" \"\$t/skills/ai-dlc\"; cp -R '$ROOT/skills/ai-dlc/scripts' '$ROOT/skills/ai-dlc/assets' \"\$t/skills/ai-dlc/\"; sed 's/59 节点 · 86 边/52 节点 · 67 边/' '$ROOT/docs/ARCHITECTURE.md' > \"\$t/docs/ARCHITECTURE.md\"; python3 '$ROOT/eval/fixtures/doc_graph_counts.py' \"\$t\""
 expect "docs: the evaluation doc still states the plugin is not L2-verified" 0 \
   bash -c "grep -q 'static_only' '$ROOT/docs/evaluation.md' && grep -q '出题人与被测者同源' '$ROOT/docs/evaluation.md'"
 

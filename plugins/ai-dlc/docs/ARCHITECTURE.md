@@ -209,7 +209,7 @@ intake → track → issue → branch → contract → g2 → cards → implemen
 G2 跑契约 v2 校验，implement 跑卡 lint，pr 读 final-state.json 与达标比对报告，archive 读发布记录里的 post-deploy 行，
 并在 implement / acceptance / pr / merge 重跑锁校验——`/commit` 与 `/pr` 的预门能被裸 git 绕开，状态机绕不开。
 
-执行图 `graph.yaml`（58 节点 · 83 边）把同一件事声明成数据：节点带边界身份
+执行图 `graph.yaml`（59 节点 · 86 边）把同一件事声明成数据：节点带边界身份
 （读什么 / 不许读什么 / 写什么 / 有什么权限），边带类型与守卫，回边标明属于哪个环。
 `graph check` 让它与状态机的阶段列表**互相断言**——图和代码互为对方的测试。
 `verify_graph.py` 另外检五条性质：写范围有界、去掉回边后是 DAG 且每个圈归属一个环、

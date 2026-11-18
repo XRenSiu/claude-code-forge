@@ -211,7 +211,7 @@ flag 不等于 reject。预门过了但带 flag，意思是「机器判不了这
 | `formal-verify/assets/formal-verification.yml` | GitHub Actions | 每个 PR 的 `fv ci`（vendored 检查器、按策略分层、回执作为 artifact） |
 | `formal-verify/assets/example-ticket/` | `eval/test_formal.py`、smoke | 抢票示例：需求清单、两份规则候选与分歧裁决、审阅、两份模型候选与分歧裁决、合同、初版设计（反例）、修正设计（3 个 mutant）、源码映射、策略、向量、真实 SQLite 实现 + harness + 并发测试 |
 | `ai-dlc/assets/sizing.yaml` | `aidlc_state.py size|plan|advance`、`verify_sizing.py` | v2：六条推导规则（带 `needs`）+ **`stages:` 广度网格** + `never_skippable`（三道门在里面）+ 每档的 `depth` / `test_strategy` + `recompose` 约束 + 预算覆盖 |
-| `ai-dlc/assets/graph.yaml` | `verify_graph.py`、`aidlc_state.py graph` | 58 节点 / 83 边；节点带 `reads` / `must_not_read` / `writes` / `authority` |
+| `ai-dlc/assets/graph.yaml` | `verify_graph.py`、`aidlc_state.py graph` | 59 节点 / 86 边；节点带 `reads` / `must_not_read` / `writes` / `authority` |
 | `ai-dlc/assets/loops.yaml` | `verify_loop.py`、`aidlc_state.py loops` | 七个环的契约：level / timescale / generator ≠ verifier / stop 四键（grill 环 v1.8.0 加入） |
 | `ai-dlc/assets/triggers.yaml` | 人 | 每个环绑到哪个原生触发（`/goal` `/loop` Stop hook `/schedule`） |
 | `acceptance-fleet/assets/evaluators.yaml` | `pick_evaluators.py` | 供应商声明与探测命令；每个槽的同源盲区排名 |
