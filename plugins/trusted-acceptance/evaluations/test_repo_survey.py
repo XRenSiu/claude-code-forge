@@ -374,6 +374,36 @@ class Contracts(unittest.TestCase):
         self.assertEqual(classify(1, "CONFIRMED"), "error")
         self.assertEqual(classify(0, "done"), "error")
 
+    def test_classify_reads_verdict_lines_not_words(self):
+        # bug_validator: "Print exactly CONFIRMED or NOT CONFIRMED ... (with any additional detail after the keyword)";
+        # "ERROR or non-zero exit" is an error. Each of these was read as confirmed by a word search (found while
+        # checking CrossHair contracts on the verdict functions, PostHolder entrance C target T6).
+        self.assertEqual(classify(0, "ERROR: probe crashed before the CONFIRMED check"), "error")
+        self.assertEqual(classify(0, "setup ok\nERROR: assertion\nCONFIRMED - x"), "error")
+        self.assertEqual(classify(0, "NOT  CONFIRMED - sold 1"), "error")          # no verdict keyword
+        self.assertEqual(classify(0, "the old run was CONFIRMED stopped"), "error")  # keyword not at the line start
+        self.assertEqual(classify(0, "CONFIRMED - a\nNOT CONFIRMED - b"), "error")  # undecided
+        self.assertEqual(classify(0, "log line\n  CONFIRMED - actual 2\n"), "confirmed")
+        self.assertEqual(classify(0, "NOT CONFIRMED \u2014 actual matched expected: 1"), "not_confirmed")
+
+    def test_contracts_receipt_validates_and_catches_tampering(self):
+        out = self.tmp / "contracts.receipt.json"
+        p = subprocess.run([sys.executable, str(FV), "contracts", "check", "--specs", str(EX / "survey/function-specs.json"),
+                            "--upstream", str(FORMAL / "upstream/UPSTREAM.json"), "--run", "--out", str(out)],
+                           capture_output=True, text=True)
+        self.assertEqual(p.returncode, 0, p.stdout + p.stderr)
+        r = json.loads(out.read_text())
+        self.assertEqual((r["command"], r["verdict"], r["evidence_level"]), ("contracts", "COMPLETE", "E0"))
+        validate(r)
+        forged = copy.deepcopy(r)
+        forged["result"]["reruns"][0]["rerun"] = "not_confirmed"
+        with self.assertRaises(FvError):
+            validate(forged)
+        forged = copy.deepcopy(r)
+        forged["verdict"] = "GAPS"
+        with self.assertRaises(FvError):
+            validate(forged)
+
 
 class CodeVerifiers(unittest.TestCase):
     """Adapter ceilings. CrossHair strings are real output of crosshair-tool 0.0.113; Kani's are from its docs."""
@@ -409,6 +439,26 @@ class CodeVerifiers(unittest.TestCase):
         self.assertEqual(parse("verus", "verification results:: 7 verified, 1 errors\n", "", 1)["verdict"], "FAIL")
         self.assertEqual(parse("lean", "warning: ./P.lean:3:8: declaration uses 'sorry'\n", "", 0)["verdict"], "INCOMPLETE")
         self.assertEqual(parse("lean", "Build completed successfully.\n", "", 0)["verdict"], "PASS")
+
+    def test_relative_spec_and_tool_paths(self):
+        # The engine runs in the spec's directory; relative --spec / --tool must still name the same files.
+        import os
+        from fvkit.external import run as run_external
+        work = Path(tempfile.mkdtemp(dir=_TMP))
+        (work / "proofs").mkdir()
+        (work / "proofs/verdicts.py").write_text("def f(x: int) -> int:\n    return x\n")
+        (work / "bin").mkdir()
+        (work / "bin/fake-crosshair").write_text('#!/bin/sh\nfor a; do last=$a; done\n[ -f "$last" ] || { echo "File not found: $last"; exit 2; }\n'
+                                                 'echo "$last:2: info: Confirmed over all paths."\n')
+        (work / "bin/fake-crosshair").chmod(0o755)
+        here = os.getcwd()
+        os.chdir(work)
+        try:
+            r = run_external("crosshair", ["proofs/verdicts.py"], "out", tool="bin/fake-crosshair")
+        finally:
+            os.chdir(here)
+        self.assertEqual(r["verdict"], "NO_COUNTEREXAMPLE_FOUND", (work / "out/stdout.txt").read_text())
+        self.assertEqual(r["inputs"]["specs"][0]["path"], "proofs/verdicts.py")   # recorded as given
 
     def test_receipt_ceiling(self):
         r = {"settings": {"engine": "crosshair"}, "evidence_level": "E1", "verdict": "PASS", "result": {}}

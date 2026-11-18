@@ -34,7 +34,7 @@ CLAIMS = {
 }
 UUID = re.compile(r"[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\Z")
 COMMANDS = ("lint", "check", "simulate", "mutate", "qualify", "trace", "conform", "source-map", "diff-contract",
-            "external", "ci", "gen-tests", "generate", "implement", "props")
+            "external", "ci", "gen-tests", "generate", "implement", "props", "contracts")
 POSITIVE = ("PASS", "BOUNDED_PASS", "QUALIFIED", "CONFORMS", "FRESH", "NOT_WEAKENED", "SATISFIED", "READY", "IMPLEMENTS",
             "ABLE_TO_FAIL", "NO_COUNTEREXAMPLE_FOUND")
 
@@ -234,6 +234,13 @@ def validate(r, model=None, contract=None, rerun=False, min_level=None, expect_v
         require(again == res["reasons"], "props verdict contradicts its recorded runs")
         require(r["verdict"] == ("ABLE_TO_FAIL" if not again else "WEAK"), "props verdict contradicts its reasons")
         require(isinstance(res.get("source"), dict) and "head" in res["source"], "props receipt lacks its source binding")
+    elif cmd == "contracts":
+        from .contracts import decide as decide_contracts
+        res = r["result"]
+        require(r["evidence_level"] == "E0", "function contracts are review-level (E0); a CONFIRMED probe is a finding, not a pass")
+        again = decide_contracts(res, r["verdict"])
+        require(not again, "contracts verdict contradicts its recorded probes: " + "; ".join(again))
+        require(isinstance(res.get("source"), dict) and "files" in res["source"], "contracts receipt lacks its source binding")
     elif cmd == "external":
         from .external import reparse
         reparse(r, base_dir)

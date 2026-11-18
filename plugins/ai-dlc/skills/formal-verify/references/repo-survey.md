@@ -75,10 +75,10 @@ $FV props run   --props props.json --out <回执> [--work <新目录>]          
 ## C5 函数契约：fv-function-specs
 
 ```bash
-$FV contracts check --specs function-specs.json --upstream $UP --run
+$FV contracts check --specs function-specs.json --upstream $UP --run [--out <回执>]    # 回执 E0，记录每次重跑；fv validate 重新推导
 ```
 
-检查：规格不用 FM-Agent 规则 3 列出的含糊词、不叙述调用了哪个 helper（规则 2）；被调函数不在调用者之前的层；每个函数都有 MATCH / MISMATCH；MISMATCH 有四项 gaps 和探针。`--run` 从仓库根目录重跑每个探针，按 bug_validator Step 2e 从输出重新推导（先判 NOT CONFIRMED，因为它包含 CONFIRMED 这个词；非零退出是 error），和记录不一致就拒绝。
+检查：规格不用 FM-Agent 规则 3 列出的含糊词、不叙述调用了哪个 helper（规则 2）；被调函数不在调用者之前的层；每个函数都有 MATCH / MISMATCH；MISMATCH 有四项 gaps 和探针。`--run` 从仓库根目录重跑每个探针，按 bug_validator Step 2e 从输出重新推导，和记录不一致就拒绝。判定看**行首关键字**，不搜全文的词（原文：“Print exactly `CONFIRMED` or `NOT CONFIRMED` … with any additional detail after the keyword”）：非零退出或任何一行以 ERROR 开头是 error；一行以 NOT CONFIRMED 开头是 not_confirmed；一行以 CONFIRMED 开头是 confirmed；两种判定行都有、或都没有，是 error。`ERROR: … CONFIRMED …`、`NOT  CONFIRMED`（两个空格）在 1.4.0 曾被读成 confirmed，1.4.1 起不再如此（PostHolder 入口 C 的 T6 发现）。`--out` 写 E0 回执（`contracts`），`fv validate` 用记录的输出重新推导每个探针的状态。
 
 示例的探针 B1 经 `tickets` 模块的公开接口复现了 check-then-act 变体的超卖：`CONFIRMED - answers ['success', 'success'], sold 2 of 1, remaining -1`。
 

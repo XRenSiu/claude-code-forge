@@ -184,12 +184,15 @@ def run(engine, spec_files, out_dir, tool=None, config=None, invariants=(), boun
     specs = [Path(p) for p in spec_files]
     for p in specs + ([Path(config)] if config else []):
         require(p.is_file(), "missing spec/config file: %s" % p)
-    argv = argv_for(engine, tool, specs[0], config, invariants, bound, samples, seed, extra)
+    # The engine runs in the spec's directory, so every path it is given must not depend on our working directory:
+    # a relative --spec / --config / --tool would otherwise be resolved a second time from there ("File not found").
     tool_path = Path(tool) if tool and Path(tool).is_file() else None
+    argv = argv_for(engine, str(tool_path.resolve()) if tool_path else tool, specs[0].resolve(),
+                    Path(config).resolve() if config else None, invariants, bound, samples, seed, extra)
     exit_code, stdout, stderr, error = None, b"", b"", None
     t0 = time.monotonic()
     try:
-        proc = subprocess.run(argv, cwd=str(specs[0].parent), capture_output=True, timeout=timeout)
+        proc = subprocess.run(argv, cwd=str(specs[0].resolve().parent), capture_output=True, timeout=timeout)
         exit_code, stdout, stderr = proc.returncode, proc.stdout[:MAX_OUTPUT], proc.stderr[:MAX_OUTPUT]
     except FileNotFoundError:
         error = "engine executable not found: %s" % argv[0]

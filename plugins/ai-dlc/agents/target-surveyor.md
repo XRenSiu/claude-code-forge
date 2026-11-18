@@ -58,4 +58,4 @@ model: sonnet
 - 规格写**做什么**，不写**怎么做**：不写“调用了某个 helper”，不用“appropriate / correctly handles / as expected / processes / manages / properly / validates the input / handles the case”。规格写的是调用者需要的**正确**行为，不记录现有 bug：代码做不到的那部分就是 bug（规则 5）。
 - 自顶向下分层：先写调用者，调用者在 `callees` 里写它对被调函数的期望，被调函数在同层（环）或更晚的层。
 - 每个函数都要有推理结果 MATCH / MISMATCH。MISMATCH 写 `gaps`（spec_claim、actual_behavior、code_evidence、trigger_condition），再按 bug_validator 写探针：**只经公开入口**加载被测代码，打印 `CONFIRMED` 或 `NOT CONFIRMED`，最多 3 次尝试，记下 `attempts` 与 `confirmation_status`。
-- `fv contracts check --specs function-specs.json --upstream UP/UPSTREAM.json --run`：重跑每个探针，从输出重新推导状态；记录的 CONFIRMED 复现不了会被拒绝。复现的 CONFIRMED 是真实代码里的缺陷，路由 `fv_implementation_defect`。MATCH 只是推理（E0），不是证明。
+- `fv contracts check --specs function-specs.json --upstream UP/UPSTREAM.json --run [--out <回执>]`：重跑每个探针，按行首关键字从输出重新推导状态（判定行以 `CONFIRMED` / `NOT CONFIRMED` 开头，`ERROR` 行是 error）；记录的 CONFIRMED 复现不了会被拒绝。复现的 CONFIRMED 是真实代码里的缺陷，路由 `fv_implementation_defect`。MATCH 只是推理（E0），不是证明。

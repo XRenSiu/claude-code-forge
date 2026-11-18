@@ -53,14 +53,25 @@ def _short(name):
 
 
 def classify(exit_code, stdout):
-    """bug_validator Step 2e. NOT CONFIRMED is tested first: it contains the word CONFIRMED."""
+    """bug_validator Step 2e, read by verdict lines.
+
+    The probe must "Print exactly `CONFIRMED` or `NOT CONFIRMED` to stdout (with any additional detail
+    after the keyword)", and "`ERROR` or non-zero exit" is an error. So the verdict is the keyword a line
+    starts with, never a word somewhere in the output: "ERROR: crashed before the CONFIRMED check" is an
+    error and "NOT  CONFIRMED" is no verdict at all. A line starting with ERROR is an error (conservative:
+    an error never fabricates a finding); a probe that prints both a CONFIRMED and a NOT CONFIRMED line
+    has not decided and is an error too.
+    """
     if exit_code != 0:
         return "error"
-    if re.search(r"\bNOT CONFIRMED\b", stdout):
-        return "not_confirmed"
-    if re.search(r"\bCONFIRMED\b", stdout):
-        return "confirmed"
-    return "error"
+    heads = [line.strip() for line in stdout.splitlines()]
+    if any(h.startswith("ERROR") for h in heads):
+        return "error"
+    no = any(re.match(r"NOT CONFIRMED\b", h) for h in heads)
+    yes = any(re.match(r"CONFIRMED\b", h) for h in heads)
+    if no and yes:
+        return "error"
+    return "not_confirmed" if no else ("confirmed" if yes else "error")
 
 
 def _spec_lint(text, names, where):
@@ -168,10 +179,12 @@ def check_specs(path, upstream=None, run=False, timeout=300):
             try:
                 p = subprocess.run(argv, cwd=str(root), capture_output=True, text=True, timeout=timeout, env=env)
                 status, tail, code = classify(p.returncode, p.stdout), (p.stdout + p.stderr)[-OUTPUT_TAIL:], p.returncode
+                stdout, complete = p.stdout[-OUTPUT_TAIL:], len(p.stdout) <= OUTPUT_TAIL
             except (OSError, subprocess.TimeoutExpired) as error:
-                status, tail, code = "error", str(error), None
+                status, tail, code, stdout, complete = "error", str(error), None, "", False
             reruns.append({"id": v["id"], "function": r["function"], "recorded": v["confirmation_status"], "rerun": status,
-                           "exit": code, "millis": int((time.monotonic() - started) * 1000), "output_tail": tail})
+                           "exit": code, "millis": int((time.monotonic() - started) * 1000), "output_tail": tail,
+                           "stdout_tail": stdout, "stdout_complete": complete})
             if status != v["confirmation_status"]:
                 issues.append("%s: probe %s now says %s, the document records %s (re-derived from its own output)"
                               % (w, v["id"], status, v["confirmation_status"]))
@@ -186,4 +199,17 @@ def check_specs(path, upstream=None, run=False, timeout=300):
             "reruns": reruns, "source": {"files": files}, "digest": sha_bytes(Path(path).read_bytes())}
 
 
-__all__ = ["check_specs", "classify", "VAGUE"]
+def decide(res, verdict):
+    """Re-derive a contracts receipt from what it recorded (used by `fv validate`)."""
+    reasons = []
+    if verdict != ("COMPLETE" if not res["issues"] else "GAPS"):
+        reasons.append("verdict %s contradicts %d recorded issues" % (verdict, len(res["issues"])))
+    for r in res.get("reruns") or []:
+        if r.get("stdout_complete") and r["rerun"] != classify(r["exit"], r.get("stdout_tail") or ""):
+            reasons.append("probe %s: the recorded output re-derives %s, not %s" % (r["id"], classify(r["exit"], r["stdout_tail"]), r["rerun"]))
+        if r["rerun"] != r["recorded"] and not any(r["id"] in x for x in res["issues"]):
+            reasons.append("probe %s re-ran as %s against a recorded %s without an issue" % (r["id"], r["rerun"], r["recorded"]))
+    return reasons
+
+
+__all__ = ["check_specs", "classify", "decide", "VAGUE"]

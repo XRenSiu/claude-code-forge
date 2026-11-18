@@ -7,6 +7,7 @@ Exit codes: 0 success (PASS / QUALIFIED / CONFORMS / FRESH / NOT_WEAKENED / vali
 """
 import argparse
 import json
+import subprocess
 import sys
 from pathlib import Path
 
@@ -580,7 +581,15 @@ def cmd_props(args):
 
 def cmd_contracts(args):
     from .contracts import check_specs
+    from .receipt import make, now
+    started = now()
     r = check_specs(args.specs, _upstream(args), run=args.run, timeout=args.timeout)
+    if args.out:
+        head = subprocess.run(["git", "-C", str(Path(args.specs).resolve().parent), "rev-parse", "HEAD"], capture_output=True, text=True)
+        r["source"]["head"] = head.stdout.strip() if head.returncode == 0 else None
+        receipt = make("contracts", {"specs": {"path": str(args.specs), "digest": r["digest"]}}, {"run": bool(args.run)},
+                       r, r["verdict"], "E0", started)
+        r = dict(r, receipt=_save(args, receipt))
     emit(r)
     return EXIT[r["verdict"]]
 
@@ -735,7 +744,7 @@ def parser():
                                          "probes re-run to re-derive CONFIRMED / NOT CONFIRMED")
     s.add_argument("action", choices=["check"]); s.add_argument("--specs", required=True); s.add_argument("--upstream")
     s.add_argument("--run", action="store_true", help="re-run every probe from the repository root")
-    s.add_argument("--timeout", type=int, default=300)
+    s.add_argument("--timeout", type=int, default=300); s.add_argument("--out", help="new receipt path (E0; reruns kept)")
     s.set_defaults(fn=cmd_contracts)
     s = sub.add_parser("intake-check", help="rules intake: Spec Kit clarify + Quint from-requirements carried out completely")
     s.add_argument("intake"); s.add_argument("--requirements"); s.add_argument("--contract"); s.add_argument("--upstream", help=up_help)

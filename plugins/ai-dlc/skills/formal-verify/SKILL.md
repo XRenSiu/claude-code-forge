@@ -100,7 +100,7 @@ user-invocable: true
 | C2 选目标 | `target-surveyor`（survey）：六个“正确”话题（能看到的给锚点，看不到的问维护者，≤5 问，不猜）；每个目标一句承诺、一句危害、逐字锚点、为什么测试够不着、路由、工具与诚实的范围；不做的簇和已有测试写理由 | `targets.json`（fv-targets） | `fv survey check`：READY；仓库变了判 STALE |
 | C3 按路由走 | `stateful-model` → 入口 B；`code-verifier` → `fv external --engine kani|crosshair|cbmc|esbmc|dafny|verus|lean`；`property-lift` → `fv props`；`function-contracts` → `fv contracts`；`generated-inputs` → 生成输入的测试再走 `fv props` | 各自的回执 | 见下 |
 | C4 抬升已有测试 | `target-surveyor`（lift）写 fv-props：检查逐字、不可被构建删掉、覆盖见证、每条性质至少一个一行破坏；`formal-reviewer`（props）按 review.md F5 / F8 审，判弱必须给出一行改动 | `props.json` · `props-review.json` | `fv props check --review`：READY；`fv props run`：在隔离副本里每个检查被走到、每个破坏以自己的标记失败 → ABLE_TO_FAIL（E1） |
-| C5 函数契约 | `target-surveyor`（contracts）按 FM-Agent 规则写行为规格（做什么，不写怎么做；自顶向下分层），每个函数 MATCH / MISMATCH；MISMATCH 写探针，只经公开入口 | `function-specs.json` | `fv contracts check --run`：每个探针重跑，从输出重新推导 CONFIRMED / NOT CONFIRMED；复现的 CONFIRMED 路由 `fv_implementation_defect` |
+| C5 函数契约 | `target-surveyor`（contracts）按 FM-Agent 规则写行为规格（做什么，不写怎么做；自顶向下分层），每个函数 MATCH / MISMATCH；MISMATCH 写探针，只经公开入口 | `function-specs.json` | `fv contracts check --run [--out]`：每个探针重跑，按行首关键字重新推导 CONFIRMED / NOT CONFIRMED；复现的 CONFIRMED 路由 `fv_implementation_defect`；回执 E0 |
 
 代码级验证器的上限写死在适配器里：Kani / Dafny / Verus / Lean 的 PASS 是 E4，但什么都没验证（0 个 harness、`sorry`、超时）不是 PASS；CBMC / ESBMC 最多 BOUNDED_PASS；CrossHair 最多 NO_COUNTEREXAMPLE_FOUND（E1），即使它说 “Confirmed over all paths”。
 
