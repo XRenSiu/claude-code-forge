@@ -78,3 +78,22 @@ $FV ci --policy policy.yaml --base HEAD~1 --all --out /tmp/ticket-ci            
 `vectors.json` 是 `gen-tests` 的产物，已经入库。模型或合同一变，`fv ci` 就会要求重新生成。
 
 实现契约带来过一次真实的代码改动：契约要求“出错 / 超时后重试”必须安全，而最初的 `purchase` 被重复调用会再扣一次库存，`request` 重复提交会抛主键异常（code-first brief 里的 D-2）。现在的代码在事务里先检查请求状态，并改用 `INSERT OR IGNORE`；契约的 `idempotency.evidence` 指向这两处代码。删掉其中一处，`impl-verify` 就判 NOT_IMPLEMENTED。
+
+## 入口 C：只给仓库，先普查再选目标（`survey/`）
+
+假装只拿到 `impl/` 这个“仓库”，没有任何需求文档。`survey/` 里的目标、回答、审阅和推理是为演示而撰写的（回答人是示例），探针和破坏是真实可跑的。
+
+```bash
+S=$EX/survey
+$FV survey scan --root $EX/impl --out $OUT/survey.json --history 0               # 26 个信号；C1 tickets.py（transaction / quantity / state-machine）
+$FV survey check --survey $S/survey.json --targets $S/targets.json --upstream $UP # READY：六个“正确”话题、两个由人回答的问题、三个目标
+# T1 stateful-model → 就是上面的入口 B（model.yaml、source-map.yaml、code-first/）
+# T2 property-lift：把 test_properties.py 的 NoOversell / Conservation 抬成能失败的检查
+$FV props check --props $S/props.json --review $S/props-review.json --upstream $UP  # READY（OSS Verify 第 3 步 + review.md F 节）
+$FV props run --props $S/props.json --out $OUT/props.json                          # ABLE_TO_FAIL（E1）：两个一行破坏都以各自的标记失败
+$FV validate $OUT/props.json --expect ABLE_TO_FAIL
+# T3 function-contracts：FM-Agent 行为规格 + 经公开入口的探针
+$FV contracts check --specs $S/function-specs.json --upstream $UP --run          # COMPLETE；B1 重跑复现：sold 2 of 1，路由 fv_implementation_defect
+```
+
+把 `props.json` 里 P1 的破坏改成不影响结果的一行（比如注释里的字），`props run` 判 WEAK（MISSED）：从没见过失败的检查不算检查。

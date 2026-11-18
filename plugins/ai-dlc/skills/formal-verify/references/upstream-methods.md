@@ -26,6 +26,9 @@
 | 05 实现契约 | model-builder（impl-contract 模式） | `quint-llm-kit/.../skills/quint-execute-spec/SKILL.md` Phase 1–2；`specula/skills/spec_generation/references/instrumentation-spec-format.md`；`spec-kit/templates/commands/plan.md`、`tasks.md`；`pstack/skills/create-formal-verification-skill/SKILL.md` | `impl-contract.yaml`（fv-impl-contract） | `fv impl-contract check`：derived 一节由 fvkit 从 QUALIFIED 模型推导、不可改写；每个变量、观测量、动作都有代码对应；推导要求原子的动作有机制和证据；四类故障只能落在模型允许的状态；每条性质、mutant、假设都有验收项；至少一个负对照 |
 | 06 编码 | card-implementer | `quint-execute-spec` Phase 2–4（先计划、每步过验证闸、全量验证、绝不改规格） | 代码 | `lint_cards.py` 第 7 项：每个契约操作恰好归一张卡，卡的白名单覆盖操作的文件，任何卡都不能写契约 |
 | 07 实现一致性 | `fv impl-verify` + formal-reviewer（impl 模式） | `spec-kit/templates/commands/analyze.md`；`quint-execute-spec` Phase 1 第 3、4 问与 Phase 4；`specula/skills/harness-generation/guide.md`；`specula/skills/bug-confirmation/phases/02-reproduction.md`；`pstack/skills/maintain-formal-verification-skill/SKILL.md` | `impl-review.yaml`（fv-impl-review）+ `implement` 回执（E3） | 约束的 evidence 逐字在代码里；测试通过、负对照失败；真实轨迹符合模型且每个操作被执行过；反例重放被拒；审阅覆盖每个操作、处置每个模型外行为、确认每条假设、钉住被审代码 |
+| C2 选目标（入口 C） | target-surveyor（survey 模式） | `pstack/skills/create-formal-verification-skill/SKILL.md`（Choose the target from the code、Let the question choose the tool）；`oss-verify/.claude/skills/add-project/SKILL.md` 第 1 步（六个话题，不猜）；`fm-agent/md/workflow_generate_phases.md`（分模块、排除测试） | `targets.json`（fv-targets） | `fv survey check`：普查摘要一致且未过期；六话题 observed（逐字锚点）/ answered（人回答）/ not_applicable（理由）；≤5 问；目标锚点逐字、一句承诺一句危害、工具与语言匹配且已安装或给出安装方式、范围诚实；前 N 个产品簇与每个已有 fuzz / 性质测试要么被采纳要么写理由 |
+| C4 性质抬升（入口 C） | target-surveyor（lift 模式）+ formal-reviewer（props 模式，全新上下文） | `oss-verify/.claude/skills/add-project/SKILL.md` 第 3 步；`oss-verify/review.md` F 节 | `props.json`（fv-props）+ `props-review.json`（fv-props-review） | `fv props check`：检查逐字且唯一、不是会被构建删掉的形式、有见证与 fires_with、每条性质至少一个一行破坏（old 在该行恰好一次）、期望值来源与方向声明；审阅覆盖每个检查，判弱必须给出一行改动；`fv props run`：隔离副本里见证通过、每个破坏以自己的标记失败 |
+| C5 函数契约（入口 C） | target-surveyor（contracts 模式） | `fm-agent/md/system_prompt.md`、`fm-agent/md/workflow_spec_step4_batch.md`、`fm-agent/md/bug_validator.md` | `function-specs.json`（fv-function-specs）+ 探针 | `fv contracts check [--run]`：规则 2 / 3、自顶向下分层、每个函数有结果、MISMATCH 有 gaps 与探针；`--run` 重跑探针并重新推导状态 |
 | 维护 | 编排者 | `pstack/skills/create-formal-verification-skill`、`maintain-formal-verification-skill` | 源码映射锁、mutant、`fv ci` | 能失败（mutant 被杀）；发现保持为发现（diff-contract）；与代码同步（source-map）；`fv ci` 每次重跑 07 |
 
 `gen-evidence rules|model`（以及 AI-DLC 的 `formal generation`）把上表汇总起来：缺任何一项都是 NOT_READY。AI-DLC 闸门每次推进时都会重算一遍，并先确认 `upstream/UPSTREAM.json` 是 INTACT。
@@ -66,6 +69,8 @@ FizzBee（`fizzbee/.claude/skills/fizz-spec`）：role → 每个参与者一组
 | Quint quint-execute-spec：计划先给用户看；每步用 `quint run` / `quint verify` 当验证闸 | 计划写进实现契约的 `plan` 与任务卡，经 `lint_cards` 与 AI-DLC 的门；验证闸换成契约里的验收测试（性质、并发、MBT），由 `fv impl-verify` 统一跑 | fvkit 模型不在编码时运行；对代码有意义的闸是对代码跑的测试 |
 | Specula harness-generation：对源码插桩，Trace.tla 校验轨迹 | 项目自己的 harness 驱动公开接口、写 fv-trace；`fv impl-verify` 逐步对照模型并检查每个动作都出现过 | 不需要 TLA+ 工具链；轨迹格式见 modeling-language.md |
 | Spec Kit analyze：只读的跨制品报告，不写文件 | 审阅结果写进 `impl-review.yaml`，按同样的分级与覆盖表检查 | 闸门需要可检查的文件 |
+| OSS Verify：maintainer 回答问题、开 PR、Theorem 的 CI 跑覆盖率与破坏、Claude 按 review.md 写一条 PR 评论 | 问题写进 fv-targets，由人回答；覆盖见证与破坏由 `fv props run` 在隔离副本里跑（不依赖 llvm-cov：以见证通过、破坏输出含该检查的 `fires_with` 为准）；审阅写成 fv-props-review | 不假设 C/C++ 与 libFuzzer；任何语言的测试命令都能跑；“检查确实被走到”由破坏时以自己的标记失败来证明，可选 `reach_marker` 再证明未改代码上也走到 |
+| FM-Agent：OpenCode 批量生成 `.spec.json` / `.info.json`，推理结果与验证结果各写文件 | 合成一份 fv-function-specs；探针命令由文档给出，`fv contracts check --run` 重跑 | 一份文件便于钉摘要与审阅；重跑而不信任记录的状态 |
 | pstack：为项目生成一个专属的 verify skill | 不生成专属 skill，统一使用 `fv` 与本 Skill；“能失败 / 与代码同步 / 诚实的范围”由 mutant、source-map 锁与 handoff 承担 | 一套工具覆盖所有模块，闸门才能统一检查 |
 
 ## 四、直接使用上游工具（已安装时）

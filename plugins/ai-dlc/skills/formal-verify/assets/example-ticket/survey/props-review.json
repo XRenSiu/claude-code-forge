@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "kind": "fv-props-review",
+  "props_digest": "sha256:90334ab2325b073f81240ed260766c4bceceee624e43c538f635b49b3d437f18",
+  "reviewer": {
+    "id": "example-reviewer",
+    "context": "fresh"
+  },
+  "procedure": [
+    {
+      "upstream": "oss-verify",
+      "path": "review.md",
+      "sha256": "sha256:a7bae6d16660b7efa5705ff1ab648582c55428f459a32e7f257877c852dec83e"
+    }
+  ],
+  "checks": [
+    {
+      "id": "P1",
+      "verdict": "pass",
+      "evidence": "test_properties.py:48 — the expected bound is stock, the schedule's own input (review F8). No single line in tickets.py both oversells and keeps sold <= stock: an oversell writes a 'success' order, which observe() counts (tickets.py:80)."
+    },
+    {
+      "id": "P2",
+      "verdict": "pass",
+      "evidence": "tickets.py:78-83 — a change in observe() that hides sales makes sold + remaining fall below stock after the first sale, so Conservation fires; remaining is read from the tickets table, not computed by purchase()."
+    }
+  ],
+  "notes": "Illustrative fresh-context review. Caveat kept for the maintainer, not a review F5/F8 failure: sold is counted by TicketService.observe(), code that ships with the service; a change there could blind NoOversell, but only together with a second change that oversells."
+}

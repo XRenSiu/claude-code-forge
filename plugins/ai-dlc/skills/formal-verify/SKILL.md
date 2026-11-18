@@ -11,9 +11,12 @@ description: >-
   模型检查、变异资格、真实代码轨迹一致性、源码映射漂移、契约弱化检测和风险分级 CI。新需求先建模
   再写代码；已有代码先用当前代码的真实轨迹校准 AI 建的现状模型，再找反例。
   用于“形式化验证”“模型检查”“不变量”“并发 / 一致性 / 幂等 / 超卖 / 重复执行”“TLA+ / Quint”
-  “这个设计会不会出错”。纯函数用性质测试，UI 用 E2E，不走这里。
+  “这个设计会不会出错”。也用于“给已有仓库生成形式化验证”“这个仓库哪里值得验证”：入口 C 先普查整个仓库
+  （pstack 从代码选目标、Theorem OSS Verify 问清“正确”与能失败的检查、FM-Agent 函数契约与探针），
+  把每个目标路由到状态模型（入口 B）、代码级验证器（Kani / CrossHair / CBMC / ESBMC / Dafny / Verus / Lean）、
+  抬升已有测试或函数契约。纯函数用性质测试，UI 用 E2E，不走这里。
   前置：Python 3.9+（自带 fvkit，仅标准库）；YAML 资产需要 PyYAML；能派发隔离子 agent 的宿主。
-argument-hint: "<需求或模块> [--entrance spec-first|code-first] [--slug <aidlc slug>] [--n 2]"
+argument-hint: "<需求、模块或仓库> [--entrance spec-first|code-first|repo-survey] [--slug <aidlc slug>] [--n 2]"
 version: 1.4.0
 user-invocable: true
 ---
@@ -85,6 +88,21 @@ user-invocable: true
 | B2–B3 | 先由一个 `model-builder`（analysis）按 Specula code_analysis 写 modeling brief；再走 G-6 到 G-8，候选按 from-code / tlaplus-from-source / Specula spec_generation 读代码，找出事务和锁的边界，写现状模型和 source-map 候选；`fv source-map verify` 不能有 BROKEN | 关键动作都映射到真实代码；brief coverage 完整 |
 | B3′ 校准 | 用 harness 在**当前代码**上跑出轨迹，`formal calibrate --model <现状模型>`：轨迹必须 CONFORMS | 不一致说明 AI 建的模型不像这份代码，先修模型，不分诊反例 |
 | B4 | `fv check` 找反例 → `fv gen-tests --strategy counterexamples` → harness 在真实代码里重放 | 能在真实代码里重放的才是缺陷 |
+
+## 入口 C · 已有仓库、还没有点名的需求：先普查，再选目标
+
+用户只给了一个仓库（“给这个仓库做形式化验证”）时，不要自己挑一个模块开始建模。先回答“这里什么值得验证、用什么验证”，答案要能被脚本检查。
+方法来自上游原文：pstack `create-formal-verification-skill`（从代码选目标、让问题选工具）、Theorem OSS Verify `add-project`（问清“正确”是什么；从已有 fuzz / 性质测试出发；检查要能失败）与 `review.md`（弱检查）、FM-Agent（分模块；函数级行为规格；经公开入口的探针）。详见 [references/repo-survey.md](references/repo-survey.md)。
+
+| 步 | 做什么 | 产物 | 过关条件 |
+|---|---|---|---|
+| C1 普查 | `fv survey scan --root <仓库> --out survey.json`：语言、测试文件、已有检查（fuzz 目标、性质测试、形式化规格、代码证明）、9 类风险信号（逐行锚点）、修复提交历史、已安装的验证器、按文件聚成的簇 | `survey.json` | 确定性，可重算；分数只排阅读顺序 |
+| C2 选目标 | `target-surveyor`（survey）：六个“正确”话题（能看到的给锚点，看不到的问维护者，≤5 问，不猜）；每个目标一句承诺、一句危害、逐字锚点、为什么测试够不着、路由、工具与诚实的范围；不做的簇和已有测试写理由 | `targets.json`（fv-targets） | `fv survey check`：READY；仓库变了判 STALE |
+| C3 按路由走 | `stateful-model` → 入口 B；`code-verifier` → `fv external --engine kani|crosshair|cbmc|esbmc|dafny|verus|lean`；`property-lift` → `fv props`；`function-contracts` → `fv contracts`；`generated-inputs` → 生成输入的测试再走 `fv props` | 各自的回执 | 见下 |
+| C4 抬升已有测试 | `target-surveyor`（lift）写 fv-props：检查逐字、不可被构建删掉、覆盖见证、每条性质至少一个一行破坏；`formal-reviewer`（props）按 review.md F5 / F8 审，判弱必须给出一行改动 | `props.json` · `props-review.json` | `fv props check --review`：READY；`fv props run`：在隔离副本里每个检查被走到、每个破坏以自己的标记失败 → ABLE_TO_FAIL（E1） |
+| C5 函数契约 | `target-surveyor`（contracts）按 FM-Agent 规则写行为规格（做什么，不写怎么做；自顶向下分层），每个函数 MATCH / MISMATCH；MISMATCH 写探针，只经公开入口 | `function-specs.json` | `fv contracts check --run`：每个探针重跑，从输出重新推导 CONFIRMED / NOT CONFIRMED；复现的 CONFIRMED 路由 `fv_implementation_defect` |
+
+代码级验证器的上限写死在适配器里：Kani / Dafny / Verus / Lean 的 PASS 是 E4，但什么都没验证（0 个 harness、`sorry`、超时）不是 PASS；CBMC / ESBMC 最多 BOUNDED_PASS；CrossHair 最多 NO_COUNTEREXAMPLE_FOUND（E1），即使它说 “Confirmed over all paths”。
 
 ## 统一验证主干
 
@@ -159,6 +177,9 @@ specs/<feature>/formal/
   rules-divergence.json      分歧 + 裁决
   rules-review.yaml · rules-triage.yaml   FVS 审阅（不可改）+ 作者处置
   contract.yaml              采纳的规则（随 G2 锁）
+  survey.json · targets.json   入口 C：仓库普查与目标（pstack + OSS Verify 第 1 步 + FM-Agent）
+  props.json · props-review.json   入口 C：抬升的性质（OSS Verify 第 3 步）与全新上下文审阅（review.md F 节）
+  function-specs.json · probes/   入口 C：FM-Agent 函数契约与探针
   modeling-brief.md · defect-ledger.json · brief-coverage.yaml   入口 B：Specula 分析与覆盖自检
   candidates/model-*/        模型候选（model.yaml + notes.md handoff）
   model-divergence.json      分歧 + 裁决
@@ -172,7 +193,7 @@ verification/policy.yaml     模块 → 风险 → 证据等级 → CI 层 → �
 ```
 
 `fv init --dir specs/<feature>/formal --name <feature> --entrance spec-first|code-first` 生成一套骨架（清单、合同、模型都能直接通过检查，`candidates/` 留给生成者）。
-完整示例在 `assets/example-ticket/`：清单、intake（3 个澄清问题）、两份规则候选（B 漏了“剩余不为负”，并把“答复”读成了“成功”）、两份模型候选（B 允许售罄后重试）、分歧报告与裁决、FVS 审阅与分诊、模型审阅、入口 B 的 Specula brief（`code-first/`）、初版设计反例的分诊（`triage/`）、修正、真实 SQLite 实现与 harness、并发测试、策略、向量。
+完整示例在 `assets/example-ticket/`：清单、intake（3 个澄清问题）、两份规则候选（B 漏了“剩余不为负”，并把“答复”读成了“成功”）、两份模型候选（B 允许售罄后重试）、分歧报告与裁决、FVS 审阅与分诊、模型审阅、入口 B 的 Specula brief（`code-first/`）、初版设计反例的分诊（`triage/`）、修正、真实 SQLite 实现与 harness、并发测试、策略、向量；入口 C 的普查（`survey/`：survey.json、targets.json、抬升出的两条性质与其一行破坏、全新上下文审阅、FM-Agent 函数契约与一个真实复现的探针）。
 
 ## 参考
 
@@ -183,6 +204,7 @@ verification/policy.yaml     模块 → 风险 → 证据等级 → CI 层 → �
 - [references/modeling-language.md](references/modeling-language.md)：清单、合同、模型、表达式、语义；轨迹、向量、源码映射、分歧报告、审阅、策略的格式
 - [references/evidence-levels.md](references/evidence-levels.md)：E0–E4 各自能声称和不能声称什么；回执字段
 - [references/triage-and-maintenance.md](references/triage-and-maintenance.md)：分诊、变异资格、CI 分层、持续校准循环、外部引擎
+- [references/repo-survey.md](references/repo-survey.md)：入口 C：普查、fv-targets、性质抬升（fv-props）、函数契约（fv-function-specs）、代码级验证器的证据上限
 - [references/open-source.md](references/open-source.md)：借鉴了哪些开源项目、借了什么、没借什么
 
 ## 已知边界（如实登记）
@@ -193,5 +215,7 @@ verification/policy.yaml     模块 → 风险 → 证据等级 → CI 层 → �
 - 实现一致性（07）是 E3：它证明代码里有契约要求的机制、测试与负对照按预期、真实轨迹符合模型，不证明所有输入与交错下都正确。验收方不重跑候选的测试，只重新推导回执、重查轨迹，并把回执绑定到候选提交。
 - 脚本检查的是“上游流程的每一步都做了、记下了”，不是“做得对”：澄清问题问得好不好、brief 的分析深不深，仍要靠人的裁决与审阅。
 - 上游流程有些步骤在隔离生成中做不到（中途找用户确认、并行子 agent、TLC 跑 hunt cfg），适配方式见 upstream-methods.md 第三节。
-- 内置检查器是显式状态枚举，不产生 E4。外部引擎适配只对固定格式的样例输出测过，本仓库没有实际运行 TLC / Apalache / Quint / FizzBee。
+- 内置检查器是显式状态枚举，不产生 E4。外部引擎适配只对固定格式的样例输出测过，本仓库没有实际运行 TLC / Apalache / Quint / FizzBee / Kani / CBMC / ESBMC / Dafny / Verus / Lean；CrossHair 0.0.113 的适配器对真实运行的输出测过（通过、反例、未确认、无可检查函数四种）。
+- 入口 C 的普查信号是正则匹配，会有误报和漏报：它决定阅读顺序，不决定目标；目标由 agent 读代码后写，由人回答看不到的问题。`tests_mentioning` 是文件名在测试里出现过，不是覆盖率。
+- `fv props run` 的 ABLE_TO_FAIL 只证明“这些检查在这些输入上会被走到、会因这些一行改动失败”（E1），不证明性质对所有输入成立。
 - 本 Skill 的行为层效果（AI 生成的规则与模型质量）尚未评测，证据等级为 `static_only`。

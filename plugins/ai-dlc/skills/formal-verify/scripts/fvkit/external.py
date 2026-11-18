@@ -1,11 +1,19 @@
-"""Adapters for external engines: TLC, Apalache, Quint (verify / run) and FizzBee.
+"""Adapters for external engines: TLC, Apalache, Quint (verify / run), FizzBee, and code-level
+verifiers that entrance C routes code to: Kani (incl. `autoharness`), CrossHair, CBMC / ESBMC,
+Dafny, Verus and Lean.
 
 fvkit closes the loop on its own; these adapters let a project keep existing .tla/.qnt/.fizz
-assets. Each run stores argv, exit code, raw stdout/stderr (with digests) and the parsed
+assets and run a verifier on the code itself. Each run stores argv, exit code, raw stdout/stderr (with digests) and the parsed
 verdict. Two rules from the engines' own documentation are encoded, not left to prose:
   - `quint run` is random simulation: at best NO_VIOLATION_SAMPLED, evidence level E1;
   - `quint verify` / Apalache are bounded symbolic checks: at best BOUNDED_PASS (E2, bounded).
 An engine that is missing, times out, or prints nothing recognisable is ERROR, never PASS.
+Code-level verifiers, with the same caution:
+  - Kani / Dafny / Verus / Lean are proof tools: a PASS is E4 for the harnesses / files that ran,
+    and a run that verified nothing (0 harnesses, "no checkable", `sorry`) is not a PASS;
+  - CBMC / ESBMC are bounded model checkers of code: at best BOUNDED_PASS (E2);
+  - CrossHair is symbolic search with timeouts: at best NO_COUNTEREXAMPLE_FOUND (E1), even when it
+    reports "Confirmed over all paths" — that line is kept in the stats, not promoted to a proof.
 """
 import re
 import subprocess
@@ -20,7 +28,19 @@ ENGINES = {
     "quint-verify": {"level": "E2", "default": "quint"},
     "quint-run": {"level": "E1", "default": "quint"},
     "fizzbee": {"level": "E2", "default": "fizz"},
+    "kani": {"level": "E4", "default": "cargo"},
+    "crosshair": {"level": "E1", "default": "crosshair"},
+    "cbmc": {"level": "E2", "default": "cbmc"},
+    "esbmc": {"level": "E2", "default": "esbmc"},
+    "dafny": {"level": "E4", "default": "dafny"},
+    "verus": {"level": "E4", "default": "verus"},
+    "lean": {"level": "E4", "default": "lake"},
 }
+CEILING = {"quint-run": ("NO_VIOLATION_SAMPLED", "FAIL", "ERROR"), "crosshair": ("NO_COUNTEREXAMPLE_FOUND", "FAIL", "ERROR"),
+           "quint-verify": ("BOUNDED_PASS", "FAIL", "ERROR"), "apalache": ("BOUNDED_PASS", "FAIL", "ERROR"),
+           "cbmc": ("BOUNDED_PASS", "FAIL", "ERROR"), "esbmc": ("BOUNDED_PASS", "FAIL", "ERROR"),
+           "lean": ("PASS", "FAIL", "INCOMPLETE", "ERROR"), "dafny": ("PASS", "FAIL", "INCOMPLETE", "ERROR"),
+           "verus": ("PASS", "FAIL", "INCOMPLETE", "ERROR")}
 MAX_OUTPUT = 16 * 1024 * 1024
 
 
@@ -39,6 +59,16 @@ def argv_for(engine, tool, spec, config=None, invariants=(), bound=None, samples
         argv = [tool, "run", str(spec)] + (["--invariant=" + ",".join(inv)] if inv else []) + \
             (["--max-steps=%d" % bound] if bound else []) + (["--max-samples=%d" % samples] if samples else []) + \
             (["--seed=%d" % seed] if seed is not None else [])
+    elif engine == "kani":   # spec = the crate's Cargo.toml; `extra` may select `autoharness -Z autoharness`
+        argv = [tool, "kani"] if Path(str(tool)).name == "cargo" else [tool]
+    elif engine == "crosshair":   # --report_all: every condition reports, so "nothing checked" cannot pass silently
+        argv = [tool, "check", "--report_all"] + (["--per_condition_timeout", str(bound)] if bound else []) + [str(spec)]
+    elif engine in ("cbmc", "esbmc"):
+        argv = [tool, str(spec)] + (["--unwind", str(bound)] if bound else [])
+    elif engine == "dafny":
+        argv = [tool, "verify", str(spec)]
+    elif engine == "lean":   # spec = lakefile; the build runs in its directory
+        argv = [tool, "build"]
     else:
         argv = [tool, str(spec)]
     return argv + list(extra)
@@ -80,6 +110,62 @@ def parse(engine, stdout, stderr="", exit_code=0):
         if re.search(r"^\s*FAILED", text, re.M):
             verdict = "FAIL"
         elif re.search(r"^\s*PASSED", text, re.M) and exit_code == 0:
+            verdict = "PASS"
+        else:
+            verdict = "ERROR"
+    elif engine == "kani":
+        violated = re.findall(r"Failed Checks:\s*(.+)", text)
+        done = re.search(r"Complete - (\d+) successfully verified (?:harnesses|functions), (\d+) failures?, (\d+) total", text)
+        if done:
+            stats = {"verified": int(done.group(1)), "failures": int(done.group(2)), "total": int(done.group(3))}
+        if violated or re.search(r"VERIFICATION:- FAILED", text) or (done and stats["failures"] > 0):
+            verdict = "FAIL"
+        elif exit_code == 0 and re.search(r"VERIFICATION:- SUCCESSFUL", text) and (not done or (stats["verified"] > 0 and stats["verified"] == stats["total"])):
+            verdict = "PASS"
+        else:
+            verdict = "ERROR"   # incl. "no functions were eligible": nothing was verified
+    elif engine == "crosshair":
+        violated = re.findall(r":\d+: error: (.+)", text)
+        confirmed = len(re.findall(r": info: Confirmed over all paths", text))
+        unconfirmed = len(re.findall(r": info: Not confirmed", text))
+        stats = {"confirmed_over_all_paths": confirmed, "not_confirmed": unconfirmed}
+        if violated:
+            verdict = "FAIL"
+        elif exit_code == 0 and confirmed + unconfirmed > 0 and "no checkable functions" not in text:
+            verdict = "NO_COUNTEREXAMPLE_FOUND"
+        else:
+            verdict = "ERROR"
+    elif engine in ("cbmc", "esbmc"):
+        violated = re.findall(r"^\s*(?:Violated property:|\[[^\]]+\][^\n]*: FAILURE)\s*(.*)$", text, re.M)
+        if re.search(r"VERIFICATION FAILED", text):
+            verdict = "FAIL"
+        elif re.search(r"VERIFICATION SUCCESSFUL", text) and exit_code == 0:
+            verdict = "BOUNDED_PASS"
+        else:
+            verdict = "ERROR"
+    elif engine in ("dafny", "verus"):
+        rx = r"Dafny program verifier finished with (\d+) verified, (\d+) errors?(?:, (\d+) time ?outs?)?" if engine == "dafny" \
+            else r"verification results::\s*(\d+) verified, (\d+) errors?"
+        m = re.search(rx, text)
+        if m:
+            stats = {"verified": int(m.group(1)), "errors": int(m.group(2)),
+                     "timeouts": int(m.group(3)) if m.lastindex and m.lastindex >= 3 and m.group(3) else 0}
+        if m and stats["errors"] > 0:
+            verdict = "FAIL"
+        elif m and stats["timeouts"] > 0:
+            verdict = "INCOMPLETE"
+        elif m and exit_code == 0 and stats["verified"] > 0:
+            verdict = "PASS"
+        else:
+            verdict = "ERROR"
+    elif engine == "lean":
+        sorry = len(re.findall(r"declaration uses 'sorry'", text))
+        stats = {"sorry": sorry}
+        if exit_code not in (0, None) and re.search(r"\berror\b", text):
+            verdict = "FAIL"
+        elif exit_code == 0 and sorry:
+            verdict = "INCOMPLETE"   # a proof with a hole is not a proof
+        elif exit_code == 0:
             verdict = "PASS"
         else:
             verdict = "ERROR"
@@ -131,10 +217,8 @@ def reparse(receipt, base_dir):
     res = receipt["result"]
     engine = receipt["settings"]["engine"]
     require(engine in ENGINES and receipt["evidence_level"] == ENGINES[engine]["level"], "external evidence level mismatch")
-    if engine == "quint-run":
-        require(receipt["verdict"] in ("NO_VIOLATION_SAMPLED", "FAIL", "ERROR"), "quint run is simulation; it cannot PASS")
-    if engine in ("quint-verify", "apalache"):
-        require(receipt["verdict"] in ("BOUNDED_PASS", "FAIL", "ERROR"), "bounded engines cannot report a complete PASS")
+    if engine in CEILING:
+        require(receipt["verdict"] in CEILING[engine], "%s can only report %s" % (engine, "/".join(CEILING[engine])))
     if base_dir is None:
         return
     raw = {}

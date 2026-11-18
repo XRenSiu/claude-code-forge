@@ -1,0 +1,89 @@
+{
+  "schema_version": 1,
+  "kind": "fv-props",
+  "root": "../impl",
+  "target": "T2",
+  "procedure": [
+    {
+      "upstream": "oss-verify",
+      "path": ".claude/skills/add-project/SKILL.md",
+      "sha256": "sha256:dc8e3d918910408acdcd0f39663a0cfc178bbac5d8784378cf12706f5cbce480"
+    },
+    {
+      "upstream": "oss-verify",
+      "path": "review.md",
+      "sha256": "sha256:a7bae6d16660b7efa5705ff1ab648582c55428f459a32e7f257877c852dec83e"
+    },
+    {
+      "upstream": "pstack",
+      "path": "pstack/skills/create-formal-verification-skill/SKILL.md",
+      "sha256": "sha256:30ef0ac27612ecd16fdc081112113221d673053cef3f8603db11932193861211"
+    }
+  ],
+  "isolation": {
+    "link": []
+  },
+  "checks": [
+    {
+      "id": "P1",
+      "file": "test_properties.py",
+      "check": "(\"NoOversell\", after[\"sold\"] <= stock)",
+      "claim": "No more tickets are sold than the event had: the count of successful orders never exceeds the initial stock.",
+      "kind": "property",
+      "expected_from": "input",
+      "directions": "one-way",
+      "witness": {
+        "argv": [
+          "python3",
+          "test_properties.py",
+          "--check",
+          "safety",
+          "--seeds",
+          "40"
+        ],
+        "timeout_seconds": 300
+      },
+      "fires_with": "NoOversell violated",
+      "breakages": [
+        {
+          "file": "tickets.py",
+          "line": 57,
+          "old": "AND remaining > 0",
+          "new": "AND remaining > -1",
+          "notes": "the conditional reservation no longer refuses an empty stock"
+        }
+      ]
+    },
+    {
+      "id": "P2",
+      "file": "test_properties.py",
+      "check": "(\"Conservation\", after[\"sold\"] + after[\"remaining\"] == stock)",
+      "claim": "Every ticket is either sold or still remaining: sold plus remaining equals the initial stock after every call.",
+      "kind": "property",
+      "expected_from": "input",
+      "directions": "one-way",
+      "witness": {
+        "argv": [
+          "python3",
+          "test_properties.py",
+          "--check",
+          "safety",
+          "--seeds",
+          "40"
+        ],
+        "timeout_seconds": 300
+      },
+      "fires_with": "Conservation violated",
+      "breakages": [
+        {
+          "file": "tickets.py",
+          "line": 60,
+          "old": "VALUES (?, 'success')",
+          "new": "VALUES (?, 'failed')",
+          "notes": "a reservation that records no successful order loses a ticket"
+        }
+      ]
+    }
+  ],
+  "notes": "Lifted from impl/test_properties.py, the project's existing seeded property test (survey existing check: none matched a property-test library; the target cites the file). stock is the schedule's own input; sold and remaining are read from the database by observe(), not from the purchase code's return values (review F8)."
+}

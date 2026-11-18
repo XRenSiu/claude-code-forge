@@ -1,0 +1,442 @@
+{
+  "schema_version": 1,
+  "kind": "fv-survey",
+  "root": "../impl",
+  "git": {
+    "head": "46f1254bf021ec4ef3d67861d79a9d0eaeba018a",
+    "dirty": false
+  },
+  "settings": {
+    "exclude": [],
+    "default_exclude": [
+      ".git",
+      "node_modules",
+      "vendor",
+      "third_party",
+      "dist",
+      "build",
+      "out",
+      "target",
+      ".venv",
+      "venv",
+      "__pycache__",
+      ".tox",
+      ".mypy_cache",
+      ".pytest_cache",
+      "coverage",
+      ".next",
+      ".turbo",
+      ".cache"
+    ],
+    "history": 0,
+    "max_file_bytes": 1048576,
+    "signal_patterns": {
+      "concurrency": "\\b(threading|Thread\\(|Mutex|RwLock|Semaphore|asyncio\\.(gather|Lock|create_task)|synchronized|go func|sync\\.(Mutex|RWMutex|WaitGroup)|atomic\\.|Atomic[A-Z]\\w*|compare_?and_?(swap|set)|compareAndSet|Promise\\.all|tokio::spawn|std::thread|pthread_\\w+|Worker\\(|SharedArrayBuffer)",
+      "transaction": "(\\b(BEGIN|COMMIT|ROLLBACK|SAVEPOINT)\\b|FOR UPDATE|SERIALIZABLE|\\btransaction\\w*\\s*\\(|\\.transaction\\b|@transaction|isolation[_ ]?level|\\boutbox\\b|optimistic[_ ]?lock|\\bversion\\s*=\\s*version\\s*\\+)",
+      "retry-idempotency": "(?i)(idempoten|\\bretr(y|ies|ied)\\b|backoff|dedup|exactly[- ]once|at[- ]least[- ]once|\\bredeliver|\\brequeue|\\breplay)",
+      "permission": "(?i)(authori[sz](e|ation)|\\bpermission|\\bacl\\b|\\brbac\\b|\\brevok|\\bgrant(ed|s)?\\b|\\bis_?admin\\b|access[_-]?control|\\bcedar\\b|\\bcasbin\\b|\\bimpersonat)",
+      "state-machine": "(\\b(status|state)\\s*(===|==|!=|!==)\\s*['\\\"]\\w+['\\\"]|\\b(status|state)\\s*[:=]\\s*['\\\"][a-z_]+['\\\"]|StateMachine|state_machine|\\btransition(s|_to)?\\b|enum\\s+\\w*(State|Status)\\b|class\\s+\\w*(State|Status)\\b)",
+      "quantity": "(?i)\\b(balance|stock|inventory|quantity|quota|budget|refund|ledger|debit|credit|oversell|capacity|remaining|allowance)\\b",
+      "parser": "\\b(parse|decode|deserializ|unmarshal|unpickle|from_bytes|struct\\.unpack|yaml\\.load|pickle\\.loads|JSON\\.parse|json\\.loads|read_exact)\\w*",
+      "low-level": "(\\bunsafe\\s*(\\{|fn\\b|impl\\b)|\\bmemcpy\\b|\\bstrcpy\\b|\\bmalloc\\s*\\(|\\bfree\\s*\\(|reinterpret_cast|\\bctypes\\b|as_mut_ptr|from_raw_parts|\\btransmute\\b|wrapping_(add|sub|mul)|overflow)",
+      "time-lease": "(?i)(\\blease|\\bexpir(e|es|ed|y|ation)\\b|\\bttl\\b|\\bdeadline\\b|\\bheartbeat|\\bfencing)"
+    }
+  },
+  "inventory": {
+    "languages": {
+      "python": {
+        "files": 4,
+        "lines": 353,
+        "test_files": 2
+      }
+    },
+    "source_files": 2,
+    "test_files": 2,
+    "skipped_binary_or_large": []
+  },
+  "existing_checks": [],
+  "signals": [
+    {
+      "class": "quantity",
+      "match": "stock",
+      "file": "harness.py",
+      "line": 24,
+      "text": "def run_vector(vector, variant, users, stock, out_dir, model_id):",
+      "id": "S1"
+    },
+    {
+      "class": "quantity",
+      "match": "stock",
+      "file": "harness.py",
+      "line": 27,
+      "text": "setup(db, stock)",
+      "id": "S2"
+    },
+    {
+      "class": "parser",
+      "match": "parse_args",
+      "file": "harness.py",
+      "line": 63,
+      "text": "a = p.parse_args()",
+      "id": "S3"
+    },
+    {
+      "class": "parser",
+      "match": "json.loads",
+      "file": "harness.py",
+      "line": 64,
+      "text": "doc = json.loads(Path(a.vectors).read_text(encoding=\"utf-8\"))",
+      "id": "S4"
+    },
+    {
+      "class": "quantity",
+      "match": "stock",
+      "file": "harness.py",
+      "line": 67,
+      "text": "users, stock = (\"alice\", \"bob\"), 1",
+      "id": "S5"
+    },
+    {
+      "class": "quantity",
+      "match": "stock",
+      "file": "harness.py",
+      "line": 70,
+      "text": "path, bad = run_vector(vector, a.variant, users, stock, out, doc[\"model\"][\"id\"])",
+      "id": "S6"
+    },
+    {
+      "class": "quantity",
+      "match": "remaining",
+      "file": "tickets.py",
+      "line": 13,
+      "text": "CREATE TABLE IF NOT EXISTS tickets (event_id INTEGER PRIMARY KEY, remaining INTEGER NOT NULL);",
+      "id": "S7"
+    },
+    {
+      "class": "transaction",
+      "match": "isolation_level",
+      "file": "tickets.py",
+      "line": 21,
+      "text": "db = sqlite3.connect(path, isolation_level=None, timeout=30, check_same_thread=False)",
+      "id": "S8"
+    },
+    {
+      "class": "quantity",
+      "match": "stock",
+      "file": "tickets.py",
+      "line": 26,
+      "text": "def setup(path, stock):",
+      "id": "S9"
+    },
+    {
+      "class": "quantity",
+      "match": "remaining",
+      "file": "tickets.py",
+      "line": 29,
+      "text": "db.execute(\"INSERT OR REPLACE INTO tickets (event_id, remaining) VALUES (?, ?)\", (EVENT, stock))",
+      "id": "S10"
+    },
+    {
+      "class": "quantity",
+      "match": "remaining",
+      "file": "tickets.py",
+      "line": 43,
+      "text": "(remaining,) = self.db.execute(\"SELECT remaining FROM tickets WHERE event_id = ?\", (EVENT,)).fetchone()",
+      "id": "S11"
+    },
+    {
+      "class": "quantity",
+      "match": "remaining",
+      "file": "tickets.py",
+      "line": 44,
+      "text": "self.db.execute(\"UPDATE requests SET seen = ? WHERE user = ?\", (remaining, user))",
+      "id": "S12"
+    },
+    {
+      "class": "quantity",
+      "match": "remaining",
+      "file": "tickets.py",
+      "line": 45,
+      "text": "return remaining",
+      "id": "S13"
+    },
+    {
+      "class": "transaction",
+      "match": "BEGIN",
+      "file": "tickets.py",
+      "line": 50,
+      "text": "self.db.execute(\"BEGIN IMMEDIATE\")",
+      "id": "S14"
+    },
+    {
+      "class": "retry-idempotency",
+      "match": "idempoten",
+      "file": "tickets.py",
+      "line": 53,
+      "text": "if row is None or row[0] != \"pending\":   # idempotent retry: a repeated purchase returns the first answer",
+      "id": "S15"
+    },
+    {
+      "class": "transaction",
+      "match": "COMMIT",
+      "file": "tickets.py",
+      "line": 54,
+      "text": "self.db.execute(\"COMMIT\")",
+      "id": "S16"
+    },
+    {
+      "class": "quantity",
+      "match": "remaining",
+      "file": "tickets.py",
+      "line": 57,
+      "text": "\"UPDATE tickets SET remaining = remaining - 1 WHERE event_id = ? AND remaining > 0\", (EVENT,)).rowcount",
+      "id": "S17"
+    },
+    {
+      "class": "state-machine",
+      "match": "status = \"success\"",
+      "file": "tickets.py",
+      "line": 58,
+      "text": "status = \"success\" if reserved == 1 else \"sold_out\"",
+      "id": "S18"
+    },
+    {
+      "class": "transaction",
+      "match": "COMMIT",
+      "file": "tickets.py",
+      "line": 62,
+      "text": "self.db.execute(\"COMMIT\")",
+      "id": "S19"
+    },
+    {
+      "class": "transaction",
+      "match": "ROLLBACK",
+      "file": "tickets.py",
+      "line": 64,
+      "text": "self.db.execute(\"ROLLBACK\")",
+      "id": "S20"
+    },
+    {
+      "class": "quantity",
+      "match": "remaining",
+      "file": "tickets.py",
+      "line": 71,
+      "text": "self.db.execute(\"UPDATE tickets SET remaining = remaining - 1 WHERE event_id = ?\", (EVENT,))",
+      "id": "S21"
+    },
+    {
+      "class": "state-machine",
+      "match": "status = 'success'",
+      "file": "tickets.py",
+      "line": 73,
+      "text": "self.db.execute(\"UPDATE requests SET status = 'success' WHERE user = ?\", (user,))",
+      "id": "S22"
+    },
+    {
+      "class": "state-machine",
+      "match": "status = 'sold_out'",
+      "file": "tickets.py",
+      "line": 75,
+      "text": "self.db.execute(\"UPDATE requests SET status = 'sold_out' WHERE user = ?\", (user,))",
+      "id": "S23"
+    },
+    {
+      "class": "state-machine",
+      "match": "status = 'success'",
+      "file": "tickets.py",
+      "line": 80,
+      "text": "(sold,) = self.db.execute(\"SELECT COUNT(*) FROM orders WHERE status = 'success'\").fetchone()",
+      "id": "S24"
+    },
+    {
+      "class": "quantity",
+      "match": "remaining",
+      "file": "tickets.py",
+      "line": 81,
+      "text": "(remaining,) = self.db.execute(\"SELECT remaining FROM tickets WHERE event_id = ?\", (EVENT,)).fetchone()",
+      "id": "S25"
+    },
+    {
+      "class": "quantity",
+      "match": "remaining",
+      "file": "tickets.py",
+      "line": 83,
+      "text": "return {\"sold\": sold, \"remaining\": remaining, \"outcome\": {u: status.get(u, \"none\") for u in self.users}}",
+      "id": "S26"
+    }
+  ],
+  "history": {
+    "available": false,
+    "reason": "history disabled",
+    "files": {}
+  },
+  "clusters": [
+    {
+      "file": "tickets.py",
+      "classes": {
+        "quantity": 10,
+        "retry-idempotency": 1,
+        "state-machine": 4,
+        "transaction": 5
+      },
+      "signals": [
+        "S7",
+        "S8",
+        "S9",
+        "S10",
+        "S11",
+        "S12",
+        "S13",
+        "S14",
+        "S15",
+        "S16",
+        "S17",
+        "S18",
+        "S19",
+        "S20",
+        "S21",
+        "S22",
+        "S23",
+        "S24",
+        "S25",
+        "S26"
+      ],
+      "fix_commits": 0,
+      "tests_mentioning": [
+        "test_concurrency.py",
+        "test_properties.py"
+      ],
+      "score": 40,
+      "role": "product",
+      "id": "C1"
+    },
+    {
+      "file": "harness.py",
+      "classes": {
+        "parser": 2,
+        "quantity": 4
+      },
+      "signals": [
+        "S1",
+        "S2",
+        "S3",
+        "S4",
+        "S5",
+        "S6"
+      ],
+      "fix_commits": 0,
+      "tests_mentioning": [],
+      "score": 14,
+      "role": "tooling",
+      "id": "C2"
+    }
+  ],
+  "tools": {
+    "apalache": {
+      "available": false,
+      "how": null,
+      "languages": [
+        "*"
+      ]
+    },
+    "cbmc": {
+      "available": false,
+      "how": null,
+      "languages": [
+        "c",
+        "cpp"
+      ]
+    },
+    "crosshair": {
+      "available": false,
+      "how": null,
+      "languages": [
+        "python"
+      ]
+    },
+    "dafny": {
+      "available": false,
+      "how": null,
+      "languages": [
+        "dafny"
+      ]
+    },
+    "esbmc": {
+      "available": false,
+      "how": null,
+      "languages": [
+        "c",
+        "cpp",
+        "python"
+      ]
+    },
+    "fizzbee": {
+      "available": false,
+      "how": null,
+      "languages": [
+        "*"
+      ]
+    },
+    "fvkit": {
+      "available": true,
+      "how": "bundled",
+      "languages": [
+        "*"
+      ]
+    },
+    "hypothesis": {
+      "available": false,
+      "how": null,
+      "languages": [
+        "python"
+      ]
+    },
+    "kani": {
+      "available": false,
+      "how": null,
+      "languages": [
+        "rust"
+      ]
+    },
+    "lean": {
+      "available": false,
+      "how": null,
+      "languages": [
+        "lean"
+      ]
+    },
+    "project-tests": {
+      "available": true,
+      "how": "the repository's own tests",
+      "languages": [
+        "*"
+      ]
+    },
+    "quint": {
+      "available": false,
+      "how": null,
+      "languages": [
+        "*"
+      ]
+    },
+    "tlc": {
+      "available": false,
+      "how": null,
+      "languages": [
+        "*"
+      ]
+    },
+    "verus": {
+      "available": false,
+      "how": null,
+      "languages": [
+        "rust"
+      ]
+    }
+  },
+  "notes": [
+    "signals and clusters order reading; they are not findings",
+    "tests_mentioning is a textual mention of the file's name, not coverage",
+    "role tooling (scripts, tools, examples, smoke, benchmarks) is listed after product code"
+  ]
+}

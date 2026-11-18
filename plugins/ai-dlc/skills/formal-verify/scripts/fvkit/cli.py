@@ -14,10 +14,10 @@ from . import VERSION
 from .values import FvError, require
 
 EXIT = {"PASS": 0, "QUALIFIED": 0, "CONFORMS": 0, "FRESH": 0, "NOT_WEAKENED": 0, "SATISFIED": 0, "APPROVED": 0,
-        "READY": 0, "TRACEABLE": 0, "AGREED": 0, "COMPLETE": 0, "REVIEWED": 0, "INTACT": 0, "TRIAGED": 0, "IMPLEMENTS": 0,
-        "NOT_READY": 1, "GAPS": 1, "DIVERGENT": 1, "NOT_REVIEWED": 1, "TAMPERED": 1, "NOT_TRIAGED": 1, "NOT_IMPLEMENTED": 1,
+        "READY": 0, "ABLE_TO_FAIL": 0, "TRACEABLE": 0, "AGREED": 0, "COMPLETE": 0, "REVIEWED": 0, "INTACT": 0, "TRIAGED": 0, "IMPLEMENTS": 0,
+        "NOT_READY": 1, "WEAK": 1, "GAPS": 1, "DIVERGENT": 1, "NOT_REVIEWED": 1, "TAMPERED": 1, "NOT_TRIAGED": 1, "NOT_IMPLEMENTED": 1,
         "FAIL": 1, "NOT_QUALIFIED": 1, "NONCONFORMANT": 1, "STALE": 1, "BROKEN": 1, "WEAKENED": 1, "UNSATISFIED": 1,
-        "ERROR": 2, "BOUNDED_PASS": 3, "INCOMPLETE": 3, "UNKNOWN": 3, "NO_VIOLATION_SAMPLED": 3}
+        "ERROR": 2, "BOUNDED_PASS": 3, "INCOMPLETE": 3, "UNKNOWN": 3, "NO_VIOLATION_SAMPLED": 3, "NO_COUNTEREXAMPLE_FOUND": 3}
 
 
 def emit(obj):
@@ -286,7 +286,7 @@ def cmd_external(args):
     from .external import run
     from .receipt import write
     receipt = run(args.engine, args.spec, args.out, tool=args.tool, config=args.config, invariants=args.invariant or [],
-                  bound=args.bound, samples=args.samples, seed=args.seed, timeout=args.timeout)
+                  bound=args.bound, samples=args.samples, seed=args.seed, timeout=args.timeout, extra=args.arg or ())
     path = write(Path(args.out) / "receipt.json", receipt)
     emit({"verdict": receipt["verdict"], "evidence_level": receipt["evidence_level"], "receipt": path,
           "parsed": receipt["result"]["parsed"], "error": receipt["result"]["error"]})
@@ -524,6 +524,67 @@ def cmd_gen_evidence(args):
     return EXIT[res["verdict"]]
 
 
+def _write_new(path, doc):
+    from .implcontract import dump
+    return dump(doc, path)
+
+
+def cmd_survey(args):
+    from .survey import check_targets, draft, scan
+    if args.action == "scan":
+        require(args.root, "scan needs --root")
+        doc = scan(args.root, args.exclude or (), args.history)
+        if args.out:
+            import os
+            doc["root"] = os.path.relpath(doc["root"], Path(args.out).resolve().parent)   # portable: relative to the survey file
+            path = _write_new(args.out, doc)
+            emit({"ok": True, "written": path, "languages": doc["inventory"]["languages"], "signals": len(doc["signals"]),
+                  "existing_checks": len(doc["existing_checks"]), "top_clusters": [
+                      {k: c[k] for k in ("id", "file", "score", "classes", "fix_commits")} for c in doc["clusters"][:args.top]],
+                  "tools": sorted(k for k, v in doc["tools"].items() if v["available"]),
+                  "next": "write fv-targets (`fv survey draft`), following pstack + oss-verify step 1, then `fv survey check`"})
+        else:
+            emit(doc)
+        return 0
+    require(args.survey, "%s needs --survey" % args.action)
+    if args.action == "draft":
+        require(args.out, "draft needs --out")
+        import os
+        doc = draft(args.survey, _upstream(args), args.top)
+        doc["survey"]["path"] = os.path.relpath(Path(args.survey).resolve(), Path(args.out).resolve().parent)
+        path = _write_new(args.out, doc)
+        emit({"ok": True, "written": path, "next": "answer every TODO from the code or the maintainer, then `fv survey check`"})
+        return 0
+    require(args.targets, "check needs --targets")
+    r = check_targets(args.targets, args.survey, args.root, _upstream(args), args.top, rescan=not args.no_rescan)
+    emit(r)
+    return EXIT[r["verdict"]]
+
+
+def cmd_props(args):
+    from .props import check_props, run_props
+    from .receipt import make, now
+    if args.action == "check":
+        r = check_props(args.props, _upstream(args), args.review)
+        emit(r)
+        return EXIT[r["verdict"]]
+    started = now()
+    v = run_props(args.props, args.work, args.timeout, _upstream(args))
+    receipt = make("props", {"props": v["props"]}, {"isolated_copy": True}, v["result"], v["verdict"], "E1", started)
+    path = _save(args, receipt)
+    emit({"verdict": v["verdict"], "reasons": v["result"]["reasons"], "receipt": path, "evidence_level": "E1", "work": v["work"],
+          "checks": [{"id": c["id"], "witness_exit": (c["witness"] or {}).get("exit"),
+                      "breakages": [b["outcome"] for b in c["breakages"]]} for c in v["result"]["checks"]]})
+    return EXIT[v["verdict"]]
+
+
+def cmd_contracts(args):
+    from .contracts import check_specs
+    r = check_specs(args.specs, _upstream(args), run=args.run, timeout=args.timeout)
+    emit(r)
+    return EXIT[r["verdict"]]
+
+
 def cmd_init(args):
     from .scaffold import init
     emit({"ok": True, "written": init(args.dir, args.name, args.entrance)})
@@ -610,8 +671,11 @@ def parser():
     s.add_argument("--tier", default="auto", choices=["auto", "fast", "core", "deep"]); s.add_argument("--all", action="store_true")
     s.add_argument("--root")
     s.set_defaults(fn=cmd_ci)
-    s = sub.add_parser("external", help="run TLC / Apalache / Quint / FizzBee and keep raw evidence")
-    s.add_argument("--engine", required=True, choices=["tlc", "apalache", "quint-verify", "quint-run", "fizzbee"])
+    from .external import ENGINES
+    s = sub.add_parser("external", help="run TLC / Apalache / Quint / FizzBee, or a code verifier (Kani, CrossHair, CBMC, "
+                                        "ESBMC, Dafny, Verus, Lean), and keep the raw evidence")
+    s.add_argument("--engine", required=True, choices=sorted(ENGINES))
+    s.add_argument("--arg", action="append", help="extra engine argument, e.g. --arg=autoharness --arg=-Z --arg=autoharness")
     s.add_argument("--spec", action="append", required=True); s.add_argument("--config"); s.add_argument("--tool")
     s.add_argument("--invariant", action="append"); s.add_argument("--bound", type=int); s.add_argument("--samples", type=int)
     s.add_argument("--seed", type=int); s.add_argument("--timeout", type=int, default=600); s.add_argument("--out", required=True)
@@ -650,6 +714,29 @@ def parser():
     s.add_argument("--project"); s.add_argument("--clone"); s.add_argument("--commit")
     s.add_argument("--remote", action="store_true", help="verify: also fetch every file at its pinned commit and compare (network)")
     s.set_defaults(fn=cmd_upstream)
+    s = sub.add_parser("survey", help="entrance C: scan an existing repo for verification targets, draft / check the agent's fv-targets")
+    s.add_argument("action", choices=["scan", "draft", "check"])
+    s.add_argument("--root", help="scan: repository to survey; check: override the survey's root")
+    s.add_argument("--exclude", action="append", help="scan: extra path or glob to skip (repeatable)")
+    s.add_argument("--history", type=int, default=500, help="scan: commits of history to read for fix commits (0 = none)")
+    s.add_argument("--survey"); s.add_argument("--targets"); s.add_argument("--upstream")
+    s.add_argument("--top", type=int, default=10, help="clusters that must be taken up or dismissed")
+    s.add_argument("--no-rescan", action="store_true", help="check: do not re-scan the repository for staleness")
+    s.add_argument("--out")
+    s.set_defaults(fn=cmd_survey)
+    s = sub.add_parser("props", help="lifted properties (oss-verify step 3): check the fv-props document, or run every witness "
+                                     "and breakage in an isolated copy (E1, ABLE_TO_FAIL / WEAK)")
+    s.add_argument("action", choices=["check", "run"]); s.add_argument("--props", required=True)
+    s.add_argument("--review", help="check: fresh-context fv-props-review (oss-verify review.md F5/F8)")
+    s.add_argument("--upstream"); s.add_argument("--work", help="run: new directory for the isolated copy")
+    s.add_argument("--timeout", type=int, default=600); s.add_argument("--out", help="run: new receipt path")
+    s.set_defaults(fn=cmd_props)
+    s = sub.add_parser("contracts", help="FM-Agent function contracts: spec rules, top-down layers, a result per function, "
+                                         "probes re-run to re-derive CONFIRMED / NOT CONFIRMED")
+    s.add_argument("action", choices=["check"]); s.add_argument("--specs", required=True); s.add_argument("--upstream")
+    s.add_argument("--run", action="store_true", help="re-run every probe from the repository root")
+    s.add_argument("--timeout", type=int, default=300)
+    s.set_defaults(fn=cmd_contracts)
     s = sub.add_parser("intake-check", help="rules intake: Spec Kit clarify + Quint from-requirements carried out completely")
     s.add_argument("intake"); s.add_argument("--requirements"); s.add_argument("--contract"); s.add_argument("--upstream", help=up_help)
     s.set_defaults(fn=cmd_intake_check)

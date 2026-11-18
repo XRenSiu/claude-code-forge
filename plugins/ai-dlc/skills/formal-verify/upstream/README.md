@@ -11,8 +11,10 @@
 | `fvs/` | [Beneficial-AI-Foundation/formal-verification-skills](https://github.com/Beneficial-AI-Foundation/formal-verification-skills) | MIT | lean-spec-review 命令、fc-spec-review 审阅契约、review-policy、trust-audit：G-5 全新上下文的对抗式规则审阅与作者分诊 |
 | `pstack/` | [cursor/plugins](https://github.com/cursor/plugins)（pstack） | MIT | create / maintain-formal-verification-skill：“能失败”“发现就是发现”“与代码同步”的验收准则 |
 | `fizzbee/` | [fizzbee-io/fizzbee](https://github.com/fizzbee-io/fizzbee) | Apache-2.0 | fizz-spec / fizz-check / fizz-mbt / fizz-debug：直接用 FizzBee 建模与 MBT 的路径 |
+| `oss-verify/` | [theorem-labs/oss-verify](https://github.com/theorem-labs/oss-verify) | Apache-2.0 | `add-project` skill（第 1 步问清“正确”、第 3 步能失败的检查）、`review.md`（F 节：弱检查）、`docs/what-gets-proven.md`（范围与例外）：入口 C 的 C2 与 C4 |
+| `fm-agent/` | [fmagent-project/FM-Agent](https://github.com/fmagent-project/FM-Agent) | Apache-2.0 | `md/system_prompt.md`（行为规格规则）、`md/workflow_spec_step4_batch.md`、`md/bug_validator.md`、`md/workflow_generate_phases.md`：入口 C 的 C2 与 C5 |
 
-每个项目目录里都带着它自己的 `LICENSE`。上述项目都没有 NOTICE 文件。Apache-2.0 项目的文件没有被修改（第 4 条 b 款不适用）；本仓库的派生物（methods.py 的检查、agent 适配说明）是独立撰写的，按原项目的方法命名并注明出处。
+每个项目目录里都带着它自己的 `LICENSE`。OSS Verify 带有 NOTICE 文件，按 Apache-2.0 第 4 条 d 款一并收录在 `oss-verify/NOTICE`（清单里有它的 sha256）；其余项目没有 NOTICE 文件。Apache-2.0 项目的文件没有被修改（第 4 条 b 款不适用）；本仓库的派生物（methods.py / survey.py / props.py / contracts.py 的检查、agent 适配说明）是独立撰写的，按原项目的方法命名并注明出处。
 
 ## 规则
 

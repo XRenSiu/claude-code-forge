@@ -81,7 +81,7 @@
 
 | skill | 一句话 | 机械预门 |
 |---|---|---|
-| `/formal-verify` | **AI 生成规则与模型（必经），方法来自上游**：agent 执行原样收录的开源流程（Spec Kit / Quint LLM Kit / TLA+ AgentSkills / Specula / Formal Verification Skills，sha256 钉住），每段流程的产出都可检。逐字引文的需求清单 → Spec Kit + Quint intake → ≥2 个隔离 `rule-formalizer` 候选 → 有限域语义比较 → 人裁决 → `formal-reviewer` 按 FVS 审阅契约审 → G2；（入口 B 先写 Specula modeling brief）≥2 个隔离 `model-builder` 候选 → 可观测行为比较 → 人裁决 → Quint review + Specula 粒度审计（code-first 再用当前代码轨迹校准）。模型检查通过后生成实现契约（模型推导出的原子 / 并发 / 验收义务 + 代码映射、幂等、故障处理），任务卡绑定契约操作、编码 agent 按契约实现，实现后 `fv impl-verify` 验证代码落实了契约与模型（E3），然后才进独立验收。状态性需求的两个入口（新需求先建模 / 已有代码先还原行为）汇入一条主干：fv-contract（规则，随 G2 锁）→ fv-model → 模型检查（最短反例、公平下的活性、对称约简）→ 反例分诊（R17–R23）→ 变异资格 → 模型驱动向量 → 真实代码轨迹一致性（E3）→ 源码映射漂移与契约弱化检测 → 风险分级 CI | `fv.py gen-evidence` `fv.py qualify` `fv.py impl-contract` `fv.py impl-verify` `fv.py conform` `fv.py diff-contract` `formal_gate.py`（`advance cards/implement/acceptance/pr/merge` 的前置，`--force` 越不过） |
+| `/formal-verify` | **AI 生成规则与模型（必经），方法来自上游**：agent 执行原样收录的开源流程（Spec Kit / Quint LLM Kit / TLA+ AgentSkills / Specula / Formal Verification Skills / pstack / Theorem OSS Verify / FM-Agent，sha256 钉住），每段流程的产出都可检。逐字引文的需求清单 → Spec Kit + Quint intake → ≥2 个隔离 `rule-formalizer` 候选 → 有限域语义比较 → 人裁决 → `formal-reviewer` 按 FVS 审阅契约审 → G2；（入口 B 先写 Specula modeling brief）≥2 个隔离 `model-builder` 候选 → 可观测行为比较 → 人裁决 → Quint review + Specula 粒度审计（code-first 再用当前代码轨迹校准）。模型检查通过后生成实现契约（模型推导出的原子 / 并发 / 验收义务 + 代码映射、幂等、故障处理），任务卡绑定契约操作、编码 agent 按契约实现，实现后 `fv impl-verify` 验证代码落实了契约与模型（E3），然后才进独立验收。只给一个已有仓库时走入口 C：`fv survey scan` 普查（风险信号、已有 fuzz / 性质测试、修复历史、本机验证器），`target-surveyor` 按 pstack + Theorem OSS Verify + FM-Agent 选目标并路由到状态模型、代码级验证器（Kani / CrossHair / CBMC / ESBMC / Dafny / Verus / Lean）、性质抬升（`fv props run`：每个检查被走到、每个一行破坏让它以自己的标记失败）或函数契约（`fv contracts check --run` 重跑探针）。状态性需求的两个入口（新需求先建模 / 已有代码先还原行为）汇入一条主干：fv-contract（规则，随 G2 锁）→ fv-model → 模型检查（最短反例、公平下的活性、对称约简）→ 反例分诊（R17–R23）→ 变异资格 → 模型驱动向量 → 真实代码轨迹一致性（E3）→ 源码映射漂移与契约弱化检测 → 风险分级 CI | `fv.py survey` `fv.py props` `fv.py contracts` `fv.py gen-evidence` `fv.py qualify` `fv.py impl-contract` `fv.py impl-verify` `fv.py conform` `fv.py diff-contract` `formal_gate.py`（`advance cards/implement/acceptance/pr/merge` 的前置，`--force` 越不过） |
 
 完整示例 `skills/formal-verify/assets/example-ticket/`：初版“先读后扣”设计找到两人都买成功的反例，修正为提交时原子预占；真实 SQLite 实现的 atomic 变体全部轨迹一致，保留的 check-then-act 变体被一致性检查和运行时监控同时抓到。
 
@@ -101,7 +101,7 @@
 | `/ratchet` | 跑到达标为止：master 只评估、worker 只执行、卡住换人；用于需要迭代收敛的卡 | — |
 
 八个隔离子 agent：`card-implementer`（单卡实现）、`review-triager`（只读分诊）、`comment-fixer`（单线程 TDD 修复）、`pr-reviewer`
-（只读审查）、`fix-verifier`（全新上下文验证）；形式化验证的 `rule-formalizer` / `model-builder`（各至少两份隔离生成，互不可见）与 `formal-reviewer`（全新上下文只读审规则、审模型、分诊反例、审代码是否落实实现契约），三者都只执行收录的上游流程；`model-builder` 另有 impl-contract 模式，把 QUALIFIED 模型转成实现契约。
+（只读审查）、`fix-verifier`（全新上下文验证）；形式化验证的 `rule-formalizer` / `model-builder`（各至少两份隔离生成，互不可见）与 `formal-reviewer`（全新上下文只读审规则、审模型、分诊反例、审代码是否落实实现契约），三者都只执行收录的上游流程；`model-builder` 另有 impl-contract 模式，把 QUALIFIED 模型转成实现契约；入口 C 的 `target-surveyor`（普查选目标、把已有测试抬成能失败的性质、FM-Agent 函数契约与探针），抬升的性质由 `formal-reviewer` 的 props 模式在全新上下文按 OSS Verify review.md 审。
 
 > 与 `looper` / `done-when-pipeline` / `ratchet` 同时启用时 `/psl` 等同名，用命名空间 `/ai-dlc:<name>` 区分；源插件仍是上游，AI-DLC 内的副本带接线段。
 

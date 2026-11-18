@@ -266,12 +266,19 @@ nodes:
     must_not_read: [candidates/model-<other>/**, model-divergence.json]
     writes: [modeling-brief.md, defect-ledger.json, candidates/model-<label>/**, brief-coverage.yaml]
     authority: {commit: false}
+  - id: agent.target-surveyor
+    kind: agent
+    role: generator
+    reads: [survey.json, src/**, tests/**, upstream/pstack/**, upstream/oss-verify/**, upstream/fm-agent/**]   # 入口 C：执行收录的上游流程
+    must_not_read: [props-review.json, generator_session]
+    writes: [targets.json, props.json, function-specs.json, probes/**]
+    authority: {commit: false}
   - id: agent.formal-reviewer
     kind: agent
     role: evaluator
-    reads: [需求原文, requirements.yaml, contract.yaml, model.yaml, impl-contract.yaml, src/**, upstream/fvs/**, upstream/quint-llm-kit/**, upstream/specula/**, upstream/spec-kit/**, upstream/pstack/**]
+    reads: [需求原文, requirements.yaml, contract.yaml, model.yaml, impl-contract.yaml, props.json, src/**, upstream/fvs/**, upstream/quint-llm-kit/**, upstream/specula/**, upstream/spec-kit/**, upstream/pstack/**, upstream/oss-verify/**]
     must_not_read: [candidates/**, rules-divergence.json, model-divergence.json, generator_session]
-    writes: [rules-review.yaml, model-review.yaml, triage/*.yaml]
+    writes: [rules-review.yaml, model-review.yaml, triage/*.yaml, props-review.json]
     authority: {commit: false}
   - id: agent.pr-reviewer
     kind: agent
@@ -361,6 +368,9 @@ edges:
   - {from: formal-verify,      to: agent.rule-formalizer, type: handoff, carries: [requirements.md, requirements.yaml]}   # ≥2 次隔离派发，互不可见
   - {from: agent.rule-formalizer, to: human.g2,          type: interrupt, carries: [candidates/rules-*, rules-divergence.json]}   # 分歧即 G2 议程
   - {from: formal-verify,      to: agent.formal-reviewer, type: handoff, carries: [contract.yaml, requirements.yaml]}     # 全新上下文只读审
+  - {from: formal-verify,      to: agent.target-surveyor, type: handoff, carries: [survey.json]}                  # 入口 C：只给仓库时先普查、选目标
+  - {from: agent.target-surveyor, to: agent.model-builder, type: handoff, carries: [targets.json]}                # stateful-model 目标进入口 B
+  - {from: agent.target-surveyor, to: agent.formal-reviewer, type: handoff, carries: [props.json]}               # 抬升的性质交全新上下文审（review.md F 节）
   - {from: agent.formal-reviewer, to: human.g2,          type: interrupt, carries: [rules-review.yaml]}           # 阻断发现由人裁
   - {from: human.g2,           to: agent.model-builder,  type: handoff, carries: [contract.yaml]}                # 规则签了才建模
   - {from: agent.model-builder, to: plan-cards,          type: handoff, carries: [candidates/model-*, model-divergence.json]}

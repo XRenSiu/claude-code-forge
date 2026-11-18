@@ -1,0 +1,95 @@
+{
+  "schema_version": 1,
+  "kind": "fv-function-specs",
+  "root": "../impl",
+  "target": "T3",
+  "procedure": [
+    {
+      "upstream": "fm-agent",
+      "path": "md/system_prompt.md",
+      "sha256": "sha256:bd82df68407c84beba1a305b658b5ce1ae5da5b179aeae887d5652c0f64f868c"
+    },
+    {
+      "upstream": "fm-agent",
+      "path": "md/workflow_spec_step4_batch.md",
+      "sha256": "sha256:4d258b807bc1b98ec466198505b87a44fe95f0da813ab773e8d904b2aea46663"
+    },
+    {
+      "upstream": "fm-agent",
+      "path": "md/bug_validator.md",
+      "sha256": "sha256:5ab211a56a1741513f6c62dd981ee4e395182b0fbc8fc72e465875ed233e3861"
+    }
+  ],
+  "functions": [
+    {
+      "id": "TicketService.purchase",
+      "file": "tickets.py",
+      "anchor": "    def purchase(self, user):",
+      "layer": 0,
+      "signature": "TicketService.purchase(self, user) -> str",
+      "pre_condition": "The database was created by setup(); user is one of the service's users.",
+      "post_condition": "Returns 'success' only if the user's pending request took one ticket while the remaining stock was positive; returns 'sold_out' when no ticket remained; a repeated call for an answered request returns that first answer without changing remaining, sold or the request; across all calls the number of successful orders never exceeds the initial stock and sold plus remaining equals the initial stock.",
+      "callees": [
+        {
+          "name": "TicketService._purchase_check_then_act",
+          "pre_condition": "The user has a request row; the variant is check-then-act.",
+          "post_condition": "Returns 'success' only if a ticket was still remaining when it was taken, so that the number of successful orders never exceeds the initial stock; otherwise records and returns 'sold_out'."
+        }
+      ]
+    },
+    {
+      "id": "TicketService._purchase_check_then_act",
+      "file": "tickets.py",
+      "anchor": "    def _purchase_check_then_act(self, user):",
+      "layer": 1,
+      "signature": "TicketService._purchase_check_then_act(self, user) -> str",
+      "pre_condition": "The user has a request row; the variant is check-then-act.",
+      "post_condition": "Returns 'success' only if a ticket was still remaining when it was taken, so that the number of successful orders never exceeds the initial stock; otherwise records and returns 'sold_out'.",
+      "callees": []
+    },
+    {
+      "id": "TicketService.read",
+      "file": "tickets.py",
+      "anchor": "    def read(self, user):",
+      "layer": 0,
+      "signature": "TicketService.read(self, user) -> int",
+      "pre_condition": "The database was created by setup().",
+      "post_condition": "Returns the current remaining stock and stores it as the value this user last saw; tickets, orders and request statuses are unchanged.",
+      "callees": []
+    }
+  ],
+  "results": [
+    {
+      "function": "TicketService.purchase",
+      "verdict": "MATCH",
+      "reasoning": "In the atomic variant the reservation is one conditional UPDATE (remaining > 0) inside BEGIN IMMEDIATE; the request status check makes a retry return the first answer. The check-then-act branch is judged under its own spec."
+    },
+    {
+      "function": "TicketService.read",
+      "verdict": "MATCH",
+      "reasoning": "One SELECT of remaining and one UPDATE of requests.seen; no other table is written."
+    },
+    {
+      "function": "TicketService._purchase_check_then_act",
+      "verdict": "MISMATCH",
+      "gaps": {
+        "spec_claim": "Returns 'success' only if a ticket was still remaining when it was taken.",
+        "actual_behavior": "Decides on the value the user saw at read time and decrements unconditionally, so two users who both saw one remaining ticket both succeed and remaining becomes -1.",
+        "code_evidence": "if seen is not None and seen > 0:\n    self.db.execute(\"UPDATE tickets SET remaining = remaining - 1 WHERE event_id = ?\", (EVENT,))",
+        "trigger_condition": "stock 1; alice and bob request and read (both see 1); both purchase."
+      },
+      "validation": {
+        "id": "B1",
+        "probe": "probes/probe_B1.py",
+        "argv": [
+          "python3",
+          "{probe}"
+        ],
+        "confirmation_status": "confirmed",
+        "attempts": 1,
+        "notes": "The defect is the original design, kept on purpose as the check-then-act variant (see ../impl/tickets.py)."
+      }
+    }
+  ],
+  "notes": "Written for the example: the agent and its reasoning are illustrative, the probe is real and re-runs with --run."
+}

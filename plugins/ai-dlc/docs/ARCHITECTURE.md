@@ -139,6 +139,9 @@ PostHolder `5c7900c` 已实跑这个闭环：故障注入后将五步轨迹缩�
 状态性需求（并发、一致性、权限、重试与幂等）在 `/formal-verify` 里多走一条线，用的是自带的检查器 fvkit，与 trusted-acceptance 逐字同一份。**生成规则与建模不用自写的方法**：agent 执行原样收录在 `skills/formal-verify/upstream/` 的开源流程（Spec Kit specify/clarify、Quint quint-modeling、TLA+ from-source、Specula 代码分析 / 规格生成 / 分诊、FVS 审阅契约），每段流程的产出都由 `fvkit/methods.py` 按上游原文的规则检查，原文本身由 `UPSTREAM.json` 的 sha256 钉住：
 
 ```
+入口 C（只给仓库）：fv survey scan（信号 / 已有检查 / 修复历史 / 本机验证器）→ target-surveyor 写 targets.json → fv survey check
+                    → 按路由：stateful-model 进入口 B；code-verifier 走 fv external；property-lift 走 fv props（ABLE_TO_FAIL，E1）；
+                      function-contracts 走 fv contracts --run（探针重跑，复现的缺陷路由 fv_implementation_defect）
 AI 生成规则（必经）：需求原文 → requirements.yaml（Spec Kit specify；逐字引文，规范句一句不漏）
                     → rules-intake.yaml（Spec Kit clarify + Quint from-requirements；问题由人答）→ ≥2 个隔离 rule-formalizer 候选
                     → fv rules-divergence（逐需求语义比较，分歧带见证）→ 人裁决
@@ -460,7 +463,8 @@ A 档里有两条特别的：**结构闸**在分析器跑不起来时退出"未�
 `pr-reviewer`（只读审查，永不批准）、`fix-verifier`（全新上下文验证）；
 形式化验证的三个（都只是上游流程的适配器，执行 `skills/formal-verify/upstream/` 的原文）：`rule-formalizer`（intake：Spec Kit specify/clarify + Quint；candidate：只读需求，写一份规则候选，看不到代码与别的候选）、
 `model-builder`（analysis：Specula code_analysis；candidate：Quint / TLA+ / Specula，只读已签合同与设计 / 代码，写一份模型候选，不能改规则）、
-`formal-reviewer`（全新上下文只读：FVS 审阅契约审规则、Quint review + Specula 粒度审计审模型、Specula fidelity checklist 分诊反例）。
+`formal-reviewer`（全新上下文只读：FVS 审阅契约审规则、Quint review + Specula 粒度审计审模型、Specula fidelity checklist 分诊反例、OSS Verify review.md 审抬升的性质）、
+`target-surveyor`（入口 C：pstack 从代码选目标 + OSS Verify 问清“正确”与能失败的检查 + FM-Agent 函数契约与探针）。
 
 每个脚本检什么、退出码什么意思，索引在 `reference.md`，**由一条冒烟期望盯着不许漏**。
 

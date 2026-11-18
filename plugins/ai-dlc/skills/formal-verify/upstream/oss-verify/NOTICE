@@ -1,0 +1,98 @@
+OSS Verify
+Copyright 2026 Theorem Labs, PBC
+
+This repository is licensed under the Apache License, Version 2.0 (LICENSE), but for the files and lines this notice
+names.
+
+The driver, infra/base-builder/driver/, is licensed under the MIT licence (LICENSES/MIT.txt) or the Apache License,
+Version 2.0, at your option (MIT OR Apache-2.0). So is each file of ours under projects/<name>/ whose SPDX line says
+so, and so are the lines of ours in the wazuh and mariadb fuzz targets that this notice names below, wherever they are
+copied. All of these are linked into the fuzz targets' binaries, and the MIT licence lets a program under version 2
+of the GNU GPL be linked with them, which the Apache License, Version 2.0 does not
+(https://www.gnu.org/licenses/license-list.html#apache2). That covers only our own code. A binary that also links
+someone else's code under the Apache License, Version 2.0 with such a program still combines the two, as the wazuh
+and mariadb fuzz targets do (below).
+
+It adapts files from OSS Scanner (https://github.com/anthropics/oss-scanner), Copyright 2026 Anthropic PBC,
+licensed under the Apache License, Version 2.0. Each adapted file keeps OSS Scanner's copyright and SPDX lines
+where it had them, and says what was changed:
+
+  README.md, CONTRIBUTING.md, SECURITY.md, CODE_OF_CONDUCT.md
+  templates/project.yaml, templates/Dockerfile, templates/patch_style.md (from its templates/threat_model.md)
+  src/oss_verify/validate.py, src/oss_verify/check.py, src/oss_verify/check_build.py
+  .github/PULL_REQUEST_TEMPLATE.md, .github/dependabot.yml
+  .github/workflows/validate.yaml, .github/workflows/build.yaml, .github/workflows/triage.yaml,
+  .github/workflows/terms.yaml, .github/workflows/review.yml, .github/scripts/triage.py,
+  .github/scripts/take-project
+
+CODE_OF_CONDUCT.md is the Contributor Covenant, version 2.0 (https://www.contributor-covenant.org).
+
+infra/base-builder/ takes its driver (driver/), its compiler wrappers and flags (toolchain.sh), the shape of a
+fuzz target's link (link-fuzz-target), the release's recipes (recipes.sh) and the steps of its build around a target
+(release-target.sh) from the build recipe of the oss-fuzz-theorems 2026.10 release, Copyright 2026 Theorem Labs, PBC.
+
+The files we generated under projects/<name>/ and seeds/<name>/ from the build recipe, and every copy of them, come from
+that same build recipe: the pins in build.sh, a target's own files, and the build-only patches. Where such a file holds
+a project's own text (for example a copy of its harness that the release edited, a file generated from its sources, or
+a patch that writes one), that text keeps the project's licence. The recipe's UPSTREAM-CARRIED.tsv, copied byte for
+byte to seeds/UPSTREAM-CARRIED.tsv, names each, with its origin and licence.
+
+The build files of seeds/<name>/ were generated from the build recipe, which carries no licence line
+for them, and a maintainer who adopts a seeded project copies them byte for byte into projects/<name>/. So for the
+two below, this notice states the licence by what the lines are. It is Theorem's grant, and it holds for these lines
+wherever they are copied: in seeds/<name>/, and in projects/<name>/ once the project is enrolled. The line
+numbers are those of the copies on main.
+
+wazuh is under version 2 of the GNU GPL only, and its fuzz target fuzz_xml is built with two files of ours that the
+port's build.sh writes: the header file_op.h (lines 63-68 of seeds/wazuh/build.sh) and the shim
+oft_file_op_shim.c (lines 71-86), which defines wfopen() as a call of fopen() and w_file_cloexec() as doing nothing.
+Both are under MIT OR Apache-2.0, but for five lines that are wazuh's and keep wazuh's licence: the declarations of
+wfopen() and w_file_cloexec() in the header (lines 66 and 67), which are lines 498 and 597 of wazuh's
+src/shared/include/file_op.h; the first line of each function in the shim (lines 74 and 77), which are those
+declarations with { for ; (line 74 is also line 2406 of its src/shared/src/file_op.c); and the return statement of
+wfopen() (line 75), which is line 2479 of file_op.c (https://github.com/wazuh/wazuh at
+6308ccd38607ce7eddf253c84c6f7fb11700dbe7, Copyright (C) 2015, Wazuh Inc. and Copyright (C) 2009 Trend Micro Inc.).
+The binary of fuzz_xml also links its harness, which defines LLVMFuzzerTestOneInput(): OSS-Fuzz's
+projects/wazuh/fuzz_xml.c, byte for byte (https://github.com/google/oss-fuzz at
+955c6866c152471d78c7472c0f1f354343548b9f, Copyright 2021 Google LLC, licensed under the Apache License, Version 2.0;
+seeds/wazuh/sources fetches it). So this fuzz target links Google's harness, which Theorem cannot relicense,
+into a program under version 2 of the GNU GPL only, and the oss-fuzz-theorems release withholds its binaries.
+
+mariadb is under version 2 of the GNU GPL only too, and its fuzz target fuzz_json links the port's
+mariadb.fuzz_json_mdev32854.c (in seeds/mariadb/). That file is OSS-Fuzz's projects/mariadb/fuzz_json.c
+(https://github.com/google/oss-fuzz at 955c6866c152471d78c7472c0f1f354343548b9f, Copyright 2023 Google LLC,
+licensed under the Apache License, Version 2.0), which keeps Google's licence, with lines 65-75, 77-78 and 80 added
+or changed by Theorem: they declare, set up and free the json_engine_t and the MEM_ROOT behind its stack, and pass
+the engine to json_locate_key(). Lines 65-67 and 70 are blank. Line 68 is line 78 of MariaDB's
+unittest/strings/json-t.c (at b2a8c2234dbc276fe3947633c9ffea454badf48f, Copyright (c) 2019, MariaDB Corporation),
+and lines 69, 71-75 and 80 are its lines 79, 83-84, 86-88 and 112, with current_mem_root renamed mem_root and the
+arguments wrapped differently; what they take from that file keeps MariaDB's licence. The rest of what Theorem wrote
+in those lines, such as the engine that lines 77-78 add to Google's call of json_locate_key(), is under MIT OR
+Apache-2.0. The binary of fuzz_json also links the rest of the file, LLVMFuzzerTestOneInput() included, which is
+Google's. So this fuzz target too links Google's harness, which Theorem cannot relicense, into a program under
+version 2 of the GNU GPL only, and the oss-fuzz-theorems release withholds its binaries.
+
+What infra/base-builder/ takes from that build recipe is Theorem's own code, but for the parts of four files that
+come from other projects and keep those projects' licences:
+
+  infra/base-builder/python/shim/atheris/__init__.py includes a transliteration of atheris 3.1.0's
+  FuzzedDataProvider (src/native/fuzzed_data_provider.cc in https://github.com/google/atheris), Copyright 2020 Google
+  LLC, licensed under the Apache License, Version 2.0. Its line 56 repeats the message "You must call Setup() before
+  Fuzz()." of atheris's src/native/core.cc (lines 94-95 at e36da74cf42b5834c4e31d7cabb58d796695d29f), Copyright 2020
+  Google LLC and Copyright 2021 Fraunhofer FKIE, under the same licence.
+  infra/base-builder/python/patches/0001-signal-assume-default-dispositions.patch holds, as its context and removed
+  lines, lines of CPython 3.11.13's Modules/signalmodule.c (https://github.com/python/cpython), Copyright (c)
+  2001-2023 Python Software Foundation, licensed under the Python Software Foundation License Version 2.
+  infra/base-builder/python/Setup.local repeats, in each of its 44 module rules, lines of CPython 3.11.13's
+  Modules/Setup and Modules/Setup.stdlib.in, under the same copyright and licence.
+  infra/base-builder/python/atheris_host.c repeats, in its lines 126-129, four declarations of CPython 3.11.13's
+  Include/internal/pycore_pylifecycle.h (its lines 25, 36, 37 and 56), under the same copyright and licence.
+
+Theorem Labs, PBC holds the copyright in the code it wrote for the build recipe, the driver included, and licenses it
+under the MIT licence. Here the driver and the lines of the wazuh and mariadb fuzz targets named above are under MIT OR
+Apache-2.0, wherever they are copied, and the rest of what comes from the recipe is under the Apache License, Version
+2.0.
+
+A file under projects/<name>/ or seeds/<name>/ copied from a project's own repository or from OSS-Fuzz
+(https://github.com/google/oss-fuzz) keeps its licence: the one its header names, or for a file with no header, that
+of the repository it was copied from (for OSS-Fuzz, the Apache License, Version 2.0).

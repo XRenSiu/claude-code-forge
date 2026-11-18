@@ -1,0 +1,219 @@
+{
+  "schema_version": 1,
+  "kind": "fv-targets",
+  "survey": {
+    "path": "survey.json",
+    "digest": "sha256:fc6e31f6217df25e8dae3a1e4a44ae20f59e813b4d3ac01a49be71d7f3bf66bb"
+  },
+  "procedure": [
+    {
+      "upstream": "pstack",
+      "path": "pstack/skills/create-formal-verification-skill/SKILL.md",
+      "sha256": "sha256:30ef0ac27612ecd16fdc081112113221d673053cef3f8603db11932193861211"
+    },
+    {
+      "upstream": "oss-verify",
+      "path": ".claude/skills/add-project/SKILL.md",
+      "sha256": "sha256:dc8e3d918910408acdcd0f39663a0cfc178bbac5d8784378cf12706f5cbce480"
+    },
+    {
+      "upstream": "fm-agent",
+      "path": "md/workflow_generate_phases.md",
+      "sha256": "sha256:c7bbcfdaad4848c3e4608c005d890ba70e61440a2a246ae3d70a883cc35b08b4"
+    }
+  ],
+  "correctness": {
+    "entry_points": {
+      "status": "observed",
+      "answer": "TicketService.request / read / purchase, called once per user action; purchase may be retried by the client.",
+      "evidence": [
+        {
+          "file": "tickets.py",
+          "quote": "    def purchase(self, user):"
+        },
+        {
+          "file": "tickets.py",
+          "quote": "    def request(self, user):"
+        }
+      ]
+    },
+    "untrusted_input": {
+      "status": "answered",
+      "question": "Q1",
+      "answer": "The user name and the timing of calls come from clients; the stock comes from the operator and is trusted."
+    },
+    "input_size": {
+      "status": "not_applicable",
+      "answer": "No byte input: the inputs are a user name and the order of calls; the stock is at most a few hundred tickets per event."
+    },
+    "expected_outcomes": {
+      "status": "observed",
+      "answer": "'sold_out' and 'no_request' are answers, not failures; a retry returns the first answer.",
+      "evidence": [
+        {
+          "file": "tickets.py",
+          "quote": "return row[0] if row else \"no_request\""
+        }
+      ]
+    },
+    "refused_resources": {
+      "status": "answered",
+      "question": "Q2",
+      "answer": "A purchase that cannot get the database lock within 30 seconds raises; it must not answer success."
+    },
+    "properties": {
+      "status": "observed",
+      "answer": "NoOversell, StockNonNegative, Conservation, SoldNeverDecreases, and every request is eventually answered.",
+      "evidence": [
+        {
+          "file": "test_properties.py",
+          "quote": "(\"NoOversell\", after[\"sold\"] <= stock)"
+        }
+      ]
+    }
+  },
+  "questions": [
+    {
+      "id": "Q1",
+      "topic": "untrusted_input",
+      "question": "Which inputs to the ticket service come from clients you do not trust?",
+      "answer": "User names and call timing come from clients; the stock is set by the operator.",
+      "by": "example maintainer",
+      "signer_kind": "human"
+    },
+    {
+      "id": "Q2",
+      "topic": "refused_resources",
+      "question": "When SQLite stays locked past the 30-second timeout, should a purchase raise rather than answer?",
+      "answer": "Raise. It must never answer success without the reservation.",
+      "by": "example maintainer",
+      "signer_kind": "human"
+    }
+  ],
+  "targets": [
+    {
+      "id": "T1",
+      "rank": 1,
+      "promise": "No more tickets are sold than the event had, whatever order concurrent purchases and retries run in.",
+      "harm": "Two buyers pay for one seat and one of them is turned away at the door.",
+      "risk_class": "transaction",
+      "anchors": [
+        {
+          "file": "tickets.py",
+          "quote": "self.db.execute(\"BEGIN IMMEDIATE\")"
+        },
+        {
+          "file": "tickets.py",
+          "quote": "\"UPDATE tickets SET remaining = remaining - 1 WHERE event_id = ? AND remaining > 0\""
+        }
+      ],
+      "signals": [
+        "S14",
+        "S15",
+        "S16",
+        "S17",
+        "S19",
+        "S20"
+      ],
+      "why_tests_miss": "The oversell needs two purchases interleaved between a read and a write; the seeded property test makes one call at a time and never interleaves inside purchase().",
+      "why_first": "Conservation and the idempotent retry both rest on the reservation being atomic; it is the one place in tickets.py where the order of events decides the outcome.",
+      "route": "stateful-model",
+      "tool": {
+        "name": "fvkit",
+        "available": true,
+        "why": "Whether events can happen in a bad order suits a model checker over a small model of the design; fvkit needs no install and its traces bind the model to this code."
+      },
+      "scope": {
+        "verified": "the purchase protocol for two users and one ticket, every interleaving",
+        "bounds": "2 users, stock 1 in the model; the property test widens to 4 users, stock 2",
+        "assumptions": [
+          "SQLite BEGIN IMMEDIATE serialises writers"
+        ],
+        "not_covered": [
+          "refunds and cancellations (the service has none)",
+          "several processes on several databases"
+        ]
+      },
+      "next": "entrance B — done in this example: model.yaml, source-map.yaml, code-first/modeling-brief.md"
+    },
+    {
+      "id": "T2",
+      "rank": 2,
+      "promise": "The existing property test fails whenever the service sells more than its stock or loses a ticket.",
+      "harm": "A regression in the reservation passes CI because the property test never fires.",
+      "risk_class": "quantity",
+      "anchors": [
+        {
+          "file": "test_properties.py",
+          "quote": "(\"NoOversell\", after[\"sold\"] <= stock)"
+        },
+        {
+          "file": "test_properties.py",
+          "quote": "(\"Conservation\", after[\"sold\"] + after[\"remaining\"] == stock)"
+        }
+      ],
+      "signals": [
+        "S17",
+        "S25"
+      ],
+      "why_tests_miss": "Nobody has seen these checks fail on broken code: a check that never failed proves nothing.",
+      "route": "property-lift",
+      "lifts": [],
+      "route_reason": "The design is verified in T1; this target makes the code's own test a check that can fail, so it guards every change between model runs.",
+      "tool": {
+        "name": "project-tests",
+        "available": true,
+        "why": "The repository already runs test_properties.py; fv props runs it with a one-line breakage per property."
+      },
+      "scope": {
+        "verified": "NoOversell and Conservation are reached by 40 seeded schedules and fire on a one-line breakage each",
+        "bounds": "40 seeds, 24 calls each (sampled, E1)",
+        "assumptions": [
+          "observe() reads the database, not the purchase code's return values"
+        ],
+        "not_covered": [
+          "StockNonNegative and SoldNeverDecreases have no breakage that fires them first"
+        ]
+      },
+      "next": "fv props check / run --props survey/props.json"
+    },
+    {
+      "id": "T3",
+      "rank": 3,
+      "promise": "No purchase variant answers success after the stock is gone.",
+      "harm": "A buyer is told they have a ticket that does not exist.",
+      "risk_class": "quantity",
+      "anchors": [
+        {
+          "file": "tickets.py",
+          "quote": "    def _purchase_check_then_act(self, user):"
+        }
+      ],
+      "signals": [
+        "S21",
+        "S22"
+      ],
+      "why_tests_miss": "The check-then-act variant is only exercised by the negative control; nothing states what it promises.",
+      "route": "function-contracts",
+      "route_reason": "A per-function contract with a probe shows the defect in the code itself; a second model of the same design would repeat T1.",
+      "tool": {
+        "name": "fvkit",
+        "available": true,
+        "why": "fv contracts checks the FM-Agent specs and re-runs each probe."
+      },
+      "scope": {
+        "verified": "the behavioural specs of purchase, read and _purchase_check_then_act",
+        "bounds": "one probe per mismatch (stock 1, two users)",
+        "assumptions": [
+          "the probe loads the service through its public module"
+        ],
+        "not_covered": [
+          "a MATCH is the agent's reasoning (E0), not a proof"
+        ]
+      },
+      "next": "fv contracts check --specs survey/function-specs.json --run"
+    }
+  ],
+  "dismissed": [],
+  "notes": "Written for the example: the answers and the maintainer are illustrative. harness.py is test tooling (role: tooling)."
+}

@@ -297,6 +297,66 @@
         }
       ],
       "license_sha256": "sha256:c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+    },
+    {
+      "id": "oss-verify",
+      "repo": "https://github.com/theorem-labs/oss-verify",
+      "commit": "406a96519c0d329a33a742dc02f9d7c694b8fa34",
+      "license": "Apache-2.0",
+      "license_file": "oss-verify/LICENSE",
+      "license_sha256": "sha256:cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+      "files": [
+        {
+          "upstream_path": ".claude/skills/add-project/SKILL.md",
+          "path": "oss-verify/.claude/skills/add-project/SKILL.md",
+          "sha256": "sha256:dc8e3d918910408acdcd0f39663a0cfc178bbac5d8784378cf12706f5cbce480"
+        },
+        {
+          "upstream_path": "review.md",
+          "path": "oss-verify/review.md",
+          "sha256": "sha256:a7bae6d16660b7efa5705ff1ab648582c55428f459a32e7f257877c852dec83e"
+        },
+        {
+          "upstream_path": "docs/what-gets-proven.md",
+          "path": "oss-verify/docs/what-gets-proven.md",
+          "sha256": "sha256:00cf0f3fea1210c46595da4fd011e996773dbd33b2f3d5c1b01679c88b2989f5"
+        },
+        {
+          "upstream_path": "NOTICE",
+          "path": "oss-verify/NOTICE",
+          "sha256": "sha256:feb4f5751b94909bf45905e3a6a155eaed78d4bc7e8a37d7921177c2843e48db"
+        }
+      ]
+    },
+    {
+      "id": "fm-agent",
+      "repo": "https://github.com/fmagent-project/fm-agent",
+      "commit": "7ff47096ec7ea3697c77031aac2d9412684100a2",
+      "license": "Apache-2.0",
+      "license_file": "fm-agent/LICENSE",
+      "license_sha256": "sha256:c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+      "files": [
+        {
+          "upstream_path": "md/system_prompt.md",
+          "path": "fm-agent/md/system_prompt.md",
+          "sha256": "sha256:bd82df68407c84beba1a305b658b5ce1ae5da5b179aeae887d5652c0f64f868c"
+        },
+        {
+          "upstream_path": "md/workflow_generate_phases.md",
+          "path": "fm-agent/md/workflow_generate_phases.md",
+          "sha256": "sha256:c7bbcfdaad4848c3e4608c005d890ba70e61440a2a246ae3d70a883cc35b08b4"
+        },
+        {
+          "upstream_path": "md/workflow_spec_step4_batch.md",
+          "path": "fm-agent/md/workflow_spec_step4_batch.md",
+          "sha256": "sha256:4d258b807bc1b98ec466198505b87a44fe95f0da813ab773e8d904b2aea46663"
+        },
+        {
+          "upstream_path": "md/bug_validator.md",
+          "path": "fm-agent/md/bug_validator.md",
+          "sha256": "sha256:5ab211a56a1741513f6c62dd981ee4e395182b0fbc8fc72e465875ed233e3861"
+        }
+      ]
     }
   ]
 }
