@@ -14,7 +14,7 @@ description: >-
   “这个设计会不会出错”。纯函数用性质测试，UI 用 E2E，不走这里。
   前置：Python 3.9+（自带 fvkit，仅标准库）；YAML 资产需要 PyYAML；能派发隔离子 agent 的宿主。
 argument-hint: "<需求或模块> [--entrance spec-first|code-first] [--slug <aidlc slug>] [--n 2]"
-version: 1.3.0
+version: 1.4.0
 user-invocable: true
 ---
 
