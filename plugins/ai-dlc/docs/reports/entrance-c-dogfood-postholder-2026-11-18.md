@@ -28,6 +28,7 @@ ai-dlc 1.30.1 / trusted-acceptance 0.10.1 (fvkit 1.4.1).
 | 3 | `fv contracts check` | No receipt: probe reruns (the only executed evidence of C5) could not be retained, bound to a commit or re-validated. | `--out` writes an E0 `contracts` receipt; `fv validate` re-derives each probe from its recorded stdout |
 | 4 | `fv survey check` | No receipt either (static, re-runnable). | open |
 | 5 | survey ids | `S<n>` / `C<n>` / `X<n>` are positional: a new scanned file before a cited one renumbers everything after it, and any new fvkit spec makes the survey STALE. Workable (exclude the survey's own evidence directory; re-scan and re-pin at the end) but brittle. | open — content-addressed ids would survive unrelated edits |
+| 7 | brief / ledger formats | The analysis role and modeling-brief-format do not say that a defect-ledger entry allows exactly nine fields, or that the brief §5 Type must be Safety/Liveness (reachable witnesses fit neither). An agent added `status` and used Transition/Reachable; `fv brief-check` then reported all 22 ledger rows as "missing" (44 issues) instead of "unexpected field". | open — name the allowed fields in the role and report unknown fields as such |
 | 6 | role of files | `.harness/formal/**/checks/*.py` is classed `product` (no tooling dir in its path). | open, cosmetic |
 
 Not skill issues: 5 failures in `eval/smoke.sh` (release bump / rollback / vana remote-tracking checks) fail identically on a clean c893954 worktree in this container — they depend on the git remotes available here.
@@ -38,3 +39,9 @@ Not skill issues: 5 failures in `eval/smoke.sh` (release bump / rollback / vana 
 - `fv props run` isolation with `isolation.link: [node_modules]` works for a pnpm workspace: nested `*/node_modules` hold only relative symlinks and resolve inside the copy.
 - Function-contract probes through the public Hub found a real defect in minutes; T4's all-MATCH result stayed honest (E0, a reading surfaced rather than buried).
 - Survey questions (≤5, human-answered) fit the host's question dialog well; the answers flowed into entrance B's requirements verbatim.
+
+## Status at the pause (2026-11-20)
+
+- T2 and T5 ran the full three fresh-review rounds. Each round found new inputs the checks never reached (T5: one fixed example per rule, then payload order and one resource; T2: one model, coarse money, UTC only, then backward clock, crash restart and the server mapping). Both end ABLE_TO_FAIL, with some checks still judged weak in round 3: the reviewer is the step that keeps E1 honest.
+- T2 also surfaced a confirmed gateway defect (fixed 1e-12 USD tolerance below float error at documented quotas), recorded as an FM-Agent contract with a probe.
+- T1 (entrance B, lease hand-over) reached adopted rules v2, two independent as-is models (each about 130k states, complete) that agree on six real-code defects, and COMPLETE brief coverage. Rules review round 3, model review, calibration harness, replay and triage remain; see PostHolder `docs/formal-verification-handoff.md`.
